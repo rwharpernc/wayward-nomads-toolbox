@@ -4,7 +4,7 @@ which specific missions are currently active:
 
 - Bounty events: fired for ship kills AND on-foot kills of wanted targets.
   The VictimFaction field tells us which faction the victim belonged to.
-  Used by massacre_state.py to estimate kill-stacking progress.
+  Used by kill_missions.py to estimate kill-stacking progress.
 - MissionRedirected events: fired when a mission's objective is complete
   and the game sends you back to turn it in. This is the authoritative
   completion signal for any mission type, not just massacre - missions_ui.py

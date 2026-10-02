@@ -278,7 +278,7 @@ class MiningBook:
             for spot in group_spots:
                 key = str(position_of[id(spot)])
                 self._spot_by_key[key] = spot
-                estimate = mining_deposit.describe(spot.rigs, spot.amount, spot.density, spot.mined_tons)
+                estimate = mining_deposit.reserve_text(spot.rigs, spot.amount, spot.density, spot.mined_tons)
                 bits = [f"{spot.rigs} rigs"] if spot.rigs else []
                 bits.append(estimate or "no estimate")
                 rows.append(dict(key=key, title=spot.material, indent=10, sub="  ·  ".join(bits),
@@ -402,7 +402,7 @@ class MiningBook:
             Pill(pills, f"{spot.density} density", _DENSITY_COLORS.get(spot.density, P.MUTED)).pack(side="left", padx=(0, 6))
         if spot.amount:
             Pill(pills, f"{spot.amount} amount", _AMOUNT_COLORS.get(spot.amount, P.MUTED)).pack(side="left")
-        estimate = mining_deposit.describe(spot.rigs, spot.amount, spot.density, spot.mined_tons)
+        estimate = mining_deposit.reserve_text(spot.rigs, spot.amount, spot.density, spot.mined_tons)
         if estimate:
             tk.Label(self._card, text=estimate, fg=P.ACCENT, bg=P.CARD,
                      font=style.font(P.FONT_SECTION)).pack(anchor="w")

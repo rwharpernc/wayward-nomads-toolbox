@@ -157,10 +157,10 @@ def format_hotspot(hotspot: hotspots.Hotspot) -> str:
         text += f" [Signal {hotspot.signal_number}]"
     if hotspot.has_position():
         text += f" @ {hotspot.latitude:.2f}, {hotspot.longitude:.2f}"
-    # Rigs and Amount together are what mining_deposit.describe() needs -
+    # Rigs and Amount together are what mining_deposit.reserve_text() needs -
     # a hotspot with only one of the two (or neither) shows no estimate
     # rather than a misleading partial one.
-    estimate = mining_deposit.describe(hotspot.rigs, hotspot.amount, hotspot.density, hotspot.mined_tons)
+    estimate = mining_deposit.reserve_text(hotspot.rigs, hotspot.amount, hotspot.density, hotspot.mined_tons)
     if estimate:
         text += f" [{estimate}]"
     if hotspot.notes:

@@ -27,26 +27,26 @@ def _spot(material: str, body: str = "1", system: str = "Sys", **kwargs) -> hots
 
 class ClassifyTests(unittest.TestCase):
     def test_non_rocky_classes(self) -> None:
-        self.assertEqual(ground.classify("Metal rich body", ""), "metal-rich")
-        self.assertEqual(ground.classify("High metal content body", None), "high-metal-content")
-        self.assertEqual(ground.classify("Rocky ice body", "volcanism ignored"), "rocky-ice")
+        self.assertEqual(ground.classify("Metal rich body", ""), "metal_rich")
+        self.assertEqual(ground.classify("High metal content body", None), "high_metal")
+        self.assertEqual(ground.classify("Rocky ice body", "volcanism ignored"), "rocky_ice")
         self.assertEqual(ground.classify("Icy body", ""), "icy")
 
     def test_rocky_splits_on_volcanism(self) -> None:
         cases = {
-            "": "rock 80%+ [none]",
-            "Minor Metallic Magma Volcanism": "rock 80%+ [metallic magma]",
-            "Major Rocky Magma Volcanism": "rock 80%+ [rocky magma]",
-            "Minor Silicate Vapour Geysers Volcanism": "rock 80%+ [silicate vapour geysers]",
-            "Major Silicate Magma Volcanism": "rock 80%+ [silicate magma]",
-            "Minor Carbon Dioxide Geysers Volcanism": "rock 80%+ [other volcanism]",
+            "": "rocky",
+            "Minor Metallic Magma Volcanism": "rocky_metallic_magma",
+            "Major Rocky Magma Volcanism": "rocky_rocky_magma",
+            "Minor Silicate Vapour Geysers Volcanism": "rocky_silicate_vapour",
+            "Major Silicate Magma Volcanism": "rocky_silicate_magma",
+            "Minor Carbon Dioxide Geysers Volcanism": "rocky_other_volcanism",
         }
         for volcanism, expected in cases.items():
             self.assertEqual(ground.classify("Rocky body", volcanism), expected, volcanism)
 
     def test_tolerates_case_and_whitespace(self) -> None:
-        self.assertEqual(ground.classify("  METAL RICH BODY ", ""), "metal-rich")
-        self.assertEqual(ground.classify("Rocky body", "  Metallic   Magma "), "rock 80%+ [metallic magma]")
+        self.assertEqual(ground.classify("  METAL RICH BODY ", ""), "metal_rich")
+        self.assertEqual(ground.classify("Rocky body", "  Metallic   Magma "), "rocky_metallic_magma")
 
     def test_no_class_is_none(self) -> None:
         self.assertIsNone(ground.classify(None, "x"))
@@ -69,7 +69,7 @@ class OwnRatesTests(unittest.TestCase):
 
     def test_shares_and_ordering(self) -> None:
         saved = [_spot("Painite", ground="icy"), _spot("painite", ground="icy"), _spot("Painite", ground="icy"),
-                 _spot("Bromellite", ground="icy"), _spot("Monazite", ground="rocky-ice")]
+                 _spot("Bromellite", ground="icy"), _spot("Monazite", ground="rocky_ice")]
         rates = ground.OwnRates(saved)
         self.assertEqual(rates.sample_size("icy"), 4)
         self.assertEqual([(r.material, r.count, r.pct) for r in rates.rates("icy")],
@@ -87,9 +87,9 @@ class OwnRatesTests(unittest.TestCase):
         self.assertEqual([r.material for r in rates.rates("icy")], ["Painite"])
 
     def test_a_stamped_ground_wins_over_the_survey(self) -> None:
-        saved = [_spot("Painite", body="7 a", ground="rocky-ice")]
+        saved = [_spot("Painite", body="7 a", ground="rocky_ice")]
         rates = ground.OwnRates(saved, {("sys", "7 a"): "icy"})
-        self.assertEqual(rates.sample_size("rocky-ice"), 1)
+        self.assertEqual(rates.sample_size("rocky_ice"), 1)
         self.assertEqual(rates.sample_size("icy"), 0)
 
 

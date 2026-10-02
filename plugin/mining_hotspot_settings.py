@@ -76,7 +76,7 @@ def build(frame: tk.Frame, start_row: int) -> None:
                     label += f" ({hotspot.rigs}R)"
                 if hotspot.signal_number is not None:
                     label += f" [Signal {hotspot.signal_number}]"
-                estimate = mining_deposit.describe(hotspot.rigs, hotspot.amount, hotspot.density, hotspot.mined_tons)
+                estimate = mining_deposit.reserve_text(hotspot.rigs, hotspot.amount, hotspot.density, hotspot.mined_tons)
                 if estimate:
                     label += f" [{estimate}]"
                 hotspot_listbox.insert(tk.END, label)

@@ -103,7 +103,7 @@ class RigsFilterTests(unittest.TestCase):
 def _rates() -> mining_ground.OwnRates:
     """Your own records: icy bodies mostly gave Painite, rocky ones rarely."""
     saved = ([_spot("1", "Painite", ground="icy")] * 5 + [_spot("1", "Bromellite", ground="icy")]
-             + [_spot("2", "Painite", ground="rock 80%+ [none]"), _spot("2", "Monazite", ground="rock 80%+ [none]")])
+             + [_spot("2", "Painite", ground="rocky"), _spot("2", "Monazite", ground="rocky")])
     return mining_ground.OwnRates(saved)
 
 

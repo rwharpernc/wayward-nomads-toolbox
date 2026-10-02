@@ -9,6 +9,11 @@ launch as v1.0.0.
 
 ## Unreleased (pre-1.0 development)
 
+### Code optimisation and maintenance
+- Missions and Mining code reorganised for clarity and easier maintenance, with no change to how they behave.
+- More unit tests for Missions and Mining.
+- Documentation brought up to date across the README and `docs/`.
+
 ### Codex Completionist: sorting, Not found tab, references
 - **Found** tab: click the **Entry** heading to sort A–Z / Z–A and **Times found** for most/least found first.
   Sorting keeps the category groups intact.
@@ -44,16 +49,15 @@ launch as v1.0.0.
   on the left, a body's hotspots grouped by location in the middle, and a detail card with a
   zoomable map on the right. Filter by material or rig count; Edit, Mark depleted, Copy coordinates
   and Delete from the card, plus a one-line summary of the materials you've saved on the body. It replaces **Search Known Hotspots** and **Show System Bodies**.
-- **Tons left** now uses a re-fitted model: 125-175 t per rig position times a Density factor
-  (High x1, Medium x2, Low x3). Note a lower Density label means a larger deposit.
+- **Tons left** is shown as a range worked out from Rigs, Amount and Density. Note a lower Density label
+  means a larger deposit.
 - Rigs is limited to 1-7. Saving a hotspot within 100 m of an existing one on the same body updates
   it instead of adding a duplicate. Refined tons are credited to the nearest hotspot, so a depleted
   deposit shows what it gave (`depleted (612 t)`).
 - **Your own rates:** for a scanned body the browser shows what *you* have found so far on that kind
   of body (share of your saved deposits per material, with the sample size), marking the ones you
   have already saved there. Picking a material in the filter keeps the scanned bodies whose kind you
-  have found it on, highest share first. It starts empty and fills in as you save hotspots; new
-  hotspots are stamped with the kind of ground (`Hotspot.ground`).
+  have found it on, highest share first. It starts empty and fills in as you save hotspots.
 - The coverage minimap uses colour-blind-safe markers (shape carries "depleted") and, in the ship,
   only appears below 2 km altitude.
 
@@ -87,13 +91,13 @@ launch as v1.0.0.
 - Not yet verified on a real Linux install; see `docs/LINUX_TESTING.md`.
 
 ### Docs
-- **README** reframed as a toolbox for the Wayward Nomads exploration squadron; the auto-update
-  note now says updates are opt-in (they always were).
-- **Acknowledgements** page (`docs/ATTRIBUTIONS.md`) and `THIRD-PARTY-NOTICES.md`.
+- **README** rewritten as a plain-language user manual: what each mode does, install steps for the
+  pre-release, which features use the internet, Linux setup, troubleshooting and how to get help.
+- **New `docs/DEVELOPMENT.md`**: setting up to build, test and change WNTB.
 - **New `docs/TECHNICAL.md`**: architecture and design rationale.
 
 ### License
-- **WNTB is GPL-3.0.** See `LICENSE` and `THIRD-PARTY-NOTICES.md`.
+- **WNTB is GPL-3.0.** See `LICENSE`.
 
 ### Fixes
 - **Self-updater** — `_OWN_DATA_FILES` listed only four of WNTB's data files, so backups swept up

@@ -1,7 +1,7 @@
 """
 Tracks Community Goal progress and the current CMDR's own contribution,
 reported live via the CommunityGoal event's CurrentGoals array. Not a
-mission - it never goes through MissionAccepted/mission_repository at all.
+mission - it never goes through MissionAccepted/active_missions at all.
 
 CurrentGoals isn't scoped to "the CG at your current station": a single
 event can list several CGs across different systems at once (confirmed
@@ -73,7 +73,7 @@ def initialize(goals_by_cmdr: dict[str, dict[int, dict]]):
 
 
 def set_current_cmdr(cmdr: str):
-    """Mirrors mission_repository.set_current_cmdr: only re-emits on an
+    """Mirrors active_missions.ActiveMissions.switch_to: only re-emits on an
     actual commander switch, so a fresh CMDR immediately sees whatever CG
     data the journal backfill already found for them."""
     global current_cmdr

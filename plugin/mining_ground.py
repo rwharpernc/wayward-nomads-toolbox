@@ -23,53 +23,58 @@ from typing import Mapping, Optional, Sequence
 from . import mining_body_survey as body_survey
 from . import mining_hotspots as hotspots
 
-# Display names for the ground keys classify() returns.
+# Ground key -> display name.
 GROUND_LABELS: dict[str, str] = {
-    "metal-rich": "Metal-rich body",
-    "high-metal-content": "High metal content body",
-    "rock 80%+ [none]": "Rocky body",
-    "rock 80%+ [metallic magma]": "Rocky body, metallic magma",
-    "rock 80%+ [rocky magma]": "Rocky body, rocky magma",
-    "rock 80%+ [silicate vapour geysers]": "Rocky body, silicate vapour",
-    "rock 80%+ [silicate magma]": "Rocky body, silicate magma",
-    "rock 80%+ [other volcanism]": "Rocky body, other volcanism",
-    "rocky-ice": "Rocky ice body",
+    "metal_rich": "Metal-rich body",
+    "high_metal": "High metal content body",
+    "rocky": "Rocky body",
+    "rocky_metallic_magma": "Rocky body, metallic magma",
+    "rocky_rocky_magma": "Rocky body, rocky magma",
+    "rocky_silicate_vapour": "Rocky body, silicate vapour",
+    "rocky_silicate_magma": "Rocky body, silicate magma",
+    "rocky_other_volcanism": "Rocky body, other volcanism",
+    "rocky_ice": "Rocky ice body",
     "icy": "Icy body",
 }
+
+_CLASS_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("metal rich", "metal_rich"),
+    ("metal-rich", "metal_rich"),
+    ("high metal", "high_metal"),
+    ("rocky ice", "rocky_ice"),
+    ("icy", "icy"),
+)
+"""PlanetClass prefix (lower case) -> ground. Anything else landable is a
+plain rocky body, which is then split by volcanism."""
+
+_VOLCANISM_WORDS: tuple[tuple[str, str], ...] = (
+    ("silicate magma", "rocky_silicate_magma"),
+    ("silicate", "rocky_silicate_vapour"),
+    ("metallic", "rocky_metallic_magma"),
+    ("rocky", "rocky_rocky_magma"),
+)
+"""Words in the Volcanism text -> ground, first match wins. The order matters:
+"silicate magma" contains "silicate"."""
 
 
 def classify(planet_class: Optional[str], volcanism: Optional[str]) -> Optional[str]:
     """Journal Scan `PlanetClass` + `Volcanism` -> a ground key, or None when
-    there's no class. The caller has already established the body is landable
-    (mining_body_survey only keeps landable bodies).
-
-    Rocky bodies split on volcanism, checked before anything else about them.
-    "silicate magma" is tested before "silicate" since the first contains the
-    second."""
+    there is no class. The caller has already established the body is
+    landable (mining_body_survey only keeps landable bodies)."""
     planet = (planet_class or "").strip().lower()
     if not planet:
         return None
-    if planet.startswith("metal rich") or planet.startswith("metal-rich"):
-        return "metal-rich"
-    if planet.startswith("high metal"):
-        return "high-metal-content"
-    if planet.startswith("rocky ice"):
-        return "rocky-ice"
-    if planet.startswith("icy"):
-        return "icy"
+    for prefix, ground in _CLASS_PREFIXES:
+        if planet.startswith(prefix):
+            return ground
 
-    volcano = " ".join((volcanism or "").lower().split())
-    if "silicate magma" in volcano:
-        return "rock 80%+ [silicate magma]"
-    if "silicate" in volcano:
-        return "rock 80%+ [silicate vapour geysers]"
-    if "metallic" in volcano:
-        return "rock 80%+ [metallic magma]"
-    if "rocky" in volcano:
-        return "rock 80%+ [rocky magma]"
-    if volcano:
-        return "rock 80%+ [other volcanism]"
-    return "rock 80%+ [none]"
+    text = " ".join((volcanism or "").lower().split())
+    if not text:
+        return "rocky"
+    for word, ground in _VOLCANISM_WORDS:
+        if word in text:
+            return ground
+    return "rocky_other_volcanism"
 
 
 def label(ground: Optional[str]) -> str:

@@ -10,22 +10,22 @@ directly. The data/logic layer is split across several files:
 - `mission_types.py` — classification rules (zero deps)
 - `mining_methods.py` — shared mining-method lookup (also used by Mining
   mode)
-- `kill_tracker.py`, `mission_repository.py`, `community_goal_state.py` —
+- `kill_tracker.py`, `active_missions.py`, `community_goal_state.py` —
   per-CMDR state, each with its own `*_listeners` list
-- `massacre_state.py`, `mission_state.py` — derived views that self-
-  register onto `mission_repository`'s and `kill_tracker`'s listener lists
+- `kill_missions.py`, `all_missions.py` — derived views that subscribe
+  to `active_missions`' and `kill_tracker`'s change notifications
   as a side effect of being imported
 - `journal_scan.py` — historic journal-backlog scan (this module's `start`
   calls it once, on plugin_start3)
 - `missions_ui.py` — the main-panel content (Canvas+Scrollbar category
   pages) and the "All Missions"/mission-detail popups, which self-registers
-  onto `massacre_state`'s/`mission_state`'s/`community_goal_state`'s
+  onto `kill_missions`'/`all_missions`'/`community_goal_state`'s
   listener lists the same way
 
 Python's own import caching handles the self-registration ordering
 correctly regardless of the order imported below — each module declares its
-own dependencies, so importing `missions_ui` (which imports `massacre_state`
-and `mission_state`) is sufficient to bring in the whole chain exactly once.
+own dependencies, so importing `missions_ui` (which imports `kill_missions`
+and `all_missions`) is sufficient to bring in the whole chain exactly once.
 """
 
 from __future__ import annotations
@@ -41,8 +41,8 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import community_goal_state, kill_tracker, mission_repository, missions_ui
-from .journal_scan import scan_journals
+from . import active_missions, community_goal_state, kill_tracker, missions_ui
+from .journal_scan import read_backlog
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -112,58 +112,53 @@ class MissionsController:
         plugin from loading — live journal events still work without the
         backlog."""
         try:
-            scan_result = scan_journals(dt.date.today() - _JOURNAL_SCAN_LOOKBACK)
+            backlog = read_backlog(dt.date.today() - _JOURNAL_SCAN_LOOKBACK)
             logger.info(
-                "Journal scan found mission data for %d CMDR(s)", len(scan_result.missions_by_cmdr),
+                "Journal scan found mission data for %d CMDR(s)", len(backlog.accepted),
             )
-            mission_repository.set_new_repo(scan_result.missions_by_cmdr)
+            active_missions.tracker.load_history(backlog.accepted)
             kill_tracker.initialize(
-                scan_result.bounties_by_cmdr, scan_result.redirected_by_cmdr,
-                scan_result.redirect_destinations_by_cmdr,
+                backlog.bounties, backlog.redirected, backlog.redirect_targets,
             )
-            community_goal_state.initialize(scan_result.community_goals_by_cmdr)
+            community_goal_state.initialize(backlog.goals)
         except Exception:
             logger.exception("Journal scan failed - starting with empty state")
-            mission_repository.set_new_repo({})
+            active_missions.tracker.load_history({})
             kill_tracker.initialize({}, {}, {})
             community_goal_state.initialize({})
 
-        missions_ui.ui.rebuild_settings(_to_display_settings(load_config()))
+        missions_ui.ui.apply_display_settings(_to_display_settings(load_config()))
 
     # --- journal dispatch -----------------------------------------------------
 
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
         event = entry.get("event")
-        repo = mission_repository.mission_repository
 
         if cmdr:
             # Order matters: the kill tracker must know the CMDR before the
-            # repository emits, because progress is computed for the
+            # active-missions tracker announces, because progress is computed for the
             # current CMDR.
             kill_tracker.set_current_cmdr(cmdr)
             community_goal_state.set_current_cmdr(cmdr)
-            if repo is not None:
-                repo.set_current_cmdr(cmdr)
+            active_missions.tracker.switch_to(cmdr)
 
         if event == "Missions":
             # Sent at login: authoritative list of currently active mission IDs.
             active_mission_uuids = [int(m["MissionID"]) for m in entry.get("Active", [])]
-            mission_repository.set_active_uuids(active_mission_uuids, cmdr)
+            active_missions.tracker.sync_login(cmdr, active_mission_uuids)
             # Also authoritative for which of those are already objective-
             # complete (e.g. right after a relog, before a fresh
-            # MissionRedirected fires) - set_active_uuids must run first so
-            # the repository knows about these mission IDs before
+            # MissionRedirected fires) - sync_login must run first so
+            # the tracker knows about these mission IDs before
             # kill_tracker's own listeners re-derive status/progress.
             complete_mission_uuids = {int(m["MissionID"]) for m in entry.get("Complete", [])}
             kill_tracker.mark_complete(cmdr, complete_mission_uuids)
 
         elif event == "MissionAccepted":
-            if repo is not None:
-                repo.notify_about_new_mission_accepted(entry, cmdr)
+            active_missions.tracker.accept(cmdr, entry)
 
         elif event in ("MissionAbandoned", "MissionCompleted", "MissionFailed"):
-            if repo is not None:
-                repo.notify_about_mission_gone(entry["MissionID"], cmdr)
+            active_missions.tracker.finish(cmdr, entry["MissionID"])
             kill_tracker.forget_mission(cmdr, entry["MissionID"])
 
         elif event == "MissionRedirected":
@@ -230,7 +225,7 @@ class MissionsController:
             display_commodities_needed=bool(self._enabled_vars["display_commodities_needed"].get()),
         )
         save_config(cfg)
-        missions_ui.ui.rebuild_settings(_to_display_settings(cfg))
+        missions_ui.ui.apply_display_settings(_to_display_settings(cfg))
 
 
 controller = MissionsController()

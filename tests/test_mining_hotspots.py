@@ -1,6 +1,6 @@
 """
 Unit tests for plugin/mining_hotspots.py's same-spot merge and mined-ton
-counting, plus mining_deposit.describe()'s depleted-tons text.
+counting, plus mining_deposit.reserve_text()'s depleted-tons text.
 
 Pure logic tests - no EDMC runtime needed (EDMC's `config` module is
 stubbed). Run with:
@@ -99,15 +99,15 @@ class MinedTonsTests(unittest.TestCase):
 
 class DescribeMinedTests(unittest.TestCase):
     def test_depleted_shows_tons_given(self) -> None:
-        self.assertEqual(deposit.describe(4, "Depleted", "High", 612), "depleted (612 t)")
+        self.assertEqual(deposit.reserve_text(4, "Depleted", "High", 612), "depleted (612 t)")
 
     def test_depleted_without_tons_is_plain(self) -> None:
-        self.assertEqual(deposit.describe(4, "Depleted", "High", None), "depleted")
-        self.assertEqual(deposit.describe(4, "Depleted", "High", 0), "depleted")
+        self.assertEqual(deposit.reserve_text(4, "Depleted", "High", None), "depleted")
+        self.assertEqual(deposit.reserve_text(4, "Depleted", "High", 0), "depleted")
 
     def test_mined_tons_ignored_while_not_depleted(self) -> None:
-        self.assertEqual(deposit.describe(4, "High", "High", 50),
-                         deposit.describe(4, "High", "High"))
+        self.assertEqual(deposit.reserve_text(4, "High", "High", 50),
+                         deposit.reserve_text(4, "High", "High"))
 
 
 if __name__ == "__main__":

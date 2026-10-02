@@ -80,7 +80,7 @@ class Hotspot:
     deposit (mining_deposit.AMOUNTS/DENSITIES) at the time it was last
     recorded - neither is a journal field, so like `signal_number` these
     are commander-entered on trust, not derived. Feeds
-    mining_deposit.describe() for an estimated tons-remaining range.
+    mining_deposit.reserve_text() for an estimated tons-remaining range.
     `mined_tons` is the one derived field: refined tons the journal
     credited to this deposit (see HotspotRepository.add_mined_tons) -
     shown once it is marked Depleted, as what the deposit actually gave."""

@@ -110,7 +110,7 @@ class TouchdownPosition:
 
 class SurfaceMiningRepository:
     """Per-commander SurfaceMiningRun state, alt-friendly like Missions
-    mode's mission_repository.py: switching commanders in EDMC switches
+    mode's active_missions.py: switching commanders in EDMC switches
     the tracked run with it."""
 
     def __init__(self) -> None:

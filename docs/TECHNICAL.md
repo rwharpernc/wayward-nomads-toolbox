@@ -58,7 +58,7 @@ plugin/           everything that ships; becomes the WNTB folder
   <feature>*.py   one or more modules per feature
 tests/            unittest suites for the pure-logic modules
 scripts/          build.mjs, package.mjs
-docs/             this file, the two tech specs, attributions, roadmap, TODO
+docs/             this file, the development guide, the two tech specs, attributions, roadmap, TODO
 ```
 
 `npm run build` copies `plugin/` to `dist/WNTB`, skipping `__pycache__` and `.pyc`, and also copies
@@ -509,10 +509,10 @@ an origin offset.
 - **Bearing** (`mining_bearing.py`) computes the relative bearing to a saved hotspot from live
   Status.json position and draws an overlay arrow.
 
-### Missions (`missions*.py`, `mission_*.py`, `kill_tracker.py`, `massacre_state.py`)
+### Missions (`missions*.py`, `mission_*.py`, `active_missions.py`, `kill_missions.py`, `all_missions.py`, `kill_tracker.py`)
 
-Data-layer modules keep per-commander state and expose listener lists; derived views and the UI
-register themselves on those lists. That avoids the data layer importing UI code. A bounded lookback
+Data-layer modules keep per-commander state and announce changes through `Notifier` objects
+(`notifier.py`); derived views and the UI subscribe to them. That avoids the data layer importing UI code. A bounded lookback
 journal scan (`journal_scan.py`, two weeks) restores missions on startup: long enough to catch
 anything still active, short because missions expire.
 

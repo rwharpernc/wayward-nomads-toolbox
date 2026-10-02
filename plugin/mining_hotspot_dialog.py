@@ -91,7 +91,7 @@ def open_hotspot_dialog(
     _row("Longitude", lon_var, 6)
     _row("Notes", notes_var, 7)
     # HUD mining-scanner readout at the time this was recorded - feeds
-    # mining_deposit.describe()'s estimated tons-remaining range, shown
+    # mining_deposit.reserve_text()'s estimated tons-remaining range, shown
     # once Rigs and Amount are both set (mining_render.py's format_hotspot()).
     _dropdown_row("Amount", amount_var, mining_deposit.AMOUNTS, 8)
     _dropdown_row("Density", density_var, mining_deposit.DENSITIES, 9)

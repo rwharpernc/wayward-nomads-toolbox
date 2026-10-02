@@ -50,9 +50,9 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from .uikit import style as ui_style
-from . import community_goal_state, kill_tracker, mining_methods, mission_state, mission_types
+from . import all_missions, community_goal_state, kill_missions, kill_tracker, mining_methods, mission_types
 from .community_goal_state import CommunityGoal
-from .massacre_state import MassacreMission, compute_progress, massacre_mission_listeners
+from .kill_missions import KillMission, estimate_progress
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -101,10 +101,10 @@ BAR_HEIGHT = 7
 _WRAP = 280
 """Wrap width for lines that run the full panel width on their own.
 Recalculated from the panel's real measured width at the top of every
-update_ui() (see _recompute_wrap_widths) - EDMC panel width varies with the
+redraw() (see _recompute_wrap_widths) - EDMC panel width varies with the
 window, other docked plugins, and DPI scaling, so a fixed guess can't track
 it. This starting value only matters before the canvas has been realized
-once (see the winfo_width() > 1 guard in update_ui())."""
+once (see the winfo_width() > 1 guard in redraw())."""
 _WRAP_NAME = 165
 """Wrap width for a name/faction label sharing a line with a right-anchored
 value (kills, reward) - narrower than _WRAP to leave that value room.
@@ -177,7 +177,7 @@ frame's direct children - it never sets a Frame's own background. A
 freshly-built Frame therefore keeps Tk's plain default (white), which is
 invisible only where its content happens to fill it completely - any Label
 that isn't leaves the frame's true white background exposed around it.
-Recomputed once at the top of every update_ui() from the mode frame's own
+Recomputed once at the top of every redraw() from the mode frame's own
 background."""
 
 
@@ -190,14 +190,14 @@ def _recompute_wrap_widths(available_width: int) -> None:
     """Derives _WRAP/_WRAP_NAME from the panel's real current width instead
     of a fixed guess, since EDMC panel width isn't a constant across
     installs (other docked plugins, window resizing, DPI scaling). Called
-    once at the top of update_ui() with the canvas's measured width."""
+    once at the top of redraw() with the canvas's measured width."""
     global _WRAP, _WRAP_NAME
     _WRAP = max(available_width - _CONTENT_RIGHT_MARGIN, 80)
     _WRAP_NAME = max(_WRAP - _WRAP_NAME_ALLOWANCE, 60)
 
 
 @dataclass
-class FactionState:
+class GiverTally:
     required: int = 0
     done: int = 0
     reward: int = 0
@@ -218,9 +218,9 @@ class MassacreData:
     filtered), aggregated per mission-giver faction.
     """
 
-    def __init__(self, missions: list[MassacreMission]):
+    def __init__(self, missions: list[KillMission]):
         self.mission_count = len(missions)
-        self.faction_rows: dict[str, FactionState] = {}
+        self.faction_rows: dict[str, GiverTally] = {}
         self.stack_height = 0
         self.before_stack_height = 0
         self.target_factions: list[str] = []
@@ -230,9 +230,9 @@ class MassacreData:
         self.reward = 0
         self.shareable_reward = 0
 
-        progress = compute_progress(missions)
+        progress = estimate_progress(missions)
         for mission in missions:
-            state = self.faction_rows.setdefault(mission.source_faction, FactionState())
+            state = self.faction_rows.setdefault(mission.source_faction, GiverTally())
             state.required += mission.count
             state.done += progress.get(mission.id, 0)
             state.reward += mission.reward
@@ -402,20 +402,20 @@ def _format_location(system: str, station: str) -> str:
     return station or system or "-"
 
 
-def _format_destination(mission: mission_state.Mission) -> str:
+def _format_destination(mission: all_missions.MissionSummary) -> str:
     return _format_location(mission.destination_system, mission.destination_station)
 
 
 def _mission_status(mission_id: int, cmdr: Optional[str]) -> tuple[bool, str]:
     """(is_complete, status text). A mission is "Complete" once its
     MissionRedirected event has fired - the same authoritative signal
-    massacre_state.py uses for kill-stack completion, just applied generically
+    kill_missions.py uses for kill-stack completion, just applied generically
     here rather than to a kill count."""
     is_complete = mission_id in kill_tracker.get_redirected(cmdr)
     return is_complete, ("✓ Complete" if is_complete else "Pending")
 
 
-def _mission_location(mission: mission_state.Mission, cmdr: Optional[str], is_complete: bool) -> str:
+def _mission_location(mission: all_missions.MissionSummary, cmdr: Optional[str], is_complete: bool) -> str:
     """Where to go right now: the redirect's new turn-in location once a
     mission is complete (if the event carried one), else its original
     destination."""
@@ -447,7 +447,7 @@ def _progress_bar(frame: tk.Frame, done: int, required: int) -> tk.Canvas:
     return canvas
 
 
-def _display_no_data_info(frame: tk.Frame, cmdr: Optional[str], row: int) -> int:
+def _display_waiting_notice(frame: tk.Frame, cmdr: Optional[str], row: int) -> int:
     who = f"CMDR {cmdr}" if cmdr else "this commander"
     label = tk.Label(frame, justify=tk.LEFT, wraplength=_WRAP,
                      text=f"No active mission data for {who} yet.\n"
@@ -505,7 +505,7 @@ def _display_category_nav(frame: tk.Frame, current: str, counts: dict[str, int],
     return row + 1
 
 
-def _display_row(frame: tk.Frame, faction: str, data: FactionState, mission_data: MassacreData,
+def _display_row(frame: tk.Frame, faction: str, data: GiverTally, mission_data: MassacreData,
                   settings: DisplaySettings, row: int) -> int:
     """A faction's kill-stack as a 2-line card: faction name + kills fraction
     on top, progress bar + reward (+ delta) below."""
@@ -595,7 +595,7 @@ def _display_massacre_data(frame: tk.Frame, data: MassacreData, settings: Displa
     return row
 
 
-def _display_all_missions_row(frame: tk.Frame, mission: mission_state.Mission,
+def _display_all_missions_row(frame: tk.Frame, mission: all_missions.MissionSummary,
                                row: int, on_click: Callable[[int], None]) -> int:
     """A mission as a stacked card, one field per line: name, faction,
     status + reward, location, expiry. The name gets a full-width line to
@@ -661,7 +661,7 @@ def _display_all_missions_row(frame: tk.Frame, mission: mission_state.Mission,
 
 
 def _aggregate_commodities_needed(
-        missions: dict[int, mission_state.Mission]) -> list[tuple[str, int, int]]:
+        missions: dict[int, all_missions.MissionSummary]) -> list[tuple[str, int, int]]:
     """(commodity, total units still needed, mission count), summed across
     missions where the commodity must still be sourced (mined or bought/
     collected - see mission_types.needs_commodity_supply), sorted by name.
@@ -701,7 +701,7 @@ def _display_commodities_needed(frame: tk.Frame, rows: list[tuple[str, int, int]
     return _separator(frame, row, pady=_CARD_GAP)
 
 
-def _display_all_missions(frame: tk.Frame, missions: dict[int, mission_state.Mission],
+def _display_all_missions(frame: tk.Frame, missions: dict[int, all_missions.MissionSummary],
                           row: int, no_missions_text: str,
                           on_click: Callable[[int], None]) -> int:
     if not missions:
@@ -716,7 +716,7 @@ def _display_all_missions(frame: tk.Frame, missions: dict[int, mission_state.Mis
     return row
 
 
-def _display_all_missions_table(frame: tk.Frame, missions: list[mission_state.Mission],
+def _display_all_missions_table(frame: tk.Frame, missions: list[all_missions.MissionSummary],
                                 on_click: Callable[[int], None]) -> None:
     """A flat, column-based table of every active mission across every
     category, including massacre/settlement ones. Used only in the "All"
@@ -772,7 +772,7 @@ def _format_full_datetime(iso: str) -> str:
     return parsed.strftime("%Y-%m-%d %H:%M UTC") if parsed else "-"
 
 
-def _display_mission_detail(frame: tk.Frame, mission: mission_state.Mission,
+def _display_mission_detail(frame: tk.Frame, mission: all_missions.MissionSummary,
                             cmdr: Optional[str]) -> None:
     """One mission's full detail as label:value rows, opened by clicking its
     card/row anywhere else in the panel. A popup isn't fighting the main
@@ -876,8 +876,8 @@ def _display_community_goal_page(frame: tk.Frame, goals: dict[int, CommunityGoal
 class MissionsUI:
     def __init__(self):
         self.__parent: Optional[tk.Frame] = None
-        self.__massacre_missions: Optional[dict[int, MassacreMission]] = None
-        self.__all_missions_data: Optional[dict[int, mission_state.Mission]] = None
+        self.__massacre_missions: Optional[dict[int, KillMission]] = None
+        self.__all_missions_data: Optional[dict[int, all_missions.MissionSummary]] = None
         self.__community_goals: dict[int, CommunityGoal] = community_goal_state.get_goals(
             community_goal_state.current_cmdr)
         self.__canvas: Optional[tk.Canvas] = None
@@ -892,9 +892,9 @@ class MissionsUI:
         self.__settings = DisplaySettings()
         self.__current_category = _load_current_category()
 
-    def rebuild_settings(self, settings: DisplaySettings):
+    def apply_display_settings(self, settings: DisplaySettings):
         self.__settings = settings
-        self.update_ui()
+        self.redraw()
 
     def build_panel(self, parent: tk.Frame):
         """Builds a Canvas/Scrollbar/content-frame trio inside `parent` (the
@@ -922,9 +922,9 @@ class MissionsUI:
         self.__canvas.bind("<Enter>", lambda _e: self.__bind_mousewheel())
         self.__canvas.bind("<Leave>", lambda _e: self.__unbind_mousewheel())
 
-        parent.bind("<<Refresh>>", lambda _e: self.update_ui())
-        self.update_ui()
-        # This first update_ui() call almost always lands before Tk has
+        parent.bind("<<Refresh>>", lambda _e: self.redraw())
+        self.redraw()
+        # This first redraw() call almost always lands before Tk has
         # given the canvas real geometry (winfo_width() still 1), so wrap
         # widths fall back to the static defaults - re-run once shortly
         # after so it self-corrects to the real panel width immediately,
@@ -934,11 +934,11 @@ class MissionsUI:
         parent.after(REFRESH_INTERVAL_MS, self.__tick)
 
     def __refresh_if_alive(self):
-        """update_ui(), but only if the frame is still a live widget - guards
+        """redraw(), but only if the frame is still a live widget - guards
         scheduled (after()) callbacks that may fire post-teardown."""
         if self.__parent is None or not self.__parent.winfo_exists():
             return
-        self.update_ui()
+        self.redraw()
 
     def __tick(self):
         self.__refresh_if_alive()
@@ -964,7 +964,7 @@ class MissionsUI:
         <Configure> callback, which can fire multiple times while deeply
         nested content is still settling its geometry - resetting to the top
         on every one of those incidental passes would fight a user who's
-        mid-scroll. update_ui() resets to the top itself, once, right after
+        mid-scroll. redraw() resets to the top itself, once, right after
         it actually rebuilds the page.
         """
         if self.__canvas is None:
@@ -1036,7 +1036,7 @@ class MissionsUI:
                 break
         self.__current_category = order[idx]
         _save_current_category(self.__current_category)
-        self.update_ui()
+        self.redraw()
 
     def __prev_category(self):
         self.__step_category(-1)
@@ -1044,17 +1044,17 @@ class MissionsUI:
     def __next_category(self):
         self.__step_category(1)
 
-    def notify_about_new_massacre_mission_state(self, data: Optional[dict[int, MassacreMission]]):
+    def on_kill_missions(self, data: Optional[dict[int, KillMission]]):
         self.__massacre_missions = data
-        self.update_ui()
+        self.redraw()
 
-    def notify_about_new_mission_state(self, data: Optional[dict[int, mission_state.Mission]]):
+    def on_all_missions(self, data: Optional[dict[int, all_missions.MissionSummary]]):
         self.__all_missions_data = data
-        self.update_ui()
+        self.redraw()
 
-    def notify_about_new_community_goal_state(self, data: dict[int, CommunityGoal]):
+    def on_community_goals(self, data: dict[int, CommunityGoal]):
         self.__community_goals = data
-        self.update_ui()
+        self.redraw()
 
     def __render_current_page(self, frame: tk.Frame, row: int) -> int:
         category = self.__current_category
@@ -1082,7 +1082,7 @@ class MissionsUI:
         return _display_all_missions(frame, missions, row, no_missions_text,
                                      self.__open_mission_detail)
 
-    def update_ui(self):
+    def redraw(self):
         if self.__parent is None or self.__content is None:
             logger.warning("Frame was not yet set. UI was not updated.")
             return
@@ -1098,7 +1098,7 @@ class MissionsUI:
 
         row = 0
         if self.__all_missions_data is None:
-            _display_no_data_info(self.__content, kill_tracker.current_cmdr, row)
+            _display_waiting_notice(self.__content, kill_tracker.current_cmdr, row)
         else:
             counts = self.__category_counts()
             total = len(self.__all_missions_data)
@@ -1136,7 +1136,7 @@ class MissionsUI:
         # own theme.update(self.__parent) - called on every panel refresh -
         # recursively walks self.__parent's *widget-tree* children and
         # doesn't know how to handle a Toplevel among them, which would
-        # silently abort the rest of update_ui() - including
+        # silently abort the rest of redraw() - including
         # __refresh_popup() - every time a mission changed while this popup
         # was open. Rooting it at the real toplevel keeps it out of that walk.
         self.__popup = tk.Toplevel(self.__parent.winfo_toplevel())
@@ -1197,7 +1197,7 @@ class MissionsUI:
         detail window - the click target for every mission card/row in the
         panel and the "All missions" popup. Follows the same Toplevel
         pattern as that popup: parented to the real EDMC root window, and
-        refreshed from update_ui() rather than registered as its own
+        refreshed from redraw() rather than registered as its own
         listener, so it stays live and tolerates the mission it was opened
         for having since disappeared (handed in, abandoned, expired)."""
         self.__detail_mission_id = mission_id
@@ -1260,18 +1260,10 @@ class MissionsUI:
 ui = MissionsUI()
 
 
-def handle_new_massacre_mission_state(data: Optional[dict[int, MassacreMission]]):
-    ui.notify_about_new_massacre_mission_state(data)
-
-
-def handle_new_mission_state(data: Optional[dict[int, mission_state.Mission]]):
-    ui.notify_about_new_mission_state(data)
-
-
 def handle_new_community_goal_state(data: dict[int, CommunityGoal]):
-    ui.notify_about_new_community_goal_state(data)
+    ui.on_community_goals(data)
 
 
-massacre_mission_listeners.append(handle_new_massacre_mission_state)
-mission_state.mission_listeners.append(handle_new_mission_state)
+kill_missions.view.changed.connect(ui.on_kill_missions)
+all_missions.view.changed.connect(ui.on_all_missions)
 community_goal_state.community_goal_listeners.append(handle_new_community_goal_state)
