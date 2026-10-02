@@ -15,8 +15,8 @@ automatically on jump, with clipboard automation for pasting into the in-game ga
 
 ## 2. Non-goals
 
-- No in-game screen overlay for Boxel Survey specifically (unlike Landing/Inventory, which do use
-  `overlay.py` — Boxel Survey has never needed one).
+- No in-game screen overlay: WNTB's Boxel Survey draws nothing on the game screen (unlike Landing
+  Assist and Inventory, which use `overlay.py`).
 - No Frontier id64/coordinate decode math (see §4.3 — deliberately, not for lack of trying).
 - No prediction of "which unvisited boxel is likely to have good finds" — checked and ruled out as
   unbuildable against any public data source (§6's carried-forward Q6).

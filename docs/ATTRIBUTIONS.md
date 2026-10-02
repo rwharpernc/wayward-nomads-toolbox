@@ -7,32 +7,54 @@ credits the projects and people whose ideas, and in some cases published data an
 Author: R.W. Harper (CMDR Bocheaux, Wayward Nomads). Licensed under the GNU GPL v3.0; see `LICENSE`.
 Notices that a licence requires are in `THIRD-PARTY-NOTICES.md`.
 
-## Ideas and inspiration
+## Ideas that belong to the community
 
-- **[NoFoolLikeOne/EDMC-Screenshot](https://github.com/NoFoolLikeOne/EDMC-Screenshot)**: converting the
-  game's screenshots to PNG, naming them from a mask, and previewing a crop of the open HUD panel.
-- **[CMDR-WDX/EDMC-Massacres](https://github.com/CMDR-WDX/EDMC-Massacres)**: tracking massacre missions
-  by stack.
-- **[alby666/EDMC-PowerPlayProgress](https://github.com/alby666/EDMC-PowerPlayProgress)** and
-  **[Fumlop/EliteMeritTracker](https://github.com/Fumlop/EliteMeritTracker)**: Powerplay merit tracking,
-  manual reset counters, a copy-to-clipboard summary and a "nearest rare commodities" view.
-- **EDCoPilot**: automatic honking on arrival.
-- **EDJP**: boxel survey walking, system age, Earth-like-world rarity and EDSM-upload-status readouts.
-- **[njthomson/SrvSurvey](https://github.com/njthomson/SrvSurvey)**: completion tracking, and keeping
-  heavy journal-history scans user-triggered.
-- **[Fumlop/EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter)**: tons-remaining estimates, a
-  driven-coverage minimap, a system bodies overview and a multi-pane browser for surface mining.
-- **[mcjohnso/EDPlanetNavigator](https://github.com/mcjohnso/EDPlanetNavigator)**: pointing an overlay
-  arrow at a surface waypoint.
-- **[aussig/BGS-Tally](https://github.com/aussig/BGS-Tally)**: BGS tracking and overlay integration.
-- **[Silarn/EDMC-BioScan](https://github.com/Silarn/EDMC-BioScan)** and
-  **[Silarn/EDMC-ExploData](https://github.com/Silarn/EDMC-ExploData)**: exobiology species prediction
-  and galactic region lookup.
-- **[bbbkada/EDMC-PlanetPOI](https://github.com/bbbkada/EDMC-PlanetPOI)**: its hotspot file and
-  share-link format, which WNTB can import.
-- **[canonn-science/EDMC-Canonn](https://github.com/canonn-science/EDMC-Canonn)**: codex and site
-  data. WNTB is built to sit alongside it, not replace it.
-- **[bgol/LandingPad](https://github.com/bgol/LandingPad)**: the landing-pad diagram.
+Every feature in WNTB is an idea that many people in the Elite Dangerous community have built, in many
+forms, over many years. None of them belongs to one tool. The projects below are examples of the
+community's work in each area: tools I've used, looked at or learned from. The list isn't complete, and
+being listed doesn't mean a tool was the first or the only one.
+
+- **Boxel surveying** (walking a boxel's systems in order, skipping ones already visited):
+  [EDJP](https://edjp.colacube.net/), [SrvSurvey](https://github.com/njthomson/SrvSurvey),
+  [VoxStellar](https://voxstellar.com/), [Elite Observatory](https://github.com/Xjph/EliteObservatory)
+  and [SectorLister](https://github.com/mpfj/SectorLister).
+- **Auto-honk** (firing the Discovery Scanner on arrival): EDCoPilot, VoiceAttack profiles and
+  autopilot tools such as [EDAPGui](https://github.com/SumZer0-git/EDAPGui).
+- **Exploration value, system age and rarity readouts:** EDJP, EDDiscovery, Elite Observatory and
+  many other exploration tools.
+- **Exobiology species prediction and sampling help:**
+  [EDMC-BioScan](https://github.com/Silarn/EDMC-BioScan),
+  [Artemis Scanner Tracker](https://github.com/Balvald/ArtemisScannerTracker), SrvSurvey and the
+  [EDMC-Canonn](https://github.com/canonn-science/EDMC-Canonn) plugin.
+- **Codex and scan tallies:** Artemis Scanner Tracker, EDMC-BioScan, EDMC-Canonn, EDDiscovery and
+  [edastro.com](https://edastro.com/).
+- **Massacre and kill-mission tracking:** [EDMC-Massacres](https://github.com/CMDR-WDX/EDMC-Massacres),
+  [EDMC-CombatTracker](https://github.com/lunarplasma/EDMC-CombatTracker),
+  [EDCarnage](https://github.com/mmomtchev/EDCarnage) and
+  [EDMMC](https://github.com/tautomer/EDMMC).
+- **Powerplay merit tracking:**
+  [EDMC-PowerPlayProgress](https://github.com/alby666/EDMC-PowerPlayProgress),
+  [EliteMeritTracker](https://github.com/Fumlop/EliteMeritTracker),
+  [EDMC Merit Tracker](https://gitlab.com/valdidan-edtools/edmc_merittracker) and BGS-Tally.
+- **Rare goods lookups:** EDMC-PowerPlayProgress, [Inara](https://inara.cz/) and many rare-commodity
+  guides.
+- **BGS tracking:** [BGS-Tally](https://github.com/aussig/BGS-Tally) and its forks,
+  [EliteFactionTracker](https://github.com/Haelnorr/EliteFactionTracker) and other faction trackers.
+- **Surface mining aids** (tons-remaining estimates, driven-coverage maps, hotspot lists, waypoint
+  arrows): [EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter),
+  [Rhino Surface Mapper](https://github.com/pbgaspar/rhino-surface-mapper), EDSMT, EliteMining,
+  [EDPlanetNavigator](https://github.com/mcjohnso/EDPlanetNavigator) and
+  [EDMC-PlanetPOI](https://github.com/bbbkada/EDMC-PlanetPOI) (whose hotspot file and share-link format
+  WNTB can import).
+- **Colonisation tracking:** Architect Tracker, [Raven Colonial](https://ravencolonial.com/),
+  ED Colonization Helper, EDColony and BGS-Tally.
+- **Landing pad guidance:** [LandingPad](https://github.com/bgol/LandingPad) and ED Recon.
+- **Screenshot conversion and renaming:** EDMC's own built-in screenshot handling and
+  [EDMC-Screenshot](https://github.com/NoFoolLikeOne/EDMC-Screenshot).
+- **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials
+  Helper.
+- **Nearby points of interest:** [Canonn](https://canonn.science/) and
+  [edastro.com](https://edastro.com/) publish the lists WNTB looks up.
 
 ## Overlay
 
