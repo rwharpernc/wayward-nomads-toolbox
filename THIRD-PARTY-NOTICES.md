@@ -20,12 +20,13 @@ and the Amount bands) are measurements published by
 [Fumlop/EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter), licensed GPL-3.0, the same licence
 as WNTB.
 
-## Exobiology species and region data (GPL-2.0, MIT)
+## Exobiology species and region data (GPL-2.0 or later, MIT)
 
 `plugin/organic_species_data.py` (species and genus conditions) and `plugin/organic_region_data.py`
 (galactic region grid, Guardian zones) are generated from the published data of
 [Silarn/EDMC-BioScan](https://github.com/Silarn/EDMC-BioScan) and
-[Silarn/EDMC-ExploData](https://github.com/Silarn/EDMC-ExploData) (both GPL-2.0). The region grid
+[Silarn/EDMC-ExploData](https://github.com/Silarn/EDMC-ExploData), both licensed GPL version 2 or
+later, which allows use under the GPL-3.0 that WNTB carries. The region grid
 originates in
 [klightspeed/EliteDangerousRegionMap](https://github.com/klightspeed/EliteDangerousRegionMap), whose
 licence follows:
@@ -53,6 +54,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Landing Assist: pad layouts (GPL-2.0 or later)
+
+The pad layouts drawn by `plugin/landing.py` follow
+[bgol/LandingPad](https://github.com/bgol/LandingPad), licensed GPL version 2 or later, which allows
+use under the GPL-3.0 that WNTB carries: the starport pad table, shell sizes and pad sectors (which the
+game's station design dictates), and the fleet carrier and squadron carrier pad rectangles. The code
+that draws them is WNTB's own.
 
 ## Micro-resource names
 
