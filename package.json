@@ -1,0 +1,11 @@
+{
+  "name": "wntb",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Wayward Nomads Toolbox — EDMC plugin",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "package": "node scripts/build.mjs && node scripts/package.mjs"
+  }
+}
