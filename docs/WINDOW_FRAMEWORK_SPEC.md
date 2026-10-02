@@ -5,7 +5,7 @@ palette, flat cards, striped sortable tables, and an embedded map. It lives in `
 that matter when changing a window are in [TECHNICAL.md](TECHNICAL.md) section 5; this page describes what
 the kit provides and where it's used.
 
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 ## 1. Scope
 

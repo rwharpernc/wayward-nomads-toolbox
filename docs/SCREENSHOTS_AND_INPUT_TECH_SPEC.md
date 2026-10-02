@@ -1,7 +1,7 @@
 # Technical Specification — Screenshots and input automation
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 Two WNTB features press keys in the game for you: **Auto-Honk** and **timed or automatic screenshot
 capture**. This document explains exactly what they do and don't do, how Screenshots converts and crops

@@ -1,7 +1,7 @@
 # Technical Specification — Missions
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 The standing reference for Missions mode: what it reads, the rules it applies, and what its numbers can
 and can't tell you. For how to use it, see the [README](../README.md#missions). For how the code is

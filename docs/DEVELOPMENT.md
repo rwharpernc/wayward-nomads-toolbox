@@ -31,8 +31,7 @@ npm run package    # builds, then zips dist/WNTB into dist/WNTB-v<version>.zip
 ```
 
 `dist/` is ignored by git. The version number comes from `plugin/__init__.py` (and is mirrored in
-`package.json`). WNTB is pre-1.0, so it should stay below `1.0.0` until a public release is decided.
-
+`package.json`).
 ## Try your changes in EDMC
 
 1. Run `npm run build`.
@@ -86,6 +85,8 @@ that means you have no permission to.
 
 ## Releasing
 
-There are no official releases yet. When one is decided on, bump the version in `plugin/__init__.py` and
-`package.json`, run `npm run package`, and publish the zip on GitHub. The in-app updater only follows
-official (non-draft, non-pre-release) GitHub releases.
+To release: bump the version in `plugin/__init__.py` and `package.json`, add a dated section to
+`CHANGELOG.md`, run `npm run package`, commit, tag `v<version>`, and publish `dist/WNTB-v<version>.zip` as
+the asset of a GitHub release. Users download that zip, not the repository. Publish it as a normal release:
+the in-app updater (and the README's "latest release" link) only follow official (non-draft,
+non-pre-release) GitHub releases.

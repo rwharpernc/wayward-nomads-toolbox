@@ -1,7 +1,7 @@
 # Technical Specification — Mining
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 The standing reference for Mining mode: what it tracks, the rules and numbers behind its estimates, the
 files it keeps, and the outside lookups it can make. For how to use it, see the

@@ -1,7 +1,7 @@
 # Technical Specification — BGS Tracking
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 ## 1. Goals
 

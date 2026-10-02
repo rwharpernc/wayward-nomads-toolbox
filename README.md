@@ -13,9 +13,8 @@ exploration helpers, mining, missions, on-foot and cargo tracking, and more. It 
 It runs inside [EDMC](https://github.com/EDCD/EDMarketConnector) (Elite Dangerous Market Connector), a
 free companion program many commanders already use. You don't need to know any programming to use WNTB.
 
-> **WNTB is in pre-release testing (version 0.x).** It works, but it's still being tested, and there
-> is no official download yet. See [Installing](#installing) for how to try it. Please tell me what you
-> find (see [Getting help](#getting-help)).
+> **Download the latest release, not the repository.** See [Installing](#installing). If you hit a
+> problem, see [Getting help](#getting-help).
 
 Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CMDR Mactavious (Easy Day, EZPZ).
 
@@ -73,26 +72,23 @@ Every feature can be turned on or off, so you only see what you want.
 
 ## Installing
 
-There are no official releases yet, so there's no download on the Releases page. To try the
-pre-release:
-
-1. **Download it.** On this page (the repository's main page), click the green **Code** button, then
-   **Download ZIP**. Extract the ZIP somewhere.
-2. **Get the plugin folder ready.** Inside the extracted folder is a folder called **`plugin`**. Make a
-   copy of it and rename the copy to **`WNTB`**.
-   (If you have [Node.js](https://nodejs.org/) installed, you can instead run `npm run build` in the
-   extracted folder, which creates a ready-made `dist/WNTB` folder. Developers: see
-   [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).)
-3. **Put it in EDMC's plugins folder.** In EDMC, open **File → Settings → Plugins** and click **Open**
+1. **Download the plugin.** Get **`WNTB-v<version>.zip`** from the
+   [latest release](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest) (under
+   **Assets**). It contains only the plugin, in a single folder called **`WNTB`**. Don't use the green
+   **Code → Download ZIP** button: that downloads the whole source repository, which you don't need.
+2. **Put it in EDMC's plugins folder.** In EDMC, open **File → Settings → Plugins** and click **Open**
    next to "Plugins folder". (On Windows it's usually
-   `%LOCALAPPDATA%\EDMarketConnector\plugins\`.) Drop the **`WNTB`** folder in there.
-4. **Restart EDMC.** A **Wayward Nomads Toolbox (WNTB)** panel should appear.
+   `%LOCALAPPDATA%\EDMarketConnector\plugins\`.) Extract the ZIP there, so you end up with
+   `plugins\WNTB\load.py`.
+3. **Restart EDMC.** A **Wayward Nomads Toolbox (WNTB)** panel should appear.
 
-**Updating:** repeat the steps, and copy the new files *over* the existing `WNTB` folder. Don't delete
-the old folder first, because your saved data (hotspots, sessions and so on) lives inside it.
+**Updating:** download the new ZIP and extract it over the existing `WNTB` folder, replacing files when
+asked. Don't delete the old folder first, because your saved data (hotspots, sessions and so on) lives
+inside it. WNTB can also update itself: turn on **Automatic updates** in its settings (it's off by
+default, and only looks at published releases).
 
-**Automatic updates** are off by default, and only look for official releases, so they do nothing until
-the first one is published.
+**Building from source** is only for developers: see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+`npm run package` creates the same ZIP.
 
 ## Finding your way around
 

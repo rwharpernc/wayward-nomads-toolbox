@@ -3,11 +3,10 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-WNTB hasn't had a real public release yet — everything below is pre-1.0 development, kept under one
-running "Unreleased" heading rather than versioned sections, until it's fully tested and ready to
-launch as v1.0.0.
+## 1.0.0 - 2026-10-02
 
-## Unreleased (pre-1.0 development)
+First public release. The entries below are everything 1.0.0 ships with, built up during development
+before release.
 
 ### Code optimisation and maintenance
 - Missions and Mining code reorganised for clarity and easier maintenance, with no change to how they behave.

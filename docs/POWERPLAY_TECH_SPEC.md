@@ -1,7 +1,7 @@
 # Technical Specification — Powerplay
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 The standing reference for Powerplay mode: how merits are attributed to an activity, how Control Points
 are estimated, how sessions work, and how the Rare Goods Finder fits in. For how to use it, see the

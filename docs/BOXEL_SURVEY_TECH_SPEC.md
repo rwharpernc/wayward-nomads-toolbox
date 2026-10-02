@@ -1,7 +1,7 @@
 # Technical Specification — Boxel Survey
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 The standing reference for Boxel Survey across all three sub-modes (Sequence, Region Sweep, Waypoint
 Route): what's true about the system right now, why, and what's still unknown. Release history is in

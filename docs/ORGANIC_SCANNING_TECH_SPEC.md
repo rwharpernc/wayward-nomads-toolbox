@@ -1,7 +1,7 @@
 # Technical Specification — Organic Scanning
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 The standing reference for Organic Scanning (exobiology): what it predicts, the rules behind the
 prediction, how scan progress is tracked, and where its answers can be wrong. For how to use it, see the

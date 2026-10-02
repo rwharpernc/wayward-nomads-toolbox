@@ -410,7 +410,7 @@ Design decisions that apply to all of them:
   caller decides, because a fabricated or stale tick would corrupt the tally. It never returns a
   guessed value.
 - **Identify WNTB in every request.** Every call sends a User-Agent naming WNTB, its version and the
-  project's address (`http_identity.py`, for example `WNTB/0.3.1 (rare-goods; +https://github.com/...)`),
+  project's address (`http_identity.py`, for example `WNTB/1.0.0 (rare-goods; +https://github.com/...)`),
   so a service operator who sees the traffic can tell what it is and get in touch. EDSM returns HTTP 403
   to the default `python-requests` agent, so its client sends EDMC's own `config.user_agent` followed by
   WNTB's.
