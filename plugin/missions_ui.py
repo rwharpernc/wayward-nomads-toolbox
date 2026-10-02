@@ -266,10 +266,10 @@ class MassacreData:
 
         if len(self.target_factions) > 1:
             self.warnings.append(
-                f"Multiple target factions: {', '.join(self.target_factions)}")
+                f"Several target factions: {', '.join(self.target_factions)}")
         if len(self.target_systems) > 1:
             self.warnings.append(
-                f"Multiple target systems: {', '.join(self.target_systems)}")
+                f"Several target systems: {', '.join(self.target_systems)}")
         if any(state.is_estimate for state in self.faction_rows.values()):
             self.warnings.append(
                 "~kills = estimate, not exact (Wing and/or on-foot kills often "
@@ -278,9 +278,9 @@ class MassacreData:
 
 @dataclass
 class DisplaySettings:
-    delta: bool = True
+    remaining: bool = True
     progress: bool = True
-    sum: bool = True
+    totals: bool = True
     mission_count: bool = True
     settlement: bool = True
     commodities_needed: bool = True
@@ -527,7 +527,7 @@ def _display_row(frame: tk.Frame, faction: str, data: GiverTally, mission_data: 
         tk.Label(bottom, text=reward_text).pack(side=tk.LEFT, padx=(8, 0))
     else:
         tk.Label(bottom, text=reward_text).pack(side=tk.LEFT)
-    if settings.delta:
+    if settings.remaining:
         delta = mission_data.stack_height - data.required
         text = delta if delta > 0 else mission_data.before_stack_height - mission_data.stack_height
         tk.Label(bottom, text=f"Δ{text}").pack(side=tk.RIGHT)
@@ -585,7 +585,7 @@ def _display_massacre_data(frame: tk.Frame, data: MassacreData, settings: Displa
         if i > 0:
             row = _separator(frame, row, pady=_CARD_GAP)
         row = _display_row(frame, faction, data.faction_rows[faction], data, settings, row)
-    if settings.sum:
+    if settings.totals:
         row = _display_sum(frame, data, settings, row)
     if settings.settlement:
         row = _display_settlements(frame, data, row)
@@ -1084,7 +1084,7 @@ class MissionsUI:
 
     def redraw(self):
         if self.__parent is None or self.__content is None:
-            logger.warning("Frame was not yet set. UI was not updated.")
+            logger.warning("Missions panel is not built yet; skipping redraw")
             return
 
         self.__canvas.update_idletasks()

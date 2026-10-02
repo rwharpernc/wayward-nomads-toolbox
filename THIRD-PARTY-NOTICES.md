@@ -55,13 +55,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Exploration Value: scan-value constants (GPL-3.0)
+
+The per-planet-class base values and the mass exponent in `plugin/exploration_value.py` are the
+community's figures for Frontier's exploration payout, as published in
+[Faber38/CMDRHelper](https://github.com/Faber38/CMDRHelper), licensed GPL-3.0, the same licence as WNTB.
+
 ## Landing Assist: pad layouts (GPL-2.0 or later)
 
 The pad layouts drawn by `plugin/landing.py` follow
 [bgol/LandingPad](https://github.com/bgol/LandingPad), licensed GPL version 2 or later, which allows
 use under the GPL-3.0 that WNTB carries: the starport pad table, shell sizes and pad sectors (which the
-game's station design dictates), and the fleet carrier and squadron carrier pad rectangles. The code
-that draws them is WNTB's own.
+game's station design dictates), the fleet carrier and squadron carrier pad rectangles, and the list of
+colonisation ship market ids. The code that draws them is WNTB's own.
 
 ## Micro-resource names
 

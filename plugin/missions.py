@@ -49,10 +49,10 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 PANEL_PLACEMENT = "missions"
 
-_CFG_DELTA = "wntb_missions_display_delta_column"
+_CFG_REMAINING = "wntb_missions_show_remaining_column"
 _CFG_PROGRESS = "wntb_missions_display_progress"
-_CFG_SUM = "wntb_missions_display_sum_row"
-_CFG_MISSION_COUNT = "wntb_missions_display_mission_count"
+_CFG_TOTALS = "wntb_missions_show_totals_row"
+_CFG_MISSION_COUNT = "wntb_missions_show_mission_count"
 _CFG_SETTLEMENT = "wntb_missions_display_settlement"
 _CFG_COMMODITIES_NEEDED = "wntb_missions_display_commodities_needed"
 
@@ -61,40 +61,40 @@ _JOURNAL_SCAN_LOOKBACK = dt.timedelta(weeks=2)
 
 @dataclass
 class MissionsConfig:
-    display_delta_column: bool = True
+    show_remaining_column: bool = True
     display_progress: bool = True
-    display_sum_row: bool = True
-    display_mission_count: bool = True
+    show_totals_row: bool = True
+    show_mission_count: bool = True
     display_settlement: bool = True
     display_commodities_needed: bool = True
 
 
 def load_config() -> MissionsConfig:
     return MissionsConfig(
-        display_delta_column=config.get_bool(_CFG_DELTA, default=True),
+        show_remaining_column=config.get_bool(_CFG_REMAINING, default=True),
         display_progress=config.get_bool(_CFG_PROGRESS, default=True),
-        display_sum_row=config.get_bool(_CFG_SUM, default=True),
-        display_mission_count=config.get_bool(_CFG_MISSION_COUNT, default=True),
+        show_totals_row=config.get_bool(_CFG_TOTALS, default=True),
+        show_mission_count=config.get_bool(_CFG_MISSION_COUNT, default=True),
         display_settlement=config.get_bool(_CFG_SETTLEMENT, default=True),
         display_commodities_needed=config.get_bool(_CFG_COMMODITIES_NEEDED, default=True),
     )
 
 
 def save_config(cfg: MissionsConfig) -> None:
-    config.set(_CFG_DELTA, cfg.display_delta_column)
+    config.set(_CFG_REMAINING, cfg.show_remaining_column)
     config.set(_CFG_PROGRESS, cfg.display_progress)
-    config.set(_CFG_SUM, cfg.display_sum_row)
-    config.set(_CFG_MISSION_COUNT, cfg.display_mission_count)
+    config.set(_CFG_TOTALS, cfg.show_totals_row)
+    config.set(_CFG_MISSION_COUNT, cfg.show_mission_count)
     config.set(_CFG_SETTLEMENT, cfg.display_settlement)
     config.set(_CFG_COMMODITIES_NEEDED, cfg.display_commodities_needed)
 
 
 def _to_display_settings(cfg: MissionsConfig) -> missions_ui.DisplaySettings:
     return missions_ui.DisplaySettings(
-        delta=cfg.display_delta_column,
+        remaining=cfg.show_remaining_column,
         progress=cfg.display_progress,
-        sum=cfg.display_sum_row,
-        mission_count=cfg.display_mission_count,
+        totals=cfg.show_totals_row,
+        mission_count=cfg.show_mission_count,
         settlement=cfg.display_settlement,
         commodities_needed=cfg.display_commodities_needed,
     )
@@ -196,9 +196,9 @@ class MissionsController:
 
         checkboxes = (
             ("display_progress", "Display Kill Progress", cfg.display_progress),
-            ("display_delta_column", "Display Delta-Column", cfg.display_delta_column),
-            ("display_sum_row", "Display Sum-Row", cfg.display_sum_row),
-            ("display_mission_count", "Display Mission Count", cfg.display_mission_count),
+            ("show_remaining_column", "Show Remaining-Kills Column", cfg.show_remaining_column),
+            ("show_totals_row", "Show Totals Row", cfg.show_totals_row),
+            ("show_mission_count", "Show Mission Count", cfg.show_mission_count),
             ("display_settlement", "Display Target Settlement (Ground Missions)", cfg.display_settlement),
             (
                 "display_commodities_needed", "Display Commodities Needed (Trade & Mining)",
@@ -217,10 +217,10 @@ class MissionsController:
         if not self._enabled_vars:
             return
         cfg = MissionsConfig(
-            display_delta_column=bool(self._enabled_vars["display_delta_column"].get()),
+            show_remaining_column=bool(self._enabled_vars["show_remaining_column"].get()),
             display_progress=bool(self._enabled_vars["display_progress"].get()),
-            display_sum_row=bool(self._enabled_vars["display_sum_row"].get()),
-            display_mission_count=bool(self._enabled_vars["display_mission_count"].get()),
+            show_totals_row=bool(self._enabled_vars["show_totals_row"].get()),
+            show_mission_count=bool(self._enabled_vars["show_mission_count"].get()),
             display_settlement=bool(self._enabled_vars["display_settlement"].get()),
             display_commodities_needed=bool(self._enabled_vars["display_commodities_needed"].get()),
         )

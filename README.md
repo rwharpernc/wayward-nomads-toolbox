@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="https://waywardnomads.org/images/wwns-patch-transp_lg.png" alt="Wayward Nomads squadron patch" width="220">
+  <a href="https://waywardnomads.org/" target="_blank" rel="noopener noreferrer">
+    <img src="docs/images/wwns-patch.png" alt="Wayward Nomads squadron patch - visit waywardnomads.org" width="220">
+  </a>
 </p>
 
 # Wayward Nomads Toolbox (WNTB)
