@@ -135,9 +135,6 @@ class ShipBuildRepository:
         key = self._cmdr_key(cmdr)
         return list(self._by_cmdr.get(key, [])) if key else []
 
-    def known_cmdrs(self) -> List[str]:
-        return sorted(self._by_cmdr.keys(), key=str.casefold)
-
     def add(self, cmdr: str, build: ShipBuild) -> None:
         key = self._cmdr_key(cmdr) or cmdr
         self._by_cmdr.setdefault(key, []).append(build)

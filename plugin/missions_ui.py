@@ -899,12 +899,14 @@ class MissionsUI:
     def build_panel(self, parent: tk.Frame):
         """Builds a Canvas/Scrollbar/content-frame trio inside `parent` (the
         "missions" mode frame WNTB's ui.py already grids/gates) - no header
-        or collapse toggle of its own, unlike edmmm's original ui.py (see
-        module docstring)."""
+        or collapse toggle of its own."""
         parent.columnconfigure(0, weight=1)
+        parent.columnconfigure(1, weight=0)  # the scrollbar column keeps its natural width
         self.__parent = parent
 
-        self.__canvas = tk.Canvas(parent, highlightthickness=0, borderwidth=0,
+        # width=1: a bare Canvas requests 10 cm of width, which would widen EDMC's window; it
+        # stretches to the panel's width instead (sticky="ew").
+        self.__canvas = tk.Canvas(parent, width=1, highlightthickness=0, borderwidth=0,
                                   yscrollincrement=24)
         self.__canvas.grid(column=0, row=0, sticky="ew")
         self.__scrollbar = tk.Scrollbar(parent, orient="vertical",

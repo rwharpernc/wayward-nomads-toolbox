@@ -99,6 +99,7 @@ _collapsible_widgets: List[tk.Widget] = []
 _panel_mode: str = _DEFAULT_PANEL_MODE
 _mode_buttons: Dict[str, tk.Button] = {}
 _mode_frames: Dict[str, tk.Frame] = {}
+_mode_holder: Optional[tk.Frame] = None
 _always_frame: Optional[tk.Frame] = None
 _toggle_off_colors: Tuple[str, str] = ("", "")
 
@@ -169,7 +170,7 @@ def _stack_features(frame: tk.Frame, placement_key: str, placeholder_text: Optio
 def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     """Create the main-window frame for EDMC."""
     global _frame, _title_label, _version_label, _collapsed, _collapsible_widgets
-    global _panel_mode, _toggle_off_colors, _always_frame
+    global _panel_mode, _toggle_off_colors, _always_frame, _mode_holder
 
     _frame = tk.Frame(parent)
     _frame.columnconfigure(1, weight=1)
@@ -197,9 +198,29 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
         btn.pack(side=tk.LEFT, padx=(0, 6) if key != PANEL_MODES[-1][0] else (0, 0))
         _mode_buttons[key] = btn
 
+    # Every mode's content lives in one holder whose WIDTH is pinned to the
+    # mode-button row's and whose height follows whichever mode is showing.
+    # EDMC sizes its main window to the widest row of every plugin, so without
+    # this the window grew and shrank as you switched modes (each mode asked
+    # for a different width). The holder never lets a mode ask for more than
+    # the button row; content wraps to the available width instead. See
+    # docs/TECHNICAL.md section 5.
+    _mode_holder = tk.Frame(_frame)
+    _mode_holder.grid(row=2, column=0, columnspan=3, sticky="ew")
+    _mode_holder.columnconfigure(0, weight=1)
+    _mode_holder.grid_propagate(False)
+    try:
+        mode_row.update_idletasks()
+        _mode_holder.configure(width=mode_row.winfo_reqwidth(), height=1)
+    except tk.TclError:
+        _mode_holder.configure(width=1, height=1)
+    mode_row.bind("<Configure>", lambda e: _mode_holder.configure(width=max(1, e.width)) if _mode_holder else None)
+
     for key, label in PANEL_MODES:
-        mode_frame = tk.Frame(_frame)
-        mode_frame.grid(row=2, column=0, columnspan=3, sticky=tk.W)
+        mode_frame = tk.Frame(_mode_holder)
+        mode_frame.columnconfigure(0, weight=1)
+        mode_frame.grid(row=0, column=0, sticky="new")
+        mode_frame.bind("<Configure>", lambda _e: _sync_mode_holder_height())
         _stack_features(mode_frame, key, placeholder_text=f"{label} — coming soon.")
         _mode_frames[key] = mode_frame
 
@@ -212,7 +233,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     _always_frame.grid(row=3, column=0, columnspan=3, sticky="ew")
     _stack_features(_always_frame, "always")
 
-    _collapsible_widgets = [mode_row] + list(_mode_frames.values()) + [_always_frame]
+    _collapsible_widgets = [mode_row, _mode_holder, _always_frame]
     _apply_collapsed_state()
 
     theme.update(_frame)
@@ -266,6 +287,16 @@ def _apply_collapsed_state() -> None:
     _apply_panel_mode_visibility()
 
 
+def _sync_mode_holder_height() -> None:
+    """The holder's width is pinned, so its height has to follow the visible
+    mode's content by hand."""
+    if _mode_holder is None or _panel_mode not in _mode_frames:
+        return
+    height = max(1, _mode_frames[_panel_mode].winfo_reqheight())
+    if int(_mode_holder.cget("height")) != height:
+        _mode_holder.configure(height=height)
+
+
 def _apply_panel_mode_visibility() -> None:
     if _collapsed:
         return
@@ -274,6 +305,7 @@ def _apply_panel_mode_visibility() -> None:
             frame.grid()
         else:
             frame.grid_remove()
+    _sync_mode_holder_height()
 
 
 def _apply_panel_mode_button_colors() -> None:

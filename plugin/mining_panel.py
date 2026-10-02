@@ -174,6 +174,7 @@ class MiningPanelController:
 
     def build_panel(self, parent: tk.Frame) -> None:
         parent.columnconfigure(0, weight=1)
+        parent.columnconfigure(1, weight=0)  # the scrollbar column keeps its natural width
         self._parent = parent
 
         self._nav = tk.Frame(parent)
@@ -187,7 +188,9 @@ class MiningPanelController:
         next_arrow.pack(side=tk.LEFT)
         next_arrow.bind("<Button-1>", lambda _e: self._step_page(1))
 
-        self._canvas = tk.Canvas(parent, highlightthickness=0, borderwidth=0, yscrollincrement=24)
+        # width=1: a bare Canvas requests 10 cm of width, which would widen EDMC's window; it
+        # stretches to the panel's width instead (sticky="ew").
+        self._canvas = tk.Canvas(parent, width=1, highlightthickness=0, borderwidth=0, yscrollincrement=24)
         self._canvas.grid(column=0, row=1, sticky="ew")
         self._scrollbar = tk.Scrollbar(parent, orient="vertical", command=self._canvas.yview)
         self._scrollbar.grid(column=1, row=1, sticky="ns")

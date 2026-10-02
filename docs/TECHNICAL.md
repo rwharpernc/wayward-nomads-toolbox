@@ -158,6 +158,14 @@ produce a very wide image.
 **The rule.** Any widget in the main window whose size comes from variable data must have a hard
 upper bound on *every* dimension that affects layout.
 
+**Switching modes must not change the width.** Every mode's content sits in one holder in `ui.py` whose
+width is pinned to the mode-button row's, and whose height follows whichever mode is showing, so the
+window never grows or shrinks as you switch. Content wraps to that width instead of asking for more.
+Two traps to remember: a bare `tk.Canvas` asks for 10 cm (about 378 px) of width, so scrolling panels
+(Mining, Missions) set `width=1` and stretch instead; and the panel's feature frames put spare space in
+their second column, so a panel with a scrollbar column must give that column weight 0.
+`tests/test_panel_width.py` guards both.
+
 How that plays out:
 
 - **Text from the game or journal** (station names, system names, faction names) is unbounded. Use
@@ -402,7 +410,7 @@ Design decisions that apply to all of them:
   caller decides, because a fabricated or stale tick would corrupt the tally. It never returns a
   guessed value.
 - **Identify WNTB in every request.** Every call sends a User-Agent naming WNTB, its version and the
-  project's address (`http_identity.py`, for example `WNTB/0.3.0 (rare-goods; +https://github.com/...)`),
+  project's address (`http_identity.py`, for example `WNTB/0.3.1 (rare-goods; +https://github.com/...)`),
   so a service operator who sees the traffic can tell what it is and get in touch. EDSM returns HTTP 403
   to the default `python-requests` agent, so its client sends EDMC's own `config.user_agent` followed by
   WNTB's.

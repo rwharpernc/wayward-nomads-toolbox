@@ -172,10 +172,6 @@ class InventoryTracker:
                 for _ in self._apply_change_item(item, delta_sign=-1, pillage=False):
                     pass
 
-    def get_backpack_total(self, internal_name: str, category: str) -> int:
-        key = canonicalise(internal_name)
-        return self._backpack.get(category, {}).get(key, 0)
-
     def get_combined_total(self, internal_name: str, category: str) -> int:
         key = canonicalise(internal_name)
         backpack = self._backpack.get(category, {}).get(key, 0)

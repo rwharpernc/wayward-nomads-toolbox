@@ -17,7 +17,7 @@ free companion program many commanders already use. You don't need to know any p
 > is no official download yet. See [Installing](#installing) for how to try it. Please tell me what you
 > find (see [Getting help](#getting-help)).
 
-Built and maintained by R.W. Harper (CMDR Bocheaux).
+Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CMDR Mactavious (Easy Day, EZPZ).
 
 ---
 

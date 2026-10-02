@@ -305,13 +305,6 @@ class HotspotRepository:
                 seen.setdefault(name.casefold(), name)
         return sorted(seen.values(), key=str.casefold)
 
-    def rig_capacities(self) -> list[int]:
-        """Distinct rig-capacity values currently in use, sorted
-        numerically - for populating a search dialog's rig-count filter.
-        A hotspot with no recorded rigs (None) is excluded rather than
-        shown as a spurious "0"."""
-        return sorted({h.rigs for h in self._hotspots if h.rigs is not None})
-
     def search(self, material_query: str, rigs: Optional[int] = None) -> list[Hotspot]:
         """Case-insensitive substring match against `material` or
         `notes` - e.g. "diamond" matches "Low Temperature Diamonds".

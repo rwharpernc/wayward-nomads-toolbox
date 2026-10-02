@@ -89,10 +89,3 @@ def save_visited(plugin_dir: str, cmdr: str, visited: Set[str]) -> None:
         os.replace(tmp_path, path)
     except OSError as exc:
         logger.warning("Could not write %s: %s", path, exc)
-
-
-def clear_visited(plugin_dir: str, cmdr: str) -> None:
-    """Wipe this commander's visited-systems log - the Settings -> Boxel
-    Survey "Clear Visited Systems Log" button. Every other commander's own
-    entry is left untouched."""
-    save_visited(plugin_dir, cmdr, set())

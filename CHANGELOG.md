@@ -11,6 +11,7 @@ launch as v1.0.0.
 
 ### Code optimisation and maintenance
 - Missions and Mining code reorganised for clarity and easier maintenance, with no change to how they behave.
+- Removed unused code.
 - More unit tests for Missions and Mining.
 - Documentation brought up to date across the README and `docs/`.
 - Overlay: when no overlay program is running, WNTB now stops retrying for 30 seconds after a failed
@@ -110,6 +111,9 @@ launch as v1.0.0.
 - **WNTB is GPL-3.0.** See `LICENSE`.
 
 ### Fixes
+- **Window width** — EDMC's main window no longer widens and narrows as you switch between modes. Every
+  mode now shares one fixed width (the width of the mode buttons) and wraps its content to fit; Mining and
+  Missions were the widest because of a default scroll-area width.
 - **Self-updater** — `_OWN_DATA_FILES` listed only four of WNTB's data files, so backups swept up
   the rest. It now lists all of them, and `mining_sessions/` is in `_OWN_DIRS`. (Updates never
   overwrote data files, since none are in the release zip.)

@@ -5,7 +5,7 @@ Every request carries a User-Agent that names WNTB, its version and where to
 find the project, so a service operator who sees traffic can tell what it is
 and get in touch. `feature` says which part of WNTB made the request.
 
-Example: "WNTB/0.3.0 (rare-goods; +https://github.com/rwharpernc/wayward-nomads-toolbox)"
+Example: "WNTB/0.3.1 (rare-goods; +https://github.com/rwharpernc/wayward-nomads-toolbox)"
 """
 from __future__ import annotations
 

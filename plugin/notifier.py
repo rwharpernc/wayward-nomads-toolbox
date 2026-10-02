@@ -24,10 +24,6 @@ class Notifier:
     def connect(self, callback: Callable[..., Any]) -> None:
         self._subscribers.append(callback)
 
-    def disconnect(self, callback: Callable[..., Any]) -> None:
-        if callback in self._subscribers:
-            self._subscribers.remove(callback)
-
     def notify(self, *args: Any) -> None:
         for callback in tuple(self._subscribers):
             try:

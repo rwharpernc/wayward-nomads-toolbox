@@ -4,7 +4,7 @@ WNTB is a toolbox I built for the Wayward Nomads exploration squadron. Elite Dan
 community of tool authors, and many of WNTB's features were shaped by what they've built. This page
 credits the projects and people whose ideas, and in some cases published data and services, helped.
 
-Author: R.W. Harper (CMDR Bocheaux, Wayward Nomads). Licensed under the GNU GPL v3.0; see `LICENSE`.
+Author: R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CMDR Mactavious (Easy Day, EZPZ). Licensed under the GNU GPL v3.0; see `LICENSE`.
 Notices that a licence requires are in `THIRD-PARTY-NOTICES.md`.
 
 ## Ideas that belong to the community
@@ -99,8 +99,8 @@ consider chipping in. WNTB asks for nothing except feedback.
 
 ## AI assistance
 
-Design and code by R.W. Harper, with code review and documentation help from Claude (Anthropic).
-Disclosed for transparency; authorship is unchanged.
+**Design and coding by R.W. Harper**, with **code review and documentation** (including this page) **by
+Claude** (Anthropic). Disclosed for transparency; authorship is unchanged.
 
 *Elite Dangerous* and related marks are trademarks of Frontier Developments plc. WNTB is a fan-made
 tool, not official Frontier software, and is not affiliated with the EDMC team or any project above.
