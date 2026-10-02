@@ -154,6 +154,10 @@ def prefs_changed(cmdr: str, is_beta: bool) -> None:
     """Settings were saved."""
     ui.save_prefs()
     powerplay.controller.flush()
+    # A changed overlay host/port applies straight away: drop the old connection
+    # and forget any recent "no overlay found" cool-off.
+    _overlay.close()
+    _overlay.retry_now()
 
 
 def journal_entry(

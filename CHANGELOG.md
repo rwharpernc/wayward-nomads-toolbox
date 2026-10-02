@@ -13,6 +13,9 @@ launch as v1.0.0.
 - Missions and Mining code reorganised for clarity and easier maintenance, with no change to how they behave.
 - More unit tests for Missions and Mining.
 - Documentation brought up to date across the README and `docs/`.
+- Overlay: when no overlay program is running, WNTB now stops retrying for 30 seconds after a failed
+  connection, so it costs almost nothing, and logs it once. A new **Check connection** button on the
+  Overlay Connection settings tab tests the host and port, and a changed host or port applies straight away.
 - Fewer web requests: Earth-like-world rarity and EDSM upload-status lookups are now remembered, so
   repeating them for the same system costs no extra calls. Every request to an outside service now says
   it comes from WNTB, with its version and project address.

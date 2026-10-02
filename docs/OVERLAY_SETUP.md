@@ -59,6 +59,9 @@ Each feature has its own tab under **File → Settings → WNTB**, with a switch
 The test buttons work even while the feature is switched off, and they tell you whether the overlay
 could be reached. Inventory and Mining have their own overlay switches in their tabs.
 
+On the **Overlay Connection** tab, **Check connection** tells you whether an overlay is listening at the
+host and port shown, without sending anything.
+
 Start the overlay, start the game (or at least have the overlay running), and press a test button. If you
 see the message on your screen, you're set.
 
@@ -68,6 +71,12 @@ see the message on your screen, you're set.
 - Landing, Interdiction and the Screenshots message sit in fixed places.
 - **EDMCModernOverlay has its own placement tool**, the Overlay Controller, where you can move each
   plugin's display, change anchors and backgrounds, and keep different profiles. See its wiki.
+
+## If you don't use an overlay
+
+Nothing breaks. WNTB tries to reach an overlay when a feature wants to draw something, and if none is
+running it gives up quietly for 30 seconds before trying again. You'll see one line in EDMC's log saying no
+overlay was found, and the on-screen extras simply don't appear.
 
 ## If nothing shows up
 

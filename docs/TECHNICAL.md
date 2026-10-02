@@ -352,6 +352,12 @@ and *wipes all of a connection's graphics the moment it disconnects*, regardless
 `ttl`. Connect-send-close would make everything vanish immediately. So the connection must stay open
 as long as its graphics should be visible.
 
+**When no overlay is running.** After a failed connection the client fails new sends immediately for 30
+seconds (`COOLOFF_S`) instead of trying again, so a user with no overlay program costs almost nothing:
+no thread waiting on a connection per pickup, screenshot or Mining update. The failure is logged once at
+INFO, and a changed host or port is applied straight away. The Settings test buttons build their own
+client, so they always try for real, and the Overlay Connection tab has a **Check connection** button.
+
 **Why one for everything?** A connection per mode would duplicate work, and each would need its own
 reconnect logic.
 
@@ -396,7 +402,7 @@ Design decisions that apply to all of them:
   caller decides, because a fabricated or stale tick would corrupt the tally. It never returns a
   guessed value.
 - **Identify WNTB in every request.** Every call sends a User-Agent naming WNTB, its version and the
-  project's address (`http_identity.py`, for example `WNTB/0.2.0 (rare-goods; +https://github.com/...)`),
+  project's address (`http_identity.py`, for example `WNTB/0.3.0 (rare-goods; +https://github.com/...)`),
   so a service operator who sees the traffic can tell what it is and get in touch. EDSM returns HTTP 403
   to the default `python-requests` agent, so its client sends EDMC's own `config.user_agent` followed by
   WNTB's.

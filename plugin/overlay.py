@@ -28,6 +28,7 @@ import logging
 import os
 import socket
 import threading
+import time
 from dataclasses import dataclass
 from typing import Iterable, Optional, Tuple
 
@@ -49,6 +50,13 @@ DEFAULT_PORT = "5010"
 # running (near-instant) or not (fails fast); a long timeout would stall
 # journal processing waiting on a helper app that isn't there.
 CONNECT_TIMEOUT_S = 1.0
+
+# After a failed connection the client stays quiet for this long and fails
+# new sends immediately, so a user with no overlay program installed costs
+# almost nothing (no thread waiting on a connection per pickup, per
+# screenshot, or once a second for Mining's stats). A Settings "Test" button
+# builds its own fresh client, so it always tries for real.
+COOLOFF_S = 30.0
 
 
 @dataclass
@@ -135,6 +143,8 @@ class OverlayClient:
         self._cfg = cfg
         self._sock: Optional[socket.socket] = None
         self._lock = threading.Lock()
+        self._unavailable_until = 0.0  # time.monotonic() before which sends fail fast
+        self._reported_unavailable = False  # log "no overlay found" once per outage
 
     def _connect_locked(self) -> socket.socket:
         cfg = self._cfg or load_config()
@@ -142,9 +152,27 @@ class OverlayClient:
             port = int(cfg.port)
         except ValueError:
             port = int(DEFAULT_PORT)
-        sock = socket.create_connection((cfg.host, port), timeout=CONNECT_TIMEOUT_S)
+        try:
+            sock = socket.create_connection((cfg.host, port), timeout=CONNECT_TIMEOUT_S)
+        except OSError:
+            self._unavailable_until = time.monotonic() + COOLOFF_S
+            if not self._reported_unavailable:
+                self._reported_unavailable = True
+                logger.info(
+                    "No overlay found at %s:%s. On-screen features stay quiet until one is running "
+                    "(see docs/OVERLAY_SETUP.md); will try again in %d seconds.",
+                    cfg.host, port, int(COOLOFF_S))
+            raise
+        self._unavailable_until = 0.0
+        self._reported_unavailable = False
         self._sock = sock
         return sock
+
+    def retry_now(self) -> None:
+        """Forget any recent failure so the next send tries to connect straight
+        away (used when the host/port setting changes)."""
+        with self._lock:
+            self._unavailable_until = 0.0
 
     def _send(self, payload: dict) -> None:
         """Raises OSError (e.g. EDMCOverlay isn't running, or the socket
@@ -156,6 +184,8 @@ class OverlayClient:
         with self._lock:
             sock = self._sock
             if sock is None:
+                if time.monotonic() < self._unavailable_until:
+                    raise ConnectionRefusedError("no overlay found (cooling off before the next attempt)")
                 sock = self._connect_locked()
             try:
                 sock.sendall(data)
@@ -225,6 +255,21 @@ class OverlayClient:
         self._send({"id": shape_id, "shape": "vect", "color": color, "vector": vector, "ttl": ttl})
 
 
+def check_connection(host: str, port: str, timeout: float = CONNECT_TIMEOUT_S) -> Tuple[bool, str]:
+    """Whether something is listening at host:port, and a plain-language result.
+    Connects and immediately closes; sends nothing."""
+    try:
+        number = int(port)
+    except (TypeError, ValueError):
+        return False, f"'{port}' isn't a valid port number."
+    try:
+        socket.create_connection((host, number), timeout=timeout).close()
+    except OSError:
+        return False, (f"No overlay found at {host}:{number}. Start your overlay program first "
+                       f"(see docs/OVERLAY_SETUP.md).")
+    return True, f"Connected: an overlay is listening at {host}:{number}."
+
+
 # --- Settings tab: the one shared host/port pair every overlay-drawing
 # feature (Interdiction/Landing/Discovery) reuses, rather than each of them
 # duplicating the same two fields on their own tab. ------------------------
@@ -245,8 +290,9 @@ def build_settings(notebook: nb.Notebook) -> None:
     nb.Label(
         frame,
         text=(
-            "Connection to EDMCOverlay, a separate, optional helper app WNTB does not install or "
-            "launch itself — used by Interdiction Warning, Landing, and Discovery Alerts below."
+            "Connection to an overlay program (EDMCModernOverlay is recommended; the older EDMCOverlay "
+            "also works). It is a separate, optional helper app that WNTB does not install or launch "
+            "itself, used by the on-screen features. Every feature works without one."
         ),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 8))
@@ -259,6 +305,28 @@ def build_settings(notebook: nb.Notebook) -> None:
     nb.Label(host_row, text="   Port:").pack(side=tk.LEFT)
     _port_var = tk.StringVar(value=cfg.port)
     nb.EntryMenu(host_row, textvariable=_port_var, width=6).pack(side=tk.LEFT, padx=(4, 0))
+
+    status_var = tk.StringVar(value="")
+
+    def _check() -> None:
+        host = _host_var.get().strip() or DEFAULT_HOST
+        port = (_port_var.get().strip() if _port_var is not None else "") or DEFAULT_PORT
+        status_var.set("Checking...")
+
+        def worker() -> None:
+            ok, message = check_connection(host, port)
+            try:
+                frame.after(0, lambda: status_var.set(message))
+            except tk.TclError:
+                pass  # the settings window was closed while checking
+
+        threading.Thread(target=worker, name="WNTB-overlay-check", daemon=True).start()
+
+    check_row = tk.Frame(frame)
+    check_row.grid(row=2, column=0, sticky=tk.W, padx=10, pady=(8, 2))
+    tk.Button(check_row, text="Check connection", command=_check).pack(side=tk.LEFT)
+    nb.Label(frame, textvariable=status_var, wraplength=440, justify=tk.LEFT).grid(
+        row=3, column=0, sticky=tk.W, padx=10, pady=(2, 8))
 
 
 def save_settings() -> None:
