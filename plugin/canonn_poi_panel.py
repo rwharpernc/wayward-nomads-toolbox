@@ -3,8 +3,8 @@ lookup against Canonn Interstellar Research's own published site lists -
 see canonn_poi_data.py and docs/ATTRIBUTIONS.md.
 
 Same "manual, not automatic-on-jump" design as gec_poi_panel.py (its sibling
-feature, edastro.com's GEC catalog) - R.W. Harper asked for button-triggered
-lookups, not a live call firing on every FSDJump. Differs from that sibling
+feature, edastro.com's GEC catalog) - lookups are button-triggered, not a
+live call firing on every FSDJump. Differs from that sibling
 in one way: Canonn has no queryable "nearest" REST endpoint of its own, so
 this downloads the full Thargoid/Guardian site lists once per session (two
 independent third-party Google Sheets/Drive fetches) and caches them in

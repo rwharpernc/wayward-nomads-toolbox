@@ -98,8 +98,8 @@ class AllMissionsView:
             self.missions = None
             self.changed.notify(None)
             return
-        # Colonisation missions are dropped entirely (not just recategorized)
-        # per user preference; every other active mission is included.
+        # Colonisation missions are dropped entirely (not just recategorized);
+        # every other active mission is included.
         self.missions = {mission_id: MissionSummary.from_event(event)
                          for mission_id, event in active.items()
                          if not mission_types.is_colonisation_mission(event)}

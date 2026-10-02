@@ -3,10 +3,10 @@ external shipyard sites (Coriolis, EDSY, Spansh, ...) - see
 ship_builds_data.py's own docstring for the "we don't build loadouts,
 EDMC's own Shipyard provider setting already does that for your current
 ship - this just organizes the links a commander saves after designing a
-build on one of those sites" framing (R.W. Harper, 2026-09-19).
+build on one of those sites" framing.
 
 Field Ops only (PANEL_PLACEMENT = "fieldops") - ship loadouts are part of
-gearing up for on-foot/cargo ops, not every mode (R.W. Harper, 2026-09-19).
+gearing up for on-foot/cargo ops, not every mode.
 Keeps the main-panel footprint to one summary line + one button (same
 "summary in panel, full CRUD list in a popup window" split as
 codex_completionist_panel.py/codex_completionist_window.py) since the

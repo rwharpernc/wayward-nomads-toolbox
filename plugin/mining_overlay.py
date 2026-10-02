@@ -12,16 +12,8 @@ pieces:
 
 Both panels now register an EDMCModernOverlay Plugin Group
 (`GROUP_NAME`/`GROUP_PREFIX` below, wired up in load.py), matching
-Landing/Inventory - this module previously registered none of its own,
-reasoning (from overlay.py's documented Discovery lesson) that a
-background rect behind narrower text would collapse to just its border
-stroke inside a group. That reasoning is superseded: a live report
-(2026-09) found this module's panel *backgrounds* invisible under
-EDMCModernOverlay specifically *without* a registered group, and
-grouping (as Landing already did) is the fix. The original Discovery
-collapse note may describe a different failure mode or a
-now-fixed EDMCModernOverlay version - not re-litigated here, just noting
-the group is back on for this module's own two panels.
+Landing/Inventory: without a registered group, a panel's background can
+render invisible under EDMCModernOverlay (see overlay.py's docstring).
 
 Rewired onto the shared `overlay.OverlayClient` - state is read
 synchronously on the caller's thread (cheap attribute reads off the

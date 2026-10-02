@@ -80,21 +80,15 @@ def register_modern_overlay_groups(groups: Iterable[Tuple[str, str]]) -> None:
     this module deliberately doesn't hardcode any feature's name, so
     load.py assembles the full list from whichever modes are active.
 
-    LESSON LEARNED, superseded (Discovery feature, 2026-09): this
-    docstring used to warn against registering a group for a single
-    background rect behind much narrower text, reasoning that the group's
-    anchor/scale transform would collapse the rect down to just its border
-    stroke. A later live report (WNTB's own Discovery Alerts, 2026-09)
-    found the opposite problem instead — a background rect's *fill*
-    rendered invisible under EDMCModernOverlay specifically when it was
-    NOT part of a registered group — and grouping it (matching Landing's
-    own approach) fixed it. Every card-style overlay in this project
-    (Landing, Inventory, Discovery, Interdiction, Mining, Screenshots) now
-    registers a group, including single-card features with no other
-    shapes to scale/anchor alongside. If a future EDMCModernOverlay
-    version reintroduces the original collapse symptom, verify via its own
-    payload-log/debug log before re-excluding a feature from grouping —
-    don't just restore the old blanket exception.
+    Why every card registers a group: a background rect's *fill* renders
+    invisible under EDMCModernOverlay when it is NOT part of a registered
+    group, and grouping it fixes that. So every card-style overlay in this
+    project (Landing, Inventory, Discovery, Interdiction, Mining,
+    Screenshots) registers a group, including single-card features with no
+    other shapes to scale/anchor alongside. (A blanket rule against
+    grouping a single rect was tried and was wrong.) If overlay rendering
+    seems wrong, verify via EDMCModernOverlay's own payload-log/debug log
+    before assuming a rule.
 
     `overlay_plugin.overlay_api` is EDMCModernOverlay's own module, only
     importable when it's installed as a sibling EDMC plugin - a plain

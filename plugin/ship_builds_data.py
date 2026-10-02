@@ -1,6 +1,6 @@
 """Per-commander catalog of ship-build *links* - not a build tool itself.
 
-R.W. Harper's own framing: WNTB doesn't build loadouts (EDMC already has a
+WNTB doesn't build loadouts (EDMC already has a
 built-in "Shipyard provider" setting - Coriolis/EDSY - that opens your
 *current* ship's live loadout on whichever site you've configured). This
 module is for the builds a commander designs and saves on one of those

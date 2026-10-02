@@ -7,22 +7,19 @@ shared updater) - a real outbound network call unlike anything else
 Mining mode does by default.
 
 Spansh doesn't publish this endpoint's request shape (major API calls
-are still undocumented as of this port). The shape used below was
-confirmed empirically: reverse-engineered from a live `POST
-/api/bodies/search` call, then cross-checked against a working
-open-source caller (RatherRude/Elite-Dangerous-AI-Integration's
-`actions_web.py`, which builds the identical `ring_signals`/`distance`
-filter shape) before trusting it. If Spansh ever changes this endpoint,
-this is the one place to fix.
+are still undocumented). The shape used below was worked out from live
+`POST /api/bodies/search` calls and checked against real responses before
+trusting it. If Spansh ever changes this endpoint, this is the one place
+to fix.
 
 Also wraps Spansh's `/api/stations/search` endpoint
 (search_best_price_stations()) - a best-price station finder, built as
 the replacement for an originally-planned Inara commodity-lookup feature
 once it turned out Inara's API has no commodity/market endpoint at all
 (confirmed against Inara's own API docs - its events are almost entirely
-write-only commander-profile-sync). This endpoint's shape was confirmed
-the same way as bodies/search: reverse-engineered from a live call,
-cross-checked against the same `actions_web.py`'s `station_finder`.
+write-only commander-profile-sync). This endpoint's shape was worked out
+the same way as bodies/search: from live calls, checked against real
+responses.
 
 Uses only the standard library (`urllib`) rather than `requests` - this
 is a deliberate choice, since there's no shared Spansh client elsewhere
@@ -240,9 +237,7 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
         # which commodities come back per station - the response's
         # "market" is that station's *entire* market, so the specific
         # commodity searched for still has to be picked out here
-        # (confirmed empirically, cross-checked against
-        # actions_web.py's filter_station_response doing the same
-        # client-side filtering).
+        # (confirmed empirically).
         entry = next((c for c in station.get("market") or []
                      if str(c.get("commodity", "")).casefold() == commodity.casefold()), None)
         if entry is None:

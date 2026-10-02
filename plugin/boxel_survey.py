@@ -61,7 +61,7 @@ _CFG_SKIP_EDSM_VISITED = "wntb_boxel_skip_edsm_visited"
 _CFG_SKIP_EDSM_SCANNED = "wntb_boxel_skip_edsm_scanned"
 _CFG_CONFIRM_ALIAS_ARRIVAL = "wntb_boxel_confirm_alias_arrival"
 
-# Collapsed by default (R.W. Harper, 2026-09-19) - this is the largest
+# Collapsed by default - this is the largest
 # single feature in Exploration mode's panel (three sub-modes' worth of
 # widgets), so it starts minimized rather than pushing everything below it
 # down the page; same click-the-title-to-toggle convention ui.py's own

@@ -61,12 +61,9 @@ HIDE_AFTER_LANDING_S = 10.0
 _HEARTBEAT_INTERVAL_S = 12.0
 
 # Fixed on both axes regardless of diagram family/pad count/game window size
-# - see the global EDMC-plugin-development instruction on bounding anything
-# that can size the main window. Bumped from 200 (R.W. Harper, 2026-09-18: the
-# diagram read a bit small in the panel), then from 240 (R.W. Harper,
-# 2026-09-19: still a bit small even once actually centered) - still a
-# static, hard-coded bound, not data-derived, so the sizing rule above
-# still holds.
+# - see docs/TECHNICAL.md section 5 on bounding anything that can size the
+# main window. A static, hard-coded bound, not data-derived, so the sizing
+# rule still holds.
 _LANDING_DIAGRAM_SIZE = 280
 
 
@@ -933,7 +930,6 @@ class LandingController:
         # frame) and its own parent `_always_frame` are now stretched to
         # the app's real content width via sticky="ew" plus a weighted
         # middle column - see ui.py's `_stack_features`/`create_plugin_app`
-        # (R.W. Harper, 2026-09-18; centering fix 2026-09-19).
         self._diagram_canvas.grid(row=1, column=0, columnspan=3, pady=(4, 0))
         self._diagram_canvas.grid_remove()
 

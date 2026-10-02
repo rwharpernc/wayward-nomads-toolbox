@@ -2,8 +2,8 @@
 interest" lookup against edastro.com's (Elite Dangerous Astrometrics) GEC
 API - see gec_poi_edastro.py and docs/ATTRIBUTIONS.md.
 
-Deliberately **manual, not automatic-on-jump** - R.W. Harper asked for a
-button-triggered lookup rather than a live call firing on every FSDJump, so
+Deliberately **manual, not automatic-on-jump**: a button-triggered lookup
+rather than a live call firing on every FSDJump, so
 this never fires on its own and stays well clear of edastro's published
 rate limit (100 requests/15 min) even on long multi-jump exploration runs.
 No opt-in/opt-out setting is needed as a result - there's no passive

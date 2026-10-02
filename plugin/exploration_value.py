@@ -290,9 +290,8 @@ class ExplorationValueController:
 
         if event == "FSDTarget":
             # Fires whenever ANY system is selected as a nav target on the
-            # galaxy map - no jump required, which is exactly the
-            # "independent of the boxel-walk flow" workflow the TODO item
-            # asked for.
+            # galaxy map - no jump required, so this works independently of
+            # the boxel-walk flow.
             if edsm_upload_enabled():
                 target_name = entry.get("Name")
                 if target_name:

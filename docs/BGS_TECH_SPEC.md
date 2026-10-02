@@ -1,15 +1,14 @@
 # Technical Specification — BGS Tracking
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-09-19 (Phases 1–4 shipped)
+**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
 
 ## 1. Goals
 
 A new WNTB mode that tracks Background Simulation (BGS) activity for factions/systems the commander
 explicitly designates, scoped to *only* BGS (Powerplay and Colonization are out of scope, handled elsewhere or not at all).
 
-Full intended scope, gathered from the scoping conversation that started this feature (2026-09-19),
-**all shipped**:
+What it covers:
 
 - Faction **state** visibility (War, Election, Boom, Bust, Outbreak, Civil Unrest, etc.) for tracked
   factions/systems — read-only observation, not something the player caused.
@@ -24,14 +23,12 @@ Full intended scope, gathered from the scoping conversation that started this fe
   own **Track**/**Untrack** buttons act on whatever system the commander is currently in, in addition
   to the Settings-tab list editors.
 - The panel always shows a live breakdown of the *current* system regardless of tracking status
-  ("no factions present" for an uninhabited system, or every faction present + controller + state) —
-  this was added after Phase 1 shipped, in response to real usage ("if I'm in a system with no
-  factions, I want to know that; if there are factions, I want to see how many, who they are, and who
-  controls it along with their status").
+  ("no factions present" for an uninhabited system, or every faction present + controller + state), so
+  you can see who is where without having to track anything first.
 
 ## 2. Non-goals
 
-- No Discord webhook (explicitly out of scope per the scoping decision, not a deferral).
+- No Discord webhook (deliberately out of scope).
 - No murder/crime negative-INF tracking, combat-zone participation, or Thargoid-war state tracking —
   flagged as a known gap (§5), not silently assumed covered.
 
@@ -39,21 +36,21 @@ Full intended scope, gathered from the scoping conversation that started this fe
 
 `PANEL_PLACEMENT = "bgs"` — its own top-level mode button (`ui.py`'s `PANEL_MODES`, placed next to
 Powerplay), not folded into an existing mode, since none of the other five map to BGS naturally
-(the mode grouping in `docs/roadmap.md` is a working proposal, not locked in).
+(the grouping of modes is a working proposal, not locked in).
 
 ```
 bgs_tracker.py     Pure logic (no Tk, no network):
-                    - FactionSnapshot / parse_faction_entry() - Phase 1 faction-state snapshots.
+                    - FactionSnapshot / parse_faction_entry() - faction-state snapshots.
                     - FactionActivity / parse_mission_faction_effects() / parse_bounty_voucher() /
                       parse_combat_bond() / market_buy_cost() / market_sell_proceeds() /
-                      exploration_sale_value() - Phase 2/4 activity-tally extraction.
+                      exploration_sale_value() - activity-tally extraction.
                     - is_tracked() / snapshot_key() - shared matching/keying for both.
                     Mirrors organic_scan.py's no-Tk/no-network split.
 bgs_state.py       Per-commander JSON persistence (bgs_state.json): tracked systems/factions,
                     faction snapshots, this-tick/previous-tick activity tallies, last-known tick
                     timestamp. Same atomic read/write-temp-then-os.replace convention as
                     boxel_state.py/organic_scan_state.py.
-bgs_tick_client.py Sync HTTP client (Phase 3's only network call) - fetch_latest_tick() against
+bgs_tick_client.py Sync HTTP client (the only network call) - fetch_latest_tick() against
                     tick.infomancer.uk. No Tk/threading here.
 bgs_panel.py       Controller: start/stop/handle_event lifecycle (organic_scan_panel.py's own
                     convention). Main-panel widgets: live current-system faction breakdown,
@@ -73,7 +70,7 @@ bgs_window.py      Treeview popup report (codex_completionist_window.py's single
 
 ## 4. Journal fields
 
-### 4.1 Faction-state snapshot (Phase 1)
+### 4.1 Faction-state snapshot
 
 `FSDJump`/`Location`/`CarrierJump` events each carry:
 
@@ -92,7 +89,7 @@ tracked-factions, case-insensitive) is persisted into `bgs_state.json`/the repor
 are **overwritten wholesale**, never merged field-by-field — the journal always sends the complete
 current state for a faction, not a delta.
 
-### 4.2 Mission INF (Phase 2)
+### 4.2 Mission INF
 
 `MissionCompleted`'s `FactionEffects[]` array: each entry has `Faction` and an `Influence[]` array of
 `{Trend, Influence}`, where `Influence` is a string of `+`/`-` characters (Frontier never exposes an
@@ -103,7 +100,7 @@ exact percentage) and `Trend` is one of `UpGood`/`DownGood`/`UpBad`/`DownBad`.
 length of the `Influence` string (e.g. `"++"` → 2 pips). Tallied per faction as `inf_plus`/`inf_minus`
 pip counts plus a mission count — never an exact percentage, since Frontier doesn't provide one.
 
-### 4.3 Bounty vouchers & combat bonds (Phase 2)
+### 4.3 Bounty vouchers & combat bonds
 
 `RedeemVoucher` — the authoritative BGS-credit source (the effect applies at redemption, not at the
 kill, so there's no need to correlate with `Bounty`/`FactionKillBond` events at all):
@@ -116,7 +113,7 @@ kill, so there's no need to correlate with `Bounty`/`FactionKillBond` events at 
 
 This asymmetry is observed in real journal entries — easy to get wrong by assuming both shapes match.
 
-### 4.4 Trade profit/loss & exploration data sold (Phase 4)
+### 4.4 Trade profit/loss & exploration data sold
 
 `MarketBuy`/`MarketSell` (using `TotalCost`/`TotalSale`) and `SellExplorationData`(legacy)/
 `MultiSellExplorationData` (using `TotalEarnings`, falling back to `BaseValue + Bonus` for the legacy
@@ -126,7 +123,7 @@ profit is `trade_sell_credits - trade_buy_credits`, net of nothing else — an a
 credits transacted, not an exact supply/demand BGS-rules model), called out explicitly in the
 Settings-tab description.
 
-### 4.5 BGS tick detection (Phase 3)
+### 4.5 BGS tick detection
 
 `bgs_tick_client.fetch_latest_tick()` does a plain HTTP GET against
 `http://tick.infomancer.uk/galtick.json` (10s timeout), reads the `lastGalaxyTick` field, and parses it
@@ -147,5 +144,4 @@ fresh one.
 - Combat-zone (ground & space) participation as its own signal (only the resulting bounty/combat-bond
   *redemption* is tracked, not CZ presence/wins directly).
 - Thargoid war states.
-- Discord webhook export (explicitly out of scope per the original scoping decision, not a gap to
-  fill later).
+- Discord webhook export (deliberately out of scope, not a gap to fill later).

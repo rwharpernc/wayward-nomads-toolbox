@@ -6,8 +6,7 @@ docs/WINDOW_FRAMEWORK_SPEC.md).
 
 Singleton, like the other WNTB windows (module-level show/refresh/close,
 saved geometry). It lists what this session's journal scan has shown for
-the current system plus every saved hotspot, anywhere, so it also replaces
-the old "Search Known Hotspots" dialog; the data shaping is in
+the current system plus every saved hotspot, anywhere; the data shaping is in
 mining_ledger_data.py (tested), this file is only widgets.
 
 No "Guide me there" button: the waypoint overlay always points at the

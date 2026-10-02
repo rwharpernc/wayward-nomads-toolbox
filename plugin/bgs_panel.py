@@ -18,8 +18,7 @@ All four phases from docs/BGS_TECH_SPEC.md are implemented here:
   to the current station's controlling faction (captured on `Docked`).
 
 Deliberately scoped to systems/factions the commander explicitly tracks,
-never "everything, everywhere" (R.W. Harper's own scoping decision,
-2026-09-19) - a commander configures which systems and/or faction names
+never "everything, everywhere" - a commander configures which systems and/or faction names
 matter to them, in this mode's Settings tab or via the panel's own
 Track/Untrack buttons, and only those get shown or persisted.
 

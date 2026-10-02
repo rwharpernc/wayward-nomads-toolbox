@@ -12,7 +12,7 @@ from . import style
 
 def clip(text: object, limit: int = 40) -> str:
     """Hard character cap with an ellipsis (external data is never trusted
-    to be short - see the width-bounding rule in CLAUDE.md)."""
+    to be short - see the width-bounding rule in docs/TECHNICAL.md section 5)."""
     text = str(text)
     return text if len(text) <= limit else text[:limit - 1] + "…"
 

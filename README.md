@@ -68,8 +68,8 @@ Every feature can be turned on or off, so you only see what you want.
   **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) is the recommended one**
   (Windows and Linux). The older [EDMCOverlay](https://github.com/inorton/EDMCOverlay) (Windows only)
   also works. An overlay is only needed for on-screen alerts such as Discovery Alerts, Landing Assist
-  and Interdiction Warning. Everything else works without it. In Elite, use borderless or windowed
-  mode so the overlay can show on top of the game.
+  and Interdiction Warning. Everything else works without it. Borderless or windowed mode in Elite works
+  with every overlay. A step-by-step guide is in [docs/OVERLAY_SETUP.md](docs/OVERLAY_SETUP.md).
 
 ## Installing
 
@@ -458,8 +458,12 @@ helps. The squadron website is [waywardnomads.org](https://waywardnomads.org/).
 
 - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: setting up to build, test and change WNTB.
 - **[docs/TECHNICAL.md](docs/TECHNICAL.md)**: how WNTB works and why it's built that way.
-- **[docs/BOXEL_SURVEY_TECH_SPEC.md](docs/BOXEL_SURVEY_TECH_SPEC.md)** and
-  **[docs/BGS_TECH_SPEC.md](docs/BGS_TECH_SPEC.md)**: the two largest features in depth.
+- **Feature specifications**, each covering what a feature reads, its rules and its limits:
+  [Missions](docs/MISSIONS_TECH_SPEC.md), [Mining](docs/MINING_TECH_SPEC.md),
+  [Boxel Survey](docs/BOXEL_SURVEY_TECH_SPEC.md), [BGS](docs/BGS_TECH_SPEC.md),
+  [Organic Scanning](docs/ORGANIC_SCANNING_TECH_SPEC.md), [Powerplay](docs/POWERPLAY_TECH_SPEC.md) and
+  [Screenshots and input automation](docs/SCREENSHOTS_AND_INPUT_TECH_SPEC.md).
+- **[docs/OVERLAY_SETUP.md](docs/OVERLAY_SETUP.md)**: setting up the on-screen overlay (for everyone).
 - **[CHANGELOG.md](CHANGELOG.md)**: what has changed.
 - **[docs/ATTRIBUTIONS.md](docs/ATTRIBUTIONS.md)**: thanks and acknowledgements to the projects and
   services that helped.

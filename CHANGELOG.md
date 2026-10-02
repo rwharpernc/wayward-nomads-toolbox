@@ -53,7 +53,7 @@ launch as v1.0.0.
 - New **Mining Book** window (button on both Mining pages): bodies you've scanned plus every saved hotspot
   on the left, a body's hotspots grouped by location in the middle, and a detail card with a
   zoomable map on the right. Filter by material or rig count; Edit, Mark depleted, Copy coordinates
-  and Delete from the card, plus a one-line summary of the materials you've saved on the body. It replaces **Search Known Hotspots** and **Show System Bodies**.
+  and Delete from the card, plus a one-line summary of the materials you've saved on the body.
 - **Tons left** is shown as a range worked out from Rigs, Amount and Density. Note a lower Density label
   means a larger deposit.
 - Rigs is limited to 1-7. Saving a hotspot within 100 m of an existing one on the same body updates
@@ -99,6 +99,8 @@ launch as v1.0.0.
 - **README** rewritten as a plain-language user manual: what each mode does, install steps for the
   pre-release, which features use the internet, Linux setup, troubleshooting and how to get help.
 - **New `docs/DEVELOPMENT.md`**: setting up to build, test and change WNTB.
+- **New feature specifications** for Missions, Mining, Organic Scanning, Powerplay and Screenshots and input
+  automation, and a plain-language **overlay setup guide** (`docs/OVERLAY_SETUP.md`).
 - **New `docs/TECHNICAL.md`**: architecture and design rationale.
 
 ### License
@@ -108,8 +110,6 @@ launch as v1.0.0.
 - **Self-updater** — `_OWN_DATA_FILES` listed only four of WNTB's data files, so backups swept up
   the rest. It now lists all of them, and `mining_sessions/` is in `_OWN_DIRS`. (Updates never
   overwrote data files, since none are in the release zip.)
-
-### Fixes
 - **Mode buttons** — BGS now sits next to Powerplay (was at the end, after Field Ops).
 - **Organic Scanning** — Active scan now lists one species per line, matching Predicted Species'
   own one-per-line formatting (was pipe-joined onto a single line).
@@ -121,10 +121,8 @@ launch as v1.0.0.
   floating text over the HUD.
 - **Overlay backgrounds (Discovery, Interdiction, Mining, Screenshots)** — Every card-style overlay
   now registers an EDMCModernOverlay Plugin Group, like Landing/Inventory already did. Without one,
-  a card's background rect rendered invisible under EDMCModernOverlay (confirmed via a live report,
-  2026-09) — only the text and border were showing. See `overlay.py`'s
-  `register_modern_overlay_groups()` docstring for the full history (this supersedes an earlier,
-  now-disproven "don't group a single background rect" lesson).
+  a card's background rect rendered invisible under EDMCModernOverlay, so only the text and border were
+  showing.
 - **Settings window** — WNTB's entire Settings panel (every tab, not just BGS) failed to open at
   all, throwing `_tkinter.TclError: unknown option "-fg"` from a BGS tab label that used the
   classic Tk `fg=` option on a themed `ttk`-backed `nb.Label`, which only accepts `foreground=`.
@@ -202,7 +200,7 @@ WNTB is a mode-switching toolbox: one plugin, one panel with a collapsible secti
     Interstellar Research's own published site lists, skipping sites you've already logged in the
     Codex.
 - **Mining mode** — Space/surface (Rhino) mining tracking, hotspot catalog, EDSM ring-reserve and
-  Spansh price lookups, driven-coverage minimap, System Bodies survey.
+  Spansh price lookups, driven-coverage minimap, scanned-bodies list.
 - **Missions mode** — Active mission tracking across every category, massacre kill-progress
   estimation, Community Goals, wing-status badges.
 - **Field Ops mode**:

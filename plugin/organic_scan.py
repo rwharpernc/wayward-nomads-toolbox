@@ -22,9 +22,8 @@ progress) *does* persist across sessions - see organic_scan_state.py and
 organic_scan_panel.py's own cmdr-switch handling - unlike
 discovery.py/interdiction.py/landing.py's ephemeral precedent, since a
 planet's biology doesn't reset just because you logged out. Galactic-region,
-Guardian-proximity, and trace-atmosphere-composition matching (the three
-gaps this module's predictions used to carry unconditionally) are now
-implemented - see ruleset_matches() and organic_region_data.py.
+Guardian-proximity, and trace-atmosphere-composition matching are part of
+the prediction - see ruleset_matches() and organic_region_data.py.
 
 Follows survey_log.py's/waypoint_route.py's own `try/except ImportError`
 fallback for `appname` so this stays genuinely unit-testable outside a

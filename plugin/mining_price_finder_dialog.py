@@ -7,11 +7,10 @@ this module only owns the Tk form/threading/results side - same split as
 mining_hotspot_finder_dialog.py/mining_spansh_client.py's ring-hotspot
 search, which this is modeled on directly.
 
-Replaces an originally-planned Inara commodity-lookup feature: Inara's
-API turned out to have no commodity/market endpoint to call (its events
-are almost entirely write-only commander-profile-sync), so this goes
-through Spansh's station-search endpoint instead, the same reverse-
-engineered-and-cross-checked way the ring-hotspot finder does.
+Inara's API has no commodity/market endpoint to call (its events are
+almost entirely write-only commander-profile-sync), so this goes through
+Spansh's station-search endpoint, the same way the ring-hotspot finder
+does.
 
 The search itself is a blocking network call, so it always runs on a
 background thread (matching mining_hotspot_finder_dialog.py's pattern).

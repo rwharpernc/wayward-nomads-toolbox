@@ -79,7 +79,7 @@ def is_colonisation_mission(event: dict) -> bool:
     """True for missions accepted in support of a colonisation effort
     (Mission_ColonisationDelivery, Mission_ColonisationBeacon, ...) -
     excluded from every mission page entirely rather than bucketed into a
-    category, per user preference."""
+    category."""
     return "colonisation" in event.get("Name", "").lower()
 
 

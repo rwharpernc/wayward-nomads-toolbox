@@ -85,11 +85,9 @@ def system_known(name: str) -> Optional[bool]:
     outage must never cause a valid candidate to be silently withheld.
 
     EDSM's "not found" shape for this endpoint is an empty list (`[]`),
-    confirmed via a live call — not the empty dict (`{}`) this function
-    originally assumed, which meant every genuinely-unknown system used to
-    fall through to the "couldn't determine" (`None`) branch below with a
-    spurious logged warning. Fixed to recognize either empty shape as
-    "not found" instead.
+    confirmed via a live call. An empty dict (`{}`) is also treated as
+    "not found", so a genuinely-unknown system never falls through to the
+    "couldn't determine" (`None`) branch below.
     """
     params = {"systemName": name, "showId": 1}
     try:

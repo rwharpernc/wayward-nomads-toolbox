@@ -4,7 +4,7 @@ map: PIL only, no tkinter (mining_render.py/mining_panel.py turn the
 result into a tk.PhotoImage for the Surface Mining page - see
 to_photo_data() below, which follows screenshot_convert.py's own
 thumbnail_photo_data() pattern exactly, including capping *both*
-dimensions per this repo's CLAUDE.md main-window-sizing rule, even
+dimensions per the main-window-sizing rule (docs/TECHNICAL.md section 5), even
 though MAP_SIZE_PX already makes the canvas an exact fixed square by
 construction - the extra thumbnail() call is a deliberate belt-and-
 suspenders match to that convention, not dead code).
@@ -33,8 +33,8 @@ from . import mining_hotspots as hotspots
 
 MAP_SIZE_PX = 220
 """Both dimensions - a fixed square, never derived from source data, so
-this can never be the widget that widens EDMC's main window (see this
-repo's CLAUDE.md)."""
+this can never be the widget that widens EDMC's main window (see
+docs/TECHNICAL.md section 5)."""
 
 VIEW_M = 6000.0
 """Half-width of what the map shows around its center - 12 km across

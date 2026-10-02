@@ -87,10 +87,8 @@ def plugin_start3(plugin_dir: str) -> str:
 
     # Every feature with its own background-rect-behind-text overlay card
     # registers an EDMCModernOverlay Plugin Group (see overlay.py's own
-    # docstring) - a live report (2026-09) found the background invisible
-    # under EDMCModernOverlay specifically *without* one, so this now
-    # matches Landing's approach across the board rather than being the
-    # exception.
+    # docstring) - without one, the background can render invisible under
+    # EDMCModernOverlay.
     overlay.register_modern_overlay_groups([
         (landing.GROUP_NAME, landing.GROUP_PREFIX),
         (inventory_panel.GROUP_NAME, inventory_panel.GROUP_PREFIX),

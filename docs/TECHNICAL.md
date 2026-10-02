@@ -2,9 +2,12 @@
 
 How Wayward Nomads Toolbox works, and why it's built that way. This is a learning and reference
 document: it explains the design decisions, including the mistakes that produced some of them. For
-what each feature does for the user, see the [README](../README.md). For the two largest features in
-depth, see [BOXEL_SURVEY_TECH_SPEC.md](BOXEL_SURVEY_TECH_SPEC.md) and
-[BGS_TECH_SPEC.md](BGS_TECH_SPEC.md). For acknowledgements, see
+what each feature does for the user, see the [README](../README.md). For features in depth, see the
+specifications: [Missions](MISSIONS_TECH_SPEC.md), [Mining](MINING_TECH_SPEC.md),
+[Boxel Survey](BOXEL_SURVEY_TECH_SPEC.md), [BGS](BGS_TECH_SPEC.md),
+[Organic Scanning](ORGANIC_SCANNING_TECH_SPEC.md), [Powerplay](POWERPLAY_TECH_SPEC.md) and
+[Screenshots and input automation](SCREENSHOTS_AND_INPUT_TECH_SPEC.md). For setting up on-screen
+overlays, see [OVERLAY_SETUP.md](OVERLAY_SETUP.md). For acknowledgements, see
 [ATTRIBUTIONS.md](ATTRIBUTIONS.md); for licence notices, see
 [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md).
 
@@ -58,7 +61,7 @@ plugin/           everything that ships; becomes the WNTB folder
   <feature>*.py   one or more modules per feature
 tests/            unittest suites for the pure-logic modules
 scripts/          build.mjs, package.mjs
-docs/             this file, the development guide, the two tech specs, attributions, roadmap, TODO
+docs/             this file, the development guide, the feature specs, the overlay guide, acknowledgements
 ```
 
 `npm run build` copies `plugin/` to `dist/WNTB`, skipping `__pycache__` and `.pyc`, and also copies
@@ -73,10 +76,9 @@ plugin source directly.
 data whose notices must accompany it. Copying at build time means the notices travel with every
 installed copy, not just the repo.
 
-For local testing, a commit hook (project-local, not committed) rebuilds and merge-copies `dist/WNTB`
-into `%LOCALAPPDATA%\EDMarketConnector\plugins\WNTB` after each commit. It is a *merge*, never
+To try a build in EDMC, copy `dist/WNTB` into EDMC's plugins folder as a *merge*, never
 delete-then-copy, because a live plugin folder holds per-commander data files that are not in the
-build (section 8). EDMC must be restarted to load the new code.
+build (section 8). EDMC must be restarted to load the new code. See [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## 3. Startup and event flow
 
@@ -125,8 +127,8 @@ Every feature module exposes the same small interface, which `ui.py` and `load.p
 Larger features add `start(plugin_dir)` and `stop()` for loading and flushing state, and optionally
 `set_overlay_client(client)`.
 
-**Why a contract instead of `ui.py` building everything?** The earlier standalone plugins each had a
-`ui.py` that grew into a thousand-line file every feature reached into. With the contract, `ui.py`
+**Why a contract instead of `ui.py` building everything?** A `ui.py` that every feature reaches into
+tends to grow into a thousand-line file. With the contract, `ui.py`
 stays a thin orchestrator: it walks the `FEATURES` tuple, builds each feature into its own child
 frame with a separator between, and never learns feature internals. Adding a feature means writing
 one module and adding it to two tuples (`FEATURES` in `ui.py`, `_FEATURES` in `load.py`).
@@ -150,8 +152,8 @@ pauses when a mode isn't on screen.
 
 **The problem.** EDMC sizes its main window to the widest row among *all* loaded plugins. One plugin
 that lets external content set a widget's width widens the window for the whole app, including every
-other plugin's panel. This was a real bug in an earlier plugin: a thumbnail capped its height only,
-and an ultrawide screenshot made a very wide image.
+other plugin's panel. For example, a thumbnail capped by height only lets an ultrawide screenshot
+produce a very wide image.
 
 **The rule.** Any widget in the main window whose size comes from variable data must have a hard
 upper bound on *every* dimension that affects layout.
@@ -338,7 +340,7 @@ on a local TCP port. WNTB is only a client.
 
 **Protocol.** Connect, send one JSON object plus a newline per graphic, for example
 `{"id": "x", "text": "hi", "color": "red", "x": 200, "y": 100, "ttl": 4}`. Nothing is read back; sends
-are fire-and-forget. WNTB's protocol notes were confirmed by reading the overlay server's source.
+are fire-and-forget. WNTB's protocol notes come from observed behaviour.
 
 ### One shared, persistent connection
 
@@ -350,8 +352,8 @@ and *wipes all of a connection's graphics the moment it disconnects*, regardless
 `ttl`. Connect-send-close would make everything vanish immediately. So the connection must stay open
 as long as its graphics should be visible.
 
-**Why one for everything?** Each mode opening its own connection was exactly the duplication the
-consolidation exists to remove, and separate connections would each need reconnect logic.
+**Why one for everything?** A connection per mode would duplicate work, and each would need its own
+reconnect logic.
 
 Connect timeout is 1 second. It's a loopback connection to an app that is either running (instant)
 or not (fails fast); a long timeout would stall journal processing waiting for an app that isn't
@@ -365,12 +367,11 @@ supplies its own without `overlay.py` naming any feature. Registration is best-e
 does nothing if ModernOverlay isn't installed, and swallows errors, because a cosmetic nicety must
 never break startup.
 
-**A lesson worth keeping.** An earlier note said *not* to register a group for a single background
-rectangle behind narrower text, because grouping collapsed it to its border. A later live report
-found the opposite: without a group, the rectangle's *fill* rendered invisible under ModernOverlay.
-Registering a group fixed it, so every card-style overlay now registers one. The generalizable point:
-when overlay rendering seems wrong, check ModernOverlay's own payload and debug log before assuming a
-rule is right, and don't turn one observation into a permanent blanket rule.
+**Why every card registers a group.** Without a group, a card's background rectangle can render
+invisible under ModernOverlay, and registering one fixes it, so every card-style overlay registers one.
+(The tempting rule "don't group a single rectangle behind narrower text" was tried and turned out to be
+wrong.) The general point: when overlay rendering seems wrong, check ModernOverlay's own payload and
+debug log before assuming a rule is right, and don't turn one observation into a permanent blanket rule.
 
 Overlay message IDs use `wntb_<feature>_*` so a group's prefix matches exactly its own shapes.
 
@@ -427,6 +428,8 @@ for as little as it can. These are the measures that are in the code today.
   are cached too, so a dead network isn't hit on every redraw. Lookups run at most 5 at a time.
 - Canonn site lists are downloaded once per session. The Codex catalogue is saved on disk
   (`codex_catalog.json`) and reused for 14 days.
+- The automatic ring-reserve check (opt-in) is remembered per ring for the session, and is never run
+  while the journal is being replayed at start-up.
 - Earth-like-world rarity is remembered per system for the session, and EDSM upload status per
   system for 10 minutes, so re-selecting the same target costs no extra calls.
 - The Boxel Survey keeps a local log of systems you've visited, so the Random button never spends an
@@ -520,11 +523,10 @@ and tracks the Log, Sample, Analyse progression plus how far you must walk betwe
 shows estimated credits (a flat per-species value; there is no first-discovery bonus for
 exobiology). It is a local, read-only companion to EDMC-Canonn and submits nothing.
 
-The two `*_data.py` files are **generated** and marked "do not hand-edit". Regenerating from source
-means the next new species is a re-run, not a hand transcription that could silently introduce
-errors. The extraction uses `ast.literal_eval`, never `exec`, so parsing someone else's file cannot
-run code. Region lookup reproduces the game's 42 region boundaries as a coordinate grid indexed from
-an origin offset.
+The two `*_data.py` files are **generated** and marked "do not hand-edit", so a new species is a
+regeneration, not a hand transcription that could silently introduce errors. Region lookup holds the
+game's 42 region boundaries as a coordinate grid indexed from an origin offset. See the
+[Organic Scanning spec](ORGANIC_SCANNING_TECH_SPEC.md).
 
 ### Mining (`mining_*.py`)
 
@@ -541,8 +543,7 @@ an origin offset.
   the panel within 100 m of an existing one on the same body updates it instead of adding a second.
 - **Windows** (`plugin/uikit/`, `mining_ledger.py`) use WNTB's own dark look - see "External
   windows" in section 5. The Mining Book (`mining_ledger.py`, data in
-  `mining_ledger_data.py`) replaces the old Search Known Hotspots and Show System Bodies
-  dialogs.
+  `mining_ledger_data.py`) is the browser for scanned bodies and saved hotspots.
 - **Your own rates** (`mining_ground.py`): no third-party dataset is bundled or downloaded. The
   journal never reports what a surface deposit holds, so `OwnRates` tallies the commander's saved
   hotspots per kind of ground: "of the deposits you recorded on this kind of body, what share were
@@ -703,7 +704,6 @@ Things that cost time once and are recorded so they don't again.
   tally simply doesn't roll over.
 - **Exobiology and region data are a snapshot.** New species from a game update require a
   regeneration.
-- The roadmap and TODO in this folder record the plan and remaining ideas.
 
 ## 18. Platform support: Windows and Linux
 

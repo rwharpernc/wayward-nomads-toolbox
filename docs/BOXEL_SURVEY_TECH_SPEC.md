@@ -1,7 +1,7 @@
 # Technical Specification — Boxel Survey
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-09-19 (pre-1.0 development; see `CHANGELOG.md`)
+**Last updated:** 2026-10-02 (pre-1.0 development; see `CHANGELOG.md`)
 
 The standing reference for Boxel Survey across all three sub-modes (Sequence, Region Sweep, Waypoint
 Route): what's true about the system right now, why, and what's still unknown. Release history is in
@@ -86,9 +86,8 @@ one's own `.active` flag gates its side effects, so switching sub-modes mid-sess
 either of the other two from nothing.
 
 - **Sequence** — walks one boxel's flat number sequence (§4). Manual Set/Next/Prev/Copy, "Use
-  Current" (seeds from the live journal `system`), "Find Nearby (EDSM)" (§4.4), and — as of
-  2026-09-19 — an automatic EDSM fallback after 3 consecutive Next clicks with no confirmed jump in
-  between (§4.5, added directly in response to the gap this doc's own research surfaced).
+  Current" (seeds from the live journal `system`), "Find Nearby (EDSM)" (§4.4), and an automatic
+  EDSM fallback after 3 consecutive Next clicks with no confirmed jump in between (§4.5).
 - **Region Sweep** — tracks *completion* across a user-curated queue of cubes instead of one flat
   sequence. Each `CubeEntry` (sector + cube_id +
   mass_code) owns one `BoxelWalker` for its own within-cube advance/retreat, plus a `systems: {name:
@@ -164,12 +163,12 @@ harder full id64/coordinate-decode problem entirely for the "walk one boxel" use
 
 ### 4.3 The reverted `next_boxel` attempt, and what it proved
 
-A v0.1.3-era attempt (still visible in `boxel.py`'s own module docstring) implemented an explicit
+An early version of the walker (still described in `boxel.py`'s own module docstring) implemented an explicit
 "next boxel" action as a plain string move: `<N1>+1` with `<N2>` dropped. Field-tested from a real position (seeded at
 `Sifi CH-Y b42-5`): the resulting candidates (`b43`–`b45`) had no matches anywhere near the
 commander's actual location, while the real neighboring boxels visible on the galaxy map from that
 exact position had entirely different cube IDs (`Sifi AV-G`, `Sifi BB-M`) — not `Sifi CH-Y` with a
-bumped number. **Reverted the same day.** This falsifies the theory that `<N1>` is "the same kind of
+bumped number. **It was reverted.** This falsifies the theory that `<N1>` is "the same kind of
 axis as `<N2>`, just coarser" — moving to a real spatially-adjacent boxel needs actual coordinate/
 id64 math, which a string increment structurally cannot provide.
 
@@ -182,7 +181,7 @@ from the journal. No id64/coordinate-decode math is involved. `edsm_client.nearb
 Nearby (EDSM)" button query a 100 ly cube (`DEFAULT_CUBE_SIZE`) around the live `StarPos`, filter to
 procedural-shaped names in a different `cube_id` than the current seed, and offer the nearest match.
 
-### 4.4.1 The "Random" button (2026-09-30)
+### 4.4.1 The "Random" button
 
 Sits above the whole Boxel Survey panel (visible even collapsed, independent of which of the three
 sub-modes is selected — it never touches `BoxelWalker`). One click: run the same
@@ -204,7 +203,7 @@ map. A `system_known()` result of `None` (lookup failed/EDSM down) is never trea
 same "`None` means couldn't determine" convention `edsm_client.py` uses everywhere else — so a flaky
 EDSM never produces a false "undiscovered" result.
 
-**The visited-systems log (`visited_systems.py`, 2026-09-30)** closes a second false-positive gap:
+**The visited-systems log (`visited_systems.py`)** closes a second false-positive gap:
 `system_known()` alone can't tell whether *this commander* has already been to a candidate — EDSM
 sync can lag by minutes, or a commander may not upload at all — so a system genuinely visited this
 session could still come back "not listed in EDSM" and get suggested again as if new.
@@ -234,7 +233,7 @@ there. Reset on any confirmed jump, explicit seed set, Prev, or commander switch
 *symptom* (small boxel ran dry) rather than precomputing a queue — see §6 for what a fuller fix would
 need.
 
-### 4.6 Region Sweep's auto-discover (2026-09-19)
+### 4.6 Region Sweep's auto-discover
 
 §4.5's Sequence-mode fix treats the symptom one boxel at a time; it never builds a *queue*. Region Sweep
 (§3.2) already had the missing piece structurally: `RegionSweepQueue.advance_cube()` auto-continues to
@@ -304,8 +303,7 @@ deciding what to skip. `survey_log.py`'s `SurveyLog`, keyed by system name:
 
 The main panel's stats line reflects whatever boxel the *live* journal `system` is in, not the
 walker's current target — so it stays accurate even when the commander is off-sequence. **Export
-Survey Log** (moved to Settings → Boxel Survey, 2026-09-19 — previously a permanent main-panel
-button) writes every notable-body row to a fixed-path CSV
+Survey Log** (in Settings → Boxel Survey) writes every notable-body row to a fixed-path CSV
 (`boxel_survey_export.csv`) in the plugin directory.
 
 ## 6. Known gaps / open questions
@@ -314,7 +312,7 @@ Assessed against the current code — anything resolved differently than origina
 so.
 
 - **A precomputed multi-boxel queue is still not built, only reactively approximated.** Sequence
-  mode's auto-suggest (§4.5) and Region Sweep's auto-discover (§4.6, both shipped 2026-09-19) close the
+  mode's auto-suggest (§4.5) and Region Sweep's auto-discover (§4.6) close the
   practical "ran out of targets" complaint using live EDSM lookups, and `advance_cube()` (§3.2) already
   gives Region Sweep genuine multi-cube continuity once its queue is populated. What's still missing is
   precomputing hundreds of boxels up front via id64 math, rather than reactively topping up 1-2 cubes at
@@ -333,7 +331,7 @@ so.
   backer naming rights, likely mechanism, unconfirmed for any specific observed case). Doesn't affect
   sequence-walking (the procedural string still round-trips correctly for search/plot), but matters
   if a future feature ever tries to verify a candidate against EDSM by display name.
-- **E4 — arriving at a renamed candidate may not trigger auto-advance — fixed 2026-09-19, opt-in.**
+- **E4 — arriving at a renamed candidate may not trigger auto-advance (opt-in fix available).**
   `on_jump()` still only advances when the journal's `StarSystem` string-matches the stored
   procedural candidate exactly (unchanged — no id64/`SystemAddress` tracking exists to match on
   instead, per E3/§4.3). Rather than requiring that, **"Confirm off-sequence arrivals against EDSM"**
@@ -347,8 +345,7 @@ so.
   lookup on every off-sequence jump while a target is pending, not just genuine boxel candidates — a
   commander doing unrelated travel with Sequence mode still selected would otherwise generate
   background EDSM traffic they didn't ask for. Still not re-confirmed against a live E3 case in-game
-  (no real renamed-candidate arrival has been observed and watched since 2026-08-26's circumstantial
-  field evidence) — the mechanism is sound given what §4.4 already establishes about EDSM coordinate
+  (no real renamed-candidate arrival has been watched end to end) — the mechanism is sound given what §4.4 already establishes about EDSM coordinate
   data, but hasn't been field-verified end to end.
 - **Q6 — "suggest a promising unsurveyed boxel" is not buildable.** Checked: Elite's systems are
   generated on demand by Stellar Forge from the address, with no published/reverse-engineered way to
@@ -356,16 +353,11 @@ so.
   a proxy for "unexplored") is unattempted and would need its own query design.
 - **Q5 — no documented public API for DSSA/IGAU fleet-carrier locations**; a "nearest carrier" feature
   was checked and ruled out as not worth building against undocumented/scraped sources.
-- ~~`region_sweep_queue.py` has no unit test~~ — **fixed 2026-09-19.** `tests/test_region_sweep_queue.py`
-  (34 tests) covers cube add/remove/idempotency, `merge_known_systems()`'s reseed-only-when-untouched
-  logic, completion tracking, `advance_cube()`'s skip/wrap/exhaustion behavior, `on_jump()` including
-  the multi-cube-continuity path (§4.6), stats aggregation, and snapshot/restore round-trips
-  (including malformed-entry recovery). The blocker (`boxel_walker.py`'s hard `from config import
-  appname`) wasn't removed from production code — the test file installs a minimal fake `config`
-  module into `sys.modules` before importing, enough to satisfy that one import with nothing else
-  EDMC-specific touched. `boxel_walker.py` itself still has no *standalone* test (only indirect
-  coverage through this file and `test_boxel.py`), but the documented gap that mattered — Region
-  Sweep's own completion/queue logic having zero automated coverage — is closed.
+- **Test coverage.** `tests/test_region_sweep_queue.py` covers Region Sweep's queue (cube add and remove,
+  reseeding, completion tracking, `advance_cube()` skip, wrap and exhaustion, `on_jump()` including the
+  multi-cube path, stats, and snapshot and restore round-trips). It installs a minimal fake `config` module
+  before importing, because `boxel_walker.py` imports EDMC's `config` at the top. `boxel_walker.py` itself
+  has no standalone test, only indirect coverage through that file and `test_boxel.py`.
 
 ## 7. External APIs
 
@@ -377,8 +369,9 @@ so.
 | EDSM `systems` (bulk) | Waypoint Route's nearest-neighbor reordering coordinates | `edsm_client.systems_coords()`; one request for the whole list |
 | Spansh systems typeahead | Region Sweep's cube-completion discovery | `region_sweep_spansh.py`; undocumented endpoint, confirmed empirically, raises on failure (unlike edsm_client's convention) |
 
-All EDSM calls set `config.user_agent` as the request's `User-Agent` — EDSM rejects `requests`'
-default UA with a 403 (confirmed by hitting it during field testing).
+Every call identifies WNTB in its `User-Agent` (see `http_identity.py`). EDSM's client sends EDMC's own
+`config.user_agent` followed by WNTB's, because EDSM rejects `requests`' default UA with a 403. For how
+call volume is kept down, see [TECHNICAL.md](TECHNICAL.md#keeping-api-traffic-low).
 
 ## 8. Persistence
 

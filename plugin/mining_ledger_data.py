@@ -7,8 +7,7 @@ see tests/test_mining_ledger_data.py.
 Bodies come from two places: this session's landable-body survey
 (mining_body_survey.py - what the journal has shown us in the current
 system) and the commander's saved hotspots (mining_hotspots.py - possibly
-in other systems entirely). The browser merges them so one window replaces
-both the "System Bodies" and "Search Known Hotspots" dialogs.
+in other systems entirely). The browser merges them into one window.
 """
 from __future__ import annotations
 

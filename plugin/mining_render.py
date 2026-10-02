@@ -8,8 +8,8 @@ each time it needs to redraw.
 
 Every label showing variable-length content uses the `wrap` value
 `mining_panel.py` derives from the canvas's real measured width, never a
-fixed wraplength - see the main-window-sizing rule in this repo's
-CLAUDE.md.
+fixed wraplength - see the main-window-sizing rule in
+docs/TECHNICAL.md section 5.
 """
 import tkinter as tk
 import dataclasses

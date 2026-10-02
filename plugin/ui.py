@@ -49,7 +49,7 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 # each module's own PANEL_PLACEMENT.
 FEATURES = (
     powerplay, missions,
-    # Exploration mode's own display order (R.W. Harper, 2026-09-19): the
+    # Exploration mode's own display order: the
     # frequently-glanced readouts/lookups first, Codex Completionist above
     # Boxel Survey (the largest single feature here, collapsed by default),
     # and Auto-Honk/Discovery Alerts last, side by side - see
@@ -65,7 +65,7 @@ FEATURES = (
 
 # Feature pairs built into a single shared row (side by side) instead of
 # each getting its own full-width row - only Auto-Honk/Discovery Alerts
-# (R.W. Harper, 2026-09-19): both are just a single toggle button (plus,
+# (the only pair so far): both are just a single toggle button (plus,
 # for Discovery, a short status line), narrow enough that stacking them
 # wastes vertical space. Keyed by the first module in the pair; both must
 # stay adjacent in FEATURES above for this to take effect.
@@ -154,7 +154,7 @@ def _stack_features(frame: tk.Frame, placement_key: str, placeholder_text: Optio
         # actually stretched to the real content width for that centering
         # to mean anything - sticky=W left it pinned to its own minimum
         # natural size, so a spanning child had no spare room to center
-        # within (R.W. Harper, 2026-09-19).
+        # within.
         feature_frame.columnconfigure(1, weight=1)
         feature_frame.grid(row=row, column=0, columnspan=3, sticky="ew")
         feature.build_panel(feature_frame)
