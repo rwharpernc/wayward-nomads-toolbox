@@ -27,7 +27,7 @@ documentation in `docs/`. [TECHNICAL.md](TECHNICAL.md) section 2 has the full la
 
 ```bash
 npm run build      # copies plugin/ to dist/WNTB (plus LICENSE and THIRD-PARTY-NOTICES.md)
-npm run package    # builds, then zips dist/WNTB into dist/WNTB-v<version>.zip
+npm run package    # builds, then zips the contents of dist/WNTB into dist/WNTB.zip
 ```
 
 `dist/` is ignored by git. The version number comes from `plugin/__init__.py` (and is mirrored in
@@ -86,7 +86,7 @@ that means you have no permission to.
 ## Releasing
 
 To release: bump the version in `plugin/__init__.py` and `package.json`, add a dated section to
-`CHANGELOG.md`, run `npm run package`, commit, tag `v<version>`, and publish `dist/WNTB-v<version>.zip` as
+`CHANGELOG.md`, run `npm run package`, commit, tag `v<version>`, and publish `dist/WNTB.zip` as
 the asset of a GitHub release. Users download that zip, not the repository. Publish it as a normal release:
 the in-app updater (and the README's "latest release" link) only follow official (non-draft,
 non-pre-release) GitHub releases.

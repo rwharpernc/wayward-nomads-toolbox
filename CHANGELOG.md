@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.0.1 - 2026-10-02
+
+### Fixed
+- The release ZIP now extracts correctly on Linux and macOS. It was built with backslash path
+  separators, so those systems created flat files with names like `icons	imer.gif` instead of folders.
+  The ZIP is now named `WNTB.zip` (no version number) and contains a single `WNTB/` folder.
+- README install steps now cover Linux as well as Windows.
+
 ## 1.0.0 - 2026-10-02
 
 First public release. The entries below are everything 1.0.0 ships with, built up during development

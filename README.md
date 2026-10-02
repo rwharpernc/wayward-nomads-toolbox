@@ -72,14 +72,16 @@ Every feature can be turned on or off, so you only see what you want.
 
 ## Installing
 
-1. **Download the plugin.** Get **`WNTB-v<version>.zip`** from the
+1. **Download the plugin.** Get **`WNTB.zip`** from the
    [latest release](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest) (under
    **Assets**). It contains only the plugin, in a single folder called **`WNTB`**. Don't use the green
    **Code → Download ZIP** button: that downloads the whole source repository, which you don't need.
 2. **Put it in EDMC's plugins folder.** In EDMC, open **File → Settings → Plugins** and click **Open**
    next to "Plugins folder". (On Windows it's usually
-   `%LOCALAPPDATA%\EDMarketConnector\plugins\`.) Extract the ZIP there, so you end up with
-   `plugins\WNTB\load.py`.
+   `%LOCALAPPDATA%\EDMarketConnector\plugins\`.) Extract the ZIP
+   into that folder (on Windows, right-click → **Extract All…** and set the destination to the plugins
+   folder itself; on Linux, `unzip WNTB.zip -d <plugins folder>`). The ZIP contains a single folder
+   called `WNTB`, so you end up with `plugins/WNTB/load.py`.
 3. **Restart EDMC.** A **Wayward Nomads Toolbox (WNTB)** panel should appear.
 
 **Updating:** download the new ZIP and extract it over the existing `WNTB` folder, replacing files when

@@ -161,7 +161,7 @@ class UpdateManager:
 
     def _download_and_stage(self, url: str, version: str) -> None:
         os.makedirs(self._updates_dir, exist_ok=True)
-        zip_path = os.path.join(self._updates_dir, f"WNTB-v{version}.zip")
+        zip_path = os.path.join(self._updates_dir, "WNTB.zip")
 
         if self._on_downloading is not None:
             self._on_downloading(version)
@@ -219,7 +219,7 @@ class UpdateManager:
             # Release zips contain a top-level WNTB/ folder (see
             # scripts/package.mjs), so strip it — plugin_dir *is* that
             # folder already.
-            prefix = names[0].split("/", 1)[0] + "/" if names and "/" in names[0] else ""
+            prefix = "WNTB/" if names and all(n.startswith("WNTB/") for n in names) else ""
 
             for member in zf.infolist():
                 relative = member.filename[len(prefix):] if prefix and member.filename.startswith(prefix) else member.filename
