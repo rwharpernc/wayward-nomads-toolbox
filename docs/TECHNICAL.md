@@ -333,7 +333,7 @@ other commanders casually typing words like "pirate" with no interdiction happen
 ## 10. The overlay
 
 Overlay features (Landing, Interdiction, Discovery, Inventory bars, Mining, Screenshots) draw over the
-game window through a separate helper app, **EDMCOverlay** (or **EDMCModernOverlay**), which listens
+game window through a separate helper app, **EDMCModernOverlay** (recommended) or the older **EDMCOverlay**, which listen
 on a local TCP port. WNTB is only a client.
 
 **Protocol.** Connect, send one JSON object plus a newline per graphic, for example

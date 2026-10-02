@@ -454,8 +454,8 @@ def build_settings(notebook: nb.Notebook) -> None:
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
 
     HyperlinkLabel(
-        frame, text="Get EDMCOverlay", background=nb.Label().cget("background"),
-        url="https://github.com/inorton/EDMCOverlay", underline=True,
+        frame, text="Get EDMCModernOverlay (recommended)", background=nb.Label().cget("background"),
+        url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
 
     _enabled_var = tk.BooleanVar(value=cfg.enabled)

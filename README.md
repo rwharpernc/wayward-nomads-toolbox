@@ -64,11 +64,12 @@ Every feature can be turned on or off, so you only see what you want.
 
 - **EDMC** on Windows or Linux. Get it from the
   [EDMC page](https://github.com/EDCD/EDMarketConnector).
-- **For features that draw on your game screen,** a small helper program running alongside the game:
-  [EDMCOverlay](https://github.com/inorton/EDMCOverlay) (Windows) or
-  [EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) (Windows and Linux). This
-  is only needed for on-screen alerts such as Discovery Alerts, Landing Assist and Interdiction
-  Warning. Everything else works without it.
+- **For features that draw on your game screen,** a small helper program running alongside the game.
+  **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) is the recommended one**
+  (Windows and Linux). The older [EDMCOverlay](https://github.com/inorton/EDMCOverlay) (Windows only)
+  also works. An overlay is only needed for on-screen alerts such as Discovery Alerts, Landing Assist
+  and Interdiction Warning. Everything else works without it. In Elite, use borderless or windowed
+  mode so the overlay can show on top of the game.
 
 ## Installing
 
