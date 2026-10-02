@@ -133,8 +133,8 @@ feature that contacts an outside site, so you can decide what you're comfortable
 
 | Feature | Contacts | When |
 |---|---|---|
-| Rare Goods Finder | Spansh | Each time you open the window, to see which Power controls each origin system |
-| Codex Completionist "Not found" tab | Canonn | Downloads a list in the background, then refreshes it about every two weeks (or when you click **Refresh Catalog**) |
+| Rare Goods Finder | Spansh | The first time you open the window for each system, to see which Power controls it; remembered until you restart EDMC |
+| Codex Completionist "Not found" tab | Canonn | Downloads a list when you open the details window (if it has none, or it's over two weeks old), or when you click **Refresh Catalog** |
 | GEC Nearby POI | edastro.com | Only when you click **Find Nearest POI** |
 | Canonn Nearby POI | Canonn | Downloads site lists when you click **Find Nearest POI** |
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons; some automatic checks are optional in Settings |
@@ -145,6 +145,13 @@ feature that contacts an outside site, so you can decide what you're comfortable
 
 Everything else (Powerplay tracking, Missions, Inventory, Screenshots, Colonisation, Organic Scanning,
 Ship Builds, Landing Assist and so on) makes no internet connection at all.
+
+WNTB is built to ask these services for as little as it can: lookups are started by you or switched on
+by you, answers are remembered, and every request says who it's from. The details are in
+[docs/TECHNICAL.md](docs/TECHNICAL.md#keeping-api-traffic-low).
+
+These services are run and funded by volunteers. If WNTB is useful to you, please consider supporting
+them, as I do: [EDSM](https://www.patreon.com/EDSM), [Spansh](https://www.patreon.com/cw/spansh) and [Inara](https://www.patreon.com/cw/artieinara).
 
 ---
 

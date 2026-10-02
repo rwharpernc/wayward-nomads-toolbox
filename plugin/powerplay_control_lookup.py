@@ -26,12 +26,14 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Dict, Iterable, Optional, Tuple
 
+from . import http_identity
+
 logger = logging.getLogger(__name__)
 
 SYSTEM_URL = "https://spansh.co.uk/api/system/{id64}"
 REQUEST_TIMEOUT_S = 8
 MAX_WORKERS = 5
-_USER_AGENT = "WNTB-rare-goods-finder"
+_USER_AGENT = http_identity.user_agent("rare-goods")
 
 _cache_lock = threading.Lock()
 _cache: Dict[int, Optional[str]] = {}

@@ -50,6 +50,7 @@ import math
 import os
 import queue
 import threading
+import time
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
@@ -68,6 +69,10 @@ PANEL_PLACEMENT = "exploration"
 _CFG_ENABLED = "wntb_exploration_value_enabled"
 _CFG_ELW_RARITY_ENABLED = "wntb_exploration_value_elw_rarity_enabled"
 _CFG_EDSM_UPLOAD_ENABLED = "wntb_exploration_value_edsm_upload_enabled"
+
+_UPLOAD_RECHECK_S = 600
+"""A system EDSM was already asked about is not asked about again for this
+long (selecting the same galaxy-map target repeatedly costs no extra calls)."""
 
 # --- Formula constants -----------------------------------------------------
 
@@ -253,6 +258,8 @@ class ExplorationValueController:
         # counter so a later scan/target selection can supersede an
         # in-flight lookup's eventual result.
         self._elw_generation = 0
+        self._elw_cache: dict[str, int] = {}  # system -> known ELW count, for this session
+        self._upload_cache: dict[str, tuple[float, bool]] = {}  # system -> (when asked, known to EDSM)
         self._elw_result_queue: "queue.Queue[tuple[int, str, Optional[int], Optional[str]]]" = queue.Queue()
         self._upload_generation = 0
         self._upload_result_queue: "queue.Queue[tuple[int, str, Optional[bool]]]" = queue.Queue()
@@ -378,6 +385,10 @@ class ExplorationValueController:
     def _check_elw_rarity(self, body_name: str, reference_system: str) -> None:
         self._elw_generation += 1
         generation = self._elw_generation
+        cached = self._elw_cache.get(reference_system.casefold())
+        if cached is not None:
+            self._elw_result_queue.put((generation, body_name, cached, None))
+            return
         if self._elw_rarity_var is not None:
             self._elw_rarity_var.set(f"ELW rarity: {body_name} — checking Spansh...")
         threading.Thread(
@@ -390,6 +401,8 @@ class ExplorationValueController:
         error: Optional[str] = None
         try:
             count = elw_rarity_spansh.count_nearby_earthlike_worlds(reference_system)
+            if count is not None:
+                self._elw_cache[reference_system.casefold()] = count
         except Exception:
             logger.exception("_elw_rarity_worker failed for %r near %r", body_name, reference_system)
             error = "Spansh lookup failed"
@@ -420,6 +433,10 @@ class ExplorationValueController:
     def _check_edsm_upload_status(self, target_name: str) -> None:
         self._upload_generation += 1
         generation = self._upload_generation
+        cached = self._upload_cache.get(target_name.casefold())
+        if cached is not None and time.monotonic() - cached[0] < _UPLOAD_RECHECK_S:
+            self._upload_result_queue.put((generation, target_name, cached[1]))
+            return
         if self._upload_status_var is not None:
             self._upload_status_var.set(f"EDSM upload status: {target_name} — checking...")
         threading.Thread(
@@ -429,6 +446,8 @@ class ExplorationValueController:
     def _edsm_upload_worker(self, generation: int, target_name: str) -> None:
         """Runs off the main thread — must not touch any Tk widget directly."""
         known = edsm_client.system_known(target_name)
+        if known is not None:
+            self._upload_cache[target_name.casefold()] = (time.monotonic(), known)
         self._upload_result_queue.put((generation, target_name, known))
 
     def _poll_upload_queue(self) -> None:

@@ -24,10 +24,12 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
+from . import http_identity
+
 NEAREST_POI_URL = "https://edastro.com/gec/json/nearest/{x}/{y}/{z}"
 NEAREST_POI_URL_RATED = "https://edastro.com/gec/json/nearest/{x}/{y}/{z}/{min_rating}"
 REQUEST_TIMEOUT_S = 20
-_USER_AGENT = "WNTB-gec-poi-edastro"
+_USER_AGENT = http_identity.user_agent("gec-poi")
 
 
 @dataclass(frozen=True)

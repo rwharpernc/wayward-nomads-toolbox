@@ -22,9 +22,11 @@ from __future__ import annotations
 import json
 import urllib.request
 
+from . import http_identity
+
 BODIES_SEARCH_URL = "https://spansh.co.uk/api/bodies/search"
 REQUEST_TIMEOUT_S = 20
-_USER_AGENT = "WNTB-elw-rarity-spansh"
+_USER_AGENT = http_identity.user_agent("elw-rarity")
 
 # How far "nearby" means for the rarity comparison. Not user-configurable
 # (matches edsm_client.py's own DEFAULT_CUBE_SIZE precedent) - wide enough

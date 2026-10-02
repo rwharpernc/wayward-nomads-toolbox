@@ -31,12 +31,14 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any, Iterable, List, Optional, Set
 
+from . import http_identity
+
 CATALOG_URL = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/ref?_limit=5000"
 REFERENCE_SEARCH_URL = "https://canonn.science/?s={query}"
 CACHE_FILENAME = "codex_catalog.json"
 MAX_AGE_DAYS = 14
 REQUEST_TIMEOUT_S = 30
-_USER_AGENT = "WNTB-codex-catalog"
+_USER_AGENT = http_identity.user_agent("codex-catalog")
 
 _CATEGORY_LABELS = {
     "$codex_category_biology;": "Biological",

@@ -21,12 +21,14 @@ import json
 import urllib.request
 from datetime import datetime, timezone
 
+from . import http_identity
+
 TICK_URL = "http://tick.infomancer.uk/galtick.json"
 """Plain HTTP, not HTTPS - the service doesn't serve HTTPS."""
 
 _TIMEOUT_S = 10
 _TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
-_USER_AGENT = "WNTB-EDMC (github.com R.W. Harper)"
+_USER_AGENT = http_identity.user_agent("bgs-tick")
 
 
 def fetch_latest_tick() -> datetime:

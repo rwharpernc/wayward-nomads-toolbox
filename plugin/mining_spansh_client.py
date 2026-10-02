@@ -34,10 +34,12 @@ import json
 import urllib.request
 from dataclasses import dataclass
 
+from . import http_identity
+
 BODIES_SEARCH_URL = "https://spansh.co.uk/api/bodies/search"
 STATIONS_SEARCH_URL = "https://spansh.co.uk/api/stations/search"
 REQUEST_TIMEOUT_S = 20
-_USER_AGENT = "WNTB-mining-spansh-finder"
+_USER_AGENT = http_identity.user_agent("mining-finder")
 
 KNOWN_RING_HOTSPOT_MATERIALS: tuple[str, ...] = tuple(sorted([
     "Alexandrite", "Bauxite", "Benitoite", "Bromellite", "Cobalt", "Coltan",

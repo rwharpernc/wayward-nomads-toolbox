@@ -88,7 +88,7 @@ coordinates, Inara commodity ids and Spansh system ids looked up once.
 
 ## Thanks
 
-Elite's third-party tooling runs on individual authors' spare time. I'm a Patreon supporter of
+Elite's third-party tooling runs on individual authors' spare time, and WNTB leans on several of these services. I'm a Patreon supporter of
 [EDSM](https://www.patreon.com/EDSM), [Spansh](https://www.patreon.com/cw/spansh),
 [Inara](https://www.patreon.com/cw/artieinara), [SrvSurvey](https://www.patreon.com/SrvSurvey) and
 [EDCoPilot](https://www.patreon.com/EDCoPilot), and I've donated to

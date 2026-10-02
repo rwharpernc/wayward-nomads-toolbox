@@ -394,9 +394,11 @@ Design decisions that apply to all of them:
   not break journal handling. The BGS tick client is the deliberate exception: it *raises*, and the
   caller decides, because a fabricated or stale tick would corrupt the tally. It never returns a
   guessed value.
-- **Set a real User-Agent.** EDSM returns HTTP 403 to the default `python-requests` agent. WNTB sends
-  EDMC's `config.user_agent`, the same fix EDMC's own EDSM plugin uses. This was found by hitting the
-  403 in testing.
+- **Identify WNTB in every request.** Every call sends a User-Agent naming WNTB, its version and the
+  project's address (`http_identity.py`, for example `WNTB/0.2.0 (rare-goods; +https://github.com/...)`),
+  so a service operator who sees the traffic can tell what it is and get in touch. EDSM returns HTTP 403
+  to the default `python-requests` agent, so its client sends EDMC's own `config.user_agent` followed by
+  WNTB's.
 - **Respect documented limits.** EDSM's `cube-systems` caps edge length at 200 ly; WNTB uses 100 as a
   middle ground between catching a few procedural systems and keeping responses small.
 - **Opt-in by default, and stated.** Anything that phones home on its own is off until enabled.
@@ -405,6 +407,56 @@ Design decisions that apply to all of them:
   content is redistributed. The exceptions are static game facts (section 12).
 - **Plain HTTP for the tick API.** That is the only address the service offers. It carries a public
   timestamp and nothing sensitive.
+
+### Keeping API traffic low
+
+WNTB is a small, volunteer-made tool that leans on services other volunteers run, so it is built to ask
+for as little as it can. These are the measures that are in the code today.
+
+**Nothing runs in the background by default, apart from three small exceptions.**
+- Every lookup is started by a button or is opt-in (off until enabled in Settings). That covers the
+  Mining lookups, the Exploration Value extras (Spansh and EDSM), the Boxel Survey skip checks and
+  alias confirmation, Region Sweep's auto-discover, and the update check.
+- The exceptions: the BGS tick poll, one small request a minute to the tick service while BGS is on
+  (it can be switched off); the Codex Completionist catalogue, downloaded when you open its details
+  window and the saved copy is missing or over 14 days old; and the Rare Goods window, which looks up
+  each origin system the first time you open it (see below).
+
+**Remember answers instead of asking again.**
+- Rare Goods: a system's controlling Power is cached for the whole EDMC session, and failed lookups
+  are cached too, so a dead network isn't hit on every redraw. Lookups run at most 5 at a time.
+- Canonn site lists are downloaded once per session. The Codex catalogue is saved on disk
+  (`codex_catalog.json`) and reused for 14 days.
+- Earth-like-world rarity is remembered per system for the session, and EDSM upload status per
+  system for 10 minutes, so re-selecting the same target costs no extra calls.
+- The Boxel Survey keeps a local log of systems you've visited, so the Random button never spends an
+  EDSM call on a system it already knows you've been to.
+
+**Hard limits on how much one click can do.**
+- A skip-check run (Sequence mode) makes at most 20 EDSM lookups. Random makes at most 20, and at
+  most 3 per anchor system. Sequence's automatic "nearest real system" suggestion happens only in
+  response to your own clicks, at most once per 3 **Next** clicks in a row with no jump.
+- EDSM nearby-system queries use a 100 ly cube, half the documented 200 ly maximum.
+- Reordering a Waypoint Route uses one bulk coordinate request for the whole list, not one per system.
+
+**One at a time, and no retry loops.**
+- Each lookup carries a generation number, so a newer request supersedes an older one and a stale
+  result is dropped. Region Sweep's auto-discover only fires when the queue is nearly empty, and only
+  one lookup is ever in flight (so at most one per jump).
+- A failed request returns "no result" and is not retried. The only repeat is the BGS tick's next
+  scheduled poll, a minute later.
+- Every request has a timeout (8 to 60 seconds), so a slow service never leaves a request hanging.
+
+**Fewer calls by design.**
+- The Rare Goods list is bundled, with EDSM coordinates and Inara and Spansh ids looked up once, so
+  those aren't requested at runtime. The exobiology and region tables are bundled for the same reason.
+- Only documented APIs and published data files are used, never page scraping.
+
+**If you add a network call,** follow the same rules: opt-in or user-triggered, cache what you can,
+cap what one action can do, set a timeout, and identify WNTB with `http_identity.user_agent()`.
+
+**Support the services.** These services are funded by their authors and their supporters. If WNTB is
+useful to you, please consider supporting them as I do: [EDSM](https://www.patreon.com/EDSM), [Spansh](https://www.patreon.com/cw/spansh) and [Inara](https://www.patreon.com/cw/artieinara).
 
 ## 12. Feature notes
 

@@ -13,6 +13,11 @@ launch as v1.0.0.
 - Missions and Mining code reorganised for clarity and easier maintenance, with no change to how they behave.
 - More unit tests for Missions and Mining.
 - Documentation brought up to date across the README and `docs/`.
+- Fewer web requests: Earth-like-world rarity and EDSM upload-status lookups are now remembered, so
+  repeating them for the same system costs no extra calls. Every request to an outside service now says
+  it comes from WNTB, with its version and project address.
+- New "Keeping API traffic low" section in `docs/TECHNICAL.md`, and a note in the README on supporting
+  the services WNTB uses.
 
 ### Codex Completionist: sorting, Not found tab, references
 - **Found** tab: click the **Entry** heading to sort A–Z / Z–A and **Times found** for most/least found first.

@@ -31,9 +31,11 @@ import json
 import urllib.parse
 import urllib.request
 
+from . import http_identity
+
 SYSTEMS_SEARCH_URL = "https://spansh.co.uk/api/systems"
 REQUEST_TIMEOUT_S = 20
-_USER_AGENT = "WNTB-region-sweep-spansh"
+_USER_AGENT = http_identity.user_agent("region-sweep")
 
 
 def search_boxel_systems(sector: str, cube_id: str, mass_code: str = "") -> list[str]:

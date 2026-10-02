@@ -22,7 +22,7 @@ from zipfile import ZipFile
 import requests
 from config import appname, config
 
-from . import __version__
+from . import __version__, http_identity
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -31,7 +31,7 @@ RELEASES_API_URL = "https://api.github.com/repos/rwharpernc/wayward-nomads-toolb
 RELEASES_PAGE_URL = "https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest"
 REQUEST_TIMEOUT_S = 15
 DOWNLOAD_TIMEOUT_S = 60
-HEADERS = {"User-Agent": "WNTB-auto-update"}
+HEADERS = {"User-Agent": http_identity.user_agent("auto-update")}
 
 CONFIG_AUTO_UPDATE = "wntb_auto_update"
 CONFIG_LAST_VERSION = "wntb_last_version"

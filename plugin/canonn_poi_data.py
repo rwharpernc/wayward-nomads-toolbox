@@ -29,6 +29,8 @@ import urllib.request
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
+from . import http_identity
+
 THARGOID_SITES_URL = (
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFRhsa3g0tpYFkqyBR2HrfUjXfjW6gSRnnDhFtVtPlWtpuNAHKujI5fH6Lnh3ctt0SAyNywnesv8H_"
     "/pub?gid=1675294629&single=true&output=tsv"
@@ -36,7 +38,7 @@ THARGOID_SITES_URL = (
 GUARDIAN_SITES_URL = "https://drive.google.com/uc?id=1m8q9lE4_cAI8CotM-oaEm5RWHeeJjoil"
 
 REQUEST_TIMEOUT_S = 30
-_USER_AGENT = "WNTB-canonn-poi-data"
+_USER_AGENT = http_identity.user_agent("canonn-poi")
 
 
 @dataclass(frozen=True)

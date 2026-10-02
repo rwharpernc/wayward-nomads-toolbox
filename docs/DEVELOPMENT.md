@@ -71,6 +71,9 @@ feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and is
 3. Anything that can size the main window (images, long text) needs a fixed upper bound on every
    dimension. Section 5 explains why.
 4. Prefix config keys and overlay ids with `wntb_<feature>_`.
+   Any new network call must follow the API-usage rules in
+   [TECHNICAL.md](TECHNICAL.md#keeping-api-traffic-low): opt-in or user-triggered, cached, capped, with a
+   timeout, and identified through `http_identity.user_agent()`.
 5. Update the README, the changelog and any affected docs in the same change.
 
 ### Using other people's work

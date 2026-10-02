@@ -27,6 +27,8 @@ import requests
 
 from config import appname, user_agent
 
+from . import http_identity
+
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
@@ -38,7 +40,7 @@ BODIES_URL = "https://www.edsm.net/api-system-v1/bodies"
 # "python-requests/X.Y" gets a 403) — confirmed by hitting this exact 403
 # during field testing, and by EDMC's own bundled edsm.py plugin setting
 # this same config.user_agent on its session for the same reason.
-REQUEST_HEADERS = {"User-Agent": user_agent}
+REQUEST_HEADERS = {"User-Agent": f"{user_agent} {http_identity.user_agent('edsm')}"}
 # EDSM caps this endpoint's cube edge length at 200 ly. 100 is a middle
 # ground: wide enough to usually catch a few procedural systems, narrow
 # enough to keep the response small and the query fast.
