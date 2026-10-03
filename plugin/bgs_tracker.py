@@ -1,6 +1,6 @@
-"""BGS (Background Simulation) tracking — pure logic (no Tk, no network),
-same split as organic_scan.py. Covers all four phases from
-docs/BGS_TECH_SPEC.md:
+"""BGS (Background Simulation) tracking — pure parsing (no Tk, no network),
+same split as organic_scan.py. The per-tick bookkeeping that uses these
+parsers is in bgs_ledger.py; see docs/BGS_TECH_SPEC.md. Covers:
 
 - Phase 1: faction-state *snapshots* (`FactionSnapshot`) from the
   `Factions[]` array every FSDJump/Location/CarrierJump event carries.
@@ -9,7 +9,7 @@ docs/BGS_TECH_SPEC.md:
   accumulated into `FactionActivity`.
 - Phase 4: trade and exploration-data-sale credit extraction
   (`market_buy_cost`/`market_sell_proceeds`/`exploration_sale_value`) - bare
-  field reads only; station-faction attribution happens in bgs_panel.py
+  field reads only; station-faction attribution happens in bgs_ledger.py
   since it spans two separate events (`Docked` then `MarketBuy`/etc).
 
 Nothing here (or anywhere in BGS mode) is gated on a "tracked" list any more:
@@ -18,7 +18,7 @@ report shows the systems that have activity (plus the current one).
 
 Field semantics (Trend → +INF/-INF, `Factions[]` vs. single `Faction` on
 `RedeemVoucher`, station-faction attribution for trade/exploration) were
-checked against real journal entries - see docs/BGS_TECH_SPEC.md. Phase 3 (tick detection) is the one piece with a real network
+checked against real journal entries - see docs/BGS_TECH_SPEC.md. Tick detection is the one piece with a real network
 call, and lives entirely in bgs_tick_client.py/bgs_panel.py instead of
 here - this module stays pure.
 """
