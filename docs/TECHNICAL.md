@@ -716,8 +716,8 @@ Things that cost time once and are recorded so they don't again.
 `pack` inside one always fails with "cannot use geometry manager pack inside ... which already has slaves
 managed by grid". A feature whose `build_settings` raises takes the whole WNTB Settings tab down with it
 (`Failed for Plugin "WNTB"` in the EDMC log), on Windows and Linux. Use `grid` inside `nb.Frame`s, or pack
-into a plain `tk.Frame` as `autohonk.py`'s rows do. This shipped once in 1.1.3 because the unit-test
-stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every tab with stand-ins that do, and
+into a plain `tk.Frame` as `autohonk.py`'s rows do. This shipped once, in a build that was withdrawn, because the
+unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every tab with stand-ins that do, and
 `tests/test_settings_layout.py` fails on any `pack` into an `nb.Frame`.
 
 ## 16. Adding a feature
