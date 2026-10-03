@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.1.3 - 2026-10-03
 
 ### Fixed
 - **Linux: screenshots were not found.** Elite writes the screenshot path with Windows backslashes even under
