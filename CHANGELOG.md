@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.1.5 - 2026-10-03
+
+### Fixed
+- BGS: mission influence is now credited to the system it actually lands in, not the system the mission was
+  handed in at. Each influence entry's `SystemAddress` is resolved to a system (as BGSTally does); if it is
+  unknown, the issuing faction's influence goes to the system the mission was accepted in, and only as a last
+  resort to the hand-in system. See `docs/BGS_TECH_SPEC.md` section 4.2.
+
 ## 1.1.4 - 2026-10-03
 
 ### Added
