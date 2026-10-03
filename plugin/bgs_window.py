@@ -37,7 +37,7 @@ from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
-from .uikit.widgets import Combobox, FlatButton, Tabs
+from .uikit.widgets import Combobox, FlatButton, SuggestEntry, Tabs
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -53,7 +53,7 @@ whole name, so this is only a guard against pasted junk."""
 
 LEGEND = (
     f"TABS: the last {RECENT_SYSTEMS} systems you've been in, plus any you pin (☆ Pin keeps a system's "
-    "tab; ✕ Close tab hides it; Add system brings one back). WHAT YOU DID: Missions = completed, "
+    "tab; ✕ Close tab hides it; Show a system - pick from the list or type a name - brings one back). WHAT YOU DID: Missions = completed, "
     "with influence pips gained/lost (Frontier gives +/- pips, not exact percentages). "
     "Failed/Abandoned = missions that cost the issuing faction influence. Bounties and Combat bonds = "
     "voucher value redeemed. Trade = sold minus bought (negative is a loss). Exploration = data sold. "
@@ -217,12 +217,8 @@ class BgsWindow:
 
         FlatButton(picker, "Add system", self._on_add, kind="normal").pack(side="right")
         self._add_var = tk.StringVar()
-        add_entry = tk.Entry(
-            picker, textvariable=self._add_var, width=28, relief="flat", bd=0, highlightthickness=1,
-            highlightbackground=P.LINE, highlightcolor=P.ACCENT, bg=P.CARD, fg=P.TEXT,
-            insertbackground=P.TEXT)
-        add_entry.pack(side="right", padx=(0, 6), ipady=4)
-        add_entry.bind("<Return>", lambda _e: self._on_add())
+        SuggestEntry(picker, self._add_var, self.known_systems, self._on_add, width=28).pack(
+            side="right", padx=(0, 6))
         tk.Label(picker, text="SHOW A SYSTEM", fg=P.MUTED, bg=P.BG,
                  font=style.font(P.FONT_SMALL)).pack(side="right", padx=(0, 6))
 
@@ -247,6 +243,16 @@ class BgsWindow:
     def lift(self) -> None:
         self._toplevel.deiconify()
         self._toplevel.lift()
+
+    def known_systems(self) -> List[str]:
+        """Every system the report has data for or the commander pinned, most
+        recently visited first (the live period leads), for the Show a
+        system box's dropdown and type-ahead."""
+        seen: Dict[str, str] = {}
+        for view in self._views:
+            for name in view.systems(self._current_system, self._pinned):
+                seen.setdefault(name.casefold(), name)
+        return list(seen.values())
 
     @staticmethod
     def _key(view: PeriodView) -> Tuple:

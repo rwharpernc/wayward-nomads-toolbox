@@ -21,7 +21,8 @@ BGS (Powerplay and Colonization are out of scope, handled elsewhere or not at al
 - **Report tabs**: the last `RECENT_SYSTEMS` (6) systems visited (any system seen in the period's
   faction data or with activity; the current one first) plus the commander's **pinned** systems (first,
   starred, always shown, in every period). **Close tab** adds a system to `hidden_systems` (and unpins it);
-  **Add system** pins it and un-hides it. Both lists are per commander in `bgs_state.json`
+  **Add system** (the "Show a system" box: a `SuggestEntry` with a dropdown of every known system and
+  type-ahead filtering, free text allowed) pins it and un-hides it. Both lists are per commander in `bgs_state.json`
   (`pinned_systems`, `hidden_systems`). Archived periods only hold faction data for systems with activity,
   so their recent list is those systems. Copy Summary ignores the limit and hidden list.
 - **Per-commander** persistence that survives a relog and a full EDMC restart.

@@ -14,8 +14,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - BGS now counts decreases as well as increases: failed and abandoned missions, trade losses, and crimes
   against a faction, alongside the existing mission INF (+/-), vouchers, trade and exploration data.
 - **Report tabs**: they show the last 6 systems you've been in, each with its full name. **Pin** keeps a
-  system's tab (marked with a star) at the front; **Close tab** hides one; **Add system** shows any system by
-  name (it pins it, and brings back a closed tab). The panel shows the star when you're in a pinned system.
+  system's tab (marked with a star) at the front; **Close tab** hides one; **Show a system** shows any system (it pins it,
+  and brings back a closed tab): pick from a dropdown of every system you've been in, or type and the list
+  filters as you go. The panel shows the star when you're in a pinned system.
   Pins and closed tabs are saved per commander.
 - The report's activity columns have plain-English headings, and a key at the bottom of the window explains
   each one.

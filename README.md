@@ -381,8 +381,10 @@ from the archive) and one tab per system you've acted in during it. Each tab lis
 Tabs show the last 6 systems you've been in (the one you're in first), with each tab's full system name.
 Click **Pin** on a tab to keep it: a pinned system (marked ★) stays at the front however long ago you were
 there, and shows a ★ on the panel when you're in it. **Close tab** hides one you don't want. To show any
-system by name, type it in the **Show a system** box and click **Add system** - that pins it, and it's also
-how you bring back a closed tab. A key at the bottom of the window explains the tabs and every column. **Copy Summary** copies every tick and system as plain text.
+system, use the **Show a system** box: click its arrow to pick from every system you've been in, or
+just start typing and the list narrows as you type (names starting with what you typed come first). Press
+Enter or click **Add system** - that pins it, and it's also how you bring back a closed tab. Any name can
+be typed, not only ones from the list. A key at the bottom of the window explains the tabs and every column. **Copy Summary** copies every tick and system as plain text.
 
 **Resets and history:** the totals reset at each tick and the closed tick is archived. When EDMC starts,
 WNTB re-reads your last few journals so the totals are cumulative since the tick even if EDMC wasn't

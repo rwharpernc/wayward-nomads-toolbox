@@ -535,3 +535,147 @@ class ProgressBar(tk.Canvas):
         self.create_rectangle(0, 0, width, height, fill=P.BG, outline="")
         if self._percent > 0:
             self.create_rectangle(0, 0, width * self._percent / 100, height, fill=self._colour, outline="")
+
+
+def suggestions(values: Sequence[str], text: str, limit: int = 200) -> list[str]:
+    """Entries of `values` matching what has been typed, best first: names
+    that start with it, then names that merely contain it (case-insensitive,
+    original order kept within each group). Empty text matches everything."""
+    needle = text.strip().casefold()
+    if not needle:
+        return list(values)[:limit]
+    starts = [v for v in values if v.casefold().startswith(needle)]
+    contains = [v for v in values if needle in v.casefold() and not v.casefold().startswith(needle)]
+    return (starts + contains)[:limit]
+
+
+class SuggestEntry(tk.Frame):
+    """A text box that suggests from a list as you type, with a drop-arrow
+    that shows the whole list. Unlike `Combobox` its popup never takes the
+    keyboard focus, so you can keep typing while it filters. Down/Up move
+    through the suggestions, Enter takes the highlighted one (or the typed
+    text when none is highlighted) and calls `on_submit`, Escape closes the
+    list. The text isn't restricted to the list: any typed name is allowed.
+
+    `values()` is asked for the list each time the popup opens or the text
+    changes, so it can reflect data that changed since the box was built."""
+
+    _MAX_ROWS = 10
+
+    def __init__(self, parent: tk.Misc, textvariable: tk.StringVar, values: Callable[[], Sequence[str]],
+                 on_submit: Callable[[], None], width: int = 28) -> None:
+        super().__init__(parent, bg=P.CARD, highlightthickness=1, highlightbackground=P.LINE,
+                         highlightcolor=P.ACCENT)
+        self._var = textvariable
+        self._values = values
+        self._on_submit = on_submit
+        self._popup: Optional[tk.Toplevel] = None
+        self._listbox: Optional[tk.Listbox] = None
+        self._outside_binding: Optional[str] = None
+        self.entry = tk.Entry(self, textvariable=textvariable, width=width, relief="flat", bd=0,
+                              highlightthickness=0, bg=P.CARD, fg=P.TEXT, insertbackground=P.TEXT,
+                              selectbackground=P.SELECT, selectforeground=P.TEXT)
+        self.entry.pack(side="left", fill="x", expand=True, padx=(6, 0), pady=3)
+        self._arrow = tk.Label(self, text="▾", fg=P.MUTED, bg=P.CARD, padx=7, cursor="hand2")
+        self._arrow.pack(side="right", fill="y")
+        self._arrow.bind("<Button-1>", lambda _e: self._toggle_all())
+        self.entry.bind("<KeyRelease>", self._on_key)
+        self.entry.bind("<Down>", lambda _e: self._move(1))
+        self.entry.bind("<Up>", lambda _e: self._move(-1))
+        self.entry.bind("<Return>", self._on_return)
+        self.entry.bind("<Escape>", lambda _e: self._close())
+        self.entry.bind("<FocusOut>", lambda _e: self.after(150, self._close))
+        self.bind("<Destroy>", lambda _e: self._close(), add="+")
+
+    # --- typing ----------------------------------------------------------------
+    def _on_key(self, event: tk.Event) -> None:
+        if event.keysym in ("Return", "Escape", "Up", "Down", "Tab", "Shift_L", "Shift_R",
+                            "Control_L", "Control_R", "Alt_L", "Alt_R"):
+            return
+        self._show(suggestions(self._values(), self._var.get()))
+
+    def _on_return(self, _event: tk.Event) -> str:
+        picked = self._selected()
+        if picked is not None:
+            self._var.set(picked)
+        self._close()
+        self._on_submit()
+        return "break"
+
+    def _toggle_all(self) -> None:
+        if self._popup:
+            self._close()
+        else:
+            self.entry.focus_set()
+            self._show(list(self._values()))
+
+    def _move(self, step: int) -> str:
+        if not self._popup:
+            self._show(suggestions(self._values(), self._var.get()))
+        listbox = self._listbox
+        if listbox is not None and listbox.size():
+            current = listbox.curselection()
+            index = (current[0] + step) if current else (0 if step > 0 else listbox.size() - 1)
+            index = max(0, min(listbox.size() - 1, index))
+            listbox.selection_clear(0, "end")
+            listbox.selection_set(index)
+            listbox.see(index)
+        return "break"
+
+    def _selected(self) -> Optional[str]:
+        if self._listbox is None:
+            return None
+        selection = self._listbox.curselection()
+        return self._listbox.get(selection[0]) if selection else None
+
+    # --- popup -----------------------------------------------------------------
+    def _show(self, items: Sequence[str]) -> None:
+        if not items:
+            self._close()
+            return
+        if not self._popup:
+            popup = tk.Toplevel(self)
+            popup.overrideredirect(True)
+            popup.configure(bg=P.LINE)
+            listbox = tk.Listbox(popup, exportselection=False, bg=P.CARD, fg=P.TEXT,
+                                 selectbackground=P.SELECT, selectforeground=P.TEXT, activestyle="none",
+                                 relief="flat", highlightthickness=0, bd=0)
+            listbox.pack(padx=1, pady=1, fill="both", expand=True)
+            listbox.bind("<ButtonRelease-1>", lambda _e: self._pick())
+            self._popup, self._listbox = popup, listbox
+            self._outside_binding = self.winfo_toplevel().bind("<Button-1>", self._outside_click, add="+")
+        listbox = self._listbox
+        assert listbox is not None and self._popup is not None
+        listbox.delete(0, "end")
+        for item in items:
+            listbox.insert("end", item)
+        listbox.configure(height=min(len(items), self._MAX_ROWS))
+        self._popup.geometry(f"{self.winfo_width()}x{listbox.winfo_reqheight() + 2}"
+                             f"+{self.winfo_rootx()}+{self.winfo_rooty() + self.winfo_height()}")
+        self._popup.lift()
+
+    def _pick(self) -> None:
+        picked = self._selected()
+        if picked is not None:
+            self._var.set(picked)
+            self._close()
+            self._on_submit()
+
+    def _outside_click(self, event: tk.Event) -> None:
+        if self._popup and not str(event.widget).startswith(str(self._popup)) \
+                and event.widget not in (self._arrow, self.entry):
+            self._close()
+
+    def _close(self) -> None:
+        popup, self._popup, self._listbox = self._popup, None, None
+        if self._outside_binding is not None:
+            try:
+                self.winfo_toplevel().unbind("<Button-1>", self._outside_binding)
+            except tk.TclError:
+                pass
+            self._outside_binding = None
+        if popup is not None:
+            try:
+                popup.destroy()
+            except tk.TclError:
+                pass
