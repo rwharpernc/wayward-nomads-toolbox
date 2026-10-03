@@ -94,6 +94,10 @@ class BgsController:
         self._ledger = TickLedger()
         self._archive: List[Dict[str, Any]] = []
         """Closed tick periods, newest first (bgs_ledger.TickLedger.archive_record)."""
+        self._pinned: List[str] = []
+        """Systems the commander pinned in the report: always given a tab."""
+        self._hidden: List[str] = []
+        """Systems whose tab the commander closed (Add system brings one back)."""
 
         self._tick_current: Optional[str] = None  # newest tick the API reported this session
         self._tick_queue: "queue.Queue[Tuple[int, Optional[str], Optional[str]]]" = queue.Queue()
@@ -142,6 +146,8 @@ class BgsController:
             # A pre-ledger state file: its last-seen tick is still the best
             # guess at when this period began.
             self._ledger.set_tick_start((data.get("tick") or {}).get("last_seen_at"))
+        self._pinned = self._load_names(data.get("pinned_systems"))
+        self._hidden = self._load_names(data.get("hidden_systems"))
         raw_archive = data.get("archive")
         self._archive = [r for r in raw_archive if isinstance(r, dict)] if isinstance(raw_archive, list) else []
         self._archive = bgs_ledger.prune_archive(self._archive, datetime.now(timezone.utc), archive_days())
@@ -157,6 +163,8 @@ class BgsController:
         bgs_state.save_state(self._plugin_dir, self._cmdr, {
             "ledger": self._ledger.to_dict(),
             "archive": self._archive,
+            "pinned_systems": self._pinned,
+            "hidden_systems": self._hidden,
         })
 
     # --- journal dispatch -----------------------------------------------
@@ -187,12 +195,52 @@ class BgsController:
         return [self._ledger.view(current=True)] + [bgs_ledger.view_from_archive(r) for r in self._archive]
 
     def _refresh_report_window(self) -> None:
-        bgs_window.refresh_if_open(self._views(), self._ledger.current_system)
+        bgs_window.refresh_if_open(self._views(), self._ledger.current_system, self._pinned, self._hidden)
 
     def _on_view_report(self) -> None:
         if self._parent is None:
             return
-        bgs_window.show(self._parent, self._views(), self._ledger.current_system)
+        bgs_window.show(
+            self._parent, self._views(), self._ledger.current_system, self._pinned, self._hidden,
+            bgs_window.TabActions(self._toggle_pin, self._close_tab, self._add_system),
+        )
+
+    @staticmethod
+    def _load_names(raw: Any) -> List[str]:
+        return [str(n) for n in raw if n] if isinstance(raw, list) else []
+
+    @staticmethod
+    def _without(names: List[str], system: str) -> List[str]:
+        return [n for n in names if n.casefold() != system.casefold()]
+
+    def _toggle_pin(self, system: str) -> None:
+        """Pin a system's tab so it always shows, or unpin it."""
+        if bgs_format.is_pinned(system, self._pinned):
+            self._pinned = self._without(self._pinned, system)
+        else:
+            self._pinned.append(system)
+            self._hidden = self._without(self._hidden, system)
+        self._after_tab_change()
+
+    def _close_tab(self, system: str) -> None:
+        """Hide a system's tab (unpinning it too)."""
+        self._pinned = self._without(self._pinned, system)
+        if not bgs_format.is_pinned(system, self._hidden):
+            self._hidden.append(system)
+        self._after_tab_change()
+
+    def _add_system(self, name: str) -> None:
+        """Show a system by name: pins it (so it stays) and un-hides it."""
+        known = {n.casefold(): n for view in self._views() for n in view.systems()}
+        system = known.get(name.casefold(), name)
+        self._hidden = self._without(self._hidden, system)
+        if not bgs_format.is_pinned(system, self._pinned):
+            self._pinned.append(system)
+        self._after_tab_change()
+
+    def _after_tab_change(self) -> None:
+        self._persist()
+        self._refresh_display()
 
     # --- tick handling + journal replay ----------------------------------
 
@@ -370,7 +418,8 @@ class BgsController:
         ledger = self._ledger
         if not ledger.current_system:
             return "Current system: (unknown — jump somewhere first)"
-        header = bgs_format.clip(ledger.current_system, 40)
+        star = "★ " if bgs_format.is_pinned(ledger.current_system, self._pinned) else ""
+        header = star + bgs_format.clip(ledger.current_system, 40)
         factions = ledger.current_system_factions
         if factions is None:
             return f"{header} — waiting on faction data..."

@@ -161,7 +161,7 @@ class RollTests(unittest.TestCase):
 
 
 class ViewTests(unittest.TestCase):
-    def test_systems_with_activity_get_tabs_current_system_first(self) -> None:
+    def test_visited_systems_are_listed_most_recent_first_current_leading(self) -> None:
         ledger = bgs_ledger.TickLedger(TICK)
         ledger.process(_jump("2026-10-03T04:00:00Z", "Sol", 0.4))
         ledger.process(_mission("2026-10-03T04:10:00Z", "Alpha Party", mission_id=1))
@@ -170,7 +170,41 @@ class ViewTests(unittest.TestCase):
         ledger.process(_jump("2026-10-03T06:00:00Z", "Empty Space", 0.4))
         view = ledger.view()
         self.assertEqual(view.systems("Empty Space"), ["Empty Space", "Achenar", "Sol"])
-        self.assertEqual(view.systems(None), ["Achenar", "Sol"])
+        self.assertEqual(view.systems(None), ["Empty Space", "Achenar", "Sol"])
+
+    def _visit_many(self, names: list) -> bgs_ledger.TickLedger:
+        ledger = bgs_ledger.TickLedger(TICK)
+        for index, name in enumerate(names):
+            ledger.process(_jump(f"2026-10-03T{4 + index:02d}:00:00Z", name, 0.4))
+        return ledger
+
+    def test_only_the_most_recent_systems_get_tabs_current_first(self) -> None:
+        names = [f"System {n}" for n in range(1, 10)]
+        view = self._visit_many(names).view()
+        shown = view.systems("System 9", limit=bgs_ledger.RECENT_SYSTEMS)
+        self.assertEqual(shown, ["System 9", "System 8", "System 7", "System 6", "System 5", "System 4"])
+        self.assertEqual(len(view.systems("System 9")), 9)  # no limit: everything (Copy Summary)
+
+    def test_pinned_systems_always_show_in_addition_to_the_recent_ones(self) -> None:
+        view = self._visit_many([f"System {n}" for n in range(1, 10)]).view()
+        shown = view.systems("System 9", ["system 1", "Quiet Place"], limit=6)
+        self.assertEqual(shown[:2], ["Quiet Place", "System 1"])  # pinned first, data's spelling kept
+        self.assertEqual(len(shown), 8)
+
+    def test_hidden_systems_are_skipped_but_pinned_wins_over_nothing(self) -> None:
+        view = self._visit_many([f"System {n}" for n in range(1, 10)]).view()
+        shown = view.systems("System 9", [], ["system 8"], limit=3)
+        self.assertEqual(shown, ["System 9", "System 7", "System 6"])
+
+    def test_summary_marks_pinned_systems_and_includes_all(self) -> None:
+        ledger = bgs_ledger.TickLedger(TICK)
+        ledger.process(_jump("2026-10-03T04:00:00Z", "Sol", 0.4))
+        ledger.process(_mission("2026-10-03T04:10:00Z", "Alpha Party", mission_id=1))
+        ledger.process(_jump("2026-10-03T05:00:00Z", "Achenar", 0.4))
+        text = bgs_format.summary_text([ledger.view()], "Achenar", ["Sol"])
+        self.assertIn("★ Sol:", text)
+        self.assertIn("Achenar:", text)
+        self.assertNotIn("★ Achenar:", text)
 
     def test_summary_text_covers_each_period_and_system(self) -> None:
         ledger = bgs_ledger.TickLedger(TICK)

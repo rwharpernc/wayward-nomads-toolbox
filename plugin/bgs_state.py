@@ -18,6 +18,8 @@ Schema (per commander):
             "tracks": {"<system>|<faction> (casefold)": {"system", "faction", "before", "now"}},
             "open_missions": {"<MissionID>": ["<faction>", "<system>"]}
         },
+        "pinned_systems": ["System Name", ...],    # starred in the report; always get a tab
+        "hidden_systems": ["System Name", ...],    # tabs the commander closed
         "archive": [           # closed tick periods, newest first, pruned to the archive-days setting
             {"tick_start", "tick_end", "activity": {...}, "tracks": {...}}
         ]
@@ -45,6 +47,8 @@ STATE_FILENAME = "bgs_state.json"
 _DEFAULT_STATE: Dict[str, Any] = {
     "ledger": {"tick_start": None, "activity": {}, "tracks": {}, "open_missions": {}},
     "archive": [],
+    "pinned_systems": [],
+    "hidden_systems": [],
 }
 
 

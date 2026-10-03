@@ -409,12 +409,17 @@ class Combobox(tk.Frame):
 
 class Tabs(tk.Frame):
     """A flat tab bar with an amber underline on the selected tab.
-    `add(title)` returns the tab's content frame."""
+    `add(title)` returns the tab's content frame. With `wrap=True` the bar
+    flows onto extra rows when the tabs don't fit the width (for a variable
+    number of tabs with long titles); otherwise it's a single row."""
 
-    def __init__(self, parent: tk.Misc, bg: str = P.BG) -> None:
+    def __init__(self, parent: tk.Misc, bg: str = P.BG, wrap: bool = False) -> None:
         super().__init__(parent, bg=bg)
+        self._wrap = wrap
         self._bar = tk.Frame(self, bg=bg)
         self._bar.pack(fill="x")
+        if wrap:
+            self._bar.bind("<Configure>", lambda _e: self._reflow())
         tk.Frame(self, bg=P.LINE, height=1).pack(fill="x")
         self._stage = tk.Frame(self, bg=P.PANE)
         self._stage.pack(fill="both", expand=True)
@@ -426,7 +431,10 @@ class Tabs(tk.Frame):
     def add(self, title: str) -> tk.Frame:
         index = len(self._tabs)
         cell = tk.Frame(self._bar, bg=P.BG)
-        cell.pack(side="left")
+        if self._wrap:
+            self.after_idle(self._reflow)
+        else:
+            cell.pack(side="left")
         label = tk.Label(cell, text=title.upper(), bg=P.BG, fg=P.MUTED, padx=16, pady=8, cursor="hand2",
                          font=style.font(P.FONT_BOLD))
         label.pack()
@@ -445,6 +453,25 @@ class Tabs(tk.Frame):
     def selected(self) -> int:
         return self._selected
 
+    def _reflow(self) -> None:
+        """Wrapping bars only: lay the visible tabs out in rows that fit."""
+        if not self.winfo_exists():
+            return
+        width = self._bar.winfo_width()
+        if width <= 1:
+            return  # not laid out yet; <Configure> calls back once it is
+        used = row = column = 0
+        for cell, shown in zip(self._cells, self._visible):
+            if not shown:
+                cell.grid_forget()
+                continue
+            needed = cell.winfo_reqwidth()
+            if column and used + needed > width:
+                row, used, column = row + 1, 0, 0
+            cell.grid(row=row, column=column, sticky="w")
+            used += needed
+            column += 1
+
     def set_tab_visible(self, index: int, visible: bool) -> None:
         """Show or hide a tab (e.g. a Carrier tab only once you own one). Hiding
         the selected tab moves the selection to the first tab still shown."""
@@ -452,9 +479,16 @@ class Tabs(tk.Frame):
             return
         self._visible[index] = visible
         if visible:
-            self._cells[index].pack(side="left")
+            if self._wrap:
+                self._reflow()
+            else:
+                self._cells[index].pack(side="left")
         else:
-            self._cells[index].pack_forget()
+            if self._wrap:
+                self._cells[index].grid_forget()
+                self._reflow()
+            else:
+                self._cells[index].pack_forget()
             if self._selected == index:
                 self.select(next(i for i, shown in enumerate(self._visible) if shown))
 
