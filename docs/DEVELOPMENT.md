@@ -8,8 +8,8 @@ How to set up, build, test and try out changes to WNTB. If you just want to *use
 
 - **Python 3** (a recent version; the code uses modern type hints). The plugin itself runs inside
   EDMC's own Python, so you only need your own copy to run the tests and checks.
-- **Node.js**, for the two small build scripts (`npm run build` and `npm run package`). Node is only
-  used to copy and zip files. There is nothing to install with `npm install`.
+- **Node.js** (22.2 or newer), for the small build scripts (`npm run build`, `deploy` and `package`).
+  Node is only used to copy and zip files. There is nothing to install with `npm install`.
 - **[EDMC](https://github.com/EDCD/EDMarketConnector)**, to try the plugin for real.
 - **Git**, to get the code and share changes.
 
@@ -34,10 +34,17 @@ npm run package    # builds, then zips the contents of dist/WNTB into dist/WNTB.
 `package.json`).
 ## Try your changes in EDMC
 
-1. Run `npm run build`.
-2. Copy the *contents* of `dist/WNTB` into EDMC's plugins folder as `WNTB`
-   (on Windows, `%LOCALAPPDATA%\EDMarketConnector\plugins\WNTB`).
-3. Restart EDMC. It loads plugin code at start-up, so every change needs a restart.
+1. Run `npm run deploy`. It builds, detects which OS you are on, and merges the result into EDMC's
+   plugins folder as `WNTB`:
+   - Windows: `%LOCALAPPDATA%\EDMarketConnector\plugins`
+   - Linux: `~/.local/share/EDMarketConnector/plugins`, or the Flatpak equivalent
+     (`~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/plugins`), whichever exists
+   - macOS: `~/Library/Application Support/EDMarketConnector/plugins`
+
+   For a non-standard location, set `WNTB_PLUGINS_DIR` or pass `--plugins-dir <path>`
+   (`node scripts/build.mjs --install --plugins-dir <path>`). `npm run build` alone just builds and
+   prints where it would copy to.
+2. Restart EDMC. It loads plugin code at start-up, so every change needs a restart.
 
 **Merge the files; don't delete and re-copy the folder.** A live plugin folder also holds per-commander
 data and plugin-managed files that aren't part of the build (saved hotspots, sessions, logs, backups,

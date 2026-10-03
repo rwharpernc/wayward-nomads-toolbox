@@ -2,13 +2,18 @@
 /**
  * Build WNTB into dist/WNTB for copying into the EDMC plugins folder.
  *
- * Usage:  node scripts/build.mjs
+ * Usage:  node scripts/build.mjs [--install] [--plugins-dir <path>]
  * Output: dist/WNTB/
+ *
+ * --install copies the build into EDMC's plugins folder for the OS you are on
+ * (see env.mjs), merging over existing files and leaving everything else in
+ * the live folder (saved data, logs, backups) alone.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { platformName, resolvePluginsDir } from "./env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
@@ -52,6 +57,25 @@ const version = fs
   .match(/__version__\s*=\s*["']([^"']+)["']/)?.[1];
 
 console.log(`Built WNTB v${version ?? "?"} -> ${outputDir}`);
+const args = process.argv.slice(2);
+const dirFlag = args.indexOf("--plugins-dir");
+const target = resolvePluginsDir(dirFlag >= 0 ? args[dirFlag + 1] : undefined);
+const installDir = path.join(target.dir, "WNTB");
+
+console.log(`Environment: ${target.label === "override" ? `${platformName()} (custom plugins folder)` : target.label}`);
 console.log("");
-console.log("Copy to EDMC plugins folder:");
-console.log("  %LOCALAPPDATA%\\EDMarketConnector\\plugins\\WNTB");
+
+if (args.includes("--install")) {
+  if (!target.exists) {
+    console.error(`EDMC plugins folder not found: ${target.dir}`);
+    console.error("Run EDMC once so it creates it, or set WNTB_PLUGINS_DIR / --plugins-dir.");
+    process.exit(1);
+  }
+  copyRecursive(outputDir, installDir);
+  console.log(`Installed -> ${installDir}`);
+  console.log("Restart EDMC to load the changes.");
+} else {
+  console.log("Copy to EDMC plugins folder:");
+  console.log(`  ${installDir}${target.exists ? "" : "  (folder not found on this machine)"}`);
+  console.log("Or run `npm run deploy` to build and copy it there automatically.");
+}
