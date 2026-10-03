@@ -18,6 +18,12 @@ BGS (Powerplay and Colonization are out of scope, handled elsewhere or not at al
 - **Per-tick**: totals reset at each tick and the closed tick is archived for a configurable number of
   days (`wntb_bgs_archive_days`, default 7, 1-90). On start the current period is rebuilt from the
   commander's recent journals, so it is cumulative since the tick even if EDMC wasn't running.
+- **Report tabs**: the last `RECENT_SYSTEMS` (6) systems visited (any system seen in the period's
+  faction data or with activity; the current one first) plus the commander's **pinned** systems (first,
+  starred, always shown, in every period). **Close tab** adds a system to `hidden_systems` (and unpins it);
+  **Add system** pins it and un-hides it. Both lists are per commander in `bgs_state.json`
+  (`pinned_systems`, `hidden_systems`). Archived periods only hold faction data for systems with activity,
+  so their recent list is those systems. Copy Summary ignores the limit and hidden list.
 - **Per-commander** persistence that survives a relog and a full EDMC restart.
 - No "tracked systems/factions" lists: activity is recorded wherever the commander acts. (Earlier
   versions gated everything on those lists; old state files still load and the lists are ignored.)
@@ -54,7 +60,7 @@ bgs_panel.py       Controller + main-panel widgets + Settings tab. Feeds live ev
                     polls the tick (queue.Queue/generation-counter/threading.Thread/after() pattern),
                     runs the journal replay on a worker thread, archives on a new tick.
 bgs_window.py      Report window (uikit): tick drop-down + one tab per system, each with a "Factions"
-                    table and a "What you did" table. Up to 8 tabs (the tab bar doesn't wrap); Copy
+                    table and a "What you did" table. Tabs = last 6 systems + pinned; Copy
                     Summary always has every system.
 ```
 

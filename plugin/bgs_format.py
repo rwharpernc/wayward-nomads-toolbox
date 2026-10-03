@@ -81,9 +81,9 @@ def period_label(view: PeriodView) -> str:
     return f"{when_text(view.tick_start)} → {when_text(view.tick_end)}"
 
 
-def system_lines(view: PeriodView, system: str) -> List[str]:
+def system_lines(view: PeriodView, system: str, pinned: bool = False) -> List[str]:
     """Plain-text block for one system in one period."""
-    lines = [f"{clip(system, 60)}:"]
+    lines = [f"{'★ ' if pinned else ''}{clip(system, 60)}:"]
     tracks = sorted(view.tracks_for(system), key=lambda t: (
         not (t.latest() and t.latest().is_controlling), t.faction.casefold()))
     activity = {a.faction.casefold(): a for a in view.activity_for(system)}
@@ -110,16 +110,21 @@ def system_lines(view: PeriodView, system: str) -> List[str]:
     return lines
 
 
-def summary_text(views: List[PeriodView], current_system: Optional[str]) -> str:
+def is_pinned(system: str, pinned: List[str]) -> bool:
+    return any(system.casefold() == p.casefold() for p in pinned)
+
+
+def summary_text(views: List[PeriodView], current_system: Optional[str], pinned: Optional[List[str]] = None) -> str:
     """Plain-text report (all periods, every system) for Copy Summary -
     Discord/forum-postable without any Discord-specific formatting."""
+    pinned = pinned or []
     out = ["WNTB BGS Report"]
     for view in views:
         out.append(f"\n== {period_label(view)} ==")
-        systems = view.systems(current_system)
+        systems = view.systems(current_system, pinned)  # every system: no tab limit, nothing hidden
         if not systems:
             out.append("  (no activity)")
         for system in systems:
             out.append("")
-            out.extend(system_lines(view, system))
+            out.extend(system_lines(view, system, is_pinned(system, pinned)))
     return "\n".join(out)

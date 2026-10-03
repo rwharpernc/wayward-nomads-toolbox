@@ -31,6 +31,9 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 from . import bgs_tracker
 from .bgs_tracker import FactionActivity, FactionSnapshot, snapshot_key
 
+RECENT_SYSTEMS = 6
+"""How many recently visited systems get a report tab (pinned ones are extra)."""
+
 MAX_OPEN_MISSIONS = 400
 """Cap on remembered accepted-but-unfinished missions (oldest dropped first)
 so an abandoned save can't grow the state file without bound."""
@@ -114,21 +117,39 @@ class PeriodView:
     activity: List[FactionActivity] = field(default_factory=list)
     tracks: List[FactionTrack] = field(default_factory=list)
 
-    def systems(self, current_system: Optional[str] = None) -> List[str]:
-        """Systems to give a tab: those with activity, most recent first;
-        for the live period the system the commander is in comes first."""
+    def systems(
+        self, current_system: Optional[str] = None, pinned: Iterable[str] = (),
+        hidden: Iterable[str] = (), limit: Optional[int] = None,
+    ) -> List[str]:
+        """Systems to give a tab: pinned ones first (always shown, even with
+        no data), then the `limit` most recently visited others - for the
+        live period the system the commander is in leads them - skipping any
+        the commander has hidden. `limit=None` returns every known system."""
         newest: Dict[str, Tuple[str, str]] = {}
+
+        def note(name: str, stamp: str) -> None:
+            key = name.casefold()
+            if key not in newest or stamp > newest[key][0]:
+                newest[key] = (stamp, name)
+
         for act in self.activity:
-            if act.is_empty():
-                continue
-            key = act.system.casefold()
-            if key not in newest or act.last_at > newest[key][0]:
-                newest[key] = (act.last_at, act.system)
-        ordered = [name for _ts, name in sorted(newest.values(), reverse=True)]
+            if not act.is_empty():
+                note(act.system, act.last_at)
+        for track in self.tracks:
+            latest = track.latest()
+            note(track.system, latest.updated_at if latest else "")
+        ordered = [name for _stamp, name in sorted(newest.values(), reverse=True)]
         if self.current and current_system:
             ordered = [s for s in ordered if s.casefold() != current_system.casefold()]
             ordered.insert(0, current_system)
-        return ordered
+
+        pin_list = sorted({p.strip() for p in pinned if p and p.strip()}, key=str.casefold)
+        pin_keys = {p.casefold() for p in pin_list}
+        hide_keys = {h.casefold() for h in hidden if h}
+        known = {name.casefold(): name for name in ordered}  # keep the spelling the data uses
+        starred = [known.get(p.casefold(), p) for p in pin_list]
+        rest = [n for n in ordered if n.casefold() not in pin_keys and n.casefold() not in hide_keys]
+        return starred + (rest if limit is None else rest[:limit])
 
     def activity_for(self, system: str) -> List[FactionActivity]:
         key = system.casefold()
