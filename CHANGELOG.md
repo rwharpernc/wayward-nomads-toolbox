@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.1.0 - 2026-10-03
 
 ### Changed
 - **BGS panel now shows only the system you're in**: each faction's state and influence (with how far
