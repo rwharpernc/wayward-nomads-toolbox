@@ -131,14 +131,19 @@ class FactionActivity:
         ))
 
 
-def parse_mission_faction_effects(entry: Dict[str, Any]) -> List[Tuple[str, int, int]]:
+def parse_mission_faction_effects(entry: Dict[str, Any]) -> List[Tuple[str, Optional[int], int, int]]:
     """`MissionCompleted`'s own `FactionEffects[]` array -> one
-    `(faction, inf_plus_pips, inf_minus_pips)` tuple per faction affected.
-    `Trend` -> direction mapping (`UpGood`/`DownGood` => +INF, `UpBad`/
-    `DownBad` => -INF) and pip-count-from-string-length are both observed
-    from real journal entries - Frontier itself only ever exposes a `+`/`-`
-    pip string, never an exact number."""
-    results: List[Tuple[str, int, int]] = []
+    `(faction, system_address, inf_plus_pips, inf_minus_pips)` tuple per
+    `Influence[]` entry. Each entry names the system (`SystemAddress`) the
+    effect lands in - that, not the system the mission was handed in at, is
+    where the INF counts (BGSTally attributes it the same way). A faction
+    with no `Influence[]` entries still yields one `(faction, None, 0, 0)`
+    so the completed mission is counted. `Trend` -> direction mapping
+    (`UpGood`/`DownGood` => +INF, `UpBad`/`DownBad` => -INF) and pip-count-
+    from-string-length are both observed from real journal entries -
+    Frontier itself only ever exposes a `+`/`-` pip string, never an exact
+    number."""
+    results: List[Tuple[str, Optional[int], int, int]] = []
     effects = entry.get("FactionEffects")
     if not isinstance(effects, list):
         return results
@@ -148,18 +153,23 @@ def parse_mission_faction_effects(entry: Dict[str, Any]) -> List[Tuple[str, int,
         faction = fx.get("Faction")
         if not faction:
             continue
-        plus = 0
-        minus = 0
+        # Pips per target system, in first-seen order.
+        per_system: Dict[Optional[int], List[int]] = {}
         for inf in fx.get("Influence") or []:
             if not isinstance(inf, dict):
                 continue
+            address = inf.get("SystemAddress")
+            totals = per_system.setdefault(address if isinstance(address, int) else None, [0, 0])
             trend = inf.get("Trend", "")
             pips = len(inf.get("Influence") or "")
             if trend in ("UpGood", "DownGood"):
-                plus += pips
+                totals[0] += pips
             elif trend in ("UpBad", "DownBad"):
-                minus += pips
-        results.append((faction, plus, minus))
+                totals[1] += pips
+        if not per_system:
+            results.append((faction, None, 0, 0))
+        for address, (plus, minus) in per_system.items():
+            results.append((faction, address, plus, minus))
     return results
 
 

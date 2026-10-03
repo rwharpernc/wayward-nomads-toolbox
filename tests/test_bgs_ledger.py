@@ -67,6 +67,26 @@ class ActivityTests(unittest.TestCase):
         ledger.process(_mission("2026-10-03T05:00:00Z", "Alpha Party", mission_id=2))
         self.assertEqual(ledger.activity["sol|alpha party"].missions, 1)
 
+    def test_mission_inf_goes_to_the_system_it_was_taken_in_not_where_it_is_handed_in(self) -> None:
+        ledger = bgs_ledger.TickLedger(TICK)
+        ledger.process({**_jump("2026-10-03T04:00:00Z", "Sol", 0.4), "SystemAddress": 111})
+        ledger.process({"timestamp": "2026-10-03T04:01:00Z", "event": "MissionAccepted",
+                        "MissionID": 7, "Faction": "Alpha Party"})
+        ledger.process({**_jump("2026-10-03T05:00:00Z", "Alpha Centauri", 0.4), "SystemAddress": 222})
+        done = _mission("2026-10-03T05:10:00Z", "Alpha Party", "UpGood", "++", 7)
+        done["FactionEffects"][0]["Influence"][0]["SystemAddress"] = 111
+        ledger.process(done)
+        self.assertEqual(ledger.activity["sol|alpha party"].inf_plus, 2)
+        self.assertNotIn("alpha centauri|alpha party", ledger.activity)
+
+        # No SystemAddress on the effect: the issuing faction falls back to the accepted system.
+        ledger.process({"timestamp": "2026-10-03T05:20:00Z", "event": "MissionAccepted",
+                        "MissionID": 8, "Faction": "Beta Corp"})
+        ledger.process({**_jump("2026-10-03T05:25:00Z", "Sol", 0.4), "SystemAddress": 111})
+        ledger.process(_mission("2026-10-03T05:30:00Z", "Beta Corp", "UpGood", "+", 8))
+        self.assertEqual(ledger.activity["alpha centauri|beta corp"].inf_plus, 1)
+        self.assertNotIn("sol|beta corp", ledger.activity)
+
     def test_failed_and_abandoned_missions_score_against_the_issuing_faction(self) -> None:
         ledger = bgs_ledger.TickLedger(TICK)
         ledger.process(_jump("2026-10-03T04:00:00Z", "Sol", 0.4))
