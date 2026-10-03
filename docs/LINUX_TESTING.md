@@ -76,6 +76,17 @@ Where a step fails, copy the relevant lines from EDMC's log
       your browser.
 - [ ] Restart EDMC: per-commander data (BGS, Boxel, Codex) is still there.
 
+## 7. BGS (rebuilt in 1.1.0)
+
+- [ ] The BGS panel's grey line shows "Last tick: ..." within a few seconds (network call works).
+- [ ] With the Journal directory set, the log has "BGS journal replay done for <CMDR>" and the totals
+      cover the whole tick. With it cleared, the log says the replay was skipped and why.
+- [ ] **View BGS Report** opens; the tick drop-down, the tabs (full system names, wrapping onto a second row
+      when there are many), **Pin**, **× Close tab** and the footer key all render, with no missing glyphs.
+- [ ] **Show a system**: typing narrows the list while you keep typing (the list must not steal the
+      keyboard), the arrow shows every system, Up/Down/Enter/Esc work, clicking a name adds its tab.
+- [ ] Pins and closed tabs survive restarting EDMC.
+
 ## Reporting
 
 Open an issue with your setup line, the failing step number, and the log excerpt.
