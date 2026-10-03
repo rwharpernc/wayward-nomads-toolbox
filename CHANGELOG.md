@@ -5,9 +5,6 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ## 1.1.4 - 2026-10-03
 
-The project is public again. Versions 1.1.1 to 1.1.3 were withdrawn; everything in them is included here, so
-this is the release to install on top of 1.1.0.
-
 ### Added
 - **"You are in <mode> mode."** (Open, Solo or Private Group, with the group's name) and **Credits this
   session** now sit directly under the mode buttons, visible in every mode, in one section with a separator
