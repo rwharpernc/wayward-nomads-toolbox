@@ -3,6 +3,18 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.1.2 - 2026-10-03
+
+### Fixed
+- Linux hardening for the new BGS report: the close-tab button uses a character every font has, the
+  "Show a system" suggestion list sizes itself correctly on X11 and no longer closes on a stray focus
+  event while you type.
+- With no Journal directory set (the Linux default), BGS now logs why it can't rebuild the tick's totals
+  from your journals instead of skipping silently.
+
+### Development
+- Added a BGS section to the Linux test checklist (`docs/LINUX_TESTING.md`).
+
 ## 1.1.1 - 2026-10-03
 
 The project is public again. This release has the same behaviour as 1.1.0.

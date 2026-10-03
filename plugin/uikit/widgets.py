@@ -584,7 +584,7 @@ class SuggestEntry(tk.Frame):
         self.entry.bind("<Up>", lambda _e: self._move(-1))
         self.entry.bind("<Return>", self._on_return)
         self.entry.bind("<Escape>", lambda _e: self._close())
-        self.entry.bind("<FocusOut>", lambda _e: self.after(150, self._close))
+        self.entry.bind("<FocusOut>", lambda _e: self.after(150, self._close_if_unfocused))
         self.bind("<Destroy>", lambda _e: self._close(), add="+")
 
     # --- typing ----------------------------------------------------------------
@@ -650,6 +650,7 @@ class SuggestEntry(tk.Frame):
         for item in items:
             listbox.insert("end", item)
         listbox.configure(height=min(len(items), self._MAX_ROWS))
+        self._popup.update_idletasks()  # X11 reports a stale requested height until layout has run
         self._popup.geometry(f"{self.winfo_width()}x{listbox.winfo_reqheight() + 2}"
                              f"+{self.winfo_rootx()}+{self.winfo_rooty() + self.winfo_height()}")
         self._popup.lift()
@@ -664,6 +665,16 @@ class SuggestEntry(tk.Frame):
     def _outside_click(self, event: tk.Event) -> None:
         if self._popup and not str(event.widget).startswith(str(self._popup)) \
                 and event.widget not in (self._arrow, self.entry):
+            self._close()
+
+    def _close_if_unfocused(self) -> None:
+        """FocusOut can fire spuriously (window managers differ); only close
+        when the entry really has lost the keyboard."""
+        try:
+            focused = self.focus_get()
+        except (KeyError, tk.TclError):  # focus_get can raise for popup-menu style windows
+            focused = None
+        if focused is not self.entry:
             self._close()
 
     def _close(self) -> None:

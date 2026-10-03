@@ -53,7 +53,7 @@ whole name, so this is only a guard against pasted junk."""
 
 LEGEND = (
     f"TABS: the last {RECENT_SYSTEMS} systems you've been in, plus any you pin (☆ Pin keeps a system's "
-    "tab; ✕ Close tab hides it; Show a system - pick from the list or type a name - brings one back). WHAT YOU DID: Missions = completed, "
+    "tab; × Close tab hides it; Show a system - pick from the list or type a name - brings one back). WHAT YOU DID: Missions = completed, "
     "with influence pips gained/lost (Frontier gives +/- pips, not exact percentages). "
     "Failed/Abandoned = missions that cost the issuing faction influence. Bounties and Combat bonds = "
     "voucher value redeemed. Trade = sold minus bought (negative is a loss). Exploration = data sold. "
@@ -135,7 +135,7 @@ class _SystemTab:
     def __init__(self, content: tk.Frame, system: str, pinned: bool, actions: TabActions) -> None:
         bar = tk.Frame(content, bg=P.PANE)
         bar.pack(fill="x", padx=P.PAD, pady=(P.PAD_SM, 0))
-        FlatButton(bar, "✕ Close tab", lambda: actions.close(system), kind="normal").pack(side="right")
+        FlatButton(bar, "× Close tab", lambda: actions.close(system), kind="normal").pack(side="right")
         FlatButton(
             bar, "★ Unpin" if pinned else "☆ Pin", lambda: actions.toggle_pin(system), kind="normal",
         ).pack(side="right", padx=(0, 6))
