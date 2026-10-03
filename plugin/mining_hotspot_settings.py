@@ -22,6 +22,7 @@ from . import mining_deposit
 from . import mining_hotspot_dialog as hotspot_dialog
 from . import mining_hotspot_import_export as hotspot_import_export
 from . import mining_hotspots as hotspots
+from . import platform_support
 
 _UNFILED = "Unfiled"
 
@@ -32,8 +33,7 @@ def build(frame: tk.Frame, start_row: int) -> None:
     function is a continuation of that same grid, not a separate
     Toplevel/tab."""
     is_dark = theme.active not in (None, theme.THEME_DEFAULT)
-    listbox_bg = "#1e1e1e" if is_dark else "SystemWindow"
-    listbox_fg = "#e0e0e0" if is_dark else "SystemWindowText"
+    listbox_bg, listbox_fg = platform_support.listbox_colors(is_dark)
 
     nb.Label(frame, text="Known Surface Hotspots").grid(
         row=start_row, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(14, 0))

@@ -44,7 +44,7 @@ import myNotebook as nb
 from config import appname, config
 from theme import theme
 
-from . import bgs_state, bgs_tick_client, bgs_tracker, bgs_window, panelkit
+from . import bgs_state, bgs_tick_client, bgs_tracker, bgs_window, panelkit, platform_support
 from .bgs_tracker import FactionActivity, FactionSnapshot
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -659,8 +659,7 @@ class BgsController:
         entry_attr: str, on_add, on_remove,
     ) -> tk.Listbox:
         is_dark = theme.active not in (None, theme.THEME_DEFAULT)
-        listbox_bg = "#1e1e1e" if is_dark else "SystemWindow"
-        listbox_fg = "#e0e0e0" if is_dark else "SystemWindowText"
+        listbox_bg, listbox_fg = platform_support.listbox_colors(is_dark)
 
         nb.Label(frame, text=title, font=("TkDefaultFont", 9, "bold")).grid(
             row=row, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(6, 0),
