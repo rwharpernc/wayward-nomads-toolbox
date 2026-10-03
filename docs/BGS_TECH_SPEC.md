@@ -113,7 +113,13 @@ exact percentage) and `Trend` is one of `UpGood`/`DownGood`/`UpBad`/`DownBad`.
 
 **Trend → direction mapping**, as observed in real journal entries: `UpGood`/`DownGood` → +INF,
 `UpBad`/`DownBad` → -INF; the pip count is the
-length of the `Influence` string (e.g. `"++"` → 2 pips). Tallied per faction as `inf_plus`/`inf_minus`
+length of the `Influence` string (e.g. `"++"` → 2 pips).
+
+**Which system gets the INF** (same approach as BGSTally): each `Influence[]` entry carries a
+`SystemAddress`, resolved to a name via the addresses seen in `FSDJump`/`Location`/`CarrierJump`/`Docked`
+events. If it can't be resolved, the issuing faction's INF goes to the system the mission was *accepted*
+in; only if that is unknown too does it fall back to the system the mission was handed in at. Handing a
+mission in elsewhere therefore never moves its INF. Tallied per faction as `inf_plus`/`inf_minus`
 pip counts plus a mission count — never an exact percentage, since Frontier doesn't provide one.
 
 ### 4.2b Failed and abandoned missions

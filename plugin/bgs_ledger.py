@@ -38,6 +38,9 @@ MAX_OPEN_MISSIONS = 400
 """Cap on remembered accepted-but-unfinished missions (oldest dropped first)
 so an abandoned save can't grow the state file without bound."""
 
+MAX_KNOWN_ADDRESSES = 5000
+"""Cap on the in-memory SystemAddress -> name map (oldest dropped first)."""
+
 T = TypeVar("T")
 
 
@@ -170,6 +173,11 @@ class TickLedger:
         """MissionID -> (issuing faction, system accepted in), for scoring a
         later MissionFailed/MissionAbandoned (neither names a faction)."""
 
+        self.addresses: Dict[int, str] = {}
+        """SystemAddress -> system name, learned from location/dock events (not
+        persisted - a replay rebuilds it) so a mission's per-system INF can be
+        credited to the system it actually lands in."""
+
         # Where the commander is - transient, rebuilt by events.
         self.current_system: Optional[str] = None
         self.current_system_factions: Optional[List[FactionSnapshot]] = None
@@ -281,6 +289,7 @@ class TickLedger:
         if event in ("FSDJump", "Location", "CarrierJump"):
             return self._on_location(entry, event, fallback_system)
         if event == "Docked":
+            self._learn_address(entry)
             self.station_faction = (entry.get("StationFaction") or {}).get("Name")
             if entry.get("StarSystem") and entry["StarSystem"] != self.current_system:
                 self.current_system = entry["StarSystem"]
@@ -295,8 +304,8 @@ class TickLedger:
         counted = self._in_period(timestamp)
         system = self.current_system or fallback_system
         if event == "MissionCompleted":
-            self.open_missions.pop(str(entry.get("MissionID")), None)
-            return counted and self._on_mission_completed(entry, system, timestamp)
+            issuer = self.open_missions.pop(str(entry.get("MissionID")), None)
+            return counted and self._on_mission_completed(entry, system, timestamp, issuer)
         if event in ("MissionFailed", "MissionAbandoned"):
             return self._on_mission_ended(entry, event, timestamp, counted)
         if not counted or not system:
@@ -312,6 +321,7 @@ class TickLedger:
         return False
 
     def _on_location(self, entry: Dict[str, Any], event: str, fallback_system: Optional[str]) -> bool:
+        self._learn_address(entry)
         star = entry.get("StarSystem") or fallback_system
         if star and star != self.current_system:
             self.current_system = star
@@ -346,6 +356,13 @@ class TickLedger:
         self.current_system_factions = present
         return True
 
+    def _learn_address(self, entry: Dict[str, Any]) -> None:
+        address, name = entry.get("SystemAddress"), entry.get("StarSystem")
+        if isinstance(address, int) and name:
+            self.addresses[address] = name
+            while len(self.addresses) > MAX_KNOWN_ADDRESSES:
+                self.addresses.pop(next(iter(self.addresses)))
+
     def _on_mission_accepted(self, entry: Dict[str, Any], fallback_system: Optional[str]) -> bool:
         mission_id = entry.get("MissionID")
         faction = entry.get("Faction")
@@ -357,12 +374,24 @@ class TickLedger:
             self.open_missions.pop(next(iter(self.open_missions)))
         return True
 
-    def _on_mission_completed(self, entry: Dict[str, Any], system: Optional[str], timestamp: str) -> bool:
-        if not system:
-            return False
+    def _on_mission_completed(
+        self, entry: Dict[str, Any], system: Optional[str], timestamp: str,
+        issuer: Optional[Tuple[str, str]] = None,
+    ) -> bool:
+        """Credit each faction effect to the system it lands in: the effect's
+        own `SystemAddress` when we've seen that system, else - for the
+        issuing faction - the system the mission was accepted in, and only
+        as a last resort the system it was handed in at (`system`). Handing
+        in elsewhere must not move the INF."""
         changed = False
-        for faction, plus, minus in bgs_tracker.parse_mission_faction_effects(entry):
-            act = self._act(system, faction, timestamp)
+        for faction, address, plus, minus in bgs_tracker.parse_mission_faction_effects(entry):
+            target = self.addresses.get(address) if address is not None else None
+            if target is None and issuer is not None and issuer[0].casefold() == faction.casefold():
+                target = issuer[1]
+            target = target or system
+            if not target:
+                continue
+            act = self._act(target, faction, timestamp)
             act.missions += 1
             act.inf_plus += plus
             act.inf_minus += minus
