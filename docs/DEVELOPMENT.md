@@ -52,6 +52,40 @@ downloaded updates). Overwrite the files the build produces and leave everything
 
 Settings and window positions are stored in EDMC's own config, under keys starting `wntb_`.
 
+## Working on Windows and Linux
+
+The same repo is developed on both. Each machine builds and installs for itself, because the build
+detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
+
+**Setting up a fresh machine**
+
+1. Install Python 3, Node.js 22.2 or newer, and Git. On Linux the Python Tk bindings are separate
+   (Arch/CachyOS: `sudo pacman -S --needed tk nodejs npm`). Without Tk the UI tests and the import
+   smoke test fail with `libtk8.6.so` errors.
+2. Clone the repo, then run `git config core.autocrlf false` inside it. The `.gitattributes` keeps
+   everything LF; leaving `autocrlf` on can fight it.
+3. Set your Git name and email for the repo (`git config user.name` / `user.email`).
+4. Check it works: `python -m unittest discover -s tests`, `python tests/import_smoke.py`,
+   `npm run build` (the first line should name the right OS) and `npm run package`.
+
+**Day to day**
+
+- Before starting on a machine: `git pull`. Before switching machines: commit and `git push`.
+- `npm run deploy` builds and copies into EDMC's plugins folder for that OS. Restart EDMC after.
+- EDMC on Linux may be a Flatpak. Its log is
+  `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/logs/EDMarketConnector-debug.log`
+  (on Windows: `%TEMP%\EDMarketConnector\EDMarketConnector-debug.log`). Check it first when something
+  works on one OS and not the other.
+- Not synced by Git (ignored on purpose): `CLAUDE.md`, `.claude/`, `docs/roadmap.md`, `docs/TODO.md`,
+  `dist/`. Copy local notes between machines yourself.
+
+**Keep code portable**
+
+- Don't use Windows-only Tk values such as `SystemWindow` colour names, and don't call `powershell.exe`
+  or Win32 APIs outside the existing `IS_WINDOWS` branches. Use `platform_support` helpers.
+- A bug that makes a Settings tab vanish usually means an exception while building it. EDMC catches it
+  and logs `Failed for Plugin "WNTB"`, so look for that line.
+
 ## Test
 
 ```bash
