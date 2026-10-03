@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugin.uikit.shell import WindowShell  # noqa: E402
 from plugin.uikit.table import _sort_value  # noqa: E402
-from plugin.uikit.widgets import clip  # noqa: E402
+from plugin.uikit.widgets import clip, suggestions  # noqa: E402
 
 
 class ClipTests(unittest.TestCase):
@@ -24,6 +24,23 @@ class ClipTests(unittest.TestCase):
         out = clip("x" * 500, 40)
         self.assertEqual(len(out), 40)
         self.assertTrue(out.endswith("…"))
+
+
+class SuggestionTests(unittest.TestCase):
+    SYSTEMS = ["Sol", "Achenar", "Alpha Centauri", "HIP 12345", "Shinrarta Dezhra", "Colonia"]
+
+    def test_empty_text_offers_everything_in_order(self) -> None:
+        self.assertEqual(suggestions(self.SYSTEMS, ""), self.SYSTEMS)
+
+    def test_names_starting_with_the_text_come_before_names_containing_it(self) -> None:
+        self.assertEqual(suggestions(self.SYSTEMS, "a"),
+                         ["Achenar", "Alpha Centauri", "Shinrarta Dezhra", "Colonia"])
+
+    def test_matching_ignores_case_and_surrounding_spaces(self) -> None:
+        self.assertEqual(suggestions(self.SYSTEMS, "  hip "), ["HIP 12345"])
+
+    def test_no_match_gives_nothing(self) -> None:
+        self.assertEqual(suggestions(self.SYSTEMS, "zzz"), [])
 
 
 class GeometryTests(unittest.TestCase):
