@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed
+- **The WNTB Settings tab was missing (Windows and Linux) in 1.1.3.** That release added a "Works on:" note to
+  the Auto-Honk tab by packing it into one of EDMC's own frames, which EDMC does not allow, so building the tab
+  raised an error and EDMC dropped the whole WNTB Settings tab. Fixed, and two new tests (one that builds the
+  whole Settings tab with EDMC-faithful stand-ins, one that checks the source) stop it happening again.
+
 ## 1.1.3 - 2026-10-03
 
 ### Fixed

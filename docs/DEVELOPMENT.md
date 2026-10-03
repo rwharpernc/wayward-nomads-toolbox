@@ -92,6 +92,10 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
 - New modal dialogs: use `ui.style.grab_when_visible(dialog)`, not `dialog.grab_set()` (X11 refuses a grab
   before the window is mapped).
 - Text symbols in the UI: stick to ones every font has (`×`, `★`, `→`, `▾`).
+- Settings tabs: never `pack` anything into an `nb.Frame`. EDMC's `myNotebook.Frame` puts a gridded spacer
+  child inside every instance, so packing into it raises, EDMC logs `Failed for Plugin "WNTB"` and the whole
+  WNTB Settings tab disappears. Use `grid`, or pack into a plain `tk.Frame`. `tests/test_settings_layout.py`
+  checks the source and `tests/test_prefs_smoke.py` builds the whole tab with EDMC-faithful stand-ins.
 - `monitor.logfile` (EDMC) is a `str` or a `pathlib.Path` depending on the version: wrap it in `str()` before
   comparing it or saving it to JSON.
 - Background threads must never touch a Tk widget; hand results back with a queue and `after()`.

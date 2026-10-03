@@ -590,7 +590,7 @@ class AutoHonkController:
 
         cfg = load_config()
 
-        intro = nb.Frame(frame)
+        intro = tk.Frame(frame)  # a plain tk.Frame: EDMC's nb.Frame can't take packed children
         intro.grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(10, 6))
         nb.Label(
             intro,
