@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.1.1 - 2026-10-03
+
+The project is public again. This release has the same behaviour as 1.1.0.
+
+### Changed
+- Corrected out-of-date wording in the BGS code comments (they still described the old per-panel
+  attribution and the removed "phases").
+
 ## 1.1.0 - 2026-10-03
 
 ### Changed
