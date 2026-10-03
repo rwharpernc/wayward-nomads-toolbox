@@ -57,7 +57,8 @@ _OWN_DATA_FILES: set = {
     "visited_systems.json",  # Boxel Survey's per-commander visited log (visited_systems.py)
     "organic_scan_state.json",  # Organic Scanning's per-body state (organic_scan_state.py)
     "codex_completionist_state.json",  # Codex Completionist's tally (codex_completionist_state.py)
-    "bgs_state.json",  # BGS tracked lists, snapshots and tally (bgs_state.py)
+    "session_credits.json",  # Credits this session: the current login's balance record (session_credits.py)
+    "bgs_state.json",  # BGS tick ledger, archive, pinned/hidden tabs (bgs_state.py)
     "mining_hotspots.json",  # Mining's hotspot catalog (mining_hotspots.py)
     "mining_coverage.json",  # Mining's Rhino coverage map (mining_coverage.py)
     "ship_builds.json",  # Ship Builds list (ship_builds_data.py)
@@ -213,6 +214,15 @@ class UpdateManager:
             except OSError:
                 logger.debug("Could not remove stale backup %s", stale, exc_info=True)
 
+    def _inside_plugin_dir(self, target: str) -> bool:
+        """Guards against a zip entry ("../x", an absolute path, another drive
+        on Windows) writing outside the plugin folder."""
+        root = os.path.normpath(self._plugin_dir)
+        try:
+            return os.path.commonpath([root, target]) == root
+        except ValueError:  # e.g. a different drive on Windows
+            return False
+
     def _apply(self, zip_path: str) -> None:
         with ZipFile(zip_path, "r") as zf:
             names = zf.namelist()
@@ -226,7 +236,10 @@ class UpdateManager:
                 if not relative or relative in _OWN_DATA_FILES:
                     continue
 
-                target = os.path.join(self._plugin_dir, relative)
+                target = os.path.normpath(os.path.join(self._plugin_dir, relative))
+                if not self._inside_plugin_dir(target):
+                    logger.warning("Skipping update entry outside the plugin folder: %r", member.filename)
+                    continue
                 if member.is_dir():
                     os.makedirs(target, exist_ok=True)
                     continue

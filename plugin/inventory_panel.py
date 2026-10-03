@@ -41,6 +41,7 @@ from . import inventory_suit as suit
 from . import overlay, panelkit
 from .inventory import CATEGORY_SHORT, InventoryTracker, SHIP_LOCKER_CAPACITY, TRACKED_CATEGORIES
 from .inventory_cargo import VehicleState
+from . import platform_support
 from .inventory_sound import PillageSound
 from .inventory_suit import SuitState
 
@@ -898,11 +899,11 @@ class InventoryPanelController:
         ).grid(row=row, column=0, sticky=tk.W, padx=10, pady=(0, 0))
         row += 1
 
-        if not sound_available:
-            nb.Label(frame, text="Not available on this platform.").grid(
-                row=row, column=0, sticky=tk.W, padx=10, pady=(2, 10),
-            )
-            row += 1
+        note, supported = platform_support.sound_support_note()
+        nb.Label(
+            frame, text=note, wraplength=440, justify=tk.LEFT, foreground="#2e7d32" if supported else "#c07000",
+        ).grid(row=row, column=0, sticky=tk.W, padx=10, pady=(2, 10))
+        row += 1
         return row
 
     def _build_overlay_bars(self, frame: nb.Frame, *, start_row: int) -> int:

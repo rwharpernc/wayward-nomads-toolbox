@@ -13,7 +13,8 @@ are estimated, how sessions work, and how the Rare Goods Finder fits in. For how
 - Show the merits (and estimated Control Points) you earn for your pledged Power, live, per session and
   per system.
 - Keep a history of sessions and make one easy to copy into Discord or a forum post.
-- Include credit income for the session.
+- Credit income and the game mode (Open / Solo / Private Group) are **not** part of Powerplay. They are
+  shown on the always-visible lines under the mode buttons (`session_credits.py`, `game_mode.py`).
 - Offer a Rare Goods Finder for Powerplay hauling.
 
 ## 2. Non-goals
@@ -89,7 +90,7 @@ A session covers one **game login**, tied to the journal file it started in. Thi
   counted from one missed while EDMC was closed.
 
 Each session stores raw merits and event counts per activity, the same broken out **per system**, the
-credit balance at the start and now (so income is the difference), and the Power. History is kept in
+Power. History is kept in
 `sessions.json` in the plugin folder, **capped at 200 sessions** so it can't grow forever, and is
 protected from updates. The **Sessions** window shows the live breakdown and the history, and **Copy**
 puts a summary on the clipboard using a format you can edit in Settings.

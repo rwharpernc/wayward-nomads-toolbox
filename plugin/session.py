@@ -1,4 +1,4 @@
-"""Session state: PowerPlay merit tallies and credit income, per game login.
+"""Session state: PowerPlay merit tallies, per game login.
 
 Raw merits are stored per activity; CP is *not* persisted — it's derived at
 display time from the current ratio settings (see formulas.py), so correcting
@@ -31,18 +31,16 @@ def _parse_iso(value: Optional[str]) -> Optional[float]:
 def new_session(
     cmdr: str,
     power: Optional[str],
-    credits_start: Optional[int],
     journal_file: Optional[str] = None,
 ) -> Dict[str, Any]:
     now = _now_iso()
+    journal_file = str(journal_file) if journal_file else None  # monitor.logfile may be a Path; JSON needs a str
     return {
         "id": uuid.uuid4().hex,
         "cmdr": cmdr,
         "power": power,
         "started_at": now,
         "updated_at": now,
-        "credits_start": credits_start,
-        "credits_now": credits_start,
         "totals": {activity: 0 for activity in ACTIVITIES},
         "events": {activity: 0 for activity in ACTIVITIES},
         # Same totals/events, broken out per system name — lets the UI show
@@ -119,15 +117,6 @@ def visited_systems(session: Dict[str, Any]) -> List[str]:
     return sorted(by_system, key=lambda name: by_system[name].get("last_seen_at", ""), reverse=True)
 
 
-def update_credits(session: Dict[str, Any], credits_now: Optional[int]) -> None:
-    if credits_now is None:
-        return
-    if session.get("credits_start") is None:
-        session["credits_start"] = credits_now
-    session["credits_now"] = credits_now
-    session["updated_at"] = _now_iso()
-
-
 def update_power(session: Dict[str, Any], power: Optional[str]) -> None:
     if power and session.get("power") != power:
         session["power"] = power
@@ -135,14 +124,6 @@ def update_power(session: Dict[str, Any], power: Optional[str]) -> None:
 
 def total_merits(session: Dict[str, Any]) -> int:
     return sum(session.get("totals", {}).values())
-
-
-def credits_earned(session: Dict[str, Any]) -> Optional[int]:
-    start = session.get("credits_start")
-    now = session.get("credits_now")
-    if start is None or now is None:
-        return None
-    return now - start
 
 
 def duration_hours(session: Dict[str, Any]) -> float:
@@ -167,7 +148,7 @@ class SessionManager:
         history, current = store.load()
         self._history = history
         self.current: Dict[str, Any] = (
-            current if current is not None else new_session(cmdr="", power=None, credits_start=None)
+            current if current is not None else new_session(cmdr="", power=None)
         )
         if self.current.get("last_merit_ts") is None and total_merits(self.current) > 0:
             # Loaded a session that already has recorded merits but predates
@@ -186,19 +167,17 @@ class SessionManager:
         self,
         cmdr: str,
         power: Optional[str],
-        credits_start: Optional[int],
         journal_file: Optional[str] = None,
     ) -> None:
         if self.current.get("cmdr") or total_merits(self.current) > 0:
             self._history.append(self.current)
-        self.current = new_session(cmdr, power, credits_start, journal_file)
+        self.current = new_session(cmdr, power, journal_file)
         self._persist()
 
     def sync_session(
         self,
         cmdr: str,
         power: Optional[str],
-        credits_start: Optional[int],
         journal_file: Optional[str],
     ) -> bool:
         """Reconcile the live session against the journal file EDMC is
@@ -229,6 +208,7 @@ class SessionManager:
         the login screen, so matching on journal file alone would carry the
         previous commander's merit totals over onto the new one.
         """
+        journal_file = str(journal_file) if journal_file else None
         same_journal = bool(journal_file) and self.current.get("journal_file") == journal_file
         current_cmdr = self.current.get("cmdr")
         same_cmdr = not current_cmdr or not cmdr or current_cmdr == cmdr
@@ -238,7 +218,7 @@ class SessionManager:
             self.current["updated_at"] = _now_iso()
             self._persist()
             return True
-        self.start_session(cmdr, power, credits_start, journal_file)
+        self.start_session(cmdr, power, journal_file)
         return False
 
     def record_merits(
@@ -247,19 +227,13 @@ class SessionManager:
         add_merits(self.current, activity, merits, system, event_ts)
         self._persist()
 
-    def record_credits(self, credits_now: Optional[int]) -> None:
-        # Called on every journal event to keep the live rate accurate;
-        # deliberately not persisted here to avoid a disk write per event.
-        # flush() (on merit gains, prefs changes, and plugin_stop) covers it.
-        update_credits(self.current, credits_now)
-
     def record_power(self, power: Optional[str]) -> None:
         update_power(self.current, power)
 
     def reset_session(self) -> None:
         """Zeroes this session's merit counts — totals, events, and every
         per-system bucket — without ending the session (cmdr/power/
-        journal_file/started_at and credit tracking are untouched). Mainly
+        journal_file/started_at are untouched). Mainly
         useful for correcting a bad count (e.g. the donation-mission
         duplicate-merit journal bug) without waiting for a relog."""
         self.current["totals"] = {activity: 0 for activity in ACTIVITIES}

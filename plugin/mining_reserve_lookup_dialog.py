@@ -127,7 +127,7 @@ def open_reserve_lookup_dialog(parent: tk.Misc) -> None:
     dialog.title("Check Ring Reserve Level")
     dialog.resizable(True, True)
     dialog.transient(root)
-    dialog.grab_set()
+    ui_style.grab_when_visible(dialog)
     dialog.columnconfigure(1, weight=1)
 
     tk.Label(dialog, text="System*", anchor=tk.W).grid(row=0, column=0, sticky="w", padx=8, pady=(8, 4))

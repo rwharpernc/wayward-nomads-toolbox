@@ -45,9 +45,19 @@ _SAFE_CHARS = set(" ._+-(),#'[]")
 _HIGH_RES_PREFIX = "HighRes_"
 
 
+def journal_basename(journal_filename: str) -> str:
+    """The file name part of a Screenshot event's `Filename`.
+
+    Elite writes these Windows-style (`\\ED_Pictures\\Screenshot_0001.bmp`)
+    even when it runs under Proton on Linux, where `os.path.basename` does
+    not treat a backslash as a separator and would return the whole string.
+    """
+    return journal_filename.replace("\\", "/").rsplit("/", 1)[-1]
+
+
 def is_high_res(source_filename: str) -> bool:
     """Elite Dangerous prefixes hi-res (Alt+F10) screenshots with 'HighRes'."""
-    return os.path.basename(source_filename).startswith("HighRes")
+    return journal_basename(source_filename).startswith("HighRes")
 
 
 def build_output_path(

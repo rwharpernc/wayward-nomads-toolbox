@@ -25,8 +25,8 @@ from config import appname, config
 
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
-    exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
-    missions, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, ship_builds_panel, ui,
+    exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
+    missions, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, session_credits, ship_builds_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -51,7 +51,7 @@ if not logger.hasHandlers():
 _FEATURES = (
     powerplay, missions, autohonk, interdiction, landing, discovery, boxel_survey, exploration_value,
     organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, ship_builds_panel, colonisation_panel, screenshots,
-    inventory_panel, mining_panel, bgs_panel,
+    inventory_panel, mining_panel, bgs_panel, game_mode, session_credits,
 )
 
 _ui_frame: Optional[tk.Frame] = None
@@ -74,6 +74,7 @@ def plugin_start3(plugin_dir: str) -> str:
     codex_completionist_panel.start(plugin_dir)
     organic_scan_panel.start(plugin_dir)
     bgs_panel.start(plugin_dir)
+    session_credits.start(plugin_dir)
     ship_builds_panel.start(plugin_dir)
     colonisation_panel.start(plugin_dir)
     inventory_panel.start(plugin_dir)
@@ -130,6 +131,7 @@ def plugin_stop() -> None:
     codex_completionist_panel.stop()
     organic_scan_panel.stop()
     bgs_panel.stop()
+    session_credits.stop()
     inventory_panel.stop()
     mining_panel.stop()
     powerplay_window.close()

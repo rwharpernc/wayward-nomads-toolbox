@@ -590,15 +590,21 @@ class AutoHonkController:
 
         cfg = load_config()
 
+        intro = nb.Frame(frame)
+        intro.grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(10, 6))
         nb.Label(
-            frame,
+            intro,
             text=(
                 "Automatically fires your ship's Discovery Scanner — the basic system-wide "
                 '"honk" that reveals bodies, not the Detailed Surface Scanner — every time you '
                 "jump into a new system."
             ),
             wraplength=440, justify=tk.LEFT,
-        ).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(10, 6))
+        ).pack(anchor=tk.W)
+        note, supported = platform_support.input_support_note()
+        nb.Label(
+            intro, text=note, wraplength=440, justify=tk.LEFT, foreground="#2e7d32" if supported else "#c07000",
+        ).pack(anchor=tk.W, pady=(4, 0))
 
         nb.Label(
             frame,

@@ -33,7 +33,7 @@ def open_ship_build_dialog(
     dialog.title("Edit Ship Build" if existing else "Add Ship Build")
     dialog.resizable(False, False)
     dialog.transient(root)
-    dialog.grab_set()
+    ui_style.grab_when_visible(dialog)
 
     name_var = tk.StringVar(value=existing.name if existing else "")
     ship_var = tk.StringVar(value=existing.ship if existing else prefill_ship)

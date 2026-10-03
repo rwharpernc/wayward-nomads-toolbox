@@ -19,7 +19,6 @@ from .powerplay import PowerplayTracker, clipboard_template, ratio_for
 from .powerplay_clipboard import format_system_line
 from .session import (
     SessionManager,
-    credits_earned,
     duration_hours,
     per_hour,
     system_merit_total,
@@ -67,7 +66,6 @@ _HISTORY_COLUMNS = (
     Column("duration", "Duration", 90, anchor="e"),
     Column("merits", "Merits", 100, anchor="e"),
     Column("cp", "Est. CP", 100, anchor="e"),
-    Column("credits", "Credits", 130, anchor="e"),
 )
 
 _window: Optional["SessionWindow"] = None
@@ -138,14 +136,13 @@ class SessionWindow:
         self._history_tab.update(self._sessions.history, self._sessions.current)
 
     def _reset_session(self) -> None:
-        """Zeroes this session's merit counts entirely (session identity and
-        credit tracking untouched) — mainly for correcting a bad count, e.g.
+        """Zeroes this session's merit counts entirely (session identity untouched) — mainly for correcting a bad count, e.g.
         the donation-mission duplicate-merit journal bug. Confirms first
         since it destroys in-memory/persisted counters."""
         if not messagebox.askyesno(
             "Reset Session",
             "Zero this session's merit totals (by system and by activity)?\n\n"
-            "This does not end the session or touch credit tracking, and can't be undone.",
+            "This does not end the session, and can't be undone.",
             parent=self._toplevel,
         ):
             return
@@ -227,10 +224,7 @@ class _CurrentTab:
                                          visible_rows=len(ACTIVITIES) + 1)
         self._activity_table.pack(fill="x", padx=P.PAD, pady=(0, P.PAD))
 
-        # --- Money + live PowerPlay context ---------------------------------
-        self._money_label = tk.Label(body, text="", bg=P.PANE, fg=P.TEXT, anchor="w", padx=P.PAD)
-        self._money_label.pack(fill="x", pady=(0, 6))
-
+        # --- Live PowerPlay context ------------------------------------------
         section_header(body, "Current PowerPlay Context").pack(fill="x")
         self._context = tk.Frame(body, bg=P.PANE)
         self._context.pack(fill="x", padx=P.PAD, pady=(0, 8))
@@ -267,13 +261,6 @@ class _CurrentTab:
 
         self._update_system_table(session, current_system)
         self._update_activity_table(session, hours)
-
-        earned = credits_earned(session)
-        if earned is None:
-            self._money_label.configure(text="Credits earned this session: (no balance data yet)")
-        else:
-            rate = f"{per_hour(earned, hours):+,.0f} cr/hr" if hours > 0 else "—"
-            self._money_label.configure(text=f"Credits earned this session: {earned:+,}      Rate: {rate}")
 
     def _update_system_table(self, session: Dict[str, Any], current_system: Optional[str]) -> None:
         self._system_table.clear()
@@ -339,7 +326,7 @@ class _CurrentTab:
 
 
 def _cumulative_summary(sessions: List[Dict[str, Any]]) -> str:
-    """'All sessions — Merits: 12,345   CP: Acquisition 120 / Reinforcement 80 / Undermining 40   Cr: +200,000'."""
+    """'All sessions — Merits: 12,345   CP: Acquisition 120 / Reinforcement 80 / Undermining 40'."""
     merit_totals: Dict[str, int] = {activity: 0 for activity in ACTIVITIES}
     for s in sessions:
         totals = s.get("totals", {})
@@ -353,18 +340,7 @@ def _cumulative_summary(sessions: List[Dict[str, Any]]) -> str:
         if activity not in NO_CP_ACTIVITIES
     )
 
-    cumulative_earned = 0
-    have_credits = False
-    for s in sessions:
-        earned = credits_earned(s)
-        if earned is not None:
-            cumulative_earned += earned
-            have_credits = True
-
-    parts = [f"All sessions — Merits: {cumulative_merits:,}", f"CP: {cp_bits}"]
-    if have_credits:
-        parts.append(f"Cr: {cumulative_earned:+,}")
-    return "   ".join(parts)
+    return "   ".join([f"All sessions — Merits: {cumulative_merits:,}", f"CP: {cp_bits}"])
 
 
 class _HistoryTab:
@@ -390,7 +366,6 @@ class _HistoryTab:
                 for activity in ACTIVITIES
                 if activity not in NO_CP_ACTIVITIES
             )
-            earned = credits_earned(session)
             is_current = session is current
 
             self._table.append((
@@ -400,8 +375,7 @@ class _HistoryTab:
                 f"{hours:.2f}h",
                 f"{total_merits(session):,}",
                 f"{cp_sum:,.1f}",
-                f"{earned:+,}" if earned is not None else "—",
             ))
 
         if not sessions:
-            self._table.append(("(no sessions yet)", "", "", "", "", "", ""))
+            self._table.append(("(no sessions yet)", "", "", "", "", ""))

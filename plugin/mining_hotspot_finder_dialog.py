@@ -56,7 +56,7 @@ def open_hotspot_finder_dialog(parent: tk.Misc) -> None:
     # themselves rather than guessing.
     dialog.resizable(True, True)
     dialog.transient(root)
-    dialog.grab_set()
+    ui_style.grab_when_visible(dialog)
     dialog.columnconfigure(1, weight=1)
 
     system_text = reference_system or "(unknown - wait for a journal event)"

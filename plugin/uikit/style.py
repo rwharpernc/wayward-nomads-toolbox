@@ -79,3 +79,22 @@ def skin(window: tk.Misc) -> None:
     for widget_class, options in _SKIN_OPTIONS.items():
         for option, value in options.items():
             window.option_add(f"*{scope}*{widget_class}.{option}", value, 60)
+
+
+def grab_when_visible(window: tk.Misc, tries: int = 40) -> None:
+    """Make a dialog modal (`grab_set`) once it is actually on screen.
+
+    On X11 (Linux) `grab_set()` raises "grab failed: window not viewable" if
+    the window hasn't been mapped yet, which is the case right after it is
+    created; Windows doesn't care. So try now and, if that fails, retry a few
+    times shortly after. A dialog that never becomes viewable simply stays
+    non-modal - it still works, which beats failing to open at all."""
+    try:
+        window.grab_set()
+    except tk.TclError:
+        if tries <= 0:
+            return
+        try:
+            window.after(50, lambda: grab_when_visible(window, tries - 1))
+        except tk.TclError:  # the dialog was closed before it ever appeared
+            pass

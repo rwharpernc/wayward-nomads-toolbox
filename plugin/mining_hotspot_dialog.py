@@ -46,7 +46,7 @@ def open_hotspot_dialog(
     dialog.title("Edit Hotspot" if existing else "Add Hotspot")
     dialog.resizable(False, False)
     dialog.transient(root)
-    dialog.grab_set()
+    ui_style.grab_when_visible(dialog)
 
     system_var = tk.StringVar(value=existing.system if existing else prefill_system)
     body_var = tk.StringVar(value=existing.body if existing else prefill_body)
