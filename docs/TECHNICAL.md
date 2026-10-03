@@ -585,12 +585,14 @@ anything still active, short because missions expire.
 
 ### BGS (`bgs_*.py`)
 
-Pure logic (`bgs_tracker.py`) reads the journal's `Factions[]` arrays into snapshots (overwritten
-wholesale on each sighting, because the journal always sends the complete picture) and accumulates
-activity (mission influence, vouchers, trade, exploration sales). Trade and exploration credit are
-attributed to the *station's* faction, which spans two events (`Docked`, then the market event), so
-attribution lives in the panel. The tick client polls every 60 seconds; on a new tick the tally rolls
-into `previous_activity`. See the [BGS spec](BGS_TECH_SPEC.md).
+Pure logic: `bgs_tracker.py` parses journal fields; `bgs_ledger.py` (`TickLedger`) holds one tick
+period's per-faction snapshots (pre-tick `before` and latest `now`) and activity, and runs identically on
+live events and on a replay of journal files (`bgs_journal.py`). Trade and exploration credit are
+attributed to the *station's* faction, which spans two events (`Docked`, then the market event), so the
+ledger carries that context. `bgs_format.py` is the shared wording. The tick client polls every 60
+seconds; a new tick archives the closed period (kept for the "archive days" setting) and starts a fresh
+one, and the current period is rebuilt from the journals once per session. See the
+[BGS spec](BGS_TECH_SPEC.md).
 
 ### Field Ops (`screenshots*.py`, `screenshot_*.py`, `inventory*.py`, `ship_builds*.py`, `colonisation*.py`)
 

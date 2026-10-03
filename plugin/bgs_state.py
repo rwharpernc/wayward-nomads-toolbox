@@ -1,30 +1,31 @@
 """JSON persistence for BGS tracking, stored alongside the plugin, keyed
 per commander (case-preserved for storage, matched case-insensitively) -
 same convention as boxel_state.py/organic_scan_state.py/ship_builds_data.py,
-so two commanders on the same install each keep their own tracked systems/
-factions and BGS data instead of silently sharing/overwriting one.
+so two commanders on the same install each keep their own BGS data instead of
+silently sharing/overwriting one.
 
 Unlike Discovery/Interdiction/Landing's ephemeral precedent, this persists
 across restarts *and* survives EDMC being closed entirely - a commander's
-tracked-faction configuration and last-known faction states shouldn't
-vanish just because they logged out (same reasoning organic_scan.py's own
-per-body state now follows).
+tick totals and last-known faction states shouldn't vanish just because they
+logged out (same reasoning organic_scan.py's own per-body state now follows).
 
 Schema (per commander):
 
     {
-        "tracked_systems": ["System Name", ...],
-        "tracked_factions": ["Faction Name", ...],
-        "snapshots": {"<system>|<faction> (casefold)": {...FactionSnapshot fields...}},
-        "activity": {"<system>|<faction> (casefold)": {...FactionActivity fields...}},
-        "previous_activity": {"<system>|<faction> (casefold)": {...FactionActivity fields...}},
-        "tick": {"last_seen_at": "<ISO timestamp of the last-known galaxy tick, or null>"}
+        "ledger": {            # the current tick period - see bgs_ledger.TickLedger.to_dict()
+            "tick_start": "<ISO timestamp of the tick that began this period, or null>",
+            "activity": {"<system>|<faction> (casefold)": {...FactionActivity fields...}},
+            "tracks": {"<system>|<faction> (casefold)": {"system", "faction", "before", "now"}},
+            "open_missions": {"<MissionID>": ["<faction>", "<system>"]}
+        },
+        "archive": [           # closed tick periods, newest first, pruned to the archive-days setting
+            {"tick_start", "tick_end", "activity": {...}, "tracks": {...}}
+        ]
     }
 
-`activity` is the tally since the last detected tick (or since the feature
-was first configured, if no tick has been detected yet); `previous_activity`
-is what `activity` held immediately before the most recent tick roll-over -
-see bgs_panel.py's own tick-handling for how/when that roll happens.
+Older files (tracked systems/factions, snapshots, previous_activity) are
+still readable: those keys are simply ignored, and the old
+`tick.last_seen_at` seeds the period start until the next tick check.
 """
 
 from __future__ import annotations
@@ -42,12 +43,8 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 STATE_FILENAME = "bgs_state.json"
 
 _DEFAULT_STATE: Dict[str, Any] = {
-    "tracked_systems": [],
-    "tracked_factions": [],
-    "snapshots": {},
-    "activity": {},
-    "previous_activity": {},
-    "tick": {"last_seen_at": None},
+    "ledger": {"tick_start": None, "activity": {}, "tracks": {}, "open_missions": {}},
+    "archive": [],
 }
 
 

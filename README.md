@@ -365,27 +365,31 @@ Finished** to clear completed and failed sites.
 ## BGS
 
 Tracks the Background Simulation (BGS): faction states, and the effect of your own missions, bounties,
-trade and exploration on them, for the systems and factions you choose.
+trade, exploration and crimes on them. Nothing to set up: it records wherever you act.
 
-**How to use it:** the panel always shows your current system, whether tracked or not. It says so if
-the system is uninhabited; otherwise it lists every faction present, who controls it (★) and each
-faction's current state. Click **Track** to start tracking the system (every faction in it) or
-**Untrack** to stop. There's no limit on how many systems you track. You can also add systems or
-individual factions under **Settings → BGS**.
+**The panel** shows only the system you're in: each faction present (★ marks the controller), its state
+and influence, and under each faction what you've done to it since the last server tick. Influence and
+state show how far they moved since before the tick, for example `45.0% (+5.0)` or `None → Boom`.
 
-Once something is tracked, WNTB tallies what you do there: mission completions (influence gained or
-lost), bounty voucher and combat bond redemptions, trade profit or loss, and exploration data sold.
-The panel shows a running total since the last "tick" (the daily BGS update). **View BGS Report**
-opens the full breakdown with two tabs, **Faction States** and **Activity Tally** (This Tick and
-Previous Tick), and **Copy Summary** copies it as plain text. Everything is kept separately for each
-commander and survives restarting EDMC.
+**What it counts, increases and decreases:** missions completed (influence pips gained or lost),
+missions failed or abandoned, bounty voucher and combat bond redemptions, trade profit or loss, exploration
+data sold, and crimes committed against a faction.
 
-WNTB checks a community tick-time service once a minute to notice the real tick and start a fresh
-tally. That's the only internet connection BGS makes, and you can turn it off in Settings (the tally
-then just keeps adding up).
+**View BGS Report** opens a window with a drop-down to pick the tick (the current one, or an earlier one
+from the archive) and one tab per system you've acted in during it. Each tab lists every faction there
+(state, influence and change, pending, recovering and active states) and a table of what you did to each.
+**Copy Summary** copies every tick and system as plain text.
 
-**Settings:** turn BGS on or off, turn tick detection on or off, and manage your tracked systems and
-factions.
+**Resets and history:** the totals reset at each tick and the closed tick is archived. When EDMC starts,
+WNTB re-reads your last few journals so the totals are cumulative since the tick even if EDMC wasn't
+running the whole time. Everything is kept separately for each commander.
+
+WNTB checks a community tick-time service once a minute to notice the real tick. That's the only internet
+connection BGS makes, and you can turn it off in Settings. Without it the totals never reset on their own
+and the journals can't be replayed, because WNTB doesn't know when the tick was.
+
+**Settings:** turn BGS on or off, turn tick detection on or off, and choose how many days of previous ticks
+to keep (default 7).
 
 ## Landing Assist and Interdiction Warning
 
