@@ -83,6 +83,18 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
 
 - Don't use Windows-only Tk values such as `SystemWindow` colour names, and don't call `powershell.exe`
   or Win32 APIs outside the existing `IS_WINDOWS` branches. Use `platform_support` helpers.
+- Keep the Windows and Linux code paths behind `platform_support` (`IS_WINDOWS`, `IS_LINUX`) and say so in
+  the feature's Settings tab with a **Works on:** note (see `platform_support.input_support_note`).
+  Full list of what each OS does: [TECHNICAL.md section 18](TECHNICAL.md#18-platform-support-windows-and-linux).
+- File names: use the game's exact case (`Status.json`), match journals as `Journal.*.log`, always pass
+  `encoding=` to `open`, and take the name from a journal `Filename` with `screenshot_naming.journal_basename`
+  (Elite writes backslashes even under Proton).
+- New modal dialogs: use `ui.style.grab_when_visible(dialog)`, not `dialog.grab_set()` (X11 refuses a grab
+  before the window is mapped).
+- Text symbols in the UI: stick to ones every font has (`×`, `★`, `→`, `▾`).
+- `monitor.logfile` (EDMC) is a `str` or a `pathlib.Path` depending on the version: wrap it in `str()` before
+  comparing it or saving it to JSON.
+- Background threads must never touch a Tk widget; hand results back with a queue and `after()`.
 - A bug that makes a Settings tab vanish usually means an exception while building it. EDMC catches it
   and logs `Failed for Plugin "WNTB"`, so look for that line.
 

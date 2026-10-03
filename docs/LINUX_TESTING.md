@@ -76,6 +76,30 @@ Where a step fails, copy the relevant lines from EDMC's log
       your browser.
 - [ ] Restart EDMC: per-commander data (BGS, Boxel, Codex) is still there.
 
+## 6b. Fixed in the platform audit - please confirm
+
+- [ ] Settings → Auto-Honk, Screenshots and Field Ops → Inventory each show a **Works on:** line, green when
+      it can work here and orange (with the reason) when it can't. Try it with and without `xdotool`.
+- [ ] Take a normal screenshot and an Alt+F10 hi-res one: both are found, converted and named, and the
+      hi-res one is treated as hi-res (the journal path is Windows-style, `\ED_Pictures\...`).
+- [ ] Open every modal dialog without it erroring or staying behind the main window: Mining → Add/Edit
+      Hotspot, Find Hotspots, Find Best Price, Check Ring Reserve, Import/Export Hotspots, and Field Ops →
+      Add/Edit Ship Build. Each should stay on top and block the window behind it.
+
+## 6c. Game mode and credits lines (under the mode buttons)
+
+- [ ] Before logging in, the first line reads "Game mode: waiting for login…" and the second "Credits this
+      session: waiting for your balance…".
+- [ ] After loading into the game: "You are in Solo mode." (or Open, or Private Group with its name) and
+      "Credits this session: no change yet". Both stay visible when you switch between every mode button and
+      disappear only when you collapse the WNTB title.
+- [ ] Earn or spend some credits: the second line changes to "+N cr earned" or "-N cr lost", and an hourly rate
+      appears after a few minutes.
+- [ ] Log out to the main menu and back in: the credits total carries on (same session). Restart EDMC while the
+      game is running: the mode line and the credits total come back. Quit the game: the mode line goes back to
+      "waiting for login".
+- [ ] `session_credits.json` appears in the WNTB plugin folder, and a plugin update leaves it alone.
+
 ## 7. BGS (rebuilt in 1.1.0)
 
 - [ ] The BGS panel's grey line shows "Last tick: ..." within a few seconds (network call works).

@@ -38,7 +38,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import bgs_format, bgs_journal, bgs_ledger, bgs_state, bgs_tick_client, bgs_window, panelkit
+from . import bgs_format, bgs_journal, bgs_ledger, bgs_state, bgs_tick_client, bgs_window, panelkit, platform_support
 from .bgs_ledger import PeriodView, TickLedger
 from .bgs_tracker import snapshot_key
 
@@ -498,6 +498,13 @@ class BgsController:
             ),
             wraplength=440, justify=tk.LEFT, foreground="grey",
         ).grid(row=4, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(0, 8))
+
+        if platform_support.IS_LINUX:
+            # Rebuilding the tick's totals needs EDMC's Journal directory, which has no default on Linux.
+            advice = platform_support.journal_dir_advice(config.get_str("journaldir") or "")
+            if advice:
+                nb.Label(frame, text=advice, wraplength=440, justify=tk.LEFT, foreground="#c07000").grid(
+                    row=6, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(0, 8))
 
         archive_row = nb.Frame(frame)
         archive_row.grid(row=5, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(0, 4))

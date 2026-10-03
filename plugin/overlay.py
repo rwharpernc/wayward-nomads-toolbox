@@ -290,9 +290,9 @@ def build_settings(notebook: nb.Notebook) -> None:
     nb.Label(
         frame,
         text=(
-            "Connection to an overlay program (EDMCModernOverlay is recommended; the older EDMCOverlay "
-            "also works). It is a separate, optional helper app that WNTB does not install or launch "
-            "itself, used by the on-screen features. Every feature works without one."
+            "Connection to an overlay program: EDMCModernOverlay (recommended; Windows and Linux) or the "
+            "older EDMCOverlay (WINDOWS ONLY). It is a separate, optional helper app that WNTB does not "
+            "install or launch itself, used by the on-screen features. Every feature works without one."
         ),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 8))

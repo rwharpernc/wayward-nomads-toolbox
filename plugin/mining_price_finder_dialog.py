@@ -58,7 +58,7 @@ def open_price_finder_dialog(parent: tk.Misc,
     dialog.title("Find Best Price")
     dialog.resizable(True, True)
     dialog.transient(root)
-    dialog.grab_set()
+    ui_style.grab_when_visible(dialog)
     dialog.columnconfigure(1, weight=1)
 
     system_text = reference_system or "(unknown - wait for a journal event)"

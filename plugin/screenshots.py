@@ -393,7 +393,7 @@ class ScreenshotsController:
             logger.warning(
                 "Screenshot source file %r not found in the configured Screenshot Directory "
                 "or any known fallback location",
-                os.path.basename(journal_filename),
+                screenshot_naming.journal_basename(journal_filename),
             )
             self._set_status("Screenshot not found — check Screenshot Directory in Settings")
             return
@@ -879,6 +879,13 @@ class ScreenshotsController:
         )
         row += 1
 
+        auto_note, auto_supported = platform_support.input_support_note()
+        nb.Label(
+            frame, text="Auto-timer and Thargoid-scan capture (they press the screenshot key for you). " + auto_note,
+            wraplength=440, justify=tk.LEFT, foreground="#2e7d32" if auto_supported else "#c07000",
+        ).grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10, pady=(12, 0))
+        row += 1
+
         if screenshot_automation.SUPPORTED:
             interval_row = tk.Frame(frame)
             interval_row.grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10, pady=(12, 0))
@@ -901,11 +908,6 @@ class ScreenshotsController:
                 frame, text="Automatically capture a screenshot when scanning a Thargoid signal",
                 variable=self._thargoid_var,
             ).grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10)
-            row += 1
-        else:
-            nb.Label(
-                frame, text="Auto-timer and Thargoid-scan capture require Windows and are unavailable on this platform.",
-            ).grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10, pady=(12, 0))
             row += 1
 
         self._overlay_var = tk.BooleanVar(value=cfg.overlay_enabled)

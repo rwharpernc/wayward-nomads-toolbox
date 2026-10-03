@@ -76,7 +76,7 @@ def import_from_link(parent: tk.Misc) -> None:
     dialog.title("Import Hotspot from Link")
     dialog.resizable(False, False)
     dialog.transient(root)
-    dialog.grab_set()
+    ui_style.grab_when_visible(dialog)
 
     tk.Label(dialog, text="Paste a PlanetPOI share link (or its payload):", anchor=tk.W).grid(
         row=0, column=0, sticky="w", padx=8, pady=(8, 4))
@@ -128,7 +128,7 @@ def open_import_export_dialog(parent: tk.Misc) -> None:
     dialog.title("Import/Export Hotspots")
     dialog.resizable(False, False)
     dialog.transient(root)
-    dialog.grab_set()
+    ui_style.grab_when_visible(dialog)
 
     tk.Label(dialog, text="Known Surface Hotspots", anchor=tk.W).grid(
         row=0, column=0, columnspan=2, sticky="w", padx=8, pady=(8, 4))

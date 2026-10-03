@@ -158,6 +158,35 @@ class JournalDirTests(unittest.TestCase):
                 self.assertIsNone(ps.journal_dir_advice("", os.path.join(root, "nope")))
 
 
+class SettingsNoteTests(unittest.TestCase):
+    """The Works on / This system notes shown in Settings."""
+
+    def test_windows_is_supported_for_input_and_sound(self) -> None:
+        with mock.patch.object(ps, "IS_WINDOWS", True), mock.patch.object(ps, "IS_LINUX", False):
+            for note in (ps.input_support_note(), ps.sound_support_note()):
+                self.assertTrue(note[1])
+                self.assertIn("Windows - supported", note[0])
+
+    def test_linux_reports_whether_the_helper_tool_is_present(self) -> None:
+        with mock.patch.object(ps, "IS_WINDOWS", False), mock.patch.object(ps, "IS_LINUX", True):
+            with mock.patch.object(ps, "xdotool_available", return_value=True):
+                self.assertEqual(ps.input_support_note()[1], True)
+            with mock.patch.object(ps, "xdotool_available", return_value=False):
+                text, ok = ps.input_support_note()
+                self.assertFalse(ok)
+                self.assertIn("xdotool NOT found", text)
+            with mock.patch.object(ps, "sound_available", return_value=False):
+                text, ok = ps.sound_support_note()
+                self.assertFalse(ok)
+                self.assertIn("no sound player", text)
+
+    def test_other_systems_are_unsupported_and_say_so(self) -> None:
+        with mock.patch.object(ps, "IS_WINDOWS", False), mock.patch.object(ps, "IS_LINUX", False):
+            self.assertFalse(ps.input_support_note()[1])
+            self.assertFalse(ps.sound_support_note()[1])
+            self.assertIn("Not on macOS", ps.input_support_note()[0])
+
+
 class XdotoolWrapperTests(unittest.TestCase):
     def _run(self, returncode: int = 0, stdout: str = ""):
         return mock.Mock(returncode=returncode, stdout=stdout, stderr="")

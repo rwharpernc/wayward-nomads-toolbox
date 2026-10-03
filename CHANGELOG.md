@@ -3,7 +3,47 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed
+- **Linux: screenshots were not found.** Elite writes the screenshot path with Windows backslashes even under
+  Proton, and Linux didn't split on them, so WNTB couldn't find the file to convert and treated hi-res
+  shots as normal ones. Fixed.
+- **Linux: modal dialogs could fail to open.** Seven dialogs (Mining hotspot add/edit, find hotspots, find
+  best price, check ring reserve, import/export hotspots, and ship builds) now wait until the window is on
+  screen before taking the modal grab, which X11 requires.
+- The Screenshots tab said auto-capture "requires Windows", although it also works on Linux with `xdotool`.
+- The self-updater no longer writes a zip entry that points outside the plugin folder (`..`, absolute path
+  or another drive).
+
+### Changed
+- **Credits this session** and a new **"You are in <mode> mode."** line (Open, Solo or Private Group) now sit
+  directly under the mode buttons, visible in every mode, in one section with a separator before the page
+  content. Each is its own module (`session_credits.py`, `game_mode.py`) and neither depends on Powerplay any
+  more: they track the balance and the game mode themselves, from the journal, and keep their own saved
+  record. The credits line reads "+N cr earned" or "-N cr lost", with an hourly rate once the session is a
+  few minutes old.
+- EDMC's `monitor.logfile` can be a `Path` or a `str` depending on the version; WNTB now always treats it as a
+  string, so saving the session records can't fail on a `Path` (Powerplay's session store included).
+- Powerplay no longer shows or tracks credits or the game mode. Gone from its page, from the Sessions
+  window's Current tab, and from the Sessions history table and totals (old saved sessions keep their data,
+  it is just not shown).
+- Settings now state which systems each OS-dependent feature works on, and whether it can work on your
+  machine right now (a **Works on:** line, green or orange): Auto-Honk, Screenshots auto-timer and Thargoid
+  capture, the Inventory pickup sound and the Overlay Connection tab (which says the older EDMCOverlay is
+  Windows-only). The BGS tab shows the Linux journal-folder hint.
+- README has a new **Platform support: Windows and Linux** section (what works where, what is Windows-only,
+  what is Linux-only). `docs/TECHNICAL.md` section 18 now lists every file, folder and command each system
+  uses, and records the audit of all 126 modules.
+
 ## 1.1.2 - 2026-10-03
+
+The project is public again. (There is no 1.1.1 release: it was withdrawn, and its only change is listed
+here.)
+
+### Changed
+- Corrected out-of-date wording in the BGS code comments (they still described the old per-panel
+  attribution and the removed "phases").
 
 ### Fixed
 - Linux hardening for the new BGS report: the close-tab button uses a character every font has, the
@@ -14,14 +54,6 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ### Development
 - Added a BGS section to the Linux test checklist (`docs/LINUX_TESTING.md`).
-
-## 1.1.1 - 2026-10-03
-
-The project is public again. This release has the same behaviour as 1.1.0.
-
-### Changed
-- Corrected out-of-date wording in the BGS code comments (they still described the old per-panel
-  attribution and the removed "phases").
 
 ## 1.1.0 - 2026-10-03
 

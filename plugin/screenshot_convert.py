@@ -12,6 +12,8 @@ from typing import Iterable, Optional, Tuple
 from config import appname
 from PIL import Image
 
+from . import screenshot_naming
+
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
@@ -29,7 +31,7 @@ def find_source_file(candidate_dirs: Iterable[str], journal_filename: str) -> Op
     — a leading path fragment Elite writes but that isn't a real filesystem
     path. Only the basename is used.
     """
-    basename = os.path.basename(journal_filename)
+    basename = screenshot_naming.journal_basename(journal_filename)
     for directory in candidate_dirs:
         candidate = os.path.join(directory, basename)
         if os.path.isfile(candidate):

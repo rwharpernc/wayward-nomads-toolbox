@@ -38,6 +38,7 @@ from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
     organic_scan_panel, overlay, panelkit, powerplay, screenshots, ship_builds_panel,
+    game_mode, session_credits,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
 
@@ -198,6 +199,17 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
         btn.pack(side=tk.LEFT, padx=(0, 6) if key != PANEL_MODES[-1][0] else (0, 0))
         _mode_buttons[key] = btn
 
+    # Session strip (game mode, then credits this session) + a separator,
+    # directly under the buttons and before any page content: visible in every
+    # mode (it is not part of one), hidden only by the master collapse toggle.
+    # Each line is its own module (game_mode.py, session_credits.py).
+    session_strip = tk.Frame(_frame)
+    session_strip.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
+    game_mode.build(session_strip, row=0)          # "You are in Solo mode."
+    session_credits.build(session_strip, row=1)    # "Credits this session: +N cr earned"
+    panelkit.add_separator(_frame, 3)
+    session_rule = _frame.grid_slaves(row=3, column=0)[0]
+
     # Every mode's content lives in one holder whose WIDTH is pinned to the
     # mode-button row's and whose height follows whichever mode is showing.
     # EDMC sizes its main window to the widest row of every plugin, so without
@@ -206,7 +218,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     # the button row; content wraps to the available width instead. See
     # docs/TECHNICAL.md section 5.
     _mode_holder = tk.Frame(_frame)
-    _mode_holder.grid(row=2, column=0, columnspan=3, sticky="ew")
+    _mode_holder.grid(row=4, column=0, columnspan=3, sticky="ew")
     _mode_holder.columnconfigure(0, weight=1)
     _mode_holder.grid_propagate(False)
     try:
@@ -230,10 +242,10 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     # collapse toggle.
     _always_frame = tk.Frame(_frame)
     _always_frame.columnconfigure(1, weight=1)
-    _always_frame.grid(row=3, column=0, columnspan=3, sticky="ew")
+    _always_frame.grid(row=5, column=0, columnspan=3, sticky="ew")
     _stack_features(_always_frame, "always")
 
-    _collapsible_widgets = [mode_row, _mode_holder, _always_frame]
+    _collapsible_widgets = [mode_row, session_strip, session_rule, _mode_holder, _always_frame]
     _apply_collapsed_state()
 
     theme.update(_frame)

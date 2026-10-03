@@ -158,6 +158,26 @@ produce a very wide image.
 **The rule.** Any widget in the main window whose size comes from variable data must have a hard
 upper bound on *every* dimension that affects layout.
 
+**Session strip.** Directly under the mode buttons (a frame at row 2 of the main frame, with a separator at
+row 3) are two lines shown in every mode; only the master collapse toggle hides them. Each is a feature
+module of its own, independent of Powerplay and of each other:
+
+- `game_mode.py`: "You are in Solo mode." (Open / Solo / Private Group with its name). Set from `LoadGame`'s
+  `GameMode`/`Group`, recovered on `StartUp` (EDMC attached to a running game, no journal replay) by reading
+  the `LoadGame` line from the top of the current journal file, cleared on `Shutdown`.
+- `session_credits.py`: "Credits this session: +N cr earned (+R cr/hr)" or "-N cr lost". It keeps its own
+  record of the current session (login balance, balance now, journal file, commander) in
+  `session_credits.json`, read from `LoadGame`'s `Credits` and EDMC's `state["Credits"]` on every event.
+  The same journal file and commander is one session (a logout to the menu and back, or an EDMC restart,
+  continues it); anything else starts a new one. Writes are throttled to one per 30 s plus start and stop.
+
+Both are registered in `load.py`'s `_FEATURES` for journal events (and `session_credits` in start/stop) and
+built into the strip by `ui.py`. Text builders and session logic are pure functions with tests
+(`tests/test_game_mode.py`, `tests/test_session_credits.py`); the labels are `panelkit.wrap_label`s, so a
+long number or private-group name wraps instead of widening EDMC's window. `session_credits.json` is on the
+updater's keep-list. Powerplay no longer knows about either: its session store has no credit fields (old
+`sessions.json` files keep theirs, ignored).
+
 **Switching modes must not change the width.** Every mode's content sits in one holder in `ui.py` whose
 width is pinned to the mode-button row's, and whose height follows whichever mode is showing, so the
 window never grows or shrinks as you switch. Content wraps to that width instead of asking for more.
@@ -729,13 +749,20 @@ isolated in `platform_support.py` (plus the Windows branches in `autohonk.py` an
 
 | Concern | Windows | Linux |
 |---|---|---|
-| Elite's bindings folder | `%LOCALAPPDATA%\Frontier Developments\...` | Inside the Wine/Proton prefix (below) |
-| Elite's screenshot folder | Shell "Pictures" known folder | `Pictures/Frontier Developments/Elite Dangerous` inside the prefix |
-| Find the game window | `FindWindowW` | `xdotool search --name "^Elite - Dangerous"` |
-| Send a key | `keybd_event` | `xdotool keydown` / `keyup` |
+| Journals and `Status.json` | EDMC's Journal directory setting (EDMC finds the default) | The same setting, but it has no default: it must point at `<prefix>/drive_c/users/<user>/Saved Games/Frontier Developments/Elite Dangerous`. An empty value means "nothing to scan" |
+| Elite's bindings folder | `%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Bindings` | The same path inside the Wine/Proton prefix (below) |
+| Elite's screenshot folder | Shell "Pictures" known folder (`SHGetKnownFolderPath`), with OneDrive redirect handling | `Pictures/Frontier Developments/Elite Dangerous` inside the prefix, else `~/Pictures` |
+| Screenshot event `Filename` | `\ED_Pictures\Screenshot_0001.bmp` | Same Windows-style string (Elite writes it even under Proton), so the file name is taken with `screenshot_naming.journal_basename`, not `os.path.basename` |
+| Find the game window | `FindWindowW` (ctypes) | `xdotool search --name "^Elite - Dangerous"` |
+| Is the game in the foreground | `win32gui.GetForegroundWindow` (bundled pywin32) | `xdotool getactivewindow getwindowname` |
+| Send a key | `keybd_event` (ctypes for Auto-Honk, pywin32 for screenshots) | `xdotool keydown` / `keyup` (XTEST) |
 | Is a companion app running | `tasklist` | `pgrep -f` |
-| Notification sound | `winsound` | `canberra-gtk-play` or `paplay` |
+| Notification sound | `winsound.MessageBeep` | `canberra-gtk-play`, else `paplay` with the freedesktop theme file |
 | Overlay | EDMCOverlay or EDMCModernOverlay | EDMCModernOverlay (or edmcoverlay2); same TCP protocol |
+| Modal dialogs | `grab_set` works at once | `ui.style.grab_when_visible`: X11 refuses a grab until the window is mapped, so it retries briefly |
+| Plain `tk.Listbox` colours | `SystemWindow` / `SystemWindowText` | `white` / `black` (those names are Windows-only Tk colours) |
+| Text symbols in the UI | Any | Only symbols every font has (`×`, `★`, `→`); `✕` was replaced because some Linux fonts lack it |
+| Settings notes | "This system: Windows - supported" | "This system: Linux, xdotool found / NOT found" (`platform_support.input_support_note`, `sound_support_note`) |
 
 **Why the prefix.** Elite is a Windows game. Under Steam Proton it sees a fake Windows profile stored
 at `.../steamapps/compatdata/359320/pfx/drive_c/users/steamuser/`, so its "Local AppData" and
@@ -781,6 +808,70 @@ spelling.
 Folder Access" error text and the shell Pictures lookup are gated on Windows, so Linux users don't
 see irrelevant advice.
 
+**Settings labelling.** Any feature that depends on the operating system shows a **Works on:** line in
+its Settings tab, coloured green when this machine can run it and orange when it cannot (and why):
+Auto-Honk, the Screenshots auto-timer and Thargoid capture, the Inventory pickup sound, and the Overlay
+Connection tab (which says the older EDMCOverlay is Windows-only). The BGS tab shows the Linux journal
+folder hint. Wording lives in one place, `platform_support.py`, and is unit-tested.
+
 **Status.** The Linux paths are unit-tested with mocked subprocess calls and temporary directories
 (`tests/test_platform_support.py`), but have not been run against a real Elite install. Wayland
 without XWayland, and macOS, are unsupported for key simulation.
+
+### 18.2 Platform notes for the session strip (`game_mode.py`, `session_credits.py`)
+
+Both modules are platform-neutral by construction; what was checked, and why it holds on each system:
+
+- **Journal source.** They read only journal events (`LoadGame`, `StartUp`, `Shutdown`) and EDMC's
+  `state["Credits"]`, which EDMC supplies identically on Windows and Linux. `StartUp` recovery reads the top
+  of the current journal file with an explicit UTF-8 encoding and tolerates a missing or unreadable file.
+- **`monitor.logfile`** is a `str` on some EDMC versions and a `pathlib.Path` on others. It is imported lazily
+  (so tests run without EDMC), then converted with `str()` before it is compared or written to JSON. Powerplay's
+  session store got the same conversion. Journal-file identity is compared as the exact string EDMC gives, so
+  Windows drive-letter paths and Linux Wine/Proton paths behave the same.
+- **Saved state.** `session_credits.json` is written to a temp file then `os.replace`d (atomic on both), at most
+  once per 30 seconds plus on start and stop; a read-only plugin folder only logs a warning. Time stamps are UTC
+  and parsed with `calendar.timegm`, not the local-time `mktime`, so a DST change or a different time zone
+  cannot skew the hourly rate.
+- **Display.** Number formatting is fixed (`f"{n:,}"`), not locale-dependent. The glyphs used are the ellipsis
+  and ordinary punctuation. Both labels are `panelkit.wrap_label`s inside one frame, so a long private-group
+  name wraps instead of widening EDMC's window, which matters most on Linux where window managers resize
+  more eagerly.
+
+### 18.1 Audit of every module (2026-10-03)
+
+All 126 modules in `plugin/` and `plugin/uikit/` (about 33,600 lines) were checked for Windows-only or
+Linux-only assumptions, in three passes:
+
+1. **Mechanical scan of every module** (AST + text) for platform signals: Win32 and `ctypes` use,
+   `subprocess`, `winsound`, `os.startfile`, `sys.platform` branches, `.exe`/PowerShell/`xdotool`
+   strings, Windows-only Tk colour names, Windows paths and environment variables, `open()` without an
+   explicit encoding, `strftime` directives that differ by platform, and file-name case. 89 modules had
+   no platform signal at all (pure logic or plain Tk) and were covered by the scan and the
+   cross-cutting checks below; the other 37 had their platform-relevant code read directly
+   (`platform_support`, `inventory_sound` and `screenshot_automation` in full; the key-injection,
+   Settings and path code of `autohonk`, `screenshots`, `screenshot_convert`, `screenshot_naming`,
+   `overlay`, `load`, `update` and the three journal readers `codex_backfill`,
+   `mining_journal_backfill`, `exploration_value`; the rest were flagged only for ordinary imports such
+   as `urllib`, `webbrowser`, `PIL` or `tkinter.font`).
+2. **Cross-cutting checks over all modules:** all 361 relative imports match the real file names
+   exactly (a case mismatch passes on Windows and fails on Linux); no two tracked paths differ only by
+   case; every `threading.Thread` target (40 of them) was checked and none touches a Tk widget directly;
+   every `grab_set` call was found; every mouse-wheel binding handles both Windows deltas and X11
+   `Button-4/5`; all generated file names avoid characters Windows rejects.
+3. **Fixes that came out of it:**
+   - Screenshot `Filename` values are Windows-style even under Proton, and `os.path.basename` doesn't
+     split on a backslash on Linux, so the source file was not found and hi-res shots were not
+     recognised. Fixed with `screenshot_naming.journal_basename` (tested).
+   - Seven modal dialogs called `grab_set()` straight after creating the window, which X11 can refuse.
+     They now use `ui.style.grab_when_visible`.
+   - The self-updater now refuses a zip entry that would be written outside the plugin folder
+     (`..`, an absolute path, another drive), which also hardens it on both systems.
+   - The BGS report's suggestion list and close button, and BGS's silent skip when no journal folder is
+     set (now logged and shown in Settings).
+   - Settings tabs for OS-dependent features now state where they work and whether they can here; the
+     Screenshots tab wrongly said auto-capture "requires Windows" when Linux with `xdotool` also works.
+
+Not verifiable from a Windows development machine, and so covered only by `docs/LINUX_TESTING.md`:
+real `xdotool` behaviour, Tk popup stacking and focus under each Linux window manager, Proton prefix
+layouts other than Steam's, and sound players.

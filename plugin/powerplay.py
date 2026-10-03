@@ -40,7 +40,7 @@ from .formulas import (
 from .powerplay_clipboard import DEFAULT_TEMPLATE as DEFAULT_CLIPBOARD_TEMPLATE
 from .powerplay_clipboard import PLACEHOLDERS as CLIPBOARD_PLACEHOLDERS
 from .session import (
-    SessionManager, credits_earned, system_merit_total, system_totals, total_merits, visited_systems,
+    SessionManager, system_merit_total, system_totals, total_merits, visited_systems,
 )
 from .store import SessionStore
 
@@ -380,19 +380,6 @@ _SYSTEM_CONTEXT_EVENTS = ("FSDJump", "Docked")
 # Commodity/data hand-ins at a power contact — see apply_delivery_signal.
 _DELIVERY_EVENTS = ("SearchAndRescue", "DeliverPowerMicroResources")
 
-_LOADGAME_SCAN_LIMIT = 50  # "LoadGame" is always one of the first few lines in a journal file
-
-
-def _mode_text(game_mode: Optional[str], group: Optional[str]) -> str:
-    if game_mode == "Open":
-        return "Mode: Open"
-    if game_mode == "Solo":
-        return "Mode: Solo"
-    if game_mode == "Group":
-        return f"Mode: Private ({group})" if group else "Mode: Private"
-    return "Mode: unknown"
-
-
 # --- CP-ratio / clipboard-template settings (this mode's own Settings-tab
 # state, kept here rather than in ui.py so the feature owns its own config) -
 
@@ -492,13 +479,11 @@ class PowerplayController:
 
         # Main-panel widgets (built in build_panel).
         self._status_label: Optional[tk.Label] = None
-        self._mode_label: Optional[tk.Label] = None
         self._system_label: Optional[tk.Label] = None
         self._here_merits_label: Optional[tk.Label] = None
         self._here_cp_label: Optional[tk.Label] = None
         self._merits_label: Optional[tk.Label] = None
         self._cp_label: Optional[tk.Label] = None
-        self._credits_label: Optional[tk.Label] = None
         self._last_event_label: Optional[tk.Label] = None
         self._panel_parent: Optional[tk.Frame] = None
 
@@ -533,10 +518,6 @@ class PowerplayController:
             from . import rare_goods_window
             rare_goods_window.refresh(self._current_system, self._current_coords)
 
-        credits_now = state.get("Credits") if isinstance(state, dict) else None
-        if isinstance(credits_now, (int, float)):
-            self.sessions.record_credits(int(credits_now))
-
         try:
             self._dispatch(cmdr, system, entry)
         finally:
@@ -547,11 +528,7 @@ class PowerplayController:
         event = entry.get("event", "")
 
         if event == "LoadGame":
-            self._set_mode(_mode_text(entry.get("GameMode"), entry.get("Group")))
-            credits_start = entry.get("Credits")
-            continued = self.sessions.sync_session(
-                cmdr, None, credits_start if isinstance(credits_start, int) else None, monitor.logfile,
-            )
+            continued = self.sessions.sync_session(cmdr, None, monitor.logfile)
             logger.info("LoadGame for %s (%s)", cmdr, "continuing session" if continued else "new session")
             if continued:
                 # Same journal file as before — a logout to the main menu and
@@ -571,11 +548,10 @@ class PowerplayController:
 
         if event == "StartUp":
             # EDMC (re)started with the game already running — no journal
-            # replay, so recover both pledge and game-mode state directly.
-            self.sessions.sync_session(cmdr, None, None, monitor.logfile)
+            # replay, so recover the pledge state directly.
+            self.sessions.sync_session(cmdr, None, monitor.logfile)
             logger.info("StartUp (EDMC attached to a running game) for %s", cmdr)
             self._recover_pledge_state()
-            self._recover_game_mode()
             self._set_status(
                 f"Pledged to {self.tracker.pledge_summary()}" if self.tracker.my_power
                 else f"CMDR {cmdr}: not a PP Pledge"
@@ -654,28 +630,6 @@ class PowerplayController:
         message = f"+{gained} merits ({label}, ~{cp:.1f} CP)"
         logger.info(message)
         self._set_last_event(message)
-
-    def _recover_game_mode(self) -> None:
-        """Reads the current journal file directly for its "LoadGame"
-        event's GameMode/Group fields — needed for the "StartUp" handler,
-        where EDMC synthesizes the entry itself (no journal replay)."""
-        if not monitor.logfile:
-            return
-        try:
-            with open(monitor.logfile, "r", encoding="utf-8") as fh:
-                for _ in range(_LOADGAME_SCAN_LIMIT):
-                    line = fh.readline()
-                    if not line:
-                        break
-                    try:
-                        entry = json.loads(line)
-                    except ValueError:
-                        continue
-                    if entry.get("event") == "LoadGame":
-                        self._set_mode(_mode_text(entry.get("GameMode"), entry.get("Group")))
-                        return
-        except OSError:
-            logger.warning("Could not read %s for game-mode recovery", monitor.logfile, exc_info=True)
 
     def _recover_pledge_state(self) -> None:
         """Falls back to reading the current journal file directly for the
@@ -769,9 +723,6 @@ class PowerplayController:
         self._status_label = panelkit.wrap_label(parent, text="Awaiting PowerPlay activity…")
         self._status_label.grid(row=0, column=0, sticky=tk.W)
 
-        self._mode_label = panelkit.wrap_label(parent, text="Mode: awaiting login…")
-        self._mode_label.grid(row=1, column=0, sticky=tk.W)
-
         self._system_label = panelkit.wrap_label(parent, text="Awaiting system data…")
         self._system_label.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
 
@@ -787,14 +738,11 @@ class PowerplayController:
         self._cp_label = panelkit.wrap_label(parent, text="Session CP: —")
         self._cp_label.grid(row=6, column=0, sticky=tk.W)
 
-        self._credits_label = panelkit.wrap_label(parent, text="")
-        self._credits_label.grid(row=7, column=0, sticky=tk.W)
-
         self._last_event_label = panelkit.wrap_label(parent, text="No merit events yet this session.")
-        self._last_event_label.grid(row=8, column=0, sticky=tk.W, pady=(4, 0))
+        self._last_event_label.grid(row=7, column=0, sticky=tk.W, pady=(4, 0))
 
         windows_row = tk.Frame(parent)
-        windows_row.grid(row=9, column=0, sticky=tk.W, pady=(4, 0))
+        windows_row.grid(row=8, column=0, sticky=tk.W, pady=(4, 0))
         tk.Button(windows_row, text="Sessions", command=self._show_sessions).pack(side=tk.LEFT, padx=(0, 6))
         tk.Button(windows_row, text="Rares", command=self._show_rares).pack(side=tk.LEFT, padx=(0, 6))
         tk.Button(windows_row, text="Rescan", command=self.rescan_journal).pack(side=tk.LEFT)
@@ -814,10 +762,6 @@ class PowerplayController:
     def _set_status(self, message: str) -> None:
         if self._status_label is not None:
             self._status_label["text"] = message
-
-    def _set_mode(self, message: str) -> None:
-        if self._mode_label is not None:
-            self._mode_label["text"] = message
 
     def _set_last_event(self, message: str) -> None:
         if self._last_event_label is not None:
@@ -840,18 +784,10 @@ class PowerplayController:
 
         merits = total_merits(session)
         cp_by_activity = _cp_by_activity(session.get("totals", {}))
-        earned = credits_earned(session)
 
         self._merits_label["text"] = f"Session merits: {merits:,}"
         if self._cp_label is not None:
             self._cp_label["text"] = f"Session CP: {_cp_bits(cp_by_activity)}"
-
-        if self._credits_label is not None:
-            if earned is None:
-                self._credits_label.grid_remove()
-            else:
-                self._credits_label["text"] = f"Credits: {earned:+,}"
-                self._credits_label.grid()
 
         from . import powerplay_window
         powerplay_window.refresh(self._current_system)

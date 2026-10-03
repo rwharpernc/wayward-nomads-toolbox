@@ -61,6 +61,7 @@ def read_events(cmdr: str, tick_start: str, folder: str = "") -> List[Dict[str, 
         logger.warning("BGS journal replay skipped: no journal folder (set EDMC's Journal directory "
                        "in Settings - Configuration; on Linux there is no default)")
         return []
+    folder = os.path.expanduser(folder)
     if not cmdr or start is None:
         return []
     window_start: datetime = start - timedelta(days=LOOKBACK_DAYS)

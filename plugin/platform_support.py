@@ -347,3 +347,36 @@ def play_notification_sound() -> bool:
         except OSError:
             continue
     return False
+
+
+# ---------------------------------------------------------------------------
+# Settings-tab notes: which operating systems a feature needs
+# ---------------------------------------------------------------------------
+
+def input_support_note() -> Tuple[str, bool]:
+    """(text, supported) for features that simulate key presses (Auto-Honk,
+    the screenshot auto-timer and Thargoid capture): where they work, and
+    whether they can work on *this* machine right now."""
+    works_on = ("Works on: Windows; Linux with xdotool installed (X11 or XWayland - not a native Wayland "
+                "window). Not on macOS.")
+    if IS_WINDOWS:
+        return f"{works_on} This system: Windows - supported.", True
+    if IS_LINUX:
+        if xdotool_available():
+            return f"{works_on} This system: Linux, xdotool found - supported.", True
+        return (f"{works_on} This system: Linux, xdotool NOT found - unavailable until you install it "
+                "(for example: sudo apt install xdotool)."), False
+    return f"{works_on} This system is not supported, so this feature is unavailable.", False
+
+
+def sound_support_note() -> Tuple[str, bool]:
+    """(text, supported) for the pickup notification sound."""
+    works_on = "Works on: Windows (system beep); Linux with canberra-gtk-play or paplay installed. Not on macOS."
+    if IS_WINDOWS:
+        return f"{works_on} This system: Windows - supported.", True
+    if IS_LINUX:
+        if sound_available():
+            return f"{works_on} This system: Linux, a sound player was found - supported.", True
+        return (f"{works_on} This system: Linux, no sound player found - unavailable until you install one "
+                "(canberra-gtk-play or pulseaudio-utils)."), False
+    return f"{works_on} This system is not supported, so this option is unavailable.", False

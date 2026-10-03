@@ -24,20 +24,21 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CM
 
 1. [What's in the toolbox](#whats-in-the-toolbox)
 2. [What you need](#what-you-need)
-3. [Installing](#installing)
-4. [Finding your way around](#finding-your-way-around)
-5. [What goes on the internet](#what-goes-on-the-internet)
-6. [Powerplay](#powerplay)
-7. [Exploration](#exploration)
-8. [Mining](#mining)
-9. [Missions](#missions)
-10. [Field Ops](#field-ops)
-11. [BGS](#bgs)
-12. [Landing Assist and Interdiction Warning](#landing-assist-and-interdiction-warning)
-13. [Using WNTB on Linux](#using-wntb-on-linux)
-14. [Troubleshooting](#troubleshooting)
-15. [Getting help](#getting-help)
-16. [For developers, credits and licence](#for-developers-credits-and-licence)
+3. [Platform support: Windows and Linux](#platform-support-windows-and-linux)
+4. [Installing](#installing)
+5. [Finding your way around](#finding-your-way-around)
+6. [What goes on the internet](#what-goes-on-the-internet)
+7. [Powerplay](#powerplay)
+8. [Exploration](#exploration)
+9. [Mining](#mining)
+10. [Missions](#missions)
+11. [Field Ops](#field-ops)
+12. [BGS](#bgs)
+13. [Landing Assist and Interdiction Warning](#landing-assist-and-interdiction-warning)
+14. [Using WNTB on Linux](#using-wntb-on-linux)
+15. [Troubleshooting](#troubleshooting)
+16. [Getting help](#getting-help)
+17. [For developers, credits and licence](#for-developers-credits-and-licence)
 
 ---
 
@@ -70,6 +71,41 @@ Every feature can be turned on or off, so you only see what you want.
   and Interdiction Warning. Everything else works without it. Borderless or windowed mode in Elite works
   with every overlay. A step-by-step guide is in [docs/OVERLAY_SETUP.md](docs/OVERLAY_SETUP.md).
 
+## Platform support: Windows and Linux
+
+WNTB runs on **Windows and Linux**, wherever EDMC does. Almost everything is the same on both, because it
+only reads the game's journal. A handful of features touch the operating system, and those are the ones
+that differ. The Settings tab for each of them says which systems it works on and whether it can work on
+*yours* right now (look for the **Works on:** line).
+
+| Feature | Windows | Linux (Elite under Steam Proton or Wine) |
+|---|---|---|
+| Everything driven by the journal: Powerplay, Exploration, Mining, Missions, BGS, Colonisation, Inventory tracking, Ship Builds, Boxel Survey, Codex, Landing Assist, Interdiction Warning, Discovery Alerts | Yes | Yes, once EDMC's **Journal directory** points at the game's journals inside the Proton/Wine folder |
+| **Game mode and credits lines** under the mode buttons | Yes | Yes (same journal data; the Journal directory must be set) |
+| **Auto-Honk** (presses your Discovery Scanner key for you) | Yes | Yes, needs **`xdotool`**; X11 or XWayland windows only, not a native Wayland window |
+| **Screenshot auto-timer** and **Thargoid-scan capture** (press the screenshot key for you) | Yes | Yes, needs **`xdotool`** |
+| Screenshot conversion and renaming | Yes | Yes (Elite's `Pictures` folder inside the Proton/Wine folder) |
+| Pickup **sound** (Field Ops → Inventory) | Yes (system beep) | Yes, needs `canberra-gtk-play` or `paplay` |
+| On-screen overlay features | EDMCModernOverlay **or** the older EDMCOverlay | EDMCModernOverlay only |
+| Self-update | Yes | Yes |
+
+**Windows only:**
+- **The older EDMCOverlay** overlay program. (EDMCModernOverlay replaces it and works on both. The
+  Overlay Connection tab says so.)
+- **OneDrive folder-redirect handling** for the Screenshot Directory, and the **Controlled Folder Access**
+  hint when Windows blocks writing screenshots. Both are automatic and only appear on Windows.
+
+**Linux only:**
+- The **Elite Wine/Proton prefix** box in Settings → Auto-Honk (blank means auto-detect Steam), and the
+  hint about EDMC's Journal directory.
+
+**macOS** is not supported or tested. Journal-driven features may work, but key simulation and sounds
+don't, and nothing has been checked there.
+
+For exactly which files, folders and commands each system uses, see
+[docs/TECHNICAL.md section 18](docs/TECHNICAL.md#18-platform-support-windows-and-linux). Linux setup is in
+[Using WNTB on Linux](#using-wntb-on-linux).
+
 ## Installing
 
 1. **Download the plugin.** Get **`WNTB.zip`** from the
@@ -96,7 +132,14 @@ default, and only looks at published releases).
 
 - **Switch modes** with the button row under the WNTB title. Every mode keeps working in the
   background while you look at a different one. Nothing pauses.
-- **Collapse the panel** by clicking the "WNTB" title. Click it again to expand.
+- **Your game mode and credits** are shown just under the mode buttons, whichever mode you are in, with a
+  rule below them before the page itself. The first line says which mode you are flying in ("You are in
+  Solo mode.", Open, or Private Group with its name). The second is the credits you have earned or lost
+  since you logged in, such as "+1,234,567 cr earned (+411,522 cr/hr)" or "-5,000 cr lost" (your balance now
+  minus your balance at login; the rate appears once the session is a few minutes old). These two lines are
+  the only place either appears.
+- **Collapse the panel** by clicking the "WNTB" title. Click it again to expand (the credits line folds
+  away with the rest).
 - **Settings** for each feature are under **File → Settings → WNTB**, in tabs. This is where you turn
   things on and off and adjust how they behave.
 - **Pop-out windows** (sessions, rare goods, inventory, the BGS report, the Mining Book and so on)
@@ -159,7 +202,8 @@ them, as I do: [EDSM](https://www.patreon.com/EDSM), [Spansh](https://www.patreo
 Tracks the merits and Control Points you earn for your pledged Power.
 
 **How to use it:** just play. The panel shows your current system's Powerplay state, what you've
-earned in that system, and running totals for the session. Click **Sessions** to browse past sessions,
+earned in that system, and running merit totals for the session (your game mode and credits are on
+the lines under the mode buttons). Click **Sessions** to browse past sessions,
 or **Rescan** if a session's numbers ever look wrong (it re-reads your journal from scratch).
 
 **Rare Goods Finder:** click **Rares** to see the rare commodities closest to where you are. Each
@@ -414,17 +458,21 @@ settings are on the **Overlay Connection** Settings tab.
 
 ## Using WNTB on Linux
 
-Linux support is new and **experimental**. It hasn't been checked on a real install yet, so please
-report anything odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
+Linux support is **new and not yet verified on a real install**: it is tested with mocked tools and
+temporary folders, and by reading every module for Windows-only assumptions, but please report anything
+odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
 
-- **Install `xdotool`** (for example `sudo apt install xdotool`). Auto-Honk and timed screenshots use
-  it to press keys in Elite's window. It works on X11, and on Wayland through XWayland.
+- **Install `xdotool`** (for example `sudo apt install xdotool`). Auto-Honk and the screenshot
+  auto-timer use it to press keys in Elite's window. It works on X11, and on Wayland through XWayland
+  (which is where a Proton game's window lives), but not with a native Wayland window.
 - **WNTB finds your Steam Proton folder automatically**, including extra Steam library folders and
   Flatpak Steam. If you use Lutris, Heroic or a custom setup, enter that folder under **Settings →
   Auto-Honk → Elite Wine/Proton prefix**.
 - **Point EDMC at the game's journals.** Set EDMC's own **Journal directory** setting to the
-  `Saved Games/Frontier Developments/Elite Dangerous` folder inside that Proton/Wine folder. WNTB
-  shows a hint under **Settings → Auto-Honk** if it looks wrong.
+  `Saved Games/Frontier Developments/Elite Dangerous` folder inside that Proton/Wine folder. Linux has
+  no default for it, and without it WNTB's journal-based features (including BGS rebuilding the tick's
+  totals) have nothing to read. WNTB shows a hint under **Settings → Auto-Honk** and **Settings → BGS**
+  if it looks wrong, and logs one at startup.
 - **On-screen features** need [EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay),
   which supports Linux. The original EDMCOverlay is Windows-only. WNTB's default connection settings
   (`127.0.0.1`, port 5010) already match.
