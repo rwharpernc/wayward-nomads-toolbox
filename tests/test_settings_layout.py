@@ -27,7 +27,8 @@ def _is_nb_frame_call(node: ast.AST) -> bool:
 
 
 def _violations(path: str) -> list[str]:
-    tree = ast.parse(open(path, encoding="utf-8").read())
+    with open(path, encoding="utf-8") as handle:
+        tree = ast.parse(handle.read())
     found: list[str] = []
     for func in ast.walk(tree):
         if not isinstance(func, (ast.FunctionDef, ast.AsyncFunctionDef)):
