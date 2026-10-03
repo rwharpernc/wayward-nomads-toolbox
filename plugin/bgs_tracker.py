@@ -12,6 +12,10 @@ docs/BGS_TECH_SPEC.md:
   field reads only; station-faction attribution happens in bgs_panel.py
   since it spans two separate events (`Docked` then `MarketBuy`/etc).
 
+Nothing here (or anywhere in BGS mode) is gated on a "tracked" list any more:
+activity is recorded wherever the commander actually does something, and the
+report shows the systems that have activity (plus the current one).
+
 Field semantics (Trend → +INF/-INF, `Factions[]` vs. single `Faction` on
 `RedeemVoucher`, station-faction attribution for trade/exploration) were
 checked against real journal entries - see docs/BGS_TECH_SPEC.md. Phase 3 (tick detection) is the one piece with a real network
@@ -55,23 +59,6 @@ def snapshot_key(system: str, faction: str) -> str:
     return f"{system.strip().casefold()}|{faction.strip().casefold()}"
 
 
-def is_tracked(system: str, faction: str, tracked_systems: List[str], tracked_factions: List[str]) -> bool:
-    """A faction is tracked if either its home system or its own name is on
-    the commander's configured list (case-insensitive) - covers both a
-    commander who tracks "everything happening in my system(s)" and one who
-    tracks "this faction wherever it operates". Returns False if nothing is
-    configured at all - Phase 1 shows nothing until the commander sets up
-    at least one tracked system or faction, deliberately (no "everything,
-    everywhere" default - see the scoping decision behind this feature)."""
-    if not tracked_systems and not tracked_factions:
-        return False
-    system_key = system.strip().casefold()
-    faction_key = faction.strip().casefold()
-    if any(system_key == s.strip().casefold() for s in tracked_systems if s.strip()):
-        return True
-    return any(faction_key == f.strip().casefold() for f in tracked_factions if f.strip())
-
-
 def _state_names(states: Any) -> List[str]:
     if not isinstance(states, list):
         return []
@@ -110,7 +97,7 @@ def parse_faction_entry(
 @dataclass
 class FactionActivity:
     """Accumulated BGS-needle-moving activity for one faction in one system,
-    since the last detected tick (see bgs_panel.py's own tick-roll logic).
+    since the last detected tick (see bgs_ledger.py's TickLedger).
     All credit fields are net-of-broker-cut as reported by the journal
     event itself (no separate broker-percentage math here)."""
 
@@ -127,12 +114,20 @@ class FactionActivity:
     trade_sell_credits: int = 0
     trade_profit_credits: int = 0  # trade_sell_credits - trade_buy_credits; can be negative
     exploration_credits: int = 0
+    missions_failed: int = 0
+    missions_abandoned: int = 0
+    crimes: int = 0
+    """Crimes committed against this faction (CommitCrime) - each costs it
+    standing, so they are shown as a decrease."""
+    crime_credits: int = 0  # total fines + bounties incurred for those crimes
+    last_at: str = ""  # ISO `timestamp` of the newest event counted here
 
     def is_empty(self) -> bool:
         return not any((
             self.missions, self.inf_plus, self.inf_minus, self.bounty_credits,
             self.combat_bond_credits, self.trade_buy_credits, self.trade_sell_credits,
-            self.exploration_credits,
+            self.exploration_credits, self.missions_failed, self.missions_abandoned,
+            self.crimes, self.crime_credits,
         ))
 
 
@@ -220,3 +215,17 @@ def exploration_sale_value(entry: Dict[str, Any]) -> Optional[int]:
     if isinstance(base, (int, float)) or isinstance(bonus, (int, float)):
         return int((base or 0) + (bonus or 0))
     return None
+
+
+def parse_crime(entry: Dict[str, Any]) -> Optional[Tuple[str, int]]:
+    """`CommitCrime` -> `(faction, credits)`: the faction the crime was
+    committed against (the one whose standing suffers) and the fine or
+    bounty it cost. Credits can be 0 (e.g. a crime with no monetary penalty
+    recorded) - the crime itself is still counted."""
+    faction = entry.get("Faction")
+    if not faction:
+        return None
+    credits = entry.get("Fine")
+    if not isinstance(credits, (int, float)):
+        credits = entry.get("Bounty")
+    return (faction, int(credits) if isinstance(credits, (int, float)) else 0)

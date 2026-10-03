@@ -5,6 +5,18 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ## Unreleased
 
+### Changed
+- **BGS panel now shows only the system you're in**: each faction's state and influence (with how far
+  each moved since before the tick) and what you've done to it this tick. The Track/Untrack buttons and
+  the tracked systems/factions lists are gone - BGS records wherever you act, so there's nothing to set up.
+- **BGS Report rebuilt**: pick the tick from a drop-down, then one tab per system you've acted in, each
+  with a Factions table and a "What you did" table.
+- BGS now counts decreases as well as increases: failed and abandoned missions, trade losses, and crimes
+  against a faction, alongside the existing mission INF (+/-), vouchers, trade and exploration data.
+- Totals are per tick. On start, WNTB re-reads your recent journals so they are cumulative since the last
+  tick even if EDMC wasn't running; each closed tick is archived. New setting **Keep previous ticks for
+  N days** (default 7) under Settings -> BGS.
+
 ### Fixed
 - The WNTB settings tab now appears on Linux. The Mining and BGS settings lists used Windows-only
   colour names, which made the whole tab fail to build on other systems.
