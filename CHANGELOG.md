@@ -3,6 +3,17 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed
+- The WNTB settings tab now appears on Linux. The Mining and BGS settings lists used Windows-only
+  colour names, which made the whole tab fail to build on other systems.
+
+### Development
+- `npm run package` no longer needs PowerShell, so it works on Linux. `npm run build` now detects your
+  OS and EDMC's plugins folder, and the new `npm run deploy` copies the build straight into it.
+- Added `.gitattributes` so line endings stay LF on Windows and Linux.
+
 ## 1.0.1 - 2026-10-02
 
 ### Fixed

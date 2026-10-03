@@ -26,6 +26,19 @@ def _make_prefix(root: str, user: str = "steamuser") -> str:
     return prefix
 
 
+class ListboxColorsTests(unittest.TestCase):
+    def test_dark_theme_is_platform_independent(self):
+        for win in (True, False):
+            with mock.patch.object(ps, "IS_WINDOWS", win):
+                self.assertEqual(ps.listbox_colors(True), ("#1e1e1e", "#e0e0e0"))
+
+    def test_light_theme_uses_system_colors_only_on_windows(self):
+        with mock.patch.object(ps, "IS_WINDOWS", True):
+            self.assertEqual(ps.listbox_colors(False), ("SystemWindow", "SystemWindowText"))
+        with mock.patch.object(ps, "IS_WINDOWS", False):
+            self.assertEqual(ps.listbox_colors(False), ("white", "black"))
+
+
 class X11KeysymTests(unittest.TestCase):
     def test_letters_digits_and_function_keys(self) -> None:
         self.assertEqual(ps.x11_keysym("Key_G"), "g")

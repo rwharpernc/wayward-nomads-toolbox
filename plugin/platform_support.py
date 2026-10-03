@@ -29,7 +29,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 try:
     from config import appname, config
@@ -50,6 +50,20 @@ ELITE_WINDOW_NAME_PATTERN = r"Elite - Dangerous"
 
 _SUBPROCESS_TIMEOUT_S = 5
 _WIN_SUBDIR = os.path.join("Frontier Developments", "Elite Dangerous")
+
+
+def listbox_colors(is_dark: bool) -> Tuple[str, str]:
+    """(background, foreground) for a plain tk.Listbox.
+
+    "SystemWindow"/"SystemWindowText" are Windows-only Tk colour names; on
+    Linux/macOS Tk raises TclError for them, which used to stop the whole
+    Settings tab from building.
+    """
+    if is_dark:
+        return "#1e1e1e", "#e0e0e0"
+    if IS_WINDOWS:
+        return "SystemWindow", "SystemWindowText"
+    return "white", "black"
 
 
 # ---------------------------------------------------------------------------
