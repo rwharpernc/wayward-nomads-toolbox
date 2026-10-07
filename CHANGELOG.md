@@ -23,6 +23,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   The panel keeps the width the full-label button row had, so EDMC still opens at its usual width.
 
 ### Changed
+- **Mining buttons are in one row** instead of stacked one per row: BOOK, +HOT, HOT, PRC, RES and I/E, showing
+  only the ones that apply to the page (Space or Surface) and are switched on in Settings.
 - **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
   Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
   than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of

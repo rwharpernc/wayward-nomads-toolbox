@@ -14,7 +14,7 @@ docs/TECHNICAL.md section 5.
 import tkinter as tk
 import dataclasses
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from . import mining_coverage as coverage
 from . import mining_coverage_render as coverage_render
@@ -62,6 +62,7 @@ class PanelButtons:
     docstring for why they're created once and only grid()/grid_remove()'d
     rather than destroyed/recreated every render - the same native-widget-
     flicker lesson every WNTB feature with a persistent button follows)."""
+    bar: tk.Frame
     hotspot_finder: tk.Button
     save_hotspot: tk.Button
     price_finder: tk.Button
@@ -209,29 +210,54 @@ def render_ring_caution(content: tk.Frame, wrap: int, row: int, enabled: bool) -
     return row + 1
 
 
-def set_button_row(button: tk.Button, row: Optional[int]) -> None:
-    """Grids `button` at `row`, or hides it if row is None - but only
-    touches the widget's grid mapping when the target state actually
-    differs from its current one (compares against button.grid_info(),
-    which is {} while hidden), so a periodic redraw that doesn't change
-    anything doesn't unmap/remap the native widget (which flickers
-    visibly on Windows even when the colors come out the same)."""
-    info = button.grid_info()
-    if row is None:
-        if info:
+BUTTON_ORDER = ("ledger", "save_hotspot", "hotspot_finder", "price_finder", "reserve_lookup", "hotspot_import_export")
+"""Left-to-right order of the panel's buttons in their one row: BOOK, +HOT, HOT, PRC,
+RES, I/E. A button not offered on the current page, or switched off in Settings, is
+simply left out."""
+
+
+def place_button_bar(buttons: PanelButtons, row: int, shown: Iterable[str]) -> None:
+    """Puts the buttons named in `shown` side by side in one row at `row` of the
+    content frame (and hides the rest), instead of stacking one per row. The buttons
+    live in `buttons.bar`, which is placed once; inside it each button keeps a fixed
+    column. Only touches a widget's grid mapping when its state actually changes
+    (compares against grid_info(), which is {} while hidden), so a periodic redraw
+    that changes nothing doesn't unmap/remap native buttons, which flickers visibly
+    on Windows even when the colors come out the same."""
+    shown = set(shown)
+    for column, name in enumerate(BUTTON_ORDER):
+        button = getattr(buttons, name)
+        info = button.grid_info()
+        if name in shown:
+            if info.get("column") != column:
+                button.grid(row=0, column=column, padx=(0, 6))
+        elif info:
             button.grid_remove()
-        return
-    if info.get("row") == row:
-        return
-    button.grid(row=row, column=0, sticky="w", padx=6, pady=(2, 6))
+    if not shown:
+        if buttons.bar.grid_info():
+            buttons.bar.grid_remove()
+    elif buttons.bar.grid_info().get("row") != row:
+        buttons.bar.grid(row=row, column=0, sticky="w", padx=6, pady=(2, 6))
 
 
-def place_gated_button(button: tk.Button, enabled: bool, row: int) -> None:
-    """Grids a persistent, opt-in-gated button at the given row - never
-    creates a new Button (that's what caused the flicker this replaced).
-    Goes through set_button_row so a periodic redraw that doesn't change
-    anything doesn't re-touch the widget's grid mapping either."""
-    set_button_row(button, row if enabled else None)
+def _shown_buttons(settings: PanelSettings, *, hotspot_finder: bool = False, save_hotspot: bool = False,
+                   price_finder: bool = False, reserve_lookup: bool = False,
+                   import_export: bool = False) -> List[str]:
+    """Names of the buttons to show on this page: the Mining Book always, plus the
+    ones the page offers, with the opt-in lookups (Spansh hotspot finder, Spansh
+    price finder, EDSM reserve lookup) only when switched on in Settings."""
+    shown = ["ledger"]
+    if save_hotspot:
+        shown.append("save_hotspot")
+    if hotspot_finder and settings.spansh_hotspot_finder_enabled:
+        shown.append("hotspot_finder")
+    if price_finder and settings.spansh_price_finder_enabled:
+        shown.append("price_finder")
+    if reserve_lookup and settings.edsm_reserve_lookup_enabled:
+        shown.append("reserve_lookup")
+    if import_export:
+        shown.append("hotspot_import_export")
+    return shown
 
 
 def render_space_mining(content: tk.Frame, wrap: int, buttons: PanelButtons, settings: PanelSettings) -> None:
@@ -242,19 +268,15 @@ def render_space_mining(content: tk.Frame, wrap: int, buttons: PanelButtons, set
     if run is None:
         add_line(content, row, wrap, "No commander detected yet.")
         row += 1
-        set_button_row(buttons.hotspot_finder, None)
         # The Mining Book needs nothing from a run (saved hotspots aren't
         # per-commander), so it's offered on both pages - Mining opens on the
         # Space Mining page, which is where people look first.
-        set_button_row(buttons.ledger, row)
-        row += 1
         # Find Best Price / Check Ring Reserve Level stay available even
         # pre-commander-detection - both are on-demand lookups that don't
         # need an active run, unlike the hotspot finder (which searches
         # relative to the reference system tracked from journal events).
-        place_gated_button(buttons.price_finder, settings.spansh_price_finder_enabled, row)
-        row += 1
-        place_gated_button(buttons.reserve_lookup, settings.edsm_reserve_lookup_enabled, row)
+        place_button_bar(buttons, row, _shown_buttons(
+            settings, price_finder=True, reserve_lookup=True))
         return
 
     if not run.has_data():
@@ -262,13 +284,8 @@ def render_space_mining(content: tk.Frame, wrap: int, buttons: PanelButtons, set
                 "No active mining run. Undock to start tracking a new run.")
         row += 1
         row = render_ring_caution(content, wrap, row, settings.edsm_reserve_lookup_enabled)
-        set_button_row(buttons.ledger, row)
-        row += 1
-        place_gated_button(buttons.hotspot_finder, settings.spansh_hotspot_finder_enabled, row)
-        row += 1
-        place_gated_button(buttons.price_finder, settings.spansh_price_finder_enabled, row)
-        row += 1
-        place_gated_button(buttons.reserve_lookup, settings.edsm_reserve_lookup_enabled, row)
+        place_button_bar(buttons, row, _shown_buttons(
+            settings, hotspot_finder=True, price_finder=True, reserve_lookup=True))
         return
 
     if run.is_paused:
@@ -305,13 +322,8 @@ def render_space_mining(content: tk.Frame, wrap: int, buttons: PanelButtons, set
         add_line(content, row, wrap, f"Refining rate: {format_rpm(run)}")
         row += 1
 
-    set_button_row(buttons.ledger, row)
-    row += 1
-    place_gated_button(buttons.hotspot_finder, settings.spansh_hotspot_finder_enabled, row)
-    row += 1
-    place_gated_button(buttons.price_finder, settings.spansh_price_finder_enabled, row)
-    row += 1
-    place_gated_button(buttons.reserve_lookup, settings.edsm_reserve_lookup_enabled, row)
+    place_button_bar(buttons, row, _shown_buttons(
+        settings, hotspot_finder=True, price_finder=True, reserve_lookup=True))
 
 
 def render_surface_mining(content: tk.Frame, wrap: int, buttons: PanelButtons, settings: PanelSettings) -> None:
@@ -322,15 +334,10 @@ def render_surface_mining(content: tk.Frame, wrap: int, buttons: PanelButtons, s
     if run is None:
         add_line(content, row, wrap, "No commander detected yet.")
         row += 1
-        set_button_row(buttons.save_hotspot, None)
         # The Mining Book / Import/Export Hotspots stay available
         # even pre-commander-detection: mining_hotspots.py's list isn't
         # per-commander, so neither needs anything from `run`.
-        set_button_row(buttons.ledger, row)
-        row += 1
-        place_gated_button(buttons.price_finder, settings.spansh_price_finder_enabled, row)
-        row += 1
-        set_button_row(buttons.hotspot_import_export, row)
+        place_button_bar(buttons, row, _shown_buttons(settings, price_finder=True, import_export=True))
         return
 
     is_active = repo.is_active
@@ -375,19 +382,12 @@ def render_surface_mining(content: tk.Frame, wrap: int, buttons: PanelButtons, s
         if matches:
             add_line(content, row, wrap, f"Known hotspots here: {format_hotspots(matches)}")
             row += 1
-        set_button_row(buttons.save_hotspot, row)
-        row += 1
-    else:
-        set_button_row(buttons.save_hotspot, None)
 
     if settings.display_coverage_minimap and current_body:
         row = render_coverage_minimap(content, row, current_system, current_body, matches)
 
-    set_button_row(buttons.ledger, row)
-    row += 1
-    place_gated_button(buttons.price_finder, settings.spansh_price_finder_enabled, row)
-    row += 1
-    set_button_row(buttons.hotspot_import_export, row)
+    place_button_bar(buttons, row, _shown_buttons(
+        settings, save_hotspot=bool(current_body), price_finder=True, import_export=True))
 
 
 SHIP_MINIMAP_MAX_ALTITUDE_M = 2000.0

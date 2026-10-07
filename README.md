@@ -435,7 +435,7 @@ Tracks two kinds of mining: **Space Mining** (in your ship) and **Surface Mining
 plus your own catalogue of known hotspots.
 
 **How to use it:** use the ◂ and ▸ arrows to switch between the two pages. Each shows live stats for
-your current run. Buttons appear when they're useful:
+your current run. Buttons appear when they're useful, side by side in one row (hover for the full name):
 
 - **+HOT** (save hotspot here) records a deposit you've found.
 - **BOOK** (the Mining Book) opens a window listing the bodies you've scanned in this system and every hotspot

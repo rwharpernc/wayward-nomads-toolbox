@@ -207,26 +207,30 @@ class MiningPanelController:
         # native OS chrome, and destroying/recreating one every second
         # produces a visible flicker on Windows even when theme colors
         # come out right each time - see mining_render.py's
-        # set_button_row()/place_gated_button().
+        # place_button_bar().
+        # All six live in one frame (the "bar"), so a page can show them side by
+        # side in a single row instead of one per row (render.place_button_bar).
+        button_bar = tk.Frame(self._content)
         self._buttons = render.PanelButtons(
+            bar=button_bar,
             hotspot_finder=tk.Button(
-                self._content, text="HOT",
+                button_bar, text="HOT",
                 command=lambda: hotspot_finder_dialog.open_hotspot_finder_dialog(self._content)),
             save_hotspot=tk.Button(
-                self._content, text="+HOT",
+                button_bar, text="+HOT",
                 command=lambda: render.open_add_hotspot_dialog(self._content)),
             price_finder=tk.Button(
-                self._content, text="PRC",
+                button_bar, text="PRC",
                 command=lambda: price_finder_dialog.open_price_finder_dialog(
                     self._content, suggested_commodities=self._current_run_refined_commodities())),
             reserve_lookup=tk.Button(
-                self._content, text="RES",
+                button_bar, text="RES",
                 command=lambda: reserve_lookup_dialog.open_reserve_lookup_dialog(self._content)),
             hotspot_import_export=tk.Button(
-                self._content, text="I/E",
+                button_bar, text="I/E",
                 command=lambda: hotspot_import_export.open_import_export_dialog(self._content)),
             ledger=tk.Button(
-                self._content, text="BOOK",
+                button_bar, text="BOOK",
                 command=lambda: ledger.show(self._content)),
         )
         for button, tip in (
@@ -322,13 +326,8 @@ class MiningPanelController:
 
         frame_bg = self._parent.cget("background")
 
-        persistent_buttons = (
-            self._buttons.hotspot_finder, self._buttons.save_hotspot,
-            self._buttons.price_finder, self._buttons.reserve_lookup, self._buttons.hotspot_import_export,
-            self._buttons.ledger,
-        )
         for child in self._content.winfo_children():
-            if child in persistent_buttons:
+            if child is self._buttons.bar:
                 continue
             child.destroy()
 
@@ -336,12 +335,8 @@ class MiningPanelController:
         settings = _settings()
 
         if self._current_page == mining_pages.SPACE_MINING:
-            render.set_button_row(self._buttons.save_hotspot, None)
-            render.set_button_row(self._buttons.hotspot_import_export, None)
             render.render_space_mining(self._content, self._wrap, self._buttons, settings)
         elif self._current_page == mining_pages.SURFACE_MINING:
-            render.set_button_row(self._buttons.hotspot_finder, None)
-            render.set_button_row(self._buttons.reserve_lookup, None)
             render.render_surface_mining(self._content, self._wrap, self._buttons, settings)
 
         if _cfg_bool(_CFG_OVERLAY_ENABLED, False):
