@@ -137,7 +137,8 @@ class GecPoiController:
         panelkit.wrap_label(body, textvariable=self._result_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
         )
-        self._find_button = tk.Button(body, text="Find Nearest POI", command=self._on_find_clicked)
+        self._find_button = tk.Button(body, text="FIND", command=self._on_find_clicked)
+        panelkit.add_tooltip(self._find_button, "Find the nearest GEC point of interest to your position")
         self._find_button.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
         self._link_label = HyperlinkLabel(
             body, text="View on edastro.com", background=nb.Label().cget("background"), underline=True,

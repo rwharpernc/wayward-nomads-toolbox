@@ -214,11 +214,13 @@ class CanonnPoiController:
         )
         button_row = tk.Frame(body)
         button_row.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))
-        self._find_button = tk.Button(button_row, text="Find Nearest POI", command=self._on_find_clicked)
+        self._find_button = tk.Button(button_row, text="FIND", command=self._on_find_clicked)
+        panelkit.add_tooltip(self._find_button, "Find the nearest Canonn site to your position")
         self._find_button.pack(side=tk.LEFT)
         self._refresh_button = tk.Button(
-            button_row, text="Refresh POI Data", command=lambda: self._on_find_clicked(force_refresh=True),
+            button_row, text="REF", command=lambda: self._on_find_clicked(force_refresh=True),
         )
+        panelkit.add_tooltip(self._refresh_button, "Refresh POI Data - re-download the Canonn site list, then search again")
         self._refresh_button.pack(side=tk.LEFT, padx=(6, 0))
 
         self._link_label = HyperlinkLabel(

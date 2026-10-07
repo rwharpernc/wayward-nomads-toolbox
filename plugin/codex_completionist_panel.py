@@ -125,10 +125,13 @@ class CodexCompletionistController:
 
         button_row = tk.Frame(body)
         button_row.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
-        tk.Button(button_row, text="View Details", command=self._on_view_details).pack(side=tk.LEFT)
-        tk.Button(button_row, text="Backfill from Journal History", command=self._on_backfill).pack(
-            side=tk.LEFT, padx=(4, 0),
-        )
+        details_button = tk.Button(button_row, text="DET", command=self._on_view_details)
+        details_button.pack(side=tk.LEFT)
+        panelkit.add_tooltip(details_button, "View Details - open the full Codex tally")
+        backfill_button = tk.Button(button_row, text="BKF", command=self._on_backfill)
+        backfill_button.pack(side=tk.LEFT, padx=(4, 0))
+        panelkit.add_tooltip(
+            backfill_button, "Backfill from Journal History - scan your old journal files for Codex entries you already found")
 
         self._status_var = tk.StringVar(value="")
         panelkit.wrap_label(body, textvariable=self._status_var, fg="grey").grid(
