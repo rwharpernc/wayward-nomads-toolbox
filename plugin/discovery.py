@@ -33,7 +33,7 @@ import os
 import queue
 import threading
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import tkinter as tk
 
@@ -387,9 +387,16 @@ _overlay_client = overlay.OverlayClient()
 
 _IDLE_STATUS = "Watching for new discoveries…"
 _DISABLED_STATUS = "Discovery alerts are disabled."
-_NEUTRON_NO_POSITION = "Neutron: position unknown - jump or reload first"
-_NEUTRON_SEARCHING = "Neutron: searching spansh.co.uk..."
-_NEUTRON_FAILED = "Neutron: lookup failed - see EDMarketConnector.log"
+_STAR_NO_POSITION = "position unknown - jump or reload first"
+_STAR_SEARCHING = "searching spansh.co.uk..."
+_STAR_FAILED = "lookup failed - see EDMarketConnector.log"
+# (button label, tooltip, finder function) - the label doubles as the result-line prefix.
+_STAR_FINDERS = (
+    ("N.S.", "Neutron Star - find the nearest system whose primary star is a neutron star",
+     neutron_finder.find_nearest_neutron),
+    ("W.D.", "White Dwarf - find the nearest system whose primary star is a white dwarf",
+     neutron_finder.find_nearest_white_dwarf),
+)
 
 
 def set_overlay_client(client: overlay.OverlayClient) -> None:
@@ -420,18 +427,18 @@ class DiscoveryController:
         self._dependent_widgets = []
         self._result_label: Optional[nb.Label] = None
 
-        # "Neutron" button (see neutron_finder.py): position comes from the
+        # "N.S." / "W.D." buttons (see neutron_finder.py): position comes from the
         # journal's StarPos; the lookup runs on a worker thread and hands its
         # result back through a queue polled via after(), like gec_poi_panel.py.
         self._star_pos: Optional[Tuple[float, float, float]] = None
         self._current_system: Optional[str] = None
         self.button_row: Optional[tk.Frame] = None
         self.panel_frame: Optional[tk.Frame] = None
-        self._neutron_btn: Optional[tk.Button] = None
+        self._star_buttons: List[tk.Button] = []
         self._neutron_label: Optional[tk.Label] = None
         self._neutron_parent: Optional[tk.Frame] = None
         self._neutron_generation = 0
-        self._neutron_queue: "queue.Queue[Tuple[int, Optional[neutron_finder.NearestNeutron], bool]]" = queue.Queue()
+        self._neutron_queue: "queue.Queue[Tuple[int, str, Optional[neutron_finder.NearestStar], bool]]" = queue.Queue()
 
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
         if system:
@@ -472,15 +479,19 @@ class DiscoveryController:
     def build_panel(self, parent: tk.Frame) -> None:
         row = tk.Frame(parent)
         row.grid(row=0, column=0, sticky=tk.W, pady=(4, 0))
-        self._toggle_btn = tk.Button(row, text="Discovery Alerts", command=self._on_toggle_click)
+        self._toggle_btn = tk.Button(row, text="D.A.", command=self._on_toggle_click)
         self._toggle_btn.pack(side=tk.LEFT)
+        panelkit.add_tooltip(self._toggle_btn, "Discovery Alerts - toggle the on-screen alert for undiscovered systems and first scans/maps")
         self._toggle_off_colors = panelkit.capture_toggle_off_colors(self._toggle_btn)
         panelkit.apply_toggle_button_state(self._toggle_btn, load_config().enabled, self._toggle_off_colors)
 
         self.button_row = row  # ui.py adds the Boxel Survey "Random" button here
         self.panel_frame = parent
-        self._neutron_btn = tk.Button(row, text="Neutron", command=self._on_neutron_click)
-        self._neutron_btn.pack(side=tk.LEFT, padx=(6, 0))  # same 6px gap as ui.py's mode-select buttons
+        for label, tip, finder in _STAR_FINDERS:
+            button = tk.Button(row, text=label, command=lambda label=label, finder=finder: self._on_star_click(label, finder))
+            button.pack(side=tk.LEFT, padx=(6, 0))  # same 6px gap as ui.py's mode-select buttons
+            panelkit.add_tooltip(button, tip)
+            self._star_buttons.append(button)
 
         self._status_label = panelkit.wrap_label(parent, text=_IDLE_STATUS)
         self._status_label.grid(row=1, column=0, sticky=tk.W, pady=(4, 0))
@@ -492,50 +503,51 @@ class DiscoveryController:
         self._neutron_parent = parent
         parent.after(200, self._poll_neutron_queue)
 
-    # --- Neutron button ------------------------------------------------------
+    # --- N.S. / W.D. buttons ------------------------------------------------
 
     def _show_neutron_text(self, text: str) -> None:
         if self._neutron_label is not None:
             self._neutron_label["text"] = text
             self._neutron_label.grid()
 
-    def _on_neutron_click(self) -> None:
+    def _on_star_click(self, label: str, finder: Callable[..., neutron_finder.NearestStar]) -> None:
         if self._star_pos is None:
-            self._show_neutron_text(_NEUTRON_NO_POSITION)
+            self._show_neutron_text(f"{label}: {_STAR_NO_POSITION}")
             return
         self._neutron_generation += 1
         generation = self._neutron_generation
-        self._show_neutron_text(_NEUTRON_SEARCHING)
-        if self._neutron_btn is not None:
-            self._neutron_btn.config(state=tk.DISABLED)
+        self._show_neutron_text(f"{label}: {_STAR_SEARCHING}")
+        for button in self._star_buttons:
+            button.config(state=tk.DISABLED)
         x, y, z = self._star_pos
         threading.Thread(
-            target=self._neutron_worker, args=(generation, x, y, z, self._current_system),
-            name="WNTB-neutron-find", daemon=True,
+            target=self._star_worker, args=(generation, label, finder, x, y, z, self._current_system),
+            name="WNTB-star-find", daemon=True,
         ).start()
 
-    def _neutron_worker(self, generation: int, x: float, y: float, z: float, current_system: Optional[str]) -> None:
+    def _star_worker(self, generation: int, label: str, finder: Callable[..., neutron_finder.NearestStar],
+                     x: float, y: float, z: float, current_system: Optional[str]) -> None:
         """Runs off the main thread - must not touch any Tk widget."""
         try:
-            result = neutron_finder.find_nearest_neutron(x, y, z, current_system)
+            result = finder(x, y, z, current_system)
         except Exception:
-            logger.exception("Neutron lookup failed for (%s, %s, %s)", x, y, z)
-            self._neutron_queue.put((generation, None, True))
+            logger.exception("%s lookup failed for (%s, %s, %s)", label, x, y, z)
+            self._neutron_queue.put((generation, label, None, True))
             return
-        self._neutron_queue.put((generation, result, False))
+        self._neutron_queue.put((generation, label, result, False))
 
     def _poll_neutron_queue(self) -> None:
         """Runs on the main thread via after() - safe to touch widgets."""
         try:
-            generation, result, failed = self._neutron_queue.get_nowait()
+            generation, label, result, failed = self._neutron_queue.get_nowait()
         except queue.Empty:
             pass
         else:
             if generation == self._neutron_generation:
-                if self._neutron_btn is not None:
-                    self._neutron_btn.config(state=tk.NORMAL)
+                for button in self._star_buttons:
+                    button.config(state=tk.NORMAL)
                 if failed or result is None:
-                    self._show_neutron_text(_NEUTRON_FAILED)
+                    self._show_neutron_text(f"{label}: {_STAR_FAILED}")
                 else:
                     # Copy the full (untruncated) name so it can be pasted straight
                     # into the galaxy map's search box.
@@ -543,7 +555,7 @@ class DiscoveryController:
                         self._neutron_parent, result.system)
                     suffix = " (copied)" if copied else ""
                     self._show_neutron_text(
-                        f"Neutron: {neutron_finder.display_name(result.system)} - "
+                        f"{label}: {neutron_finder.display_name(result.system)} - "
                         f"{result.distance_ly:,.1f} ly{suffix}"
                     )
         if self._neutron_parent is not None:
