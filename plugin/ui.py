@@ -143,6 +143,12 @@ def _stack_features(frame: tk.Frame, placement_key: str, placeholder_text: Optio
             right_frame = tk.Frame(pair_frame)
             right_frame.grid(row=0, column=1, sticky="nw", padx=(6, 0))  # same 6px gap as the mode-select buttons
             partner.build_panel(right_frame)
+            if partner is discovery:
+                # Boxel Survey's "Random" button shares this button row (its
+                # status line goes below Discovery's, in row 3); Boxel Survey
+                # itself is built earlier in this stack.
+                boxel_survey.build_random_button(
+                    discovery.controller.button_row, discovery.controller.panel_frame, 3)
             row += 1
             built = True
             i += 2

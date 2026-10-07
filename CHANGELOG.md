@@ -16,6 +16,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Exploration: Codex Completionist, Canonn Nearby POI and GEC Nearby POI start minimized.** Click a title
   (▸ / ▾) to expand or collapse it; WNTB remembers which you left open. The three buttons on the
   Auto-Honk / Discovery Alerts / Neutron row now sit 6px apart, like the mode buttons.
+- **Boxel Survey's Random button moved** onto that same row (Auto-Honk, Discovery Alerts, Neutron, Random), so
+  it's reachable while Boxel Survey is collapsed. Its status line now shows under the row.
 
 ## 1.2.0 - 2026-10-07
 
