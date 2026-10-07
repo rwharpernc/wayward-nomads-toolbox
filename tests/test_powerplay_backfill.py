@@ -262,6 +262,54 @@ class ViewGapTests(unittest.TestCase):
         self.assertEqual([v.number for v in ledger.views()], [101])
 
 
+class DailyTests(unittest.TestCase):
+    def test_merits_are_tallied_by_cycle_day_with_day_one_starting_at_the_cycle(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_merits("A", REINFORCEMENT, 10, "2026-10-01T07:00:00Z")   # day 1, first second
+        ledger.record_merits("A", REINFORCEMENT, 20, "2026-10-02T06:59:59Z")   # still day 1
+        ledger.record_merits("A", UNDERMINING, 5, "2026-10-02T07:00:00Z")      # day 2
+        ledger.record_merits("B", REINFORCEMENT, 7, "2026-10-07T23:00:00Z")    # day 7
+        view = ledger.views()[0]
+        self.assertEqual(view.day_merits(1), {REINFORCEMENT: 30})
+        self.assertEqual(view.day_merits(2), {UNDERMINING: 5})
+        self.assertEqual(view.day_merits(7), {REINFORCEMENT: 7})
+        self.assertEqual(view.day_merits(3), {})
+        self.assertEqual(sum(sum(m.values()) for m in view.daily.values()), 42)
+
+    def test_days_are_archived_with_their_cycle_and_reset_for_the_next(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_merits("A", REINFORCEMENT, 10, _ts(2, 12))
+        ledger.record_merits("A", REINFORCEMENT, 4, _ts(8, 12))   # cycle 102, day 1
+        self.assertEqual(L.view_from_archive(ledger.archive[0]).day_merits(2), {REINFORCEMENT: 10})
+        self.assertEqual(ledger.views()[0].day_merits(1), {REINFORCEMENT: 4})
+        self.assertEqual(ledger.views()[0].day_merits(2), {})
+
+    def test_daily_survives_saving_and_junk(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_merits("A", REINFORCEMENT, 10, _ts(2, 12))
+        again = L.PowerplayLedger.from_dict(json.loads(json.dumps(ledger.to_dict())))
+        self.assertEqual(again.daily, ledger.daily)
+        bad = L.PowerplayLedger.from_dict({"daily": {"1": {"x": "y", "z": 3}, "2": 5}, "schema": "no"})
+        self.assertEqual(bad.daily, {"1": {"z": 3}})
+        self.assertEqual(bad.schema, 1)
+
+    def test_a_ledger_saved_before_days_existed_is_rebuilt_once(self):
+        old = L.PowerplayLedger()
+        old.covered_from = datetime(2026, 9, 10, 7, tzinfo=timezone.utc)
+        old.seen_to = "2026-10-07T18:29:00Z"
+        old.schema = 1
+        now = datetime(2026, 10, 7, 18, 30, tzinfo=timezone.utc)
+        self.assertEqual(old.plan_scan(now, 4).mode, L.SCAN_REBUILD)
+        old.adopt(backfill.rebuild_ledger([]), L.parse_ts("2026-09-10T07:00:00Z"), None)
+        self.assertEqual(old.schema, L.SCHEMA)
+        self.assertEqual(old.plan_scan(now, 4).mode, L.SCAN_NONE)
+
+    def test_rebuild_from_journals_fills_the_days(self):
+        ops = _replay(_session(ts_day=2, merits=((12, 100),))).ops + _replay(_session(ts_day=4, merits=((12, 40),))).ops
+        view = backfill.rebuild_ledger(ops).views()[0]
+        self.assertEqual((sum(view.day_merits(2).values()), sum(view.day_merits(4).values())), (100, 40))
+
+
 class ScanFilesTests(unittest.TestCase):
     def _write(self, folder: str, name: str, entries: list, age_days: float = 0.0) -> str:
         path = os.path.join(folder, name)

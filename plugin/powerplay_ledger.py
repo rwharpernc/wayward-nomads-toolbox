@@ -52,6 +52,9 @@ MAX_BACKFILL_CYCLES = 12
 UP_TO_DATE_WINDOW = timedelta(minutes=2)
 """If the ledger has seen the journal this recently there is nothing to scan."""
 
+SCHEMA = 2
+"""Saved-ledger layout. 2 added the per-day merit tally; an older ledger is rebuilt from the journals once."""
+
 SCAN_NONE = "none"
 SCAN_INCREMENTAL = "incremental"
 SCAN_REBUILD = "rebuild"
@@ -293,6 +296,8 @@ class CycleView:
     records: Dict[str, SystemRecord] = field(default_factory=dict)  # casefolded name -> record
     powers: List[str] = field(default_factory=list)
     """The Power(s) the commander was pledged to during the cycle (empty = none seen / not pledged)."""
+    daily: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    """Merits per activity for each day of the cycle: "1" (first 24 h from the cycle start) to "7"."""
 
     @property
     def number(self) -> Optional[int]:
@@ -306,6 +311,10 @@ class CycleView:
                 if merits:
                     totals[activity] = totals.get(activity, 0) + merits
         return totals
+
+    def day_merits(self, day: int) -> Dict[str, int]:
+        """Merits per activity on cycle day `day` (1-7); empty if none."""
+        return dict(self.daily.get(str(day), {}))
 
     def systems_worked(self) -> int:
         """How many systems the commander earned merits in this cycle."""
@@ -338,6 +347,7 @@ def view_from_archive(record: Dict[str, Any]) -> CycleView:
     parsed = [SystemRecord.from_dict(v) for v in raw.values()] if isinstance(raw, dict) else []
     powers = record.get("powers")
     return CycleView(
+        daily=_clean_daily(record.get("daily")),
         cycle_start=record.get("cycle_start"), cycle_end=record.get("cycle_end"), current=False,
         records={r.system.casefold(): r for r in parsed if r},
         powers=[str(p) for p in powers] if isinstance(powers, list) else [],
@@ -355,6 +365,9 @@ class PowerplayLedger:
         self.records: Dict[str, SystemRecord] = {}
         self.powers: List[str] = []
         """Power(s) the commander was pledged to this cycle, in the order seen."""
+        self.daily: Dict[str, Dict[str, int]] = {}
+        """This cycle's merits per activity per cycle day ("1".."7") - see CycleView.daily."""
+        self.schema = SCHEMA
         self.last_merit_ts: Optional[str] = None
         """Timestamp of the newest merit event counted - older ones are never counted again."""
         self.last_merit_n = 0
@@ -383,6 +396,7 @@ class PowerplayLedger:
                 "cycle_end": format_ts(self.cycle_start + CYCLE),
                 "systems": kept,
                 "powers": list(self.powers),
+                "daily": {d: dict(m) for d, m in self.daily.items()},
             })
             del self.archive[MAX_ARCHIVE:]
         # Each system's newest reading is the next cycle's baseline.
@@ -392,6 +406,7 @@ class PowerplayLedger:
             if latest is not None:
                 carried[key] = SystemRecord(system=record.system, before=latest, last_at=record.last_at)
         self.records = carried
+        self.daily = {}
         self.powers = self.powers[-1:]  # still pledged to the same Power until told otherwise
         self.cycle_start = cycle_start_for(when)
 
@@ -453,6 +468,9 @@ class PowerplayLedger:
             self.last_merit_n += 1
         else:
             self.last_merit_ts, self.last_merit_n, self._replay_dups = timestamp, 1, 0
+        day = str(max(1, min(7, (when - self.cycle_start) // timedelta(days=1) + 1)))
+        by_activity = self.daily.setdefault(day, {})
+        by_activity[activity] = by_activity.get(activity, 0) + merits
         record = self._record(system)
         record.merits[activity] = record.merits.get(activity, 0) + merits
         record.events[activity] = record.events.get(activity, 0) + 1
@@ -502,9 +520,10 @@ class PowerplayLedger:
         current = cycle_start_for(now)
         oldest = current - CYCLE * (depth - 1)
         wanted = [current - CYCLE * n for n in range(depth - 1, -1, -1)]
-        missing = [cycle_number(c) for c in wanted if self.covered_from is None or c < self.covered_from]
+        missing = [cycle_number(c) for c in wanted
+                   if self.covered_from is None or c < self.covered_from or self.schema < SCHEMA]
         scan_from: Optional[datetime] = None
-        if self.covered_from is None or self.covered_from > oldest:
+        if self.covered_from is None or self.covered_from > oldest or self.schema < SCHEMA:
             mode, scan_from = SCAN_REBUILD, oldest
         else:
             seen = parse_ts(self.seen_to) or current
@@ -542,7 +561,7 @@ class PowerplayLedger:
             if fresh.cycle_start == self.cycle_start:
                 if sum(r.total_merits() for r in fresh.records.values()) >= \
                         sum(r.total_merits() for r in self.records.values()):
-                    self.records = fresh.records
+                    self.records, self.daily = fresh.records, fresh.daily
                 self.powers = fresh.powers or self.powers
         if fresh.last_merit_ts and (self.last_merit_ts is None or fresh.last_merit_ts > self.last_merit_ts):
             self.last_merit_ts, self.last_merit_n = fresh.last_merit_ts, fresh.last_merit_n
@@ -550,6 +569,7 @@ class PowerplayLedger:
             self.touch(stamp)
         if self.covered_from is None or covered_from < self.covered_from:
             self.covered_from = covered_from
+        self.schema = SCHEMA
 
     # -- views --
 
@@ -558,7 +578,8 @@ class PowerplayLedger:
         ledger covers but nothing happened in (so it wasn't archived) appears as an empty view."""
         live = CycleView(
             cycle_start=format_ts(self.cycle_start) if self.cycle_start else None, cycle_end=None,
-            current=True, records=dict(self.records), powers=list(self.powers))
+            current=True, records=dict(self.records), powers=list(self.powers),
+            daily={d: dict(m) for d, m in self.daily.items()})
         closed = {r["cycle_start"]: view_from_archive(r) for r in self.archive if isinstance(r.get("cycle_start"), str)}
         if self.cycle_start is not None and self.covered_from is not None:
             start = self.cycle_start - CYCLE
@@ -585,6 +606,8 @@ class PowerplayLedger:
             "cycle_start": format_ts(self.cycle_start) if self.cycle_start else None,
             "systems": {k: r.to_dict() for k, r in self.records.items()},
             "powers": list(self.powers),
+            "daily": {d: dict(m) for d, m in self.daily.items()},
+            "schema": self.schema,
             "last_merit_ts": self.last_merit_ts,
             "last_merit_n": self.last_merit_n,
             "covered_from": format_ts(self.covered_from) if self.covered_from else None,
@@ -606,6 +629,9 @@ class PowerplayLedger:
         powers = data.get("powers")
         ledger.powers = [_clip(p) for p in powers if p] if isinstance(powers, list) else []
         ledger.last_merit_ts = data["last_merit_ts"] if parse_ts(data.get("last_merit_ts")) else None
+        ledger.daily = _clean_daily(data.get("daily"))
+        schema = data.get("schema")
+        ledger.schema = schema if isinstance(schema, int) and not isinstance(schema, bool) else 1
         n = data.get("last_merit_n")
         ledger.last_merit_n = n if isinstance(n, int) and not isinstance(n, bool) and n > 0 else \
             (1 if ledger.last_merit_ts else 0)
@@ -638,6 +664,16 @@ class ScanPlan:
             gap = f" Not in history yet: cycle{'s' if len(self.missing_cycles) > 1 else ''} " \
                   f"{', '.join(str(n) for n in self.missing_cycles)}."
         return f"{where}. Journal scan: reading {self.days_back} day{'s' if self.days_back != 1 else ''} back.{gap}"
+
+
+def _clean_daily(raw: Any) -> Dict[str, Dict[str, int]]:
+    """Per-day merit tallies from saved data, dropping anything malformed."""
+    out: Dict[str, Dict[str, int]] = {}
+    for day, by_activity in (raw.items() if isinstance(raw, dict) else ()):
+        if isinstance(by_activity, dict):
+            out[str(day)] = {str(a): int(m) for a, m in by_activity.items()
+                             if isinstance(m, int) and not isinstance(m, bool)}
+    return out
 
 
 def _archived_merits(record: Dict[str, Any]) -> int:

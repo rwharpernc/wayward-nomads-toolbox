@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from dataclasses import dataclass
+from datetime import timedelta
 from tkinter import messagebox
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -432,3 +433,100 @@ class CyclesTab:
             ))
         self._summary.configure(
             text=f"All cycles shown ({shown}) — Merits: {total_merits:,}   Est. CP: {total_cp:,.1f}")
+
+
+_DAY_COLUMNS = (
+    Column("day", "Day", 90),
+    Column("date", "Date (UTC, from 07:00)", 200, stretch=True),
+    Column("merits", "Merits", 130, anchor="e"),
+    Column("cp", "Est. CP", 130, anchor="e"),
+)
+
+
+def day_cp(view: CycleView, day: int) -> float:
+    """Estimated Control Points earned on cycle day `day`, from the current Settings ratios."""
+    return sum(
+        merits_to_cp(merits, ratio_for(activity))
+        for activity, merits in view.day_merits(day).items() if activity not in NO_CP_ACTIVITIES
+    )
+
+
+def daily_rows(view: CycleView, today: Optional[int] = None) -> List[Tuple[str, ...]]:
+    """One row per day of the cycle - day, date, merits, CP (whole numbers) - then a total.
+    `today` (the live cycle) stops the list at the current day."""
+    start = parse_ts(view.cycle_start)
+    rows: List[Tuple[str, ...]] = []
+    total_merits, total_cp = 0, 0.0
+    for day in range(1, (today or 7) + 1):
+        merits, cp = sum(view.day_merits(day).values()), day_cp(view, day)
+        total_merits += merits
+        total_cp += cp
+        date = (start + timedelta(days=day - 1)).strftime("%a %Y-%m-%d") if start else "?"
+        rows.append((f"Day {day}", date, f"{merits:,}", f"{cp:,.0f}"))
+    rows.append(("Total", "", f"{total_merits:,}", f"{total_cp:,.0f}"))
+    return rows
+
+
+class DailyTab:
+    """Merits and estimated CP earned on each day of a cycle (the current one by default)."""
+
+    def __init__(self, parent: tk.Frame) -> None:
+        self._pane: Optional[SystemsPane] = None
+        self._labels: Dict[str, CycleView] = {}
+        self._selected_key: Optional[Tuple] = None
+        picker = tk.Frame(parent, bg=P.PANE)
+        picker.pack(fill="x", padx=P.PAD, pady=(P.PAD_SM, P.PAD_SM))
+        tk.Label(picker, text="CYCLE", fg=P.MUTED, bg=P.PANE, font=style.font(P.FONT_SMALL)).pack(side="left")
+        self._var = tk.StringVar()
+        self._box = Combobox(picker, textvariable=self._var, state="readonly", width=40)
+        self._box.pack(side="left", padx=(P.PAD_SM, 0))
+        self._box.bind("<<ComboboxSelected>>", lambda _e: self._on_selected())
+        self._note = tk.Label(parent, bg=P.PANE, fg=P.MUTED, anchor="w", justify="left", padx=P.PAD,
+                              wraplength=900, font=style.font(P.FONT_SMALL))
+        self._note.pack(side="bottom", fill="x", pady=(0, P.PAD_SM))
+        self._table = DataTable(parent, _DAY_COLUMNS, sortable=False, visible_rows=8,
+                                empty_text="Nothing recorded for this cycle.")
+        self._table.pack(fill="both", expand=True, padx=P.PAD, pady=(0, P.PAD_SM))
+
+    @staticmethod
+    def _key(view: CycleView) -> Tuple:
+        return (view.cycle_start, view.cycle_end, view.current)
+
+    def update(self, pane: Optional[SystemsPane]) -> None:
+        if pane is None:
+            return
+        self._pane = pane
+        views = pane.views()
+        self._labels = {}
+        for view in views:
+            label = cycle_label(view)
+            while label in self._labels:
+                label += " "
+            self._labels[label] = view
+        self._box.configure(values=list(self._labels))
+        selected = next((v for v in views if self._key(v) == self._selected_key), None) or (views[0] if views else None)
+        if selected is not None:
+            self._selected_key = self._key(selected)
+            self._var.set(next(lbl for lbl, v in self._labels.items() if v is selected))
+        self._show(selected)
+
+    def _on_selected(self) -> None:
+        view = self._labels.get(self._var.get())
+        if view is not None:
+            self._selected_key = self._key(view)
+            self._show(view)
+
+    def _show(self, view: Optional[CycleView]) -> None:
+        self._table.clear()
+        if view is None:
+            return
+        today = None
+        if view.current and (start := parse_ts(view.cycle_start)) is not None:
+            from datetime import datetime, timezone
+            today = max(1, min(7, (datetime.now(timezone.utc) - start).days + 1))
+        for row in daily_rows(view, today):
+            self._table.append(row)
+        self._note.configure(
+            text="A cycle day runs from 07:00 UTC to 07:00 UTC the next day (day 1 starts when the cycle does). "
+                 + ("" if view.daily or not view.records else
+                    "This cycle's per-day split isn't available (it was recorded before days were tracked)."))
