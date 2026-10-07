@@ -20,6 +20,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the Power they were pledged to, systems, merits, CP and a per-activity breakdown. Up to 52 closed cycles
   are kept. Each commander has their own history and Power; an unpledged commander still gets standing
   readings and shows "not pledged".
+- **Daily tab**: the merits and estimated Control Points (whole numbers) earned on each day of a cycle, with a
+  cycle total. Day 1 starts when the cycle does (Thursday 07:00 UTC) and each day runs 07:00 to 07:00 UTC; pick
+  the current cycle or any in the history. A ledger saved before days were tracked is rebuilt once from the
+  journals on the next start to fill them in.
 - **Start-up journal scan** for each commander, done only as far as needed. WNTB works out what cycle it
   is, which cycles aren't in that commander's history yet and how many days back to read (a new commander
   rebuilds the last 4 cycles; after that only the gap since EDMC last saw the journal is read, and nothing

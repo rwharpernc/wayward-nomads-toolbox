@@ -215,6 +215,10 @@ tabs totals the cycle (merits, estimated CP, systems worked). The **Cycles** tab
 (cycle 101 began 2026-10-01) with the Power you were pledged to then. Pins and history are kept per
 commander, so a commander pledged to another Power, or to none, has their own.
 
+**Daily tab:** merits and estimated CP for each day of a cycle (whole numbers, plus a total). A cycle runs
+Thursday 07:00 UTC to the next Thursday 07:00 UTC, and each day is 07:00 to 07:00 UTC. Pick the current cycle or
+an earlier one at the top.
+
 **Catching up from your journals:** the first time WNTB sees a commander it reads their journals to
 fill in the last few cycles (4 by default; **Settings > Powerplay > Journal scan**), and after that
 only what happened while EDMC was closed, so playing without it running doesn't lose a cycle. It

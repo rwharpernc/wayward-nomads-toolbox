@@ -213,6 +213,16 @@ The Cycles tab shows the plan or the result in one line (cycle, day of 7, days r
 28 days of journals took about 0.3 s per commander on a 1.6 GB journal folder (files are chosen by modification
 time and lines are pre-filtered before JSON parsing).
 
+### 11.2d Daily breakdown
+The ledger tallies merits per activity per **cycle day** (`daily`, keys "1" to "7"): day = whole 24-hour periods since
+the cycle start + 1, so day 1 is Thursday 07:00 UTC to Friday 07:00 UTC. It is archived with its cycle and reset at a
+rollover. The **Daily** tab (`powerplay_systems_tab.DailyTab`, `daily_rows`) shows merits and estimated CP per day as whole
+numbers with a total; the live cycle stops at today. CP is derived from the current ratios (section 4), never stored,
+and the delivery and unattributed merits count in merits only, as everywhere else.
+`SCHEMA` (2) marks the saved layout: a ledger saved before the daily tally existed (schema 1) is planned as a **rebuild**
+once, which fills the days in from the journals, then marked current. A cycle whose journals are gone and which was
+kept because its saved merits were larger has no per-day split; the tab says so.
+
 ### 11.3 Tabs and pins
 Same model as the BGS report (`powerplay_ledger.TabPrefs`, `CycleView.systems`): pinned systems first
 (sorted, starred, always shown even with no data, in every cycle), then the `RECENT_SYSTEMS` (6) most
@@ -233,4 +243,4 @@ updates (`update.py`). The controller switches ledger and pins whenever the comm
 tallies, rollover and carried baselines, the archive cap, tab ordering, the pin cap, serialisation and the
 per-commander state file. `tests/test_powerplay_backfill.py` covers the replay (attribution, commanders kept apart, files
 and the window), applying ops twice, same-second merits, a gap across a cycle boundary, rebuild and adoption, the
-scan plan in every mode, empty-cycle rows and reading real files. The widgets are exercised by hand in EDMC.
+scan plan in every mode, empty-cycle rows, the per-day tally (boundaries, archiving, saving, the one-time rebuild) and reading real files. The widgets are exercised by hand in EDMC.
