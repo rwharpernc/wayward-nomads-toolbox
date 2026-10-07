@@ -140,6 +140,10 @@ default, and only looks at published releases).
   the only place either appears.
 - **Collapse the panel** by clicking the "WNTB" title. Click it again to expand (the credits line folds
   away with the rest).
+- **Buttons have short names.** The EDMC main window is small, and every plugin shares it, so WNTB's
+  buttons use abbreviations to keep the panel compact rather than widening your window. **Hover over any
+  button for a moment and a tooltip shows its full name.** The full list is in
+  [Button names](#button-names) below.
 - **Settings** for each feature are under **File → Settings → WNTB**, in tabs. This is where you turn
   things on and off and adjust how they behave.
 - **Pop-out windows** (sessions, rare goods, inventory, the BGS report, the Mining Book and so on)
@@ -152,14 +156,14 @@ Switch to the mode, then use the button listed here.
 
 | Window | Mode | How to open it |
 |---|---|---|
-| Powerplay Sessions (tabs: Current session, Systems, Cycles, Daily, History) | Powerplay | **Sessions** button (bottom row of the panel) |
-| Rare Goods Finder | Powerplay | **Rares** button, next to Sessions |
-| BGS Report | BGS | **View BGS Report** button |
-| Codex Completionist | Exploration | **View Details** button in the Codex Completionist section |
+| Powerplay Sessions (tabs: Current session, Systems, Cycles, Daily, History) | Powerplay | **SES** button (bottom row of the panel) |
+| Rare Goods Finder | Powerplay | **RAR** button, next to SES |
+| BGS Report | BGS | **RPT** button |
+| Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there's no button) |
-| Ship Builds | Field Ops | **Manage Ship Builds** button |
-| Colonisation | Field Ops | **Colonisation Sites** button |
-| Mining Book | Mining | **Mining Book...** button, on both the Space Mining and Surface Mining pages |
+| Ship Builds | Field Ops | **BLD** button |
+| Colonisation | Field Ops | **COL** button |
+| Mining Book | Mining | **BOOK** button, on both the Space Mining and Surface Mining pages |
 
 A few notes:
 - You don't need to be mining to open the Mining Book. It lists your saved hotspots either way.
@@ -167,6 +171,37 @@ A few notes:
   click a mission card for that mission's details.
 - If you can't find the BGS or Codex Completionist sections, they can each be switched off under
   **File → Settings → WNTB**. Both are on by default.
+
+### Button names
+
+Hover over any button for a moment to see its full name.
+
+| Button | Full name | Where |
+|---|---|---|
+| **SES** | Sessions | Powerplay |
+| **RAR** | Rares (rare goods finder) | Powerplay |
+| **RSC** | Rescan | Powerplay |
+| **RPT** | View BGS report | BGS |
+| **A.H.** | Auto-Honk | Exploration |
+| **D.A.** | Discovery Alerts | Exploration |
+| **N.S.** | Nearest neutron star (primary star) | Exploration |
+| **W.D.** | Nearest white dwarf (primary star) | Exploration |
+| **RND** | Random (an undiscovered system nearby) | Exploration |
+| **FIND** | Find nearest POI (GEC and Canonn) | Exploration |
+| **REF** | Refresh POI data (Canonn) | Exploration |
+| **DET** | View details (Codex Completionist) | Exploration |
+| **BKF** | Backfill from journal history (Codex Completionist) | Exploration |
+| **HOT** | Find nearby hotspots | Mining |
+| **+HOT** | Save hotspot here | Mining |
+| **PRC** | Find best price | Mining |
+| **RES** | Check ring reserve level | Mining |
+| **I/E** | Import/export hotspots | Mining |
+| **BOOK** | Mining Book | Mining |
+| **BLD** | Manage ship builds | Field Ops |
+| **COL** | Colonisation sites | Field Ops |
+
+The mode buttons (Powerplay, BGS, Exploration, Mining, Missions, Field Ops) and the buttons inside
+pop-out windows and Settings keep their full names.
 
 ## What goes on the internet
 
@@ -177,8 +212,8 @@ feature that contacts an outside site, so you can decide what you're comfortable
 |---|---|---|
 | Rare Goods Finder | Spansh | The first time you open the window for each system, to see which Power controls it; remembered until you restart EDMC |
 | Codex Completionist "Not found" tab | Canonn | Downloads a list when you open the details window (if it has none, or it's over two weeks old), or when you click **Refresh Catalog** |
-| GEC Nearby POI | edastro.com | Only when you click **Find Nearest POI** |
-| Canonn Nearby POI | Canonn | Downloads site lists when you click **Find Nearest POI** |
+| GEC Nearby POI | edastro.com | Only when you click **FIND** |
+| Canonn Nearby POI | Canonn | Downloads site lists when you click **FIND** |
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons; some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings |
@@ -209,7 +244,7 @@ commander**, so a commander pledged to another Power, or to none, has their own 
 
 **How to use it:** just play. The panel shows your current system's Powerplay state, what you've
 earned in that system, and running merit totals for the session (your game mode and credits are on
-the lines under the mode buttons). Click **Sessions** to open the Sessions window, or **Rescan** if a
+the lines under the mode buttons). Click **SES** to open the Sessions window, or **RSC** if a
 session's numbers ever look wrong (it re-reads your journal from scratch).
 
 ### The Sessions window
@@ -250,7 +285,7 @@ you're in (the same for the per-system and daily numbers). Control Points are es
 you can edit. Delivery and unattributed merits count as merits only. The detail is in the
 [Powerplay specification](docs/POWERPLAY_TECH_SPEC.md).
 
-**Rare Goods Finder:** click **Rares** to see the rare commodities closest to where you are. Each
+**Rare Goods Finder:** click **RAR** to see the rare commodities closest to where you are. Each
 row shows the origin system, station, landing-pad size, and which Power currently controls that
 system, which is handy for Powerplay hauling. Double-click a row to open that commodity on Inara. Use
 **Show nearest** to choose how many rows to see (up to all 141). The list needs your position, so it
@@ -282,8 +317,8 @@ moment you're the first to scan or map a body.
 [What you need](#what-you-need)); enter its connection details on the **Overlay Connection** Settings
 tab. Use **Settings → Discovery** to move the banner or send a test one.
 
-**Short button names:** on the Exploration row, **A.H.** is Auto-Honk and **D.A.** is Discovery Alerts;
-hover any button to see its full name.
+**Short button names:** on the Exploration row, **A.H.** is Auto-Honk and **D.A.** is Discovery Alerts
+(see [Button names](#button-names)).
 
 **N.S. and W.D. buttons:** next to the toggle, find the nearest system whose *primary* star is a neutron
 star (**N.S.**) or a white dwarf (**W.D.**), measured from where you are now. They show the system name and
@@ -352,8 +387,8 @@ own journal, makes no internet connection, and is designed to work alongside
 A personal tally of everything you've ever scanned: biological, geological, Guardian, human, Thargoid
 and more.
 
-**How to use it:** it builds itself as you play. Click **View Details** for the full breakdown (a ⭐
-marks a genuine first discovery), or **Backfill from Journal History** once to pull in your past
+**How to use it:** it builds itself as you play. Click **DET** for the full breakdown (a ⭐
+marks a genuine first discovery), or **BKF** (backfill from journal history) once to pull in your past
 journals. That button isn't automatic because it can take a while for a long career.
 
 The details window has two tabs:
@@ -370,8 +405,8 @@ Finds the nearest point of interest from edastro.com's exploration catalogue. Cl
 POI**. It only looks something up when you ask.
 
 ### Canonn Nearby POI
-The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **Find Nearest POI**. The
-first click downloads the lists, which are then kept for the rest of your session. **Refresh POI Data**
+The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **FIND**. The
+first click downloads the lists, which are then kept for the rest of your session. **REF**
 fetches fresh copies. Choose which kinds of site to include in **Settings → Canonn Nearby POI**. By
 default it skips sites you've already logged in Codex Completionist, so it points you somewhere new;
 you can turn that off in the same place.
@@ -384,13 +419,13 @@ plus your own catalogue of known hotspots.
 **How to use it:** use the ◂ and ▸ arrows to switch between the two pages. Each shows live stats for
 your current run. Buttons appear when they're useful:
 
-- **+ Save Hotspot Here** records a deposit you've found.
-- **Mining Book** opens a window listing the bodies you've scanned in this system and every hotspot
+- **+HOT** (save hotspot here) records a deposit you've found.
+- **BOOK** (the Mining Book) opens a window listing the bodies you've scanned in this system and every hotspot
   you've saved. You can filter by material or number of rigs, see tons mined and an estimate of tons
   left, edit or mark a hotspot as depleted, copy its coordinates, and view a zoomable map. For a
   scanned body it also shows what *you've* found so far on that kind of body. That starts empty and
   fills in as you save hotspots; it describes your own finds, not what a body actually holds.
-- **Find Nearby Hotspots**, **Find Best Price** and **Check Ring Reserve Level** look things up on
+- **HOT** (find nearby hotspots), **PRC** (find best price) and **RES** (check ring reserve level) look things up on
   Spansh and EDSM. They're off until you turn them on in Settings.
 
 **Settings:** turn on the lookups above, show live stats on your game screen, show a surface arrow
@@ -439,7 +474,7 @@ commander. WNTB doesn't design ships itself. This just helps you find a build ag
 
 **How to use it:**
 1. Design your build on whichever site you like.
-2. Click **Manage Ship Builds** in the WNTB panel.
+2. Click **BLD** (manage ship builds) in the WNTB panel.
 3. Click **Add**, give it a name (and optionally a role, such as "PvE Exploration"), pick the site and
    paste the build's web address.
 4. Click **Save**.
@@ -455,7 +490,7 @@ docked, and what you still have to find after counting the cargo already in your
 1. Dock at a construction depot (or open its market) once. WNTB registers the site from the game's
    journal. There's nothing to type in.
 2. The Field Ops panel shows your most recently updated site: its progress and the tonnes still to go.
-3. Click **Colonisation Sites** for the full list. Each site is a group with its outstanding
+3. Click **COL** (colonisation sites) for the full list. Each site is a group with its outstanding
    commodities underneath: required, delivered, remaining, how much is in your cargo now, and how much
    is left **To Source**.
 
@@ -482,7 +517,7 @@ state show how far they moved since before the tick, for example `45.0% (+5.0)` 
 missions failed or abandoned, bounty voucher and combat bond redemptions, trade profit or loss, exploration
 data sold, and crimes committed against a faction.
 
-**View BGS Report** opens a window with a drop-down to pick the tick (the current one, or an earlier one
+**RPT** (view BGS report) opens a window with a drop-down to pick the tick (the current one, or an earlier one
 from the archive) and one tab per system you've acted in during it. Each tab lists every faction there
 (state, influence and change, pending, recovering and active states) and a table of what you did to each.
 Tabs show the last 6 systems you've been in (the one you're in first), with each tab's full system name.
@@ -559,8 +594,8 @@ match it. Use the **Test** buttons in each feature's Settings tab to check.
 
 **Numbers look wrong or out of date.**
 Many features read the game's journal, so they only know what has happened since EDMC started, plus a
-bit of recent history. Powerplay has a **Rescan** button. Codex Completionist has **Backfill from
-Journal History**.
+bit of recent history. Powerplay has a **RSC** (rescan) button. Codex Completionist has **BKF** (backfill from
+journal history).
 
 **Something else is wrong.**
 EDMC's Help menu can open its log folder. The log often says exactly what went wrong, and including it
