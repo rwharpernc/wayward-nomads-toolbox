@@ -973,7 +973,10 @@ class BoxelSurveyController:
         """Adds the Random button to `button_row` (pack, 6px gap like every
         other button there) and its grey status line at `status_row` of
         `status_parent`, hidden until there is something to say."""
-        tk.Button(button_row, text="Random", command=self._on_random).pack(side=tk.LEFT, padx=(6, 0))
+        random_button = tk.Button(button_row, text="RND", command=self._on_random)
+        random_button.pack(side=tk.LEFT, padx=(6, 0))
+        panelkit.add_tooltip(
+            random_button, "Random - find an undiscovered system near you and copy its name to the clipboard")
         self._random_status_label = panelkit.wrap_label(
             status_parent, textvariable=self._random_status_var, fg="grey",
         )
