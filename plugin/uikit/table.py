@@ -92,6 +92,7 @@ class DataTable(tk.Frame):
         self._max_rows = visible_rows
         self._on_header = on_header
         self._layout_pending = False
+        self._signature: Optional[list] = None  # rows last given to set_rows()
 
         self._header = tk.Frame(self, bg=P.CARD)
         self._header.pack(fill="x", padx=(0, SlimScrollbar.WIDTH))
@@ -117,7 +118,20 @@ class DataTable(tk.Frame):
         """Foreground colour for rows inserted with this tag."""
         self._tags[tag] = foreground
 
+    def set_rows(self, rows: Sequence[Sequence[object]]) -> None:
+        """Replace the table's rows with `rows`, doing nothing at all when they are the
+        same as last time. For a table that is re-filled often (a live window) this
+        avoids destroying and rebuilding every cell on each refresh."""
+        signature = [tuple(str(v) for v in row) for row in rows]
+        if signature == self._signature:
+            return
+        self.clear()
+        for row in rows:
+            self.append(row)
+        self._signature = signature
+
     def clear(self) -> None:
+        self._signature = None
         for row in self._rows.values():
             for cell in row.cells:
                 cell.destroy()
@@ -128,6 +142,7 @@ class DataTable(tk.Frame):
 
     def insert(self, iid: str, values: Sequence[object], tag: Optional[str] = None,
                parent: Optional[str] = None, group: bool = False, open: bool = True) -> None:
+        self._signature = None
         row = _TableRow(iid, [str(v) for v in values], tag, parent, group, open)
         self._rows[iid] = row
         self._order.append(iid)

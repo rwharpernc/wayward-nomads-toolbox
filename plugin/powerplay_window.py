@@ -114,12 +114,12 @@ class SessionWindow:
         self._shell.window.protocol("WM_DELETE_WINDOW", self.close)
         self._toplevel = self._shell.window
 
-        self._shell.add_action("Refresh", lambda: self.refresh(self._current_system))
+        self._shell.add_action("Refresh", self._flush)
         self._copy_button = self._shell.add_action("Copy Progress", self._copy_progress)
         self._shell.add_action("Reset Current System", self._reset_current_system)
         self._shell.add_action("Reset Session", self._reset_session)
 
-        tabs = Tabs(self._shell.body)
+        self._tabs = tabs = Tabs(self._shell.body)
         tabs.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
         self._current_tab = _CurrentTab(tabs.add("Current session"))
         self._systems_tab = SystemsTab(tabs.add("Systems"), self._toplevel)
@@ -127,7 +127,20 @@ class SessionWindow:
         self._daily_tab = DailyTab(tabs.add("Daily"))
         self._history_tab = _HistoryTab(tabs.add("History"))
 
-        self.refresh(current_system)
+        # Journal events arrive in bursts and every tab is a table of widgets, so a refresh is
+        # coalesced into one pass a moment later and only the tab on screen is redrawn; the
+        # others are marked stale and drawn when they are selected.
+        self._updaters = [
+            lambda: self._current_tab.update(self._sessions.current, self._pp, self._current_system),
+            lambda: self._systems_tab.update(self._systems, self._current_system),
+            lambda: self._cycles_tab.update(self._systems),
+            lambda: self._daily_tab.update(self._systems),
+            lambda: self._history_tab.update(self._sessions.history, self._sessions.current),
+        ]
+        self._stale = set(range(len(self._updaters)))
+        self._flush_job: Optional[str] = None
+        tabs.on_select = self._draw_if_stale
+        self._flush()
 
     @property
     def alive(self) -> bool:
@@ -137,17 +150,36 @@ class SessionWindow:
         self._toplevel.deiconify()
         self._toplevel.lift()
 
+    REFRESH_DELAY_MS = 250
+
     def refresh(self, current_system: Optional[str], systems: Optional[SystemsPane] = None) -> None:
+        """New data is available: remember it and redraw soon (one pass, however many calls)."""
         if not self.alive:
             return
         self._current_system = current_system
         if systems is not None:
             self._systems = systems
-        self._current_tab.update(self._sessions.current, self._pp, current_system)
-        self._systems_tab.update(self._systems, current_system)
-        self._cycles_tab.update(self._systems)
-        self._daily_tab.update(self._systems)
-        self._history_tab.update(self._sessions.history, self._sessions.current)
+        self._stale = set(range(len(self._updaters)))
+        if self._flush_job is None:
+            self._flush_job = self._toplevel.after(self.REFRESH_DELAY_MS, self._flush)
+
+    def _flush(self) -> None:
+        """Redraw the tab being shown now; mark the rest stale."""
+        if self._flush_job is not None:
+            try:
+                self._toplevel.after_cancel(self._flush_job)
+            except tk.TclError:
+                pass
+            self._flush_job = None
+        if not self.alive:
+            return
+        self._stale = set(range(len(self._updaters)))
+        self._draw_if_stale(self._tabs.selected)
+
+    def _draw_if_stale(self, index: int) -> None:
+        if self.alive and index in self._stale and 0 <= index < len(self._updaters):
+            self._stale.discard(index)
+            self._updaters[index]()
 
     def _reset_session(self) -> None:
         """Zeroes this session's merit counts entirely (session identity untouched) — mainly for correcting a bad count, e.g.
@@ -207,6 +239,12 @@ class SessionWindow:
         self._copy_button.after(1500, lambda: self._copy_button.configure(text=original_text))
 
     def close(self) -> None:
+        if self._flush_job is not None:
+            try:
+                self._toplevel.after_cancel(self._flush_job)
+            except tk.TclError:
+                pass
+            self._flush_job = None
         self._shell.close()
 
 
@@ -215,6 +253,8 @@ class _CurrentTab:
     earned in each system visited, and the same broken out by activity."""
 
     def __init__(self, parent: tk.Frame) -> None:
+        self._heading_shown: Optional[tuple] = None
+        self._context_shown: Optional[tuple] = None
         scroll = ScrollFrame(parent)
         scroll.pack(fill="both", expand=True)
         body = scroll.body
@@ -259,26 +299,30 @@ class _CurrentTab:
         started = session.get("started_at") or "?"
         hours = duration_hours(session)
 
-        for child in self._heading.winfo_children():
-            child.destroy()
-        field_grid(self._heading, 0, (("Commander:", cmdr), ("Power:", power)))
-        field_grid(self._heading, 1, (("Started:", started), ("Duration:", f"{hours:.2f}h")))
+        heading = (cmdr, power, started, f"{hours:.2f}h")
+        if heading != self._heading_shown:
+            self._heading_shown = heading
+            for child in self._heading.winfo_children():
+                child.destroy()
+            field_grid(self._heading, 0, (("Commander:", cmdr), ("Power:", power)))
+            field_grid(self._heading, 1, (("Started:", started), ("Duration:", f"{hours:.2f}h")))
 
-        for child in self._context.winfo_children():
-            child.destroy()
         name = current_system or pp.system_name or "(none seen yet)"
         state = pp.system_state or "(none seen yet)"
         controller = pp.system_controller or "(none)"
         powers = ", ".join(pp.system_powers) if pp.system_powers else "(none)"
-        field_grid(self._context, 0, (("System:", name), ("State:", state)))
-        field_grid(self._context, 1, (("Controller:", controller), ("Rival Powers:", powers)))
+        context = (name, state, controller, powers)
+        if context != self._context_shown:
+            self._context_shown = context
+            for child in self._context.winfo_children():
+                child.destroy()
+            field_grid(self._context, 0, (("System:", name), ("State:", state)))
+            field_grid(self._context, 1, (("Controller:", controller), ("Rival Powers:", powers)))
 
         self._update_system_table(session, current_system)
         self._update_activity_table(session, hours)
 
     def _update_system_table(self, session: Dict[str, Any], current_system: Optional[str]) -> None:
-        self._system_table.clear()
-
         systems = visited_systems(session)
         # The current system leads the list even if it hasn't earned any
         # merits yet this visit, so it's never missing from its own table.
@@ -288,9 +332,10 @@ class _CurrentTab:
             systems = [current_system] + [s for s in systems if s != current_system]
 
         if not systems:
-            self._system_table.append(("(no systems visited yet)", "", "", ""))
+            self._system_table.set_rows([("(no systems visited yet)", "", "", "")])
             return
 
+        rows = []
         for name in systems:
             totals = system_totals(session, name)
             merits = system_merit_total(session, name)
@@ -306,10 +351,11 @@ class _CurrentTab:
             ) or "—"
 
             label = f"{_CURRENT_SYSTEM_MARK}{name} (current)" if name == current_system else name
-            self._system_table.append((label, f"{merits:,}", f"{cp:,.1f}" if merits else "—", breakdown))
+            rows.append((label, f"{merits:,}", f"{cp:,.1f}" if merits else "—", breakdown))
+        self._system_table.set_rows(rows)
 
     def _update_activity_table(self, session: Dict[str, Any], hours: float) -> None:
-        self._activity_table.clear()
+        rows = []
         totals = session.get("totals", {})
 
         merits_sum = 0
@@ -322,7 +368,7 @@ class _CurrentTab:
             cp = merits_to_cp(merits, ratio) if has_cp else 0.0
             cp_sum += cp
             cp_hr = per_hour(cp, hours)
-            self._activity_table.append((
+            rows.append((
                 ACTIVITY_LABELS[activity],
                 f"{merits:,}",
                 f"{ratio:g}" if ratio else "—",
@@ -330,13 +376,14 @@ class _CurrentTab:
                 f"{cp_hr:,.1f}" if has_cp and hours > 0 else "—",
             ))
 
-        self._activity_table.append((
+        rows.append((
             "Total",
             f"{merits_sum:,}",
             "",
             f"{cp_sum:,.1f}",
             f"{per_hour(cp_sum, hours):,.1f}" if hours > 0 else "—",
         ))
+        self._activity_table.set_rows(rows)
 
 
 def _cumulative_summary(sessions: List[Dict[str, Any]]) -> str:
@@ -369,8 +416,7 @@ class _HistoryTab:
         self._table.pack(fill="both", expand=True, padx=P.PAD, pady=(0, P.PAD_SM))
 
     def update(self, history: List[Dict[str, Any]], current: Dict[str, Any]) -> None:
-        self._table.clear()
-
+        rows = []
         sessions = list(history) + [current]
         self._summary_label.configure(text=_cumulative_summary(sessions))
         for session in reversed(sessions):
@@ -382,7 +428,7 @@ class _HistoryTab:
             )
             is_current = session is current
 
-            self._table.append((
+            rows.append((
                 session.get("started_at", "?") + (" (live)" if is_current else ""),
                 session.get("cmdr") or "?",
                 session.get("power") or "—",
@@ -392,4 +438,5 @@ class _HistoryTab:
             ))
 
         if not sessions:
-            self._table.append(("(no sessions yet)", "", "", "", "", ""))
+            rows.append(("(no sessions yet)", "", "", "", "", ""))
+        self._table.set_rows(rows)

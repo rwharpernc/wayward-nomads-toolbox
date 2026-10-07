@@ -31,16 +31,14 @@ from .powerplay_ledger import (
 from .uikit import palette as P
 from .uikit import style
 from .uikit.table import Column, DataTable
-from .uikit.widgets import Combobox, FlatButton, SuggestEntry, Tabs
+from .uikit.widgets import Combobox, FlatButton, NoteLabel, ScrollFrame, SuggestEntry, Tabs
 
 LEGEND = (
-    f"TABS: the last {RECENT_SYSTEMS} systems you've been in, plus up to {MAX_PINNED} you pin (☆ Pin keeps a "
-    "system's tab; × Close tab hides it; Show a system - pick from the list or type a name - pins one). "
-    "STANDING: Baseline is the system's last reading before this cycle began (or your first reading this "
-    "cycle); Latest is the newest. Control progress, Reinforcement and Undermining are whole-system figures "
-    "from the journal - everyone's work, not just yours - and only update when you jump in or log in there. "
-    "WHAT YOU DID: your merits by activity, with Control Points estimated from your Settings ratios. "
-    "Cycles run Thursday 07:00 UTC to Thursday 07:00 UTC; the Cycles tab keeps every cycle for this commander."
+    f"Tabs: your last {RECENT_SYSTEMS} systems plus up to {MAX_PINNED} you pin (☆ Pin keeps a tab, × Close tab "
+    "hides it, Show a system adds one).  Standing compares the system's baseline (its last reading before this "
+    "cycle, or your first this cycle) with its latest. These are whole-system figures from the journal, everyone's "
+    "work and not just yours, and they update when you jump in or log in there.  What you did is your own "
+    "merits, with Control Points estimated from your Settings ratios."
 )
 
 _STANDING_COLUMNS = (
@@ -195,6 +193,10 @@ class _SystemTab:
 
     def __init__(self, content: tk.Frame, system: str, pinned: bool, actions: Callable[[], TabActions],
                  on_pin: Callable[[str], None]) -> None:
+        # Scrollable, so a short window never squeezes a table out of sight.
+        scroll = ScrollFrame(content)
+        scroll.pack(fill="both", expand=True)
+        content = scroll.body
         bar = tk.Frame(content, bg=P.PANE)
         bar.pack(fill="x", padx=P.PAD, pady=(P.PAD_SM, 0))
         FlatButton(bar, "× Close tab", lambda: actions().close(system), kind="normal").pack(side="right")
@@ -207,18 +209,14 @@ class _SystemTab:
         self.standing.pack(fill="x", padx=P.PAD, pady=(2, P.PAD_SM))
         tk.Label(content, text="WHAT YOU DID", fg=P.MUTED, bg=P.PANE, anchor="w", padx=P.PAD,
                  font=style.font(P.FONT_SMALL)).pack(fill="x", pady=(P.PAD_SM, 0))
-        self.did = DataTable(content, _DID_COLUMNS, sortable=False,
+        self.did = DataTable(content, _DID_COLUMNS, sortable=False, visible_rows=8,
                              empty_text="No merits earned here this cycle.")
-        self.did.pack(fill="both", expand=True, padx=P.PAD, pady=(2, P.PAD))
+        self.did.pack(fill="x", padx=P.PAD, pady=(2, P.PAD))
 
     def fill(self, view: CycleView, system: str) -> None:
         record = view.record_for(system)
-        self.standing.clear()
-        for row in standing_rows(record):
-            self.standing.append(row)
-        self.did.clear()
-        for row in did_rows(record):
-            self.did.append(row)
+        self.standing.set_rows(standing_rows(record))
+        self.did.set_rows(did_rows(record))
 
 
 class SystemsTab:
@@ -238,8 +236,7 @@ class SystemsTab:
         self._heading = tk.Label(parent, bg=P.PANE, fg=P.MUTED, anchor="w", padx=P.PAD, justify="left",
                                  font=style.font(P.FONT_SMALL))
         self._heading.pack(fill="x", pady=(P.PAD_SM, 0))
-        self._summary = tk.Label(parent, bg=P.PANE, fg=P.TEXT, anchor="w", padx=P.PAD, justify="left",
-                                 wraplength=900, font=style.font(P.FONT_BOLD))
+        self._summary = NoteLabel(parent, fg=P.TEXT, font=P.FONT_BOLD)
         self._summary.pack(fill="x", pady=(2, 0))
 
         picker = tk.Frame(parent, bg=P.PANE)
@@ -257,8 +254,7 @@ class SystemsTab:
         tk.Label(picker, text="SHOW A SYSTEM", fg=P.MUTED, bg=P.PANE,
                  font=style.font(P.FONT_SMALL)).pack(side="right", padx=(0, 6))
 
-        tk.Label(parent, text=LEGEND, fg=P.MUTED, bg=P.PANE, anchor="w", justify="left", wraplength=900,
-                 padx=P.PAD, font=style.font(P.FONT_SMALL)).pack(side="bottom", fill="x", pady=(0, P.PAD_SM))
+        NoteLabel(parent, text=LEGEND).pack(side="bottom", fill="x", pady=(P.PAD_SM, P.PAD_SM))
         self._stage = tk.Frame(parent, bg=P.PANE)
         self._stage.pack(fill="both", expand=True)
 
@@ -393,9 +389,8 @@ class CyclesTab:
         self._summary = tk.Label(parent, bg=P.PANE, fg=P.TEXT, anchor="w", justify="left", padx=P.PAD,
                                  pady=P.PAD_SM, font=style.font(P.FONT_BOLD))
         self._summary.pack(side="bottom", fill="x")
-        self._status = tk.Label(parent, bg=P.PANE, fg=P.MUTED, anchor="w", justify="left", padx=P.PAD,
-                                wraplength=900, font=style.font(P.FONT_SMALL))
-        self._status.pack(side="bottom", fill="x")
+        self._status = NoteLabel(parent)
+        self._status.pack(side="bottom", fill="x", pady=(0, P.PAD_SM))
         self._table = DataTable(parent, _CYCLE_COLUMNS, sortable=False,
                                 empty_text="No cycles recorded yet for this commander.")
         self._table.pack(fill="both", expand=True, padx=P.PAD, pady=(P.PAD_SM, P.PAD_SM))
@@ -408,7 +403,7 @@ class CyclesTab:
             text=f"{'CMDR ' + cmdr + ' · ' if cmdr else ''}one row per Powerplay cycle; each commander has "
                  "their own history and their own Power")
         self._status.configure(text=pane.status())
-        self._table.clear()
+        rows: List[Tuple[str, ...]] = []
         total_merits = 0
         total_cp = 0.0
         shown = 0
@@ -426,11 +421,12 @@ class CyclesTab:
                 period = f"{start.strftime(fmt)} - {end.strftime(fmt)}"
             else:
                 period = "?"
-            self._table.append((
+            rows.append((
                 _cycle_name(view) + (" (live)" if view.current else ""), period,
                 pane.pledge() if view.current else power_text(view),
                 str(view.systems_worked()), f"{merits:,}", f"{cp:,.1f}", cycle_breakdown(view),
             ))
+        self._table.set_rows(rows)
         self._summary.configure(
             text=f"All cycles shown ({shown}) — Merits: {total_merits:,}   Est. CP: {total_cp:,.1f}")
 
@@ -481,9 +477,8 @@ class DailyTab:
         self._box = Combobox(picker, textvariable=self._var, state="readonly", width=40)
         self._box.pack(side="left", padx=(P.PAD_SM, 0))
         self._box.bind("<<ComboboxSelected>>", lambda _e: self._on_selected())
-        self._note = tk.Label(parent, bg=P.PANE, fg=P.MUTED, anchor="w", justify="left", padx=P.PAD,
-                              wraplength=900, font=style.font(P.FONT_SMALL))
-        self._note.pack(side="bottom", fill="x", pady=(0, P.PAD_SM))
+        self._note = NoteLabel(parent)
+        self._note.pack(side="bottom", fill="x", pady=(P.PAD_SM, P.PAD_SM))
         self._table = DataTable(parent, _DAY_COLUMNS, sortable=False, visible_rows=8,
                                 empty_text="Nothing recorded for this cycle.")
         self._table.pack(fill="both", expand=True, padx=P.PAD, pady=(0, P.PAD_SM))
@@ -517,15 +512,14 @@ class DailyTab:
             self._show(view)
 
     def _show(self, view: Optional[CycleView]) -> None:
-        self._table.clear()
         if view is None:
+            self._table.clear()
             return
         today = None
         if view.current and (start := parse_ts(view.cycle_start)) is not None:
             from datetime import datetime, timezone
             today = max(1, min(7, (datetime.now(timezone.utc) - start).days + 1))
-        for row in daily_rows(view, today):
-            self._table.append(row)
+        self._table.set_rows(daily_rows(view, today))
         self._note.configure(
             text="A cycle day runs from 07:00 UTC to 07:00 UTC the next day (day 1 starts when the cycle does). "
                  + ("" if view.daily or not view.records else

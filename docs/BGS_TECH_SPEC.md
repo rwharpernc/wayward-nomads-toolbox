@@ -2,6 +2,7 @@
 
 **Author:** R.W. Harper (CMDR Bocheaux)
 **Last updated:** 2026-10-03 (see `CHANGELOG.md`)
+**Status:** work in progress. Feedback, bug reports and suggestions are welcome: [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward Nomads squadron.
 
 ## 1. Goals
 

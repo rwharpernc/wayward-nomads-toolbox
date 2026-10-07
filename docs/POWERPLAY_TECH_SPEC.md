@@ -1,7 +1,8 @@
 # Technical Specification — Powerplay
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-07 (see `CHANGELOG.md`)
+**Last updated:** 2026-10-08 (see `CHANGELOG.md`)
+**Status:** work in progress. Feedback, bug reports and suggestions are welcome: [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward Nomads squadron.
 
 The standing reference for Powerplay mode: how merits are attributed to an activity, how Control Points
 are estimated, how sessions work, and how the Rare Goods Finder fits in. For how to use it, see the
@@ -13,6 +14,8 @@ are estimated, how sessions work, and how the Rare Goods Finder fits in. For how
 - Show the merits (and estimated Control Points) you earn for your pledged Power, live, per session and
   per system.
 - Keep a history of sessions and make one easy to copy into Discord or a forum post.
+- Track each commander's activity **per system, per numbered Powerplay cycle and per day**, with each system's
+  standing and how it moved, rebuilt from the journals as far back as needed (section 11).
 - Credit income and the game mode (Open / Solo / Private Group) are **not** part of Powerplay. They are
   shown on the always-visible lines under the mode buttons (`session_credits.py`, `game_mode.py`).
 - Offer a Rare Goods Finder for Powerplay hauling.
@@ -113,8 +116,9 @@ A window listing the rare commodities closest to your current system.
 
 ## 8. Settings
 
-**File → Settings → WNTB → Powerplay** (keys start `wntb_powerplay_`): the three merits-per-CP ratios and
-the clipboard format. Sessions and history need no setting.
+**File → Settings → WNTB → Powerplay** (keys start `wntb_powerplay_`): the three merits-per-CP ratios,
+the clipboard format, and how many cycles the start-up journal scan covers (`wntb_powerplay_backfill_cycles`,
+default 4, 1-12). Sessions, cycles and history need no setting.
 
 ## 9. Testing
 
@@ -222,6 +226,13 @@ and the delivery and unattributed merits count in merits only, as everywhere els
 `SCHEMA` (2) marks the saved layout: a ledger saved before the daily tally existed (schema 1) is planned as a **rebuild**
 once, which fills the days in from the journals, then marked current. A cycle whose journals are gone and which was
 kept because its saved merits were larger has no per-day split; the tab says so.
+
+### 11.2e Keeping the window responsive
+The Sessions window is a set of table widgets, and the controller asks it to refresh on every journal event. So
+`SessionWindow.refresh` only records the new data and schedules one redraw 250 ms later (many calls = one pass); the
+redraw updates just the selected tab and marks the others stale, to be drawn when selected (`Tabs.on_select`); and
+tables are filled with `DataTable.set_rows`, which skips a table whose rows haven't changed. Before this a refresh
+cost 0.6 to 1.2 s on a real history, and a burst of events froze EDMC. The **Refresh** button redraws immediately.
 
 ### 11.3 Tabs and pins
 Same model as the BGS report (`powerplay_ledger.TabPrefs`, `CycleView.systems`): pinned systems first
