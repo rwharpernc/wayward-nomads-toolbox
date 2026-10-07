@@ -55,7 +55,7 @@ a fixed set of module-level functions if they exist.
 plugin/           everything that ships; becomes the WNTB folder
   load.py         EDMC entry point (the hooks)
   ui.py           main panel, mode buttons, Settings tab: orchestration only
-  panelkit.py     shared Tk helpers (wrapping, separators, toggles, theming)
+  panelkit.py     shared Tk helpers (wrapping, separators, toggles, tooltips, collapsible sections, theming)
   overlay.py      the one shared overlay client
   update.py       the one self-updater
   <feature>*.py   one or more modules per feature
@@ -141,7 +141,21 @@ by construction.
 separator between consecutive ones. Earlier, features picked their own grid rows, which produced a
 real row-collision bug and a "too jumbled" visual report. Frame-per-feature removes the possibility.
 A small `_SIDE_BY_SIDE_PAIRS` table puts two narrow features (Auto-Honk and Discovery Alerts) in one
-row to save vertical space.
+row to save vertical space. That one row also carries the N.S. and W.D. buttons (built by `discovery.py`)
+and Boxel Survey's RND button (`boxel_survey.build_random_button`, called from `ui.py` with
+`discovery.controller.button_row`, so it stays usable while Boxel Survey is collapsed). Every button there
+is packed with the same 6px gap as the mode buttons; the N.S./W.D. result line and RND's status line sit
+below the row.
+
+**Short button names and tooltips.** The EDMC window is small and shared, so main-panel buttons use
+abbreviations (the table is in the README's "Button names"), and `panelkit.add_tooltip` shows the full name on
+hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
+`ui._MODE_BUTTON_TEXT`; `PANEL_MODES` keeps the full labels for the tooltip and the "coming soon" placeholder.
+
+**Collapsible sections.** `panelkit.collapsible_section` gives GEC Nearby POI, Canonn Nearby POI and Codex
+Completionist a clickable ▸/▾ title over a body frame, collapsed unless the saved flag
+(`wntb_gec_poi_collapsed`, `wntb_canonn_poi_collapsed`, `wntb_codex_completionist_collapsed`) says otherwise.
+Boxel Survey keeps its own equivalent (`wntb_boxel_collapsed`)
 
 **Modes.** `PANEL_MODES` in `ui.py` is the ordered list of mode buttons. Each mode has its own frame.
 Switching modes shows one frame and hides the others (`grid_remove`), so it never destroys or
@@ -349,7 +363,7 @@ Two situations mean a feature can start with an incomplete picture:
   `FSSBodySignals`, `Scan` or `ScanOrganic` events. So Organic Scanning persists per-body state to
   disk (`organic_scan_state.json`) rather than relying on the journal to re-tell it.
 
-Some things are deliberately *not* automatic. Codex Completionist's "Backfill from Journal History"
+Some things are deliberately *not* automatic. Codex Completionist's "Backfill from Journal History" (BKF)
 is a button because reading years of journal files is real I/O; it does no work until asked.
 
 ### Reading journals defensively
@@ -414,7 +428,7 @@ Overlay message IDs use `wntb_<feature>_*` so a group's prefix matches exactly i
 | Service | Used for | Trigger |
 |---|---|---|
 | EDSM | Nearby systems, "does EDSM know this system", bodies, ring reserves | Buttons; some opt-in automatic checks |
-| Spansh | Mining price finder, hotspot and boxel lookups, ELW rarity, rare-goods origin Power | Buttons; opt-in; the Rares window looks up on open |
+| Spansh | Mining price finder, hotspot and boxel lookups, ELW rarity, rare-goods origin Power, nearest neutron star / white dwarf (N.S./W.D.) | Buttons; opt-in; the Rares window looks up on open |
 | edastro.com (GEC) | Nearest exploration POI | Button only |
 | Canonn sheets | Thargoid and Guardian site lists | Button; downloaded once per session |
 | tick.infomancer.uk | BGS tick time | 60-second poll; can be turned off |
@@ -466,11 +480,11 @@ for as little as it can. These are the measures that are in the code today.
   while the journal is being replayed at start-up.
 - Earth-like-world rarity is remembered per system for the session, and EDSM upload status per
   system for 10 minutes, so re-selecting the same target costs no extra calls.
-- The Boxel Survey keeps a local log of systems you've visited, so the Random button never spends an
+- The Boxel Survey keeps a local log of systems you've visited, so the RND (Random) button never spends an
   EDSM call on a system it already knows you've been to.
 
 **Hard limits on how much one click can do.**
-- A skip-check run (Sequence mode) makes at most 20 EDSM lookups. Random makes at most 20, and at
+- A skip-check run (Sequence mode) makes at most 20 EDSM lookups. RND makes at most 20, and at
   most 3 per anchor system. Sequence's automatic "nearest real system" suggestion happens only in
   response to your own clicks, at most once per 3 **Next** clicks in a row with no jump.
 - EDSM nearby-system queries use a 100 ly cube, half the documented 200 ly maximum.
@@ -528,7 +542,7 @@ number" shortcut was built and then reverted because it produced candidates nowh
 
 Spatial adjacency therefore comes from a real source. EDSM's `cube-systems` query, centered on the
 journal's `StarPos`, supplies nearby real systems. Region Sweep never invents a "next cube" itself; it
-only tracks completion for cubes it was given by a typed seed, EDSM or Spansh. **Random** asks EDSM
+only tracks completion for cubes it was given by a typed seed, EDSM or Spansh. **RND** (Random) asks EDSM
 for a known boxel nearby, hunts inside it for a name EDSM has no record of, and checks a local
 per-commander visited-systems log first, because EDSM sync can lag or a commander may not upload, so
 a system you already visited could otherwise come back as "new". Details and open questions are in the [Boxel Survey spec](BOXEL_SURVEY_TECH_SPEC.md).
@@ -549,6 +563,18 @@ Uses fields the journal already carries. On arrival the game auto-scans the star
 *previous* `Scan` event's `WasMapped` for the same body, cached per body and cleared on system change
 so a stale entry can't leak into the next system. It stays silent in the common already-discovered
 case: it's a celebration, not a status readout.
+
+### Nearest neutron star / white dwarf (`neutron_finder.py`, buttons in `discovery.py`)
+
+The **N.S.** and **W.D.** buttons ask Spansh's `bodies/search` for the nearest system whose *primary* star is
+a neutron star or a white dwarf. The filters are `subtype` (`Neutron Star`, or the 14 `White Dwarf (xx) Star`
+classes, which Spansh lists separately) and `is_main_star: true`, sorted by distance, with the origin given as
+`reference_coords` taken from the journal `StarPos`, so it works from a system Spansh has never seen. The
+request shape was worked out from live calls (Spansh doesn't document it); `neutron_finder.py` is the one place
+to fix if it changes. It asks for two results so it can skip the commander's own system. The lookup runs on a
+worker thread with a result queue polled via `after()` (same as the GEC panel), is manual only, copies the full
+system name to the clipboard, and truncates the displayed name (`MAX_NAME_CHARS`) so a long name can't widen
+the window. `tests/test_neutron_finder.py` covers the result-picking against canned responses.
 
 ### Organic Scanning (`organic_scan*.py`, `organic_*_data.py`)
 

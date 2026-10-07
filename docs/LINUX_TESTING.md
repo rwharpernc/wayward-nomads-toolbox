@@ -69,8 +69,12 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Field Ops → **COL** (colonisation sites): after docking at a construction depot, the site appears with its
       outstanding commodities, In Cargo matches your hold, and **Copy Shopping List** pastes elsewhere.
 - [ ] Mining: journal backfill works, and in an SRV the surface bearing arrow and coverage map work.
-- [ ] Copy buttons (Powerplay, BGS, Boxel Random): pasting into another app works.
+- [ ] Copy buttons (Powerplay, BGS, Boxel **RND**): pasting into another app works.
 - [ ] Network lookups (EDSM, Spansh, Canonn, GEC) return results.
+- [ ] Exploration **N.S.** and **W.D.** buttons: after a jump, each shows a system and distance and copies the
+      name to the clipboard (paste it elsewhere to check).
+- [ ] Hovering a short-named button (for example **A.H.**, **RND**, **SES**, **P.P.**) shows its full name in a
+      tooltip that disappears when you move away, and the GEC, Canonn and Codex sections start minimized.
 - [ ] Powerplay → **RAR** (rares) opens the Rare Goods Finder: after a jump or login it lists the nearest
       rare goods, the Controlling Power column fills in from Spansh, and double-click opens Inara in
       your browser.
