@@ -145,6 +145,9 @@ default, and only looks at published releases).
   buttons use abbreviations to keep the panel compact rather than widening your window. **Hover over any
   button for a moment and a tooltip shows its full name.** The full list is in
   [Button names](#button-names) below.
+- **The EDMC window resizes its height to fit** when you open it, switch modes, or expand or collapse a
+  section, so you never have to drag it taller. It leaves your width and position alone. If you'd rather set
+  the height yourself, untick it under **File → Settings → WNTB → Window**.
 - **Settings** for each feature are under **File → Settings → WNTB**, in tabs. This is where you turn
   things on and off and adjust how they behave.
 - **Pop-out windows** (sessions, rare goods, inventory, the BGS report, the Mining Book and so on)

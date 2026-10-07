@@ -24,6 +24,7 @@ class PrefsSmokeTests(unittest.TestCase):
             self.skipTest("Tk has no display here")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("SETTINGS BUILT OK", result.stdout)
+        self.assertIn("Window", result.stdout)  # the window-behaviour tab (auto height fit)
 
 
 if __name__ == "__main__":
