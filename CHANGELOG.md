@@ -20,6 +20,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   abbreviations keep WNTB's panel compact. The README has a new "Button names" table.
 - **Mode-select buttons shortened the same way**: P.P. (Powerplay), BGS, EXP (Exploration), MIN (Mining),
   MSN (Missions) and OPS (Field Ops), with a tooltip giving the full name and what the mode is for.
+  The panel keeps the width the full-label button row had, so EDMC still opens at its usual width.
 
 ### Changed
 - **Exploration: Codex Completionist, Canonn Nearby POI and GEC Nearby POI start minimized.** Click a title
