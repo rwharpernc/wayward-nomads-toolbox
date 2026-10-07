@@ -23,6 +23,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   The panel keeps the width the full-label button row had, so EDMC still opens at its usual width.
 
 ### Changed
+- **The EDMC window now resizes its height to fit** when it opens, when you switch modes, and when you
+  expand or collapse a section, so you no longer have to drag it taller to see everything. It also shrinks
+  back when the content gets shorter. Your width and window position are left alone.
 - **Exploration: Codex Completionist, Canonn Nearby POI and GEC Nearby POI start minimized.** Click a title
   (▸ / ▾) to expand or collapse it; WNTB remembers which you left open. The three buttons on the
   A.H. / D.A. / N.S. / W.D. row now sit 6px apart, like the mode buttons.

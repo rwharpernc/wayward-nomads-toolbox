@@ -350,6 +350,44 @@ def _sync_mode_holder_height() -> None:
     height = max(1, _mode_frames[_panel_mode].winfo_reqheight())
     if int(_mode_holder.cget("height")) != height:
         _mode_holder.configure(height=height)
+    _schedule_window_fit()
+
+
+_fit_pending = False
+
+
+def _schedule_window_fit() -> None:
+    """Asks for one window re-fit once Tk is idle; several height changes in a
+    row (a mode switch redraws a few frames) collapse into a single resize."""
+    global _fit_pending
+    if _fit_pending or _frame is None:
+        return
+    _fit_pending = True
+    _frame.after_idle(_fit_window_height)
+
+
+def _fit_window_height() -> None:
+    """Resizes EDMC's main window to the height its content needs, keeping its
+    current width and position. Once a window has been given an explicit size
+    (EDMC restores the last one, and dragging it does the same), Tk stops
+    fitting it to its content, so switching to a taller mode or expanding a
+    section left the bottom cut off until the window was dragged taller; this
+    does that automatically, and shrinks it back when the content gets shorter.
+    Left alone when the window is maximized/minimized or not yet on screen."""
+    global _fit_pending
+    _fit_pending = False
+    if _frame is None:
+        return
+    try:
+        top = _frame.winfo_toplevel()
+        if top.state() != "normal" or not top.winfo_viewable():
+            return
+        top.update_idletasks()
+        wanted = top.winfo_reqheight()
+        if abs(wanted - top.winfo_height()) > 1:
+            top.geometry(f"{top.winfo_width()}x{wanted}")
+    except tk.TclError:
+        logger.debug("Could not fit the EDMC window to its content", exc_info=True)
 
 
 def _apply_panel_mode_visibility() -> None:
