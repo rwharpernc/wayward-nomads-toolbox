@@ -208,13 +208,11 @@ class CanonnPoiController:
         self._parent = parent
         self._result_var = tk.StringVar(value=_IDLE_TEXT)
 
-        tk.Label(parent, text="Canonn Nearby POI", font=panelkit.bold_font(parent)).grid(
-            row=0, column=0, columnspan=3, sticky=tk.W,
-        )
-        panelkit.wrap_label(parent, textvariable=self._result_var, anchor="w").grid(
+        body = panelkit.collapsible_section(parent, "Canonn Nearby POI", "wntb_canonn_poi_collapsed")
+        panelkit.wrap_label(body, textvariable=self._result_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
         )
-        button_row = tk.Frame(parent)
+        button_row = tk.Frame(body)
         button_row.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))
         self._find_button = tk.Button(button_row, text="Find Nearest POI", command=self._on_find_clicked)
         self._find_button.pack(side=tk.LEFT)
@@ -224,7 +222,7 @@ class CanonnPoiController:
         self._refresh_button.pack(side=tk.LEFT, padx=(6, 0))
 
         self._link_label = HyperlinkLabel(
-            parent, text="View site details", background=nb.Label().cget("background"), underline=True,
+            body, text="View site details", background=nb.Label().cget("background"), underline=True,
         )
         self._link_label.grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
         self._link_label.grid_remove()

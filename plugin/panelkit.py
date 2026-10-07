@@ -24,7 +24,7 @@ import tkinter as tk
 import tkinter.font as tkfont
 from typing import List, Tuple
 
-from config import appname
+from config import appname, config
 from theme import theme
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -92,6 +92,34 @@ def apply_toggle_button_state(widget: tk.Button, on: bool, off_colors: Tuple[str
         widget.configure(background=bg, foreground=fg, activebackground=bg, activeforeground=fg)
     except tk.TclError:
         pass
+
+
+def collapsible_section(parent: tk.Frame, title: str, config_key: str, default_collapsed: bool = True) -> tk.Frame:
+    """A bold, click-to-toggle title (▸ collapsed / ▾ expanded) in row 0 of
+    `parent`, with a body frame in row 1 that the caller builds its widgets
+    into. The state is remembered in EDMC's config under `config_key`; with
+    nothing saved yet the section starts collapsed (`default_collapsed`) -
+    same convention as Boxel Survey's own title (boxel_survey.py) and ui.py's
+    main-panel collapse."""
+    collapsed = config.get_bool(config_key, default=default_collapsed)
+    title_label = tk.Label(parent, font=bold_font(parent), cursor="hand2")
+    title_label.grid(row=0, column=0, columnspan=3, sticky=tk.W)
+    body = tk.Frame(parent)
+    body.grid(row=1, column=0, columnspan=3, sticky=tk.W)
+
+    def apply() -> None:
+        title_label.config(text=f"{'▸' if collapsed else '▾'} {title}")
+        (body.grid_remove if collapsed else body.grid)()
+
+    def toggle(_event: tk.Event) -> None:
+        nonlocal collapsed
+        collapsed = not collapsed
+        config.set(config_key, collapsed)
+        apply()
+
+    title_label.bind("<Button-1>", toggle)
+    apply()
+    return body
 
 
 def copy_to_clipboard(widget: tk.Misc, text: str) -> bool:
