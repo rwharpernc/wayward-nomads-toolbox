@@ -88,7 +88,7 @@ PANEL_MODES: Tuple[Tuple[str, str], ...] = (
 # Short text for the mode-select buttons - EDMC's main window is small and shared
 # with every other plugin - with the full label (above) shown as a tooltip.
 _MODE_BUTTON_TEXT = {
-    "powerplay": "PWR", "bgs": "BGS", "exploration": "EXP", "mining": "MIN", "missions": "MSN", "fieldops": "OPS",
+    "powerplay": "P.P.", "bgs": "BGS", "exploration": "EXP", "mining": "MIN", "missions": "MSN", "fieldops": "OPS",
 }
 _DEFAULT_PANEL_MODE = PANEL_MODES[0][0]
 _MODE_KEYS = {key for key, _ in PANEL_MODES}

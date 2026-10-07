@@ -130,7 +130,7 @@ default, and only looks at published releases).
 
 ## Finding your way around
 
-- **Switch modes** with the button row under the WNTB title (**PWR**, **BGS**, **EXP**, **MIN**, **MSN**,
+- **Switch modes** with the button row under the WNTB title (**P.P.**, **BGS**, **EXP**, **MIN**, **MSN**,
   **OPS**; hover for the full name). Every mode keeps working in the
   background while you look at a different one. Nothing pauses.
 - **Your game mode and credits** are shown just under the mode buttons, whichever mode you are in, with a
@@ -179,7 +179,7 @@ Hover over any button for a moment to see its full name.
 
 | Button | Full name | Where |
 |---|---|---|
-| **PWR** | Powerplay | Mode buttons (top of the panel) |
+| **P.P.** | Powerplay | Mode buttons (top of the panel) |
 | **BGS** | BGS | Mode buttons |
 | **EXP** | Exploration | Mode buttons |
 | **MIN** | Mining | Mode buttons |

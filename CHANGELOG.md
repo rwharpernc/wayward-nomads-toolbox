@@ -18,7 +18,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   Rares, Rescan), BGS RPT (report), Mining HOT / +HOT / PRC / RES / I/E / BOOK, and Field Ops BLD / COL
   (Ship Builds, Colonisation). The EDMC main window is small and shared with every other plugin, so the
   abbreviations keep WNTB's panel compact. The README has a new "Button names" table.
-- **Mode-select buttons shortened the same way**: PWR (Powerplay), BGS, EXP (Exploration), MIN (Mining),
+- **Mode-select buttons shortened the same way**: P.P. (Powerplay), BGS, EXP (Exploration), MIN (Mining),
   MSN (Missions) and OPS (Field Ops), with the full name as a tooltip.
 
 ### Changed
