@@ -476,7 +476,7 @@ class DiscoveryController:
         panelkit.apply_toggle_button_state(self._toggle_btn, load_config().enabled, self._toggle_off_colors)
 
         self._neutron_btn = tk.Button(row, text="Neutron", command=self._on_neutron_click)
-        self._neutron_btn.pack(side=tk.LEFT, padx=(24, 0))  # same gap ui.py puts between Auto-Honk and Discovery
+        self._neutron_btn.pack(side=tk.LEFT, padx=(6, 0))  # same 6px gap as ui.py's mode-select buttons
 
         self._status_label = panelkit.wrap_label(parent, text=_IDLE_STATUS)
         self._status_label.grid(row=1, column=0, sticky=tk.W, pady=(4, 0))
