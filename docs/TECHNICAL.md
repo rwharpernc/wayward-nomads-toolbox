@@ -150,7 +150,7 @@ below the row.
 **Short button names and tooltips.** The EDMC window is small and shared, so main-panel buttons use
 abbreviations (the table is in the README's "Button names"), and `panelkit.add_tooltip` shows the full name on
 hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
-`ui._MODE_BUTTON_TEXT`; `PANEL_MODES` keeps the full labels for the tooltip and the "coming soon" placeholder.
+`ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder.
 
 **Collapsible sections.** `panelkit.collapsible_section` gives GEC Nearby POI, Canonn Nearby POI and Codex
 Completionist a clickable ▸/▾ title over a body frame, collapsed unless the saved flag

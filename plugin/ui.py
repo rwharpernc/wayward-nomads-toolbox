@@ -86,9 +86,17 @@ PANEL_MODES: Tuple[Tuple[str, str], ...] = (
     ("fieldops", "Field Ops"),
 )
 # Short text for the mode-select buttons - EDMC's main window is small and shared
-# with every other plugin - with the full label (above) shown as a tooltip.
+# with every other plugin - with the full label plus a one-line description (_MODE_TOOLTIPS) as the tooltip.
 _MODE_BUTTON_TEXT = {
     "powerplay": "P.P.", "bgs": "BGS", "exploration": "EXP", "mining": "MIN", "missions": "MSN", "fieldops": "OPS",
+}
+_MODE_TOOLTIPS = {
+    "powerplay": "Powerplay - merits and Control Points you earn for your Power, and the rare goods finder",
+    "bgs": "BGS - faction states in the Background Simulation, and what your own activity does to them",
+    "exploration": "Exploration - auto-honk, first-discovery alerts, boxel survey, scan values, exobiology help and Codex tally",
+    "mining": "Mining - space and surface (SRV) mining, and your own catalogue of mining hotspots",
+    "missions": "Missions - every mission you have in one view, with kill-progress bars for massacres",
+    "fieldops": "Field Ops - screenshots, backpack/locker/cargo, saved ship builds and colonisation sites",
 }
 _DEFAULT_PANEL_MODE = PANEL_MODES[0][0]
 _MODE_KEYS = {key for key, _ in PANEL_MODES}
@@ -207,7 +215,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     mode_row.grid(row=1, column=0, columnspan=3, pady=(6, 0))
     for key, label in PANEL_MODES:
         btn = tk.Button(mode_row, text=_MODE_BUTTON_TEXT.get(key, label), command=lambda k=key: _on_panel_mode_click(k))
-        panelkit.add_tooltip(btn, label)
+        panelkit.add_tooltip(btn, _MODE_TOOLTIPS.get(key, label))
         btn.pack(side=tk.LEFT, padx=(0, 6) if key != PANEL_MODES[-1][0] else (0, 0))
         _mode_buttons[key] = btn
 
