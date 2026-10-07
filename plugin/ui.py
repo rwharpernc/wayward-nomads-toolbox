@@ -74,6 +74,8 @@ _SIDE_BY_SIDE_PAIRS = {autohonk: discovery}
 
 CONFIG_COLLAPSED = "wntb_main_collapsed"
 CONFIG_PANEL_MODE = "wntb_active_panel_mode"
+CONFIG_FIT_HEIGHT = "wntb_fit_window_height"
+_DEFAULT_FIT_HEIGHT = True
 
 # (mode key, button label) - order here is left-to-right button order.
 # A mode with no feature module registered for it just shows a placeholder.
@@ -118,6 +120,7 @@ _always_frame: Optional[tk.Frame] = None
 _toggle_off_colors: Tuple[str, str] = ("", "")
 
 _auto_update_var: Optional[tk.BooleanVar] = None
+_fit_height_var: Optional[tk.BooleanVar] = None
 
 PLUGIN_DISPLAY_NAME = "Wayward Nomads Toolbox (WNTB)"
 
@@ -376,7 +379,7 @@ def _fit_window_height() -> None:
     Left alone when the window is maximized/minimized or not yet on screen."""
     global _fit_pending
     _fit_pending = False
-    if _frame is None:
+    if _frame is None or not config.get_bool(CONFIG_FIT_HEIGHT, default=_DEFAULT_FIT_HEIGHT):
         return
     try:
         top = _frame.winfo_toplevel()
@@ -459,9 +462,35 @@ def create_prefs(parent: tk.Frame) -> nb.Frame:
     for feature in FEATURES:
         if hasattr(feature, "build_settings"):
             feature.build_settings(tabs)
+    _create_window_tab(tabs)
     _create_updates_tab(tabs)
 
     return outer
+
+
+def _create_window_tab(notebook: nb.Notebook) -> None:
+    """Window behaviour. Everything here is placed with `grid` (never `pack`) - an
+    nb.Frame already holds a gridded child, and packing into it makes the whole
+    WNTB Settings tab vanish (tests/test_settings_layout.py)."""
+    global _fit_height_var
+
+    frame = nb.Frame(notebook)
+    frame.columnconfigure(0, weight=1)
+    notebook.add(frame, text="Window")
+
+    _fit_height_var = tk.BooleanVar(value=config.get_bool(CONFIG_FIT_HEIGHT, default=_DEFAULT_FIT_HEIGHT))
+    nb.Checkbutton(
+        frame, text="Resize the EDMC window's height to fit WNTB automatically", variable=_fit_height_var,
+    ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 2))
+    nb.Label(
+        frame,
+        text=(
+            "When you open EDMC, switch modes, or expand or collapse a section, the window grows or shrinks "
+            "to show everything, so you don't have to drag it taller. Your width and window position are "
+            "never changed. Turn this off if you prefer to set the height yourself."
+        ),
+        wraplength=440, justify=tk.LEFT,
+    ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _create_updates_tab(notebook: nb.Notebook) -> None:
@@ -482,6 +511,10 @@ def _create_updates_tab(notebook: nb.Notebook) -> None:
 
 
 def save_prefs() -> None:
+    if _fit_height_var is not None:
+        config.set(CONFIG_FIT_HEIGHT, bool(_fit_height_var.get()))
+        if _fit_height_var.get() and _frame is not None:
+            _schedule_window_fit()
     if _auto_update_var is not None:
         config.set(CONFIG_AUTO_UPDATE, bool(_auto_update_var.get()))
 
