@@ -425,6 +425,8 @@ class DiscoveryController:
         # result back through a queue polled via after(), like gec_poi_panel.py.
         self._star_pos: Optional[Tuple[float, float, float]] = None
         self._current_system: Optional[str] = None
+        self.button_row: Optional[tk.Frame] = None
+        self.panel_frame: Optional[tk.Frame] = None
         self._neutron_btn: Optional[tk.Button] = None
         self._neutron_label: Optional[tk.Label] = None
         self._neutron_parent: Optional[tk.Frame] = None
@@ -475,6 +477,8 @@ class DiscoveryController:
         self._toggle_off_colors = panelkit.capture_toggle_off_colors(self._toggle_btn)
         panelkit.apply_toggle_button_state(self._toggle_btn, load_config().enabled, self._toggle_off_colors)
 
+        self.button_row = row  # ui.py adds the Boxel Survey "Random" button here
+        self.panel_frame = parent
         self._neutron_btn = tk.Button(row, text="Neutron", command=self._on_neutron_click)
         self._neutron_btn.pack(side=tk.LEFT, padx=(6, 0))  # same 6px gap as ui.py's mode-select buttons
 

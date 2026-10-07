@@ -246,6 +246,7 @@ class BoxelSurveyController:
         # everywhere else.
         self._random_result_queue: "queue.Queue[Tuple[Optional[str], int, bool]]" = queue.Queue()
         self._random_status_var: Optional[tk.StringVar] = None
+        self._random_status_label: Optional[tk.Label] = None
 
         # Per-commander "visited systems" log (visited_systems.py) — every
         # system genuinely arrived at (FSDJump/Location), regardless of
@@ -508,23 +509,18 @@ class BoxelSurveyController:
         # its siblings by panelkit.add_separator() - so this can just start
         # at row 0 of its own frame, no cross-feature row coordination needed.
 
-        # "Random" sits above the collapsible title itself (stays visible and
-        # usable even when the section is collapsed, and works regardless of
-        # which sub-mode is selected - it doesn't touch the walker at all).
-        random_row = tk.Frame(parent)
-        random_row.grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 4))
+        # The "Random" button isn't built here: it lives on the Auto-Honk /
+        # Discovery Alerts / Neutron button row (see build_random_button(),
+        # called from ui.py), so it stays visible and usable even when this
+        # section is collapsed, whichever sub-mode is selected.
         self._random_status_var = tk.StringVar(value="")
-        tk.Button(random_row, text="Random", command=self._on_random).pack(side=tk.LEFT)
-        panelkit.wrap_label(random_row, textvariable=self._random_status_var, fg="grey").pack(
-            side=tk.LEFT, padx=(6, 0),
-        )
 
         self._title_label = tk.Label(parent, text=self._title_text(), font=panelkit.bold_font(parent), cursor="hand2")
-        self._title_label.grid(row=1, column=0, columnspan=3, sticky=tk.W)
+        self._title_label.grid(row=0, column=0, columnspan=3, sticky=tk.W)
         self._title_label.bind("<Button-1>", self._toggle_collapsed)
 
         self._body_frame = tk.Frame(parent)
-        self._body_frame.grid(row=2, column=0, columnspan=3, sticky=tk.W)
+        self._body_frame.grid(row=1, column=0, columnspan=3, sticky=tk.W)
 
         mode_row = tk.Frame(self._body_frame)
         mode_row.grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=(2, 4))
@@ -973,9 +969,22 @@ class BoxelSurveyController:
         if self._parent is not None:
             self._parent.after(200, self._poll_random_queue)
 
+    def build_random_button(self, button_row: tk.Frame, status_parent: tk.Frame, status_row: int) -> None:
+        """Adds the Random button to `button_row` (pack, 6px gap like every
+        other button there) and its grey status line at `status_row` of
+        `status_parent`, hidden until there is something to say."""
+        tk.Button(button_row, text="Random", command=self._on_random).pack(side=tk.LEFT, padx=(6, 0))
+        self._random_status_label = panelkit.wrap_label(
+            status_parent, textvariable=self._random_status_var, fg="grey",
+        )
+        self._random_status_label.grid(row=status_row, column=0, sticky=tk.W, pady=(2, 0))
+        self._random_status_label.grid_remove()
+
     def _set_random_status(self, message: str) -> None:
         if self._random_status_var is not None:
             self._random_status_var.set(message)
+        if self._random_status_label is not None:
+            (self._random_status_label.grid if message else self._random_status_label.grid_remove)()
 
     def _update_visited_count_label(self) -> None:
         if self._visited_count_var is None:
@@ -1262,6 +1271,10 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
 
 def build_panel(parent: tk.Frame) -> None:
     controller.build_panel(parent)
+
+
+def build_random_button(button_row: tk.Frame, status_parent: tk.Frame, status_row: int) -> None:
+    controller.build_random_button(button_row, status_parent, status_row)
 
 
 def build_settings(notebook: nb.Notebook) -> None:
