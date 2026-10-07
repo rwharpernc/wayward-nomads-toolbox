@@ -66,7 +66,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Codex **BKF** (backfill from journal history) finds your journals.
 - [ ] Codex details window: the Entry and Times found headings sort both ways, the **Not found** tab fills in
       (needs network the first time), and double-clicking an entry opens its Canonn search in your browser.
-- [ ] Field Ops → **COL** (colonisation sites): after docking at a construction depot, the site appears with its
+- [ ] Field Ops → **REPORT** (colonisation sites): after docking at a construction depot, the site appears with its
       outstanding commodities, In Cargo matches your hold, and **Copy Shopping List** pastes elsewhere.
 - [ ] Mining: journal backfill works, and in an SRV the surface bearing arrow and coverage map work.
 - [ ] Copy buttons (Powerplay, BGS, Boxel **RND**): pasting into another app works.
@@ -75,7 +75,7 @@ Where a step fails, copy the relevant lines from EDMC's log
       name to the clipboard (paste it elsewhere to check).
 - [ ] Hovering a short-named button (for example **A.H.**, **RND**, **SES**, **P.P.**) shows its full name in a
       tooltip that disappears when you move away, and the GEC, Canonn and Codex sections start minimized.
-- [ ] Powerplay → **RAR** (rares) opens the Rare Goods Finder: after a jump or login it lists the nearest
+- [ ] Powerplay → **RARES** (rares) opens the Rare Goods Finder: after a jump or login it lists the nearest
       rare goods, the Controlling Power column fills in from Spansh, and double-click opens Inara in
       your browser.
 - [ ] Restart EDMC: per-commander data (BGS, Boxel, Codex) is still there.
@@ -109,7 +109,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] The BGS panel's grey line shows "Last tick: ..." within a few seconds (network call works).
 - [ ] With the Journal directory set, the log has "BGS journal replay done for <CMDR>" and the totals
       cover the whole tick. With it cleared, the log says the replay was skipped and why.
-- [ ] **RPT** (view BGS report) opens; the tick drop-down, the tabs (full system names, wrapping onto a second row
+- [ ] **REPORT** (view BGS report) opens; the tick drop-down, the tabs (full system names, wrapping onto a second row
       when there are many), **Pin**, **× Close tab** and the footer key all render, with no missing glyphs.
 - [ ] **Show a system**: typing narrows the list while you keep typing (the list must not steal the
       keyboard), the arrow shows every system, Up/Down/Enter/Esc work, clicking a name adds its tab.

@@ -971,10 +971,10 @@ class PowerplayController:
         sessions_button = tk.Button(windows_row, text="SES", command=self._show_sessions)
         sessions_button.pack(side=tk.LEFT, padx=(0, 6))
         panelkit.add_tooltip(sessions_button, "Sessions - open the Powerplay sessions window")
-        rares_button = tk.Button(windows_row, text="RAR", command=self._show_rares)
+        rares_button = tk.Button(windows_row, text="RARES", command=self._show_rares)
         rares_button.pack(side=tk.LEFT, padx=(0, 6))
         panelkit.add_tooltip(rares_button, "Rares - open the nearby rare goods window")
-        rescan_button = tk.Button(windows_row, text="RSC", command=self.rescan_journal)
+        rescan_button = tk.Button(windows_row, text="RESCAN", command=self.rescan_journal)
         rescan_button.pack(side=tk.LEFT)
         panelkit.add_tooltip(
             rescan_button, "Rescan - re-read the current journal to recover merits missed after an EDMC restart")

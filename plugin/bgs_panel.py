@@ -405,7 +405,7 @@ class BgsController:
 
         button_row = tk.Frame(parent)
         button_row.grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))
-        report_button = tk.Button(button_row, text="RPT", command=self._on_view_report)
+        report_button = tk.Button(button_row, text="REPORT", command=self._on_view_report)
         report_button.grid(row=0, column=0)
         panelkit.add_tooltip(report_button, "View BGS Report - open the BGS report window")
 
