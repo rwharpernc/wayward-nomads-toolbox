@@ -96,6 +96,11 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
   child inside every instance, so packing into it raises, EDMC logs `Failed for Plugin "WNTB"` and the whole
   WNTB Settings tab disappears. Use `grid`, or pack into a plain `tk.Frame`. `tests/test_settings_layout.py`
   checks the source and `tests/test_prefs_smoke.py` builds the whole tab with EDMC-faithful stand-ins.
+- Where a new feature's Settings go: `ui._build_settings_tabs` lays the tabs out (General, Powerplay, Missions,
+  Exploration, Mining, BGS, Field Ops, Always On). Add the feature to the right group there. A feature with a
+  `build_settings` that isn't listed still gets a tab, under "Other". To put two small pages on one tab, wrap
+  them with `_stacked_page`: each feature's `build_settings(notebook)` keeps working unchanged, because the
+  stack accepts `add(frame, text=...)` like a notebook does.
 - `monitor.logfile` (EDMC) is a `str` or a `pathlib.Path` depending on the version: wrap it in `str()` before
   comparing it or saving it to JSON.
 - Background threads must never touch a Tk widget; hand results back with a queue and `after()`.

@@ -91,12 +91,12 @@ that differ. The Settings tab for each of them says which systems it works on an
 
 **Windows only:**
 - **The older EDMCOverlay** overlay program. (EDMCModernOverlay replaces it and works on both. The
-  Overlay Connection tab says so.)
+  Overlay Connection tab (Settings → General) says so.)
 - **OneDrive folder-redirect handling** for the Screenshot Directory, and the **Controlled Folder Access**
   hint when Windows blocks writing screenshots. Both are automatic and only appear on Windows.
 
 **Linux only:**
-- The **Elite Wine/Proton prefix** box in Settings → Auto-Honk (blank means auto-detect Steam), and the
+- The **Elite Wine/Proton prefix** box in Settings → Exploration → Alerts (blank means auto-detect Steam), and the
   hint about EDMC's Journal directory.
 
 **macOS** is not supported or tested. Journal-driven features may work, but key simulation and sounds
@@ -148,7 +148,9 @@ default, and only looks at published releases).
 - **The EDMC window resizes its height to fit** when you open it, switch modes, or expand or collapse a
   section, so you never have to drag it taller. It leaves your width and position alone. If you'd rather set
   the height yourself, untick it under **File → Settings → WNTB → Window**.
-- **Settings** for each feature are under **File → Settings → WNTB**, in tabs. This is where you turn
+- **Settings** for each feature are under **File → Settings → WNTB**, in tabs grouped by mode (General,
+  Powerplay, Missions, Exploration, Mining, BGS, Field Ops, Always On; Exploration, Field Ops and the others
+  hold a row of tabs of their own). This is where you turn
   things on and off and adjust how they behave.
 - **Pop-out windows** (sessions, rare goods, inventory, the BGS report, the Mining Book and so on)
   have their own dark look, remember their size and position, and close with **Esc** or the ✕. The
@@ -314,7 +316,7 @@ Everything in this mode sits in one scrolling panel, stacked top to bottom.
 Fires your Discovery Scanner automatically every time you jump into a system, so you never forget to
 honk.
 
-**How to use it:** turn it on with its toggle button. In **Settings → Auto-Honk** you can choose which
+**How to use it:** turn it on with its toggle button. In **Settings → Exploration → Alerts** you can choose which
 fire button it uses and how long it holds it, and the **Test Honk Now** button checks it's working
 without waiting for a real jump. If you also run EDCoPilot with its own auto-honk, turn one of the two
 off, or they'll fight each other.
@@ -325,7 +327,7 @@ moment you're the first to scan or map a body.
 
 **How to use it:** click its toggle button. It needs an overlay helper program running (see
 [What you need](#what-you-need)); enter its connection details on the **Overlay Connection** Settings
-tab. Use **Settings → Discovery** to move the banner or send a test one.
+tab. Use **Settings → Exploration → Alerts** to move the banner or send a test one.
 
 **Short button names:** on the Exploration row, **A.H.** is Auto-Honk and **D.A.** is Discovery Alerts
 (see [Button names](#button-names)).
@@ -361,11 +363,11 @@ accepts any system name, not just procedurally named ones.
   **Find Nearby (EDSM)** to jump to the nearest unexplored boxel. If several **Next** clicks go by
   with no real jump, WNTB can check EDSM for the nearest real system for you. Notable finds
   (Earth-likes, water worlds, biological signals and so on) are tallied automatically, and
-  **Export Survey Log** (in Settings → Boxel Survey) saves them to a spreadsheet file.
+  **Export Survey Log** (in Settings → Exploration → Boxel Survey) saves them to a spreadsheet file.
 - **Region Sweep:** for clearing a whole region. Add cubes to a queue, and use **Discover Nearby
   Cubes** or **Discover Known Systems** to fill in what's already known. Mark a cube **Empty** once
   you've confirmed there's nothing worth surveying, and it moves on to the next unfinished cube by
-  itself. Turn on **Auto-discover more nearby cubes** (Settings → Region Sweep) to keep the queue
+  itself. Turn on **Auto-discover more nearby cubes** (Settings → Exploration → Region Sweep) to keep the queue
   topped up.
 - **Waypoint Route:** add systems one at a time or with **Import CSV**, then click **Reorder
   (Nearest-Neighbor)** to sort them by distance from where you are.
@@ -375,7 +377,7 @@ visible even while this section is collapsed, and works in any mode. It finds a 
 then looks for a name EDSM has no record of, and copies it to your clipboard. Paste it into the galaxy
 map to go find something nobody has discovered. It keeps its own log of every system you've actually
 visited, so a place you've already been to isn't suggested as "new". Clear that log any time from
-Settings → Boxel Survey → **Clear Visited Systems Log**.
+Settings → Exploration → Boxel Survey → **Clear Visited Systems Log**.
 
 ### Exploration Value
 A quiet readout of what you're finding. Nothing to turn on: it shows the estimated payout for your
@@ -423,7 +425,7 @@ WNTB remembers which sections you left open.
 
 The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **FIND**. The
 first click downloads the lists, which are then kept for the rest of your session. **REF**
-fetches fresh copies. Choose which kinds of site to include in **Settings → Canonn Nearby POI**. By
+fetches fresh copies. Choose which kinds of site to include in **Settings → Exploration → Points of Interest**. By
 default it skips sites you've already logged in Codex Completionist, so it points you somewhere new;
 you can turn that off in the same place.
 
@@ -560,13 +562,13 @@ to keep (default 7).
 These are always available, whichever mode you're in.
 
 - **Landing Assist** shows which landing pad you've been assigned while docking, in the panel and as
-  a diagram on your game screen. Turn it on and choose where it appears in **Settings → Landing**.
+  a diagram on your game screen. Turn it on and choose where it appears in **Settings → Always On → Landing**.
 - **Interdiction Warning** puts an alert on your game screen the moment an interdiction starts. It has
   no panel button, only Settings. Turn it on and try it with **Test Warning** in **Settings →
   Interdiction Warning**.
 
 Both need an overlay helper program running (see [What you need](#what-you-need)). Its connection
-settings are on the **Overlay Connection** Settings tab.
+settings are on the **Overlay Connection** Settings tab (Settings → General).
 
 ---
 
@@ -585,7 +587,7 @@ odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
 - **Point EDMC at the game's journals.** Set EDMC's own **Journal directory** setting to the
   `Saved Games/Frontier Developments/Elite Dangerous` folder inside that Proton/Wine folder. Linux has
   no default for it, and without it WNTB's journal-based features (including BGS rebuilding the tick's
-  totals) have nothing to read. WNTB shows a hint under **Settings → Auto-Honk** and **Settings → BGS**
+  totals) have nothing to read. WNTB shows a hint under **Settings → Exploration → Alerts** and **Settings → BGS**
   if it looks wrong, and logs one at startup.
 - **On-screen features** need [EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay),
   which supports Linux. The original EDMCOverlay is Windows-only. WNTB's default connection settings

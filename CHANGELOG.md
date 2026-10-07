@@ -23,6 +23,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   The panel keeps the width the full-label button row had, so EDMC still opens at its usual width.
 
 ### Changed
+- **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
+  Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
+  than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of
+  Interest** page, and Auto-Honk and Discovery share one **Alerts** page. Overlay Connection, Window and
+  Updates are under General; Interdiction Warning and Landing under Always On. Nothing was removed.
 - **The EDMC window now resizes its height to fit** when it opens, when you switch modes, and when you
   expand or collapse a section, so you no longer have to drag it taller to see everything. It also shrinks
   back when the content gets shorter. Your width and window position are left alone. Turn it off under
@@ -65,6 +70,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   `powerplay_systems_tab.py` and `tests/test_powerplay_ledger.py`. See `docs/POWERPLAY_TECH_SPEC.md` section 11.
 
 ### Changed
+- **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
+  Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
+  than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of
+  Interest** page, and Auto-Honk and Discovery share one **Alerts** page. Overlay Connection, Window and
+  Updates are under General; Interdiction Warning and Landing under Always On. Nothing was removed.
 - **Powerplay Current Session tab:** its explanatory notes now span the full window width, re-wrap on resize and are
   pinned to the bottom of the tab. The Systems tab's cycle summary line is pinned to the bottom as well.
 - **Notes at the bottom of the Powerplay Systems, Cycles and Daily tabs** now span the full width of the window
@@ -108,6 +118,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   (`docs/LINUX_TESTING.md`).
 
 ### Changed
+- **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
+  Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
+  than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of
+  Interest** page, and Auto-Honk and Discovery share one **Alerts** page. Overlay Connection, Window and
+  Updates are under General; Interdiction Warning and Landing under Always On. Nothing was removed.
 - Powerplay no longer shows or tracks credits or the game mode: gone from its page, from the Sessions window's
   Current tab, and from the Sessions history table and totals (old saved sessions keep their data, it is just
   not shown).
@@ -137,6 +152,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## 1.1.0 - 2026-10-03
 
 ### Changed
+- **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
+  Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
+  than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of
+  Interest** page, and Auto-Honk and Discovery share one **Alerts** page. Overlay Connection, Window and
+  Updates are under General; Interdiction Warning and Landing under Always On. Nothing was removed.
 - **BGS panel now shows only the system you're in**: each faction's state and influence (with how far
   each moved since before the tick) and what you've done to it this tick. The Track/Untrack buttons and
   the tracked systems/factions lists are gone - BGS records wherever you act, so there's nothing to set up.
