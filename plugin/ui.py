@@ -141,7 +141,7 @@ def _stack_features(frame: tk.Frame, placement_key: str, placeholder_text: Optio
             left_frame.grid(row=0, column=0, sticky="nw")
             feature.build_panel(left_frame)
             right_frame = tk.Frame(pair_frame)
-            right_frame.grid(row=0, column=1, sticky="nw", padx=(24, 0))
+            right_frame.grid(row=0, column=1, sticky="nw", padx=(6, 0))  # same 6px gap as the mode-select buttons
             partner.build_panel(right_frame)
             row += 1
             built = True
