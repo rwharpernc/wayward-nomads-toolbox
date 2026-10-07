@@ -282,6 +282,11 @@ moment you're the first to scan or map a body.
 [What you need](#what-you-need)); enter its connection details on the **Overlay Connection** Settings
 tab. Use **Settings → Discovery** to move the banner or send a test one.
 
+**Neutron button:** next to the toggle, finds the nearest system whose *primary* star is a neutron star,
+measured from where you are now. It shows the system name and distance and copies the name to your clipboard
+so you can paste it into the galaxy map. Manual only: it contacts spansh.co.uk when you click and never on
+its own. Jump or reload first so WNTB knows your position.
+
 ### Boxel Survey
 
 > **Work in progress.** Boxel Survey is still being built, and I'd really appreciate your feedback: if something
