@@ -53,6 +53,8 @@ being listed doesn't mean a tool was the first or the only one.
   [EDMC-Screenshot](https://github.com/NoFoolLikeOne/EDMC-Screenshot).
 - **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials
   Helper.
+- **Nearest neutron star and white dwarf lookups:** [Spansh](https://spansh.co.uk/) answers the N.S. and W.D.
+  buttons.
 - **Nearby points of interest:** [Canonn](https://canonn.science/) and
   [edastro.com](https://edastro.com/) publish the lists WNTB looks up.
 

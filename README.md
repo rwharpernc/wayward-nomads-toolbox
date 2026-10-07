@@ -216,6 +216,7 @@ feature that contacts an outside site, so you can decide what you're comfortable
 
 | Feature | Contacts | When |
 |---|---|---|
+| N.S. and W.D. buttons (nearest neutron star / white dwarf) | Spansh | Only when you click **N.S.** or **W.D.** |
 | Rare Goods Finder | Spansh | The first time you open the window for each system, to see which Power controls it; remembered until you restart EDMC |
 | Codex Completionist "Not found" tab | Canonn | Downloads a list when you open the details window (if it has none, or it's over two weeks old), or when you click **Refresh Catalog** |
 | GEC Nearby POI | edastro.com | Only when you click **FIND** |
@@ -366,7 +367,8 @@ accepts any system name, not just procedurally named ones.
 - **Waypoint Route:** add systems one at a time or with **Import CSV**, then click **Reorder
   (Nearest-Neighbor)** to sort them by distance from where you are.
 
-**Random:** sits above the whole panel and works in any mode. It finds a real, known boxel near you,
+**RND** (random): sits on the Exploration button row, next to A.H., D.A., N.S. and W.D., so it stays
+visible even while this section is collapsed, and works in any mode. It finds a real, known boxel near you,
 then looks for a name EDSM has no record of, and copies it to your clipboard. Paste it into the galaxy
 map to go find something nobody has discovered. It keeps its own log of every system you've actually
 visited, so a place you've already been to isn't suggested as "new". Clear that log any time from
@@ -390,6 +392,8 @@ own journal, makes no internet connection, and is designed to work alongside
 [EDMC-Canonn](https://github.com/canonn-science/EDMC-Canonn) if you run that too.
 
 ### Codex Completionist
+(Starts minimized: click the title to open it.)
+
 A personal tally of everything you've ever scanned: biological, geological, Guardian, human, Thargoid
 and more.
 
@@ -407,10 +411,13 @@ The details window has two tabs:
 Double-click any entry (or select it and click **Open Reference**) to look it up on Canonn's website.
 
 ### GEC Nearby POI
-Finds the nearest point of interest from edastro.com's exploration catalogue. Click **Find Nearest
-POI**. It only looks something up when you ask.
+Finds the nearest point of interest from edastro.com's exploration catalogue. Click **FIND**. It only
+looks something up when you ask. This section starts minimized: click its title (▸ / ▾) to open it.
+WNTB remembers which sections you left open.
 
 ### Canonn Nearby POI
+(Starts minimized, like GEC Nearby POI and Codex Completionist: click the title to open it.)
+
 The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **FIND**. The
 first click downloads the lists, which are then kept for the rest of your session. **REF**
 fetches fresh copies. Choose which kinds of site to include in **Settings → Canonn Nearby POI**. By

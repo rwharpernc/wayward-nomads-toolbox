@@ -182,10 +182,12 @@ from the journal. No id64/coordinate-decode math is involved. `edsm_client.nearb
 Nearby (EDSM)" button query a 100 ly cube (`DEFAULT_CUBE_SIZE`) around the live `StarPos`, filter to
 procedural-shaped names in a different `cube_id` than the current seed, and offer the nearest match.
 
-### 4.4.1 The "Random" button
+### 4.4.1 The "Random" button (RND)
 
-Sits above the whole Boxel Survey panel (visible even collapsed, independent of which of the three
-sub-modes is selected — it never touches `BoxelWalker`). One click: run the same
+Labelled **RND** (tooltip "Random"). It no longer sits inside the Boxel Survey panel: `ui.py` adds it to the
+Exploration button row (A.H., D.A., N.S., W.D., RND) via `build_random_button()`, with its grey status line
+below that row, so it is visible even when Boxel Survey is collapsed and independent of which of the three
+sub-modes is selected — it never touches `BoxelWalker`. One click: run the same
 `edsm_client.nearby_systems()` cube-systems lookup as "Find Nearby" against the commander's live
 `StarPos`, parse the results into real, EDSM-known procedural anchor boxels sorted by distance, then
 for each anchor (nearest first) generate a handful of random candidate names in that same boxel —
