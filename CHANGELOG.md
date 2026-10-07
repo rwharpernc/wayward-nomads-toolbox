@@ -11,8 +11,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   a companion star doesn't count. Both measure from your current position, show the system name and distance,
   and copy the name to the clipboard so you can paste it into the galaxy map. If you're already in such a
   system you get the next one. The lookup asks spansh.co.uk, and only when you click; nothing runs on its own.
-- **Tooltips** on the shortened Exploration buttons: hover **A.H.** (Auto-Honk), **D.A.** (Discovery Alerts),
-  **N.S.** or **W.D.** for the full name.
+- **Tooltips** on the shortened Exploration buttons: hover one for its full name. A.H. (Auto-Honk), D.A.
+  (Discovery Alerts), N.S. (neutron), W.D. (white dwarf), RND (Random), FIND (nearest POI, GEC and Canonn),
+  REF (refresh Canonn data), DET (Codex details) and BKF (Codex backfill).
 
 ### Changed
 - **Exploration: Codex Completionist, Canonn Nearby POI and GEC Nearby POI start minimized.** Click a title
