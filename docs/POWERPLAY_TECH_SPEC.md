@@ -132,8 +132,8 @@ the most useful next step for this feature.
 - The Rare Goods list is a snapshot; a new rare good needs the list updated.
 
 - The Systems tab (section 11) only knows what the commander's own client has seen: a system's standing
-  updates when they jump in or log in there, and there is no journal replay to rebuild a cycle from before
-  the feature was installed (the archive starts with the first cycle WNTB sees).
+  updates when they jump in or log in there. Cycles from before the feature was installed are rebuilt from the
+  journals (section 11.2c), but only as far back as the journals still exist and the scan depth allows.
 
 ## 11. Per-system tracking (Systems tab)
 
@@ -141,10 +141,12 @@ The Sessions window's **Systems** tab is the Powerplay counterpart of the BGS re
 ([BGS_TECH_SPEC.md](BGS_TECH_SPEC.md)): per commander, per system, per cycle.
 
 ### 11.1 Cycle
+Cycles are numbered: **cycle 101 began 2026-10-01 07:00 UTC** and the number counts weeks from there
+(`powerplay_ledger.cycle_number`, anchored by `ANCHOR_CYCLE`/`ANCHOR_START`). The window labels them "Cycle 101".
 A cycle is the weekly Powerplay period, **Thursday 07:00 UTC to the next** (`powerplay_ledger.cycle_start_for`).
 This is an assumption about Frontier's schedule; it is one constant in the module if it ever moves. There is no
 network lookup (BGS needs one for its irregular tick; this does not). A cycle that ends while EDMC is closed
-is archived on the next start. `MAX_ARCHIVE` (8) closed cycles are kept.
+is archived on the next start. `MAX_ARCHIVE` (52) closed cycles are kept.
 
 ### 11.2 What is recorded
 - **Standing** - from `FSDJump`, `Location` and `CarrierJump` (`Docked` doesn't repeat the fields):
@@ -162,6 +164,54 @@ is archived on the next start. `MAX_ARCHIVE` (8) closed cycles are kept.
 The session tallies in section 6 are untouched and remain per game login; the ledger is per **cycle**, so
 they can differ (a session can straddle a cycle boundary). Reset Session / Reset Current System act on
 sessions only.
+
+### 11.2b Power and totals per cycle
+The ledger notes the Power(s) the commander is pledged to (`record_power`, called wherever the session is told:
+`Powerplay`, join, defect, merits, pledge recovery). The list is stored with the cycle when it is archived and
+carried into the next cycle (still pledged until told otherwise); a defection mid-cycle gives that cycle two
+Powers. A commander who is not pledged records none and shows "not pledged" - their standing readings are
+still kept, since system standing doesn't depend on a pledge. Leaving a Power doesn't erase it from the cycle
+it happened in. `CycleView.merit_totals()` and `systems_worked()` give the cycle-wide figures behind the
+cycle total line on the Systems tab and the rows of the **Cycles** tab (one row per cycle, newest first, live
+cycle first). Everything is per commander: each has their own ledger, Power and pins in `powerplay_state.json`.
+
+### 11.2c Journal scan (back-fill)
+`powerplay_backfill.py` rebuilds what EDMC missed from the commander's `Journal*.log` files, planned by
+`PowerplayLedger.plan_scan(now, depth)` which returns a `ScanPlan`: the current cycle number and the day of it
+(1-7), the `missing_cycles` (wanted cycles older than `covered_from`), the mode, and `days_back`. It runs in
+`PowerplayController._switch_cmdr`, i.e. once when a commander is first seen in a session.
+
+| Mode | When | Reads |
+|---|---|---|
+| **rebuild** | never scanned (`covered_from` is None), or the history doesn't reach back `depth` cycles | from the oldest wanted cycle start, into a fresh ledger that is merged in (`adopt`) |
+| **incremental** | covered, and the journal was last seen more than 2 minutes ago | from `seen_to` (the newest journal timestamp the ledger is current with; every live event moves it), never earlier than the oldest wanted cycle |
+| **none** | covered and seen moments ago | nothing |
+
+`depth` is the setting `wntb_powerplay_backfill_cycles` (default 4, 1-12). A cycle is wanted if it is one
+of the last `depth`. After a rebuild `covered_from` is the oldest wanted cycle's start, so later starts are
+incremental, a bigger depth rebuilds only the new range, and journals that no longer exist are not retried every start.
+
+How it stays correct:
+- **Worker thread, no shared state.** The worker only reads files and returns a list of `Op`s (snapshot, merits, power);
+  the main thread applies them in time order (`apply_ops`) - so a cycle that ended during the gap is archived in
+  its own place by the ledger's normal rollover. Live events that arrive during the scan are buffered and applied after it.
+  The cycle is not rolled by the clock while a scan runs (`_tick_cycle`), only after.
+- **No double counting.** The ledger keeps `last_merit_ts` and `last_merit_n` (how many merit events share that
+  second): a replayed merit older than it is skipped, and at that second only the first `last_merit_n` replayed events are.
+  Standing readings are applied in timestamp order, so repeating one is harmless.
+- **Per commander.** Each file is read with the commander named by its `Commander`/`LoadGame` events; a different
+  commander's events are skipped, and a fresh `PowerplayTracker` starts at each `Fileheader` and whenever the commander
+  changes. Everything of the commander's feeds the tracker (the pledge and the system context come from events
+  before the window); only events inside the window become ops. After a relog to a *different* commander in one
+  launch there is no new `Powerplay` event, so the pledge is learned from the first `PowerplayMerits` (it names the Power).
+- **Never lose data.** For a cycle both the saved ledger and the rebuild have, the one with more merits wins.
+- **On time.** The cycle rolls on the clock whenever an event arrives or the window refreshes, not only at the next
+  merit; `ledger.views()` lists covered cycles with no activity as empty rows, so the history is gap-free and newest first.
+- If the journal folder isn't set or readable nothing is learned and nothing is marked covered, so it is tried again next start.
+
+The Cycles tab shows the plan or the result in one line (cycle, day of 7, days read, files, merit events). Reading
+28 days of journals took about 0.3 s per commander on a 1.6 GB journal folder (files are chosen by modification
+time and lines are pre-filtered before JSON parsing).
 
 ### 11.3 Tabs and pins
 Same model as the BGS report (`powerplay_ledger.TabPrefs`, `CycleView.systems`): pinned systems first
@@ -181,4 +231,6 @@ updates (`update.py`). The controller switches ledger and pins whenever the comm
 ### 11.5 Tests
 `tests/test_powerplay_ledger.py` covers cycle boundaries, snapshot parsing, standing changes, merit
 tallies, rollover and carried baselines, the archive cap, tab ordering, the pin cap, serialisation and the
-per-commander state file. The widgets are exercised by hand in EDMC.
+per-commander state file. `tests/test_powerplay_backfill.py` covers the replay (attribution, commanders kept apart, files
+and the window), applying ops twice, same-second merits, a gap across a cycle boundary, rebuild and adoption, the
+scan plan in every mode, empty-cycle rows and reading real files. The widgets are exercised by hand in EDMC.

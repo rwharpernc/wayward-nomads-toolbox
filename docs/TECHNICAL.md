@@ -499,7 +499,7 @@ useful to you, please consider supporting them as I do: [EDSM](https://www.patre
 
 Short explanations of the non-obvious decisions in each area. Filenames are in `plugin/`.
 
-### Powerplay (`powerplay.py`, `session.py`, `store.py`, `formulas.py`, `powerplay_ledger.py`, `powerplay_state.py`, `powerplay_systems_tab.py`)
+### Powerplay (`powerplay.py`, `session.py`, `store.py`, `formulas.py`, `powerplay_ledger.py`, `powerplay_state.py`, `powerplay_backfill.py`, `powerplay_systems_tab.py`)
 
 The journal's `PowerplayMerits` event reports what you earned, after every game multiplier. It does
 not say how many Control Points that is; that depends on the activity, and Frontier hasn't documented

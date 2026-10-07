@@ -20,11 +20,16 @@ Two kinds of data are kept per system:
   attribution powerplay.PowerplayTracker already makes), tallied here per
   system and per cycle, rather than per game session.
 
+The ledger also knows how far it can be trusted (`covered_from`, `seen_to`, `last_merit_ts`) so the
+journal back-fill (powerplay_backfill.py) scans only what is missing: `plan_scan` says what cycle it is,
+which cycles aren't in the history yet and how many days back to read.
+
 The commander's tab choices live in `TabPrefs` (pinned, capped at MAX_PINNED,
 and hidden). Persistence is powerplay_state.py's job."""
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
@@ -37,13 +42,27 @@ RECENT_SYSTEMS = 6
 MAX_PINNED = 5
 """How many systems a commander can pin at once."""
 
-MAX_ARCHIVE = 8
-"""How many closed cycles are kept (about two months)."""
+MAX_ARCHIVE = 52
+"""How many closed cycles are kept (a year)."""
+
+DEFAULT_BACKFILL_CYCLES = 4
+MAX_BACKFILL_CYCLES = 12
+"""How many cycles (the current one included) the journal scan covers by default / at most."""
+
+UP_TO_DATE_WINDOW = timedelta(minutes=2)
+"""If the ledger has seen the journal this recently there is nothing to scan."""
+
+SCAN_NONE = "none"
+SCAN_INCREMENTAL = "incremental"
+SCAN_REBUILD = "rebuild"
 
 MAX_NAME_CHARS = 60
 """Cap on a stored/typed system name (Elite names are far shorter)."""
 
 CYCLE = timedelta(days=7)
+ANCHOR_CYCLE = 101
+ANCHOR_START = datetime(2026, 10, 1, 7, 0, tzinfo=timezone.utc)
+"""Powerplay cycle 101 began at this moment; every other cycle number counts weeks from it."""
 _CYCLE_WEEKDAY = 3  # Thursday (Monday = 0)
 _CYCLE_HOUR_UTC = 7
 
@@ -74,6 +93,13 @@ def cycle_start_for(moment: datetime) -> datetime:
     if start > moment:
         start -= CYCLE
     return start
+
+
+def cycle_number(start: Optional[datetime]) -> Optional[int]:
+    """The Powerplay cycle number for a cycle starting at `start` (101 began 2026-10-01 07:00 UTC)."""
+    if start is None:
+        return None
+    return ANCHOR_CYCLE + (start.astimezone(timezone.utc) - ANCHOR_START) // CYCLE
 
 
 def _clip(name: str) -> str:
@@ -265,6 +291,25 @@ class CycleView:
     cycle_end: Optional[str]
     current: bool
     records: Dict[str, SystemRecord] = field(default_factory=dict)  # casefolded name -> record
+    powers: List[str] = field(default_factory=list)
+    """The Power(s) the commander was pledged to during the cycle (empty = none seen / not pledged)."""
+
+    @property
+    def number(self) -> Optional[int]:
+        return cycle_number(parse_ts(self.cycle_start))
+
+    def merit_totals(self) -> Dict[str, int]:
+        """Merits per activity across every system this cycle (activities with none are absent)."""
+        totals: Dict[str, int] = {}
+        for record in self.records.values():
+            for activity, merits in record.merits.items():
+                if merits:
+                    totals[activity] = totals.get(activity, 0) + merits
+        return totals
+
+    def systems_worked(self) -> int:
+        """How many systems the commander earned merits in this cycle."""
+        return sum(1 for r in self.records.values() if r.total_merits() > 0)
 
     def record_for(self, system: str) -> Optional[SystemRecord]:
         return self.records.get(system.casefold())
@@ -291,9 +336,11 @@ class CycleView:
 def view_from_archive(record: Dict[str, Any]) -> CycleView:
     raw = record.get("systems")
     parsed = [SystemRecord.from_dict(v) for v in raw.values()] if isinstance(raw, dict) else []
+    powers = record.get("powers")
     return CycleView(
         cycle_start=record.get("cycle_start"), cycle_end=record.get("cycle_end"), current=False,
         records={r.system.casefold(): r for r in parsed if r},
+        powers=[str(p) for p in powers] if isinstance(powers, list) else [],
     )
 
 
@@ -306,6 +353,17 @@ class PowerplayLedger:
     def __init__(self) -> None:
         self.cycle_start: Optional[datetime] = None
         self.records: Dict[str, SystemRecord] = {}
+        self.powers: List[str] = []
+        """Power(s) the commander was pledged to this cycle, in the order seen."""
+        self.last_merit_ts: Optional[str] = None
+        """Timestamp of the newest merit event counted - older ones are never counted again."""
+        self.last_merit_n = 0
+        """How many merit events counted share `last_merit_ts` (journal timestamps are whole seconds)."""
+        self._replay_dups = 0
+        self.covered_from: Optional[datetime] = None
+        """The ledger is complete (journal-checked or live) from this moment on; None = never scanned."""
+        self.seen_to: Optional[str] = None
+        """Timestamp of the newest journal event the ledger is known to be up to date with."""
         self.archive: List[Dict[str, Any]] = []
         """Closed cycles, newest first: {"cycle_start", "cycle_end", "systems"}."""
 
@@ -324,6 +382,7 @@ class PowerplayLedger:
                 "cycle_start": format_ts(self.cycle_start),
                 "cycle_end": format_ts(self.cycle_start + CYCLE),
                 "systems": kept,
+                "powers": list(self.powers),
             })
             del self.archive[MAX_ARCHIVE:]
         # Each system's newest reading is the next cycle's baseline.
@@ -333,6 +392,7 @@ class PowerplayLedger:
             if latest is not None:
                 carried[key] = SystemRecord(system=record.system, before=latest, last_at=record.last_at)
         self.records = carried
+        self.powers = self.powers[-1:]  # still pledged to the same Power until told otherwise
         self.cycle_start = cycle_start_for(when)
 
     def _record(self, system: str) -> SystemRecord:
@@ -364,9 +424,15 @@ class PowerplayLedger:
         if snapshot.at > record.last_at:
             record.last_at = snapshot.at
 
-    def record_merits(self, system: str, activity: str, merits: int, timestamp: Optional[str]) -> bool:
+    def begin_replay(self) -> None:
+        """Call before feeding journal-replayed merits (record_merits(replay=True))."""
+        self._replay_dups = 0
+
+    def record_merits(
+        self, system: str, activity: str, merits: int, timestamp: Optional[str], replay: bool = False,
+    ) -> bool:
         """Merits earned in `system`. False if ignored (no system/merits, no
-        usable timestamp, or from before this cycle)."""
+        usable timestamp, from before this cycle, or - for a replay - already counted)."""
         when = parse_ts(timestamp)
         if not system or merits <= 0 or when is None:
             return False
@@ -374,6 +440,19 @@ class PowerplayLedger:
         assert self.cycle_start is not None
         if when < self.cycle_start:
             return False
+        if self.last_merit_ts is not None:
+            if timestamp < self.last_merit_ts:  # type: ignore[operator]
+                return False  # older than what is already counted
+            if timestamp == self.last_merit_ts and replay:
+                # Same second as the newest counted merit: the first `last_merit_n` replayed
+                # events at this stamp are the ones already counted; later ones are new.
+                self._replay_dups += 1
+                if self._replay_dups <= self.last_merit_n:
+                    return False
+        if timestamp == self.last_merit_ts:
+            self.last_merit_n += 1
+        else:
+            self.last_merit_ts, self.last_merit_n, self._replay_dups = timestamp, 1, 0
         record = self._record(system)
         record.merits[activity] = record.merits.get(activity, 0) + merits
         record.events[activity] = record.events.get(activity, 0) + 1
@@ -381,19 +460,115 @@ class PowerplayLedger:
             record.last_at = timestamp  # type: ignore[assignment]
         return True
 
-    def roll_to(self, moment: datetime) -> None:
-        """Roll the cycle forward if `moment` is past its end - used on load, so
-        a cycle that ended while EDMC was closed is archived before new data."""
+    def record_power(self, power: Optional[str], timestamp: Optional[str] = None) -> None:
+        """Note the Power the commander is pledged to (None / blank = not pledged: nothing to note).
+        A `timestamp` (journal replay) files it under the cycle it belongs to."""
+        name = _clip(power) if power else ""
+        if not name:
+            return
+        when = parse_ts(timestamp)
+        if when is not None:
+            self._advance(when)
+            if self.cycle_start is not None and when < self.cycle_start:
+                return
+        if name not in self.powers:
+            self.powers.append(name)
+
+    def touch(self, timestamp: Any) -> None:
+        """The journal has been seen up to `timestamp` (any live event)."""
+        if isinstance(timestamp, str) and parse_ts(timestamp) is not None \
+                and (self.seen_to is None or timestamp > self.seen_to):
+            self.seen_to = timestamp
+
+    def roll_to(self, moment: datetime) -> bool:
+        """Roll the cycle forward if `moment` is past its end, so a cycle that
+        ended is archived on time rather than at the next event. True if it rolled."""
+        before = self.cycle_start
         self._advance(moment)
+        return before != self.cycle_start
+
+    # -- journal scan planning and adoption --
+
+    def plan_scan(self, now: datetime, depth: int = DEFAULT_BACKFILL_CYCLES) -> "ScanPlan":
+        """What the startup journal scan has to do: which cycle it is, which of
+        the last `depth` cycles aren't covered yet, and how far back to read.
+
+        - Never scanned, or the history doesn't reach back `depth` cycles:
+          **rebuild** from the oldest wanted cycle.
+        - Otherwise **incremental**: only what happened since the ledger last saw
+          the journal (a gap while EDMC was closed), or **none** if that is moments ago."""
+        depth = max(1, min(MAX_BACKFILL_CYCLES, depth))
+        now = now.astimezone(timezone.utc)
+        current = cycle_start_for(now)
+        oldest = current - CYCLE * (depth - 1)
+        wanted = [current - CYCLE * n for n in range(depth - 1, -1, -1)]
+        missing = [cycle_number(c) for c in wanted if self.covered_from is None or c < self.covered_from]
+        scan_from: Optional[datetime] = None
+        if self.covered_from is None or self.covered_from > oldest:
+            mode, scan_from = SCAN_REBUILD, oldest
+        else:
+            seen = parse_ts(self.seen_to) or current
+            if now - seen < UP_TO_DATE_WINDOW:
+                mode = SCAN_NONE
+            else:
+                mode, scan_from = SCAN_INCREMENTAL, max(seen, oldest)
+        days_back = math.ceil((now - scan_from).total_seconds() / 86400) if scan_from else 0
+        return ScanPlan(
+            mode=mode, current_cycle=cycle_number(current) or 0, cycle_start=current,
+            day_of_cycle=(now - current).days + 1, scan_from=scan_from, days_back=days_back,
+            missing_cycles=[n for n in missing if n is not None],
+        )
+
+    def adopt(self, fresh: "PowerplayLedger", covered_from: datetime, seen_to: Optional[str]) -> None:
+        """Take a ledger rebuilt from the journals (the **rebuild** scan) into this one.
+
+        The journals are the truth, but never lose data they no longer hold: for a
+        cycle both have, the one with more merits wins (the rebuild on a tie).
+        The history stays newest first and capped. Everything from `covered_from`
+        on now counts as covered."""
+        if fresh.cycle_start is not None:
+            if self.cycle_start is None:
+                self.cycle_start = fresh.cycle_start
+            elif fresh.cycle_start < self.cycle_start:
+                fresh.roll_to(self.cycle_start)  # the rebuild's last cycle is already over: into its history
+            else:
+                self.roll_to(fresh.cycle_start)  # an older live cycle goes to the history first
+            merged = {r["cycle_start"]: r for r in self.archive if isinstance(r.get("cycle_start"), str)}
+            for record in fresh.archive:
+                key = record.get("cycle_start")
+                if isinstance(key, str) and (key not in merged or _archived_merits(record) >= _archived_merits(merged[key])):
+                    merged[key] = record
+            self.archive = sorted(merged.values(), key=lambda r: r["cycle_start"], reverse=True)[:MAX_ARCHIVE]
+            if fresh.cycle_start == self.cycle_start:
+                if sum(r.total_merits() for r in fresh.records.values()) >= \
+                        sum(r.total_merits() for r in self.records.values()):
+                    self.records = fresh.records
+                self.powers = fresh.powers or self.powers
+        if fresh.last_merit_ts and (self.last_merit_ts is None or fresh.last_merit_ts > self.last_merit_ts):
+            self.last_merit_ts, self.last_merit_n = fresh.last_merit_ts, fresh.last_merit_n
+        for stamp in (seen_to, fresh.seen_to):
+            self.touch(stamp)
+        if self.covered_from is None or covered_from < self.covered_from:
+            self.covered_from = covered_from
 
     # -- views --
 
     def views(self) -> List[CycleView]:
-        """The live cycle first, then archived ones (newest first)."""
+        """The live cycle first, then the closed ones, newest first and in order: a cycle the
+        ledger covers but nothing happened in (so it wasn't archived) appears as an empty view."""
         live = CycleView(
             cycle_start=format_ts(self.cycle_start) if self.cycle_start else None, cycle_end=None,
-            current=True, records=dict(self.records))
-        return [live] + [view_from_archive(r) for r in self.archive]
+            current=True, records=dict(self.records), powers=list(self.powers))
+        closed = {r["cycle_start"]: view_from_archive(r) for r in self.archive if isinstance(r.get("cycle_start"), str)}
+        if self.cycle_start is not None and self.covered_from is not None:
+            start = self.cycle_start - CYCLE
+            for _ in range(MAX_ARCHIVE):
+                if start < self.covered_from:
+                    break
+                key = format_ts(start)
+                closed.setdefault(key, CycleView(cycle_start=key, cycle_end=format_ts(start + CYCLE), current=False))
+                start -= CYCLE
+        return [live] + [closed[k] for k in sorted(closed, reverse=True)]
 
     def known_systems(self) -> List[str]:
         """Every system any view has data for, live cycle first."""
@@ -409,6 +584,11 @@ class PowerplayLedger:
         return {
             "cycle_start": format_ts(self.cycle_start) if self.cycle_start else None,
             "systems": {k: r.to_dict() for k, r in self.records.items()},
+            "powers": list(self.powers),
+            "last_merit_ts": self.last_merit_ts,
+            "last_merit_n": self.last_merit_n,
+            "covered_from": format_ts(self.covered_from) if self.covered_from else None,
+            "seen_to": self.seen_to,
             "archive": self.archive,
         }
 
@@ -423,10 +603,51 @@ class PowerplayLedger:
             record = SystemRecord.from_dict(value)
             if record:
                 ledger.records[record.system.casefold()] = record
+        powers = data.get("powers")
+        ledger.powers = [_clip(p) for p in powers if p] if isinstance(powers, list) else []
+        ledger.last_merit_ts = data["last_merit_ts"] if parse_ts(data.get("last_merit_ts")) else None
+        n = data.get("last_merit_n")
+        ledger.last_merit_n = n if isinstance(n, int) and not isinstance(n, bool) and n > 0 else \
+            (1 if ledger.last_merit_ts else 0)
+        ledger.covered_from = parse_ts(data.get("covered_from"))
+        ledger.seen_to = data["seen_to"] if parse_ts(data.get("seen_to")) else None
         archive = data.get("archive")
         if isinstance(archive, list):
             ledger.archive = [r for r in archive if isinstance(r, dict)][:MAX_ARCHIVE]
         return ledger
+
+
+@dataclass
+class ScanPlan:
+    """What the startup journal scan will do - see PowerplayLedger.plan_scan."""
+
+    mode: str
+    current_cycle: int
+    cycle_start: datetime
+    day_of_cycle: int
+    scan_from: Optional[datetime]
+    days_back: int
+    missing_cycles: List[int]
+
+    def describe(self) -> str:
+        where = f"Cycle {self.current_cycle}, day {self.day_of_cycle} of 7"
+        if self.mode == SCAN_NONE:
+            return f"{where}. Journal scan: up to date."
+        gap = ""
+        if self.missing_cycles:
+            gap = f" Not in history yet: cycle{'s' if len(self.missing_cycles) > 1 else ''} " \
+                  f"{', '.join(str(n) for n in self.missing_cycles)}."
+        return f"{where}. Journal scan: reading {self.days_back} day{'s' if self.days_back != 1 else ''} back.{gap}"
+
+
+def _archived_merits(record: Dict[str, Any]) -> int:
+    """Total merits in an archived cycle record (junk-tolerant)."""
+    systems = record.get("systems")
+    total = 0
+    for system in (systems.values() if isinstance(systems, dict) else ()):
+        merits = system.get("merits") if isinstance(system, dict) else None
+        total += sum(v for v in merits.values() if isinstance(v, int)) if isinstance(merits, dict) else 0
+    return total
 
 
 def activity_rows(record: Optional[SystemRecord]) -> List[str]:

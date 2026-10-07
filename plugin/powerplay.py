@@ -23,6 +23,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import queue
+import threading
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
@@ -40,8 +42,12 @@ from .formulas import (
 )
 from .powerplay_clipboard import DEFAULT_TEMPLATE as DEFAULT_CLIPBOARD_TEMPLATE
 from .powerplay_clipboard import PLACEHOLDERS as CLIPBOARD_PLACEHOLDERS
-from . import powerplay_state
-from .powerplay_ledger import PowerplayLedger, TabPrefs, parse_snapshot
+from . import powerplay_backfill, powerplay_state
+from .powerplay_backfill import OP_MERITS, OP_SNAPSHOT, Op, ScanResult
+from .powerplay_ledger import (
+    DEFAULT_BACKFILL_CYCLES, MAX_BACKFILL_CYCLES, SCAN_NONE, SCAN_REBUILD, PowerplayLedger, ScanPlan, TabPrefs,
+    parse_snapshot,
+)
 from .session import (
     SessionManager, system_merit_total, system_totals, total_merits, visited_systems,
 )
@@ -180,6 +186,17 @@ class PowerplayTracker:
         self.total_merits = None
         rank = entry.get("Rank")
         self.rank = rank if isinstance(rank, int) else 0
+
+    def apply_pledge_event(self, event: str, entry: Mapping[str, Any]) -> bool:
+        """Apply a pledge-lifecycle event ("Powerplay", join, leave, defect). False if `event` isn't one."""
+        applier = {
+            "Powerplay": self.apply_login_snapshot, "PowerplayJoin": self.apply_join,
+            "PowerplayLeave": self.apply_leave, "PowerplayDefect": self.apply_defect,
+        }.get(event)
+        if applier is None:
+            return False
+        applier(entry)
+        return True
 
     def apply_rank(self, entry: Mapping[str, Any]) -> None:
         rank = entry.get("Rank")
@@ -393,6 +410,16 @@ _DELIVERY_EVENTS = ("SearchAndRescue", "DeliverPowerMicroResources")
 
 CONFIG_RATIO_PREFIX = "wntb_powerplay_ratio_"
 CONFIG_CLIPBOARD_FORMAT = "wntb_powerplay_clipboard_format"
+CONFIG_BACKFILL_CYCLES = "wntb_powerplay_backfill_cycles"
+
+
+def backfill_cycles() -> int:
+    """How many cycles (the current one included) the start-up journal scan covers (Settings), 1-12."""
+    try:
+        value = int(config.get_str(CONFIG_BACKFILL_CYCLES) or DEFAULT_BACKFILL_CYCLES)
+    except ValueError:
+        value = DEFAULT_BACKFILL_CYCLES
+    return max(1, min(MAX_BACKFILL_CYCLES, value))
 
 
 def ratio_for(activity: str) -> float:
@@ -486,6 +513,13 @@ class PowerplayController:
         # tab (powerplay_ledger.py) - swapped out when the commander changes.
         self.ledger = PowerplayLedger()
         self.tab_prefs = TabPrefs()
+        # Start-up journal scan (powerplay_backfill.py): runs on a worker thread, answers on a
+        # queue, and live ledger writes wait in `_scan_buffer` until it has been applied.
+        self._scan_queue: "queue.Queue[Tuple[int, str, ScanPlan, ScanResult]]" = queue.Queue()
+        self._scan_generation = 0
+        self._scan_running = False
+        self._scan_buffer: List[Op] = []
+        self._scan_status = "Journal scan: waiting for a commander."
         self._current_system: Optional[str] = None
         # Galactic (x, y, z) from the latest StarPos-carrying event - only
         # the Rare Goods Finder needs it.
@@ -504,6 +538,7 @@ class PowerplayController:
         # Settings-tab state.
         self._ratio_vars: Dict[str, tk.StringVar] = {}
         self._clipboard_format_var: Optional[tk.StringVar] = None
+        self._backfill_var: Optional[tk.StringVar] = None
 
     # --- lifecycle --------------------------------------------------------
 
@@ -528,11 +563,94 @@ class PowerplayController:
         data = saved if isinstance(saved, dict) else {}
         self.ledger = PowerplayLedger.from_dict(data.get("ledger"))
         self.tab_prefs = TabPrefs.from_dict(data.get("pinned_systems"), data.get("hidden_systems"))
-        # A cycle that ended while EDMC was closed gets archived now, not on the next event.
-        self.ledger.roll_to(datetime.now(timezone.utc))
         if saved:
             logger.info("Restored Powerplay ledger for %s: %d system(s), %d archived cycle(s)",
                         cmdr, len(self.ledger.records), len(self.ledger.archive))
+        self._start_scan()
+
+    # --- start-up journal scan ------------------------------------------------
+
+    def _start_scan(self) -> None:
+        """Work out what the journals can still tell us for this commander and, if
+        anything, read it on a worker thread. A new commander (or a first run)
+        rebuilds the last few cycles; after that only the gap since EDMC last saw the
+        journal is read, and nothing at all when there isn't one."""
+        self._scan_generation += 1
+        self._scan_buffer = []
+        now = datetime.now(timezone.utc)
+        plan = self.ledger.plan_scan(now, backfill_cycles())
+        self._scan_status = plan.describe()
+        logger.info("Powerplay %s: %s (mode %s)", self._cmdr, plan.describe(), plan.mode)
+        if plan.mode == SCAN_NONE or plan.scan_from is None or not self._cmdr:
+            self._scan_running = False
+            self._tick_cycle()
+            return
+        self._scan_running = True
+        threading.Thread(
+            target=self._scan_worker, args=(self._scan_generation, self._cmdr, plan), daemon=True,
+        ).start()
+        if self._panel_parent is not None:
+            self._panel_parent.after(500, self._poll_scan)
+
+    def _scan_worker(self, generation: int, cmdr: str, plan: ScanPlan) -> None:
+        """Off the main thread: must never touch a Tk widget or the live ledger."""
+        try:
+            result = powerplay_backfill.scan_journals(cmdr, plan.scan_from, PowerplayTracker)  # type: ignore[arg-type]
+        except Exception:  # never let a journal quirk take the thread (or plugin) down
+            logger.exception("Powerplay journal scan failed")
+            result = ScanResult(ok=False)
+        self._scan_queue.put((generation, cmdr, plan, result))
+
+    def _poll_scan(self) -> None:
+        """Main thread (via after() and on every journal event): pick up a finished scan."""
+        try:
+            generation, cmdr, plan, result = self._scan_queue.get_nowait()
+        except queue.Empty:
+            if self._scan_running and self._panel_parent is not None:
+                self._panel_parent.after(500, self._poll_scan)
+            return
+        self._finish_scan(generation, cmdr, plan, result)
+
+    def _finish_scan(self, generation: int, cmdr: str, plan: ScanPlan, result: ScanResult) -> None:
+        if generation != self._scan_generation or cmdr != self._cmdr:
+            return  # stale: the commander changed meanwhile
+        self._scan_running = False
+        buffered, self._scan_buffer = self._scan_buffer, []
+        if not result.ok:
+            self._scan_status = f"{plan.describe()} Could not read the journals (is EDMC's Journal directory set?)."
+        else:
+            if plan.mode == SCAN_REBUILD:
+                fresh = powerplay_backfill.rebuild_ledger(result.ops)
+                self.ledger.adopt(fresh, plan.scan_from, result.last_ts)  # type: ignore[arg-type]
+            else:
+                powerplay_backfill.apply_ops(self.ledger, result.ops)
+                self.ledger.touch(result.last_ts)
+            self._scan_status = (
+                f"Cycle {plan.current_cycle}, day {plan.day_of_cycle} of 7. Journal scan: read {plan.days_back} "
+                f"day{'s' if plan.days_back != 1 else ''} back ({result.files} file{'s' if result.files != 1 else ''}, "
+                f"{sum(1 for op in result.ops if op.kind == OP_MERITS)} merit event(s)).")
+        powerplay_backfill.apply_ops(self.ledger, buffered)
+        self._tick_cycle()
+        self._persist_ledger()
+        logger.info("Powerplay journal scan done for %s: %s", cmdr, self._scan_status)
+        self._refresh_panel()
+
+    def _tick_cycle(self) -> None:
+        """Archive a cycle that has ended - on time, not at the next event. Held back
+        while a scan runs: the scan applies a gap's events in order and rolls the cycles itself."""
+        if not self._scan_running and self.ledger.roll_to(datetime.now(timezone.utc)):
+            self._persist_ledger()
+
+    def _apply_live(self, op: Op) -> None:
+        """A live journal event for the ledger (held until the scan is applied, if one is running)."""
+        if self._scan_running:
+            self._scan_buffer.append(op)
+            return
+        if op.kind == OP_SNAPSHOT and op.snapshot is not None:
+            self.ledger.record_snapshot(op.system, op.snapshot)
+        elif op.kind == OP_MERITS:
+            self.ledger.record_merits(op.system, op.activity, op.merits, op.ts)
+        self._persist_ledger()
 
     def _persist_ledger(self) -> None:
         if self._plugin_dir is None or self._cmdr is None:
@@ -548,17 +666,31 @@ class PowerplayController:
         snapshot = parse_snapshot(entry)
         name = entry.get("StarSystem") or system
         if snapshot is not None and name:
-            self.ledger.record_snapshot(str(name), snapshot)
-            self._persist_ledger()
+            self._apply_live(Op(OP_SNAPSHOT, snapshot.at, system=str(name), snapshot=snapshot))
 
     def systems_pane(self):
         """What the Sessions window's Systems tab needs - fetched fresh on every refresh."""
         from . import powerplay_systems_tab
         return powerplay_systems_tab.SystemsPane(
             views=self.ledger.views, prefs=lambda: self.tab_prefs, cmdr=lambda: self._cmdr or "",
+            pledge=self._pledge_text, status=lambda: self._scan_status,
             known_systems=self.ledger.known_systems,
             actions=powerplay_systems_tab.TabActions(self._toggle_pin, self._close_tab, self._add_system),
         )
+
+    def _pledge_text(self) -> str:
+        """The commander's pledge as the Systems/Cycles tabs show it."""
+        if self.tracker.pledge_status == PLEDGED:
+            return self.tracker.pledge_summary() or "pledged"
+        if self.tracker.pledge_status == NOT_PLEDGED:
+            return "not pledged"
+        return "checking pledge…"
+
+    def _record_power(self) -> None:
+        """Keep the session and this cycle's ledger told which Power is pledged."""
+        assert self.sessions is not None
+        self.sessions.record_power(self.tracker.my_power)
+        self.ledger.record_power(self.tracker.my_power)
 
     def _toggle_pin(self, system: str) -> bool:
         ok = self.tab_prefs.toggle_pin(system)
@@ -589,6 +721,9 @@ class PowerplayController:
             self._current_system = system
         if cmdr and cmdr != self._cmdr:
             self._switch_cmdr(cmdr)
+        self._poll_scan()
+        self.ledger.touch(entry.get("timestamp"))
+        self._tick_cycle()
 
         star_pos = entry.get("StarPos")
         if (
@@ -641,7 +776,7 @@ class PowerplayController:
 
         if event == "Powerplay":
             self.tracker.apply_login_snapshot(entry)
-            self.sessions.record_power(self.tracker.my_power)
+            self._record_power()
             self._set_status(
                 f"Pledged to {self.tracker.pledge_summary()}" if self.tracker.my_power
                 else f"CMDR {cmdr}: not a PP Pledge"
@@ -650,7 +785,7 @@ class PowerplayController:
 
         if event == "PowerplayJoin":
             self.tracker.apply_join(entry)
-            self.sessions.record_power(self.tracker.my_power)
+            self._record_power()
             self._set_status(f"Pledged to {self.tracker.pledge_summary()}")
             return
 
@@ -661,7 +796,7 @@ class PowerplayController:
 
         if event == "PowerplayDefect":
             self.tracker.apply_defect(entry)
-            self.sessions.record_power(self.tracker.my_power)
+            self._record_power()
             self._set_status(f"Defected to {self.tracker.pledge_summary()}")
             return
 
@@ -700,15 +835,15 @@ class PowerplayController:
         assert self.sessions is not None
 
         gained = self.tracker.apply_merits(entry)
-        self.sessions.record_power(self.tracker.my_power)
+        self._record_power()
         if gained is None:
             return
 
         activity = self.tracker.classify_current_activity(system)
         ts = entry.get("timestamp")
         self.sessions.record_merits(activity, gained, system, ts if isinstance(ts, str) else None)
-        if self.ledger.record_merits(system or "", activity, gained, ts if isinstance(ts, str) else None):
-            self._persist_ledger()
+        if system and isinstance(ts, str):
+            self._apply_live(Op(OP_MERITS, ts, system=system, activity=activity, merits=gained))
 
         ratio = ratio_for(activity)
         cp = 0.0 if not ratio else gained / ratio
@@ -727,6 +862,7 @@ class PowerplayController:
         if entry is not None:
             _PLEDGE_EVENT_APPLIERS[entry["event"]](self.tracker, entry)
             logger.info("Recovered pledge state from journal file: %s", self.tracker.pledge_summary() or "not pledged")
+            self._record_power()
 
     def rescan_journal(self) -> None:
         """"Rescan" button handler: re-reads the current journal file from
@@ -785,7 +921,8 @@ class PowerplayController:
                         )
                         if is_new:
                             self.sessions.record_merits(activity, gained, replay_system, ts)
-                            self.ledger.record_merits(replay_system or "", activity, gained, ts)
+                            if replay_system:
+                                self._apply_live(Op(OP_MERITS, ts, system=replay_system, activity=activity, merits=gained))
                             baseline_ts = ts
                             recovered_events += 1
                             recovered_merits += gained
@@ -794,7 +931,7 @@ class PowerplayController:
             self._set_last_event("Rescan failed: could not read journal file")
             return
 
-        self.sessions.record_power(self.tracker.my_power)
+        self._record_power()
         self._persist_ledger()
         logger.info("Rescanned journal: recovered %d merits across %d events", recovered_merits, recovered_events)
         if recovered_events:
@@ -903,6 +1040,31 @@ class PowerplayController:
         clipboard_section.grid(row=4, column=0, sticky=tk.NSEW)
         self._build_clipboard_section(clipboard_section)
 
+        ttk.Separator(tab, orient=tk.HORIZONTAL).grid(row=5, column=0, sticky=tk.EW, padx=10, pady=(8, 0))
+        nb.Label(tab, text="Journal scan", font=("TkDefaultFont", 9, "bold")).grid(
+            row=6, column=0, sticky=tk.W, padx=10, pady=(10, 2),
+        )
+        scan_section = nb.Frame(tab)
+        scan_section.grid(row=7, column=0, sticky=tk.NSEW)
+        self._build_scan_section(scan_section)
+
+    def _build_scan_section(self, frame: nb.Frame) -> None:
+        nb.Label(
+            frame,
+            text=(
+                "When a commander is first seen, WNTB reads their journals to fill in Powerplay cycles it "
+                "missed. After that it only reads what happened while EDMC was closed. This is how many "
+                f"cycles back (this one included, 1-{MAX_BACKFILL_CYCLES}) to look when a commander is new; "
+                "journals older than you have kept can't be read."
+            ),
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(10, 6))
+        nb.Label(frame, text="Cycles to scan:").grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
+        self._backfill_var = tk.StringVar(value=str(backfill_cycles()))
+        nb.EntryMenu(frame, textvariable=self._backfill_var, width=8).grid(
+            row=1, column=1, sticky=tk.W, padx=(0, 10), pady=2,
+        )
+
     def _build_ratios_section(self, frame: nb.Frame) -> None:
         nb.Label(
             frame,
@@ -976,6 +1138,14 @@ class PowerplayController:
             if value <= 0:
                 continue
             config.set(f"{CONFIG_RATIO_PREFIX}{activity}", str(value))
+
+        if self._backfill_var is not None:
+            try:
+                depth = int(self._backfill_var.get().strip())
+            except ValueError:
+                depth = 0
+            if depth >= 1:
+                config.set(CONFIG_BACKFILL_CYCLES, str(min(MAX_BACKFILL_CYCLES, depth)))
 
         if self._clipboard_format_var is not None:
             text = self._clipboard_format_var.get()

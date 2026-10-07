@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from tkinter import messagebox
 from typing import Callable, Dict, List, Optional, Tuple
 
-from .formulas import ACTIVITY_LABELS, NO_CP_ACTIVITIES, merits_to_cp
+from .formulas import ACTIVITIES, ACTIVITY_LABELS, NO_CP_ACTIVITIES, merits_to_cp
 from .powerplay import ratio_for
 from .powerplay_ledger import (
     MAX_NAME_CHARS, MAX_PINNED, RECENT_SYSTEMS, CycleView, Snapshot, SystemRecord, TabPrefs, activity_rows,
@@ -39,7 +39,7 @@ LEGEND = (
     "cycle); Latest is the newest. Control progress, Reinforcement and Undermining are whole-system figures "
     "from the journal - everyone's work, not just yours - and only update when you jump in or log in there. "
     "WHAT YOU DID: your merits by activity, with Control Points estimated from your Settings ratios. "
-    "Cycles run Thursday 07:00 UTC to Thursday 07:00 UTC."
+    "Cycles run Thursday 07:00 UTC to Thursday 07:00 UTC; the Cycles tab keeps every cycle for this commander."
 )
 
 _STANDING_COLUMNS = (
@@ -73,6 +73,8 @@ class SystemsPane:
     views: Callable[[], List[CycleView]]
     prefs: Callable[[], TabPrefs]
     cmdr: Callable[[], str]
+    pledge: Callable[[], str]
+    status: Callable[[], str]
     known_systems: Callable[[], List[str]]
     actions: TabActions
 
@@ -80,13 +82,45 @@ class SystemsPane:
 # --- wording -------------------------------------------------------------------
 
 
+def _cycle_name(view: CycleView) -> str:
+    return f"Cycle {view.number}" if view.number is not None else "Cycle ?"
+
+
 def cycle_label(view: CycleView) -> str:
     start = parse_ts(view.cycle_start)
     begin = start.strftime("%Y-%m-%d %H:%M") if start else "?"
     if view.current:
-        return f"Current cycle (since {begin} UTC)"
+        return f"{_cycle_name(view)} - current (since {begin} UTC)"
     end = parse_ts(view.cycle_end)
-    return f"{begin} – {end.strftime('%Y-%m-%d %H:%M') if end else '?'} UTC"
+    return f"{_cycle_name(view)} - {begin} to {end.strftime('%Y-%m-%d %H:%M') if end else '?'} UTC"
+
+
+def cycle_cp(view: CycleView) -> Dict[str, float]:
+    """Estimated Control Points per activity across the cycle (activities without a ratio are left out)."""
+    return {
+        activity: merits_to_cp(merits, ratio_for(activity))
+        for activity, merits in view.merit_totals().items() if activity not in NO_CP_ACTIVITIES
+    }
+
+
+def cycle_breakdown(view: CycleView) -> str:
+    """'Acquisition 1,200 · Reinforcement 300' - merits per activity for the whole cycle."""
+    totals = view.merit_totals()
+    return " · ".join(f"{ACTIVITY_LABELS[a]} {totals[a]:,}" for a in ACTIVITIES if a in totals) or "—"
+
+
+def cycle_summary(view: CycleView) -> str:
+    """One line of cumulative metrics for the whole cycle, across every system."""
+    merits = sum(view.merit_totals().values())
+    systems = view.systems_worked()
+    return (f"{_cycle_name(view).upper()} TOTAL — {merits:,} merits · est. {sum(cycle_cp(view).values()):,.1f} CP · "
+            f"{systems} system{'s' if systems != 1 else ''} worked   ({cycle_breakdown(view)})")
+
+
+def power_text(view: CycleView) -> str:
+    if view.powers:
+        return ", ".join(view.powers)
+    return "not pledged" if view.records else "—"   # an empty cycle says nothing about the pledge
 
 
 def _text(value: Optional[str]) -> str:
@@ -203,6 +237,9 @@ class SystemsTab:
         self._heading = tk.Label(parent, bg=P.PANE, fg=P.MUTED, anchor="w", padx=P.PAD, justify="left",
                                  font=style.font(P.FONT_SMALL))
         self._heading.pack(fill="x", pady=(P.PAD_SM, 0))
+        self._summary = tk.Label(parent, bg=P.PANE, fg=P.TEXT, anchor="w", padx=P.PAD, justify="left",
+                                 wraplength=900, font=style.font(P.FONT_BOLD))
+        self._summary.pack(fill="x", pady=(2, 0))
 
         picker = tk.Frame(parent, bg=P.PANE)
         picker.pack(fill="x", padx=P.PAD, pady=(P.PAD_SM, P.PAD_SM))
@@ -268,9 +305,11 @@ class SystemsTab:
         shown = view.systems(self._current_system, prefs, limit=RECENT_SYSTEMS)
         wanted = [(s, prefs.is_pinned(s)) for s in shown]
         cmdr = self._pane.cmdr()
+        power = self._pane.pledge() if view.current else power_text(view)
         self._heading.configure(
-            text=f"{'CMDR ' + cmdr + ' — ' if cmdr else ''}{len(shown)} tab(s): last {RECENT_SYSTEMS} systems "
-                 f"plus {len(prefs.pinned)}/{MAX_PINNED} pinned")
+            text=f"{'CMDR ' + cmdr + ' · ' if cmdr else ''}{power} — {len(shown)} tab(s): last {RECENT_SYSTEMS} "
+                 f"systems plus {len(prefs.pinned)}/{MAX_PINNED} pinned")
+        self._summary.configure(text=cycle_summary(view))
         key = self._key(view)
         if self._tabs is None or wanted != self._tab_systems or key != self._tab_cycle_key:
             self._rebuild_tabs(wanted, key)
@@ -329,3 +368,67 @@ class SystemsTab:
         if not self._pane.actions.add(name):
             self._pending_select = None
             self._limit_reached()
+
+
+_CYCLE_COLUMNS = (
+    Column("cycle", "Cycle", 120),
+    Column("period", "Period (UTC)", 220),
+    Column("power", "Power", 170, stretch=True, max_chars=40),
+    Column("systems", "Systems", 80, anchor="e"),
+    Column("merits", "Merits", 100, anchor="e"),
+    Column("cp", "Est. CP", 100, anchor="e"),
+    Column("breakdown", "Merits by activity", 320, max_chars=90),
+)
+
+
+class CyclesTab:
+    """History by cycle for the commander the ledger belongs to: one row per
+    Powerplay cycle, newest first, with the Power they were pledged to then."""
+
+    def __init__(self, parent: tk.Frame) -> None:
+        self._heading = tk.Label(parent, bg=P.PANE, fg=P.MUTED, anchor="w", padx=P.PAD,
+                                 font=style.font(P.FONT_SMALL))
+        self._heading.pack(fill="x", pady=(P.PAD_SM, 0))
+        self._summary = tk.Label(parent, bg=P.PANE, fg=P.TEXT, anchor="w", justify="left", padx=P.PAD,
+                                 pady=P.PAD_SM, font=style.font(P.FONT_BOLD))
+        self._summary.pack(side="bottom", fill="x")
+        self._status = tk.Label(parent, bg=P.PANE, fg=P.MUTED, anchor="w", justify="left", padx=P.PAD,
+                                wraplength=900, font=style.font(P.FONT_SMALL))
+        self._status.pack(side="bottom", fill="x")
+        self._table = DataTable(parent, _CYCLE_COLUMNS, sortable=False,
+                                empty_text="No cycles recorded yet for this commander.")
+        self._table.pack(fill="both", expand=True, padx=P.PAD, pady=(P.PAD_SM, P.PAD_SM))
+
+    def update(self, pane: Optional[SystemsPane]) -> None:
+        if pane is None:
+            return
+        cmdr = pane.cmdr()
+        self._heading.configure(
+            text=f"{'CMDR ' + cmdr + ' · ' if cmdr else ''}one row per Powerplay cycle; each commander has "
+                 "their own history and their own Power")
+        self._status.configure(text=pane.status())
+        self._table.clear()
+        total_merits = 0
+        total_cp = 0.0
+        shown = 0
+        fmt = "%Y-%m-%d %H:%M"
+        for view in pane.views():
+            merits = sum(view.merit_totals().values())
+            cp = sum(cycle_cp(view).values())
+            total_merits += merits
+            total_cp += cp
+            shown += 1
+            start, end = parse_ts(view.cycle_start), parse_ts(view.cycle_end)
+            if view.current and start:
+                period = f"{start.strftime(fmt)} - now"
+            elif start and end:
+                period = f"{start.strftime(fmt)} - {end.strftime(fmt)}"
+            else:
+                period = "?"
+            self._table.append((
+                _cycle_name(view) + (" (live)" if view.current else ""), period,
+                pane.pledge() if view.current else power_text(view),
+                str(view.systems_worked()), f"{merits:,}", f"{cp:,.1f}", cycle_breakdown(view),
+            ))
+        self._summary.configure(
+            text=f"All cycles shown ({shown}) — Merits: {total_merits:,}   Est. CP: {total_cp:,.1f}")

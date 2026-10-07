@@ -231,6 +231,68 @@ class TabPrefsTests(unittest.TestCase):
         self.assertEqual(L.TabPrefs.from_dict("junk", 5), L.TabPrefs())
 
 
+class CycleNumberAndPowerTests(unittest.TestCase):
+    def test_cycle_numbers_count_weeks_from_101(self):
+        def number(text):
+            return L.cycle_number(L.cycle_start_for(L.parse_ts(text)))
+        self.assertEqual(number("2026-10-01T07:00:00Z"), 101)
+        self.assertEqual(number("2026-10-07T23:00:00Z"), 101)   # still 101 until Thursday 07:00 UTC
+        self.assertEqual(number("2026-10-08T07:00:00Z"), 102)
+        self.assertEqual(number("2026-09-30T00:00:00Z"), 100)
+        self.assertIsNone(L.cycle_number(None))
+
+    def test_powers_are_recorded_per_cycle_and_archived(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_power(None)
+        ledger.record_power("")
+        self.assertEqual(ledger.powers, [])
+        ledger.record_power("Pranav Antal")
+        ledger.record_power("Pranav Antal")
+        ledger.record_merits("Ngurii", ACQUISITION, 10, IN_CYCLE_1)
+        ledger.record_merits("Ngurii", ACQUISITION, 10, IN_CYCLE_2)   # rolls to cycle 102
+        self.assertEqual(L.view_from_archive(ledger.archive[0]).powers, ["Pranav Antal"])
+        self.assertEqual(ledger.powers, ["Pranav Antal"])             # carried into the new cycle
+        self.assertEqual(ledger.views()[0].number, 102)
+        self.assertEqual(ledger.views()[1].number, 101)
+
+    def test_defecting_adds_a_second_power_to_the_cycle(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_power("Pranav Antal")
+        ledger.record_power("Aisling Duval")
+        self.assertEqual(ledger.powers, ["Pranav Antal", "Aisling Duval"])
+        self.assertEqual(L.PowerplayLedger.from_dict(ledger.to_dict()).powers, ledger.powers)
+
+    def test_unpledged_commander_has_no_power_but_keeps_standing(self):
+        ledger = L.PowerplayLedger()
+        _feed(ledger, _jump(IN_CYCLE_1))
+        view = ledger.views()[0]
+        self.assertEqual(view.powers, [])
+        self.assertEqual(view.merit_totals(), {})
+        self.assertEqual(view.systems_worked(), 0)
+        self.assertEqual(view.systems(), ["Ngurii"])
+
+    def test_cycle_totals_span_systems(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_merits("Alpha", ACQUISITION, 100, IN_CYCLE_1)
+        ledger.record_merits("Bravo", ACQUISITION, 50, IN_CYCLE_1)
+        ledger.record_merits("Bravo", REINFORCEMENT, 25, IN_CYCLE_1_LATER)
+        view = ledger.views()[0]
+        self.assertEqual(view.merit_totals(), {ACQUISITION: 150, REINFORCEMENT: 25})
+        self.assertEqual(view.systems_worked(), 2)
+
+    def test_commanders_are_kept_apart_on_disk(self):
+        with tempfile.TemporaryDirectory() as folder:
+            a, b = L.PowerplayLedger(), L.PowerplayLedger()
+            a.record_power("Pranav Antal"); a.record_merits("Alpha", ACQUISITION, 10, IN_CYCLE_1)
+            b.record_power("Aisling Duval"); b.record_merits("Bravo", REINFORCEMENT, 20, IN_CYCLE_1)
+            powerplay_state.save_state(folder, "Bocheaux", {"ledger": a.to_dict()})
+            powerplay_state.save_state(folder, "Mactavious", {"ledger": b.to_dict()})
+            back_a = L.PowerplayLedger.from_dict(powerplay_state.load_state(folder, "Bocheaux")["ledger"])
+            back_b = L.PowerplayLedger.from_dict(powerplay_state.load_state(folder, "Mactavious")["ledger"])
+            self.assertEqual((back_a.powers, list(back_a.records)), (["Pranav Antal"], ["alpha"]))
+            self.assertEqual((back_b.powers, list(back_b.records)), (["Aisling Duval"], ["bravo"]))
+
+
 class StateTests(unittest.TestCase):
     def test_per_commander_round_trip_keeps_others(self):
         with tempfile.TemporaryDirectory() as folder:
