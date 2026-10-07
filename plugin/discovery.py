@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import logging
 import os
+import queue
 import threading
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Tuple
@@ -39,7 +40,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import overlay, panelkit
+from . import neutron_finder, overlay, panelkit
 from .overlay import OverlayClient
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -386,6 +387,9 @@ _overlay_client = overlay.OverlayClient()
 
 _IDLE_STATUS = "Watching for new discoveries…"
 _DISABLED_STATUS = "Discovery alerts are disabled."
+_NEUTRON_NO_POSITION = "Neutron: position unknown - jump or reload first"
+_NEUTRON_SEARCHING = "Neutron: searching spansh.co.uk..."
+_NEUTRON_FAILED = "Neutron: lookup failed - see EDMarketConnector.log"
 
 
 def set_overlay_client(client: overlay.OverlayClient) -> None:
@@ -416,7 +420,25 @@ class DiscoveryController:
         self._dependent_widgets = []
         self._result_label: Optional[nb.Label] = None
 
+        # "Neutron" button (see neutron_finder.py): position comes from the
+        # journal's StarPos; the lookup runs on a worker thread and hands its
+        # result back through a queue polled via after(), like gec_poi_panel.py.
+        self._star_pos: Optional[Tuple[float, float, float]] = None
+        self._current_system: Optional[str] = None
+        self._neutron_btn: Optional[tk.Button] = None
+        self._neutron_label: Optional[tk.Label] = None
+        self._neutron_parent: Optional[tk.Frame] = None
+        self._neutron_generation = 0
+        self._neutron_queue: "queue.Queue[Tuple[int, Optional[neutron_finder.NearestNeutron], bool]]" = queue.Queue()
+
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
+        if system:
+            self._current_system = system
+        if entry.get("event") in ("FSDJump", "Location"):
+            star_pos = entry.get("StarPos")
+            if (isinstance(star_pos, list) and len(star_pos) == 3
+                    and all(isinstance(v, (int, float)) for v in star_pos)):
+                self._star_pos = (float(star_pos[0]), float(star_pos[1]), float(star_pos[2]))
         if system:
             self.tracker.handle_system_change(system)
         if entry.get("event") in DISCOVERY_EVENTS:
@@ -453,9 +475,75 @@ class DiscoveryController:
         self._toggle_off_colors = panelkit.capture_toggle_off_colors(self._toggle_btn)
         panelkit.apply_toggle_button_state(self._toggle_btn, load_config().enabled, self._toggle_off_colors)
 
+        self._neutron_btn = tk.Button(row, text="Neutron", command=self._on_neutron_click)
+        self._neutron_btn.pack(side=tk.LEFT, padx=(6, 0))
+
         self._status_label = panelkit.wrap_label(parent, text=_IDLE_STATUS)
         self._status_label.grid(row=1, column=0, sticky=tk.W, pady=(4, 0))
         self._sync_status_label()
+
+        self._neutron_label = panelkit.wrap_label(parent, text="")
+        self._neutron_label.grid(row=2, column=0, sticky=tk.W, pady=(2, 0))
+        self._neutron_label.grid_remove()  # nothing to say until the first click
+        self._neutron_parent = parent
+        parent.after(200, self._poll_neutron_queue)
+
+    # --- Neutron button ------------------------------------------------------
+
+    def _show_neutron_text(self, text: str) -> None:
+        if self._neutron_label is not None:
+            self._neutron_label["text"] = text
+            self._neutron_label.grid()
+
+    def _on_neutron_click(self) -> None:
+        if self._star_pos is None:
+            self._show_neutron_text(_NEUTRON_NO_POSITION)
+            return
+        self._neutron_generation += 1
+        generation = self._neutron_generation
+        self._show_neutron_text(_NEUTRON_SEARCHING)
+        if self._neutron_btn is not None:
+            self._neutron_btn.config(state=tk.DISABLED)
+        x, y, z = self._star_pos
+        threading.Thread(
+            target=self._neutron_worker, args=(generation, x, y, z, self._current_system),
+            name="WNTB-neutron-find", daemon=True,
+        ).start()
+
+    def _neutron_worker(self, generation: int, x: float, y: float, z: float, current_system: Optional[str]) -> None:
+        """Runs off the main thread - must not touch any Tk widget."""
+        try:
+            result = neutron_finder.find_nearest_neutron(x, y, z, current_system)
+        except Exception:
+            logger.exception("Neutron lookup failed for (%s, %s, %s)", x, y, z)
+            self._neutron_queue.put((generation, None, True))
+            return
+        self._neutron_queue.put((generation, result, False))
+
+    def _poll_neutron_queue(self) -> None:
+        """Runs on the main thread via after() - safe to touch widgets."""
+        try:
+            generation, result, failed = self._neutron_queue.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            if generation == self._neutron_generation:
+                if self._neutron_btn is not None:
+                    self._neutron_btn.config(state=tk.NORMAL)
+                if failed or result is None:
+                    self._show_neutron_text(_NEUTRON_FAILED)
+                else:
+                    # Copy the full (untruncated) name so it can be pasted straight
+                    # into the galaxy map's search box.
+                    copied = self._neutron_parent is not None and panelkit.copy_to_clipboard(
+                        self._neutron_parent, result.system)
+                    suffix = " (copied)" if copied else ""
+                    self._show_neutron_text(
+                        f"Neutron: {neutron_finder.display_name(result.system)} - "
+                        f"{result.distance_ly:,.1f} ly{suffix}"
+                    )
+        if self._neutron_parent is not None:
+            self._neutron_parent.after(200, self._poll_neutron_queue)
 
     def _on_toggle_click(self) -> None:
         cfg = load_config()

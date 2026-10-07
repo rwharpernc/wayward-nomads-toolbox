@@ -3,6 +3,15 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Exploration: a Neutron button**, next to Discovery Alerts. Click it to find the nearest system whose
+  **primary star** is a neutron star (a neutron that is only a secondary companion is ignored), measured from
+  your current position. It shows the system name and distance, and copies the name to the clipboard so you
+  can paste it into the galaxy map. If you're already in such a system it gives you the next one. The lookup
+  asks spansh.co.uk, and only when you click; nothing runs on its own.
+
 ## 1.2.0 - 2026-10-07
 
 ### Added
