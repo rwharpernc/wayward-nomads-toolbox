@@ -92,7 +92,19 @@ try:
             if isinstance(sub, ttk.Notebook):
                 tabs = sub
     names = [tabs.tab(t, "text") for t in tabs.tabs()] if tabs else []
-    print("SETTINGS BUILT OK:", len(names), "tabs:", ", ".join(names))
+    # Walk the nested groups too, so every leaf tab is listed (and counted) as "Group > Tab".
+    leaves = []
+    for tab_id in (tabs.tabs() if tabs else []):
+        page = tabs.nametowidget(tab_id)
+        inner = [w for w in page.winfo_children() if isinstance(w, ttk.Notebook)]
+        if inner:
+            leaves += [f"{tabs.tab(tab_id, 'text')} > {inner[0].tab(t, 'text')}" for t in inner[0].tabs()]
+        else:
+            leaves.append(tabs.tab(tab_id, "text"))
+    root.update_idletasks()
+    print("SETTINGS BUILT OK:", len(names), "top-level tabs:", ", ".join(names))
+    print("LEAF TABS:", len(leaves), "|", "; ".join(leaves))
+    print("TALLEST PAGE (px):", max(tabs.nametowidget(t).winfo_reqheight() for t in tabs.tabs()) if tabs else 0)
     code = 0 if names else 1
 except Exception as exc:  # noqa: BLE001
     import traceback

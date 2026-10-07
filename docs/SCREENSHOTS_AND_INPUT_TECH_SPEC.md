@@ -125,7 +125,7 @@ This is the only input WNTB sends without you turning something on first. To sto
 
 **File → Settings → WNTB → Screenshots** (keys start `wntb_screenshot_`): source and output folders,
 delete originals, group by system, the file-name mask, the timer icon, hi-res on timer, Thargoid capture,
-the overlay notification, and the poll interval. **Settings → Auto-Honk** (keys start `wntb_autohonk_`):
+the overlay notification, and the poll interval. **Settings → Exploration → Alerts** (Auto-Honk; keys start `wntb_autohonk_`):
 enabled, fire button, hold time, focus the game, skip repeats, and the Linux prefix override.
 
 ## 8. Testing

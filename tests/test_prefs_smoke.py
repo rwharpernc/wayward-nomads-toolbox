@@ -25,6 +25,11 @@ class PrefsSmokeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("SETTINGS BUILT OK", result.stdout)
         self.assertIn("Window", result.stdout)  # the window-behaviour tab (auto height fit)
+        # Grouped layout: eight top-level tabs, and the merged Exploration pages are all there.
+        self.assertIn("SETTINGS BUILT OK: 8 top-level tabs", result.stdout)
+        for leaf in ("Exploration > Points of Interest", "Exploration > Alerts", "General > Overlay Connection",
+                     "Always On > Landing", "Field Ops > Inventory"):
+            self.assertIn(leaf, result.stdout)
 
 
 if __name__ == "__main__":

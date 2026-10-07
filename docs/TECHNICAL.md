@@ -152,6 +152,15 @@ abbreviations (the table is in the README's "Button names"), and `panelkit.add_t
 hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
 `ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder. EDMC sizes its window to the widest row across all plugins, and the mode row used to be WNTB's widest, so the mode row is held at the size measured from a throwaway row of full-label buttons (`ui._mode_row_full_label_size`), with the short buttons centered inside it; without that the shortened labels made EDMC open far narrower. Don't implement this with a thin spacer widget in the same grid cell: it draws a line across the buttons.
 
+**Settings layout.** `ui._build_settings_tabs` builds eight top-level Settings tabs: General (Overlay
+Connection, Window, Updates), Powerplay, Missions, Exploration, Mining, BGS, Field Ops and Always On
+(Interdiction, Landing). A group is a plain tab holding its own `nb.Notebook` (`_settings_group`). In
+Exploration, GEC, Canonn and Codex share one "Points of Interest" page and Auto-Honk and Discovery share an
+"Alerts" page: `_SectionStack` is an `nb.Frame` whose `add()` grids each feature's frame one under the other,
+so features still call `notebook.add(frame, text=...)` unchanged. Everything is placed with `grid`. Features
+not listed fall into "Other" rather than losing their tab. A group page adds about 53px for its tab strip,
+and the tallest page (Alerts, 632px, in the Exploration group) now sets the Settings window height.
+
 **Height fitting.** Once a window has an explicit size, Tk stops fitting it to its content. `ui._sync_mode_holder_height` is the single place the panel's height changes (mode switch, startup, a section expanding), and it schedules `ui._fit_window_height` once at idle: it sets the top-level window's geometry to its current width and the height its content requests (`winfo_reqheight`), so a taller mode is never cut off. It is skipped when the window is maximized, minimized or not yet visible, and keeps the width and position. The Settings → Window tab has a checkbox (`wntb_fit_window_height`, default on) that turns it off; that tab is built with `grid` only, per the Settings rule in the development guide.
 
 **Collapsible sections.** `panelkit.collapsible_section` gives GEC Nearby POI, Canonn Nearby POI and Codex
@@ -400,7 +409,7 @@ as long as its graphics should be visible.
 seconds (`COOLOFF_S`) instead of trying again, so a user with no overlay program costs almost nothing:
 no thread waiting on a connection per pickup, screenshot or Mining update. The failure is logged once at
 INFO, and a changed host or port is applied straight away. The Settings test buttons build their own
-client, so they always try for real, and the Overlay Connection tab has a **Check connection** button.
+client, so they always try for real, and the Overlay Connection tab (Settings → General) has a **Check connection** button.
 
 **Why one for everything?** A connection per mode would duplicate work, and each would need its own
 reconnect logic.

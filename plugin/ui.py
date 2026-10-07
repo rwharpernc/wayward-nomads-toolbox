@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import tkinter as tk
 from tkinter import ttk
@@ -456,16 +456,89 @@ def create_prefs(parent: tk.Frame) -> nb.Frame:
     tabs = nb.Notebook(notebook_border, style=_SETTINGS_NOTEBOOK_STYLE)
     tabs.grid(row=0, column=0, sticky=tk.NSEW, padx=4, pady=4)
 
-    # Overlay Connection first - the one shared host/port pair Interdiction/
-    # Landing/Discovery's own tabs (built next) all reference.
-    overlay.build_settings(tabs)
-    for feature in FEATURES:
-        if hasattr(feature, "build_settings"):
-            feature.build_settings(tabs)
-    _create_window_tab(tabs)
-    _create_updates_tab(tabs)
+    _build_settings_tabs(tabs)
 
     return outer
+
+
+class _SectionStack(nb.Frame):
+    """A Settings page that stacks several features' settings one under another
+    (with a rule between). Each feature's `build_settings(notebook)` builds a frame
+    of its own and calls `notebook.add(frame, text=...)`; handing it one of these
+    instead of a real notebook makes `add` stack that frame as a section. Frames are
+    only ever placed with `grid` - never `pack` into an nb.Frame (the development
+    guide's Settings rule)."""
+
+    def __init__(self, parent: tk.Misc) -> None:
+        super().__init__(parent)
+        self.columnconfigure(0, weight=1)
+        self._next_row = 1  # row 0 is nb.Frame's own gridded spacer
+
+    def add(self, child: tk.Misc, **_options: object) -> None:
+        if self._next_row > 1:
+            ttk.Separator(self, orient=tk.HORIZONTAL).grid(
+                row=self._next_row, column=0, sticky=tk.EW, padx=10, pady=4)
+            self._next_row += 1
+        child.grid(row=self._next_row, column=0, sticky=tk.EW)
+        self._next_row += 1
+
+
+def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.Misc], None]]) -> None:
+    """One top-level Settings tab holding its own row of tabs, so the strip across
+    the top stays short instead of listing every feature."""
+    page = nb.Frame(tabs)
+    page.columnconfigure(0, weight=1)
+    page.rowconfigure(1, weight=1)
+    tabs.add(page, text=title)
+    inner = nb.Notebook(page, style=_SETTINGS_NOTEBOOK_STYLE)
+    inner.grid(row=1, column=0, sticky=tk.NSEW, padx=4, pady=4)
+    for build in builders:
+        build(inner)
+
+
+def _stacked_page(title: str, builders: List[Callable[[tk.Misc], None]]) -> Callable[[tk.Misc], None]:
+    """A builder that adds ONE tab called `title` holding all of `builders`' settings stacked."""
+    def build(notebook: tk.Misc) -> None:
+        stack = _SectionStack(notebook)
+        notebook.add(stack, text=title)
+        for build_section in builders:
+            build_section(stack)
+    return build
+
+
+def _build_settings_tabs(tabs: nb.Notebook) -> None:
+    """Top-level Settings tabs: General, then one per mode (modes with several
+    features get a row of tabs inside), then the always-on overlays. Small related
+    Exploration pages are merged: the three point-of-interest/codex pages into one,
+    Auto-Honk and Discovery into one. Any feature with settings that is not listed
+    here lands in "Other", so a new feature can never lose its Settings tab."""
+    placed = set()
+
+    def settings_of(*features) -> List[Callable[[tk.Misc], None]]:
+        placed.update(features)
+        return [feature.build_settings for feature in features]
+
+    # General: Overlay Connection is the one shared host/port pair that Interdiction/
+    # Landing/Discovery's own settings all point to.
+    _settings_group(tabs, "General", [overlay.build_settings, _create_window_tab, _create_updates_tab])
+    for feature in (powerplay, missions):
+        for build in settings_of(feature):
+            build(tabs)
+    _settings_group(tabs, "Exploration", [
+        *settings_of(exploration_value, organic_scan_panel),
+        _stacked_page("Points of Interest", settings_of(gec_poi_panel, canonn_poi_panel, codex_completionist_panel)),
+        *settings_of(boxel_survey),
+        _stacked_page("Alerts", settings_of(autohonk, discovery)),
+    ])
+    for feature in (mining_panel, bgs_panel):
+        for build in settings_of(feature):
+            build(tabs)
+    _settings_group(tabs, "Field Ops", settings_of(screenshots, inventory_panel, ship_builds_panel, colonisation_panel))
+    _settings_group(tabs, "Always On", settings_of(interdiction, landing))
+
+    leftovers = [f for f in FEATURES if hasattr(f, "build_settings") and f not in placed]
+    if leftovers:
+        _settings_group(tabs, "Other", settings_of(*leftovers))
 
 
 def _create_window_tab(notebook: nb.Notebook) -> None:

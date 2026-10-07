@@ -37,7 +37,7 @@ its own notes if you want that.)
 
 ## Step 3: Check WNTB's connection settings
 
-In EDMC, open **File → Settings → WNTB** and choose the **Overlay Connection** tab. The defaults are:
+In EDMC, open **File → Settings → WNTB**, choose **General**, then the **Overlay Connection** tab. The defaults are:
 
 - **Host:** `127.0.0.1`
 - **Port:** `5010`
@@ -47,14 +47,14 @@ If you changed the port in your overlay, enter the same one here.
 
 ## Step 4: Turn the features on and test them
 
-Each feature has its own tab under **File → Settings → WNTB**, with a switch and a test button:
+Each feature has its own settings under **File → Settings → WNTB**, with a switch and a test button:
 
 | Where | Test button |
 |---|---|
-| **Discovery** | **Test Discovery** |
-| **Interdiction Warning** | **Test Warning** |
-| **Landing** | **Test Overlay** |
-| **Screenshots** | **Test Overlay** |
+| **Exploration → Alerts** (Discovery) | **Test Discovery** |
+| **Always On → Interdiction Warning** | **Test Warning** |
+| **Always On → Landing** | **Test Overlay** |
+| **Field Ops → Screenshots** | **Test Overlay** |
 
 The test buttons work even while the feature is switched off, and they tell you whether the overlay
 could be reached. Inventory and Mining have their own overlay switches in their tabs.

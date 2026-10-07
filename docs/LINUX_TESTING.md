@@ -28,7 +28,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 2. Paths and journal
 
-- [ ] Settings → Auto-Honk shows **no** orange journal hint when the Journal directory is right.
+- [ ] Settings → Exploration → Alerts shows **no** orange journal hint when the Journal directory is right.
 - [ ] Clear the Journal directory: the hint appears, and the log has a "Linux journal folder" warning.
 - [ ] Set **Elite Wine/Proton prefix** to a wrong path: Auto-Honk reports the binds file can't be found.
 - [ ] Clear it again: the Proton prefix is auto-detected.
@@ -36,7 +36,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 3. Auto-Honk
 
-- [ ] Settings → Auto-Honk → **Rescan** shows "Will press <key>" for your fire button.
+- [ ] Settings → Exploration → Alerts → **Rescan** shows "Will press <key>" for your fire button.
 - [ ] Elite running and focused: **Test Honk Now** reports "sent" and the scanner fires.
 - [ ] Elite not focused, **Focus game window first** on: Elite comes forward and the honk fires.
 - [ ] Elite not running: it reports "Elite Dangerous window not found".
@@ -82,7 +82,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 6b. Fixed in the platform audit - please confirm
 
-- [ ] Settings → Auto-Honk, Screenshots and Field Ops → Inventory each show a **Works on:** line, green when
+- [ ] Settings → Exploration → Alerts, Field Ops → Screenshots and Field Ops → Inventory each show a **Works on:** line, green when
       it can work here and orange (with the reason) when it can't. Try it with and without `xdotool`.
 - [ ] Take a normal screenshot and an Alt+F10 hi-res one: both are found, converted and named, and the
       hi-res one is treated as hi-res (the journal path is Windows-style, `\ED_Pictures\...`).
