@@ -210,8 +210,16 @@ or **Rescan** if a session's numbers ever look wrong (it re-reads your journal f
 07:00 UTC to Thursday 07:00 UTC; earlier cycles are in the drop-down). Each shows how the system stands
 (state, controlling Power, control progress, reinforcement, undermining: baseline against latest, so you
 can see a gain or a loss) and what **you** earned there. It shows your last 6 systems plus up to **5 you
-pin** (☆ Pin on the tab, or type a name in "Show a system"); × Close tab hides one. Pins are kept per
-commander. The standing figures update when you jump into or log in at a system, so they are as fresh as
+pin** (☆ Pin on the tab, or type a name in "Show a system"); × Close tab hides one. A line above the
+tabs totals the cycle (merits, estimated CP, systems worked). The **Cycles** tab lists every past cycle
+(cycle 101 began 2026-10-01) with the Power you were pledged to then. Pins and history are kept per
+commander, so a commander pledged to another Power, or to none, has their own.
+
+**Catching up from your journals:** the first time WNTB sees a commander it reads their journals to
+fill in the last few cycles (4 by default; **Settings > Powerplay > Journal scan**), and after that
+only what happened while EDMC was closed, so playing without it running doesn't lose a cycle. It
+works out how far back to read from the cycle date, and does nothing if there's nothing new. Journals
+you've deleted can't be read, and your own totals are never replaced by smaller ones. The standing figures update when you jump into or log in at a system, so they are as fresh as
 your last visit.
 
 **Rare Goods Finder:** click **Rares** to see the rare commodities closest to where you are. Each

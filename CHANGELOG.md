@@ -14,6 +14,18 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - It shows the last 6 systems you've been in plus up to **5 pinned** ones (☆ Pin / ★ Unpin, × Close tab, and a
   "Show a system" box with type-ahead). Pinned and hidden tabs and the history are **per commander**
   (`powerplay_state.json`, protected from updates). Merit totals in the sessions themselves are unchanged.
+- **Cycle numbers and history.** Cycles are numbered (cycle 101 began 2026-10-01 07:00 UTC; the number counts
+  weeks from there). The Systems tab shows a **cycle total** line (merits, estimated Control Points and
+  systems worked across every system), and a new **Cycles** tab lists every cycle for the commander: period,
+  the Power they were pledged to, systems, merits, CP and a per-activity breakdown. Up to 52 closed cycles
+  are kept. Each commander has their own history and Power; an unpledged commander still gets standing
+  readings and shows "not pledged".
+- **Start-up journal scan** for each commander, done only as far as needed. WNTB works out what cycle it
+  is, which cycles aren't in that commander's history yet and how many days back to read (a new commander
+  rebuilds the last 4 cycles; after that only the gap since EDMC last saw the journal is read, and nothing
+  when you were just playing). Cycles you played while EDMC was closed are counted, archived in order and
+  never double counted; a cycle with no activity shows as an empty row, so the history has no holes. The
+  Cycles tab says what the scan did. New setting: **Powerplay > Journal scan > Cycles to scan** (1-12).
 - Reads `PowerplayStateControlProgress`, `PowerplayStateReinforcement` and `PowerplayStateUndermining` from
   `FSDJump`, `Location` and `CarrierJump`. New `powerplay_ledger.py`, `powerplay_state.py`,
   `powerplay_systems_tab.py` and `tests/test_powerplay_ledger.py`. See `docs/POWERPLAY_TECH_SPEC.md` section 11.

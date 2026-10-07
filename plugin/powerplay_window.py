@@ -26,7 +26,7 @@ from .session import (
     total_merits,
     visited_systems,
 )
-from .powerplay_systems_tab import SystemsPane, SystemsTab
+from .powerplay_systems_tab import CyclesTab, SystemsPane, SystemsTab
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -123,6 +123,7 @@ class SessionWindow:
         tabs.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
         self._current_tab = _CurrentTab(tabs.add("Current session"))
         self._systems_tab = SystemsTab(tabs.add("Systems"), self._toplevel)
+        self._cycles_tab = CyclesTab(tabs.add("Cycles"))
         self._history_tab = _HistoryTab(tabs.add("History"))
 
         self.refresh(current_system)
@@ -143,6 +144,7 @@ class SessionWindow:
             self._systems = systems
         self._current_tab.update(self._sessions.current, self._pp, current_system)
         self._systems_tab.update(self._systems, current_system)
+        self._cycles_tab.update(self._systems)
         self._history_tab.update(self._sessions.history, self._sessions.current)
 
     def _reset_session(self) -> None:
