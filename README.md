@@ -206,6 +206,14 @@ earned in that system, and running merit totals for the session (your game mode 
 the lines under the mode buttons). Click **Sessions** to browse past sessions,
 or **Rescan** if a session's numbers ever look wrong (it re-reads your journal from scratch).
 
+**Systems tab:** in the Sessions window, one tab per system for the current Powerplay cycle (Thursday
+07:00 UTC to Thursday 07:00 UTC; earlier cycles are in the drop-down). Each shows how the system stands
+(state, controlling Power, control progress, reinforcement, undermining: baseline against latest, so you
+can see a gain or a loss) and what **you** earned there. It shows your last 6 systems plus up to **5 you
+pin** (☆ Pin on the tab, or type a name in "Show a system"); × Close tab hides one. Pins are kept per
+commander. The standing figures update when you jump into or log in at a system, so they are as fresh as
+your last visit.
+
 **Rare Goods Finder:** click **Rares** to see the rare commodities closest to where you are. Each
 row shows the origin system, station, landing-pad size, and which Power currently controls that
 system, which is handy for Powerplay hauling. Double-click a row to open that commodity on Inara. Use

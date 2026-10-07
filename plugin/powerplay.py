@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import tkinter as tk
@@ -39,6 +40,8 @@ from .formulas import (
 )
 from .powerplay_clipboard import DEFAULT_TEMPLATE as DEFAULT_CLIPBOARD_TEMPLATE
 from .powerplay_clipboard import PLACEHOLDERS as CLIPBOARD_PLACEHOLDERS
+from . import powerplay_state
+from .powerplay_ledger import PowerplayLedger, TabPrefs, parse_snapshot
 from .session import (
     SessionManager, system_merit_total, system_totals, total_merits, visited_systems,
 )
@@ -377,6 +380,11 @@ _PLEDGE_EVENT_APPLIERS = {
 # the not-pledged checkpoint).
 _SYSTEM_CONTEXT_EVENTS = ("FSDJump", "Docked")
 
+# Events that carry a system's full Powerplay standing (state, control
+# progress, reinforcement, undermining) for the per-system ledger. Docked
+# doesn't repeat those fields; CarrierJump does.
+_LEDGER_SNAPSHOT_EVENTS = ("FSDJump", "Location", "CarrierJump")
+
 # Commodity/data hand-ins at a power contact — see apply_delivery_signal.
 _DELIVERY_EVENTS = ("SearchAndRescue", "DeliverPowerMicroResources")
 
@@ -472,6 +480,12 @@ class PowerplayController:
     def __init__(self) -> None:
         self.tracker = PowerplayTracker()
         self.sessions: Optional[SessionManager] = None
+        self._plugin_dir: Optional[str] = None
+        self._cmdr: Optional[str] = None
+        # Per-commander, per-system ledger for the Sessions window's Systems
+        # tab (powerplay_ledger.py) - swapped out when the commander changes.
+        self.ledger = PowerplayLedger()
+        self.tab_prefs = TabPrefs()
         self._current_system: Optional[str] = None
         # Galactic (x, y, z) from the latest StarPos-carrying event - only
         # the Rare Goods Finder needs it.
@@ -494,11 +508,76 @@ class PowerplayController:
     # --- lifecycle --------------------------------------------------------
 
     def start(self, plugin_dir: str) -> None:
+        self._plugin_dir = plugin_dir
         self.sessions = SessionManager(SessionStore(plugin_dir))
+        # The ledger is per commander and EDMC doesn't say who is active until
+        # the first journal event - the load happens in _switch_cmdr().
 
     def flush(self) -> None:
         if self.sessions is not None:
             self.sessions.flush()
+        self._persist_ledger()
+
+    # --- per-commander system ledger -----------------------------------------
+
+    def _switch_cmdr(self, cmdr: str) -> None:
+        """Save the previous commander's ledger and load this one's."""
+        self._persist_ledger()
+        self._cmdr = cmdr
+        saved = powerplay_state.load_state(self._plugin_dir, cmdr) if self._plugin_dir else None
+        data = saved if isinstance(saved, dict) else {}
+        self.ledger = PowerplayLedger.from_dict(data.get("ledger"))
+        self.tab_prefs = TabPrefs.from_dict(data.get("pinned_systems"), data.get("hidden_systems"))
+        # A cycle that ended while EDMC was closed gets archived now, not on the next event.
+        self.ledger.roll_to(datetime.now(timezone.utc))
+        if saved:
+            logger.info("Restored Powerplay ledger for %s: %d system(s), %d archived cycle(s)",
+                        cmdr, len(self.ledger.records), len(self.ledger.archive))
+
+    def _persist_ledger(self) -> None:
+        if self._plugin_dir is None or self._cmdr is None:
+            return
+        powerplay_state.save_state(self._plugin_dir, self._cmdr, {
+            "ledger": self.ledger.to_dict(),
+            "pinned_systems": self.tab_prefs.pinned,
+            "hidden_systems": self.tab_prefs.hidden,
+        })
+
+    def _record_standing(self, system: Optional[str], entry: Mapping[str, Any]) -> None:
+        """FSDJump/Location/CarrierJump: file the system's Powerplay standing."""
+        snapshot = parse_snapshot(entry)
+        name = entry.get("StarSystem") or system
+        if snapshot is not None and name:
+            self.ledger.record_snapshot(str(name), snapshot)
+            self._persist_ledger()
+
+    def systems_pane(self):
+        """What the Sessions window's Systems tab needs - fetched fresh on every refresh."""
+        from . import powerplay_systems_tab
+        return powerplay_systems_tab.SystemsPane(
+            views=self.ledger.views, prefs=lambda: self.tab_prefs, cmdr=lambda: self._cmdr or "",
+            known_systems=self.ledger.known_systems,
+            actions=powerplay_systems_tab.TabActions(self._toggle_pin, self._close_tab, self._add_system),
+        )
+
+    def _toggle_pin(self, system: str) -> bool:
+        ok = self.tab_prefs.toggle_pin(system)
+        self._after_tab_change()
+        return ok
+
+    def _close_tab(self, system: str) -> None:
+        self.tab_prefs.close(system)
+        self._after_tab_change()
+
+    def _add_system(self, name: str) -> bool:
+        known = {n.casefold(): n for n in self.ledger.known_systems()}
+        ok = self.tab_prefs.add(known.get(name.casefold(), name))
+        self._after_tab_change()
+        return ok
+
+    def _after_tab_change(self) -> None:
+        self._persist_ledger()
+        self._refresh_panel()
 
     # --- journal dispatch ---------------------------------------------------
 
@@ -508,6 +587,8 @@ class PowerplayController:
 
         if system:
             self._current_system = system
+        if cmdr and cmdr != self._cmdr:
+            self._switch_cmdr(cmdr)
 
         star_pos = entry.get("StarPos")
         if (
@@ -590,6 +671,9 @@ class PowerplayController:
                 self._set_status(f"Pledged to {self.tracker.pledge_summary()}")
             return
 
+        if event in _LEDGER_SNAPSHOT_EVENTS:
+            self._record_standing(system, entry)
+
         if event == "Location":
             # "Location" always fires once at startup, after "Powerplay"
             # would have if the commander is pledged — so if pledge status
@@ -623,6 +707,8 @@ class PowerplayController:
         activity = self.tracker.classify_current_activity(system)
         ts = entry.get("timestamp")
         self.sessions.record_merits(activity, gained, system, ts if isinstance(ts, str) else None)
+        if self.ledger.record_merits(system or "", activity, gained, ts if isinstance(ts, str) else None):
+            self._persist_ledger()
 
         ratio = ratio_for(activity)
         cp = 0.0 if not ratio else gained / ratio
@@ -699,6 +785,7 @@ class PowerplayController:
                         )
                         if is_new:
                             self.sessions.record_merits(activity, gained, replay_system, ts)
+                            self.ledger.record_merits(replay_system or "", activity, gained, ts)
                             baseline_ts = ts
                             recovered_events += 1
                             recovered_merits += gained
@@ -708,6 +795,7 @@ class PowerplayController:
             return
 
         self.sessions.record_power(self.tracker.my_power)
+        self._persist_ledger()
         logger.info("Rescanned journal: recovered %d merits across %d events", recovered_merits, recovered_events)
         if recovered_events:
             self._set_last_event(f"Rescan: recovered {recovered_merits} merits ({recovered_events} events)")
@@ -752,7 +840,8 @@ class PowerplayController:
     def _show_sessions(self) -> None:
         if self._panel_parent is not None and self.sessions is not None:
             from . import powerplay_window
-            powerplay_window.show(self._panel_parent, self.sessions, self.tracker, self._current_system)
+            powerplay_window.show(
+                self._panel_parent, self.sessions, self.tracker, self._current_system, self.systems_pane())
 
     def _show_rares(self) -> None:
         if self._panel_parent is not None:
@@ -790,7 +879,7 @@ class PowerplayController:
             self._cp_label["text"] = f"Session CP: {_cp_bits(cp_by_activity)}"
 
         from . import powerplay_window
-        powerplay_window.refresh(self._current_system)
+        powerplay_window.refresh(self._current_system, self.systems_pane())
 
     # --- Settings tab --------------------------------------------------------
 

@@ -1,7 +1,7 @@
 # Technical Specification — Powerplay
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
+**Last updated:** 2026-10-07 (see `CHANGELOG.md`)
 
 The standing reference for Powerplay mode: how merits are attributed to an activity, how Control Points
 are estimated, how sessions work, and how the Rare Goods Finder fits in. For how to use it, see the
@@ -130,3 +130,55 @@ the most useful next step for this feature.
 - The merits-per-CP ratios are estimates.
 - Deliveries and unattributed merits don't produce Control Points.
 - The Rare Goods list is a snapshot; a new rare good needs the list updated.
+
+- The Systems tab (section 11) only knows what the commander's own client has seen: a system's standing
+  updates when they jump in or log in there, and there is no journal replay to rebuild a cycle from before
+  the feature was installed (the archive starts with the first cycle WNTB sees).
+
+## 11. Per-system tracking (Systems tab)
+
+The Sessions window's **Systems** tab is the Powerplay counterpart of the BGS report
+([BGS_TECH_SPEC.md](BGS_TECH_SPEC.md)): per commander, per system, per cycle.
+
+### 11.1 Cycle
+A cycle is the weekly Powerplay period, **Thursday 07:00 UTC to the next** (`powerplay_ledger.cycle_start_for`).
+This is an assumption about Frontier's schedule; it is one constant in the module if it ever moves. There is no
+network lookup (BGS needs one for its irregular tick; this does not). A cycle that ends while EDMC is closed
+is archived on the next start. `MAX_ARCHIVE` (8) closed cycles are kept.
+
+### 11.2 What is recorded
+- **Standing** - from `FSDJump`, `Location` and `CarrierJump` (`Docked` doesn't repeat the fields):
+  `PowerplayState`, `ControllingPower`, `Powers`, `PowerplayStateControlProgress` (0-1, shown as %),
+  `PowerplayStateReinforcement`, `PowerplayStateUndermining`. `before` is the baseline - the newest reading
+  from an earlier cycle, else the first reading this cycle - and `now` the newest. The change is `now - before`,
+  so it reflects **everyone's** work on the system, and it is blank until two readings exist. At a rollover each
+  system's newest reading becomes the next baseline. Readings are applied in timestamp order, so a replayed
+  older one never overwrites a newer one.
+- **What you did** - merits and event counts per activity per system, recorded from the same
+  `_handle_merits` path (and **Rescan**) that fills the session, using the same activity attribution
+  (section 3). CP is derived at display time from the current ratios, as in section 4, and is never stored.
+  Merits timestamped before the cycle began are ignored.
+
+The session tallies in section 6 are untouched and remain per game login; the ledger is per **cycle**, so
+they can differ (a session can straddle a cycle boundary). Reset Session / Reset Current System act on
+sessions only.
+
+### 11.3 Tabs and pins
+Same model as the BGS report (`powerplay_ledger.TabPrefs`, `CycleView.systems`): pinned systems first
+(sorted, starred, always shown even with no data, in every cycle), then the `RECENT_SYSTEMS` (6) most
+recently active others with the current system leading in the live cycle, minus hidden ones. **Close tab**
+hides and unpins; **Show a system** (type-ahead over every known system, free text allowed) pins and un-hides.
+Unlike the BGS report, pins are **capped at `MAX_PINNED` (5)**: pinning a sixth, or adding one, shows a
+message and changes nothing; re-adding an already pinned system always works. The cap is re-applied when a
+state file is loaded.
+
+### 11.4 Persistence
+`powerplay_state.json` in the plugin folder, keyed per commander (case-insensitive match, written
+atomically, other commanders' entries preserved; `powerplay_state.py`, same convention as `bgs_state.py`).
+Holds `ledger` (current cycle + archive), `pinned_systems` and `hidden_systems`. It is protected from
+updates (`update.py`). The controller switches ledger and pins whenever the commander changes.
+
+### 11.5 Tests
+`tests/test_powerplay_ledger.py` covers cycle boundaries, snapshot parsing, standing changes, merit
+tallies, rollover and carried baselines, the archive cap, tab ordering, the pin cap, serialisation and the
+per-commander state file. The widgets are exercised by hand in EDMC.

@@ -59,6 +59,7 @@ _OWN_DATA_FILES: set = {
     "codex_completionist_state.json",  # Codex Completionist's tally (codex_completionist_state.py)
     "session_credits.json",  # Credits this session: the current login's balance record (session_credits.py)
     "bgs_state.json",  # BGS tick ledger, archive, pinned/hidden tabs (bgs_state.py)
+    "powerplay_state.json",  # Powerplay per-system ledger, archive, pinned/hidden tabs (powerplay_state.py)
     "mining_hotspots.json",  # Mining's hotspot catalog (mining_hotspots.py)
     "mining_coverage.json",  # Mining's Rhino coverage map (mining_coverage.py)
     "ship_builds.json",  # Ship Builds list (ship_builds_data.py)
