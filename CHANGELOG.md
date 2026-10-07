@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.2.0 - 2026-10-07
 
 ### Added
 - **Powerplay: a Systems tab** in the Sessions window, the counterpart of the BGS report. One tab per system
@@ -35,6 +35,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   `powerplay_systems_tab.py` and `tests/test_powerplay_ledger.py`. See `docs/POWERPLAY_TECH_SPEC.md` section 11.
 
 ### Changed
+- **Powerplay Current Session tab:** its explanatory notes now span the full window width, re-wrap on resize and are
+  pinned to the bottom of the tab. The Systems tab's cycle summary line is pinned to the bottom as well.
 - **Notes at the bottom of the Powerplay Systems, Cycles and Daily tabs** now span the full width of the window
   and re-wrap as it is resized (they wrapped at a fixed width, leaving a narrow column), in larger text. The
   Systems legend is shorter, and each system's tab scrolls so a short window never hides a table.
