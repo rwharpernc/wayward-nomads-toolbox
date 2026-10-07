@@ -187,22 +187,21 @@ def _stack_features(frame: tk.Frame, placement_key: str, placeholder_text: Optio
         placeholder.grid(row=0, column=0, sticky=tk.W, pady=(4, 0))
 
 
-def _reserve_mode_row_width(frame: tk.Frame) -> None:
-    """Keeps the panel as wide as the mode-button row was when the buttons carried
-    their full labels. EDMC sizes its main window to the widest row across every
-    plugin, and that row used to be what set WNTB's width - shortening the labels
-    (_MODE_BUTTON_TEXT) alone made the whole EDMC window open much narrower. The
-    width is measured from a throwaway, never-displayed row of full-label buttons,
-    so it follows the user's font/DPI and is fixed by the six labels in
-    PANEL_MODES: nothing external can make it grow."""
+def _mode_row_full_label_size(frame: tk.Frame) -> Tuple[int, int]:
+    """(width, height) the mode-button row had when the buttons carried their full
+    labels. EDMC sizes its main window to the widest row across every plugin, and
+    that row used to be what set WNTB's width - shortening the labels
+    (_MODE_BUTTON_TEXT) alone made the whole EDMC window open much narrower. Measured
+    from a throwaway, never-displayed row of full-label buttons, so it follows the
+    user's font/DPI and is fixed by the six labels in PANEL_MODES: nothing external
+    can make it grow."""
     probe = tk.Frame(frame)
     for _key, label in PANEL_MODES:
         tk.Button(probe, text=label).pack(side=tk.LEFT, padx=(0, 6))
     probe.update_idletasks()
-    width = probe.winfo_reqwidth()
+    size = (probe.winfo_reqwidth(), probe.winfo_reqheight())
     probe.destroy()
-    spacer = tk.Frame(frame, width=width, height=1, borderwidth=0)
-    spacer.grid(row=1, column=0, columnspan=3, sticky=tk.W)
+    return size
 
 
 def create_plugin_app(parent: tk.Frame) -> tk.Frame:
@@ -229,15 +228,19 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     _version_label.grid(row=0, column=2, sticky=tk.E, padx=(4, 0))
     _version_label.grid_remove()
 
-    mode_row = tk.Frame(_frame)
+    # The row itself is held at the full-label size (see _mode_row_full_label_size) with
+    # the short buttons centered inside it - no extra widget sits over the buttons.
+    row_width, row_height = _mode_row_full_label_size(_frame)
+    mode_row = tk.Frame(_frame, width=row_width, height=row_height)
+    mode_row.pack_propagate(False)
     mode_row.grid(row=1, column=0, columnspan=3, pady=(6, 0))
+    mode_buttons_frame = tk.Frame(mode_row)
+    mode_buttons_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
     for key, label in PANEL_MODES:
-        btn = tk.Button(mode_row, text=_MODE_BUTTON_TEXT.get(key, label), command=lambda k=key: _on_panel_mode_click(k))
+        btn = tk.Button(mode_buttons_frame, text=_MODE_BUTTON_TEXT.get(key, label), command=lambda k=key: _on_panel_mode_click(k))
         panelkit.add_tooltip(btn, _MODE_TOOLTIPS.get(key, label))
         btn.pack(side=tk.LEFT, padx=(0, 6) if key != PANEL_MODES[-1][0] else (0, 0))
         _mode_buttons[key] = btn
-
-    _reserve_mode_row_width(_frame)
 
     # Session strip (game mode, then credits this session) + a separator,
     # directly under the buttons and before any page content: visible in every

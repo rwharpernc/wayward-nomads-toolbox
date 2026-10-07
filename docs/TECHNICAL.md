@@ -150,7 +150,7 @@ below the row.
 **Short button names and tooltips.** The EDMC window is small and shared, so main-panel buttons use
 abbreviations (the table is in the README's "Button names"), and `panelkit.add_tooltip` shows the full name on
 hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
-`ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder. EDMC sizes its window to the widest row across all plugins, and the mode row used to be WNTB's widest, so `ui._reserve_mode_row_width` adds a fixed-width spacer measured from a throwaway row of full-label buttons; without it the shortened labels made EDMC open far narrower.
+`ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder. EDMC sizes its window to the widest row across all plugins, and the mode row used to be WNTB's widest, so the mode row is held at the size measured from a throwaway row of full-label buttons (`ui._mode_row_full_label_size`), with the short buttons centered inside it; without that the shortened labels made EDMC open far narrower. Don't implement this with a thin spacer widget in the same grid cell: it draws a line across the buttons.
 
 **Collapsible sections.** `panelkit.collapsible_section` gives GEC Nearby POI, Canonn Nearby POI and Codex
 Completionist a clickable ▸/▾ title over a body frame, collapsed unless the saved flag
