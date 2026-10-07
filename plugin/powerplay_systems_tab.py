@@ -237,7 +237,7 @@ class SystemsTab:
                                  font=style.font(P.FONT_SMALL))
         self._heading.pack(fill="x", pady=(P.PAD_SM, 0))
         self._summary = NoteLabel(parent, fg=P.TEXT, font=P.FONT_BOLD)
-        self._summary.pack(fill="x", pady=(2, 0))
+        self._summary.pack(side="bottom", fill="x", pady=(2, 0))
 
         picker = tk.Frame(parent, bg=P.PANE)
         picker.pack(fill="x", padx=P.PAD, pady=(P.PAD_SM, P.PAD_SM))

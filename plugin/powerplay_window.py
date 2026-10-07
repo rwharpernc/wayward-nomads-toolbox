@@ -31,7 +31,7 @@ from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
-from .uikit.widgets import ScrollFrame, Tabs, field_grid, section_header
+from .uikit.widgets import NoteLabel, ScrollFrame, Tabs, field_grid, section_header
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -255,6 +255,21 @@ class _CurrentTab:
     def __init__(self, parent: tk.Frame) -> None:
         self._heading_shown: Optional[tuple] = None
         self._context_shown: Optional[tuple] = None
+        # Explanatory notes are pinned to the bottom of the tab, full width, and
+        # packed before the scroll area so they keep their height when it shrinks.
+        NoteLabel(
+            parent, fg=P.WARN,
+            text=(
+                "The journal doesn't say which activity your merits were for, so WNTB infers it from "
+                "who controlled the system when they landed: uncontrolled = Acquisition, your Power = "
+                "Reinforcement, a rival Power = Undermining. If a system's breakdown above looks wrong, "
+                "compare it against the context shown here."
+            ),
+        ).pack(side="bottom", fill="x", pady=(P.PAD_SM, P.PAD_SM))
+        NoteLabel(
+            parent,
+            text="By System: what you've earned in each system this session — the current one is marked and stays first.",
+        ).pack(side="bottom", fill="x")
         scroll = ScrollFrame(parent)
         scroll.pack(fill="both", expand=True)
         body = scroll.body
@@ -265,10 +280,6 @@ class _CurrentTab:
 
         # --- By system -----------------------------------------------------
         section_header(body, "By System").pack(fill="x")
-        tk.Label(
-            body, bg=P.PANE, fg=P.MUTED, anchor="w", justify="left", wraplength=900, padx=P.PAD,
-            text="What you've earned in each system this session — the current one is marked and stays first.",
-        ).pack(fill="x", pady=(0, 6))
         self._system_table = DataTable(body, _SYSTEM_COLUMNS, sortable=False, visible_rows=6)
         self._system_table.pack(fill="x", padx=P.PAD, pady=(0, P.PAD))
 
@@ -282,16 +293,6 @@ class _CurrentTab:
         section_header(body, "Current PowerPlay Context").pack(fill="x")
         self._context = tk.Frame(body, bg=P.PANE)
         self._context.pack(fill="x", padx=P.PAD, pady=(0, 8))
-
-        tk.Label(
-            body, bg=P.PANE, fg=P.WARN, anchor="w", justify="left", wraplength=900, padx=P.PAD,
-            text=(
-                "The journal doesn't say which activity your merits were for, so WNTB infers it from "
-                "who controlled the system when they landed: uncontrolled = Acquisition, your Power = "
-                "Reinforcement, a rival Power = Undermining. If a system's breakdown above looks wrong, "
-                "compare it against the context shown here."
-            ),
-        ).pack(fill="x", pady=(0, P.PAD))
 
     def update(self, session: Dict[str, Any], pp: PowerplayTracker, current_system: Optional[str]) -> None:
         cmdr = session.get("cmdr") or "(unknown)"
