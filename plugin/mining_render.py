@@ -211,7 +211,7 @@ def render_ring_caution(content: tk.Frame, wrap: int, row: int, enabled: bool) -
 
 
 BUTTON_ORDER = ("ledger", "save_hotspot", "hotspot_finder", "price_finder", "reserve_lookup", "hotspot_import_export")
-"""Left-to-right order of the panel's buttons in their one row: BOOK, +HOT, HOT, PRC,
+"""Left-to-right order of the panel's buttons in their one row: BOOK, +H.S., H.S., PRICE,
 RES, I/E. A button not offered on the current page, or switched off in Settings, is
 simply left out."""
 

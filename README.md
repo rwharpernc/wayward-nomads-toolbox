@@ -163,12 +163,12 @@ Switch to the mode, then use the button listed here.
 | Window | Mode | How to open it |
 |---|---|---|
 | Powerplay Sessions (tabs: Current session, Systems, Cycles, Daily, History) | Powerplay | **SES** button (bottom row of the panel) |
-| Rare Goods Finder | Powerplay | **RAR** button, next to SES |
-| BGS Report | BGS | **RPT** button |
+| Rare Goods Finder | Powerplay | **RARES** button, next to SES |
+| BGS Report | BGS | **REPORT** button |
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there's no button) |
-| Ship Builds | Field Ops | **BLD** button |
-| Colonisation | Field Ops | **COL** button |
+| Ship Builds | Field Ops | **SHIPS** button |
+| Colonisation | Field Ops | **REPORT** button |
 | Mining Book | Mining | **BOOK** button, on both the Space Mining and Surface Mining pages |
 
 A few notes:
@@ -191,9 +191,9 @@ Hover over any button for a moment to see its full name.
 | **MSN** | Missions | Mode buttons |
 | **OPS** | Field Ops | Mode buttons |
 | **SES** | Sessions | Powerplay |
-| **RAR** | Rares (rare goods finder) | Powerplay |
-| **RSC** | Rescan | Powerplay |
-| **RPT** | View BGS report | BGS |
+| **RARES** | Rares (rare goods finder) | Powerplay |
+| **RESCAN** | Rescan | Powerplay |
+| **REPORT** | View BGS report | BGS |
 | **A.H.** | Auto-Honk | Exploration |
 | **D.A.** | Discovery Alerts | Exploration |
 | **N.S.** | Nearest neutron star (primary star) | Exploration |
@@ -203,14 +203,14 @@ Hover over any button for a moment to see its full name.
 | **REF** | Refresh POI data (Canonn) | Exploration |
 | **DET** | View details (Codex Completionist) | Exploration |
 | **BKF** | Backfill from journal history (Codex Completionist) | Exploration |
-| **HOT** | Find nearby hotspots | Mining |
-| **+HOT** | Save hotspot here | Mining |
-| **PRC** | Find best price | Mining |
+| **H.S.** | Find nearby hotspots | Mining |
+| **+H.S.** | Save hotspot here | Mining |
+| **PRICE** | Find best price | Mining |
 | **RES** | Check ring reserve level | Mining |
 | **I/E** | Import/export hotspots | Mining |
 | **BOOK** | Mining Book | Mining |
-| **BLD** | Manage ship builds | Field Ops |
-| **COL** | Colonisation sites | Field Ops |
+| **SHIPS** | Manage ship builds | Field Ops |
+| **REPORT** | Colonisation sites | Field Ops |
 
 The buttons inside pop-out windows and Settings keep their full names.
 
@@ -256,7 +256,7 @@ commander**, so a commander pledged to another Power, or to none, has their own 
 
 **How to use it:** just play. The panel shows your current system's Powerplay state, what you've
 earned in that system, and running merit totals for the session (your game mode and credits are on
-the lines under the mode buttons). Click **SES** to open the Sessions window, or **RSC** if a
+the lines under the mode buttons). Click **SES** to open the Sessions window, or **RESCAN** if a
 session's numbers ever look wrong (it re-reads your journal from scratch).
 
 ### The Sessions window
@@ -297,7 +297,7 @@ you're in (the same for the per-system and daily numbers). Control Points are es
 you can edit. Delivery and unattributed merits count as merits only. The detail is in the
 [Powerplay specification](docs/POWERPLAY_TECH_SPEC.md).
 
-**Rare Goods Finder:** click **RAR** to see the rare commodities closest to where you are. Each
+**Rare Goods Finder:** click **RARES** to see the rare commodities closest to where you are. Each
 row shows the origin system, station, landing-pad size, and which Power currently controls that
 system, which is handy for Powerplay hauling. Double-click a row to open that commodity on Inara. Use
 **Show nearest** to choose how many rows to see (up to all 141). The list needs your position, so it
@@ -437,13 +437,13 @@ plus your own catalogue of known hotspots.
 **How to use it:** use the ◂ and ▸ arrows to switch between the two pages. Each shows live stats for
 your current run. Buttons appear when they're useful, side by side in one row (hover for the full name):
 
-- **+HOT** (save hotspot here) records a deposit you've found.
+- **+H.S.** (save hotspot here) records a deposit you've found.
 - **BOOK** (the Mining Book) opens a window listing the bodies you've scanned in this system and every hotspot
   you've saved. You can filter by material or number of rigs, see tons mined and an estimate of tons
   left, edit or mark a hotspot as depleted, copy its coordinates, and view a zoomable map. For a
   scanned body it also shows what *you've* found so far on that kind of body. That starts empty and
   fills in as you save hotspots; it describes your own finds, not what a body actually holds.
-- **HOT** (find nearby hotspots), **PRC** (find best price) and **RES** (check ring reserve level) look things up on
+- **H.S.** (find nearby hotspots), **PRICE** (find best price) and **RES** (check ring reserve level) look things up on
   Spansh and EDSM. They're off until you turn them on in Settings.
 
 **Settings:** turn on the lookups above, show live stats on your game screen, show a surface arrow
@@ -492,7 +492,7 @@ commander. WNTB doesn't design ships itself. This just helps you find a build ag
 
 **How to use it:**
 1. Design your build on whichever site you like.
-2. Click **BLD** (manage ship builds) in the WNTB panel.
+2. Click **SHIPS** (manage ship builds) in the WNTB panel.
 3. Click **Add**, give it a name (and optionally a role, such as "PvE Exploration"), pick the site and
    paste the build's web address.
 4. Click **Save**.
@@ -508,7 +508,7 @@ docked, and what you still have to find after counting the cargo already in your
 1. Dock at a construction depot (or open its market) once. WNTB registers the site from the game's
    journal. There's nothing to type in.
 2. The Field Ops panel shows your most recently updated site: its progress and the tonnes still to go.
-3. Click **COL** (colonisation sites) for the full list. Each site is a group with its outstanding
+3. Click **REPORT** (colonisation sites) for the full list. Each site is a group with its outstanding
    commodities underneath: required, delivered, remaining, how much is in your cargo now, and how much
    is left **To Source**.
 
@@ -535,7 +535,7 @@ state show how far they moved since before the tick, for example `45.0% (+5.0)` 
 missions failed or abandoned, bounty voucher and combat bond redemptions, trade profit or loss, exploration
 data sold, and crimes committed against a faction.
 
-**RPT** (view BGS report) opens a window with a drop-down to pick the tick (the current one, or an earlier one
+**REPORT** (view BGS report) opens a window with a drop-down to pick the tick (the current one, or an earlier one
 from the archive) and one tab per system you've acted in during it. Each tab lists every faction there
 (state, influence and change, pending, recovering and active states) and a table of what you did to each.
 Tabs show the last 6 systems you've been in (the one you're in first), with each tab's full system name.
@@ -612,7 +612,7 @@ match it. Use the **Test** buttons in each feature's Settings tab to check.
 
 **Numbers look wrong or out of date.**
 Many features read the game's journal, so they only know what has happened since EDMC started, plus a
-bit of recent history. Powerplay has a **RSC** (rescan) button. Codex Completionist has **BKF** (backfill from
+bit of recent history. Powerplay has a **RESCAN** button. Codex Completionist has **BKF** (backfill from
 journal history).
 
 **Something else is wrong.**

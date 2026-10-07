@@ -214,13 +214,13 @@ class MiningPanelController:
         self._buttons = render.PanelButtons(
             bar=button_bar,
             hotspot_finder=tk.Button(
-                button_bar, text="HOT",
+                button_bar, text="H.S.",
                 command=lambda: hotspot_finder_dialog.open_hotspot_finder_dialog(self._content)),
             save_hotspot=tk.Button(
-                button_bar, text="+HOT",
+                button_bar, text="+H.S.",
                 command=lambda: render.open_add_hotspot_dialog(self._content)),
             price_finder=tk.Button(
-                button_bar, text="PRC",
+                button_bar, text="PRICE",
                 command=lambda: price_finder_dialog.open_price_finder_dialog(
                     self._content, suggested_commodities=self._current_run_refined_commodities())),
             reserve_lookup=tk.Button(

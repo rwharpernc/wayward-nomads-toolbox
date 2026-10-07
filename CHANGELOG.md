@@ -14,8 +14,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Tooltips** on the shortened Exploration buttons: hover one for its full name. A.H. (Auto-Honk), D.A.
   (Discovery Alerts), N.S. (neutron), W.D. (white dwarf), RND (Random), FIND (nearest POI, GEC and Canonn),
   REF (refresh Canonn data), DET (Codex details) and BKF (Codex backfill).
-- **Short button names on the other pages too**, each with a tooltip: Powerplay SES / RAR / RSC (Sessions,
-  Rares, Rescan), BGS RPT (report), Mining HOT / +HOT / PRC / RES / I/E / BOOK, and Field Ops BLD / COL
+- **Short button names on the other pages too**, each with a tooltip: Powerplay SES / RARES / RESCAN (Sessions,
+  Rares, Rescan), BGS REPORT (report), Mining H.S. / +H.S. / PRICE / RES / I/E / BOOK, and Field Ops SHIPS / REPORT
   (Ship Builds, Colonisation). The EDMC main window is small and shared with every other plugin, so the
   abbreviations keep WNTB's panel compact. The README has a new "Button names" table.
 - **Mode-select buttons shortened the same way**: P.P. (Powerplay), BGS, EXP (Exploration), MIN (Mining),
@@ -23,7 +23,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   The panel keeps the width the full-label button row had, so EDMC still opens at its usual width.
 
 ### Changed
-- **Mining buttons are in one row** instead of stacked one per row: BOOK, +HOT, HOT, PRC, RES and I/E, showing
+- **Mining buttons are in one row** instead of stacked one per row: BOOK, +H.S., H.S., PRICE, RES and I/E, showing
   only the ones that apply to the page (Space or Surface) and are switched on in Settings.
 - **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
   Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
