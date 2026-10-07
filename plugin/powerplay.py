@@ -968,9 +968,16 @@ class PowerplayController:
 
         windows_row = tk.Frame(parent)
         windows_row.grid(row=8, column=0, sticky=tk.W, pady=(4, 0))
-        tk.Button(windows_row, text="Sessions", command=self._show_sessions).pack(side=tk.LEFT, padx=(0, 6))
-        tk.Button(windows_row, text="Rares", command=self._show_rares).pack(side=tk.LEFT, padx=(0, 6))
-        tk.Button(windows_row, text="Rescan", command=self.rescan_journal).pack(side=tk.LEFT)
+        sessions_button = tk.Button(windows_row, text="SES", command=self._show_sessions)
+        sessions_button.pack(side=tk.LEFT, padx=(0, 6))
+        panelkit.add_tooltip(sessions_button, "Sessions - open the Powerplay sessions window")
+        rares_button = tk.Button(windows_row, text="RAR", command=self._show_rares)
+        rares_button.pack(side=tk.LEFT, padx=(0, 6))
+        panelkit.add_tooltip(rares_button, "Rares - open the nearby rare goods window")
+        rescan_button = tk.Button(windows_row, text="RSC", command=self.rescan_journal)
+        rescan_button.pack(side=tk.LEFT)
+        panelkit.add_tooltip(
+            rescan_button, "Rescan - re-read the current journal to recover merits missed after an EDMC restart")
 
         self._refresh_panel()
 

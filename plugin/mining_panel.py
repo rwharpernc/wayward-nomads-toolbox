@@ -210,25 +210,33 @@ class MiningPanelController:
         # set_button_row()/place_gated_button().
         self._buttons = render.PanelButtons(
             hotspot_finder=tk.Button(
-                self._content, text="Find Nearby Hotspots...",
+                self._content, text="HOT",
                 command=lambda: hotspot_finder_dialog.open_hotspot_finder_dialog(self._content)),
             save_hotspot=tk.Button(
-                self._content, text="+ Save Hotspot Here",
+                self._content, text="+HOT",
                 command=lambda: render.open_add_hotspot_dialog(self._content)),
             price_finder=tk.Button(
-                self._content, text="Find Best Price...",
+                self._content, text="PRC",
                 command=lambda: price_finder_dialog.open_price_finder_dialog(
                     self._content, suggested_commodities=self._current_run_refined_commodities())),
             reserve_lookup=tk.Button(
-                self._content, text="Check Ring Reserve Level...",
+                self._content, text="RES",
                 command=lambda: reserve_lookup_dialog.open_reserve_lookup_dialog(self._content)),
             hotspot_import_export=tk.Button(
-                self._content, text="Import/Export Hotspots...",
+                self._content, text="I/E",
                 command=lambda: hotspot_import_export.open_import_export_dialog(self._content)),
             ledger=tk.Button(
-                self._content, text="Mining Book...",
+                self._content, text="BOOK",
                 command=lambda: ledger.show(self._content)),
         )
+        for button, tip in (
+                (self._buttons.hotspot_finder, "Find Nearby Hotspots - find rings with a confirmed hotspot for a commodity (Spansh)"),
+                (self._buttons.save_hotspot, "Save Hotspot Here - save the current ring as a hotspot"),
+                (self._buttons.price_finder, "Find Best Price - find the best-paying station for a commodity (Spansh)"),
+                (self._buttons.reserve_lookup, "Check Ring Reserve Level - look up a ring's reserve level"),
+                (self._buttons.hotspot_import_export, "Import/Export Hotspots - import or export your saved hotspots"),
+                (self._buttons.ledger, "Mining Book - open your mining ledger")):
+            panelkit.add_tooltip(button, tip)
         for button in (self._buttons.hotspot_finder, self._buttons.save_hotspot,
                       self._buttons.price_finder, self._buttons.reserve_lookup,
                       self._buttons.hotspot_import_export, self._buttons.ledger):

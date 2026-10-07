@@ -14,6 +14,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Tooltips** on the shortened Exploration buttons: hover one for its full name. A.H. (Auto-Honk), D.A.
   (Discovery Alerts), N.S. (neutron), W.D. (white dwarf), RND (Random), FIND (nearest POI, GEC and Canonn),
   REF (refresh Canonn data), DET (Codex details) and BKF (Codex backfill).
+- **Short button names on the other pages too**, each with a tooltip: Powerplay SES / RAR / RSC (Sessions,
+  Rares, Rescan), BGS RPT (report), Mining HOT / +HOT / PRC / RES / I/E / BOOK, and Field Ops BLD / COL
+  (Ship Builds, Colonisation). The EDMC main window is small and shared with every other plugin, so the
+  abbreviations keep WNTB's panel compact. The README has a new "Button names" table.
 
 ### Changed
 - **Exploration: Codex Completionist, Canonn Nearby POI and GEC Nearby POI start minimized.** Click a title

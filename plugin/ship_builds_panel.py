@@ -91,9 +91,9 @@ class ShipBuildsController:
         panelkit.wrap_label(parent, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
         )
-        tk.Button(parent, text="Manage Ship Builds", command=self._on_manage_clicked).grid(
-            row=2, column=0, sticky=tk.W, pady=(4, 0),
-        )
+        manage_button = tk.Button(parent, text="BLD", command=self._on_manage_clicked)
+        manage_button.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
+        panelkit.add_tooltip(manage_button, "Manage Ship Builds - open your ship builds")
 
     def _on_manage_clicked(self) -> None:
         if self._parent is None:
