@@ -467,6 +467,9 @@ class BgsController:
             row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(10, 4),
         )
         nb.Label(
+            frame, text=panelkit.WORK_IN_PROGRESS_NOTE, wraplength=440, justify=tk.LEFT, foreground="#c07000",
+        ).grid(row=99, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(14, 10))
+        nb.Label(
             frame,
             text=(
                 "The BGS panel shows the system you're in: each faction's state and influence, "

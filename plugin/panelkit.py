@@ -11,6 +11,13 @@ mechanics every one of them needs.
 
 from __future__ import annotations
 
+WORK_IN_PROGRESS_NOTE = (
+    "Work in progress: this feature is still being developed. Feedback, bug reports and ideas are very welcome - "
+    "please open an issue at https://github.com/rwharpernc/wayward-nomads-toolbox/issues or find me in the "
+    "Wayward Nomads squadron."
+)
+"""Shown at the foot of the Settings tab of every feature that is still taking shape."""
+
 import logging
 import os
 import tkinter as tk

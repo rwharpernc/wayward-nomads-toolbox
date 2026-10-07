@@ -34,6 +34,21 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   `FSDJump`, `Location` and `CarrierJump`. New `powerplay_ledger.py`, `powerplay_state.py`,
   `powerplay_systems_tab.py` and `tests/test_powerplay_ledger.py`. See `docs/POWERPLAY_TECH_SPEC.md` section 11.
 
+### Changed
+- **Notes at the bottom of the Powerplay Systems, Cycles and Daily tabs** now span the full width of the window
+  and re-wrap as it is resized (they wrapped at a fixed width, leaving a narrow column), in larger text. The
+  Systems legend is shorter, and each system's tab scrolls so a short window never hides a table.
+- **Work in progress.** Boxel Survey, Powerplay and BGS now say so, with a request for feedback, in the README
+  and at the foot of their Settings tabs. The Powerplay README section and specification were rewritten to cover
+  the Systems, Cycles and Daily tabs, cycles, the journal scan and the per-commander separation.
+
+### Fixed
+- **Powerplay Sessions window freezing** while open (it showed when clicking the Cycles tab). Every journal event
+  rebuilt all five tabs (about 0.6 to 1.2 seconds on a real history), so a burst of events locked up EDMC. The
+  window now redraws once, shortly after the last change, only for the tab being shown (others are drawn when you
+  select them), and a table whose rows haven't changed is left alone (`DataTable.set_rows`). `Tabs` gained an
+  `on_select` callback for this.
+
 ## 1.1.5 - 2026-10-03
 
 ### Fixed

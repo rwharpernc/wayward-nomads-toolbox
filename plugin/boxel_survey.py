@@ -1174,6 +1174,9 @@ class BoxelSurveyController:
         nb.Label(frame, text="Boxel Survey", font=("TkDefaultFont", 9, "bold")).grid(
             row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4),
         )
+        nb.Label(
+            frame, text=panelkit.WORK_IN_PROGRESS_NOTE, wraplength=440, justify=tk.LEFT, foreground="#c07000",
+        ).grid(row=99, column=0, sticky=tk.W, padx=10, pady=(14, 10))
         nb.Checkbutton(
             frame, text="Auto-copy next target to clipboard on jump", variable=self._autocopy_var,
         ).grid(row=1, column=0, sticky=tk.W, padx=10)

@@ -1048,6 +1048,10 @@ class PowerplayController:
         scan_section.grid(row=7, column=0, sticky=tk.NSEW)
         self._build_scan_section(scan_section)
 
+        nb.Label(
+            tab, text=panelkit.WORK_IN_PROGRESS_NOTE, wraplength=440, justify=tk.LEFT, foreground="#c07000",
+        ).grid(row=8, column=0, sticky=tk.W, padx=10, pady=(14, 10))
+
     def _build_scan_section(self, frame: nb.Frame) -> None:
         nb.Label(
             frame,

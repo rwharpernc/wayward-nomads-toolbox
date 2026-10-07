@@ -152,7 +152,7 @@ Switch to the mode, then use the button listed here.
 
 | Window | Mode | How to open it |
 |---|---|---|
-| Powerplay Sessions | Powerplay | **Sessions** button (bottom row of the panel) |
+| Powerplay Sessions (tabs: Current session, Systems, Cycles, Daily, History) | Powerplay | **Sessions** button (bottom row of the panel) |
 | Rare Goods Finder | Powerplay | **Rares** button, next to Sessions |
 | BGS Report | BGS | **View BGS Report** button |
 | Codex Completionist | Exploration | **View Details** button in the Codex Completionist section |
@@ -199,32 +199,56 @@ them, as I do: [EDSM](https://www.patreon.com/EDSM), [Spansh](https://www.patreo
 
 ## Powerplay
 
-Tracks the merits and Control Points you earn for your pledged Power.
+> **Work in progress.** Powerplay is still being built, and I'd really appreciate your feedback: if something
+> looks wrong, or you have a suggestion, please [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward
+> Nomads squadron. See [Getting help](#getting-help).
+
+Tracks the merits and Control Points you earn for your pledged Power: live on the panel, and in the Sessions
+window per session, per system, per Powerplay cycle and per day. Everything is kept **separately for each
+commander**, so a commander pledged to another Power, or to none, has their own numbers.
 
 **How to use it:** just play. The panel shows your current system's Powerplay state, what you've
 earned in that system, and running merit totals for the session (your game mode and credits are on
-the lines under the mode buttons). Click **Sessions** to browse past sessions,
-or **Rescan** if a session's numbers ever look wrong (it re-reads your journal from scratch).
+the lines under the mode buttons). Click **Sessions** to open the Sessions window, or **Rescan** if a
+session's numbers ever look wrong (it re-reads your journal from scratch).
 
-**Systems tab:** in the Sessions window, one tab per system for the current Powerplay cycle (Thursday
-07:00 UTC to Thursday 07:00 UTC; earlier cycles are in the drop-down). Each shows how the system stands
-(state, controlling Power, control progress, reinforcement, undermining: baseline against latest, so you
-can see a gain or a loss) and what **you** earned there. It shows your last 6 systems plus up to **5 you
-pin** (☆ Pin on the tab, or type a name in "Show a system"); × Close tab hides one. A line above the
-tabs totals the cycle (merits, estimated CP, systems worked). The **Cycles** tab lists every past cycle
-(cycle 101 began 2026-10-01) with the Power you were pledged to then. Pins and history are kept per
-commander, so a commander pledged to another Power, or to none, has their own.
+### The Sessions window
 
-**Daily tab:** merits and estimated CP for each day of a cycle (whole numbers, plus a total). A cycle runs
-Thursday 07:00 UTC to the next Thursday 07:00 UTC, and each day is 07:00 to 07:00 UTC. Pick the current cycle or
-an earlier one at the top.
+| Tab | What it shows |
+|---|---|
+| **Current session** | This login: merits and estimated Control Points by system and by activity, and the Power context WNTB is using. |
+| **Systems** | One tab per system for the cycle (see below), with the system's standing and what you earned there. |
+| **Cycles** | One row per Powerplay cycle, newest first: period, the Power you were pledged to, systems worked, merits, estimated CP, merits by activity. |
+| **Daily** | Merits and estimated CP (whole numbers) for each day of a cycle, with a total. |
+| **History** | Every past session. |
 
-**Catching up from your journals:** the first time WNTB sees a commander it reads their journals to
-fill in the last few cycles (4 by default; **Settings > Powerplay > Journal scan**), and after that
-only what happened while EDMC was closed, so playing without it running doesn't lose a cycle. It
-works out how far back to read from the cycle date, and does nothing if there's nothing new. Journals
-you've deleted can't be read, and your own totals are never replaced by smaller ones. The standing figures update when you jump into or log in at a system, so they are as fresh as
-your last visit.
+**Cycles.** A Powerplay cycle runs from Thursday 07:00 UTC to the next Thursday 07:00 UTC and is numbered
+(cycle 101 began on 2026-10-01). Each day of a cycle also runs 07:00 to 07:00 UTC, so day 1 is the Thursday.
+The Systems, Cycles and Daily tabs all have a drop-down to look at an earlier cycle.
+
+**Systems tab.**
+- A line above the tabs totals the cycle: merits, estimated CP and how many systems you worked.
+- Each system's **Standing** table compares a baseline (the system's last reading before the cycle began, or
+  your first reading this cycle) with the latest: state, controlling Power, control progress, reinforcement
+  and undermining, with the change. These are whole-system figures from the journal, everyone's work and not
+  just yours, so you can see a system you're defending gaining or losing ground. They only update when you
+  jump into or log in at the system, so they are as fresh as your last visit.
+- **What you did** shows your own merits there by activity, with estimated Control Points.
+- It shows your last 6 systems plus up to **5 you pin**. Click **☆ Pin** on a tab, or type a name in
+  **Show a system** (it suggests as you type) and press **Add system**; **× Close tab** hides a system. Pinned
+  tabs stay, in every cycle, even with no data. Pins and hidden tabs are remembered for each commander.
+
+**Catching up from your journals.** The first time WNTB sees a commander it reads their journals to fill in the
+last few cycles (4 by default; change it under **Settings > Powerplay > Journal scan**, 1 to 12), and after that it
+reads only what happened while EDMC was closed, so playing without it running doesn't lose a cycle. It works out
+what cycle it is, which cycles aren't in that commander's history yet and how many days back to read, and does
+nothing when there's nothing new. The **Cycles** tab shows what it did. It can't read journals you've deleted, and
+your own totals are never replaced by smaller ones.
+
+**Good to know.** The journal doesn't say which activity merits came from, so WNTB infers it from the system
+you're in (the same for the per-system and daily numbers). Control Points are estimates from merits using ratios
+you can edit. Delivery and unattributed merits count as merits only. The detail is in the
+[Powerplay specification](docs/POWERPLAY_TECH_SPEC.md).
 
 **Rare Goods Finder:** click **Rares** to see the rare commodities closest to where you are. Each
 row shows the origin system, station, landing-pad size, and which Power currently controls that
@@ -233,8 +257,9 @@ system, which is handy for Powerplay hauling. Double-click a row to open that co
 says "Awaiting system data" until your first jump or login after EDMC starts. A "—" in the Power
 column means unclaimed or couldn't be checked.
 
-**Settings:** adjust the merit-per-Control-Point ratios (only needed if Frontier changes them) and
-change the text used when you click **Copy** to paste a session summary into Discord or a forum post.
+**Settings:** adjust the merit-per-Control-Point ratios (only needed if Frontier changes them), change the
+text used when you click **Copy Progress** to paste a summary into Discord or a forum post, and choose how many
+cycles the start-up journal scan covers.
 
 ## Exploration
 
@@ -258,6 +283,11 @@ moment you're the first to scan or map a body.
 tab. Use **Settings → Discovery** to move the banner or send a test one.
 
 ### Boxel Survey
+
+> **Work in progress.** Boxel Survey is still being built, and I'd really appreciate your feedback: if something
+> looks wrong, or you have a suggestion, please [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward
+> Nomads squadron. See [Getting help](#getting-help).
+
 A tool for exploring the galaxy systematically, system by system. (A "boxel" is a small cube of space
 that Elite's procedurally generated systems are named after, such as `Outotz LS-K d8-0`.) It has three
 modes, which you switch between with the buttons at the top of its section. The section is collapsed
@@ -427,6 +457,11 @@ copy that site's list (handy for a squadron channel), **Remove Site** to stop tr
 Finished** to clear completed and failed sites.
 
 ## BGS
+
+> **Work in progress.** BGS tracking is still being built, and I'd really appreciate your feedback: if something
+> looks wrong, or you have a suggestion, please [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward
+> Nomads squadron. See [Getting help](#getting-help).
+
 
 Tracks the Background Simulation (BGS): faction states, and the effect of your own missions, bounties,
 trade, exploration and crimes on them. Nothing to set up: it records wherever you act.

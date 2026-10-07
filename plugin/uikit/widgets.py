@@ -91,6 +91,25 @@ class ScrollFrame(tk.Frame):
         self._canvas.yview_moveto(0)
 
 
+class NoteLabel(tk.Label):
+    """A wrapped note that spans the full width of its parent and re-wraps as the
+    window is resized (a fixed `wraplength` leaves a narrow column in a wide window).
+    Body-size text by default; muted unless given another colour."""
+
+    _START_WRAP = 600  # until the first layout; a huge unwrapped request would stretch the window
+
+    def __init__(self, parent: tk.Misc, text: str = "", fg: str = P.MUTED, bg: str = P.PANE,
+                 font: tuple = P.FONT_BODY, padx: int = P.PAD) -> None:
+        super().__init__(parent, text=text, fg=fg, bg=bg, anchor="w", justify="left", padx=padx,
+                         wraplength=self._START_WRAP, font=style.font(font))
+        self.bind("<Configure>", self._rewrap)
+
+    def _rewrap(self, event: tk.Event) -> None:
+        width = max(event.width - 2 * int(str(self.cget("padx"))), 100)
+        if width != int(str(self.cget("wraplength"))):
+            self.configure(wraplength=width)
+
+
 class Row(tk.Frame):
     """One selectable list row: title, optional sub line, right-aligned
     detail, optional pill. Hover/selected colours come from the palette."""
@@ -427,6 +446,8 @@ class Tabs(tk.Frame):
         self._cells: list[tk.Frame] = []
         self._visible: list[bool] = []
         self._selected = -1
+        self.on_select: Optional[Callable[[int], None]] = None
+        """Called with the tab's index after it is selected (so a window can update just the tab being shown)."""
 
     def add(self, title: str) -> tk.Frame:
         index = len(self._tabs)
@@ -502,6 +523,8 @@ class Tabs(tk.Frame):
             else:
                 content.pack_forget()
         self._selected = index
+        if self.on_select is not None:
+            self.on_select(index)
 
 
 def field_grid(parent: tk.Misc, row: int, pairs: Sequence[tuple[str, str]], bg: str = P.PANE) -> None:
