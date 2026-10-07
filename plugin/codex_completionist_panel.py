@@ -116,16 +116,14 @@ class CodexCompletionistController:
     def build_panel(self, parent: tk.Frame) -> None:
         self._parent = parent
 
-        tk.Label(parent, text="Codex Completionist", font=panelkit.bold_font(parent)).grid(
-            row=0, column=0, columnspan=3, sticky=tk.W,
-        )
+        body = panelkit.collapsible_section(parent, "Codex Completionist", "wntb_codex_completionist_collapsed")
 
         self._summary_var = tk.StringVar(value=_summary_text(self._tally) if enabled() else _DISABLED_TEXT)
-        panelkit.wrap_label(parent, textvariable=self._summary_var, anchor="w").grid(
+        panelkit.wrap_label(body, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
         )
 
-        button_row = tk.Frame(parent)
+        button_row = tk.Frame(body)
         button_row.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
         tk.Button(button_row, text="View Details", command=self._on_view_details).pack(side=tk.LEFT)
         tk.Button(button_row, text="Backfill from Journal History", command=self._on_backfill).pack(
@@ -133,7 +131,7 @@ class CodexCompletionistController:
         )
 
         self._status_var = tk.StringVar(value="")
-        panelkit.wrap_label(parent, textvariable=self._status_var, fg="grey").grid(
+        panelkit.wrap_label(body, textvariable=self._status_var, fg="grey").grid(
             row=3, column=0, columnspan=3, sticky=tk.W,
         )
 

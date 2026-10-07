@@ -12,6 +12,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   can paste it into the galaxy map. If you're already in such a system it gives you the next one. The lookup
   asks spansh.co.uk, and only when you click; nothing runs on its own.
 
+### Changed
+- **Exploration: Codex Completionist, Canonn Nearby POI and GEC Nearby POI start minimized.** Click a title
+  (▸ / ▾) to expand or collapse it; WNTB remembers which you left open. The three buttons on the
+  Auto-Honk / Discovery Alerts / Neutron row now sit 6px apart, like the mode buttons.
+
 ## 1.2.0 - 2026-10-07
 
 ### Added
