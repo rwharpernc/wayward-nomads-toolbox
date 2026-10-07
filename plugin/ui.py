@@ -85,6 +85,11 @@ PANEL_MODES: Tuple[Tuple[str, str], ...] = (
     ("missions", "Missions"),
     ("fieldops", "Field Ops"),
 )
+# Short text for the mode-select buttons - EDMC's main window is small and shared
+# with every other plugin - with the full label (above) shown as a tooltip.
+_MODE_BUTTON_TEXT = {
+    "powerplay": "PWR", "bgs": "BGS", "exploration": "EXP", "mining": "MIN", "missions": "MSN", "fieldops": "OPS",
+}
 _DEFAULT_PANEL_MODE = PANEL_MODES[0][0]
 _MODE_KEYS = {key for key, _ in PANEL_MODES}
 
@@ -201,7 +206,8 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     mode_row = tk.Frame(_frame)
     mode_row.grid(row=1, column=0, columnspan=3, pady=(6, 0))
     for key, label in PANEL_MODES:
-        btn = tk.Button(mode_row, text=label, command=lambda k=key: _on_panel_mode_click(k))
+        btn = tk.Button(mode_row, text=_MODE_BUTTON_TEXT.get(key, label), command=lambda k=key: _on_panel_mode_click(k))
+        panelkit.add_tooltip(btn, label)
         btn.pack(side=tk.LEFT, padx=(0, 6) if key != PANEL_MODES[-1][0] else (0, 0))
         _mode_buttons[key] = btn
 

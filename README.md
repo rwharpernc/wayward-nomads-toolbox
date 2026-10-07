@@ -130,7 +130,8 @@ default, and only looks at published releases).
 
 ## Finding your way around
 
-- **Switch modes** with the button row under the WNTB title. Every mode keeps working in the
+- **Switch modes** with the button row under the WNTB title (**PWR**, **BGS**, **EXP**, **MIN**, **MSN**,
+  **OPS**; hover for the full name). Every mode keeps working in the
   background while you look at a different one. Nothing pauses.
 - **Your game mode and credits** are shown just under the mode buttons, whichever mode you are in, with a
   rule below them before the page itself. The first line says which mode you are flying in ("You are in
@@ -178,6 +179,12 @@ Hover over any button for a moment to see its full name.
 
 | Button | Full name | Where |
 |---|---|---|
+| **PWR** | Powerplay | Mode buttons (top of the panel) |
+| **BGS** | BGS | Mode buttons |
+| **EXP** | Exploration | Mode buttons |
+| **MIN** | Mining | Mode buttons |
+| **MSN** | Missions | Mode buttons |
+| **OPS** | Field Ops | Mode buttons |
 | **SES** | Sessions | Powerplay |
 | **RAR** | Rares (rare goods finder) | Powerplay |
 | **RSC** | Rescan | Powerplay |
@@ -200,8 +207,7 @@ Hover over any button for a moment to see its full name.
 | **BLD** | Manage ship builds | Field Ops |
 | **COL** | Colonisation sites | Field Ops |
 
-The mode buttons (Powerplay, BGS, Exploration, Mining, Missions, Field Ops) and the buttons inside
-pop-out windows and Settings keep their full names.
+The buttons inside pop-out windows and Settings keep their full names.
 
 ## What goes on the internet
 
