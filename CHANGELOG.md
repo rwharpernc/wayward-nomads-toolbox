@@ -3,6 +3,21 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Powerplay: a Systems tab** in the Sessions window, the counterpart of the BGS report. One tab per system
+  for the current Powerplay cycle (Thursday 07:00 UTC to Thursday 07:00 UTC) with a drop-down to look back at
+  earlier cycles. Each tab shows the system's **standing** (state, controlling Power, control progress,
+  reinforcement and undermining: baseline against latest, so a gain or loss shows even when it wasn't you) and
+  **what you did** there (merits, events and estimated Control Points per activity).
+- It shows the last 6 systems you've been in plus up to **5 pinned** ones (☆ Pin / ★ Unpin, × Close tab, and a
+  "Show a system" box with type-ahead). Pinned and hidden tabs and the history are **per commander**
+  (`powerplay_state.json`, protected from updates). Merit totals in the sessions themselves are unchanged.
+- Reads `PowerplayStateControlProgress`, `PowerplayStateReinforcement` and `PowerplayStateUndermining` from
+  `FSDJump`, `Location` and `CarrierJump`. New `powerplay_ledger.py`, `powerplay_state.py`,
+  `powerplay_systems_tab.py` and `tests/test_powerplay_ledger.py`. See `docs/POWERPLAY_TECH_SPEC.md` section 11.
+
 ## 1.1.5 - 2026-10-03
 
 ### Fixed

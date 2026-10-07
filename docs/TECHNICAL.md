@@ -294,7 +294,7 @@ and `load.py` schedules the UI change with `frame.after(0, ...)`.
 - **JSON files in the plugin folder** hold real data: sessions, hotspot catalog, survey log, BGS
   tallies, visited systems, ship builds. Examples: `sessions.json`, `boxel_state.json`,
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
-  `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`,
+  `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
   `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
@@ -499,7 +499,7 @@ useful to you, please consider supporting them as I do: [EDSM](https://www.patre
 
 Short explanations of the non-obvious decisions in each area. Filenames are in `plugin/`.
 
-### Powerplay (`powerplay.py`, `session.py`, `store.py`, `formulas.py`)
+### Powerplay (`powerplay.py`, `session.py`, `store.py`, `formulas.py`, `powerplay_ledger.py`, `powerplay_state.py`, `powerplay_systems_tab.py`)
 
 The journal's `PowerplayMerits` event reports what you earned, after every game multiplier. It does
 not say how many Control Points that is; that depends on the activity, and Frontier hasn't documented

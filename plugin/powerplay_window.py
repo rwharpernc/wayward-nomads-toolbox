@@ -26,6 +26,7 @@ from .session import (
     total_merits,
     visited_systems,
 )
+from .powerplay_systems_tab import SystemsPane, SystemsTab
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -71,21 +72,24 @@ _HISTORY_COLUMNS = (
 _window: Optional["SessionWindow"] = None
 
 
-def show(parent: tk.Misc, sessions: SessionManager, pp: PowerplayTracker, current_system: Optional[str]) -> None:
+def show(
+    parent: tk.Misc, sessions: SessionManager, pp: PowerplayTracker, current_system: Optional[str],
+    systems: Optional[SystemsPane] = None,
+) -> None:
     """Open the sessions window, or raise it if already open."""
     global _window
 
     if _window is not None and _window.alive:
-        _window.refresh(current_system)
+        _window.refresh(current_system, systems)
         _window.lift()
         return
 
-    _window = SessionWindow(parent, sessions, pp, current_system)
+    _window = SessionWindow(parent, sessions, pp, current_system, systems)
 
 
-def refresh(current_system: Optional[str]) -> None:
+def refresh(current_system: Optional[str], systems: Optional[SystemsPane] = None) -> None:
     if _window is not None and _window.alive:
-        _window.refresh(current_system)
+        _window.refresh(current_system, systems)
 
 
 def close() -> None:
@@ -96,10 +100,12 @@ def close() -> None:
 class SessionWindow:
     def __init__(
         self, parent: tk.Misc, sessions: SessionManager, pp: PowerplayTracker, current_system: Optional[str],
+        systems: Optional[SystemsPane] = None,
     ) -> None:
         self._sessions = sessions
         self._pp = pp
         self._current_system = current_system
+        self._systems = systems
 
         self._shell = WindowShell(
             parent, "Powerplay Sessions", "", size=DEFAULT_SIZE, min_size=(MIN_WIDTH, MIN_HEIGHT),
@@ -116,6 +122,7 @@ class SessionWindow:
         tabs = Tabs(self._shell.body)
         tabs.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
         self._current_tab = _CurrentTab(tabs.add("Current session"))
+        self._systems_tab = SystemsTab(tabs.add("Systems"), self._toplevel)
         self._history_tab = _HistoryTab(tabs.add("History"))
 
         self.refresh(current_system)
@@ -128,11 +135,14 @@ class SessionWindow:
         self._toplevel.deiconify()
         self._toplevel.lift()
 
-    def refresh(self, current_system: Optional[str]) -> None:
+    def refresh(self, current_system: Optional[str], systems: Optional[SystemsPane] = None) -> None:
         if not self.alive:
             return
         self._current_system = current_system
+        if systems is not None:
+            self._systems = systems
         self._current_tab.update(self._sessions.current, self._pp, current_system)
+        self._systems_tab.update(self._systems, current_system)
         self._history_tab.update(self._sessions.history, self._sessions.current)
 
     def _reset_session(self) -> None:
