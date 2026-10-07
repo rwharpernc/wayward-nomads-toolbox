@@ -29,6 +29,11 @@ class PickNearestTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             neutron_finder.pick_nearest({"error": "x"}, None)
 
+    def test_white_dwarf_subtypes_cover_every_class(self):
+        self.assertIn("White Dwarf (DA) Star", neutron_finder.WHITE_DWARF_SUBTYPES)
+        self.assertIn("White Dwarf (DQ) Star", neutron_finder.WHITE_DWARF_SUBTYPES)
+        self.assertEqual(len(set(neutron_finder.WHITE_DWARF_SUBTYPES)), 14)
+
     def test_display_name_is_capped(self):
         long_name = "X" * 200
         self.assertEqual(len(neutron_finder.display_name(long_name)), neutron_finder.MAX_NAME_CHARS)

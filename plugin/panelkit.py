@@ -94,6 +94,49 @@ def apply_toggle_button_state(widget: tk.Button, on: bool, off_colors: Tuple[str
         pass
 
 
+TOOLTIP_DELAY_MS = 500
+TOOLTIP_WRAP = 280
+
+
+def add_tooltip(widget: tk.Widget, text: str) -> None:
+    """Shows `text` in a small popup next to `widget` after the pointer rests on
+    it for TOOLTIP_DELAY_MS, and hides it on leave/click. The popup is its own
+    borderless top-level window, so it never affects the size of EDMC's main
+    window; fixed light colours keep it legible under every EDMC theme."""
+    state = {"after": None, "tip": None}
+
+    def hide(_event: object = None) -> None:
+        if state["after"] is not None:
+            widget.after_cancel(state["after"])
+            state["after"] = None
+        if state["tip"] is not None:
+            state["tip"].destroy()
+            state["tip"] = None
+
+    def show() -> None:
+        state["after"] = None
+        try:
+            tip = tk.Toplevel(widget)
+            tip.wm_overrideredirect(True)
+            tip.wm_geometry(f"+{widget.winfo_rootx() + 8}+{widget.winfo_rooty() + widget.winfo_height() + 4}")
+            tk.Label(
+                tip, text=text, justify=tk.LEFT, wraplength=TOOLTIP_WRAP, background="#ffffe0",
+                foreground="#000000", relief=tk.SOLID, borderwidth=1, padx=4, pady=2,
+            ).pack()
+            state["tip"] = tip
+        except tk.TclError:
+            state["tip"] = None
+
+    def schedule(_event: object = None) -> None:
+        hide()
+        state["after"] = widget.after(TOOLTIP_DELAY_MS, show)
+
+    widget.bind("<Enter>", schedule, add="+")
+    widget.bind("<Leave>", hide, add="+")
+    widget.bind("<ButtonPress>", hide, add="+")
+    widget.bind("<Destroy>", hide, add="+")
+
+
 def collapsible_section(parent: tk.Frame, title: str, config_key: str, default_collapsed: bool = True) -> tk.Frame:
     """A bold, click-to-toggle title (▸ collapsed / ▾ expanded) in row 0 of
     `parent`, with a body frame in row 1 that the caller builds its widgets

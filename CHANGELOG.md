@@ -6,17 +6,19 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
-- **Exploration: a Neutron button**, next to Discovery Alerts. Click it to find the nearest system whose
-  **primary star** is a neutron star (a neutron that is only a secondary companion is ignored), measured from
-  your current position. It shows the system name and distance, and copies the name to the clipboard so you
-  can paste it into the galaxy map. If you're already in such a system it gives you the next one. The lookup
-  asks spansh.co.uk, and only when you click; nothing runs on its own.
+- **Exploration: N.S. and W.D. buttons**, next to Discovery Alerts. **N.S.** finds the nearest system whose
+  **primary star** is a neutron star, and **W.D.** the nearest whose primary star is a white dwarf (any class);
+  a companion star doesn't count. Both measure from your current position, show the system name and distance,
+  and copy the name to the clipboard so you can paste it into the galaxy map. If you're already in such a
+  system you get the next one. The lookup asks spansh.co.uk, and only when you click; nothing runs on its own.
+- **Tooltips** on the shortened Exploration buttons: hover **A.H.** (Auto-Honk), **D.A.** (Discovery Alerts),
+  **N.S.** or **W.D.** for the full name.
 
 ### Changed
 - **Exploration: Codex Completionist, Canonn Nearby POI and GEC Nearby POI start minimized.** Click a title
   (▸ / ▾) to expand or collapse it; WNTB remembers which you left open. The three buttons on the
-  Auto-Honk / Discovery Alerts / Neutron row now sit 6px apart, like the mode buttons.
-- **Boxel Survey's Random button moved** onto that same row (Auto-Honk, Discovery Alerts, Neutron, Random), so
+  A.H. / D.A. / N.S. / W.D. row now sit 6px apart, like the mode buttons.
+- **Boxel Survey's Random button moved** onto that same row (A.H., D.A., N.S., W.D., Random), so
   it's reachable while Boxel Survey is collapsed. Its status line now shows under the row.
 
 ## 1.2.0 - 2026-10-07
