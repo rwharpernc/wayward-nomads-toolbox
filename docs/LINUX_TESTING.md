@@ -20,6 +20,11 @@ Where a step fails, copy the relevant lines from EDMC's log
       `<prefix>/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous`. The
       prefix is usually `~/.local/share/Steam/steamapps/compatdata/359320/pfx`.
 - [ ] For overlay features: EDMCModernOverlay is installed and its overlay is running.
+- [ ] If EDMC is a Flatpak: `flatpak override --user --show io.edcd.EDMarketConnector` lists
+      `org.freedesktop.Flatpak=talk`. If not, run
+      `flatpak override --user --talk-name=org.freedesktop.Flatpak io.edcd.EDMarketConnector` and restart EDMC.
+      Without it the overlay's sockets open (so **Check connection** passes) but its window never starts.
+- [ ] An `overlay_client` process is running (`ps -eo args | grep overlay_client`).
 - [ ] WNTB is copied into EDMC's `plugins` folder, EDMC is restarted, and the panel appears.
 
 ## 1. Basics

@@ -627,6 +627,12 @@ odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
 - **On-screen features** need [EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay),
   which supports Linux. The original EDMCOverlay is Windows-only. WNTB's default connection settings
   (`127.0.0.1`, port 5010) already match.
+- **Running EDMC as a Flatpak? Let it start the overlay.** EDMCModernOverlay launches its drawing window
+  on your desktop through `flatpak-spawn --host`, and the Flatpak is not allowed to do that by default.
+  Without the permission, WNTB's **Check connection** still reports success (the port is open) but nothing
+  is drawn, which looks like the overlay issue above. Grant it once, then restart EDMC:
+  `flatpak override --user --talk-name=org.freedesktop.Flatpak io.edcd.EDMarketConnector`
+  (Flatpak plugins live in `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/plugins`.)
 - **Notification sounds** use `canberra-gtk-play` or `paplay` if you have either.
 
 A step-by-step checklist for testers is in [docs/LINUX_TESTING.md](docs/LINUX_TESTING.md).
