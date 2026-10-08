@@ -39,10 +39,11 @@ _CFG_Y = "wntb_notable_y"
 _CFG_RULES = "wntb_notable_rules"
 DEFAULT_ENABLED = False
 
-# Default position: straight under discovery.py's body card (its default Y plus the card offset
-# and height), so the three alert cards stack when they fire together.
+# Default position: centred like the Discovery cards but well below them and below the Canonn
+# plugin's default overlay spots (its right-middle text starts at y=200 and grows downward; its
+# left-middle spot is at x=100, left of this card), so the cards don't land on each other.
 DEFAULT_X = discovery.DEFAULT_X
-DEFAULT_Y = discovery.DEFAULT_Y + discovery._Y_BODY_OFFSET + discovery._CARD_H + 16
+DEFAULT_Y = 560
 
 CARD_SHOW_S = 6.0
 MAX_QUEUED = 3  # cards waiting behind the one on screen; any further ones are counted, not shown
@@ -404,8 +405,8 @@ class NotableController:
         nb.Label(
             frame,
             text=(
-                "Position is the card's top-left corner. The default sits just below the Discovery "
-                "Alerts cards. If several bodies match at once the cards take turns."
+                "Position is the card's top-left corner. The default sits in the lower middle, "
+                "clear of the Discovery Alerts and Canonn overlay text. If several bodies match at once the cards take turns."
             ),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=4, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(4, 4))
