@@ -16,11 +16,6 @@ free companion program many commanders already use. You don't need to know any p
 > **Download the latest release, not the repository.** See [Installing](#installing). If you hit a
 > problem, see [Getting help](#getting-help).
 
-> **Known issue on Linux.** The **WNTB Settings panel may not display correctly** on Linux; a fix is
-> planned. **On-screen overlays** now draw on Linux (tested with EDMCModernOverlay), but if EDMC is a
-> Flatpak they need one permission first; see [Using WNTB on Linux](#using-wntb-on-linux). Everything
-> else that reads the journal works as normal.
-
 Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CMDR Mactavious (Easy Day, EZPZ).
 
 ---
@@ -605,13 +600,6 @@ settings are on the **Overlay Connection** Settings tab (Settings → General).
 
 ## Using WNTB on Linux
 
-> **Known issue (a fix is on the way).** The WNTB Settings panel may not display correctly on Linux.
->
-> **Overlays:** the test overlay, Discovery Alerts and Notable Bodies have been confirmed drawing on Linux
-> (KDE Wayland, EDMC as a Flatpak). If an overlay stays blank, first check the Flatpak permission below;
-> **Check connection** passes even when the overlay window never started. Landing Assist, the
-> Interdiction Warning and card backgrounds are still to be confirmed on Linux.
-
 Linux support is **new and not yet verified on a real install**: it is tested with mocked tools and
 temporary folders, and by reading every module for Windows-only assumptions, but please report anything
 odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
@@ -633,7 +621,7 @@ odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
 - **Running EDMC as a Flatpak? Let it start the overlay.** EDMCModernOverlay launches its drawing window
   on your desktop through `flatpak-spawn --host`, and the Flatpak is not allowed to do that by default.
   Without the permission, WNTB's **Check connection** still reports success (the port is open) but nothing
-  is drawn, which looks like the overlay issue above. Grant it once, then restart EDMC:
+  is drawn. Grant it once, then restart EDMC:
   `flatpak override --user --talk-name=org.freedesktop.Flatpak io.edcd.EDMarketConnector`
   (Flatpak plugins live in `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/plugins`.)
 - **Notification sounds** use `canberra-gtk-play` or `paplay` if you have either.
@@ -652,12 +640,8 @@ Completionist sections can each be hidden there. Also make sure you're in the ri
 
 **On-screen alerts don't show up.**
 They need EDMCOverlay or EDMCModernOverlay running, and WNTB's **Overlay Connection** settings must
-match it. Use the **Test** buttons in each feature's Settings tab to check. On Linux, overlays do not
-always show yet; that is a known issue with a fix coming.
-
-**The Settings panel looks wrong on Linux.**
-Known issue, fix coming. The panel may not display correctly. Features still work, and your settings are
-still saved.
+match it. Use the **Test** buttons in each feature's Settings tab to check. On Linux with a Flatpak EDMC,
+see [Using WNTB on Linux](#using-wntb-on-linux) for the permission the overlay needs.
 
 **Notable Bodies never shows anything.**
 It is switched off until you tick **Enable** under **Settings → Exploration → Alerts → Notable Bodies**.
