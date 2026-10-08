@@ -826,7 +826,7 @@ isolated in `platform_support.py` (plus the Windows branches in `autohonk.py` an
 | Screenshot event `Filename` | `\ED_Pictures\Screenshot_0001.bmp` | Same Windows-style string (Elite writes it even under Proton), so the file name is taken with `screenshot_naming.journal_basename`, not `os.path.basename` |
 | Find the game window | `FindWindowW` (ctypes) | `xdotool search --name "^Elite - Dangerous"` |
 | Is the game in the foreground | `win32gui.GetForegroundWindow` (bundled pywin32) | `xdotool getactivewindow getwindowname` |
-| Send a key | `keybd_event` (ctypes for Auto-Honk, pywin32 for screenshots) | `xdotool keydown` / `keyup` (XTEST) |
+| Send a key | `keybd_event` (ctypes for Auto-Honk, pywin32 for screenshots) | `xdotool` (XTEST); a hold is one `keydown`, `sleep`, `keyup` call (`platform_support.hold_key`) |
 | Is a companion app running | `tasklist` | `pgrep -f` |
 | Notification sound | `winsound.MessageBeep` | `canberra-gtk-play`, else `paplay` with the freedesktop theme file |
 | Overlay | EDMCOverlay or EDMCModernOverlay | EDMCModernOverlay (or edmcoverlay2); same TCP protocol |
@@ -850,6 +850,20 @@ desktop. The alternatives are worse fits: `python-xlib` needs installing into ED
 `evdev`/`uinput` needs device permissions. Keys are sent with XTEST after focusing the window,
 because per-window synthetic events (`--window`) are ignored by most games. This mirrors Windows,
 where `keybd_event` goes to the foreground window.
+
+**One process per hold.** XWayland releases a synthetic (XTEST) key about a second after the `xdotool`
+process that pressed it exits. A separate `keydown` process, a Python `sleep`, then a `keyup` process
+therefore held the key for only about a second, and a honk needs several. `hold_key` runs
+`xdotool keydown K sleep N keyup K` as one process, which keeps the key down for the full time.
+
+**Flatpak EDMC.** The sandbox sees neither host programs nor the game's folders. `platform_support._tool_command`
+uses a sandbox copy of a tool when one exists, and otherwise runs `flatpak-spawn --host --directory=/ <tool>`
+after probing that the host has it (only a successful probe is cached). `pgrep` prefers the host, because
+the sandbox only sees its own processes. `--directory=/` is required: `flatpak-spawn` starts the host command
+in the sandbox's working directory, which for EDMC (`/app/edmarketconnector`) does not exist on the host. The
+user must grant `--talk-name=org.freedesktop.Flatpak` and filesystem access to the journals, Bindings and
+Pictures folders (see the README, Linux, Step 3). EDMCModernOverlay needs the same talk permission to start
+its overlay window, so a missing one makes the overlay's port answer while nothing is drawn.
 
 **Failure behavior.** Every wrapper returns `False`, `None` or an empty list, never raises. A missing
 `xdotool` produces a clear outcome ("xdotool isn't installed") rather than a silent no-op, and

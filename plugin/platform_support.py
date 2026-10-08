@@ -16,6 +16,10 @@ Design notes:
 - Keys are sent with XTEST (`xdotool keydown`, no `--window`) after
   focusing the game window. Synthetic per-window events (`--window`) are
   ignored by most games, so focusing first is required to reach Elite.
+- EDMC may run as a Flatpak, whose sandbox can't see `xdotool` or the game's
+  processes on the host. There the tools are run through `flatpak-spawn --host`
+  (the Flatpak needs `--talk-name=org.freedesktop.Flatpak`, the same permission
+  EDMCModernOverlay needs to start its overlay window).
 - Every wrapper returns False/None/[] on failure and never raises: input
   simulation is a convenience, not something that should ever break journal
   handling.
@@ -263,15 +267,56 @@ def x11_keysym(elite_key: str) -> Optional[str]:
 # xdotool wrappers (Linux)
 # ---------------------------------------------------------------------------
 
+IN_FLATPAK = IS_LINUX and os.path.exists("/.flatpak-info")
+
+_host_tool_cache: Dict[str, bool] = {}
+
+# `--directory=/`: flatpak-spawn starts the host command in the sandbox's own
+# working directory (EDMC's is /app/edmarketconnector), which doesn't exist
+# on the host, so the call would fail with "Failed to change to directory".
+_HOST_PREFIX = ["flatpak-spawn", "--host", "--directory=/"]
+
+
+def _tool_command(tool: str, prefer_host: bool = False) -> Optional[List[str]]:
+    """Command prefix that runs `tool`: the tool itself when it is on PATH,
+    else, inside a Flatpak, `flatpak-spawn --host <tool>` if the host has it.
+    `prefer_host` tries the host first, for tools that must see host
+    processes. None when it can't be found either way."""
+    if shutil.which(tool) and not (prefer_host and IN_FLATPAK and shutil.which("flatpak-spawn")):
+        return [tool]
+    if IN_FLATPAK and shutil.which("flatpak-spawn"):
+        # Only a successful probe is cached, so a transient failure (slow
+        # session helper at startup, say) is retried instead of sticking.
+        if not _host_tool_cache.get(tool):
+            try:
+                probe = subprocess.run(
+                    [*_HOST_PREFIX, "which", tool],
+                    capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                    timeout=_SUBPROCESS_TIMEOUT_S, check=False,
+                )
+                _host_tool_cache[tool] = probe.returncode == 0
+                if probe.returncode != 0:
+                    logger.warning("Host lookup of %s failed (exit %s): %s",
+                                   tool, probe.returncode, (probe.stderr or probe.stdout).strip())
+            except (OSError, subprocess.SubprocessError) as exc:
+                logger.warning("Host lookup of %s failed: %s", tool, exc)
+                _host_tool_cache[tool] = False
+        if _host_tool_cache[tool]:
+            return [*_HOST_PREFIX, tool]
+    return [tool] if shutil.which(tool) else None
+
+
 def xdotool_available() -> bool:
-    return IS_LINUX and shutil.which("xdotool") is not None
+    return IS_LINUX and _tool_command("xdotool") is not None
 
 
-def _xdotool(*args: str) -> Optional[str]:
+def _xdotool(*args: str, timeout: float = _SUBPROCESS_TIMEOUT_S) -> Optional[str]:
     """stdout of `xdotool <args>`, or None on any failure."""
     try:
         result = subprocess.run(
-            ["xdotool", *args], capture_output=True, text=True, timeout=_SUBPROCESS_TIMEOUT_S, check=False,
+            [*(_tool_command("xdotool") or ["xdotool"]), *args],
+            capture_output=True, text=True, stdin=subprocess.DEVNULL,
+            timeout=timeout, check=False,
         )
     except (OSError, subprocess.SubprocessError):
         logger.debug("xdotool %s failed", args, exc_info=True)
@@ -296,6 +341,17 @@ def active_window_title() -> str:
     return (_xdotool("getactivewindow", "getwindowname") or "").strip()
 
 
+def hold_key(keysym: str, hold_ms: int) -> bool:
+    """Press `keysym`, keep it down for `hold_ms`, then release it, all inside
+    ONE xdotool process. XWayland releases XTEST keys about a second after
+    the xdotool process that pressed them exits, so separate keydown and
+    keyup calls cut any hold longer than that short (an Auto-Honk needs
+    several seconds)."""
+    seconds = max(hold_ms, 0) / 1000
+    return _xdotool("keydown", keysym, "sleep", f"{seconds:g}", "keyup", keysym,
+                    timeout=seconds + _SUBPROCESS_TIMEOUT_S) is not None
+
+
 def key_down(keysym: str) -> bool:
     return _xdotool("keydown", keysym) is not None
 
@@ -307,11 +363,12 @@ def key_up(keysym: str) -> bool:
 def is_process_running(pattern: str) -> bool:
     """Linux: whether a process whose command line matches `pattern`
     (`pgrep -f`) is running."""
-    if not IS_LINUX or shutil.which("pgrep") is None:
+    command = _tool_command("pgrep", prefer_host=True) if IS_LINUX else None
+    if command is None:
         return False
     try:
         return subprocess.run(
-            ["pgrep", "-f", pattern], capture_output=True, timeout=_SUBPROCESS_TIMEOUT_S, check=False,
+            [*command, "-f", pattern], capture_output=True, timeout=_SUBPROCESS_TIMEOUT_S, check=False,
         ).returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False

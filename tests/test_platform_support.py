@@ -204,12 +204,81 @@ class XdotoolWrapperTests(unittest.TestCase):
             self.assertFalse(ps.key_up("g"))
             self.assertEqual(ps.active_window_title(), "")
 
+    def test_hold_key_is_a_single_xdotool_process(self) -> None:
+        with mock.patch.object(ps.subprocess, "run", return_value=self._run()) as run:
+            self.assertTrue(ps.hold_key("slash", 2500))
+        run.assert_called_once()
+        self.assertEqual(run.call_args.args[0][-6:], ["keydown", "slash", "sleep", "2.5", "keyup", "slash"])
+        self.assertGreater(run.call_args.kwargs["timeout"], 2.5)
+
+    def test_hold_key_failure_returns_false(self) -> None:
+        with mock.patch.object(ps.subprocess, "run", return_value=self._run(returncode=1)):
+            self.assertFalse(ps.hold_key("slash", 1000))
+
     def test_key_down_up_call_xdotool(self) -> None:
         with mock.patch.object(ps.subprocess, "run", return_value=self._run()) as run:
             self.assertTrue(ps.key_down("F10"))
             self.assertTrue(ps.key_up("F10"))
         self.assertEqual([c.args[0] for c in run.call_args_list],
                          [["xdotool", "keydown", "F10"], ["xdotool", "keyup", "F10"]])
+
+
+class FlatpakToolTests(unittest.TestCase):
+    """Inside a Flatpak, host tools are reached through flatpak-spawn --host."""
+
+    def setUp(self) -> None:
+        ps._host_tool_cache.clear()
+        self.addCleanup(ps._host_tool_cache.clear)
+
+    def _which(self, present):
+        return lambda name: f"/usr/bin/{name}" if name in present else None
+
+    def test_local_tool_is_used_directly(self) -> None:
+        with mock.patch.object(ps.shutil, "which", self._which({"xdotool"})):
+            self.assertEqual(ps._tool_command("xdotool"), ["xdotool"])
+
+    def test_flatpak_falls_back_to_the_host_tool(self) -> None:
+        probe = mock.Mock(returncode=0)
+        with mock.patch.object(ps, "IN_FLATPAK", True), \
+                mock.patch.object(ps.shutil, "which", self._which({"flatpak-spawn"})), \
+                mock.patch.object(ps.subprocess, "run", return_value=probe) as run:
+            self.assertEqual(ps._tool_command("xdotool"), ["flatpak-spawn", "--host", "--directory=/", "xdotool"])
+            self.assertEqual(ps._tool_command("xdotool"), ["flatpak-spawn", "--host", "--directory=/", "xdotool"])
+        self.assertEqual(run.call_count, 1)  # the probe is cached
+        self.assertEqual(run.call_args.args[0], ["flatpak-spawn", "--host", "--directory=/", "which", "xdotool"])
+
+    def test_flatpak_without_the_host_tool_is_unavailable(self) -> None:
+        with mock.patch.object(ps, "IN_FLATPAK", True), \
+                mock.patch.object(ps.shutil, "which", self._which({"flatpak-spawn"})), \
+                mock.patch.object(ps.subprocess, "run", return_value=mock.Mock(returncode=1)):
+            self.assertIsNone(ps._tool_command("xdotool"))
+
+    def test_prefer_host_uses_the_host_even_when_a_sandbox_copy_exists(self) -> None:
+        with mock.patch.object(ps, "IN_FLATPAK", True), \
+                mock.patch.object(ps.shutil, "which", self._which({"flatpak-spawn", "pgrep"})), \
+                mock.patch.object(ps.subprocess, "run", return_value=mock.Mock(returncode=0)):
+            self.assertEqual(ps._tool_command("pgrep", prefer_host=True), ["flatpak-spawn", "--host", "--directory=/", "pgrep"])
+            self.assertEqual(ps._tool_command("pgrep"), ["pgrep"])
+
+    def test_prefer_host_falls_back_to_the_sandbox_copy(self) -> None:
+        with mock.patch.object(ps, "IN_FLATPAK", True), \
+                mock.patch.object(ps.shutil, "which", self._which({"flatpak-spawn", "pgrep"})), \
+                mock.patch.object(ps.subprocess, "run", return_value=mock.Mock(returncode=1)):
+            self.assertEqual(ps._tool_command("pgrep", prefer_host=True), ["pgrep"])
+
+    def test_not_in_flatpak_never_calls_flatpak_spawn(self) -> None:
+        with mock.patch.object(ps, "IN_FLATPAK", False), \
+                mock.patch.object(ps.shutil, "which", self._which({"flatpak-spawn"})), \
+                mock.patch.object(ps.subprocess, "run") as run:
+            self.assertIsNone(ps._tool_command("xdotool"))
+        run.assert_not_called()
+
+    def test_wrappers_run_through_the_host_prefix(self) -> None:
+        host = ["flatpak-spawn", "--host", "--directory=/", "xdotool"]
+        with mock.patch.object(ps, "_tool_command", return_value=host), \
+                mock.patch.object(ps.subprocess, "run", return_value=mock.Mock(returncode=0, stdout="", stderr="")) as run:
+            self.assertTrue(ps.key_down("F10"))
+        self.assertEqual(run.call_args.args[0], host + ["keydown", "F10"])
 
 
 if __name__ == "__main__":

@@ -421,13 +421,10 @@ def _send_key_press_linux(raw_key: str, focus_window: bool, hold_ms: int) -> str
             platform_support.focus_window(windows[0])
             time.sleep(0.12)
         # XTEST goes to whichever window has focus, like Windows' keybd_event.
-        if not platform_support.key_down(keysym):
-            return "error"
-        try:
-            if hold_ms > 0:
-                time.sleep(hold_ms / 1000)
-        finally:
+        # The whole hold is one xdotool process (see platform_support.hold_key).
+        if not platform_support.hold_key(keysym, hold_ms):
             platform_support.key_up(keysym)
+            return "error"
         return "sent"
     except Exception:
         logger.warning("Auto-Honk: send_key_press failed", exc_info=True)

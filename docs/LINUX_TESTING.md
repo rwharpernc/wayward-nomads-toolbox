@@ -21,10 +21,12 @@ Where a step fails, copy the relevant lines from EDMC's log
       `<prefix>/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous`. The
       prefix is usually `~/.local/share/Steam/steamapps/compatdata/359320/pfx`.
 - [ ] For overlay features: EDMCModernOverlay is installed and its overlay is running.
-- [ ] If EDMC is a Flatpak: `flatpak override --user --show io.edcd.EDMarketConnector` lists
-      `org.freedesktop.Flatpak=talk`. If not, run
-      `flatpak override --user --talk-name=org.freedesktop.Flatpak io.edcd.EDMarketConnector` and restart EDMC.
-      Without it the overlay's sockets open (so **Check connection** passes) but its window never starts.
+- [ ] If EDMC is a Flatpak: `flatpak override --user --show io.edcd.EDMarketConnector` lists all four
+      permissions from the README (Linux, Step 3): the journals folder, the Bindings folder (`:ro`), the
+      Pictures folder, and `org.freedesktop.Flatpak=talk`. Without the last one the overlay's sockets open (so
+      **Check connection** passes) but its window never starts, and `xdotool` is invisible to WNTB.
+- [ ] If EDMC is a Flatpak: the EDMC log has no "Host lookup of ... failed" lines from WNTB.
+- [ ] **Elite Wine/Proton prefix** in Settings is empty unless you use a custom setup.
 - [ ] An `overlay_client` process is running (`ps -eo args | grep overlay_client`).
 - [ ] WNTB is copied into EDMC's `plugins` folder, EDMC is restarted, and the panel appears.
 
@@ -48,6 +50,8 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 - [ ] Settings → Exploration → Alerts → **Rescan** shows "Will press <key>" for your fire button.
 - [ ] Elite running and focused: **Test Honk Now** reports "sent" and the scanner fires.
+- [ ] The honk key stays down for the whole **hold time** (set 8 to 10 seconds): the scan completes instead
+      of stopping after about a second.
 - [ ] Elite not focused, **Focus game window first** on: Elite comes forward and the honk fires.
 - [ ] Elite not running: it reports "Elite Dangerous window not found".
 - [ ] `xdotool` uninstalled: it reports that it isn't installed, with the install hint.
