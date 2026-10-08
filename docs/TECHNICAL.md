@@ -575,6 +575,30 @@ Uses fields the journal already carries. On arrival the game auto-scans the star
 so a stale entry can't leak into the next system. It stays silent in the common already-discovered
 case: it's a celebration, not a status readout.
 
+### Notable Bodies (`notable_rules.py`, `notable.py`)
+
+`notable_rules.py` is pure (no EDMC or Tk imports): a table of `Rule`s, each a function of one `Scan`
+event plus the other scans already seen in the system (`bodies`, by `BodyID`), returning a one-line
+detail or `None`. `evaluate()` runs the enabled rules and never raises on a malformed event. Units are the
+journal's own: metres, seconds, m/s^2. The rules and limits are Elite Observatory's defaults
+(`DefaultCriteria.cs`, MIT): landable above 29.4 m/s^2 (about 3 g), landable radius above 18,000 km, rotation
+or orbit under 8 h, eccentricity above 0.9, 5 of 6 premium FSD materials on a landable, ring wider than 5x the
+body's radius, orbit under 3x the parent's radius, a shepherd moon is one orbiting inside the *outermost*
+ring's outer edge, and a close or colliding binary is a pair sharing a barycentre whose radius/semi-major-axis
+is above 0.4 for both (colliding when their periapsis distances are less than their radii). Fast rotation
+and fast orbit apply to planets only here (a neutron star spins in milliseconds), and fast rotation skips
+tidally locked bodies. Green gas giants are matched on planet class plus a table of confirmed surface
+temperatures (+/-0.001 K), from community research credited in THIRD-PARTY-NOTICES.md.
+
+`notable.py` follows `discovery.py`. `NotableTracker` keeps the current system's scans keyed by `BodyID`
+(reset on a new `SystemAddress`), and when a body arrives it also re-judges the already-scanned bodies that
+orbit it, since a moon is often scanned before its parent. `(BodyID, rule)` pairs alert once. One card per
+body, with the first rule's label as the title and `+N` for more. Cards show for 6 s; three can wait and the
+rest are only counted ("(N more)"). Title and name are capped (28 and 24 characters) because the card's
+centring maths estimates text width from character count. Rule choices are saved as a JSON dict in
+`wntb_notable_rules`; a rule missing from it uses its default, so a later release can add rules without a
+migration. The feature has no panel widget, only a Settings page (Exploration → Alerts).
+
 ### Nearest neutron star / white dwarf (`neutron_finder.py`, buttons in `discovery.py`)
 
 The **N.S.** and **W.D.** buttons ask Spansh's `bodies/search` for the nearest system whose *primary* star is

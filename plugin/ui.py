@@ -37,7 +37,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
-    organic_scan_panel, overlay, panelkit, powerplay, screenshots, ship_builds_panel,
+    notable, organic_scan_panel, overlay, panelkit, powerplay, screenshots, ship_builds_panel,
     game_mode, session_credits,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
@@ -56,7 +56,7 @@ FEATURES = (
     # and Auto-Honk/Discovery Alerts last, side by side - see
     # _SIDE_BY_SIDE_PAIRS below, which is why they must stay adjacent here.
     exploration_value, organic_scan_panel, gec_poi_panel, canonn_poi_panel,
-    codex_completionist_panel, boxel_survey, autohonk, discovery,
+    codex_completionist_panel, boxel_survey, autohonk, discovery, notable,
     screenshots,
     inventory_panel, ship_builds_panel, colonisation_panel,
     mining_panel,
@@ -510,7 +510,7 @@ def _build_settings_tabs(tabs: nb.Notebook) -> None:
     """Top-level Settings tabs: General, then one per mode (modes with several
     features get a row of tabs inside), then the always-on overlays. Small related
     Exploration pages are merged: the three point-of-interest/codex pages into one,
-    Auto-Honk and Discovery into one. Any feature with settings that is not listed
+    Auto-Honk, Discovery and Notable Bodies into one. Any feature with settings that is not listed
     here lands in "Other", so a new feature can never lose its Settings tab."""
     placed = set()
 
@@ -528,7 +528,7 @@ def _build_settings_tabs(tabs: nb.Notebook) -> None:
         *settings_of(exploration_value, organic_scan_panel),
         _stacked_page("Points of Interest", settings_of(gec_poi_panel, canonn_poi_panel, codex_completionist_panel)),
         *settings_of(boxel_survey),
-        _stacked_page("Alerts", settings_of(autohonk, discovery)),
+        _stacked_page("Alerts", settings_of(autohonk, discovery, notable)),
     ])
     for feature in (mining_panel, bgs_panel):
         for build in settings_of(feature):

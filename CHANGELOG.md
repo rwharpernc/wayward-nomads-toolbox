@@ -6,6 +6,15 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Exploration: Notable Bodies alerts.** A violet card on your in-game overlay when a body you scan matches a
+  rule you have switched on. Thirteen rules: terraformable landable, landable above about 3 g, shepherd moon,
+  5 or 6 of the premium FSD materials, green gas giant (from the Codex, or a gas giant whose class and surface
+  temperature match a confirmed green one; the journal never records colour, so it is a lead to check in the
+  system map), colliding binary, and eight more that start off (large landable, landable ringed, close orbit,
+  close binary, high eccentricity, fast orbit, fast rotation, wide ring). Off by default; only the six rare
+  rules start ticked. Settings only, under **Exploration → Alerts**, so the main panel stays the same size.
+  A moon scanned before its parent is judged when the parent arrives, a body alerts once per rule, and
+  several matches in a row take turns. The thresholds are Elite Observatory's own defaults.
 - **Exploration: N.S. and W.D. buttons**, next to Discovery Alerts. **N.S.** finds the nearest system whose
   **primary star** is a neutron star, and **W.D.** the nearest whose primary star is a white dwarf (any class);
   a companion star doesn't count. Both measure from your current position, show the system name and distance,
