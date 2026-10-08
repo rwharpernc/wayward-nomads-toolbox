@@ -3,15 +3,21 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.3.0 - 2026-10-08
+
+### Known issues
+- **Linux:** the WNTB Settings panel may not display correctly, and on-screen overlays do not always show.
+  A fix is planned for an upcoming release. Everything that only reads the journal works as before.
 
 ### Added
 - **Exploration: Notable Bodies alerts.** A violet card on your in-game overlay when a body you scan matches a
-  rule you have switched on. Thirteen rules: terraformable landable, landable above about 3 g, shepherd moon,
+  rule you have switched on. Fifteen rules: high-value body (any terraformable, plus every Earth-like,
+  water and ammonia world, landable or not; it says if the body is undiscovered or unmapped), terraformable
+  landable, landable above about 3 g, shepherd moon,
   5 or 6 of the premium FSD materials, green gas giant (from the Codex, or a gas giant whose class and surface
   temperature match a confirmed green one; the journal never records colour, so it is a lead to check in the
   system map), colliding binary, and eight more that start off (large landable, landable ringed, close orbit,
-  close binary, high eccentricity, fast orbit, fast rotation, wide ring). Off by default; only the six rare
+  close binary, high eccentricity, fast orbit, fast rotation, wide ring). Off by default; only the seven rare
   rules start ticked. Settings only, under **Exploration → Alerts**, so the main panel stays the same size.
   A moon scanned before its parent is judged when the parent arrives, a body alerts once per rule, and
   several matches in a row take turns. The thresholds are Elite Observatory's own defaults.

@@ -125,6 +125,27 @@ def _terraformable_landable(scan: Scan, bodies: Bodies) -> Optional[str]:
     return None
 
 
+HIGH_VALUE_CLASSES = frozenset({"earthlike body", "ammonia world", "water world"})
+
+
+def _high_value_body(scan: Scan, bodies: Bodies) -> Optional[str]:
+    """Any terraformable, plus every Earth-like, ammonia and water world (landable or not)."""
+    planet_class = str(scan.get("PlanetClass") or "")
+    terraform = scan.get("TerraformState")
+    terraformable = isinstance(terraform, str) and bool(terraform)
+    if planet_class.casefold() not in HIGH_VALUE_CLASSES and not terraformable:
+        return None
+    status = ""
+    if scan.get("WasMapped") is False:
+        status = "undiscovered " if scan.get("WasDiscovered") is False else "unmapped "
+    if terraformable:
+        status += "terraformable "
+    distance = _number(scan.get("DistanceFromArrivalLS"))
+    where = f", {distance:,.0f} Ls" if distance is not None else ""
+    text = f"{status}{planet_class.lower()}{where}".strip()
+    return text[:1].upper() + text[1:]
+
+
 def _high_gravity(scan: Scan, bodies: Bodies) -> Optional[str]:
     gravity = _number(scan.get("SurfaceGravity"))
     if _landable(scan) and gravity is not None and gravity > HIGH_GRAVITY_MS2:
@@ -310,6 +331,8 @@ class Rule:
 RULES = (
     Rule("terraformable_landable", "Terraformable landable", "A landable body that is terraformable, or being or already terraformed.",
          True, _terraformable_landable),
+    Rule("high_value", "High-value body",
+         "Any terraformable, Earth-like, water or ammonia world, landable or not.", True, _high_value_body),
     Rule("high_g", "High-g landable", "A landable body above about 3 g (29.4 m/s²).", True, _high_gravity),
     Rule("shepherd_moon", "Shepherd moon", "A moon orbiting inside the outer edge of its parent's outermost ring.",
          True, _shepherd_moon),

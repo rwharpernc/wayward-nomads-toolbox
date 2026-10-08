@@ -5,6 +5,10 @@ Linux support is new and has only been unit-tested with mocked system calls, so 
 valuable. Note your distro, desktop (GNOME, KDE, Sway...), session type (X11 or Wayland), and whether
 you run EDMC natively or as a Flatpak.
 
+**Known issues going in:** the WNTB Settings panel may not display correctly on Linux, and overlays do
+not always show. A fix is planned. Please still note exactly what you see (which tabs, which overlays, how
+often) so the fix can be checked against it.
+
 Where a step fails, copy the relevant lines from EDMC's log
 (`~/.local/share/EDMarketConnector/EDMarketConnector.log`) into your report.
 
@@ -55,8 +59,10 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 5. Overlay (needs EDMCModernOverlay)
 
-- [ ] Landing Assist, Interdiction Warning (**Test Warning**) and Discovery (test) all draw over the
-      game.
+- [ ] Landing Assist, Interdiction Warning (**Test Warning**), Discovery (**Test Discovery**) and
+      Notable Bodies (**Test Notable**, after ticking Enable) all draw over the game.
+- [ ] Notable Bodies: scan a terraformable or an Earth-like, water or ammonia world and a violet banner
+      appears; the same body does not alert twice.
 - [ ] Card backgrounds are visible, not just the text.
 - [ ] It works in borderless mode; note what happens in fullscreen.
 

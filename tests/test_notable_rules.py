@@ -51,6 +51,23 @@ class SingleScanRuleTests(unittest.TestCase):
         self.assertNotIn("terraformable_landable", run(planet(Landable=False, TerraformState="Terraformable")))
         self.assertNotIn("terraformable_landable", run(planet(Landable=True, TerraformState="")))
 
+    def test_high_value_body(self) -> None:
+        self.assertIn("high_value", run(planet(PlanetClass="Earthlike body")))
+        self.assertIn("high_value", run(planet(PlanetClass="Water world")))
+        self.assertIn("high_value", run(planet(PlanetClass="Ammonia world")))
+        self.assertIn("high_value", run(planet(PlanetClass="High metal content body", TerraformState="Terraformable")))
+        self.assertNotIn("high_value", run(planet(PlanetClass="High metal content body", TerraformState="")))
+        self.assertNotIn("high_value", run(planet(PlanetClass="Icy body")))
+        self.assertNotIn("high_value", run(star()))
+
+    def test_high_value_body_detail_says_what_is_new(self) -> None:
+        scan = planet(PlanetClass="Water world", TerraformState="Terraformable", WasDiscovered=False,
+                      WasMapped=False, DistanceFromArrivalLS=1234.5)
+        detail = nr.evaluate(scan, {}, {"high_value"})[0].detail
+        self.assertEqual(detail, "Undiscovered terraformable water world, 1,234 Ls")
+        scan = planet(PlanetClass="Earthlike body", WasDiscovered=True, WasMapped=False)
+        self.assertTrue(nr.evaluate(scan, {}, {"high_value"})[0].detail.startswith("Unmapped earthlike"))
+
     def test_high_gravity_boundary(self) -> None:
         self.assertIn("high_g", run(planet(Landable=True, SurfaceGravity=29.41)))
         self.assertNotIn("high_g", run(planet(Landable=True, SurfaceGravity=29.4)))
@@ -191,7 +208,8 @@ class EvaluateTests(unittest.TestCase):
     def test_defaults_are_the_rare_rules(self) -> None:
         self.assertEqual(
             nr.default_enabled(),
-            {"terraformable_landable", "high_g", "shepherd_moon", "good_fsd", "green_gas_giant", "colliding_binary"},
+            {"terraformable_landable", "high_value", "high_g", "shepherd_moon", "good_fsd", "green_gas_giant",
+             "colliding_binary"},
         )
 
     def test_labels_fit_the_card_title(self) -> None:
@@ -222,13 +240,13 @@ class TrackerTests(unittest.TestCase):
         return self.tracker.get_snapshot()
 
     def test_matching_scan_shows_a_card(self) -> None:
-        self.tracker.handle_event(planet(5, BodyName="Sys 5 b", Landable=True, TerraformState="Terraformable"))
+        self.tracker.handle_event(planet(5, BodyName="Sys 5 b", Landable=True, SurfaceGravity=35.0))
         snap = self.snapshot()
         self.assertTrue(snap.visible)
-        self.assertEqual((snap.title, snap.name), ("Terraformable landable", "Sys 5 b"))
+        self.assertEqual((snap.title, snap.name), ("High-g landable", "Sys 5 b"))
 
     def test_repeat_scan_does_not_alert_twice(self) -> None:
-        scan = planet(5, Landable=True, TerraformState="Terraformable")
+        scan = planet(5, Landable=True, SurfaceGravity=35.0)
         self.tracker.handle_event(scan)
         self.tracker.handle_event(scan)
         self.assertEqual(self.snapshot().more, 0)
@@ -236,7 +254,7 @@ class TrackerTests(unittest.TestCase):
     def test_two_rules_on_one_body_merge_into_one_card(self) -> None:
         self.tracker.handle_event(planet(5, Landable=True, TerraformState="Terraformable", SurfaceGravity=3.5 * G))
         snap = self.snapshot()
-        self.assertEqual(snap.title, "Terraformable landable +1")
+        self.assertEqual(snap.title, "Terraformable landable +2")  # + high-value body and high-g
         self.assertEqual(snap.more, 0)
 
     def test_moon_scanned_before_its_parent_alerts_when_the_parent_arrives(self) -> None:
@@ -249,7 +267,7 @@ class TrackerTests(unittest.TestCase):
 
     def test_cards_queue_and_overflow_is_counted(self) -> None:
         for body_id in range(1, 8):
-            self.tracker.handle_event(planet(body_id, Landable=True, TerraformState="Terraformable"))
+            self.tracker.handle_event(planet(body_id, Landable=True, SurfaceGravity=35.0))
         snap = self.snapshot()
         self.assertEqual(snap.name, "Sys 1")
         self.assertEqual(snap.more, 6)  # 3 queued + 3 counted
@@ -257,7 +275,7 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(self.snapshot().name, "Sys 2")
 
     def test_changing_system_forgets_bodies_and_alerts(self) -> None:
-        scan = planet(5, Landable=True, TerraformState="Terraformable")
+        scan = planet(5, Landable=True, SurfaceGravity=35.0)
         self.tracker.handle_event(scan)
         self.tracker._advance()
         self.assertFalse(self.snapshot().visible)
@@ -276,12 +294,12 @@ class TrackerTests(unittest.TestCase):
 
     def test_nothing_fires_when_no_rules_are_enabled(self) -> None:
         tracker = self.notable.NotableTracker(self.changes.append, lambda: set())
-        tracker.handle_event(planet(5, Landable=True, TerraformState="Terraformable"))
+        tracker.handle_event(planet(5, Landable=True, SurfaceGravity=35.0))
         self.assertFalse(tracker.get_snapshot().visible)
 
     def test_worst_case_text_is_capped(self) -> None:
         long_name = "X" * 200
-        self.tracker.handle_event(planet(5, BodyName=long_name, Landable=True, TerraformState="Terraformable"))
+        self.tracker.handle_event(planet(5, BodyName=long_name, Landable=True, SurfaceGravity=35.0))
         self.assertLessEqual(len(self.snapshot().name), self.notable.NAME_MAX_CHARS)
         self.assertLessEqual(len(self.snapshot().title), self.notable.TITLE_MAX_CHARS)
 
