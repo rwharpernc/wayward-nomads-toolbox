@@ -710,7 +710,7 @@ EDMC grant Step 3, command 2. Also make sure **Elite Wine/Proton prefix** in **S
 Alerts** is empty unless you really use a custom setup; a wrong value there hides your keybindings.
 
 **Auto-Honk presses the key but the scan stops after about a second (Linux).**
-Fixed in the version after 1.3.0 (earlier builds released the key too early under XWayland). Update WNTB.
+Fixed in 1.3.1 (earlier builds released the key too early under XWayland). Update WNTB.
 
 **Notable Bodies never shows anything.**
 It is switched off until you tick **Enable** under **Settings → Exploration → Alerts → Notable Bodies**.

@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.3.1 - 2026-10-08
 
 ### Fixed (Linux)
 - **Auto-Honk stopped after about a second.** WNTB pressed the key with one `xdotool` call and released it
@@ -37,6 +37,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ### Known issues
 - **Linux:** the WNTB Settings panel may not display correctly, and on-screen overlays do not always show.
   A fix is planned for an upcoming release. Everything that only reads the journal works as before.
+  *(Resolved in 1.3.1: the Settings panel was confirmed fine, and the overlay problem was the missing
+  Flatpak permission described under 1.3.1. See the new Linux setup guide in the README.)*
 
 ### Added
 - **Exploration: Notable Bodies alerts.** A violet card on your in-game overlay when a body you scan matches a
