@@ -585,7 +585,8 @@ journal's own: metres, seconds, m/s^2. The rules and limits are Elite Observator
 or orbit under 8 h, eccentricity above 0.9, 5 of 6 premium FSD materials on a landable, ring wider than 5x the
 body's radius, orbit under 3x the parent's radius, a shepherd moon is one orbiting inside the *outermost*
 ring's outer edge, and a close or colliding binary is a pair sharing a barycentre whose radius/semi-major-axis
-is above 0.4 for both (colliding when their periapsis distances are less than their radii). Fast rotation
+is above 0.4 for both (colliding when their periapsis distances are less than their radii). A high-value body is any terraformable or any Earth-like, water or ammonia world, landable or not
+(its detail says "undiscovered" or "unmapped" from `WasDiscovered` and `WasMapped`). Fast rotation
 and fast orbit apply to planets only here (a neutron star spins in milliseconds), and fast rotation skips
 tidally locked bodies. Green gas giants are matched on planet class plus a table of confirmed surface
 temperatures (+/-0.001 K), from community research credited in THIRD-PARTY-NOTICES.md.
@@ -597,7 +598,8 @@ body, with the first rule's label as the title and `+N` for more. Cards show for
 rest are only counted ("(N more)"). Title and name are capped (28 and 24 characters) because the card's
 centring maths estimates text width from character count. Rule choices are saved as a JSON dict in
 `wntb_notable_rules`; a rule missing from it uses its default, so a later release can add rules without a
-migration. The feature has no panel widget, only a Settings page (Exploration → Alerts).
+migration. There are 15 rules, 7 on by default. A body matching several rules gets one card (first label
+plus `+N`). The feature has no panel widget, only a Settings page (Exploration → Alerts).
 
 ### Nearest neutron star / white dwarf (`neutron_finder.py`, buttons in `discovery.py`)
 

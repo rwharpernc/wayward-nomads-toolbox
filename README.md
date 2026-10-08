@@ -16,6 +16,11 @@ free companion program many commanders already use. You don't need to know any p
 > **Download the latest release, not the repository.** See [Installing](#installing). If you hit a
 > problem, see [Getting help](#getting-help).
 
+> **Known issue on Linux.** Two things are not yet right on Linux: the **WNTB Settings panel may not
+> display correctly**, and **on-screen overlays do not always show**. Both will be fixed in an upcoming
+> release. Everything else that reads the journal works as normal. See
+> [Using WNTB on Linux](#using-wntb-on-linux) for the rest of the Linux notes.
+
 Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CMDR Mactavious (Easy Day, EZPZ).
 
 ---
@@ -49,7 +54,7 @@ WNTB has one panel with six **modes**. You click a button to switch between them
 | Mode | What it's for |
 |---|---|
 | **Powerplay** | Tracks the merits and Control Points you earn for your Power, and finds rare goods. |
-| **Exploration** | Auto-honk, "first discovery" alerts, a boxel survey tool, scan values, exobiology help, and a lifetime tally of everything you've scanned. |
+| **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values, exobiology help, and a lifetime tally of everything you've scanned. |
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalogue of mining hotspots. |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions. |
 | **Field Ops** | Screenshots, your backpack/locker/cargo, saved ship builds, and colonisation sites. |
@@ -329,17 +334,6 @@ moment you're the first to scan or map a body.
 [What you need](#what-you-need)); enter its connection details on the **Overlay Connection** Settings
 tab. Use **Settings → Exploration → Alerts** to move the banner or send a test one.
 
-### Notable Bodies
-Puts a violet banner on your in-game screen when a body you scan is worth a second look, for example a
-terraformable landable, a shepherd moon or a body with nearly every premium FSD material. A match comes
-from the scan data, so check the body in the system map before you plan around it. Needs the same overlay
-helper as Discovery Alerts.
-
-**How to use it:** open **Settings → Exploration → Alerts → Notable Bodies**, tick **Enable**, and choose
-which rules you want. Only the rarer rules are ticked to start with; the common ones (fast rotation, wide
-rings and so on) are there if you want them. **Test Notable** shows a sample card. It has no button on the
-main panel.
-
 **Short button names:** on the Exploration row, **A.H.** is Auto-Honk and **D.A.** is Discovery Alerts
 (see [Button names](#button-names)).
 
@@ -347,6 +341,32 @@ main panel.
 star (**N.S.**) or a white dwarf (**W.D.**), measured from where you are now. They show the system name and
 distance and copy the name to your clipboard so you can paste it into the galaxy map. Manual only: they
 contact spansh.co.uk when you click and never on their own. Jump or reload first so WNTB knows your position.
+
+### Notable Bodies
+Puts a violet banner on your in-game screen when a body you scan is worth a second look. A match comes
+from the scan data, so check the body in the system map before you plan around it. It needs the same
+overlay helper as Discovery Alerts (see [What you need](#what-you-need)).
+
+**How to use it:** open **Settings → Exploration → Alerts → Notable Bodies**, tick **Enable**, and choose
+which rules you want. It is off until you do. **Test Notable** shows a sample banner, and the X and Y boxes
+move it. It has no button on the main panel.
+
+**What it looks for.** These are on to start with, because they are the rarer finds:
+
+- **High-value body**: any terraformable world, and every Earth-like, water and ammonia world, whether or
+  not you can land on it. The log line says if it is undiscovered or unmapped.
+- **Terraformable landable**, **High-g landable** (about 3 g or more), **Shepherd moon**,
+  **Good FSD injection** (5 or 6 of the premium boost materials on a landable), **Colliding binary**.
+- **Green gas giant**: from the Codex, or a gas giant whose surface temperature matches a confirmed green
+  one. The game never records a planet's colour, so treat this as a lead.
+
+These are off to start with, because they are common: large landable, landable with rings, close orbit,
+close binary, high eccentricity, fast orbit, fast rotation and wide ring.
+
+If a body matches several rules you get one banner (for example "High-value body +2"). A body only alerts
+once per rule, and banners take turns if several come at once. The limits are Elite Observatory's own
+defaults. If the banner lands on top of another plugin's overlay text (Canonn's, for example), change X and
+Y.
 
 ### Boxel Survey
 
@@ -585,6 +605,10 @@ settings are on the **Overlay Connection** Settings tab (Settings → General).
 
 ## Using WNTB on Linux
 
+> **Known issues (a fix is on the way).** The WNTB Settings panel may not display correctly on Linux, and
+> overlays (Discovery Alerts, Notable Bodies, Landing Assist and the rest) do not always show. If an overlay
+> stays blank, that is this issue, not something you set up wrong. Both will be fixed in an upcoming release.
+
 Linux support is **new and not yet verified on a real install**: it is tested with mocked tools and
 temporary folders, and by reading every module for Windows-only assumptions, but please report anything
 odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
@@ -619,7 +643,16 @@ Completionist sections can each be hidden there. Also make sure you're in the ri
 
 **On-screen alerts don't show up.**
 They need EDMCOverlay or EDMCModernOverlay running, and WNTB's **Overlay Connection** settings must
-match it. Use the **Test** buttons in each feature's Settings tab to check.
+match it. Use the **Test** buttons in each feature's Settings tab to check. On Linux, overlays do not
+always show yet; that is a known issue with a fix coming.
+
+**The Settings panel looks wrong on Linux.**
+Known issue, fix coming. The panel may not display correctly. Features still work, and your settings are
+still saved.
+
+**Notable Bodies never shows anything.**
+It is switched off until you tick **Enable** under **Settings → Exploration → Alerts → Notable Bodies**.
+Only some rules are on to start with, so tick the ones you want. A banner needs the overlay to be running.
 
 **Numbers look wrong or out of date.**
 Many features read the game's journal, so they only know what has happened since EDMC started, plus a

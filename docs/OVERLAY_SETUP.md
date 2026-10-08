@@ -12,6 +12,7 @@ on-screen extras.
 | Feature | What appears on screen |
 |---|---|
 | **Discovery Alerts** | A banner when you enter an unscanned system, or are first to scan or map a body |
+| **Notable Bodies** | A banner when a body you scan matches a rule you chose (terraformable, high-value world, shepherd moon and more) |
 | **Landing Assist** | The pad you've been assigned, with a diagram of the station or carrier |
 | **Interdiction Warning** | An alert the moment an interdiction starts |
 | **Inventory** | Capacity bars and pickup messages |
@@ -52,6 +53,7 @@ Each feature has its own settings under **File → Settings → WNTB**, with a s
 | Where | Test button |
 |---|---|
 | **Exploration → Alerts** (Discovery) | **Test Discovery** |
+| **Exploration → Alerts** (Notable Bodies) | **Test Notable** |
 | **Always On → Interdiction Warning** | **Test Warning** |
 | **Always On → Landing** | **Test Overlay** |
 | **Field Ops → Screenshots** | **Test Overlay** |
