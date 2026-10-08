@@ -600,33 +600,87 @@ settings are on the **Overlay Connection** Settings tab (Settings → General).
 
 ## Using WNTB on Linux
 
-Linux support is **new and not yet verified on a real install**: it is tested with mocked tools and
-temporary folders, and by reading every module for Windows-only assumptions, but please report anything
-odd. Elite runs under Steam Proton or Wine on Linux, which needs a few extras:
+WNTB runs on Linux wherever EDMC does. It has been tested on a real install (KDE Plasma on Wayland, Elite
+under Steam Proton, EDMC as a Flatpak): the Settings panel, the on-screen overlays (test overlay, Discovery
+Alerts, Notable Bodies) and Auto-Honk all work. The screenshot features have not been checked on a real
+install yet, so please report anything odd. Elite runs under Steam Proton or Wine on Linux, which needs a few
+extras. Work through the steps in order.
 
-- **Install `xdotool`** (for example `sudo apt install xdotool`). Auto-Honk and the screenshot
-  auto-timer use it to press keys in Elite's window. It works on X11, and on Wayland through XWayland
-  (which is where a Proton game's window lives), but not with a native Wayland window.
-- **WNTB finds your Steam Proton folder automatically**, including extra Steam library folders and
-  Flatpak Steam. If you use Lutris, Heroic or a custom setup, enter that folder under **Settings →
-  Auto-Honk → Elite Wine/Proton prefix**.
-- **Point EDMC at the game's journals.** Set EDMC's own **Journal directory** setting to the
-  `Saved Games/Frontier Developments/Elite Dangerous` folder inside that Proton/Wine folder. Linux has
-  no default for it, and without it WNTB's journal-based features (including BGS rebuilding the tick's
-  totals) have nothing to read. WNTB shows a hint under **Settings → Exploration → Alerts** and **Settings → BGS**
-  if it looks wrong, and logs one at startup.
-- **On-screen features** need [EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay),
-  which supports Linux. The original EDMCOverlay is Windows-only. WNTB's default connection settings
-  (`127.0.0.1`, port 5010) already match.
-- **Running EDMC as a Flatpak? Let it start the overlay.** EDMCModernOverlay launches its drawing window
-  on your desktop through `flatpak-spawn --host`, and the Flatpak is not allowed to do that by default.
-  Without the permission, WNTB's **Check connection** still reports success (the port is open) but nothing
-  is drawn. Grant it once, then restart EDMC:
-  `flatpak override --user --talk-name=org.freedesktop.Flatpak io.edcd.EDMarketConnector`
-  (Flatpak plugins live in `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/plugins`.)
-- **Notification sounds** use `canberra-gtk-play` or `paplay` if you have either.
+### Step 1: Install the helper tools
 
-A step-by-step checklist for testers is in [docs/LINUX_TESTING.md](docs/LINUX_TESTING.md).
+- **`xdotool`** presses keys in Elite's window for Auto-Honk and the screenshot auto-timer. Install it
+  **on your system** (not inside anything): Debian/Ubuntu `sudo apt install xdotool`, Arch/CachyOS
+  `sudo pacman -S xdotool`, Fedora `sudo dnf install xdotool`. It works on X11, and on Wayland through
+  XWayland (which is where a Proton game's window lives), but not with a native Wayland window.
+- **EDMCModernOverlay** draws the on-screen cards. Install it as an EDMC plugin from its
+  [project page](https://github.com/SweetJonnySauce/EDMCModernOverlay). The original EDMCOverlay is
+  Windows-only. WNTB's default connection settings (`127.0.0.1`, port 5010) already match it.
+- Optional: `canberra-gtk-play` or `paplay` for notification sounds.
+
+### Step 2: Tell EDMC where Elite's journals are
+
+Set EDMC's own **Journal directory** (File → Settings → Configuration) to the
+`Saved Games/Frontier Developments/Elite Dangerous` folder inside Elite's Proton folder, which is usually
+`~/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous`.
+Linux has no default for it, and without it WNTB's journal-based features (including BGS rebuilding the
+tick's totals) have nothing to read. WNTB shows a hint under **Settings → Exploration → Alerts** and
+**Settings → BGS** if it looks wrong, and logs one at startup. WNTB finds the Proton folder itself
+(including extra Steam library folders and Flatpak Steam). Only if you use Lutris, Heroic or a custom
+setup, enter the folder under **Settings → Exploration → Alerts → Elite Wine/Proton prefix**; otherwise
+**leave that field empty**. A wrong value there stops WNTB from finding your keybindings, because it
+deliberately does not fall back to auto-detection.
+
+### Step 3: If EDMC is a Flatpak, grant it four permissions
+
+A Flatpak runs in a sandbox that cannot see your Steam folders, your keyboard tools or your desktop. Without
+these, WNTB looks fine in its settings but does nothing. Run each command once in a terminal, then
+**restart EDMC**. They only widen what EDMC can reach; nothing else about the sandbox changes.
+
+```bash
+# Set this to your Elite Proton folder (the same one as Step 2, without the trailing parts).
+PFX="$HOME/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser"
+
+# 1. Journals (EDMC reads the journal and Status.json, and keeps a lock file there)
+flatpak override --user --filesystem="$PFX/Saved Games/Frontier Developments/Elite Dangerous" io.edcd.EDMarketConnector
+
+# 2. Keybindings (read-only; Auto-Honk needs to know which key you bound)
+flatpak override --user --filesystem="$PFX/AppData/Local/Frontier Developments/Elite Dangerous/Options/Bindings:ro" io.edcd.EDMarketConnector
+
+# 3. Screenshots (read and write; WNTB converts and files them)
+flatpak override --user --filesystem="$PFX/Pictures/Frontier Developments/Elite Dangerous" io.edcd.EDMarketConnector
+
+# 4. Run host programs: lets the overlay window start, and lets WNTB use your system's xdotool
+flatpak override --user --talk-name=org.freedesktop.Flatpak io.edcd.EDMarketConnector
+```
+
+Check them with `flatpak override --user --show io.edcd.EDMarketConnector`. If you use Flatpak Steam, your
+Proton folder is under `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/` instead. EDMC installed as
+a Flatpak keeps its plugins in `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/plugins`. If EDMC
+is not a Flatpak (a native or AppImage install), skip this step.
+
+Why permission 4 matters: EDMCModernOverlay starts its drawing window through the host, and WNTB runs
+`xdotool` the same way. Without it, WNTB's **Check connection** still reports success (the overlay's port is
+open) but nothing is drawn, and Auto-Honk says `xdotool` is not installed even though it is.
+
+### Step 4: Bind a keyboard key for the honk (Auto-Honk only)
+
+Auto-Honk can only press **keyboard** keys. If your fire buttons are bound only to a mouse button or a HOTAS
+button, it reports "only bound to a joystick/HOTAS button". In Elite, open Options → Controls → Ship →
+Cockpit Modes, and add a keyboard key to the **second** slot of **Secondary Fire** (keep your mouse or stick
+binding in the first slot). Then in EDMC open **Settings → Exploration → Alerts**, press **Rescan**, and it
+should say "Will press <your key>". Press **Test Honk Now** with the ship able to use its scanner. Set
+the **hold time** to the seconds the scan needs (8 to 10 is typical); it is kept down for the full time.
+
+### Step 5: Check the overlay
+
+Start EDMC and Elite (borderless or windowed), open **Settings → WNTB → General → Overlay Connection**, and
+press **Check connection**, then press a **Test** button, such as **Test Discovery** or **Test Notable** under
+**Exploration → Alerts**. Cards should appear over the game. If they do not, see the Linux items in
+[Troubleshooting](#troubleshooting) below.
+
+A step-by-step checklist for testers is in [docs/LINUX_TESTING.md](docs/LINUX_TESTING.md). The platform
+differences and the reasoning behind them are in
+[docs/TECHNICAL.md section 18](docs/TECHNICAL.md#18-platform-support-windows-and-linux).
 
 ## Troubleshooting
 
@@ -641,7 +695,22 @@ Completionist sections can each be hidden there. Also make sure you're in the ri
 **On-screen alerts don't show up.**
 They need EDMCOverlay or EDMCModernOverlay running, and WNTB's **Overlay Connection** settings must
 match it. Use the **Test** buttons in each feature's Settings tab to check. On Linux with a Flatpak EDMC,
-see [Using WNTB on Linux](#using-wntb-on-linux) for the permission the overlay needs.
+**Check connection** passes even when the overlay window never started; see Step 3 of
+[Using WNTB on Linux](#using-wntb-on-linux) (the "run host programs" permission). You can confirm the window is
+running with `ps -eo args | grep overlay_client`.
+
+**Auto-Honk or the screenshot timer say `xdotool` is not installed (Linux).**
+Install `xdotool` on your system (Step 1). If EDMC is a Flatpak, also grant the "run host programs"
+permission (Step 3, command 4) and restart EDMC. The EDMC log then shows a "Host lookup of xdotool failed"
+line with the reason if it still fails.
+
+**Auto-Honk says no usable keybind found (Linux).**
+Either your fire button has no keyboard key (Step 4), or WNTB can't read the bindings folder. For a Flatpak
+EDMC grant Step 3, command 2. Also make sure **Elite Wine/Proton prefix** in **Settings → Exploration →
+Alerts** is empty unless you really use a custom setup; a wrong value there hides your keybindings.
+
+**Auto-Honk presses the key but the scan stops after about a second (Linux).**
+Fixed in the version after 1.3.0 (earlier builds released the key too early under XWayland). Update WNTB.
 
 **Notable Bodies never shows anything.**
 It is switched off until you tick **Enable** under **Settings → Exploration → Alerts → Notable Bodies**.

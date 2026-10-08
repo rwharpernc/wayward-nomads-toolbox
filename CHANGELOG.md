@@ -3,6 +3,35 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed (Linux)
+- **Auto-Honk stopped after about a second.** WNTB pressed the key with one `xdotool` call and released it
+  with another, and XWayland releases a synthetic key roughly a second after the process that pressed it
+  exits, so any hold longer than that was cut short whatever the hold-time setting said. The whole hold is
+  now one `xdotool` call (`platform_support.hold_key`), so the key stays down for the full time.
+- **`xdotool` and `pgrep` were invisible to a Flatpak EDMC.** The sandbox cannot see programs on your
+  system, so Auto-Honk, the screenshot timer and the companion-app check reported "xdotool isn't installed"
+  even when it was. Inside a Flatpak WNTB now runs them on the host through `flatpak-spawn --host`. The call
+  uses `--directory=/` because EDMC's own working directory (`/app/edmarketconnector`) does not exist on the
+  host and made every host call fail. A failed lookup is no longer remembered for the session, and a
+  failure is logged with its reason ("Host lookup of ... failed").
+- **Overlays did not draw with a Flatpak EDMC.** EDMCModernOverlay starts its drawing window through the
+  host, which a Flatpak is not allowed to do by default, so WNTB's **Check connection** passed (the port was
+  open) while nothing appeared. The fix is a one-time permission, now documented with the other Flatpak
+  permissions in the README.
+- **Keybindings and screenshots were unreadable from a Flatpak EDMC**, so Auto-Honk reported "no usable
+  keybind found". The Bindings and Pictures folders need Flatpak permissions; the README lists the exact
+  commands.
+
+### Changed
+- README: the Linux section is now a step-by-step setup guide (helper tools, journal folder, the four
+  Flatpak permissions, binding a keyboard key for the honk, checking the overlay), and Troubleshooting has
+  Linux entries for each symptom above. The "known issue" notices for Linux are removed; the Settings panel
+  and the overlays have been confirmed working on Linux.
+- Docs: `docs/LINUX_TESTING.md` has checks for the Flatpak permissions and `docs/TECHNICAL.md` section 18
+  describes how host tools are reached from a Flatpak.
+
 ## 1.3.0 - 2026-10-08
 
 ### Known issues
