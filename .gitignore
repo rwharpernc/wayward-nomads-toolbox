@@ -35,9 +35,8 @@ plugin/updates/
 plugin/backups/
 plugin/disable-auto-update.txt
 
-# AI assistant local config/context (kept locally, not tracked)
+# AI assistant local config (kept locally, not tracked; CLAUDE.md is tracked)
 .claude/
-CLAUDE.md
 
 # Internal development notes — kept locally for this developer's own reference,
 # never shared/published as part of the repo
