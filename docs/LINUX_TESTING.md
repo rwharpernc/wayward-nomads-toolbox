@@ -5,10 +5,10 @@ Linux support is new and has only been unit-tested with mocked system calls, so 
 valuable. Note your distro, desktop (GNOME, KDE, Sway...), session type (X11 or Wayland), and whether
 you run EDMC natively or as a Flatpak.
 
-**Known issues going in:** the WNTB Settings panel may not display correctly on Linux. A fix is planned.
-Overlays have been seen drawing (test overlay, Discovery, Notable Bodies on KDE Wayland with a Flatpak
-EDMC), but a Flatpak EDMC needs the host-spawn permission in section 0 first. Please still note exactly
-what you see (which tabs, which overlays, how often) so any fix can be checked against it.
+**Already seen working:** the WNTB Settings panel, and the test overlay, Discovery and Notable Bodies
+overlays (KDE Wayland, Flatpak EDMC). A Flatpak EDMC needs the host-spawn permission in section 0 before
+overlays will draw. Please note exactly what you see (which tabs, which overlays, how often) so anything
+that differs can be checked against it.
 
 Where a step fails, copy the relevant lines from EDMC's log
 (`~/.local/share/EDMarketConnector/EDMarketConnector.log`) into your report.
