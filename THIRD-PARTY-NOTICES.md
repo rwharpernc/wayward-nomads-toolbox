@@ -74,3 +74,16 @@ colonisation ship market ids. The code that draws them is WNTB's own.
 `plugin/inventory_names_fdevids.py` is generated from the `microresources.csv` published by
 [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no licence. The names are Frontier's
 own.
+
+## Notable Bodies: rules, thresholds and green gas giant temperatures (MIT)
+
+The rules and numeric limits in `plugin/notable_rules.py` (landable above 29.4 m/s^2, landable radius above
+18,000 km, rotation or orbit under 8 hours, eccentricity above 0.9, 5 of the 6 premium FSD materials, wide
+ring, close orbit, shepherd moon, close and colliding binary) follow the default criteria in
+`ObservatoryExplorer/DefaultCriteria.cs` of [Elite Observatory](https://github.com/Xjph/ObservatoryCore),
+Copyright (c) 2021 Jonathan Miller, MIT licence. The implementation is WNTB's own.
+
+The list of confirmed green gas giant surface temperatures comes from CMDR Arcanic's research
+([ed-ggg.github.io/edggg](https://ed-ggg.github.io/edggg/)), as compiled by DaftMav into the community
+"Custom Criteria for Everyone" file maintained by CMDR Julian Ford. They are measured values from the game;
+that file states no licence, so only the numbers are used, with credit.

@@ -20,6 +20,12 @@ being listed doesn't mean a tool was the first or the only one.
   and [SectorLister](https://github.com/mpfj/SectorLister).
 - **Auto-honk** (firing the Discovery Scanner on arrival): EDCoPilot, VoiceAttack profiles and
   autopilot tools such as [EDAPGui](https://github.com/SumZer0-git/EDAPGui).
+- **Notable Bodies alerts:** the rules and thresholds follow the default criteria of
+  [Elite Observatory](https://github.com/Xjph/ObservatoryCore)'s Explorer plugin (MIT). The green gas
+  giant temperature table is community research: CMDR Arcanic's [ED GGG](https://ed-ggg.github.io/edggg/)
+  work, compiled for Observatory by DaftMav and CMDR Julian Ford's "Custom Criteria for Everyone".
+  Discovery Watch, a standalone journal watcher, was a useful reference for which rules commanders want.
+  No code was taken from any of them.
 - **Exploration value, system age and rarity readouts:** EDJP, EDDiscovery, Elite Observatory and
   many other exploration tools.
 - **Exobiology species prediction and sampling help:**

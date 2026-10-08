@@ -329,6 +329,17 @@ moment you're the first to scan or map a body.
 [What you need](#what-you-need)); enter its connection details on the **Overlay Connection** Settings
 tab. Use **Settings → Exploration → Alerts** to move the banner or send a test one.
 
+### Notable Bodies
+Puts a violet banner on your in-game screen when a body you scan is worth a second look, for example a
+terraformable landable, a shepherd moon or a body with nearly every premium FSD material. A match comes
+from the scan data, so check the body in the system map before you plan around it. Needs the same overlay
+helper as Discovery Alerts.
+
+**How to use it:** open **Settings → Exploration → Alerts → Notable Bodies**, tick **Enable**, and choose
+which rules you want. Only the rarer rules are ticked to start with; the common ones (fast rotation, wide
+rings and so on) are there if you want them. **Test Notable** shows a sample card. It has no button on the
+main panel.
+
 **Short button names:** on the Exploration row, **A.H.** is Auto-Honk and **D.A.** is Discovery Alerts
 (see [Button names](#button-names)).
 

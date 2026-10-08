@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
-    missions, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, session_credits, ship_builds_panel, ui,
+    missions, notable, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, session_credits, ship_builds_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -49,7 +49,7 @@ if not logger.hasHandlers():
 # Every feature module that consumes journal events. Order doesn't matter -
 # each one only ever reads `entry`/`state`, never mutates them.
 _FEATURES = (
-    powerplay, missions, autohonk, interdiction, landing, discovery, boxel_survey, exploration_value,
+    powerplay, missions, autohonk, interdiction, landing, discovery, notable, boxel_survey, exploration_value,
     organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, ship_builds_panel, colonisation_panel, screenshots,
     inventory_panel, mining_panel, bgs_panel, game_mode, session_credits,
 )
@@ -82,6 +82,7 @@ def plugin_start3(plugin_dir: str) -> str:
     interdiction.set_overlay_client(_overlay)
     landing.set_overlay_client(_overlay)
     discovery.set_overlay_client(_overlay)
+    notable.set_overlay_client(_overlay)
     screenshots.set_overlay_client(_overlay)
     inventory_panel.set_overlay_client(_overlay)
     mining_panel.set_overlay_client(_overlay)
@@ -94,6 +95,7 @@ def plugin_start3(plugin_dir: str) -> str:
         (landing.GROUP_NAME, landing.GROUP_PREFIX),
         (inventory_panel.GROUP_NAME, inventory_panel.GROUP_PREFIX),
         (discovery.GROUP_NAME, discovery.GROUP_PREFIX),
+        (notable.GROUP_NAME, notable.GROUP_PREFIX),
         (interdiction.GROUP_NAME, interdiction.GROUP_PREFIX),
         (mining_overlay.GROUP_NAME, mining_overlay.GROUP_PREFIX),
         (screenshots.GROUP_NAME, screenshots.GROUP_PREFIX),
