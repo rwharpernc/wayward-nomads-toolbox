@@ -108,7 +108,8 @@ _BG_ID = f"{_ID_PREFIX}bg"
 GROUP_NAME = "wntb_screenshot"
 GROUP_PREFIX = _ID_PREFIX
 _MAX_LINES = 3
-_TTL_SECONDS = 6
+_TTL_SECONDS = 10
+_TEST_TTL_SECONDS = 20  # long enough to alt-tab from EDMC's Settings to the game
 # Legacy overlay coordinates are on a 1280x960 virtual screen.
 _ORIGIN_X = 30
 _ORIGIN_Y = 700
@@ -948,10 +949,10 @@ class ScreenshotsController:
             try:
                 client.send_shape(
                     _BG_ID, "rect", _COLOUR, _BG_FILL, _ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y,
-                    260, _LINE_HEIGHT + _BG_PADDING_Y * 2, ttl=_TTL_SECONDS,
+                    260, _LINE_HEIGHT + _BG_PADDING_Y * 2, ttl=_TEST_TTL_SECONDS,
                 )
                 client.send_message(
-                    f"{_ID_PREFIX}0", "Screenshot saved: Test.png", _COLOUR, _ORIGIN_X, _ORIGIN_Y, ttl=_TTL_SECONDS,
+                    f"{_ID_PREFIX}0", "Screenshot saved: Test.png", _COLOUR, _ORIGIN_X, _ORIGIN_Y, ttl=_TEST_TTL_SECONDS,
                     size=_TEXT_SIZE,
                 )
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
