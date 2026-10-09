@@ -30,6 +30,16 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     a verdict line says whether the galaxy-wide best beats the best nearby and by how much. **Price finder**
     opens Mining's price finder. All the page's buttons now carry full labels.
   - The Spansh lookups are **off until enabled** (Settings → WNTB → Trade) and only run when you press a button.
+- **Trade History** (saved sessions). **Save session** on the Session page keeps the current trading session when you
+  ask (nothing is saved automatically; saving again during the same login updates the same entry), and **History** opens
+  a pop-out window like the BGS and Powerplay ones: pick a saved session (newest first, with a commander filter) and see
+  its **Overview** (net and trade profit, running costs, per hour, tonnes, balance change, jumps, per-tonne and per-jump
+  figures), **Commodities**, **Stations**, the **Route** flown (the stations visited in order with what was bought and
+  sold and a running net), the full **Trades** log (paged), **Stock & carrier** as they stood when saved, and the
+  **Lookups** (Spansh routes and market searches) made during it. **Copy summary**, **Export log (CSV)** and **Delete
+  session**. **Reset** now offers to save an unsaved session first. New: `trade_history.py`, `trade_stats.py`,
+  `trade_history_window.py`, `trade_history.json`; the live ledger now also keeps a bounded log of trades and costs with
+  their station, jumps and the starting balance.
 - **Ship and landing pads** (`trade_ship.py`): the ship from the journal's `Loadout` gives the pad size it needs
   (pad classes from Coriolis ship data; EDMC's own ship-name table is used when available). Override in Settings.
 - **Stock bought, not yet sold** (`trade_stock.py`, `trade_stock.json`): what you have spent on cargo that is still

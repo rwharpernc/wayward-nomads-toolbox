@@ -216,6 +216,8 @@ Hover over any button for a moment to see its full name.
 | **I/E** | Import/export hotspots | Mining |
 | **BOOK** | Mining Book | Mining |
 | **Reset** | Start the session profit tally again | Trade (Session page) |
+| **Save session** | Keep this session in Trade History | Trade (Session page) |
+| **History** | Open the Trade History window | Trade (Session page) |
 | **Clear stock** | Forget the unsold stock list | Trade (Session page) |
 | **Find routes** / **Cancel** | Ask Spansh for trade routes / stop waiting | Trade (Routes page) |
 | **Copy next system** | Copy the first destination to the clipboard | Trade (Routes page) |
@@ -515,7 +517,8 @@ Reads your journal only; nothing is sent anywhere. It shows:
   the trade profit and each cost listed under it. Insurance rebuys and fines aren't counted, and a cost only
   counts if WNTB saw it, so a refuel before EDMC started isn't included.
 - **Reset** starts the profit tally again (it carries on if you log out to the menu and back, and survives
-  restarting EDMC). **Clear stock** forgets the unsold stock list.
+  restarting EDMC). If the session has trades you haven't saved, it asks whether to save it to Trade History first.
+  **Clear stock** forgets the unsold stock list. **Save session** and **History** are described next.
 - **Stock bought, not yet sold**: what you have spent on commodities that are still waiting to be sold, with
   the average price you paid, and how much of each is still in your hold and how much is elsewhere (usually
   your carrier). This follows the cargo, not the login, so it carries across sessions. It is one list for both
@@ -529,6 +532,36 @@ Reads your journal only; nothing is sent anywhere. It shows:
 - **Your hold**: how many tonnes are used, the capacity, how much is free, and what the station you're docked
   at would pay for the whole hold.
 - **Your carrier's cargo space**, if you have one (see below).
+
+### Trade History (saving sessions)
+
+Nothing is kept automatically. When you want to keep a trading session, press **Save session** on the Session page. It
+saves the session as it stands (you can keep trading and press it again: that updates the same entry instead of adding
+a second one). **Reset** starts a new session, which becomes a new entry if you save it.
+
+Press **History** to open the **Trade History** window, a pop-out like the BGS and Powerplay ones. A drop-down at the
+top picks a saved session (newest first; if you have more than one commander there is also a commander filter), and
+the tabs show everything about it:
+
+- **Overview**: net profit, trade profit, running costs, net per hour, tonnes sold and trading time at a glance, then
+  the commander, ship, start and end, your balance at login and at save, tonnes bought and sold, profit per tonne,
+  margin, jumps and light years, profit per jump and per light year, and each running cost with its share of sales.
+- **Commodities**: for each one, tonnes bought and sold, what you paid and received, average buy and sell price,
+  profit, margin, profit per tonne and what was left unsold.
+- **Stations**: the same added up for each station you traded at (visits, bought, sold, profit, costs, net).
+- **Route**: the stations you traded at in the order you flew them, with what was bought and sold at each, the net on
+  that visit and a running net. Going back to a station later is a new visit.
+- **Trades**: every purchase, sale and cost with its time, price, total, profit, station and system, 200 at a time.
+- **Stock & carrier**: the stock bought but not sold, the hold, and your carrier's cargo space when you saved.
+- **Lookups**: the Spansh routes and market searches you made during the session, and the best result of each.
+
+**Copy summary** puts a plain-text report on the clipboard, **Export log (CSV)** saves the full trade log to a file you
+choose, and **Delete session** removes a saved session (it asks first).
+
+Good to know: the figures only cover what WNTB saw, so trades made before EDMC started aren't in a session; the balance
+change is your real credits difference and so also includes anything else you earned; times are UTC; and a session
+keeps the most recent 5,000 trades and costs (the totals are always exact). History is kept in `trade_history.json` in
+the WNTB plugin folder, which updates leave alone.
 
 ### Routes (needs the Spansh lookups on)
 
