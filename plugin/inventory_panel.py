@@ -145,7 +145,7 @@ _THEME_DEBUG_LOG_LIMIT = 60
 
 
 def overlay_enabled() -> bool:
-    return config.get_bool(_CFG_OVERLAY_ENABLED, default=True)
+    return config.get_bool(_CFG_OVERLAY_ENABLED, default=False)
 
 
 def sound_enabled() -> bool:

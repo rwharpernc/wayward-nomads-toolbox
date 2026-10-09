@@ -46,7 +46,7 @@ _CFG_ENABLED = "wntb_landing_enabled"
 _CFG_OVERLAY_ENABLED = "wntb_landing_overlay_enabled"
 _CFG_IN_APP_ENABLED = "wntb_landing_in_app_enabled"
 DEFAULT_ENABLED = False
-DEFAULT_OVERLAY_ENABLED = True
+DEFAULT_OVERLAY_ENABLED = False
 DEFAULT_IN_APP_ENABLED = True
 
 # How long the overlay keeps showing "Docking Approved" info after touchdown

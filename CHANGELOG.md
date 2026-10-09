@@ -3,6 +3,43 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Trade mode** (the new **TRD** button), with three pages:
+  - **Session**: profit, credits per hour, tonnes bought and sold and your best sales this session
+    (`trade_ledger.py`, saved to `trade_ledger.json` so an EDMC restart keeps it), plus your hold and what the
+    docked station would pay for it (`trade_market.py`, read from `Market.json`).
+  - **Routes**: the most profitable trade routes from where you are, from Spansh's trade-route planner
+    (`trade_spansh_client.py`; submit a job, poll until it completes). Uses your cargo size, credits and jump
+    range from the game. Cancellable; **Copy next system** copies the first destination.
+  - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`; the list is generated from FDevIDs,
+    `trade_commodities_data.py`) and **Near me** / **Galaxy** searches. Offers are ranked by what your load would
+    earn (`trade_prices.py`: price x min(tonnes, demand)), stations your ship cannot dock at are left out, fleet
+    carriers get their own section, and a one-line verdict says whether the galaxy-wide best beats the best nearby.
+    **Price…** opens Mining's price finder.
+  - **Ship and pads** (`trade_ship.py`): the ship from the journal's `Loadout` gives the landing pad it needs
+    (pad classes from Coriolis ship data). Routes ask Spansh for large-pad stations when the ship needs one.
+    Override in Settings.
+  - **Fleet carrier cargo space** (`trade_carrier.py`): used, free and reserved cargo tonnes from `CarrierStats`
+    and `CargoTransfer`, kept per commander in `trade_carrier.json`; hidden for commanders without a carrier.
+  - The hold line now shows free tonnes, and the Session page shows the ship and its pad size.
+  - The Spansh lookups are off until enabled in Settings > Trade, and only run when you press a button.
+  - Tests: `tests/test_trade.py`. Checked on Windows only; the lookups and panel layout still need a look on Linux.
+
+### Fixed
+- **Mining's price finder** now uses the game's exact commodity name. Spansh's market search is case-sensitive
+  ("Liquid oxygen" finds markets, "Liquid Oxygen" finds none), so typing a name in the wrong case silently
+  found nothing. The price search also accepts "no distance limit" (used by Trade's Galaxy search).
+
+### Changed
+- **Every overlay is now off by default, and existing installs are reset once.** The Inventory, Landing
+  Assist and Screenshots overlays used to start on; they now start off like the rest (Discovery, Notable,
+  Interdiction, Mining and the mining waypoint). On the first start of this version every overlay switch is
+  turned off (`_reset_overlays_once` in `load.py`, marked by `wntb_overlay_reset_v1`), so you need to tick
+  the overlays you want again in Settings. The reset runs once; your choices afterwards are kept.
+- The mode buttons at the top of the panel are left-justified instead of centered.
+
 ## 1.3.1 - 2026-10-08
 
 ### Fixed (Linux)

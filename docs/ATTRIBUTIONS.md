@@ -82,8 +82,9 @@ and imports its `config`, `theme` and `myNotebook` modules at runtime.
 Game facts such as thresholds, names, coordinates and measured values (the exobiology and region
 tables, the pad layout, scan-value constants, mining depletion figures and micro-resource names) come
 from the community's published work and from the game itself. Where a source's licence asks for a
-notice, it is in `THIRD-PARTY-NOTICES.md`. Micro-resource names come from
-**[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs)**.
+notice, it is in `THIRD-PARTY-NOTICES.md`. Micro-resource and commodity names come from
+**[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs)**, and the landing-pad size of each ship (Trade mode) from
+**[EDCD/coriolis-data](https://github.com/EDCD/coriolis-data)**.
 
 ## Services
 
