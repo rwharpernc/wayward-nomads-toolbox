@@ -144,7 +144,7 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
       part. Also play a short stretch with EDMC closed, then start EDMC: that stretch is added the next time it sees you.
       With two commanders, switching to the other and back leaves each one's tally as it was.
 - [ ] Stock: buy some cargo and the Session page shows "Stock bought, not yet sold" with the cost and how much is
-      aboard. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "elsewhere" grows.
+      aboard. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "not in your hold" grows.
       Restart EDMC after buying while it was closed: the purchase is still counted. **Clear stock** empties it.
 - [ ] Carriers (only if you have one): open Carrier Management once. The carrier's used and free cargo tonnes
       appear. Transfer cargo to it: the figure follows. Restart EDMC: it comes back without opening Carrier

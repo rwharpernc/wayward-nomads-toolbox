@@ -176,18 +176,23 @@ def stock_blocks(holdings: List[Holding], in_hold: Dict[str, int],
     blocks: List[Block] = [Heading("Stock bought, not yet sold"),
                            Pair("Total", f"{tonnes:,} t, {cost:,} cr", bold=True),
                            Columns(("Held", "Avg cost"))]
+    away = False
     for holding in holdings[:SHOWN]:
         aboard = min(holding.tonnes, max(0, in_hold.get(holding.key, 0)))
         elsewhere = holding.tonnes - aboard
         where = []
         if aboard:
-            where.append(f"{aboard:,} t aboard")
+            where.append(f"{aboard:,} t in your hold")
         if elsewhere:
-            where.append(f"{elsewhere:,} t elsewhere")
+            where.append(f"{elsewhere:,} t not in your hold")
+            away = True
         shown = name_of(holding) if name_of else holding.name
         blocks.append(Item(shown, (f"{holding.tonnes:,} t", f"{holding.average:,}"), detail=", ".join(where)))
     if len(holdings) > SHOWN:
         blocks.append(Note(f"+{len(holdings) - SHOWN} more"))
+    if away:
+        blocks.append(Note("\"Not in your hold\" is cargo you bought that is no longer aboard, usually moved to your "
+                           "carrier. It stays here until it is sold; Clear stock forgets it."))
     return blocks
 
 

@@ -542,7 +542,7 @@ It reads your journal only; nothing is sent anywhere. Top to bottom:
   profit** (trade profit less those costs; the credits per hour is the net), with the trade profit and each cost listed
   under it. Insurance rebuys and fines aren't counted, and a cost only counts once WNTB has seen it.
 - **Stock bought, not yet sold**: what you've spent on commodities still waiting to be sold, at the average price you
-  paid, and how much of each is still aboard and how much is elsewhere (usually your carrier). It follows the cargo, not
+  paid, and how much of each is still in your hold and how much is not (usually moved to your carrier). It follows the cargo, not
   the session, so it carries on after a Reset. It is one list for both ways of trading: on a station-to-station run it
   goes up when you buy and down when you sell; when you're loading your carrier for a bulk sale, every purchase adds to
   it, and moving cargo to or from the carrier changes where it is, not what you paid. It only comes down when you
