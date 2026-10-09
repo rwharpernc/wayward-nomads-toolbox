@@ -50,7 +50,7 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from .uikit import style as ui_style
-from . import all_missions, community_goal_state, kill_missions, kill_tracker, mining_methods, mission_types
+from . import all_missions, community_goal_state, kill_missions, kill_tracker, mining_methods, mission_types, panelkit
 from .community_goal_state import CommunityGoal
 from .kill_missions import KillMission, estimate_progress
 
@@ -486,17 +486,13 @@ def _display_category_nav(frame: tk.Frame, current: str, counts: dict[str, int],
 
     fonts = _get_fonts()
 
-    prev_label = tk.Label(nav, text="◂", font=fonts["nav_arrow"], fg=ACCENT, cursor="hand2")
-    prev_label.pack(side=tk.LEFT)
-    prev_label.bind("<Button-1>", lambda _e: on_prev())
+    panelkit.nav_arrow(nav, -1, on_prev).pack(side=tk.LEFT)
 
     all_label = tk.Label(nav, text="All", font=fonts["small"], cursor="hand2")
     all_label.pack(side=tk.RIGHT)
     all_label.bind("<Button-1>", lambda _e: on_show_all())
 
-    next_label = tk.Label(nav, text="▸", font=fonts["nav_arrow"], fg=ACCENT, cursor="hand2")
-    next_label.pack(side=tk.RIGHT, padx=(0, 8))
-    next_label.bind("<Button-1>", lambda _e: on_next())
+    panelkit.nav_arrow(nav, 1, on_next).pack(side=tk.RIGHT, padx=(0, 8))
 
     title_text = f"{_PAGE_LABELS[current]} ({counts.get(current, 0)})"
     title_label = tk.Label(nav, text=title_text, font=fonts["small"])

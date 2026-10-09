@@ -72,7 +72,6 @@ _CARGO_LINES = 4
 _NAME_MAX = 34  # clip station / system / commodity names; the body also wraps to the panel width
 _PERSIST_EVERY_S = 30.0
 _POLL_MS = 500
-_ACCENT = "#ff8c0d"  # Elite orange - nav arrows, matching Mining
 
 
 def _clip(text: Any, limit: int = _NAME_MAX) -> str:
@@ -289,10 +288,8 @@ class TradePanelController:
 
         nav = tk.Frame(parent)
         nav.grid(row=0, column=0, columnspan=3, sticky="ew")
-        for text, step, side in (("◂", -1, tk.LEFT), ("▸", 1, tk.RIGHT)):
-            arrow = tk.Label(nav, text=text, fg=_ACCENT, cursor="hand2")
-            arrow.pack(side=side)
-            arrow.bind("<Button-1>", lambda _e, s=step: self._step_page(s))
+        panelkit.nav_arrow(nav, -1, lambda: self._step_page(-1)).pack(side=tk.LEFT)
+        panelkit.nav_arrow(nav, 1, lambda: self._step_page(1)).pack(side=tk.RIGHT)
         self._page_label = tk.Label(nav, anchor=tk.CENTER)
         self._page_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
