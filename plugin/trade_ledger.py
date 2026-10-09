@@ -1,6 +1,6 @@
 """
-Trade mode's session ledger: what you bought and sold since logging in, per
-commodity, with profit and credits per hour. Pure logic plus a small JSON file
+Trade mode's session ledger: what you bought and sold since the last Reset (it
+spans logins), per commodity, with profit and credits per hour. Pure logic plus a small JSON file
 (`trade_ledger.json` beside the plugin) so it can be unit-tested without EDMC and
 survives an EDMC restart mid-session.
 

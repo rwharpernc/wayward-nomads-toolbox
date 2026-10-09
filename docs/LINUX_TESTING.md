@@ -122,9 +122,10 @@ Where a step fails, copy the relevant lines from EDMC's log
       "waiting for login".
 - [ ] `session_credits.json` appears in the WNTB plugin folder, and a plugin update leaves it alone.
 
-## 6d. Trade mode (new)
+## 6d. Trade mode
 
-Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable Spansh trade lookups**.
+Windows was checked as Trade was built. Linux was checked against this list on 2026-10-09 with no new issues (the boxes
+below stay unticked, like the rest of this file, so it can be run again). Settings → WNTB → Trade first: tick **Enable Spansh trade lookups**.
 
 - [ ] The **TRD** button appears with the others, and the **◀** / **▶** buttons at the top of the Trade panel are
       large and show their arrow glyphs (not empty boxes). The same buttons on Mining and Missions look right.
@@ -156,7 +157,7 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
       right, and aligned number columns; long station names wrap instead of being cut off; nothing is clipped on the
       right edge or makes the EDMC window wider. The buttons and (on Market) the Commodity box and **Sell** / **Buy**
       are **above** the results.
-- [ ] Settings → Trade: untick **Search ground facilities** and **Search fleet carriers**; the results then show
+- [ ] Settings → Trade: untick **Include ground facilities** and **Include fleet carriers**; the results then show
       orbital stations only, and a search makes one request instead of two.
 - [ ] The **Sell** / **Buy** buttons under the Commodity box: the chosen one is lit, switching clears the results,
       and the results heading says "Selling" or "Buying". All the page's buttons show their full labels (**Near me**,
@@ -170,6 +171,8 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
 - [ ] **Hops** button cycles 2, 3, 4, 5. **Round trip** (docked at a normal station, not a carrier) answers in about
       20 seconds with up to three pairs, each showing what to carry out and back; both legs are loaded. A route's page
       shows an estimated profit per hour and supply/demand per hop.
+- [ ] Settings → Trade route filters: set **ignore prices older than** to a small number of hours and tick **Routes may use
+      systems that need a permit**; **Find routes** and **Round trip** still answer (an old-price filter can leave fewer results).
 - [ ] No Python errors in the EDMC log, and the EDMC window did not get wider when you opened Trade.
 
 ## 7. BGS (rebuilt in 1.1.0)

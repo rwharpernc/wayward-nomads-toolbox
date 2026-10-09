@@ -58,11 +58,13 @@ plugin/           everything that ships; becomes the WNTB folder
   panelkit.py     shared Tk helpers (wrapping, separators, toggles, tooltips, collapsible sections, theming)
   overlay.py      the one shared overlay client
   update.py       the one self-updater
-  <feature>*.py   one or more modules per feature
+  <feature>*.py   one or more modules per feature (every module is listed in MODULES.md)
 tests/            unittest suites for the pure-logic modules
 scripts/          build.mjs, package.mjs
 docs/             this file, the development guide, the feature specs, the overlay guide, acknowledgements
 ```
+
+[MODULES.md](MODULES.md) lists every module with a one-line description; `tests/test_docs_modules.py` keeps it complete.
 
 `npm run build` copies `plugin/` to `dist/WNTB`, skipping `__pycache__` and `.pyc`, and also copies
 `LICENSE` and `THIRD-PARTY-NOTICES.md` into it. `npm run package` zips that folder, keeping the
@@ -152,8 +154,8 @@ abbreviations (the table is in the README's "Button names"), and `panelkit.add_t
 hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
 `ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder. EDMC sizes its window to the widest row across all plugins, and the mode row used to be WNTB's widest, so the mode row is held at the size measured from a throwaway row of full-label buttons (`ui._mode_row_full_label_size`), with the short buttons centered inside it; without that the shortened labels made EDMC open far narrower. Don't implement this with a thin spacer widget in the same grid cell: it draws a line across the buttons.
 
-**Settings layout.** `ui._build_settings_tabs` builds eight top-level Settings tabs: General (Overlay
-Connection, Window, Updates), Powerplay, Missions, Exploration, Mining, BGS, Field Ops and Always On
+**Settings layout.** `ui._build_settings_tabs` builds nine top-level Settings tabs: General (Overlay
+Connection, Window, Updates), Powerplay, Missions, Exploration, Mining, Trade, BGS, Field Ops and Always On
 (Interdiction, Landing). A group is a plain tab holding its own `nb.Notebook` (`_settings_group`). In
 Exploration, GEC, Canonn and Codex share one "Points of Interest" page and Auto-Honk and Discovery share an
 "Alerts" page: `_SectionStack` is an `nb.Frame` whose `add()` grids each feature's frame one under the other,
@@ -414,6 +416,11 @@ other commanders casually typing words like "pirate" with no interdiction happen
 Overlay features (Landing, Interdiction, Discovery, Inventory bars, Mining, Screenshots) draw over the
 game window through a separate helper app, **EDMCModernOverlay** (recommended) or the older **EDMCOverlay**, which listen
 on a local TCP port. WNTB is only a client.
+
+**Every overlay switch defaults to off.** The Inventory, Landing and Screenshots overlays used to default on; on the first
+start after that change `load._reset_overlays_once` sets every switch in `_OVERLAY_ENABLE_KEYS` to off, once, recorded by the
+`wntb_overlay_reset_v1` config key, before any feature reads its settings. A new overlay switch must be added to
+`_OVERLAY_ENABLE_KEYS` and default to off.
 
 **Protocol.** Connect, send one JSON object plus a newline per graphic, for example
 `{"id": "x", "text": "hi", "color": "red", "x": 200, "y": 100, "ttl": 4}`. Nothing is read back; sends
@@ -1029,9 +1036,9 @@ EDMC's `state`, and `Market.json` from the journal folder (`config.get_str("jour
 Proton prefix's journal path), and makes HTTPS requests with `urllib`. All file reads use an explicit UTF-8
 encoding (`errors="replace"` for journals), writes are temp-file-then-`os.replace`, and the carrier backfill
 ignores a missing folder. Background work is a plain daemon thread plus `queue`/polling; no thread touches Tk.
-Checked on Windows only. Still to confirm on Linux (listed in `LINUX_TESTING.md` section 6d): the type-ahead
-popup, which is a borderless `Toplevel` and so depends on the window manager for stacking and focus; the
-◀ ▶ glyphs in the page arrows with Linux fonts; and that the backfill finds a Proton journal folder.
+Checked on Windows while building, then on Linux on 2026-10-09 against `LINUX_TESTING.md` section 6d with no new
+issues: the type-ahead popup (a borderless `Toplevel`, so it depends on the window manager for stacking and focus), the
+◀ ▶ glyphs in the page arrows with Linux fonts, and the backfill finding a Proton journal folder.
 
 ### 18.1 Audit of every module (2026-10-03)
 

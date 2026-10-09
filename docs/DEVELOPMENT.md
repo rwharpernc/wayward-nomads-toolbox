@@ -21,7 +21,8 @@ cd wayward-nomads-toolbox
 ```
 
 The plugin source is the `plugin/` folder. Tests are in `tests/`, build scripts in `scripts/`, and
-documentation in `docs/`. [TECHNICAL.md](TECHNICAL.md) section 2 has the full layout.
+documentation in `docs/`. [TECHNICAL.md](TECHNICAL.md) section 2 has the full layout and [MODULES.md](MODULES.md)
+names every module. Adding a module means adding its row there (a test checks).
 
 ## Build
 
@@ -32,6 +33,7 @@ npm run package    # builds, then zips the contents of dist/WNTB into dist/WNTB.
 
 `dist/` is ignored by git. The version number comes from `plugin/__init__.py` (and is mirrored in
 `package.json`).
+
 ## Try your changes in EDMC
 
 1. Run `npm run deploy`. It builds, detects which OS you are on, and merges the result into EDMC's
@@ -76,8 +78,8 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
   `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/logs/EDMarketConnector-debug.log`
   (on Windows: `%TEMP%\EDMarketConnector\EDMarketConnector-debug.log`). Check it first when something
   works on one OS and not the other.
-- Not synced by Git (ignored on purpose): `CLAUDE.md`, `.claude/`, `docs/roadmap.md`, `docs/TODO.md`,
-  `dist/`. Copy local notes between machines yourself.
+- Not synced by Git (ignored on purpose): `.claude/`, `docs/roadmap.md`, `docs/TODO.md`, `dist/`. Copy local notes
+  between machines yourself. `CLAUDE.md` is committed (it holds the two-machine guidance for both installs).
 
 **Keep code portable**
 
@@ -139,7 +141,8 @@ feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and is
    Any new network call must follow the API-usage rules in
    [TECHNICAL.md](TECHNICAL.md#keeping-api-traffic-low): opt-in or user-triggered, cached, capped, with a
    timeout, and identified through `http_identity.user_agent()`.
-5. Update the README, the changelog and any affected docs in the same change.
+5. Update the README, the changelog and any affected docs in the same change, including a row in
+   [MODULES.md](MODULES.md) for any new module.
 
 ### Using other people's work
 
