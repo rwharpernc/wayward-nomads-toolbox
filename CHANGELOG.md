@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.4.0 - 2026-10-09
 
 ### Action needed
 - **Every overlay is switched off once on first start** (see Changed). Tick the overlays you want again in Settings.
