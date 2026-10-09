@@ -179,6 +179,13 @@ live calls and checked against independent callers, and `mining_spansh_client.py
 if Spansh changes it. An earlier plan to use Inara was dropped because Inara has no commodity or market
 lookup to call.
 
+Two details shared with [Trade mode](TRADE_TECH_SPEC.md): Spansh's market search is **case-sensitive and
+exact** ("Liquid oxygen" finds markets, "Liquid Oxygen" finds none), so the price finder resolves whatever is
+typed through `trade_commodities.resolve` to the game's exact name before searching; and
+`search_best_price_stations` accepts `max_distance_ly=None` for "no distance limit", which Trade's Galaxy
+search uses (the Mining dialog still always passes a distance). The page arrows on the Mining panel are the
+shared `panelkit.nav_arrow`.
+
 ## 9. Optional extras
 
 - **On-screen stats panel and waypoint arrow** (overlay; two separate switches). Both register an

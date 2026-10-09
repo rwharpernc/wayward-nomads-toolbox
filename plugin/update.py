@@ -65,6 +65,8 @@ _OWN_DATA_FILES: set = {
     "ship_builds.json",  # Ship Builds list (ship_builds_data.py)
     "codex_catalog.json",  # Codex Completionist's cached Canonn entry catalog (codex_catalog.py)
     "colonisation_sites.json",  # Colonisation construction sites (colonisation_data.py)
+    "trade_ledger.json",  # Trade mode's session ledger (trade_ledger.py)
+    "trade_carrier.json",  # Trade mode's fleet/squadron carrier cargo space (trade_carrier.py)
 }
 _OWN_DIRS = {UPDATES_DIRNAME, BACKUPS_DIRNAME, "mining_sessions", "__pycache__"}  # mining_sessions: mining_session_archive.py
 

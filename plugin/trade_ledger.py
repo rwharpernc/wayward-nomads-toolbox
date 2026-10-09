@@ -12,6 +12,14 @@ that actually landed in the account.
 
 A session is one game login, tied to the journal file it started in, the same
 rule session_credits.py uses (a logout to the menu and back continues it).
+
+Running costs are tracked too, so the headline is a net figure: refuelling (`RefuelAll`,
+`RefuelPartial`), repairs (`Repair`, `RepairAll`), rearm (`BuyAmmo`, `RestockVehicle`) and limpets
+(`BuyDrones` bought, `SellDrones` sold back). Each carries a credit cost in the journal (field names
+checked against a real journal, 2026-10-09). Insurance rebuys (`Resurrect`) and fines are not counted.
+Costs only count from when WNTB saw them, like trades, so a refuel before EDMC started isn't included.
+The credits-per-hour clock still runs first trade to last trade, so a refuel before the first sale
+doesn't stretch it.
 """
 from __future__ import annotations
 
@@ -37,6 +45,13 @@ TOP_ROWS_SHOWN = 5
 
 _ROW_FIELDS = ("bought", "spent", "sold", "revenue", "cost_basis")
 
+# Running costs: category -> (heading, journal events that add to it).
+EXPENSE_LABELS = {"fuel": "Fuel", "repairs": "Repairs", "rearm": "Rearm", "limpets": "Limpets"}
+_EXPENSE_OF_EVENT = {
+    "RefuelAll": "fuel", "RefuelPartial": "fuel", "Repair": "repairs", "RepairAll": "repairs",
+    "BuyAmmo": "rearm", "RestockVehicle": "rearm", "BuyDrones": "limpets", "SellDrones": "limpets",
+}
+
 
 def _parse_timestamp(value: Any) -> Optional[float]:
     if not isinstance(value, str):
@@ -48,7 +63,8 @@ def _parse_timestamp(value: Any) -> Optional[float]:
 
 
 def new_ledger(cmdr: str, journal_file: Optional[str]) -> Dict[str, Any]:
-    return {"cmdr": cmdr, "journal_file": journal_file, "first_trade": None, "last_trade": None, "rows": {}}
+    return {"cmdr": cmdr, "journal_file": journal_file, "first_trade": None, "last_trade": None, "rows": {},
+            "expenses": {}}
 
 
 def sync_ledger(
@@ -76,10 +92,29 @@ def _int(value: Any) -> int:
     return int(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else 0
 
 
+def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str) -> bool:
+    """Add one cost event. `SellDrones` is limpets sold back, so it reduces the limpet cost (the
+    category can go negative if you sell more than you bought this session)."""
+    if event == "BuyDrones":
+        amount = _int(entry.get("TotalCost"))
+    elif event == "SellDrones":
+        amount = -_int(entry.get("TotalSale"))
+    else:
+        amount = _int(entry.get("Cost"))
+    if amount == 0:
+        return False
+    category = _EXPENSE_OF_EVENT[event]
+    expenses = ledger.setdefault("expenses", {})
+    expenses[category] = expenses.get(category, 0) + amount
+    return True
+
+
 def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any]) -> bool:
-    """Fold one `MarketBuy` / `MarketSell` into the ledger. Returns True if the
-    ledger changed."""
+    """Fold one trade (`MarketBuy` / `MarketSell`) or running-cost event into the ledger. Returns True
+    if the ledger changed."""
     event = entry.get("event")
+    if event in _EXPENSE_OF_EVENT:
+        return _apply_expense(ledger, entry, event)
     if event not in ("MarketBuy", "MarketSell"):
         return False
     count = _int(entry.get("Count"))
@@ -107,7 +142,18 @@ class Totals:
     sold_t: int
     spent: int
     revenue: int
-    profit: int
+    profit: int          # trade profit: sales minus what the sold tonnes cost
+    expenses: int = 0    # fuel + repairs + rearm + limpets
+
+    @property
+    def net(self) -> int:
+        return self.profit - self.expenses
+
+
+def expenses_by_category(ledger: Optional[Dict[str, Any]]) -> Dict[str, int]:
+    """Running costs so far, in display order, leaving out categories that are zero."""
+    recorded = (ledger or {}).get("expenses") or {}
+    return {c: recorded[c] for c in EXPENSE_LABELS if recorded.get(c)}
 
 
 def totals(ledger: Dict[str, Any]) -> Totals:
@@ -118,7 +164,7 @@ def totals(ledger: Dict[str, Any]) -> Totals:
         spent += row.get("spent", 0)
         revenue += row.get("revenue", 0)
         basis += row.get("cost_basis", 0)
-    return Totals(bought, sold, spent, revenue, revenue - basis)
+    return Totals(bought, sold, spent, revenue, revenue - basis, sum(expenses_by_category(ledger).values()))
 
 
 def hours_traded(ledger: Dict[str, Any]) -> float:
@@ -139,17 +185,30 @@ def commodity_profits(ledger: Dict[str, Any]) -> List[Tuple[str, int, int]]:
     return rows
 
 
+def _cost_lines(expenses: Dict[str, int]) -> List[str]:
+    """'Fuel: -12,300 cr' (a negative cost, such as limpets sold back, reads '+500 cr')."""
+    return [f"{EXPENSE_LABELS[category]}: {-amount:+,} cr" for category, amount in expenses.items()]
+
+
 def summary_lines(ledger: Optional[Dict[str, Any]]) -> List[str]:
-    """The Session page's text, one entry per line."""
-    if not ledger or not ledger.get("rows"):
+    """The Session page's text, one entry per line. With running costs it leads with the net figure
+    and then the trade profit and each cost; without any it is just the profit, as before."""
+    expenses = expenses_by_category(ledger)
+    has_trades = bool(ledger and ledger.get("rows"))
+    if not has_trades and not expenses:
         return ["No trades yet this session.", "Buy or sell at a market and they are counted here."]
     t = totals(ledger)
+    if not has_trades:
+        return ["No trades yet this session.", *_cost_lines(expenses), f"Net: {t.net:+,} cr"]
     hours = hours_traded(ledger)
-    profit_line = f"Profit: {t.profit:+,} cr"
+    headline = f"Net profit: {t.net:+,} cr" if expenses else f"Profit: {t.profit:+,} cr"
     if hours >= MIN_HOURS_FOR_RATE:
-        profit_line += f" ({t.profit / hours:+,.0f} cr/hr)"
-    lines = [
-        profit_line,
+        headline += f" ({t.net / hours:+,.0f} cr/hr)"
+    lines = [headline]
+    if expenses:
+        lines.append(f"Trade profit: {t.profit:+,} cr")
+        lines.extend(_cost_lines(expenses))
+    lines += [
         f"Bought {t.bought_t:,} t for {t.spent:,} cr",
         f"Sold {t.sold_t:,} t for {t.revenue:,} cr",
     ]
