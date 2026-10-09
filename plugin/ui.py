@@ -38,7 +38,7 @@ from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
     notable, organic_scan_panel, overlay, panelkit, powerplay, screenshots, ship_builds_panel,
-    game_mode, session_credits, trade_panel,
+    game_mode, session_credits, settings_scroll, trade_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
 
@@ -464,9 +464,32 @@ def create_prefs(parent: tk.Frame) -> nb.Frame:
     tabs = nb.Notebook(notebook_border, style=_SETTINGS_NOTEBOOK_STYLE)
     tabs.grid(row=0, column=0, sticky=tk.NSEW, padx=4, pady=4)
 
-    _build_settings_tabs(tabs)
+    page_bg = _page_background(outer)
+    _build_settings_tabs(tabs, page_bg)
+    _match_page_background(tabs, page_bg)
 
     return outer
+
+
+def _page_background(widget: tk.Misc) -> str:
+    """The colour EDMC paints Settings pages with (white on Windows, the theme's on Linux). Read from a real
+    nb.Label, which EDMC colours to match its pages."""
+    probe = nb.Label(widget)
+    try:
+        colour = str(probe.cget("background"))
+    finally:
+        probe.destroy()
+    return colour or str(ttk.Style().lookup("TFrame", "background") or "")
+
+
+def _match_page_background(widget: tk.Misc, background: str) -> None:
+    """Give every plain tk.Frame on the Settings pages the page colour. A tk.Frame (used where a row needs `pack`,
+    which an nb.Frame can't take) is painted the system button grey by default, which showed as odd grey bands
+    on the white pages. ttk frames (class TFrame) already follow the page and are left alone."""
+    for child in widget.winfo_children():
+        if background and child.winfo_class() == "Frame":
+            child.configure(background=background)
+        _match_page_background(child, background)
 
 
 class _SectionStack(nb.Frame):
@@ -491,7 +514,7 @@ class _SectionStack(nb.Frame):
         self._next_row += 1
 
 
-def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.Misc], None]]) -> None:
+def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.Misc], None]], page_bg: str) -> None:
     """One top-level Settings tab holding its own row of tabs, so the strip across
     the top stays short instead of listing every feature."""
     page = nb.Frame(tabs)
@@ -501,7 +524,7 @@ def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.M
     inner = nb.Notebook(page, style=_SETTINGS_NOTEBOOK_STYLE)
     inner.grid(row=1, column=0, sticky=tk.NSEW, padx=4, pady=4)
     for build in builders:
-        build(inner)
+        settings_scroll.scrolled_page(inner, build, page_bg)
 
 
 def _stacked_page(title: str, builders: List[Callable[[tk.Misc], None]]) -> Callable[[tk.Misc], None]:
@@ -514,7 +537,7 @@ def _stacked_page(title: str, builders: List[Callable[[tk.Misc], None]]) -> Call
     return build
 
 
-def _build_settings_tabs(tabs: nb.Notebook) -> None:
+def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
     """Top-level Settings tabs: General, then one per mode (modes with several
     features get a row of tabs inside), then the always-on overlays. Small related
     Exploration pages are merged: the three point-of-interest/codex pages into one,
@@ -528,25 +551,26 @@ def _build_settings_tabs(tabs: nb.Notebook) -> None:
 
     # General: Overlay Connection is the one shared host/port pair that Interdiction/
     # Landing/Discovery's own settings all point to.
-    _settings_group(tabs, "General", [overlay.build_settings, _create_window_tab, _create_updates_tab])
+    _settings_group(tabs, "General", [overlay.build_settings, _create_window_tab, _create_updates_tab], page_bg)
     for feature in (powerplay, missions):
         for build in settings_of(feature):
-            build(tabs)
+            settings_scroll.scrolled_page(tabs, build, page_bg)
     _settings_group(tabs, "Exploration", [
         *settings_of(exploration_value, organic_scan_panel),
         _stacked_page("Points of Interest", settings_of(gec_poi_panel, canonn_poi_panel, codex_completionist_panel)),
         *settings_of(boxel_survey),
         _stacked_page("Alerts", settings_of(autohonk, discovery, notable)),
-    ])
+    ], page_bg)
     for feature in (mining_panel, trade_panel, bgs_panel):
         for build in settings_of(feature):
-            build(tabs)
-    _settings_group(tabs, "Field Ops", settings_of(screenshots, inventory_panel, ship_builds_panel, colonisation_panel))
-    _settings_group(tabs, "Always On", settings_of(interdiction, landing))
+            settings_scroll.scrolled_page(tabs, build, page_bg)
+    _settings_group(tabs, "Field Ops", settings_of(screenshots, inventory_panel, ship_builds_panel, colonisation_panel),
+                    page_bg)
+    _settings_group(tabs, "Always On", settings_of(interdiction, landing), page_bg)
 
     leftovers = [f for f in FEATURES if hasattr(f, "build_settings") and f not in placed]
     if leftovers:
-        _settings_group(tabs, "Other", settings_of(*leftovers))
+        _settings_group(tabs, "Other", settings_of(*leftovers), page_bg)
 
 
 def _create_window_tab(notebook: nb.Notebook) -> None:

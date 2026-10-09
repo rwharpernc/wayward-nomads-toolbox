@@ -98,6 +98,10 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
   child inside every instance, so packing into it raises, EDMC logs `Failed for Plugin "WNTB"` and the whole
   WNTB Settings tab disappears. Use `grid`, or pack into a plain `tk.Frame`. `tests/test_settings_layout.py`
   checks the source and `tests/test_prefs_smoke.py` builds the whole tab with EDMC-faithful stand-ins.
+- Settings pages scroll: `ui` hands each feature's `build_settings` a `settings_scroll.ScrollContent` instead of a
+  notebook, so a page taller than the screen allows (`settings_scroll.height_cap`) gets a scrollbar and the OK button
+  stays visible. Nothing changes for a feature: keep calling `notebook.add(frame, text=...)`. Plain `tk.Frame` rows
+  on a Settings page are recoloured to the page colour (`ui._match_page_background`), so they don't show as grey bands.
 - Where a new feature's Settings go: `ui._build_settings_tabs` lays the tabs out (General, Powerplay, Missions,
   Exploration, Mining, Trade, BGS, Field Ops, Always On). Add the feature to the right group there. A feature with a
   `build_settings` that isn't listed still gets a tab, under "Other". To put two small pages on one tab, wrap

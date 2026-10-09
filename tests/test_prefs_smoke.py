@@ -27,6 +27,8 @@ class PrefsSmokeTests(unittest.TestCase):
         self.assertIn("Window", result.stdout)  # the window-behaviour tab (auto height fit)
         # Grouped layout: nine top-level tabs, and the merged Exploration pages are all there.
         self.assertIn("SETTINGS BUILT OK: 9 top-level tabs", result.stdout)
+        # Every page is wrapped in a scroller capped in height, so a long page can't push OK off the screen.
+        self.assertIn("PAGES OVER HEIGHT CAP: 0 of 19", result.stdout)
         for leaf in ("Exploration > Points of Interest", "Exploration > Alerts", "General > Overlay Connection",
                      "Always On > Landing", "Field Ops > Inventory"):
             self.assertIn(leaf, result.stdout)
