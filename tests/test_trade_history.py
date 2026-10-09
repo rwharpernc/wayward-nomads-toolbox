@@ -200,23 +200,154 @@ class RebuildFromJournalTests(unittest.TestCase):
             self.assertIsNone(ledger_mod.rebuild_from_journal(path, ""))
             self.assertIsNone(ledger_mod.rebuild_from_journal(os.path.join(folder, "missing.log"), "Bocheaux"))
 
-    def test_events_the_replay_already_counted_are_skipped_when_delivered_live(self) -> None:
+    def test_events_already_counted_are_skipped_when_delivered_again(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             rebuilt = ledger_mod.rebuild_from_journal(self._write(folder, self._events()), "Bocheaux")
         events = self._events()
         last = events[-1]                                                       # the 11:05 purchase, last in the replay
-        self.assertTrue(ledger_mod.already_replayed(rebuilt, events[3]))        # an older purchase
-        self.assertTrue(ledger_mod.already_replayed(rebuilt, dict(last)))       # the very same event again
-        self.assertFalse(ledger_mod.already_replayed(rebuilt, {**last, "Count": 7}))   # same second, a different event
-        self.assertFalse(ledger_mod.already_replayed(rebuilt, buy("Gold", 1, 1, "2026-10-09T11:06:00Z")))
-        self.assertFalse(ledger_mod.already_replayed(ledger_mod.new_ledger("B", "J"), last))   # nothing was rebuilt
+        self.assertTrue(ledger_mod.already_counted(rebuilt, events[3]))        # an older purchase
+        self.assertTrue(ledger_mod.already_counted(rebuilt, dict(last)))       # the very same event again
+        self.assertFalse(ledger_mod.already_counted(rebuilt, {**last, "Count": 7}))   # same second, a different event
+        self.assertFalse(ledger_mod.already_counted(rebuilt, buy("Gold", 1, 1, "2026-10-09T11:06:00Z")))
+        self.assertFalse(ledger_mod.already_counted(ledger_mod.new_ledger("B", "J"), last))   # nothing was rebuilt
 
     def test_two_events_in_the_last_second_are_both_remembered(self) -> None:
         events = self._events()[:-1] + [buy("Gold", 5, 10_400, "2026-10-09T11:05:00Z"), buy("Tea", 6, 100, "2026-10-09T11:05:00Z")]
         with tempfile.TemporaryDirectory() as folder:
             rebuilt = ledger_mod.rebuild_from_journal(self._write(folder, events), "Bocheaux")
-        self.assertTrue(ledger_mod.already_replayed(rebuilt, events[-1]))
-        self.assertTrue(ledger_mod.already_replayed(rebuilt, events[-2]))
+        self.assertTrue(ledger_mod.already_counted(rebuilt, events[-1]))
+        self.assertTrue(ledger_mod.already_counted(rebuilt, events[-2]))
+
+
+class SessionSpansPlaySessionsTests(unittest.TestCase):
+    """One commander loading a carrier over several play sessions: three logins (three journal files), the middle one
+    played with EDMC closed, another commander in the same file, and EDMC restarted in between. The session is the
+    commander's, and carries on until they press Reset."""
+
+    X = ("Sol", "Daedalus")
+    Y = ("Alpha Centauri", "Hutton Orbital")
+
+    def _journals(self, folder: str) -> dict:
+        def write(name: str, events: list, age_days: float) -> str:
+            path = os.path.join(folder, name)
+            with open(path, "w", encoding="utf-8") as handle:
+                for event in events:
+                    handle.write(json.dumps(event, separators=(",", ":")) + "\n")
+            moment = stats.parse_time(events[-1]["timestamp"]) + 1      # a journal file is last written at its last event
+            os.utime(path, (moment, moment))
+            return path
+
+        def docked(ts: str, place: tuple) -> dict:
+            return {"timestamp": ts, "event": "Location", "Docked": True, "StarSystem": place[0], "StationName": place[1]}
+
+        j1 = [{"timestamp": "2026-10-09T10:00:00Z", "event": "Commander", "Name": "BOCHEAUX"},
+              {"timestamp": "2026-10-09T10:00:01Z", "event": "LoadGame", "Commander": "BOCHEAUX", "Credits": 5_000_000},
+              docked("2026-10-09T10:00:02Z", self.X), buy("Gold", 100, 10_000, "2026-10-09T10:05:00Z")]
+        j2 = [{"timestamp": "2026-10-10T09:00:00Z", "event": "Commander", "Name": "BOCHEAUX"},                  # EDMC was closed
+              {"timestamp": "2026-10-10T09:00:01Z", "event": "LoadGame", "Commander": "BOCHEAUX", "Credits": 4_900_000},
+              docked("2026-10-10T09:00:02Z", self.X), buy("Gold", 100, 10_000, "2026-10-10T09:05:00Z"),
+              {"timestamp": "2026-10-10T09:06:00Z", "event": "RefuelAll", "Cost": 200},
+              {"timestamp": "2026-10-10T09:10:00Z", "event": "LoadGame", "Commander": "MACTAVIOUS", "Credits": 1},
+              docked("2026-10-10T09:10:02Z", self.X), buy("Tea", 5, 100, "2026-10-10T09:11:00Z"),
+              {"timestamp": "2026-10-10T09:20:00Z", "event": "LoadGame", "Commander": "BOCHEAUX", "Credits": 4_899_000},
+              docked("2026-10-10T09:20:02Z", self.X),
+              {"timestamp": "2026-10-10T09:25:00Z", "event": "Undocked"},
+              {"timestamp": "2026-10-10T09:26:00Z", "event": "FSDJump", "StarSystem": "Alpha Centauri", "JumpDist": 4.38},
+              {"timestamp": "2026-10-10T09:29:00Z", "event": "Docked", "StarSystem": "Alpha Centauri", "StationName": "Hutton Orbital"},
+              buy("Gold", 50, 10_400, "2026-10-10T09:30:00Z")]
+        j3 = [{"timestamp": "2026-10-11T08:00:00Z", "event": "Commander", "Name": "BOCHEAUX"},                  # EDMC running again
+              {"timestamp": "2026-10-11T08:00:01Z", "event": "LoadGame", "Commander": "BOCHEAUX", "Credits": 4_800_000},
+              docked("2026-10-11T08:00:02Z", self.Y), sell("Gold", 150, 13_000, 10_000, "2026-10-11T08:10:00Z")]
+        return {"j1": (write("Journal.2026-10-09T100000.01.log", j1, 2.0), j1),
+                "j2": (write("Journal.2026-10-10T090000.01.log", j2, 1.0), j2),
+                "j3": (write("Journal.2026-10-11T080000.01.log", j3, 0.0), j3)}
+
+    def _play_live(self, ledger: dict, events: list) -> None:
+        """What the panel does with each event EDMC delivers while it is running."""
+        place = (None, None)
+        for entry in events:
+            kind = entry.get("event")
+            if kind == "LoadGame":
+                ledger_mod.note_start(ledger, entry["timestamp"], entry.get("Credits"))
+            elif kind in ("Location", "Docked"):
+                place = (entry["StarSystem"], entry["StationName"])
+            elif not ledger_mod.already_counted(ledger, entry):
+                ledger_mod.apply_trade_event(ledger, entry, place)
+                ledger_mod.note_jump(ledger, entry)
+
+    def test_the_session_spans_logins_restarts_and_play_with_edmc_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._journals(folder)
+            book = ledger_mod.LedgerBook()
+            ledger, _ = book.ensure("Bocheaux", files["j1"][0])
+            self._play_live(ledger, files["j1"][1])                              # login 1, EDMC running
+            first_id = history.build_record(ledger, "Bocheaux")["id"]
+            self.assertEqual(ledger["rows"]["Gold"]["bought"], 100)
+
+            ledger_mod.save_book(folder, book)                                   # EDMC is closed; login 2 is played without it
+            book = ledger_mod.load_book(folder)                                  # EDMC starts again; login 3 begins
+            ledger, created = book.ensure("Bocheaux", files["j3"][0])
+            self.assertFalse(created, "a new login must not start a new session")
+            added = ledger_mod.catch_up(ledger, "Bocheaux", folder)
+
+        self.assertGreater(added, 0)
+        rows = ledger["rows"]["Gold"]
+        self.assertEqual((rows["bought"], rows["sold"]), (250, 150))             # 100 + 100 + 50 bought, the sale seen in login 3
+        self.assertNotIn("Tea", ledger["rows"])                                  # the other commander's purchase
+        self.assertEqual(ledger_mod.expenses_by_category(ledger), {"fuel": 200})
+        info = ledger_mod.meta(ledger)
+        self.assertEqual((info["started"], info["credits_start"]), ("2026-10-09T10:00:01Z", 5_000_000))   # login 1's start, kept
+        self.assertEqual((info["jumps"], info["jump_ly"]), (1, 4.38))
+        self.assertEqual([(i["e"], i.get("stn")) for i in ledger["log"]],
+                         [("buy", "Daedalus"), ("buy", "Daedalus"), ("cost", "Daedalus"), ("buy", "Hutton Orbital"),
+                          ("sell", "Hutton Orbital")])
+        record = history.build_record(ledger, "Bocheaux")
+        self.assertEqual(record["id"], first_id, "saving after more logins must update the same history entry")
+        self.assertEqual([(v.station, v.bought_t, v.sold_t) for v in stats.visits(record)],
+                         [("Daedalus", 200, 0), ("Hutton Orbital", 50, 150)])
+
+    def test_catching_up_again_and_live_repeats_add_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._journals(folder)
+            book = ledger_mod.LedgerBook()
+            ledger, _ = book.ensure("Bocheaux", files["j1"][0])
+            self._play_live(ledger, files["j1"][1])
+            ledger_mod.catch_up(ledger, "Bocheaux", folder)
+            before = json.dumps(ledger, sort_keys=True)
+            self.assertEqual(ledger_mod.catch_up(ledger, "Bocheaux", folder), 0)
+            self._play_live(ledger, files["j3"][1])                              # EDMC now delivers login 3's events live too
+            self.assertEqual(json.dumps(ledger, sort_keys=True), before, "events already counted must not count again")
+
+    def test_a_new_event_after_the_catch_up_still_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._journals(folder)
+            ledger, _ = ledger_mod.LedgerBook().ensure("Bocheaux", files["j1"][0])
+            self._play_live(ledger, files["j1"][1])
+            ledger_mod.catch_up(ledger, "Bocheaux", folder)
+        self.assertFalse(ledger_mod.already_counted(ledger, sell("Gold", 1, 1, 1, "2026-10-11T09:00:00Z")))
+        self.assertTrue(ledger_mod.apply_trade_event(ledger, sell("Gold", 1, 1, 1, "2026-10-11T09:00:00Z"), self.Y))
+        self.assertEqual(ledger["rows"]["Gold"]["sold"], 151)
+
+    def test_nothing_to_catch_up_from(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertEqual(ledger_mod.catch_up(ledger_mod.new_ledger("B", "J"), "B", folder), 0)    # no start, nothing counted
+            started = ledger_mod.new_ledger("B", "J", started="2026-10-09T10:00:00Z")
+            self.assertEqual(ledger_mod.catch_up(started, "B", folder), 0)                            # no journals at all
+            self.assertEqual(ledger_mod.catch_up(started, "B", os.path.join(folder, "missing")), 0)
+
+    def test_journal_files_written_before_the_session_last_counted_anything_are_not_read(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            files = self._journals(folder)
+            old = os.path.join(folder, "Journal.2026-10-01T000000.01.log")
+            with open(old, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps({"timestamp": "2026-10-12T00:00:00Z", "event": "LoadGame", "Commander": "BOCHEAUX", "Credits": 1}) + "\n")
+                handle.write(json.dumps(buy("Gold", 999, 1, "2026-10-12T00:01:00Z")) + "\n")
+            long_ago = stats.parse_time("2026-10-01T00:00:00Z")      # last written long before the session's last event
+            os.utime(old, (long_ago, long_ago))
+            ledger, _ = ledger_mod.LedgerBook().ensure("Bocheaux", files["j1"][0])
+            self._play_live(ledger, files["j1"][1])
+            ledger_mod.catch_up(ledger, "Bocheaux", folder)
+        self.assertEqual(ledger["rows"]["Gold"]["bought"], 250)                  # the 999 t in the stale file never counted
 
 
 class OverviewTests(unittest.TestCase):

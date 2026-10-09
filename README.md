@@ -516,8 +516,7 @@ Reads your journal only; nothing is sent anywhere. It shows:
   headline becomes **Net profit** (trade profit less those costs, and the credits per hour is the net), with
   the trade profit and each cost listed under it. Insurance rebuys and fines aren't counted, and a cost only
   counts if WNTB saw it, so a refuel before EDMC started isn't included.
-- **Reset** starts the profit tally again (it carries on if you log out to the menu and back, and survives
-  restarting EDMC). If the session has trades you haven't saved, it asks whether to save it to Trade History first.
+- **Reset** starts the profit tally again (it carries on across logins and EDMC restarts until you press it). If the session has trades you haven't saved, it asks whether to save it to Trade History first.
   **Clear stock** forgets the unsold stock list. **Save session** and **History** are described next.
 - **Stock bought, not yet sold**: what you have spent on commodities that are still waiting to be sold, with
   the average price you paid, and how much of each is still in your hold and how much is elsewhere (usually
@@ -558,11 +557,14 @@ the tabs show everything about it:
 **Copy summary** puts a plain-text report on the clipboard, **Export log (CSV)** saves the full trade log to a file you
 choose, and **Delete session** removes a saved session (it asks first).
 
-Good to know: if you start EDMC while the game is already running, WNTB rebuilds the *current* login's session from the
-game's journal file, so trades made before EDMC started are included (earlier logins are never looked at, and nothing is
-kept unless you press Save session); the balance change is your real credits difference and so also includes anything
-else you earned; times are UTC; and a session
-keeps the most recent 5,000 trades and costs (the totals are always exact). History is kept in `trade_history.json` in
+**A session belongs to a commander and lasts until you press Reset**, however many times you log in or restart EDMC. That
+is what makes a long job, such as loading a fleet carrier over several evenings, one session. Each commander has their own,
+so switching commanders never loses anyone's tally. If you play with EDMC closed, the next time EDMC sees that commander it
+catches up from the game's journal files and adds what it missed (only what is new, so it can't count anything twice).
+Nothing reaches History unless you press Save session.
+
+Good to know: the balance change is your real credits difference and so also includes anything else you earned; times
+are UTC; and a session keeps the most recent 5,000 trades and costs (the totals are always exact). History is kept in `trade_history.json` in
 the WNTB plugin folder, which updates leave alone.
 
 ### Routes (needs the Spansh lookups on)

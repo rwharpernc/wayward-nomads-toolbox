@@ -8,8 +8,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ### Added
 - **Trade mode** (the new **TRD** button), with three pages (see [docs/TRADE_TECH_SPEC.md](docs/TRADE_TECH_SPEC.md)):
   - **Session** (works offline):
-    - Profit, credits per hour, tonnes bought and sold and your best sales for this login (`trade_ledger.py`,
-      saved to `trade_ledger.json` so an EDMC restart keeps it). Profit uses the game's `AvgPricePaid`.
+    - Profit, credits per hour, tonnes bought and sold and your best sales for the session (`trade_ledger.py`,
+      saved to `trade_ledger.json`). A session belongs to a commander and lasts until Reset, across game logins and EDMC
+      restarts. Profit uses the game's `AvgPricePaid`.
     - **Running costs**: fuel (`RefuelAll`, `RefuelPartial`), repairs (`Repair`, `RepairAll`), **Advanced
       Maintenance** (its own line: a `Repair` whose items include "Wear"), rearm (`BuyAmmo`,
       `RestockVehicle`) and limpets (`BuyDrones` less `SellDrones`). Once any is recorded the headline is
@@ -31,7 +32,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     opens Mining's price finder. All the page's buttons now carry full labels.
   - The Spansh lookups are **off until enabled** (Settings → WNTB → Trade) and only run when you press a button.
 - **Trade History** (saved sessions). **Save session** on the Session page keeps the current trading session when you
-  ask (nothing is saved automatically; saving again during the same login updates the same entry), and **History** opens
+  ask (nothing is saved automatically; saving again updates the same entry, however many logins the session spans), and **History** opens
   a pop-out window like the BGS and Powerplay ones: pick a saved session (newest first, with a commander filter) and see
   its **Overview** (net and trade profit, running costs, per hour, tonnes, balance change, jumps, per-tonne and per-jump
   figures), **Commodities**, **Stations**, the **Route** flown (the stations visited in order with what was bought and
@@ -40,12 +41,15 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   session**. **Reset** now offers to save an unsaved session first. New: `trade_history.py`, `trade_stats.py`,
   `trade_history_window.py`, `trade_history.json`; the live ledger now also keeps a bounded log of trades and costs with
   their station, jumps and the starting balance.
-- **A session in progress when EDMC starts is rebuilt from its journal file** (`trade_ledger.rebuild_from_journal`), so
-  trades, costs, jumps and stations from before EDMC started are included, with the station-by-station route. Only the
-  current login is read, never earlier ones, and nothing is kept in History unless you press Save session. Events EDMC
-  then delivers live that the replay already counted are skipped (`already_replayed`). On a real journal this recovered
-  the 3,795 t of purchases a running plugin had missed across an EDMC restart. Commodity names the journal gives in
-  lowercase (`superconductors`) are now resolved to the game's name in the ledger.
+- **A trading session now spans play sessions.** It belongs to a **commander** and lasts **until Reset**, however many
+  game logins, journal files and EDMC runs that takes (loading a fleet carrier over several evenings is one session), and
+  each commander has their own (`LedgerBook`). Previously a new login silently replaced the session, discarding it.
+- **Catch-up from the journals** (`trade_ledger.catch_up`): the first time EDMC sees a commander after starting, the
+  session is brought up to date from the journal files written since its last counted event, so play with EDMC closed is
+  included, with the station-by-station route. It only adds (every event is idempotent: `already_counted`), reads only the
+  commander's own events, and nothing reaches History unless you press Save session. On a real journal it found the 3,795 t
+  of purchases a running plugin had missed across an EDMC restart. Commodity names the journal gives in lowercase
+  (`superconductors`) are now resolved to the game's name in the ledger.
 - **Ship and landing pads** (`trade_ship.py`): the ship from the journal's `Loadout` gives the pad size it needs
   (pad classes from Coriolis ship data; EDMC's own ship-name table is used when available). Override in Settings.
 - **Stock bought, not yet sold** (`trade_stock.py`, `trade_stock.json`): what you have spent on cargo that is still
