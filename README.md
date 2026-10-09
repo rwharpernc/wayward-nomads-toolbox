@@ -7,7 +7,8 @@
 # Wayward Nomads Toolbox (WNTB)
 
 A free add-on for **Elite Dangerous** that puts a set of handy tools in one panel: Powerplay tracking,
-exploration helpers, mining, missions, on-foot and cargo tracking, and more. It was built for the
+exploration helpers, mining, trading (profit tracking, routes, prices and fleet carrier cargo), missions, on-foot and
+cargo tracking, and more. It was built for the
 **Wayward Nomads** exploration squadron (WWNS) and is open to anyone who wants it.
 
 It runs inside [EDMC](https://github.com/EDCD/EDMarketConnector) (Elite Dangerous Market Connector), a
@@ -52,7 +53,7 @@ WNTB has one panel with seven **modes**. You click a button to switch between th
 | **Powerplay** | Tracks the merits and Control Points you earn for your Power, and finds rare goods. |
 | **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values, exobiology help, and a lifetime tally of everything you've scanned. |
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalogue of mining hotspots. |
-| **Trade** | What you bought and sold this session, the value of your hold, and Spansh lookups for the best trade routes and prices near you. |
+| **Trade** | Your trading profit after fuel and repairs, the stock you've bought but not yet sold, your hold and fleet carrier cargo space, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions. |
 | **Field Ops** | Screenshots, your backpack/locker/cargo, saved ship builds, and colonisation sites. |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. |
@@ -84,6 +85,7 @@ that differ. The Settings tab for each of them says which systems it works on an
 |---|---|---|
 | Everything driven by the journal: Powerplay, Exploration, Mining, Missions, BGS, Colonisation, Inventory tracking, Ship Builds, Boxel Survey, Codex, Landing Assist, Interdiction Warning, Discovery Alerts | Yes | Yes, once EDMC's **Journal directory** points at the game's journals inside the Proton/Wine folder |
 | **Game mode and credits lines** under the mode buttons | Yes | Yes (same journal data; the Journal directory must be set) |
+| **Trade**: session profit and costs, stock, carrier cargo, Trade History (including **Export log (CSV)**), and the Spansh route and price lookups | Yes | Yes. The Journal directory must be set: Trade reads the journals to catch a session up after EDMC was closed |
 | **Auto-Honk** (presses your Discovery Scanner key for you) | Yes | Yes, needs **`xdotool`**; X11 or XWayland windows only, not a native Wayland window |
 | **Screenshot auto-timer** and **Thargoid-scan capture** (press the screenshot key for you) | Yes | Yes, needs **`xdotool`** |
 | Screenshot conversion and renaming | Yes | Yes (Elite's `Pictures` folder inside the Proton/Wine folder) |
@@ -175,6 +177,7 @@ Switch to the mode, then use the button listed here.
 | Ship Builds | Field Ops | **SHIPS** button |
 | Colonisation | Field Ops | **REPORT** button |
 | Mining Book | Mining | **BOOK** button, on both the Space Mining and Surface Mining pages |
+| Trade History (tabs: Overview, Commodities, Stations, Route, Trades, Stock & carrier, Lookups) | Trade | **History** button on the Session page |
 
 A few notes:
 - You don't need to be mining to open the Mining Book. It lists your saved hotspots either way.
@@ -245,12 +248,13 @@ feature that contacts an outside site, so you can decide what you're comfortable
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons; some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings |
-| Trade lookups (best routes, best sell price) | Spansh | **Off** until you turn them on in Settings. Only when you press **Find routes** (it then checks for the answer every 5 seconds, for up to 4 minutes, until you press **Cancel**) or **Near me** / **Galaxy** (two requests each: stations, then fleet carriers; one if you hide carriers) |
+| Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. Only when you press **Find routes** (it then checks for the answer every 5 seconds, for up to 4 minutes, until you press **Cancel**) or **Near me** / **Galaxy** (two requests each: stations, then fleet carriers; one if you hide carriers) |
 | BGS tick detection | A community tick-time service | Every 60 seconds while BGS is on; can be turned off in Settings |
 | Automatic updates | GitHub | **Off** by default |
 
 Everything else (Powerplay tracking, Missions, Inventory, Screenshots, Colonisation, Organic Scanning,
-Ship Builds, Landing Assist and so on) makes no internet connection at all.
+Ship Builds, Landing Assist, and Trade's session profit, stock, carrier cargo and History, and so on) makes no
+internet connection at all.
 
 WNTB is built to ask these services for as little as it can: lookups are started by you or switched on
 by you, answers are remembered, and every request says who it's from. The details are in
@@ -495,61 +499,73 @@ completed runs automatically.
 
 ## Trade
 
-Everything about buying and selling: what you've made this session, your ship's hold and your carrier's, and
-where to find the best routes and prices. Use the **◀** and **▶** buttons at the top of the panel to move
-between its three pages.
+Everything about buying and selling: what you've earned after fuel and repairs, what you still have tied up in
+cargo, your hold and your carrier's space, and where to find the best routes and prices. Trade mode has three pages,
+**Session**, **Routes** and **Market**; use the large orange **◀** and **▶** buttons at the top of the panel to move
+between them. A pop-out **Trade History** window keeps the sessions you choose to save.
 
-The buttons for each page sit at the top, under the page arrows, and the page itself is laid out in sections
-(orange headings, with a rule between them): label-and-value rows with the value on the right, and tables where the
-numbers line up in columns. Long station names wrap instead of being cut off.
+Each page is laid out in sections (orange headings with a rule between them), with label-and-value rows (the value on
+the right) and tables whose numbers line up in columns. Long station names wrap instead of being cut off. A page's
+buttons are at the top, under the page arrows.
 
-### Session (works offline)
+### How a trading session works
 
-Reads your journal only; nothing is sent anywhere. It shows:
+- **A session is your running tally, and it belongs to a commander.** It starts the first time WNTB sees you and lasts
+  **until you press Reset**, however many times you log in or restart EDMC. That is what makes a long job, such as
+  loading a fleet carrier over several evenings, one session.
+- **Each commander has their own.** Switching to another commander never loses anyone's tally.
+- **Playing with EDMC closed is fine.** The next time EDMC sees that commander it catches the session up from the game's
+  journal files and adds what it missed. It only adds what is new, so it can't count anything twice. (On Linux this
+  needs EDMC's **Journal directory** to be set; see [Using WNTB on Linux](#using-wntb-on-linux).)
+- **Only what WNTB has seen is counted.** Trades made before WNTB first ran, or in a session you reset, aren't included.
+- **Nothing is kept for good unless you ask.** Press **Save session** to put it in Trade History (below).
 
-- **Profit** since you logged in, and credits per hour once you've traded for a few minutes, with the tonnes
-  you bought and sold and your best-selling commodities. Trade profit is what you were paid minus what the
-  sold tonnes cost you, as the game reports it; stolen or black-market cargo counts the whole sale.
-- **Running costs**, so the profit is honest: **fuel** (refuelling), **repairs**, **advanced maintenance**
-  (the game logs it as a repair that includes module "Wear"; the whole charge goes on its own line), **rearm**
-  (ammunition and restocking an SRV or fighter) and **limpets** (bought, less any sold back). Once you've spent anything the
-  headline becomes **Net profit** (trade profit less those costs, and the credits per hour is the net), with
-  the trade profit and each cost listed under it. Insurance rebuys and fines aren't counted, and a cost only
-  counts if WNTB saw it, so a refuel before EDMC started isn't included.
-- **Reset** starts the profit tally again (it carries on across logins and EDMC restarts until you press it). If the session has trades you haven't saved, it asks whether to save it to Trade History first.
-  **Clear stock** forgets the unsold stock list. **Save session** and **History** are described next.
-- **Stock bought, not yet sold**: what you have spent on commodities that are still waiting to be sold, with
-  the average price you paid, and how much of each is still in your hold and how much is elsewhere (usually
-  your carrier). This follows the cargo, not the login, so it carries across sessions. It is one list for both
-  ways of trading: on a station-to-station run it goes up when you buy and down when you sell; when you are
-  loading your carrier for a bulk sale, every purchase adds to it and moving cargo to or from the carrier
-  changes where it is, not what you paid. It only comes down when you **sell**. WNTB reads your recent journals
-  when it starts, so purchases made while EDMC was closed are included (a first run looks back 14 days).
-  Cargo that leaves some other way, such as your carrier selling it on a trade order, stays listed until you
-  press **Clear stock**.
-- **Your ship** and the landing pad it needs (for example "Type-9 Heavy (large pad)").
-- **Your hold**: how many tonnes are used, the capacity, how much is free, and what the station you're docked
-  at would pay for the whole hold.
-- **Your carrier's cargo space**, if you have one (see below).
+### The Session page (works offline)
+
+It reads your journal only; nothing is sent anywhere. Top to bottom:
+
+- **Profit.** Trade profit is what you were paid minus what the sold tonnes cost you, as the game reports it; stolen or
+  black-market cargo counts the whole sale. Credits per hour appears once you've traded for a few minutes (it uses first
+  trade to last trade). With tonnes bought and sold and your best-selling commodities.
+- **Running costs**, so the profit is honest: **fuel** (refuelling), **repairs**, **advanced maintenance** (the game logs it
+  as a repair that includes module "Wear"; the whole charge goes on its own line), **rearm** (ammunition, and restocking
+  an SRV or fighter) and **limpets** (bought, less any sold back). Once you've spent anything the headline becomes **Net
+  profit** (trade profit less those costs; the credits per hour is the net), with the trade profit and each cost listed
+  under it. Insurance rebuys and fines aren't counted, and a cost only counts once WNTB has seen it.
+- **Stock bought, not yet sold**: what you've spent on commodities still waiting to be sold, at the average price you
+  paid, and how much of each is still aboard and how much is elsewhere (usually your carrier). It follows the cargo, not
+  the session, so it carries on after a Reset. It is one list for both ways of trading: on a station-to-station run it
+  goes up when you buy and down when you sell; when you're loading your carrier for a bulk sale, every purchase adds to
+  it, and moving cargo to or from the carrier changes where it is, not what you paid. It only comes down when you
+  **sell**. WNTB reads your recent journals when it starts, so purchases made while EDMC was closed are included (a first
+  run looks back 14 days). Cargo that leaves some other way, such as your carrier selling it on a trade order, stays
+  listed until you press **Clear stock**.
+- **Ship and hold**: your ship and the landing pad it needs (for example "Type-9 Heavy, large"), how many tonnes are used,
+  the capacity and how much is free, what the station you're docked at would pay for the whole hold, and what each
+  commodity aboard would sell for there.
+- **Your carrier's cargo space**, if you have one (see [Your fleet carrier and squadron carrier](#your-fleet-carrier-and-squadron-carrier)).
+
+Buttons: **Reset** starts the tally again (if the session has trades you haven't saved, it asks whether to save it to
+Trade History first), **Clear stock** forgets the unsold stock list, **Save session** and **History** are described next.
 
 ### Trade History (saving sessions)
 
-Nothing is kept automatically. When you want to keep a trading session, press **Save session** on the Session page. It
-saves the session as it stands (you can keep trading and press it again: that updates the same entry instead of adding
-a second one). **Reset** starts a new session, which becomes a new entry if you save it.
+When you want to keep a trading session, press **Save session**. It saves the session as it stands; you can keep trading
+and press it again, which updates that same entry instead of adding a second one. **Reset** starts a new session, which
+becomes a new entry if you save it. **Save session** is greyed out until there is something to save.
 
-Press **History** to open the **Trade History** window, a pop-out like the BGS and Powerplay ones. A drop-down at the
-top picks a saved session (newest first; if you have more than one commander there is also a commander filter), and
-the tabs show everything about it:
+Press **History** to open the **Trade History** window, a pop-out like the BGS and Powerplay ones (dark look, remembers
+its size and position, closes with **Esc**). A drop-down at the top picks a saved session, newest first; with more than
+one commander there is also a commander filter. The tabs show everything about the session:
 
 - **Overview**: net profit, trade profit, running costs, net per hour, tonnes sold and trading time at a glance, then
-  the commander, ship, start and end, your balance at login and at save, tonnes bought and sold, profit per tonne,
-  margin, jumps and light years, profit per jump and per light year, and each running cost with its share of sales.
-- **Commodities**: for each one, tonnes bought and sold, what you paid and received, average buy and sell price,
-  profit, margin, profit per tonne and what was left unsold.
+  the commander, ship, start and end, your balance at the start and when you saved, tonnes bought and sold, profit per
+  tonne, margin, jumps and light years, profit per jump and per light year, and each running cost with its share of sales.
+- **Commodities**: for each one, tonnes bought and sold, what you paid and received, average buy and sell price, profit,
+  margin, profit per tonne and what was left unsold.
 - **Stations**: the same added up for each station you traded at (visits, bought, sold, profit, costs, net).
-- **Route**: the stations you traded at in the order you flew them, with what was bought and sold at each, the net on
-  that visit and a running net. Going back to a station later is a new visit.
+- **Route**: the stations you traded at in the order you flew them, with what was bought and sold at each, the net on that
+  visit and a running net. Going back to a station later is a new visit.
 - **Trades**: every purchase, sale and cost with its time, price, total, profit, station and system, 200 at a time.
 - **Stock & carrier**: the stock bought but not sold, the hold, and your carrier's cargo space when you saved.
 - **Lookups**: the Spansh routes and market searches you made during the session, and the best result of each.
@@ -557,85 +573,87 @@ the tabs show everything about it:
 **Copy summary** puts a plain-text report on the clipboard, **Export log (CSV)** saves the full trade log to a file you
 choose, and **Delete session** removes a saved session (it asks first).
 
-**A session belongs to a commander and lasts until you press Reset**, however many times you log in or restart EDMC. That
-is what makes a long job, such as loading a fleet carrier over several evenings, one session. Each commander has their own,
-so switching commanders never loses anyone's tally. If you play with EDMC closed, the next time EDMC sees that commander it
-catches up from the game's journal files and adds what it missed (only what is new, so it can't count anything twice).
-Nothing reaches History unless you press Save session.
-
-Good to know: the balance change is your real credits difference and so also includes anything else you earned; times
-are UTC; and a session keeps the most recent 5,000 trades and costs (the totals are always exact). History is kept in `trade_history.json` in
-the WNTB plugin folder, which updates leave alone.
+Good to know: the balance change is your real credits difference, so it also includes anything else you earned; times are
+UTC; and a session keeps its most recent 5,000 trades and costs (the totals are always exact). History is kept in
+`trade_history.json` in the WNTB plugin folder, which updates leave alone.
 
 ### Routes (needs the Spansh lookups on)
 
-**Find routes** asks Spansh for the most profitable trade route from where you are. It starts from the
-station you're docked at, or the last one you docked at, and uses your cargo size and credits from the game
-and your ship's jump range. That range is the *unladen* one, so lower it in Settings if a full hold jumps
-shorter. Spansh can take a minute or two; **Cancel** stops waiting. It lists each hop (stations, system,
-distance, best commodity and profit) and the route's total. **Copy next system** puts the first destination
-on your clipboard so you can paste it into the galaxy map. If your ship needs a large pad, only stations with
-one are considered.
+**Find routes** asks Spansh for the most profitable trade route from where you are. It starts from the station you're
+docked at, or the last one you docked at, and uses your cargo size and credits from the game and your ship's jump range.
+That range is the *unladen* one, so lower it in Settings if a full hold jumps shorter. If your ship needs a large pad, only
+stations with one are considered. Before you search, the page shows what it will use (start, ship, cargo, jump range,
+budget).
+
+Spansh's planner doesn't know fleet carriers, so a route never starts from one: if you're docked at your carrier it starts from the last real station you docked at (the page says where). If Spansh refuses a search, the page shows its reason.
+
+Spansh can take a minute or two; **Cancel** stops waiting. The result is the route's total profit and each hop (stations,
+system, distance, best commodity and profit; the first four are shown, with "+N more" after). **Copy next system** puts the
+first destination on your clipboard so you can paste it into the galaxy map.
 
 ### Market (needs the Spansh lookups on)
 
 Finds where to **sell** or where to **buy** a commodity.
 
-1. Choose what you want to do with the **Sell** / **Buy** buttons under the Commodity box (the lit one is
-   chosen). It is remembered.
-2. Click the **Commodity** box and start typing. Suggestions fill in as you type, starting with what you
-   carry and what the station you're at buys, then every commodity. When selling, leave it empty to search for
-   the commodity you carry the most of. When buying, you type what you want.
-3. Press **Near me** to look within a radius of your system (100 ly unless you change it in Settings), or
-   **Galaxy** to look everywhere. You can press both.
-4. **Selling:** results are ranked by what *your load* would earn, price per tonne times the tonnes the
-   station still wants. A station paying more per tonne but wanting 40 t is worth less to a 200 t hold. If you
-   haven't got any of it, a full hold is assumed.
-   **Buying:** the amount is your *free hold space*. Stations that can supply all of it come first, cheapest
-   first; stations that can only supply part come after, marked "only N t in stock".
-5. Once you've run both searches it tells you which is better and by how much (more money when selling, a
-   lower price when buying), and how much further away it is.
-6. Every result says what kind of place it is: **orbital** or **ground** (on a planet's surface), the station
-   type (Coriolis Starport, Planetary Outpost and so on), and how far it is from the arrival star in light
-   seconds. Stations with no landing pad your ship fits are left out.
-7. **Fleet carriers and ground facilities can be left out.** **Fleet carriers are listed in their own section**, marked "they can move", because a carrier can jump away
-   before you arrive. They are asked for separately and weighted about one carrier to every three stations, so
-   cheap carriers never crowd the real stations out of the list. Under **Settings → WNTB → Trade** you can stop
-   searching for fleet carriers, for **ground facilities** (planetary ports and outposts, and settlements), or
-   both, which leaves only stations in space. A line says when a carrier would beat the best station. You can hide carriers in
-   Settings.
+1. Choose what you want to do with the **Sell** / **Buy** buttons under the Commodity box (the lit one is chosen). It is
+   remembered.
+2. Click the **Commodity** box and start typing. Suggestions fill in as you type, starting with what you carry and what the
+   station you're at buys, then every commodity. When selling, you can leave it empty to search for the commodity you carry
+   the most of. When buying, type what you want.
+3. Press **Near me** to look within a radius of your system (100 ly unless you change it in Settings), or **Galaxy** to look
+   everywhere. You can press both.
+4. **Selling:** results are ranked by what *your load* would earn, price per tonne times the tonnes the station still
+   wants. A station paying more per tonne but wanting 40 t is worth less to a 200 t hold. If you haven't got any of it,
+   a full hold is assumed.
+   **Buying:** the amount is your *free hold space*. Stations that can supply all of it come first, cheapest first;
+   stations that can only supply part come after, marked "only N t in stock".
+5. Once you've run both searches it tells you which is better and by how much (more money when selling, a lower price when
+   buying), and how much further away it is.
+6. Every result says what kind of place it is: **orbital** or **ground** (on a planet's surface), the station type
+   (Coriolis Starport, Planetary Outpost and so on), and how far it is from the arrival star in light seconds. Stations with
+   no landing pad your ship fits are left out.
+7. **Fleet carriers are listed in their own section**, marked "they can move", because a carrier can jump away before you
+   arrive. They are asked for separately and weighted about one carrier to every three stations, so cheap carriers never
+   crowd the real stations out of the list, and a line says when a carrier would beat the best station. In
+   **Settings → WNTB → Trade** you can stop searching for fleet carriers, for **ground facilities** (planetary ports and
+   outposts, and settlements), or both, which leaves only stations in space.
 
-**Price finder** opens the finder Mining's **PRICE** button also uses, for any commodity, to buy or sell, with
-its own distance box.
+**Price finder** opens the finder Mining's **PRICE** button also uses, for any commodity, to buy or sell, with its own
+distance box.
 
-Prices are only as fresh as the last player who docked there (markets older than 30 days are ignored), so
-check the market when you arrive.
+Prices are only as fresh as the last player who docked there (markets older than 30 days are ignored), so check the market
+when you arrive.
 
 ### Your fleet carrier and squadron carrier
 
-Not every commander has a carrier, and some have a fleet carrier, a squadron carrier or both. Under
-**Settings → WNTB → Trade**, each commander WNTB has seen gets a choice: **Auto** (show whatever your
-journal has revealed), **None**, **Fleet**, **Squadron** or **Both**. Nothing is shown for a carrier you
-haven't chosen. For each one the Session page shows the cargo space used, free, and reserved for trade orders,
-for example "5,060/23,720 t used, 18,660 t free".
+Not every commander has a carrier, and some have a fleet carrier, a squadron carrier or both. Under **Settings → WNTB →
+Trade**, each commander WNTB has seen gets a choice: **Auto** (show whatever your journal has revealed), **None**,
+**Fleet**, **Squadron** or **Both**. Nothing is shown for a carrier you haven't chosen. For each one the Session page shows
+the cargo space used, free, and reserved for trade orders, for example "5,060 / 23,720 t used, 18,660 t free".
 
 How it stays up to date:
 
-- The game only reports a carrier's space when you **open Carrier Management**, so do that once. WNTB also
-  reads your recent journal files when it starts, so it finds the last time you did, even if EDMC was
-  restarted since.
-- After that it follows your cargo transfers. A transfer is counted for the carrier you're docked at, so
-  docking at someone else's carrier never changes your figure.
-- Reserved space, and anything your carrier does itself (trade orders, sales), only update the next time you
-  open Carrier Management.
+- The game only reports a carrier's space when you **open Carrier Management**, so do that once. WNTB also reads your recent
+  journal files when it starts, so it finds the last time you did, even if EDMC was restarted since.
+- After that it follows your cargo transfers. A transfer is counted for the carrier you're docked at, so docking at
+  someone else's carrier never changes your figure.
+- Reserved space, and anything your carrier does itself (trade orders, sales), only update the next time you open Carrier
+  Management.
 
 ### Trade settings
 
-**Settings → WNTB → Trade**: *Enable Spansh trade lookups* (off until you tick it), the number of route hops,
-the furthest a station may be from its star, a jump-range override, the "near me" radius, whether to search fleet
-carriers and ground facilities in price results, your ship size (read from your ship by default; pick a size only if it guesses
-wrong) and the carrier choice for each commander. See [What goes on the internet](#what-goes-on-the-internet)
-for exactly what is contacted.
+**Settings → WNTB → Trade**:
+
+- *Enable Spansh trade lookups*: off until you tick it. The Routes and Market pages do nothing without it.
+- *Route hops* (1 to 10, default 3), *Max distance from the star* in light seconds (default 5,000), *Jump range override*
+  (blank uses your ship's unladen range) and *Only stations with a large landing pad*, for Routes.
+- *"Near me" price search radius* in light years (default 100).
+- *Search fleet carriers* and *Search ground facilities* in price results (both on by default).
+- *Ship size (landing pad)*: **From my ship** (the default), or Small, Medium or Large if it guesses wrong.
+- The carrier choice for each commander (above).
+
+See [What goes on the internet](#what-goes-on-the-internet) for exactly what is contacted, and
+[docs/TRADE_TECH_SPEC.md](docs/TRADE_TECH_SPEC.md) for how it all works.
 
 ## Missions
 
@@ -839,6 +857,15 @@ press **Check connection**, then press a **Test** button, such as **Test Discove
 **Exploration → Alerts**. Cards should appear over the game. If they do not, see the Linux items in
 [Troubleshooting](#troubleshooting) below.
 
+### Step 6: Trade (nothing extra to install)
+
+Trade mode needs nothing beyond Step 2, but it leans on it more than most features. EDMC's **Journal directory** is what
+lets WNTB catch a trading session up after you played with EDMC closed, rebuild your carrier's cargo history and the
+unsold stock list at start-up, and read the docked station's `Market.json`. If it is wrong or empty those quietly find
+nothing, and the session only counts what EDMC delivered while it was running. For a Flatpak EDMC the journals permission in
+Step 3 already covers it. The Spansh lookups just need the network. **Export log (CSV)** in Trade History uses a standard
+file dialog; if EDMC is a Flatpak and the save fails, pick a folder EDMC is allowed to write to (WNTB shows the error).
+
 A step-by-step checklist for testers is in [docs/LINUX_TESTING.md](docs/LINUX_TESTING.md). The platform
 differences and the reasoning behind them are in
 [docs/TECHNICAL.md section 18](docs/TECHNICAL.md#18-platform-support-windows-and-linux).
@@ -874,23 +901,36 @@ Alerts** is empty unless you really use a custom setup; a wrong value there hide
 Fixed in 1.3.1 (earlier builds released the key too early under XWayland). Update WNTB.
 
 **Trade: the lookup buttons are greyed out, or there is no Commodity box.**
-The Spansh lookups are off until you tick **Enable Spansh trade lookups** under **Settings → WNTB → Trade**.
-The Commodity box only appears on the Market page, and only once lookups are on.
+The Spansh lookups are off until you tick **Enable Spansh trade lookups** under **Settings → WNTB → Trade**. The Commodity
+box only appears on the Market page, and only once lookups are on.
 
 **Trade: I can't tell whether it's searching for a place to buy or to sell.**
-The **Sell** and **Buy** buttons under the Commodity box choose the side; the lit one is active, and the results
-heading says "Selling" or "Buying". Changing the side clears the old results.
+The **Sell** and **Buy** buttons under the Commodity box choose the side; the lit one is active, and the results heading
+says "Selling" or "Buying". Changing the side clears the old results.
 
 **Trade: the Market search finds nothing for a commodity.**
-Pick the name from the suggestion list. Spansh only knows commodities by their exact in-game name (for example
-"Void Opal", not "Void Opals"), and an unknown name finds no markets. Also check that your ship's pad size is
-right under **Settings → WNTB → Trade**: stations without a pad your ship fits are left out.
+Pick the name from the suggestion list. Spansh only knows commodities by their exact in-game name (for example "Void Opal",
+not "Void Opals"), and an unknown name finds no markets. Also check that your ship's pad size is right under
+**Settings → WNTB → Trade**: stations without a pad your ship fits are left out, and the result says how many were.
+
+**Trade: the Session page seems to have lost some trades.**
+A session lasts until you press **Reset**, across logins and EDMC restarts, and catches up from the journals when EDMC next
+sees you. Check you didn't press **Reset** (it asks to save first if there was anything unsaved), and on Linux that EDMC's
+**Journal directory** is set: without it the catch-up can't read the journals. Trades made before WNTB first ran aren't
+counted.
+
+**Trade: Save session is greyed out, or the History window is empty.**
+**Save session** needs at least one trade or running cost in the session. The History window only lists sessions you saved,
+so press **Save session** first.
+
+**Trade: the stock list shows cargo I've already sold.**
+The list only comes down when WNTB sees you sell. Cargo your carrier sold on a trade order, or that you lost or jettisoned,
+stays until you press **Clear stock**.
 
 **Trade: my carrier doesn't show, or its cargo looks wrong.**
-Check your carrier choice for that commander under **Settings → WNTB → Trade** (Auto, Fleet, Squadron or Both,
-not None), and open **Carrier Management** in the game once so the game reports its space. If the numbers
-still look wrong, open an issue with the `CarrierStats` line from your journal (it is in the latest
-`Journal.*.log`).
+Check your carrier choice for that commander under **Settings → WNTB → Trade** (Auto, Fleet, Squadron or Both, not None),
+and open **Carrier Management** in the game once so the game reports its space. If the numbers still look wrong, open an
+issue with the `CarrierStats` line from your journal (it is in the latest `Journal.*.log`).
 
 **Notable Bodies never shows anything.**
 It is switched off until you tick **Enable** under **Settings → Exploration → Alerts → Notable Bodies**.
@@ -899,7 +939,8 @@ Only some rules are on to start with, so tick the ones you want. A banner needs 
 **Numbers look wrong or out of date.**
 Many features read the game's journal, so they only know what has happened since EDMC started, plus a
 bit of recent history. Powerplay has a **RESCAN** button. Codex Completionist has **BKF** (backfill from
-journal history).
+journal history). Trade catches its session up from the journals by itself; see
+[How a trading session works](#how-a-trading-session-works).
 
 **Something else is wrong.**
 EDMC's Help menu can open its log folder. The log often says exactly what went wrong, and including it
@@ -918,7 +959,7 @@ helps. The squadron website is [waywardnomads.org](https://waywardnomads.org/).
 - **[docs/TECHNICAL.md](docs/TECHNICAL.md)**: how WNTB works and why it's built that way.
 - **Feature specifications**, each covering what a feature reads, its rules and its limits:
   [Missions](docs/MISSIONS_TECH_SPEC.md), [Mining](docs/MINING_TECH_SPEC.md),
-  [Boxel Survey](docs/BOXEL_SURVEY_TECH_SPEC.md), [BGS](docs/BGS_TECH_SPEC.md),
+  [Trade](docs/TRADE_TECH_SPEC.md), [Boxel Survey](docs/BOXEL_SURVEY_TECH_SPEC.md), [BGS](docs/BGS_TECH_SPEC.md),
   [Organic Scanning](docs/ORGANIC_SCANNING_TECH_SPEC.md), [Powerplay](docs/POWERPLAY_TECH_SPEC.md) and
   [Screenshots and input automation](docs/SCREENSHOTS_AND_INPUT_TECH_SPEC.md).
 - **[docs/OVERLAY_SETUP.md](docs/OVERLAY_SETUP.md)**: setting up the on-screen overlay (for everyone).

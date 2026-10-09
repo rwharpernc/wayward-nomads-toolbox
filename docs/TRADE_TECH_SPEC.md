@@ -70,10 +70,11 @@ with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** 
 
 ## 3. The three pages
 
-**Session.** `trade_ledger.summary_lines` (profit, tonnes, best sales), then the stock block
-(`trade_stock.stock_lines`), then the hold block (`_hold_lines`:
-ship and pad size, `used/capacity (free)`, what the docked market would pay, up to four cargo lines), then
-the carrier block (`trade_carrier.cargo_lines`). Buttons: **Reset** (the profit tally) and **Clear stock**.
+**Session.** `trade_ledger.summary_blocks` (profit, running costs, tonnes, best sales; `summary_lines` is the
+plain-text twin), then the stock block, then the hold block (ship and pad size, `used/capacity (free)`, what the docked
+market would pay, up to four cargo lines), then the carrier block (`trade_carrier.cargo_blocks`; `cargo_lines` is the
+plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first), **Clear stock**,
+**Save session** (greyed out until there is something to save) and **History**.
 
 **Routes.** Idle text shows the start station, ship, cargo size, jump range and budget the search will use.
 Buttons: **Find routes** (becomes **Cancel** while searching) and **Copy next system**.
@@ -391,11 +392,13 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_market_side` | Market search side: sell or buy | sell |
 | `wntb_trade_commanders` | Commanders seen, `\|`-separated, so Settings can list them | "" |
 | `wntb_trade_carriers_<commander>` | auto / none / fleet / squadron / both | auto |
+| `wntb_trade_history_window_geometry` | Size and position of the Trade History window | "" |
 
 Files in the plugin folder (all are commander data and must survive updates; see `_OWN_DATA_FILES`, which
 `tests/test_own_data_files.py` enforces): `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json` and
-`trade_history.json`. `trade_carrier.json` was a flat `{commander: record}` map in
-an earlier build; `load_all` reads that as a fleet carrier.
+`trade_history.json`. `trade_ledger.json` is `{"ledgers": {commander: ledger}}` (one session per commander; the
+single-ledger file of an earlier build is read as the current commander's). `trade_carrier.json` was a flat
+`{commander: record}` map in an earlier build; `load_all` reads that as a fleet carrier.
 
 ## 11. Limits and network behaviour
 
@@ -468,7 +471,8 @@ a real Tk window with EDMC and Spansh stubbed; that is not part of the suite.
   was updated in the last 30 days.
 - Stock: cargo sold by the carrier's own orders or lost stays listed until cleared; a first run only looks back
   14 days, so older purchases still unsold aren't known.
-- No automated UI tests.
+- UI tests are smoke tests only (`tests/trade_view_smoke.py`, `tests/trade_history_window_smoke.py`, run in
+  subprocesses and skipped without a display); they check layout and clipping, not looks.
 
 ## 14. Platform notes
 

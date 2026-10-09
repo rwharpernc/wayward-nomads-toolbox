@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
@@ -123,8 +124,20 @@ def parse_hops(result: Any) -> List[Hop]:
 def _request(url: str, data: Optional[bytes] = None) -> Dict[str, Any]:
     request = urllib.request.Request(url, data=data, headers={"User-Agent": _USER_AGENT},
                                      method="POST" if data is not None else "GET")
-    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as response:
-        parsed = json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as response:
+            parsed = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        # Spansh explains a refusal in the body (e.g. {"error": "Could not find station"}); show that.
+        reason = ""
+        try:
+            body = json.loads(err.read().decode("utf-8"))
+            reason = str(body.get("error") or "") if isinstance(body, dict) else ""
+        except (OSError, ValueError):
+            pass
+        if err.code in (400, 404, 422) and reason:
+            raise RouteSearchError(f"Spansh says: {reason}.") from err
+        raise
     return parsed if isinstance(parsed, dict) else {}
 
 

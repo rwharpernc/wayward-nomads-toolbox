@@ -71,6 +71,7 @@ _CFG_COMMANDERS = "wntb_trade_commanders"  # commanders seen, "|"-separated
 _CFG_SHIP_PAD = "wntb_trade_ship_pad_override"  # "" = work it out from the ship
 
 _DEFAULT_MAX_HOPS = 3
+_CARRIER_STATION_TYPES = ("FleetCarrier", "SquadronCarrier")  # journal StationType values
 _DEFAULT_MAX_ARRIVAL_LS = 5000
 _FALLBACK_JUMP_RANGE_LY = 30.0
 _DEFAULT_NEAR_RADIUS_LY = 100
@@ -164,7 +165,8 @@ class TradePanelController:
         # What the journal has told us.
         self._system: Optional[str] = None
         self._station: Optional[str] = None          # where we are docked now
-        self._home_station: Optional[str] = None      # last station we docked at (route start)
+        self._home_station: Optional[str] = None      # last station we docked at (route start); never a carrier
+        self._carrier_names: set = set()              # fleet / squadron carriers docked at (not valid route starts)
         self._home_system: Optional[str] = None
         self._cargo: Dict[str, int] = {}
         self._capacity = 0
@@ -332,8 +334,13 @@ class TradePanelController:
         self._track_carrier(event, entry)
 
         if event == "Docked":
-            self._home_station = entry.get("StationName") or self._home_station
-            self._home_system = entry.get("StarSystem") or self._home_system
+            if str(entry.get("StationType") or "") in _CARRIER_STATION_TYPES:
+                # Spansh's route planner doesn't know fleet carriers ("Could not find station"), so they are
+                # never a route start; remember the name so we skip it while we are docked there.
+                self._carrier_names.add(str(entry.get("StationName") or ""))
+            else:
+                self._home_station = entry.get("StationName") or self._home_station
+                self._home_system = entry.get("StarSystem") or self._home_system
         elif event == "Loadout":
             if entry.get("Ship"):
                 self._ship = str(entry["Ship"])
@@ -566,8 +573,9 @@ class TradePanelController:
                 Note("Turn them on in Settings > WNTB > Trade.")]
 
     def _route_start(self) -> Optional[tuple[str, str]]:
-        """(system, station) a route starts from: where we are docked, else the last place we docked."""
-        if self._station and self._system:
+        """(system, station) a route starts from: where we are docked, else the last station we docked at.
+        Fleet carriers are skipped: Spansh can't plan from one."""
+        if self._station and self._system and self._station not in self._carrier_names:
             return self._system, self._station
         if self._home_station and self._home_system:
             return self._home_system, self._home_station
