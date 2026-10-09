@@ -232,13 +232,13 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     _version_label.grid_remove()
 
     # The row itself is held at the full-label size (see _mode_row_full_label_size) with
-    # the short buttons centered inside it - no extra widget sits over the buttons.
+    # the short buttons left-justified inside it - no extra widget sits over the buttons.
     row_width, row_height = _mode_row_full_label_size(_frame)
     mode_row = tk.Frame(_frame, width=row_width, height=row_height)
     mode_row.pack_propagate(False)
-    mode_row.grid(row=1, column=0, columnspan=3, pady=(6, 0))
+    mode_row.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
     mode_buttons_frame = tk.Frame(mode_row)
-    mode_buttons_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+    mode_buttons_frame.place(relx=0, rely=0.5, anchor=tk.W)
     for key, label in PANEL_MODES:
         btn = tk.Button(mode_buttons_frame, text=_MODE_BUTTON_TEXT.get(key, label), command=lambda k=key: _on_panel_mode_click(k))
         panelkit.add_tooltip(btn, _MODE_TOOLTIPS.get(key, label))
