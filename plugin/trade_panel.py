@@ -148,7 +148,8 @@ class _Job:
 class TradePanelController:
     def __init__(self) -> None:
         self._plugin_dir: Optional[str] = None
-        self._ledger: Optional[Dict[str, Any]] = None
+        self._book = ledger_mod.LedgerBook()    # each commander's working session; lasts until they press Reset
+        self._caught_up: set = set()            # commanders whose session was brought up to date from the journals this run
         self._stock = trade_stock.StockBook()  # bought-not-yet-sold cargo, per commander, across logins
         self._stock_saved = 0.0
         self._history = trade_history.HistoryBook()   # sessions saved on request (Save session)
@@ -219,7 +220,7 @@ class TradePanelController:
 
     def start(self, plugin_dir: str) -> None:
         self._plugin_dir = plugin_dir
-        self._ledger = ledger_mod.load_ledger(plugin_dir)
+        self._book = ledger_mod.load_book(plugin_dir)
         self._carrier.records = trade_carrier.load_all(plugin_dir)
         self._stock.books = trade_stock.load_all(plugin_dir)
         self._history.sessions = trade_history.load_all(plugin_dir)
@@ -265,11 +266,16 @@ class TradePanelController:
             trade_stock.save_all(self._plugin_dir, self._stock.books)
             self._stock_saved = time.monotonic()
 
+    @property
+    def _ledger(self) -> Optional[Dict[str, Any]]:
+        """The current commander's working session (None until a commander is known)."""
+        return self._book.get(self._cmdr) if self._cmdr else None
+
     def _save(self, force: bool = False) -> None:
-        if self._plugin_dir is None or self._ledger is None:
+        if self._plugin_dir is None or not self._book.ledgers:
             return
         if force or time.monotonic() - self._last_saved >= _PERSIST_EVERY_S:
-            ledger_mod.save_ledger(self._plugin_dir, self._ledger)
+            ledger_mod.save_book(self._plugin_dir, self._book)
             self._last_saved = time.monotonic()
 
     # --- journal -------------------------------------------------------------
@@ -300,23 +306,28 @@ class TradePanelController:
                 self._credits = int(credits)
 
         new_session = False
-        if event in ("LoadGame", "StartUp"):
-            self._ledger, continued = ledger_mod.sync_ledger(self._ledger, cmdr, _current_logfile())
-            new_session = not continued
-        if event == "StartUp" and cmdr:
-            # EDMC started with the game already running and doesn't replay old events: rebuild this login's
-            # session from its journal file so it includes everything before now (trades, costs, jumps, stations).
-            logfile = _current_logfile()
-            rebuilt = ledger_mod.rebuild_from_journal(logfile, cmdr, keep=self._ledger) if logfile else None
-            if rebuilt is not None:
-                self._ledger, new_session = rebuilt, True
-                logger.info("Trade session rebuilt from %s", logfile)
+        if cmdr and (event in ("LoadGame", "StartUp") or self._ledger is None):
+            # The commander's working session carries on across game logins, journal files and EDMC runs until they
+            # press Reset; it is only created here if they have none. LoadGame carries the balance at login.
+            opening = entry.get("Credits") if event == "LoadGame" else None
+            _ledger, created = self._book.ensure(
+                cmdr, _current_logfile(), started=str(entry.get("timestamp") or "") or None,
+                credits=opening if isinstance(opening, int) else (self._credits or None))
+            new_session = created
+        key = trade_carrier.key_for(cmdr)
+        if cmdr and event in ("StartUp", "LoadGame") and key not in self._caught_up and self._ledger is not None:
+            # First sight of this commander since EDMC started: EDMC doesn't replay old events, and the game may have been
+            # played while it was closed, so add whatever the journals hold since the session's last counted event.
+            self._caught_up.add(key)
+            added = ledger_mod.catch_up(self._ledger, cmdr, _journal_dir())
+            if added:
+                logger.info("Trade session caught up from the journals: %d event(s) added", added)
+                new_session = True
         if self._ledger is None:
-            self._ledger = ledger_mod.new_ledger(cmdr, _current_logfile())
-        # When this session began and the balance then: LoadGame carries the balance at login.
-        opening = entry.get("Credits") if event == "LoadGame" else None
+            return self._after_event()
+        note_credits = entry.get("Credits") if event == "LoadGame" else None
         ledger_mod.note_start(self._ledger, str(entry.get("timestamp") or "") or None,
-                              opening if isinstance(opening, int) else (self._credits or None))
+                              note_credits if isinstance(note_credits, int) else (self._credits or None))
 
         self._track_carrier(event, entry)
 
@@ -340,13 +351,16 @@ class TradePanelController:
             self._names[market_mod.canonical_name(entry["Type"])] = str(entry["Type_Localised"])
         if event in ("MarketBuy", "MarketSell") and self._stock.feed(entry, self._cmdr):
             self._save_stock()
-        counted = not ledger_mod.already_replayed(self._ledger, entry)   # a rebuilt session already has older events
+        counted = not ledger_mod.already_counted(self._ledger, entry)   # a caught-up session already has older events
         changed = ledger_mod.apply_trade_event(self._ledger, entry, (self._system, self._station)) if counted else False
         changed = (ledger_mod.note_jump(self._ledger, entry) if counted else False) or changed
         if new_session:
             self._save(force=True)
         elif changed:
             self._save()
+        self._after_event()
+
+    def _after_event(self) -> None:
         if self._parent is not None:
             self._refresh()
 
@@ -725,11 +739,10 @@ class TradePanelController:
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     def _session_id(self) -> str:
-        """The id this session would be saved under (the same one every time it is saved during this login)."""
+        """The id this session would be saved under: the same every time it is saved, however many logins it spans."""
         info = ledger_mod.meta(self._ledger) if self._ledger else {}
         started = info.get("started") or (self._ledger or {}).get("first_trade")
-        return trade_history.session_id((self._ledger or {}).get("cmdr") or self._cmdr,
-                                        (self._ledger or {}).get("journal_file"), started)
+        return trade_history.session_id((self._ledger or {}).get("cmdr") or self._cmdr, started)
 
     def _session_mark(self) -> tuple:
         """How the session looks right now, to tell whether anything has happened since it was last saved."""
@@ -797,6 +810,8 @@ class TradePanelController:
 
     def _reset_ledger(self) -> None:
         """Start the tally again. If this session has trades that were never saved, offer to save it first."""
+        if not self._cmdr:
+            return
         if self._unsaved() and self._parent is not None:
             answer = messagebox.askyesnocancel(
                 "Reset trade session",
@@ -806,8 +821,8 @@ class TradePanelController:
                 return
             if answer and not self._save_session():
                 return
-        self._ledger = ledger_mod.new_ledger("", _current_logfile(), started=self._now(), credits=self._credits or None)
-        self._ledger["cmdr"] = self._cmdr
+        self._book.put(self._cmdr, ledger_mod.new_ledger(self._cmdr, _current_logfile(), started=self._now(),
+                                                         credits=self._credits or None))
         self._save(force=True)
         self._refresh()
 

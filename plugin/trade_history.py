@@ -3,9 +3,10 @@ Trade History: sessions the commander chose to save, kept in `trade_history.json
 a small JSON file, so it is unit-tested without EDMC or a window).
 
 Nothing is saved automatically: the live session ledger (trade_ledger.py) is a working tally, and a session only goes
-into history when the commander presses **Save session**. Saving again during the same login *updates* that session's
-record instead of adding a second one (the id is made from the commander, the journal file and the start time), and
-**Reset** starts a new session with a new id, so each login or reset becomes at most one history entry.
+into history when the commander presses **Save session**. Saving again *updates* that session's record instead of adding a
+second one (the id is made from the commander and the moment the session began), and **Reset** starts a new session
+with a new id. A session belongs to a commander and lasts until Reset, however many game logins, journal files and EDMC
+runs it spans, so it becomes at most one history entry.
 
 A record is a snapshot, so it still reads right after the live ledger has moved on:
 
@@ -51,9 +52,10 @@ def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
-def session_id(cmdr: str, journal_file: Optional[str], started: Optional[str]) -> str:
-    """Stable for one login: saving it again updates the same record."""
-    raw = f"{key_for(cmdr)}|{journal_file or ''}|{started or ''}"
+def session_id(cmdr: str, started: Optional[str]) -> str:
+    """Stable for one session, however many logins and journal files it spans: saving it again updates the same record.
+    (The commander and the moment the session began; Reset begins a new one.)"""
+    raw = f"{key_for(cmdr)}|{started or ''}"
     return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
 
 
@@ -75,7 +77,7 @@ def build_record(
     stamp = saved_at or _now()
     last_entry = next((item.get("t") for item in reversed(log) if item.get("t")), None)
     record: Record = {
-        "id": session_id(cmdr, ledger.get("journal_file"), started),
+        "id": session_id(cmdr, started),
         "cmdr": cmdr, "saved_at": stamp, "started": started, "ended": last_entry or ledger.get("last_trade") or stamp,
         "first_trade": ledger.get("first_trade"), "last_trade": ledger.get("last_trade"),
         "credits_start": info.get("credits_start"), "credits_end": credits_end,

@@ -7,6 +7,7 @@ Run with: python -m unittest discover -s tests
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
@@ -78,28 +79,47 @@ class LedgerTests(unittest.TestCase):
         self.assertIn("No trades yet", ledger_mod.summary_lines(None)[0])
         self.assertIn("No trades yet", ledger_mod.summary_lines(self._ledger())[0])
 
-    def test_same_journal_and_commander_continues(self) -> None:
-        ledger = self._ledger()
-        ledger_mod.apply_trade_event(ledger, buy("Gold", 1, 10))
-        same, continued = ledger_mod.sync_ledger(ledger, "Bocheaux", "Journal.1.log")
-        self.assertTrue(continued)
-        self.assertIn("Gold", same["rows"])
+    def test_a_commanders_session_carries_on_across_logins(self) -> None:
+        book = ledger_mod.LedgerBook()
+        first, created = book.ensure("Bocheaux", "Journal.1.log", started="2026-10-09T10:00:00Z", credits=100)
+        self.assertTrue(created)
+        ledger_mod.apply_trade_event(first, buy("Gold", 1, 10, "2026-10-09T10:05:00Z"))
+        again, created = book.ensure("BOCHEAUX", "Journal.2.log", started="2026-10-10T09:00:00Z", credits=999)
+        self.assertFalse(created)
+        self.assertIs(again, first)
+        self.assertIn("Gold", again["rows"])                                          # nothing was discarded
+        self.assertEqual(again["journal_file"], "Journal.2.log")                      # only a note of the file being played
+        self.assertEqual(ledger_mod.meta(again)["started"], "2026-10-09T10:00:00Z")   # the start is the session's, not the login's
+        self.assertEqual(ledger_mod.meta(again)["credits_start"], 100)
 
-    def test_new_journal_or_commander_starts_over(self) -> None:
-        ledger = self._ledger()
-        ledger_mod.apply_trade_event(ledger, buy("Gold", 1, 10))
-        for cmdr, journal in (("Bocheaux", "Journal.2.log"), ("Mactavious", "Journal.1.log")):
-            fresh, continued = ledger_mod.sync_ledger(ledger, cmdr, journal)
-            self.assertFalse(continued)
-            self.assertEqual(fresh["rows"], {})
+    def test_each_commander_has_their_own_session(self) -> None:
+        book = ledger_mod.LedgerBook()
+        bocheaux, _ = book.ensure("Bocheaux", "Journal.1.log")
+        ledger_mod.apply_trade_event(bocheaux, buy("Gold", 1, 10, "2026-10-09T10:05:00Z"))
+        mactavious, created = book.ensure("Mactavious", "Journal.1.log")
+        self.assertTrue(created)
+        self.assertEqual(mactavious["rows"], {})
+        self.assertIn("Gold", book.get("bocheaux")["rows"])          # switching commanders discarded nothing
+        self.assertIsNone(book.get("Someone Else"))
 
     def test_save_and_load_round_trip(self) -> None:
-        ledger = self._ledger()
-        ledger_mod.apply_trade_event(ledger, buy("Gold", 3, 30))
+        book = ledger_mod.LedgerBook()
+        ledger, _ = book.ensure("Bocheaux", "Journal.1.log", started="2026-10-09T10:00:00Z")
+        ledger_mod.apply_trade_event(ledger, buy("Gold", 3, 30, "2026-10-09T10:05:00Z"))
         with tempfile.TemporaryDirectory() as folder:
-            self.assertIsNone(ledger_mod.load_ledger(folder))
-            ledger_mod.save_ledger(folder, ledger)
-            self.assertEqual(ledger_mod.load_ledger(folder), ledger)
+            self.assertEqual(ledger_mod.load_book(folder).ledgers, {})
+            ledger_mod.save_book(folder, book)
+            self.assertEqual(ledger_mod.load_book(folder).ledgers, book.ledgers)
+
+    def test_an_earlier_single_ledger_file_becomes_that_commanders_session(self) -> None:
+        old = ledger_mod.new_ledger("Bocheaux", "Journal.1.log")
+        ledger_mod.apply_trade_event(old, buy("Gold", 3, 30, "2026-10-09T10:05:00Z"))
+        with tempfile.TemporaryDirectory() as folder:
+            with open(os.path.join(folder, ledger_mod.STATE_FILENAME), "w", encoding="utf-8") as handle:
+                json.dump(old, handle)
+            book = ledger_mod.load_book(folder)
+        self.assertEqual(book.get("bocheaux")["rows"]["Gold"]["bought"], 3)
+
 
 
 class RunningCostTests(unittest.TestCase):
@@ -196,12 +216,13 @@ class RunningCostTests(unittest.TestCase):
         self.assertTrue(ledger_mod.apply_trade_event(old, {"event": "RefuelAll", "Cost": 5}))
         self.assertEqual(ledger_mod.expenses_by_category(old), {"fuel": 5})
 
-    def test_a_new_session_starts_with_no_costs(self) -> None:
-        ledger = self._ledger()
+    def test_a_reset_session_starts_with_no_costs(self) -> None:
+        book = ledger_mod.LedgerBook()
+        ledger, _ = book.ensure("Bocheaux", "Journal.1.log")
         ledger_mod.apply_trade_event(ledger, {"event": "RefuelAll", "Cost": 5})
-        fresh, continued = ledger_mod.sync_ledger(ledger, "Bocheaux", "Journal.2.log")
-        self.assertFalse(continued)
-        self.assertEqual(ledger_mod.expenses_by_category(fresh), {})
+        book.put("Bocheaux", ledger_mod.new_ledger("Bocheaux", "Journal.1.log", started="2026-10-09T12:00:00Z"))
+        self.assertEqual(ledger_mod.expenses_by_category(book.get("Bocheaux")), {})
+
 
 
 class MarketTests(unittest.TestCase):

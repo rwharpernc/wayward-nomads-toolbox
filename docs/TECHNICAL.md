@@ -388,10 +388,10 @@ Two situations mean a feature can start with an incomplete picture:
   `FSSBodySignals`, `Scan` or `ScanOrganic` events. So Organic Scanning persists per-body state to
   disk (`organic_scan_state.json`) rather than relying on the journal to re-tell it.
 
-- **A session that started before EDMC did.** The Trade session ledger is rebuilt on `StartUp` by replaying the current
-  login's journal file through the same code the live events use, and de-duplicated by time and event fingerprint
-  (`meta["replay_ts"]`, `already_replayed`) because EDMC may still deliver some of those events live. Only that one
-  file is read; earlier logins are never looked at.
+- **A job that spans play sessions.** Trade's working session belongs to a commander and lasts until Reset, across logins,
+  journal files and EDMC runs. When EDMC next sees the commander it catches the session up from the journal files written
+  since the last event it counted (`trade_ledger.catch_up`), through the same code the live events use, and only adds:
+  every event is idempotent (`already_counted`, by time and fingerprint), so replays and live repeats can't double count.
 - **A baseline event that is only written on request.** `CarrierStats` (the fleet or squadron carrier's
   cargo space) is written only when the Carrier Management screen is opened, and EDMC does not replay it when
   it starts. Trade mode therefore replays the newest 40 journal files on a background thread at startup,
@@ -706,7 +706,7 @@ Full detail is in the [Trade spec](TRADE_TECH_SPEC.md); the decisions worth know
   a guess. Carriers always fit and are listed apart because they can move.
 - **History is saved on request, from a richer ledger.** The live ledger keeps a bounded log of every trade and cost
   with its station, plus jumps and the starting balance; **Save session** snapshots it (and the stock, hold and carrier) into
-  `trade_history.json`, re-saving the same login updates the same record, and `trade_stats.py` works out every figure and
+  `trade_history.json`, re-saving the same session (however many logins it spans) updates the same record, and `trade_stats.py` works out every figure and
   table row so the Trade History window (`trade_history_window.py`) only lays them out. Totals are exact; the log can be
   shorter on a very long session.
 - **Unsold stock is one book, not two trackers.** `trade_stock.py` follows cargo bought and not yet sold per

@@ -33,7 +33,7 @@ Trade mode is one of the panel's modes (`PANEL_PLACEMENT = "trade"`). It has thr
 
 | Page | Works offline? | Purpose |
 |---|---|---|
-| Session | Yes | What you bought and sold this login, your ship and hold, and your carrier's cargo space |
+| Session | Yes | What you have bought and sold this session (until Reset), your ship and hold, and your carrier's cargo space |
 | Routes | No (Spansh) | The most profitable trade route from where you are |
 | Market | No (Spansh) | Where a commodity sells best, near you and anywhere |
 
@@ -152,17 +152,21 @@ category to credits (an older saved ledger without it still loads).
   still show ("No trades yet", the costs, "Net: ...").
 - **Rate** (credits per hour) is the net figure over first-to-last trade time, so a refuel before the first sale
   doesn't stretch the clock. It appears after 3 minutes (`MIN_HOURS_FOR_RATE`).
-- **Session identity** follows `session_credits.py`: one login, tied to the journal file (`monitor.logfile`,
-  converted with `str()`) and commander. The same file and commander continue the ledger across a
-  logout-to-menu and back; anything else starts fresh.
+- **Session identity.** A session belongs to a **commander** (matched ignoring case) and lasts **until Reset**; it is
+  deliberately not tied to a game login or a journal file, because a job such as loading a fleet carrier for a bulk sale
+  spans several play sessions, several journal files and several EDMC runs. `LedgerBook` holds one working session per
+  commander, so switching commanders never discards anyone's tally; `ensure` returns the existing session (noting the
+  journal file now being played) and only creates one if the commander has none; **Reset** replaces it. The Session page
+  therefore shows the commander's whole tally, not just this login's. (The credits line under the mode buttons is a
+  different feature and still counts per login.)
 - **Persistence:** `trade_ledger.json`, atomic write (temp file then `os.replace`), at most once per 30 s plus
   on a new session and on shutdown. Loads tolerate a missing or wrong-shaped file.
 
 ### 5.1 Stock bought, not yet sold
 
-`trade_stock.py`. The ledger is one login; money tied up in cargo often spans several (loading a carrier for a
-bulk sale over days) and the credits are out of your account the whole time. So the stock book follows the
-*cargo*, per commander, in `trade_stock.json`, and is the **same mechanism for both ways of trading**:
+`trade_stock.py`. The session ledger now spans logins too, but it ends at Reset, whereas money tied up in cargo
+stays tied up until the cargo is sold, whenever that is. So the stock book follows the *cargo*, per commander, in
+`trade_stock.json`, and is the **same mechanism for both ways of trading**:
 
 - Station to station: `MarketBuy` adds tonnes and `TotalCost`; `MarketSell` removes tonnes at the commodity's
   average cost so far.
@@ -221,46 +225,25 @@ first and last trade, balance at start and at save, ship and pad size, jumps and
 `routes`, `searches`, plus what was true at the moment of saving: the unsold `stock`, the `hold` and its `capacity`, and
 the commander's `carriers`. Later changes to the live ledger never alter it.
 
-**Rebuilding the current session from the journal.** EDMC doesn't replay old events when it starts, so a session that
-was running before WNTB started (or before the log existed) would be missing that part. On the `StartUp` event (EDMC
-started with the game already running) the panel calls `trade_ledger.rebuild_from_journal(logfile, cmdr, keep=ledger)`:
-it replays **that login's journal file only** (never earlier logins) through the same functions the live events use
-(`apply_trade_event`, `note_jump`, `note_start`), tracking the system and the docked station as EDMC reports them
-(`Location`, `FSDJump`, `CarrierJump`, `Docked`, `Undocked`). A journal can hold several commanders, so only the
-commander's own events count (`Commander` and `LoadGame` switch who is current), and a logout-to-menu-and-back carries
-on the same session. The result replaces the ledger; its Spansh routes and market searches (not in the journal) are
-carried over. Because EDMC can still deliver live some events the replay already read, the ledger records
-`meta["replay_ts"]` (the time of the last event replayed) and `meta["replay_seen"]` (fingerprints of the events at
-exactly that second); `already_replayed` makes the panel skip anything at or before that point, counting two events in
-the same second correctly. The replay changes only the live working session: nothing reaches History until Save session.
-Checked on a real journal, where it recovered the 3,795 t of purchases the running plugin had missed while EDMC restarted.
+**Catching a session up from the journals.** EDMC doesn't replay old events when it starts, and the game can be played with
+EDMC closed, so a session would be missing whatever happened in between. The ledger remembers the last event it counted
+(`meta["seen_ts"]` and fingerprints of the events at exactly that second, updated by every `apply_trade_event` and
+`note_jump`). The first time the panel sees a commander in an EDMC run (their `StartUp` or `LoadGame`) it calls
+`trade_ledger.catch_up(ledger, cmdr, journal_dir)`: every journal file modified since that point is replayed, oldest
+first, through the **same functions the live events use** (`apply_trade_event`, `note_jump`, `note_start`), tracking the
+system and docked station as EDMC reports them (`Location`, `FSDJump`, `CarrierJump`, `Docked`, `Undocked`). Only the
+commander's own events count (`Commander` and `LoadGame` say who is current, since one file can hold several), and it only
+**adds**: `already_counted` skips any event at or before the last counted one (and, within that second, any whose
+fingerprint was recorded), so replaying twice, or EDMC then delivering live an event the replay already read, never counts
+anything twice. Nothing is replaced or discarded, and it reads at most `CATCH_UP_FILES` (80) files, skipping any last
+written before the session's last event. A ledger saved before the markers existed falls back on its last logged event.
+`rebuild_from_journal` (a fresh session built from one file) remains for recovering a session whose tally was lost.
+Catch-up changes only the working session: nothing reaches History until Save session.
 
-**Identity.** `id` = a short SHA-1 of the commander, the journal file and the start time, so saving again during the
-same login *replaces* that record (`HistoryBook.save` returns True when it did) instead of adding a duplicate, and
-**Reset** (a new start time) is a new session. Reset asks to save first when `_unsaved()`: the session has content and
-its `(log length, net)` differs from the mark taken at the last save.
-
-**Numbers** (`trade_stats.py`, all pure) come from `rows` and `expenses` (exact), with the log supplying the detail:
-- *Trade profit* = revenue - cost basis; *net* = trade profit - running costs; *per hour* uses trading time (first to
-  last trade), shown only after 3 minutes; *balance change* is the real credits difference (it includes everything
-  else earned); per tonne sold, margin on cost, per jump and per light year.
-- A **visit** is a run of consecutive log entries at one station; the **route** is the visits in order, and a station
-  returned to is a new visit. Per-station figures add the visits up. The running net in the Route table adds each
-  visit's net (trade profit made there minus fuel and repairs paid there).
-- The Commodities table adds average buy and sell price, margin, profit per tonne and unsold tonnes.
-
-**Storage.** `trade_history.json` (`{"sessions": [...]}`, atomic write, tolerant load that drops junk entries), at most
-`MAX_SESSIONS` = 500, oldest first out. It is in `update.py`'s `_OWN_DATA_FILES`.
-
-**The window** (`trade_history_window.py`) follows the BGS Report and Powerplay Sessions windows: `WindowShell`
-(saved geometry under `wntb_trade_history_window_geometry`, minimum 1,080 px wide, default 1,180 x 700), a session
-`Combobox` newest first with a commander filter shown only when there is more than one commander, and `Tabs`:
-Overview, Commodities, Stations, Route, Trades, Stock & carrier, Lookups. Only the tab on screen is filled (`Tabs.on_select`),
-once per session. The Trades tab is paged at 200 rows (each row is a set of widgets, and a session can have thousands),
-opening on the newest page. Actions: **Copy summary** (clipboard), **Export log (CSV)** (a file dialog, UTF-8, the full
-log), **Delete session** (confirms, then calls back so the panel writes the file). `refresh_if_open` updates an open
-window when a session is saved. Column widths are chosen so every table fits at the minimum window size (a table wider
-than its window is clipped, not scrolled); `tests/trade_history_window_smoke.py` checks that.
+**Identity.** `id` = a short SHA-1 of the commander and the moment the session began, so saving again *replaces* that
+record (`HistoryBook.save` returns True when it did) instead of adding a duplicate, however many logins the session has
+spanned, and **Reset** (a new start time) is a new session. Reset asks to save first when `_unsaved()`: the session has
+content and its `(log length, net)` differs from the mark taken at the last save.
 
 ## 6. Hold, ship and landing pads
 

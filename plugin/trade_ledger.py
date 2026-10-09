@@ -10,8 +10,9 @@ Profit uses the game's own numbers: a `MarketSell` event carries `TotalSale` and
 `AvgPricePaid` of 0, so its whole sale counts as profit - the same as the credits
 that actually landed in the account.
 
-A session is one game login, tied to the journal file it started in, the same
-rule session_credits.py uses (a logout to the menu and back continues it).
+A session belongs to a **commander** and lasts until the commander presses Reset. It is deliberately *not* tied to a game
+login: loading a carrier for a bulk sale can take several play sessions, and so several journal files and several EDMC
+runs, for one commander. Each commander has their own working session (`LedgerBook`).
 
 Running costs are tracked too, so the headline is a net figure: refuelling (`RefuelAll`,
 `RefuelPartial`), repairs (`Repair`, `RepairAll`), Advanced Maintenance (a `Repair` whose `Items` include
@@ -27,11 +28,12 @@ history"): `log`, one entry per trade or cost with the station and system it hap
 out), `meta` (when the session started, the balance at login, jumps and light years travelled), and the `routes` and
 `searches` done during it. It is all bounded, and an older saved ledger without any of it still loads.
 
-EDMC doesn't replay old events when it starts, so a session that began before WNTB was running (or before it kept the
-log) would be missing that part. `rebuild_from_journal` fixes it: when EDMC starts with the game already running, it
-replays that login's journal file through the *same* functions the live events use, so the result is what live
-tracking would have produced. The events replayed are remembered (`meta["replay_ts"]` and a fingerprint of those at
-that exact second) so `already_replayed` can skip them if EDMC then delivers them live as well.
+EDMC doesn't replay old events when it starts, and the game can be played while EDMC is closed, so a session would be
+missing whatever happened in between. `catch_up` fixes it: the ledger remembers the last event it counted
+(`meta["seen_ts"]`, plus fingerprints of the events at that exact second), and when EDMC next sees the commander it
+replays the journal files written since then, through the *same* functions the live events use, adding only what is
+new. Nothing is ever replaced or discarded, and `already_counted` makes any event idempotent, so replaying twice, or
+EDMC delivering live an event the replay already read, never counts it twice.
 """
 from __future__ import annotations
 
@@ -120,7 +122,64 @@ def note_jump(ledger: Dict[str, Any], entry: Dict[str, Any]) -> bool:
     distance = entry.get("JumpDist")
     if isinstance(distance, (int, float)) and not isinstance(distance, bool) and distance > 0:
         record["jump_ly"] = round(record["jump_ly"] + float(distance), 2)
+    _mark_seen(ledger, entry)
     return True
+
+
+def _fingerprint(entry: Dict[str, Any]) -> str:
+    return hashlib.sha1(json.dumps(entry, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:12]
+
+
+def _key(cmdr: str) -> str:
+    return str(cmdr or "").strip().casefold()
+
+
+def _mark_seen(ledger: Dict[str, Any], entry: Dict[str, Any]) -> None:
+    """Remember the latest event counted (its time, and fingerprints of the events at that exact second) so it can be
+    recognised, and skipped, if it ever comes round again."""
+    stamp = str(entry.get("timestamp") or "")
+    if not stamp:
+        return
+    record = meta(ledger)
+    last = record.get("seen_ts") or ""
+    if stamp > last:
+        record["seen_ts"], record["seen_fp"] = stamp, [_fingerprint(entry)]
+    elif stamp == last:
+        seen = record.setdefault("seen_fp", [])
+        fingerprint = _fingerprint(entry)
+        if fingerprint not in seen:
+            seen.append(fingerprint)
+            del seen[: max(0, len(seen) - 50)]
+
+
+def watermark(ledger: Dict[str, Any]) -> str:
+    """The time of the last event this session has counted (or, failing that, when it started): where a catch-up
+    from the journals begins."""
+    record = meta(ledger)
+    if record.get("seen_ts"):
+        return str(record["seen_ts"])
+    stamps = [str(item.get("t") or "") for item in (ledger.get("log") or [])[-1:]]
+    stamps += [str(ledger.get("last_trade") or ""), str(record.get("started") or "")]
+    return max(stamps)
+
+
+def already_counted(ledger: Optional[Dict[str, Any]], entry: Dict[str, Any]) -> bool:
+    """Has this session already counted this event? True for anything before the last event counted, and, for events in
+    that same second, for those whose fingerprint was recorded. A ledger from before this was recorded falls back on the
+    time of its last logged event."""
+    if not ledger:
+        return False
+    stamp = str(entry.get("timestamp") or "")
+    record = meta(ledger)
+    last = record.get("seen_ts") or ""
+    seen = record.get("seen_fp") or []
+    if not last:
+        entries = ledger.get("log") or []
+        last = str(entries[-1].get("t") or "") if entries else str(ledger.get("last_trade") or "")
+        seen = []
+    if not stamp or not last or stamp > last:
+        return False
+    return True if stamp < last else _fingerprint(entry) in seen
 
 
 def _log(ledger: Dict[str, Any], item: Dict[str, Any], entry: Dict[str, Any],
@@ -137,39 +196,26 @@ def _log(ledger: Dict[str, Any], item: Dict[str, Any], entry: Dict[str, Any],
         del log[: len(log) - LOG_LIMIT]
 
 
-# --- rebuilding a session from its journal file -----------------------------------------------------------------
+# --- catching a session up from the journals -----------------------------------------------------------------------
 
 _WANTED = re.compile(
     r'"event"\s*:\s*"(?:MarketBuy|MarketSell|RefuelAll|RefuelPartial|Repair|RepairAll|BuyAmmo|RestockVehicle|BuyDrones|'
     r'SellDrones|FSDJump|CarrierJump|Docked|Undocked|Location|LoadGame|Commander)"')
+CATCH_UP_FILES = 80   # at most this many journal files are read in one catch-up
 
 
-def _fingerprint(entry: Dict[str, Any]) -> str:
-    return hashlib.sha1(json.dumps(entry, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:12]
-
-
-def _key(cmdr: str) -> str:
-    return str(cmdr or "").strip().casefold()
-
-
-def rebuild_from_journal(path: str, cmdr: str, keep: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
-    """A fresh ledger for `cmdr` built by replaying one journal file, oldest event first, through the same functions
-    the live events use (`apply_trade_event`, `note_jump`, `note_start`), tracking the system and the station the
-    commander was docked at as EDMC would have reported them. Only the commander's own events count (a journal can
-    hold more than one). `keep` is the existing ledger: its Spansh routes and market searches (which the journal
-    doesn't record) are carried over. Returns None if the file can't be read or has nothing for this commander.
-
-    The returned ledger carries `meta["replay_ts"]` and `meta["replay_seen"]`, which `already_replayed` uses."""
+def replay_journal(ledger: Dict[str, Any], path: str, cmdr: str) -> int:
+    """Count into `ledger` the events of one journal file that it hasn't counted yet (`already_counted`), oldest first,
+    through the same functions the live events use. Tracks the system and the station the commander was docked at as EDMC
+    would have reported them; only `cmdr`'s own events count (a journal can hold more than one). Returns how many events
+    were added."""
     wanted = _key(cmdr)
     if not wanted:
-        return None
-    ledger = new_ledger(cmdr, path)
+        return 0
     system: Optional[str] = None
     station: Optional[str] = None
     current = ""
-    saw_commander = False
-    last_ts = ""
-    last_seen: List[str] = []
+    added = 0
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as handle:
             for line in handle:
@@ -189,7 +235,6 @@ def rebuild_from_journal(path: str, cmdr: str, keep: Optional[Dict[str, Any]] = 
                     current = _key(entry.get("Commander") or current)
                     station = None
                     if current == wanted:
-                        saw_commander = True
                         credits = entry.get("Credits")
                         note_start(ledger, str(entry.get("timestamp") or "") or None,
                                    credits if isinstance(credits, int) and not isinstance(credits, bool) else None)
@@ -202,40 +247,53 @@ def rebuild_from_journal(path: str, cmdr: str, keep: Optional[Dict[str, Any]] = 
                     station = str(entry.get("StationName") or "") or None
                 elif event == "Undocked" or (event == "Location" and not entry.get("Docked")):
                     station = None
+                if already_counted(ledger, entry):
+                    continue
                 changed = apply_trade_event(ledger, entry, (system, station))
                 changed = note_jump(ledger, entry) or changed
-                if changed:
-                    stamp = str(entry.get("timestamp") or "")
-                    if stamp != last_ts:
-                        last_ts, last_seen = stamp, []
-                    last_seen.append(_fingerprint(entry))
+                added += 1 if changed else 0
     except OSError:
+        return 0
+    return added
+
+
+def catch_up(ledger: Dict[str, Any], cmdr: str, journal_dir: str, max_files: int = CATCH_UP_FILES) -> int:
+    """Bring the commander's session up to date from the journal files written since its last counted event, which
+    covers play with EDMC closed and several logins in between. Adds only what is new, so it is safe to run any number
+    of times. Returns how many events were added."""
+    since = _parse_timestamp(watermark(ledger))
+    if since is None:
+        return 0     # a session with nothing counted and no start time has nothing to catch up from
+    try:
+        found = []
+        for name in os.listdir(journal_dir):
+            if name.startswith("Journal.") and name.endswith(".log"):
+                full = os.path.join(journal_dir, name)
+                modified = os.path.getmtime(full)
+                if modified >= since - 120:       # a file last written before the session's last event holds nothing newer
+                    found.append((modified, name, full))
+    except OSError:
+        return 0
+    found.sort()
+    added = 0
+    for _modified, _name, full in found[-max_files:]:
+        added += replay_journal(ledger, full, cmdr)
+    return added
+
+
+def rebuild_from_journal(path: str, cmdr: str, keep: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    """A fresh session for `cmdr` built entirely from one journal file (used to recover a session whose tally was lost).
+    `keep` is an existing ledger whose Spansh routes and market searches (which the journal doesn't record) are carried
+    over. Returns None if the file can't be read or holds nothing for this commander."""
+    if not _key(cmdr):
         return None
-    if not saw_commander:
+    ledger = new_ledger(cmdr, path)
+    if replay_journal(ledger, path, cmdr) == 0 and not meta(ledger).get("started"):
         return None
     if keep:
         ledger["routes"] = list(keep.get("routes") or [])
         ledger["searches"] = list(keep.get("searches") or [])
-    record = meta(ledger)
-    record["replay_ts"] = last_ts
-    record["replay_seen"] = last_seen
     return ledger
-
-
-def already_replayed(ledger: Dict[str, Any], entry: Dict[str, Any]) -> bool:
-    """Was this event already counted by `rebuild_from_journal`? EDMC can still deliver, live, events the replay read
-    (the ones written between EDMC's own read position and the end of the file), so they are skipped by time and, for
-    events in the replay's last second, by fingerprint. Always False for a ledger that wasn't rebuilt."""
-    record = (ledger or {}).get("meta") or {}
-    last = record.get("replay_ts")
-    if not last:
-        return False
-    stamp = str(entry.get("timestamp") or "")
-    if not stamp or stamp > last:
-        return False
-    if stamp < last:
-        return True
-    return _fingerprint(entry) in (record.get("replay_seen") or [])
 
 
 def add_route(ledger: Dict[str, Any], route: Dict[str, Any]) -> None:
@@ -252,18 +310,32 @@ def add_search(ledger: Dict[str, Any], search: Dict[str, Any]) -> None:
     del searches[: max(0, len(searches) - SEARCHES_KEPT)]
 
 
-def sync_ledger(
-    ledger: Optional[Dict[str, Any]], cmdr: str, journal_file: Optional[str],
-) -> Tuple[Dict[str, Any], bool]:
-    """Same journal file and commander -> the saved ledger carries on; anything
-    else starts a fresh one. Returns (ledger, continued)."""
-    if ledger and journal_file and ledger.get("journal_file") == journal_file:
-        saved = ledger.get("cmdr")
-        if not saved or not cmdr or saved == cmdr:
-            if cmdr:
-                ledger["cmdr"] = cmdr
-            return ledger, True
-    return new_ledger(cmdr, journal_file), False
+class LedgerBook:
+    """Each commander's working session. The session is looked up by commander (ignoring case), so switching commanders
+    never discards anyone's tally, and it carries on across game logins and EDMC restarts until it is reset."""
+
+    def __init__(self, ledgers: Optional[Dict[str, Dict[str, Any]]] = None) -> None:
+        self.ledgers: Dict[str, Dict[str, Any]] = ledgers if ledgers is not None else {}
+
+    def get(self, cmdr: str) -> Optional[Dict[str, Any]]:
+        return self.ledgers.get(_key(cmdr))
+
+    def put(self, cmdr: str, ledger: Dict[str, Any]) -> None:
+        self.ledgers[_key(cmdr)] = ledger
+
+    def ensure(self, cmdr: str, journal_file: Optional[str], started: Optional[str] = None,
+               credits: Optional[int] = None) -> Tuple[Dict[str, Any], bool]:
+        """The commander's session, started if they have none. Returns (ledger, created). `journal_file` is only
+        a note of the file being played now."""
+        existing = self.get(cmdr)
+        if existing is not None:
+            if journal_file:
+                existing["journal_file"] = journal_file
+            existing["cmdr"] = existing.get("cmdr") or cmdr
+            return existing, False
+        ledger = new_ledger(cmdr, journal_file, started=started, credits=credits)
+        self.put(cmdr, ledger)
+        return ledger, True
 
 
 def _row(ledger: Dict[str, Any], name: str) -> Dict[str, int]:
@@ -302,6 +374,7 @@ def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str,
     expenses = ledger.setdefault("expenses", {})
     expenses[category] = expenses.get(category, 0) + amount
     _log(ledger, {"e": "cost", "c": category, "tot": amount}, entry, where)
+    _mark_seen(ledger, entry)
     return True
 
 
@@ -339,6 +412,7 @@ def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any],
     if _parse_timestamp(stamp) is not None:
         ledger["first_trade"] = ledger.get("first_trade") or stamp
         ledger["last_trade"] = stamp
+    _mark_seen(ledger, entry)
     return True
 
 
@@ -434,22 +508,30 @@ def summary_lines(ledger: Optional[Dict[str, Any]]) -> List[str]:
 
 # --- persistence --------------------------------------------------------------
 
-def load_ledger(plugin_dir: str) -> Optional[Dict[str, Any]]:
+def load_book(plugin_dir: str) -> LedgerBook:
+    """The saved working sessions. A file from before sessions were kept per commander held one ledger; it becomes that
+    commander's."""
     try:
         with open(os.path.join(plugin_dir, STATE_FILENAME), "r", encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, ValueError):
-        return None
-    return data if isinstance(data, dict) and isinstance(data.get("rows"), dict) else None
+        return LedgerBook()
+    if not isinstance(data, dict):
+        return LedgerBook()
+    if isinstance(data.get("ledgers"), dict):
+        return LedgerBook({_key(k): v for k, v in data["ledgers"].items() if isinstance(v, dict) and isinstance(v.get("rows"), dict)})
+    if isinstance(data.get("rows"), dict):                    # the earlier single-ledger file
+        return LedgerBook({_key(str(data.get("cmdr") or "")): data}) if _key(str(data.get("cmdr") or "")) else LedgerBook()
+    return LedgerBook()
 
 
-def save_ledger(plugin_dir: str, ledger: Dict[str, Any]) -> None:
+def save_book(plugin_dir: str, book: LedgerBook) -> None:
     """Temp file then replace, so a crash can't leave a half-written file."""
     path = os.path.join(plugin_dir, STATE_FILENAME)
     tmp = f"{path}.tmp"
     try:
         with open(tmp, "w", encoding="utf-8") as handle:
-            json.dump(ledger, handle, indent=2, sort_keys=True)
+            json.dump({"ledgers": book.ledgers}, handle, indent=2, sort_keys=True)
         os.replace(tmp, path)
     except OSError:
         logger.warning("Could not write %s", path, exc_info=True)

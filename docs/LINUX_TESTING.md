@@ -137,9 +137,11 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
       flew them, **Trades** pages with Earlier / Later. Press **Save session** again after another trade: the entry updates
       (no duplicate). **Copy summary** pastes into another app; **Export log (CSV)** opens a file dialog and writes the file;
       **Delete session** asks first. **Reset** with unsaved trades asks whether to save first.
-- [ ] Rebuild: trade for a while, then restart EDMC with the game still running. The Session page still shows the whole
-      session (trades from before the restart included), the numbers don't double when new trades arrive, and after
-      **Save session** the **Route** tab lists the stations from before and after the restart.
+- [ ] A session spans play sessions: trade, log out of the game and back in (a new journal file), restart EDMC, then trade
+      some more. The Session page keeps one running tally through all of it (nothing starts afresh until you press
+      **Reset**), the numbers don't double, and after **Save session** the **Route** tab lists the stations from every
+      part. Also play a short stretch with EDMC closed, then start EDMC: that stretch is added the next time it sees you.
+      With two commanders, switching to the other and back leaves each one's tally as it was.
 - [ ] Stock: buy some cargo and the Session page shows "Stock bought, not yet sold" with the cost and how much is
       aboard. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "elsewhere" grows.
       Restart EDMC after buying while it was closed: the purchase is still counted. **Clear stock** empties it.
