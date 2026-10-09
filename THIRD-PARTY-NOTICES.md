@@ -75,6 +75,18 @@ colonisation ship market ids. The code that draws them is WNTB's own.
 [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no licence. The names are Frontier's
 own.
 
+## Commodity names (Trade)
+
+`plugin/trade_commodities_data.py` is generated from the `commodity.csv` published by
+[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no licence. The names are Frontier's own, and
+Spansh's market search needs them exactly.
+
+## Ship landing-pad sizes (Trade)
+
+The pad class of each ship in `plugin/trade_ship.py` (small, medium or large) was read from the ship data in
+[EDCD/coriolis-data](https://github.com/EDCD/coriolis-data) (`properties.class`). These are game facts; no code
+or data file from that project is bundled.
+
 ## Notable Bodies: rules, thresholds and green gas giant temperatures (MIT)
 
 The rules and numeric limits in `plugin/notable_rules.py` (landable above 29.4 m/s^2, landable radius above

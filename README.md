@@ -132,8 +132,8 @@ default, and only looks at published releases).
 
 ## Finding your way around
 
-- **Switch modes** with the button row under the WNTB title (**P.P.**, **BGS**, **EXP**, **MIN**, **MSN**,
-  **OPS**; hover for the full name). Every mode keeps working in the
+- **Switch modes** with the button row under the WNTB title (**P.P.**, **BGS**, **EXP**, **MIN**, **TRD**,
+  **MSN**, **OPS**; hover for the full name). Every mode keeps working in the
   background while you look at a different one. Nothing pauses.
 - **Your game mode and credits** are shown just under the mode buttons, whichever mode you are in, with a
   rule below them before the page itself. The first line says which mode you are flying in ("You are in
@@ -141,6 +141,8 @@ default, and only looks at published releases).
   since you logged in, such as "+1,234,567 cr earned (+411,522 cr/hr)" or "-5,000 cr lost" (your balance now
   minus your balance at login; the rate appears once the session is a few minutes old). These two lines are
   the only place either appears.
+- **Pages.** Mining, Trade and Missions have several pages. Click the large orange **◀** and **▶** buttons
+  at the top of the panel to move between them.
 - **Collapse the panel** by clicking the "WNTB" title. Click it again to expand (the credits line folds
   away with the rest).
 - **Buttons have short names.** The EDMC main window is small, and every plugin shares it, so WNTB's
@@ -151,7 +153,7 @@ default, and only looks at published releases).
   section, so you never have to drag it taller. It leaves your width and position alone. If you'd rather set
   the height yourself, untick it under **File → Settings → WNTB → Window**.
 - **Settings** for each feature are under **File → Settings → WNTB**, in tabs grouped by mode (General,
-  Powerplay, Missions, Exploration, Mining, BGS, Field Ops, Always On; Exploration, Field Ops and the others
+  Powerplay, Missions, Exploration, Mining, Trade, BGS, Field Ops, Always On; Exploration, Field Ops and the others
   hold a row of tabs of their own). This is where you turn
   things on and off and adjust how they behave.
 - **Pop-out windows** (sessions, rare goods, inventory, the BGS report, the Mining Book and so on)
@@ -212,6 +214,12 @@ Hover over any button for a moment to see its full name.
 | **RES** | Check ring reserve level | Mining |
 | **I/E** | Import/export hotspots | Mining |
 | **BOOK** | Mining Book | Mining |
+| **Reset** | Start the session profit tally again | Trade (Session page) |
+| **Find routes** / **Cancel** | Ask Spansh for trade routes / stop waiting | Trade (Routes page) |
+| **Copy next system** | Copy the first destination to the clipboard | Trade (Routes page) |
+| **Near me** / **Galaxy** | Best place to sell, near you / anywhere | Trade (Market page) |
+| **Price…** | Find best price (the Mining PRICE finder) | Trade (Market page) |
+| **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **SHIPS** | Manage ship builds | Field Ops |
 | **REPORT** | Colonisation sites | Field Ops |
 
@@ -232,7 +240,7 @@ feature that contacts an outside site, so you can decide what you're comfortable
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons; some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings |
-| Trade lookups (best routes, best sell price) | Spansh | **Off** until you turn them on in Settings; only when you press a button |
+| Trade lookups (best routes, best sell price) | Spansh | **Off** until you turn them on in Settings. Only when you press **Find routes** (it then checks for the answer every 5 seconds, for up to 4 minutes, until you press **Cancel**) or **Near me** / **Galaxy** (one request each) |
 | BGS tick detection | A community tick-time service | Every 60 seconds while BGS is on; can be turned off in Settings |
 | Automatic updates | GitHub | **Off** by default |
 
@@ -464,7 +472,7 @@ you can turn that off in the same place.
 Tracks two kinds of mining: **Space Mining** (in your ship) and **Surface Mining** (in the Rhino SRV),
 plus your own catalogue of known hotspots.
 
-**How to use it:** use the ◂ and ▸ arrows to switch between the two pages. Each shows live stats for
+**How to use it:** use the ◀ and ▶ buttons to switch between the two pages. Each shows live stats for
 your current run. Buttons appear when they're useful, side by side in one row (hover for the full name):
 
 - **+H.S.** (save hotspot here) records a deposit you've found.
@@ -482,36 +490,87 @@ completed runs automatically.
 
 ## Trade
 
-Three pages; use the ◂ and ▸ arrows to switch.
+Everything about buying and selling: what you've made this session, your ship's hold and your carrier's, and
+where to find the best routes and prices. Use the **◀** and **▶** buttons at the top of the panel to move
+between its three pages.
 
-- **Session** works offline from your journal. It shows your profit since you logged in (and credits per
-  hour once you've traded for a few minutes), tonnes bought and sold, your best-selling commodities, your
-  ship and the landing pad it needs, and your hold: its capacity, how much is free, and what the station
-  you're docked at would pay for it. If you have a **fleet carrier**, it also shows the carrier's cargo
-  space (used, free and reserved for trade orders). A commander without a carrier never sees that line.
-  Open Carrier Management in the game once so WNTB can read the carrier's space; after that it follows
-  your cargo transfers, and it is remembered per commander. **Reset** starts the tally again. Profit is what you were paid minus what the sold tonnes cost you, as the game reports it;
-  stolen or black-market cargo counts the whole sale.
-- **Routes** asks Spansh for the most profitable trade route from where you are. Press **Find routes**; it
-  starts from the station you're docked at, or the last one you docked at. It uses your cargo size and
-  credits from the game and your ship's jump range (unladen, so lower it in Settings if a full hold jumps
-  shorter). Spansh can take a minute or two; **Cancel** stops waiting. **Copy next system** puts the first
-  destination on your clipboard so you can paste it into the galaxy map.
-- **Market** finds where a commodity sells best. Type a commodity in the box (suggestions fill in as you
-  type, starting with what you carry and what the station you're at buys), or leave it empty to search for
-  the commodity you carry most of. **Near me** looks within a radius of your system (100 ly unless you change
-  it in Settings); **Galaxy** looks everywhere. Results are ranked by what *your load* would earn (price
-  times the tonnes the station still wants), not just price per tonne, and once you've run both it says
-  which is better and by how much. Stations with no landing pad your ship fits are left out, and **fleet
-  carriers are listed in their own section** because they can jump away. **Price…** is the same finder as
-  Mining's **PRICE** button, for any commodity or for buying.
+### Session (works offline)
 
-**Settings:** the Routes and Market lookups are **off** until you tick *Enable Spansh trade lookups*. You
-can also set the number of hops, the furthest a station may be from its star, a jump-range override, the
-"near me" radius, whether to show fleet carriers, and your ship size (by default read from your ship;
-pick a size only if it guesses wrong). Routes ask for large-pad stations automatically when your ship needs
-a large pad. Prices and routes are only as fresh as the last player who docked
-there, so check the market when you arrive.
+Reads your journal only; nothing is sent anywhere. It shows:
+
+- **Profit** since you logged in, and credits per hour once you've traded for a few minutes, with the tonnes
+  you bought and sold and your best-selling commodities. Trade profit is what you were paid minus what the
+  sold tonnes cost you, as the game reports it; stolen or black-market cargo counts the whole sale.
+- **Running costs**, so the profit is honest: **fuel** (refuelling), **repairs**, **rearm** (ammunition and
+  restocking an SRV or fighter) and **limpets** (bought, less any sold back). Once you've spent anything the
+  headline becomes **Net profit** (trade profit less those costs, and the credits per hour is the net), with
+  the trade profit and each cost listed under it. Insurance rebuys and fines aren't counted, and a cost only
+  counts if WNTB saw it, so a refuel before EDMC started isn't included.
+- **Reset** starts the tally again. It carries on if you log out to the menu and back, and survives restarting
+  EDMC.
+- **Your ship** and the landing pad it needs (for example "Type-9 Heavy (large pad)").
+- **Your hold**: how many tonnes are used, the capacity, how much is free, and what the station you're docked
+  at would pay for the whole hold.
+- **Your carrier's cargo space**, if you have one (see below).
+
+### Routes (needs the Spansh lookups on)
+
+**Find routes** asks Spansh for the most profitable trade route from where you are. It starts from the
+station you're docked at, or the last one you docked at, and uses your cargo size and credits from the game
+and your ship's jump range. That range is the *unladen* one, so lower it in Settings if a full hold jumps
+shorter. Spansh can take a minute or two; **Cancel** stops waiting. It lists each hop (stations, system,
+distance, best commodity and profit) and the route's total. **Copy next system** puts the first destination
+on your clipboard so you can paste it into the galaxy map. If your ship needs a large pad, only stations with
+one are considered.
+
+### Market (needs the Spansh lookups on)
+
+Finds where a commodity sells best.
+
+1. Click the **Commodity** box and start typing. Suggestions fill in as you type, starting with what you
+   carry and what the station you're at buys, then every commodity. Leave it empty to search for the
+   commodity you carry the most of.
+2. Press **Near me** to look within a radius of your system (100 ly unless you change it in Settings), or
+   **Galaxy** to look everywhere. You can press both.
+3. Results are ranked by what *your load* would earn: price per tonne times the tonnes the station still
+   wants. A station paying more per tonne but wanting 40 t is worth less to a 200 t hold. If you haven't
+   got any of it, a full hold is assumed. Once you've run both searches it tells you which is better, by
+   how much, and how much further away it is.
+4. Stations with no landing pad your ship fits are left out.
+5. **Fleet carriers are listed in their own section**, marked "they can move", because a carrier can jump away
+   before you arrive. A line says when a carrier would pay more than the best station. You can hide
+   carriers in Settings.
+
+**Price…** opens the same finder as Mining's **PRICE** button, which also looks up where to *buy*.
+
+Prices are only as fresh as the last player who docked there (markets older than 30 days are ignored), so
+check the market when you arrive.
+
+### Your fleet carrier and squadron carrier
+
+Not every commander has a carrier, and some have a fleet carrier, a squadron carrier or both. Under
+**Settings → WNTB → Trade**, each commander WNTB has seen gets a choice: **Auto** (show whatever your
+journal has revealed), **None**, **Fleet**, **Squadron** or **Both**. Nothing is shown for a carrier you
+haven't chosen. For each one the Session page shows the cargo space used, free, and reserved for trade orders,
+for example "5,060/23,720 t used, 18,660 t free".
+
+How it stays up to date:
+
+- The game only reports a carrier's space when you **open Carrier Management**, so do that once. WNTB also
+  reads your recent journal files when it starts, so it finds the last time you did, even if EDMC was
+  restarted since.
+- After that it follows your cargo transfers. A transfer is counted for the carrier you're docked at, so
+  docking at someone else's carrier never changes your figure.
+- Reserved space, and anything your carrier does itself (trade orders, sales), only update the next time you
+  open Carrier Management.
+
+### Trade settings
+
+**Settings → WNTB → Trade**: *Enable Spansh trade lookups* (off until you tick it), the number of route hops,
+the furthest a station may be from its star, a jump-range override, the "near me" radius, whether to show fleet
+carriers in price results, your ship size (read from your ship by default; pick a size only if it guesses
+wrong) and the carrier choice for each commander. See [What goes on the internet](#what-goes-on-the-internet)
+for exactly what is contacted.
 
 ## Missions
 
@@ -748,6 +807,21 @@ Alerts** is empty unless you really use a custom setup; a wrong value there hide
 
 **Auto-Honk presses the key but the scan stops after about a second (Linux).**
 Fixed in 1.3.1 (earlier builds released the key too early under XWayland). Update WNTB.
+
+**Trade: the lookup buttons are greyed out, or there is no Commodity box.**
+The Spansh lookups are off until you tick **Enable Spansh trade lookups** under **Settings → WNTB → Trade**.
+The Commodity box only appears on the Market page, and only once lookups are on.
+
+**Trade: the Market search finds nothing for a commodity.**
+Pick the name from the suggestion list. Spansh only knows commodities by their exact in-game name (for example
+"Void Opal", not "Void Opals"), and an unknown name finds no markets. Also check that your ship's pad size is
+right under **Settings → WNTB → Trade**: stations without a pad your ship fits are left out.
+
+**Trade: my carrier doesn't show, or its cargo looks wrong.**
+Check your carrier choice for that commander under **Settings → WNTB → Trade** (Auto, Fleet, Squadron or Both,
+not None), and open **Carrier Management** in the game once so the game reports its space. If the numbers
+still look wrong, open an issue with the `CarrierStats` line from your journal (it is in the latest
+`Journal.*.log`).
 
 **Notable Bodies never shows anything.**
 It is switched off until you tick **Enable** under **Settings → Exploration → Alerts → Notable Bodies**.

@@ -4,7 +4,7 @@ How Wayward Nomads Toolbox works, and why it's built that way. This is a learnin
 document: it explains the design decisions, including the mistakes that produced some of them. For
 what each feature does for the user, see the [README](../README.md). For features in depth, see the
 specifications: [Missions](MISSIONS_TECH_SPEC.md), [Mining](MINING_TECH_SPEC.md),
-[Boxel Survey](BOXEL_SURVEY_TECH_SPEC.md), [BGS](BGS_TECH_SPEC.md),
+[Trade](TRADE_TECH_SPEC.md), [Boxel Survey](BOXEL_SURVEY_TECH_SPEC.md), [BGS](BGS_TECH_SPEC.md),
 [Organic Scanning](ORGANIC_SCANNING_TECH_SPEC.md), [Powerplay](POWERPLAY_TECH_SPEC.md) and
 [Screenshots and input automation](SCREENSHOTS_AND_INPUT_TECH_SPEC.md). For setting up on-screen
 overlays, see [OVERLAY_SETUP.md](OVERLAY_SETUP.md). For acknowledgements, see
@@ -308,6 +308,14 @@ hands data across the thread boundary safely; `after()` runs the consumer on the
 The updater follows the same rule: it works in a thread, then calls back with a plain version string,
 and `load.py` schedules the UI change with `frame.after(0, ...)`.
 
+Trade mode (`trade_panel.py`) uses two simpler variants of the same rule, because each has exactly one
+consumer. A lookup is a `_Job`: a daemon thread that fills in `result`/`error` and sets `done`, which an
+`after(500)` poller on the Tk thread reads; only one job runs at a time and **Cancel** sets a
+`threading.Event` the worker checks while it waits. The startup journal read for carrier cargo puts one
+result on a `queue.Queue` that the Tk thread merges. Neither touches a widget from the worker, and there is
+no generation counter because a second request can't start while one is running. If a feature can have
+several requests in flight, use the generation counter above instead.
+
 ## 8. Persistence
 
 ### Two kinds of storage
@@ -320,7 +328,8 @@ and `load.py` schedules the UI change with `frame.after(0, ...)`.
   tallies, visited systems, ship builds. Examples: `sessions.json`, `boxel_state.json`,
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
-  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`. `codex_catalog.json` is a cache of a downloaded list rather
+  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`,
+  `trade_ledger.json`, `trade_carrier.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
 **Why files instead of `config`?** `config` is for settings, not structured or growing data. JSON
@@ -334,6 +343,11 @@ name keeps its original casing on disk but is matched case-insensitively (`casef
 players can have several commanders, and their surveys, tallies and hotspots must not mix. Matching
 case-insensitively avoids a duplicate entry if the journal reports the same name with different
 casing.
+
+Trade's carrier records and per-commander carrier choice take this a step further: they are keyed by the
+*casefolded* name (`trade_carrier.key_for`), because a real journal was seen writing `BOCHEAUX` where EDMC
+supplies `Bocheaux`. The list of commanders seen is kept in one config key (`wntb_trade_commanders`) so the
+Settings tab can offer a choice for each, since Settings can't ask the game who your commanders are.
 
 ### Atomic writes
 
@@ -373,6 +387,12 @@ Two situations mean a feature can start with an incomplete picture:
 - **The player relogs.** A relog creates a new journal file that does *not* replay earlier
   `FSSBodySignals`, `Scan` or `ScanOrganic` events. So Organic Scanning persists per-body state to
   disk (`organic_scan_state.json`) rather than relying on the journal to re-tell it.
+
+- **A baseline event that is only written on request.** `CarrierStats` (the fleet or squadron carrier's
+  cargo space) is written only when the Carrier Management screen is opened, and EDMC does not replay it when
+  it starts. Trade mode therefore replays the newest 40 journal files on a background thread at startup,
+  parsing only the few event names it needs, to find the last baseline and the transfers after it (about 0.03 s
+  on a real journal folder). See the [Trade spec](TRADE_TECH_SPEC.md#7-fleet-and-squadron-carrier-cargo-space).
 
 Some things are deliberately *not* automatic. Codex Completionist's "Backfill from Journal History" (BKF)
 is a button because reading years of journal files is real I/O; it does no work until asked.
@@ -439,7 +459,7 @@ Overlay message IDs use `wntb_<feature>_*` so a group's prefix matches exactly i
 | Service | Used for | Trigger |
 |---|---|---|
 | EDSM | Nearby systems, "does EDSM know this system", bodies, ring reserves | Buttons; some opt-in automatic checks |
-| Spansh | Mining price finder, hotspot and boxel lookups, ELW rarity, rare-goods origin Power, nearest neutron star / white dwarf (N.S./W.D.) | Buttons; opt-in; the Rares window looks up on open |
+| Spansh | Mining price finder, hotspot and boxel lookups, ELW rarity, rare-goods origin Power, nearest neutron star / white dwarf (N.S./W.D.), Trade routes and best-price searches | Buttons; opt-in; the Rares window looks up on open |
 | edastro.com (GEC) | Nearest exploration POI | Button only |
 | Canonn sheets | Thargoid and Guardian site lists | Button; downloaded once per session |
 | tick.infomancer.uk | BGS tick time | 60-second poll; can be turned off |
@@ -508,6 +528,9 @@ for as little as it can. These are the measures that are in the code today.
 - A failed request returns "no result" and is not retried. The only repeat is the BGS tick's next
   scheduled poll, a minute later.
 - Every request has a timeout (8 to 60 seconds), so a slow service never leaves a request hanging.
+- Trade's route search is the one lookup that polls: Spansh queues a job and WNTB asks for the result every
+  5 seconds, for at most 4 minutes (about 48 requests), then gives up. It stops at once on **Cancel**. A
+  Near me or Galaxy price search is one request per press.
 
 **Fewer calls by design.**
 - The Rare Goods list is bundled, with EDSM coordinates and Inara and Spansh ids looked up once, so
@@ -659,6 +682,30 @@ game's 42 region boundaries as a coordinate grid indexed from an origin offset. 
 - **Bearing** (`mining_bearing.py`) computes the relative bearing to a saved hotspot from live
   Status.json position and draws an overlay arrow.
 
+### Trade (`trade_*.py`)
+
+Full detail is in the [Trade spec](TRADE_TECH_SPEC.md); the decisions worth knowing here:
+
+- **Profit uses the game's own number.** `MarketSell` carries `AvgPricePaid` (what the sold tonnes cost), so
+  profit is `TotalSale - AvgPricePaid x Count` with no stock-lot bookkeeping; stolen cargo has `AvgPricePaid` 0.
+  Running costs (fuel, repairs, rearm, limpets) are summed from the journal's cost events and subtracted to give
+  a net figure; insurance rebuys and fines are not included.
+- **Names go through one resolver.** Spansh's market search is case-sensitive and exact, and the journal's
+  plural ("Void Opals") finds nothing where the list's "Void Opal" works. `trade_commodities.resolve` maps
+  typed text, journal names and internal symbols to Spansh's exact name, from a table generated off FDevIDs;
+  Mining's price finder uses it too.
+- **Offers are ranked for your load**, not by price per tonne: `price x min(tonnes, demand)`. A station
+  paying more per tonne but wanting 40 t is worth less to a 200 t hold.
+- **Pad filtering is client-side.** Stations your ship can't dock at are dropped after the search (so a
+  filtered search asks for 40 stations, not 20). Unknown ship or missing pad data means "don't filter", never
+  a guess. Carriers always fit and are listed apart because they can move.
+- **A transfer goes to the carrier you are docked at.** `CargoTransfer` doesn't name one; `Docked`/`Location`
+  carry the station's `MarketID`, which equals the carrier's `CarrierID`. Docked at someone else's carrier,
+  nothing is counted; with two carriers and no dock information, the transfer is skipped rather than guessed.
+- **The page arrows** are the shared `panelkit.nav_arrow` (a raised, bordered, padded label with a large bold
+  glyph), also used by Mining and Missions, because the bare triangles they replaced were too small to see in
+  EDMC's small window.
+
 ### Missions (`missions*.py`, `mission_*.py`, `active_missions.py`, `kill_missions.py`, `all_missions.py`, `kill_tracker.py`)
 
 Data-layer modules keep per-commander state and announce changes through `Notifier` objects
@@ -738,6 +785,11 @@ parsing, organic species matching, Codex tallying, deposit estimates and Rhino c
 add the repo root to `sys.path` and import `plugin.<module>` directly, which works because those
 modules avoid EDMC-only imports (section 6).
 
+Trade mode's logic is covered by `tests/test_trade.py` and `tests/test_trade_search.py` (ledger, market
+parsing, Spansh response parsing, commodity names, ship pads, offer ranking, carrier cargo tracking and the
+journal backfill). `tests/test_own_data_files.py` reads the sources and fails if any plugin module defines a
+`*FILENAME` data file that is missing from `update.py`'s `_OWN_DATA_FILES`.
+
 `tests/test_import_smoke.py` additionally imports every plugin module (including `load.py`) with
 EDMC's modules stubbed, in a subprocess, to catch import-time breakage that single-module tests miss.
 
@@ -774,6 +826,16 @@ Things that cost time once and are recorded so they don't again.
 - **A `tk.Label` can't take a tuple `padx`** (only `pack`/`grid` can); indent with spaces instead.
 - **Case in commander and system names.** Store the original, compare with `casefold()`.
 - **Never assume order between Status.json and the journal.** They are independent callbacks.
+- **Spansh market names are exact and case-sensitive.** "Liquid oxygen" works, "Liquid Oxygen" returns zero
+  results with no error, and the journal's own plurals can differ from Spansh's. A search that silently finds
+  nothing is the symptom; resolve every name through `trade_commodities.resolve`.
+- **Journal names and EDMC names differ in case.** `BOCHEAUX` in the journal, `Bocheaux` from EDMC. Key
+  anything per commander by `casefold()`.
+- **`CarrierStats` isn't automatic and isn't replayed.** It exists only if the player opened Carrier
+  Management, so state built from it needs a journal backfill at startup, and a baseline from before WNTB
+  started is otherwise missed.
+- **A `CargoTransfer` doesn't say where it went.** Use the docked station's `MarketID` against
+  `CarrierID`; don't assume "my carrier".
 
 **Settings tab and `pack`.** EDMC's `myNotebook.Frame.__init__` grids a spacer child into every `nb.Frame`, so
 `pack` inside one always fails with "cannot use geometry manager pack inside ... which already has slaves
@@ -790,8 +852,9 @@ unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every 
    file a unique name and consider `_OWN_DATA_FILES` (section 13).
 3. Add the panel module implementing the contract (section 4). Choose `PANEL_PLACEMENT`.
 4. Use `panelkit.wrap_label` for any text from the game, and a hard box for any image (section 5).
-5. Put network calls behind the worker, queue and generation-counter pattern (section 7). Fail to
-   an empty result, and make automatic lookups opt-in.
+5. Put network calls behind the worker, queue and generation-counter pattern (section 7; Trade's
+   one-job-at-a-time variant is described there too). Fail to an empty result, and make automatic lookups
+   opt-in.
 6. If it draws an overlay: use the shared client, a `wntb_<feature>_` ID prefix, and register a group.
 7. Prefix config keys `wntb_<feature>_`.
 8. Add the module to `FEATURES` (`ui.py`) and `_FEATURES` (`load.py`); call `start`/`stop` from
@@ -804,11 +867,14 @@ unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every 
 
 - **`_OWN_DATA_FILES` is a hand-kept list.** A new data file must be added to it (and a new data
   folder to `_OWN_DIRS`) or it will be swept into the pre-update backup. Data was never at risk of
-  being overwritten, since it isn't in the release zip, but a test that compares the list against
-  every `*_FILENAME` constant would stop it drifting again.
+  being overwritten, since it isn't in the release zip. `tests/test_own_data_files.py` now fails when a
+  `*FILENAME` constant isn't listed (it caught Trade's two files); a data *folder* is still unchecked.
 - **Mining and other panels have no automated UI tests** (section 14).
 - **Tick detection depends on a third-party, plain-HTTP service** with no SLA; when it is down the
   tally simply doesn't roll over.
+- **Trade mode's gaps** are listed in its [spec](TRADE_TECH_SPEC.md#13-verified-assumed-and-known-gaps): a
+  squadron carrier's `CarrierStats` is assumed to match a fleet carrier's, the commodity list and ship pad
+  classes are snapshots, and carrier reserved space is only as fresh as the last Carrier Management visit.
 - **Exobiology and region data are a snapshot.** New species from a game update require a
   regeneration.
 
@@ -922,6 +988,17 @@ Both modules are platform-neutral by construction; what was checked, and why it 
   and ordinary punctuation. Both labels are `panelkit.wrap_label`s inside one frame, so a long private-group
   name wraps instead of widening EDMC's window, which matters most on Linux where window managers resize
   more eagerly.
+
+### 18.3 Platform notes for Trade mode (`trade_*.py`)
+
+Added after the audit below, so not part of its counts. Nothing in Trade is OS-specific: it reads journal events,
+EDMC's `state`, and `Market.json` from the journal folder (`config.get_str("journaldir")`, which on Linux is the
+Proton prefix's journal path), and makes HTTPS requests with `urllib`. All file reads use an explicit UTF-8
+encoding (`errors="replace"` for journals), writes are temp-file-then-`os.replace`, and the carrier backfill
+ignores a missing folder. Background work is a plain daemon thread plus `queue`/polling; no thread touches Tk.
+Checked on Windows only. Still to confirm on Linux (listed in `LINUX_TESTING.md` section 6d): the type-ahead
+popup, which is a borderless `Toplevel` and so depends on the window manager for stacking and focus; the
+◀ ▶ glyphs in the page arrows with Linux fonts; and that the backfill finds a Proton journal folder.
 
 ### 18.1 Audit of every module (2026-10-03)
 

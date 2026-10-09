@@ -32,7 +32,7 @@ from . import http_identity
 ROUTE_URL = "https://spansh.co.uk/api/trade/route"
 RESULTS_URL = "https://spansh.co.uk/api/results/"
 REQUEST_TIMEOUT_S = 20
-POLL_INTERVAL_S = 3.0
+POLL_INTERVAL_S = 5.0
 MAX_WAIT_S = 240.0
 _USER_AGENT = http_identity.user_agent("trade-routes")
 

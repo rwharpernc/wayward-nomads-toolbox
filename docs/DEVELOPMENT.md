@@ -97,7 +97,7 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
   WNTB Settings tab disappears. Use `grid`, or pack into a plain `tk.Frame`. `tests/test_settings_layout.py`
   checks the source and `tests/test_prefs_smoke.py` builds the whole tab with EDMC-faithful stand-ins.
 - Where a new feature's Settings go: `ui._build_settings_tabs` lays the tabs out (General, Powerplay, Missions,
-  Exploration, Mining, BGS, Field Ops, Always On). Add the feature to the right group there. A feature with a
+  Exploration, Mining, Trade, BGS, Field Ops, Always On). Add the feature to the right group there. A feature with a
   `build_settings` that isn't listed still gets a tab, under "Other". To put two small pages on one tab, wrap
   them with `_stacked_page`: each feature's `build_settings(notebook)` keeps working unchanged, because the
   stack accepts `add(frame, text=...)` like a notebook does.
@@ -120,6 +120,10 @@ imports every module:
 ```bash
 python tests/import_smoke.py
 ```
+
+Two guards worth knowing: `tests/test_prefs_smoke.py` builds every Settings tab (it hard-codes the number of
+top-level tabs, so adding a tab means updating it), and `tests/test_own_data_files.py` fails if a module defines a
+data file (`*FILENAME = "x.json"`) that `plugin/update.py` doesn't list in `_OWN_DATA_FILES`.
 
 Screens and windows aren't covered by automated tests. For those, build, copy and click through the
 feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and isn't tested and why.

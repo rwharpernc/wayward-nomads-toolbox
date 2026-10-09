@@ -102,6 +102,87 @@ class LedgerTests(unittest.TestCase):
             self.assertEqual(ledger_mod.load_ledger(folder), ledger)
 
 
+class RunningCostTests(unittest.TestCase):
+    """Event shapes copied from a real journal (2026-10-09)."""
+
+    def _ledger(self) -> dict:
+        return ledger_mod.new_ledger("Bocheaux", "Journal.1.log")
+
+    def test_fuel_repairs_rearm_and_limpets_are_counted(self) -> None:
+        ledger = self._ledger()
+        for entry in (
+            {"event": "RefuelAll", "Cost": 14, "Amount": 0.26972},
+            {"event": "RefuelPartial", "Cost": 243, "Amount": 4.85},
+            {"event": "Repair", "Items": ["$type8_cockpit_name;", "Hull"], "Cost": 1731},
+            {"event": "RepairAll", "Cost": 1621},
+            {"event": "BuyAmmo", "Cost": 16},
+            {"event": "RestockVehicle", "Type": "testbuggy", "Cost": 5270, "Count": 1},
+            {"event": "BuyDrones", "Type": "Drones", "Count": 60, "BuyPrice": 101, "TotalCost": 6060},
+            {"event": "SellDrones", "Type": "Drones", "Count": 20, "SellPrice": 100, "TotalSale": 2000},
+        ):
+            self.assertTrue(ledger_mod.apply_trade_event(ledger, entry), entry["event"])
+        self.assertEqual(ledger_mod.expenses_by_category(ledger),
+                         {"fuel": 257, "repairs": 3352, "rearm": 5286, "limpets": 4060})
+
+    def test_a_free_or_empty_cost_changes_nothing(self) -> None:
+        ledger = self._ledger()
+        self.assertFalse(ledger_mod.apply_trade_event(ledger, {"event": "RefuelAll", "Cost": 0}))
+        self.assertFalse(ledger_mod.apply_trade_event(ledger, {"event": "RepairAll"}))
+        self.assertEqual(ledger_mod.expenses_by_category(ledger), {})
+
+    def test_net_is_trade_profit_less_costs(self) -> None:
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, buy("Gold", 10, 90_000))
+        ledger_mod.apply_trade_event(ledger, sell("Gold", 10, 120_000, 9_000))
+        ledger_mod.apply_trade_event(ledger, {"event": "RefuelAll", "Cost": 1_000})
+        ledger_mod.apply_trade_event(ledger, {"event": "RepairAll", "Cost": 4_000})
+        totals = ledger_mod.totals(ledger)
+        self.assertEqual((totals.profit, totals.expenses, totals.net), (30_000, 5_000, 25_000))
+        lines = ledger_mod.summary_lines(ledger)
+        self.assertEqual(lines[0], "Net profit: +25,000 cr (+25,000 cr/hr)")  # buy and sell an hour apart
+        self.assertIn("Trade profit: +30,000 cr", lines)
+        self.assertIn("Fuel: -1,000 cr", lines)
+        self.assertIn("Repairs: -4,000 cr", lines)
+
+    def test_without_costs_the_summary_is_unchanged(self) -> None:
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, sell("Gold", 1, 1_000, 0))
+        self.assertEqual(ledger_mod.summary_lines(ledger)[0], "Profit: +1,000 cr")
+        self.assertNotIn("Trade profit", "\n".join(ledger_mod.summary_lines(ledger)))
+
+    def test_costs_before_any_trade_still_show(self) -> None:
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, {"event": "RefuelAll", "Cost": 700})
+        lines = ledger_mod.summary_lines(ledger)
+        self.assertEqual(lines[0], "No trades yet this session.")
+        self.assertIn("Fuel: -700 cr", lines)
+        self.assertEqual(lines[-1], "Net: -700 cr")
+
+    def test_limpets_sold_back_can_read_as_a_gain(self) -> None:
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, {"event": "SellDrones", "TotalSale": 2_000})
+        self.assertIn("Limpets: +2,000 cr", ledger_mod.summary_lines(ledger))
+
+    def test_the_rate_uses_the_net_figure_and_ignores_cost_times(self) -> None:
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, sell("Gold", 1, 3_000, 0, "2026-10-09T10:00:00Z"))
+        ledger_mod.apply_trade_event(ledger, {"event": "RepairAll", "Cost": 1_000, "timestamp": "2026-10-09T09:00:00Z"})
+        ledger_mod.apply_trade_event(ledger, sell("Gold", 1, 3_000, 0, "2026-10-09T11:00:00Z"))
+        self.assertIn("Net profit: +5,000 cr (+5,000 cr/hr)", ledger_mod.summary_lines(ledger)[0])
+
+    def test_an_older_saved_ledger_without_costs_still_works(self) -> None:
+        old = {"cmdr": "B", "journal_file": "J", "first_trade": None, "last_trade": None, "rows": {}}
+        self.assertTrue(ledger_mod.apply_trade_event(old, {"event": "RefuelAll", "Cost": 5}))
+        self.assertEqual(ledger_mod.expenses_by_category(old), {"fuel": 5})
+
+    def test_a_new_session_starts_with_no_costs(self) -> None:
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, {"event": "RefuelAll", "Cost": 5})
+        fresh, continued = ledger_mod.sync_ledger(ledger, "Bocheaux", "Journal.2.log")
+        self.assertFalse(continued)
+        self.assertEqual(ledger_mod.expenses_by_category(fresh), {})
+
+
 class MarketTests(unittest.TestCase):
     DATA = {"Items": [
         {"Name": "$gold_name;", "Name_Localised": "Gold", "SellPrice": 50_000, "BuyPrice": 0, "Demand": 80, "Stock": 0},

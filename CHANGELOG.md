@@ -6,34 +6,47 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
-- **Trade mode** (the new **TRD** button), with three pages:
-  - **Session**: profit, credits per hour, tonnes bought and sold and your best sales this session
-    (`trade_ledger.py`, saved to `trade_ledger.json` so an EDMC restart keeps it), plus your hold and what the
-    docked station would pay for it (`trade_market.py`, read from `Market.json`).
-  - **Routes**: the most profitable trade routes from where you are, from Spansh's trade-route planner
-    (`trade_spansh_client.py`; submit a job, poll until it completes). Uses your cargo size, credits and jump
-    range from the game. Cancellable; **Copy next system** copies the first destination.
-  - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`; the list is generated from FDevIDs,
-    `trade_commodities_data.py`) and **Near me** / **Galaxy** searches. Offers are ranked by what your load would
-    earn (`trade_prices.py`: price x min(tonnes, demand)), stations your ship cannot dock at are left out, fleet
-    carriers get their own section, and a one-line verdict says whether the galaxy-wide best beats the best nearby.
-    **Price…** opens Mining's price finder.
-  - **Ship and pads** (`trade_ship.py`): the ship from the journal's `Loadout` gives the landing pad it needs
-    (pad classes from Coriolis ship data). Routes ask Spansh for large-pad stations when the ship needs one.
-    Override in Settings.
-  - **Fleet carrier cargo space** (`trade_carrier.py`): used, free and reserved cargo tonnes from `CarrierStats`
-    and `CargoTransfer`, kept per commander in `trade_carrier.json`; hidden for commanders without a carrier.
-  - The carrier figure is rebuilt from your recent journals at startup (last `CarrierStats` plus the `CargoTransfer`s since),
-    because `CarrierStats` is only written when Carrier Management is opened and EDMC does not replay old events. Commander
-    names are matched ignoring case (the journal says `BOCHEAUX`).
-  - The hold line now shows free tonnes, and the Session page shows the ship and its pad size.
-  - The Spansh lookups are off until enabled in Settings > Trade, and only run when you press a button.
-  - Tests: `tests/test_trade.py`. Checked on Windows only; the lookups and panel layout still need a look on Linux.
+- **Trade mode** (the new **TRD** button), with three pages (see [docs/TRADE_TECH_SPEC.md](docs/TRADE_TECH_SPEC.md)):
+  - **Session** (works offline):
+    - Profit, credits per hour, tonnes bought and sold and your best sales for this login (`trade_ledger.py`,
+      saved to `trade_ledger.json` so an EDMC restart keeps it). Profit uses the game's `AvgPricePaid`.
+    - **Running costs**: fuel (`RefuelAll`, `RefuelPartial`), repairs (`Repair`, `RepairAll`), rearm (`BuyAmmo`,
+      `RestockVehicle`) and limpets (`BuyDrones` less `SellDrones`). Once any is recorded the headline is
+      **Net profit** (credits per hour is the net), with the trade profit and each cost under it. Insurance
+      rebuys and fines aren't counted.
+    - Your ship and the landing pad it needs, the hold as used / capacity / free, and what the docked station
+      would pay for it (`trade_market.py`, read from `Market.json`).
+    - **Fleet and squadron carrier cargo space** (`trade_carrier.py`): used, free and reserved tonnes.
+  - **Routes**: **Find routes** asks Spansh's trade-route planner for the most profitable route from where you
+    are (`trade_spansh_client.py`: submit a job, poll every 5 s for up to 4 minutes). Uses your cargo size,
+    credits and jump range; asks for large-pad stations when your ship needs one. **Cancel**, and **Copy next
+    system**.
+  - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`) and **Near me** / **Galaxy** searches.
+    Offers are ranked by what *your load* would earn (`trade_prices.py`: price x min(tonnes, demand)); stations
+    your ship can't dock at are left out; fleet carriers get their own section; a verdict line says whether the
+    galaxy-wide best beats the best nearby and by how much. **Price…** opens Mining's price finder.
+  - The Spansh lookups are **off until enabled** (Settings → WNTB → Trade) and only run when you press a button.
+- **Ship and landing pads** (`trade_ship.py`): the ship from the journal's `Loadout` gives the pad size it needs
+  (pad classes from Coriolis ship data; EDMC's own ship-name table is used when available). Override in Settings.
+- **Per-commander carrier choice** (Settings → Trade): Auto, None, Fleet, Squadron or Both, for each commander
+  WNTB has seen, because not every commander has a carrier and some have both.
+- **Commodity list** (`trade_commodities.py`, generated `trade_commodities_data.py` from FDevIDs): 173 sellable
+  commodities for the suggestions, plus Salvage names that still resolve when typed.
+- `tests/test_trade.py`, `tests/test_trade_search.py` and `tests/test_own_data_files.py`.
+- Documentation: a new Trade specification, and updates to the README, the technical guide, the Mining spec, the
+  development guide, the Linux checklist (section 6d) and the third-party notices.
 
 ### Fixed
 - **Mining's price finder** now uses the game's exact commodity name. Spansh's market search is case-sensitive
   ("Liquid oxygen" finds markets, "Liquid Oxygen" finds none), so typing a name in the wrong case silently
   found nothing. The price search also accepts "no distance limit" (used by Trade's Galaxy search).
+- **Carrier cargo was lost whenever EDMC restarted after the carrier screen was opened.** `CarrierStats` is only
+  written when Carrier Management is opened and EDMC doesn't replay old events, so every later transfer was
+  ignored. The newest 40 journal files are now replayed at startup to find the last baseline and the transfers
+  since. Commander names are matched ignoring case (the journal says `BOCHEAUX`, EDMC says `Bocheaux`). A
+  transfer is counted for the carrier you are docked at, so another player's carrier is never mixed in.
+- `trade_ledger.json` and `trade_carrier.json` are now in the updater's protected data-file list, so a
+  pre-update backup no longer sweeps them up; a new test fails whenever a data file is missing from that list.
 
 ### Changed
 - **Every overlay is now off by default, and existing installs are reset once.** The Inventory, Landing
@@ -41,7 +54,14 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   Interdiction, Mining and the mining waypoint). On the first start of this version every overlay switch is
   turned off (`_reset_overlays_once` in `load.py`, marked by `wntb_overlay_reset_v1`), so you need to tick
   the overlays you want again in Settings. The reset runs once; your choices afterwards are kept.
+- **The page arrows are much larger** in Mining, Missions and Trade: one shared `panelkit.nav_arrow`, a raised,
+  bordered, padded orange button with a big bold ◀ / ▶, because the small triangles were too hard to see.
 - The mode buttons at the top of the panel are left-justified instead of centered.
+- Settings now has nine top-level tabs (Trade sits between Mining and BGS).
+
+### Checked on Windows only
+- The Trade panel, its type-ahead popup and the larger arrows still need a look on Linux (checklist section 6d).
+- A squadron carrier's `CarrierStats` is assumed to look like a fleet carrier's (`CarrierType`); no real one was seen.
 
 ## 1.3.1 - 2026-10-08
 

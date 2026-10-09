@@ -120,6 +120,29 @@ Where a step fails, copy the relevant lines from EDMC's log
       "waiting for login".
 - [ ] `session_credits.json` appears in the WNTB plugin folder, and a plugin update leaves it alone.
 
+## 6d. Trade mode (new)
+
+Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable Spansh trade lookups**.
+
+- [ ] The **TRD** button appears with the others, and the **◀** / **▶** buttons at the top of the Trade panel are
+      large and show their arrow glyphs (not empty boxes). The same buttons on Mining and Missions look right.
+- [ ] **Session**: after docking, the ship and its pad size show; the hold line shows used, capacity and free
+      tonnes. Buy and sell something: the profit lines appear. Refuel and repair: a **Net profit** headline appears
+      with Fuel and Repairs lines under it. **Reset** clears it.
+- [ ] Carriers (only if you have one): open Carrier Management once. The carrier's used and free cargo tonnes
+      appear. Transfer cargo to it: the figure follows. Restart EDMC: it comes back without opening Carrier
+      Management again (this reads the journal folder, so it also checks the Proton journal path).
+- [ ] Settings → Trade lists your commanders with a carrier choice each; choosing **None** hides the carrier.
+- [ ] **Market**: click the Commodity box; a suggestion list appears **under the box and does not steal the
+      keyboard** (this is a borderless window, so check it stacks above EDMC under your window manager). Typing
+      narrows it; Up/Down/Enter/Esc work; clicking a name fills the box.
+- [ ] **Near me** and **Galaxy** each return results for a common commodity (try Gold and Liquid oxygen). A
+      fleet carrier appears in its own section, not mixed with stations. Stations without a pad for your ship are
+      missing.
+- [ ] **Routes**: **Find routes** shows "Asking Spansh..." with a counting timer, and a route within a couple of
+      minutes. **Cancel** stops it. **Copy next system** puts the system name on the clipboard.
+- [ ] No Python errors in the EDMC log, and the EDMC window did not get wider when you opened Trade.
+
 ## 7. BGS (rebuilt in 1.1.0)
 
 - [ ] The BGS panel's grey line shows "Last tick: ..." within a few seconds (network call works).
