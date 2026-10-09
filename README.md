@@ -73,6 +73,8 @@ Every feature can be turned on or off, so you only see what you want.
   also works. An overlay is only needed for on-screen alerts such as Discovery Alerts, Landing Assist
   and Interdiction Warning. Everything else works without it. Borderless or windowed mode in Elite works
   with every overlay. A step-by-step guide is in [docs/OVERLAY_SETUP.md](docs/OVERLAY_SETUP.md).
+  **Every WNTB overlay is off until you tick it in Settings** (Inventory, Landing Assist and Screenshots used to start on;
+  the release that added Trade switched them all off once on its first start, so tick the ones you want again).
 
 ## Platform support: Windows and Linux
 
@@ -223,6 +225,8 @@ Hover over any button for a moment to see its full name.
 | **History** | Open the Trade History window | Trade (Session page) |
 | **Clear stock** | Forget the unsold stock list | Trade (Session page) |
 | **Find routes** / **Cancel** | Ask Spansh for trade routes / stop waiting | Trade (Routes page) |
+| **Hops** | Cycle the route length through 2, 3, 4 and 5 hops | Trade (Routes page) |
+| **Round trip** | Find the best back-and-forth pair of stations, loaded both ways | Trade (Routes page) |
 | **Copy next system** | Copy the first destination to the clipboard | Trade (Routes page) |
 | **Sell** / **Buy** | Choose whether the search is for selling or buying | Trade (Market page) |
 | **Near me** / **Galaxy** | Best place to sell or buy, near you / anywhere | Trade (Market page) |
@@ -589,7 +593,7 @@ Spansh's planner doesn't know fleet carriers, so a route never starts from one: 
 
 The **Hops** button on the page cycles 2, 3, 4 or 5 hops (the same setting as in Settings). **2 hops** is the choice for a back-and-forth pair: when the route ends at the station it started from and every leg carries cargo, the result is headed "repeatable loop" and says you can fly it again; otherwise the page says why it isn't one. A leg with no cargo is flagged.
 
-**Round trip** finds the best back-and-forth pair itself, because Spansh's planner returns the best *chain*, which doesn't always come back. One search asks Spansh for the markets of the nearest stations (up to 300, within twice your jump range, at most 100 ly), then works out for each neighbour what to carry out and what to bring back. A pair only counts when **both legs make a profit, so you never fly empty**. Each leg fills the hold with the most profitable commodity first and tops up with the next, limited by the supply where you buy, the demand where you sell and what you can afford. Pairs are ranked by estimated profit per hour and the top three are shown with what to carry each way. It uses the same filters as Find routes (price age, ground facilities, fleet carriers, your ship's pad size, distance from the star) plus the **least supply** and **least demand** settings (200 t each by default), so thin markets are left out. It takes about 20 seconds and makes one to three Spansh requests (100 stations each).
+**Round trip** finds the best back-and-forth pair itself, because Spansh's planner returns the best *chain*, which doesn't always come back. One search asks Spansh for the markets of the nearest stations (up to 300, within twice your jump range, but never less than 20 ly or more than 100 ly), then works out for each neighbour what to carry out and what to bring back. A pair only counts when **both legs make a profit, so you never fly empty**. Each leg fills the hold with the most profitable commodity first and tops up with the next, limited by the supply where you buy, the demand where you sell and what you can afford. Pairs are ranked by estimated profit per hour and the top three are shown with what to carry each way. It uses the same filters as Find routes (price age, ground facilities, fleet carriers, your ship's pad size, distance from the star) plus the **least supply** and **least demand** settings (200 t each by default), so thin markets are left out. It takes about 20 seconds and makes one to three Spansh requests (100 stations each).
 
 Spansh can take a minute or two; **Cancel** stops waiting. The result is the route's total profit, an **estimated profit per hour**, and each hop (stations,
 system, distance, best commodity and profit, with the supply at the buying station and the demand at the selling one; the first four are shown, with "+N more" after). **Copy next system** puts the
@@ -786,9 +790,8 @@ settings are on the **Overlay Connection** Settings tab (Settings → General).
 
 WNTB runs on Linux wherever EDMC does. It has been tested on a real install (KDE Plasma on Wayland, Elite
 under Steam Proton, EDMC as a Flatpak): the Settings panel, the on-screen overlays (test overlay, Discovery
-Alerts, Notable Bodies) and Auto-Honk all work. The screenshot features have not been checked on a real
-install yet, so please report anything odd. Elite runs under Steam Proton or Wine on Linux, which needs a few
-extras. Work through the steps in order.
+Alerts, Notable Bodies), Auto-Honk, the screenshot features and Trade all work. Please report anything odd.
+Elite runs under Steam Proton or Wine on Linux, which needs a few extras. Work through the steps in order.
 
 ### Step 1: Install the helper tools
 
@@ -962,6 +965,7 @@ helps. The squadron website is [waywardnomads.org](https://waywardnomads.org/).
 
 - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: setting up to build, test and change WNTB.
 - **[docs/TECHNICAL.md](docs/TECHNICAL.md)**: how WNTB works and why it's built that way.
+- **[docs/MODULES.md](docs/MODULES.md)**: every module in `plugin/`, by feature, in one line each.
 - **Feature specifications**, each covering what a feature reads, its rules and its limits:
   [Missions](docs/MISSIONS_TECH_SPEC.md), [Mining](docs/MINING_TECH_SPEC.md),
   [Trade](docs/TRADE_TECH_SPEC.md), [Boxel Survey](docs/BOXEL_SURVEY_TECH_SPEC.md), [BGS](docs/BGS_TECH_SPEC.md),

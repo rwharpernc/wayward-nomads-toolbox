@@ -1,14 +1,15 @@
 """
 Trade mode's feature-module entry point (`PANEL_PLACEMENT = "trade"`): the panel
-chrome (page nav, one text body, a small button row), the Settings tab, and the
-journal dispatch. Three pages, in trade_pages.PAGE_ORDER:
+chrome (page nav, a block-drawn page body, a small button row), the Settings tab, and
+the journal dispatch. Three pages, in trade_pages.PAGE_ORDER:
 
-- Session: what you bought and sold since logging in (trade_ledger.py), the hold,
+- Session: what you bought and sold since the last Reset (trade_ledger.py), the hold,
   and what the docked station would pay for it (trade_market.py). Works offline.
 - Routes: the most profitable routes from where you are, from Spansh's trade-route
-  planner (trade_spansh_client.py). Needs the lookups turned on in Settings.
-- Market: where to sell what you are carrying, and a button for the best-price
-  finder Mining mode already has (it works for any commodity).
+  planner (trade_spansh_client.py), and the best back-and-forth pair
+  (trade_roundtrip.py). Needs the lookups turned on in Settings.
+- Market: where to sell or buy a commodity, near you and galaxy-wide, and a button
+  for the best-price finder Mining mode already has (it works for any commodity).
 
 Network calls are opt-in (off by default, like Mining's Spansh finders) and only
 happen when you press a button. They run on a background thread; the panel polls

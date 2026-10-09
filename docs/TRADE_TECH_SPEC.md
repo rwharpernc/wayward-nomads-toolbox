@@ -78,7 +78,8 @@ plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an 
 **Save session** (greyed out until there is something to save) and **History**.
 
 **Routes.** Idle text shows the start station, ship, cargo size, jump range and budget the search will use.
-Buttons: **Find routes** (becomes **Cancel** while searching) and **Copy next system**.
+Buttons: **Find routes** (becomes **Cancel** while searching), **Copy next system**, **Hops: N** (cycles 2 to 5, section 8.1)
+and **Round trip** (section 8.2).
 
 **Market.** A commodity box (type-ahead), a **Sell** / **Buy** toggle, then **Near me**, **Galaxy** and
 **Price finder**. The box and toggle are shown only on this page and only when lookups are enabled. The toggle
@@ -523,7 +524,7 @@ a real Tk window with EDMC and Spansh stubbed; that is not part of the suite.
 
 Nothing in Trade is OS-specific: it reads journal events, EDMC state and `Market.json` from the journal folder
 (`config.get_str("journaldir")`, which on Linux is the Proton prefix's journal path), and makes HTTPS requests.
-Background work is plain `threading`/`queue`. What a Windows-only development machine can't confirm, and
+Background work is plain `threading`/`queue`. What a Windows-only development machine couldn't confirm, and
 `LINUX_TESTING.md` section 6d lists: the suggestion popup (a borderless `Toplevel`) under each Linux window
 manager, the page arrows' glyphs (◀ ▶) with Linux fonts, and the journal backfill finding the Proton journal
-folder. Tested on Windows only so far.
+folder. Tested on Windows while building and on Linux on 2026-10-09 (the section 6d checklist, no new issues).

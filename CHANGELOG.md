@@ -75,7 +75,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Commodity list** (`trade_commodities.py`, generated `trade_commodities_data.py` from FDevIDs): 173 sellable
   commodities for the suggestions, plus Salvage names that still resolve when typed.
 - `tests/test_trade.py`, `tests/test_trade_search.py` and `tests/test_own_data_files.py`.
-- Documentation: a new Trade specification, and updates to the README, the technical guide, the Mining spec, the
+- Documentation: a module index (`docs/MODULES.md`, kept complete by `tests/test_docs_modules.py`), a new Trade specification, and updates to the README, the technical guide, the Mining spec, the
   development guide, the Linux checklist (section 6d) and the third-party notices.
 
 ### Fixed
@@ -120,9 +120,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **The screenshot overlay message stays up longer** (10 seconds, 20 for the Settings test message) so it isn't
   missed when switching from EDMC to the game.
 
-### Checked on Windows only
-- The Trade panel, its type-ahead popup and the larger arrows still need a look on Linux (checklist section 6d).
-- A squadron carrier's `CarrierStats` is assumed to look like a fleet carrier's (`CarrierType`); no real one was seen.
+### Checked
+- **Linux** (2026-10-09): the Trade panel, its type-ahead popup and the larger arrows were checked against the Linux
+  checklist (section 6d) with no new issues. Windows was checked as each part was built.
+- Still assumed: a squadron carrier's `CarrierStats` looks like a fleet carrier's (`CarrierType`); no real one was seen.
 
 ## 1.3.1 - 2026-10-08
 

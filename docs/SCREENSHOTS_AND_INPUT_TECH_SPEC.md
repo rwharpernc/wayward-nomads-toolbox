@@ -64,7 +64,7 @@ When Elite takes a screenshot (by you, or by the timer), the game writes a raw f
    (wrapped four to a row). Click one for a larger preview.
 4. **Optionally deletes the original**, but only after a **60-second** grace period so other plugins that
    want the raw file can see it first. Off by default.
-5. **Notifies:** a status line in the panel and, if you use an overlay, a short on-screen message.
+5. **Notifies:** a status line in the panel and, if you use an overlay, a short on-screen message (shown for 10 seconds, 20 for the Settings test message, so it survives an alt-tab to the game).
 
 Conversion and cropping work on every platform; only the key simulation is platform-specific.
 
