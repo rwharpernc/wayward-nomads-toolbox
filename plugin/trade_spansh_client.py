@@ -48,6 +48,8 @@ class Cargo:
     tonnes: int
     profit_per_t: int
     total_profit: int
+    supply: int = 0   # at the buying station
+    demand: int = 0   # at the selling station
 
 
 @dataclass
@@ -74,11 +76,16 @@ class RouteQuery:
     max_hop_distance_ly: float = 30.0
     max_arrival_ls: int = 5000
     requires_large_pad: bool = False
+    max_price_age_h: int = 0          # 0 = any age; otherwise leave out markets not updated within this many hours
+    allow_planetary: bool = True      # ground ports, outposts and settlements
+    allow_player_owned: bool = False  # fleet and squadron carriers (they can jump away)
+    allow_permit: bool = False        # systems that need a permit you may not hold
 
 
-def build_form(query: RouteQuery) -> Dict[str, str]:
-    """The form fields Spansh expects. Numbers are sent as whole values it accepts."""
-    return {
+def build_form(query: RouteQuery, now: Optional[float] = None) -> Dict[str, str]:
+    """The form fields Spansh expects. Numbers are sent as whole values it accepts. `max_price_age` is the
+    oldest update time allowed, as Unix seconds (how Spansh's own page sends it)."""
+    form = {
         "system": query.system,
         "station": query.station,
         "max_hops": str(max(1, int(query.max_hops))),
@@ -87,7 +94,13 @@ def build_form(query: RouteQuery) -> Dict[str, str]:
         "max_cargo": str(max(1, int(query.cargo_capacity))),
         "max_system_distance": str(max(1, int(query.max_arrival_ls))),
         "requires_large_pad": "1" if query.requires_large_pad else "0",
+        "allow_planetary": "1" if query.allow_planetary else "0",
+        "allow_player_owned": "1" if query.allow_player_owned else "0",
+        "permit": "1" if query.allow_permit else "0",
     }
+    if query.max_price_age_h > 0:
+        form["max_price_age"] = str(int((time.time() if now is None else now) - query.max_price_age_h * 3600))
+    return form
 
 
 def _num(value: Any, default: float = 0) -> float:
@@ -102,7 +115,9 @@ def parse_hops(result: Any) -> List[Hop]:
             source, dest = raw["source"], raw["destination"]
             cargo = [
                 Cargo(str(c.get("name", "?")), int(_num(c.get("amount"))), int(_num(c.get("profit"))),
-                      int(_num(c.get("total_profit"))))
+                      int(_num(c.get("total_profit"))),
+                      int(_num((c.get("source_commodity") or {}).get("supply"))),
+                      int(_num((c.get("destination_commodity") or {}).get("demand"))))
                 for c in raw.get("commodities") or [] if isinstance(c, dict)
             ]
             updated = [int(t) for t in (source.get("market_updated_at"), dest.get("market_updated_at"))
@@ -164,3 +179,22 @@ def search_routes(query: RouteQuery, cancel: Optional[threading.Event] = None) -
         if state in ("failed", "error"):
             raise RouteSearchError(str(data.get("error") or "Spansh could not plan a route."))
     raise RouteSearchError("Spansh took too long. Try fewer hops or a shorter jump range.")
+
+
+# --- Time estimate (for profit per hour) ---------------------------------------------------------------------
+# Rough, fixed allowances: it is an estimate for comparing routes, not a stopwatch.
+SECONDS_PER_JUMP = 45          # charge, jump and scoop
+SECONDS_SUPERCRUISE_BASE = 30  # drop in, line up
+SECONDS_PER_LS = 0.03          # supercruise to the station
+SECONDS_AT_STATION = 120       # dock, trade, undock
+
+
+def estimate_hop_seconds(hop: Hop, jump_range_ly: float) -> float:
+    """About how long one hop takes: the jumps, the supercruise to the destination, and the stop."""
+    jumps = max(1, -(-hop.distance_ly // max(jump_range_ly, 1.0)))
+    return jumps * SECONDS_PER_JUMP + SECONDS_SUPERCRUISE_BASE + hop.dest_ls * SECONDS_PER_LS + SECONDS_AT_STATION
+
+
+def estimate_profit_per_hour(hops: List[Hop], jump_range_ly: float) -> int:
+    seconds = sum(estimate_hop_seconds(hop, jump_range_ly) for hop in hops)
+    return int(sum(hop.profit for hop in hops) * 3600 / seconds) if seconds > 0 else 0

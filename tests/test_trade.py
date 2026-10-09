@@ -288,6 +288,30 @@ class SpanshClientTests(unittest.TestCase):
         self.assertEqual(form["requires_large_pad"], "1")
         self.assertTrue(all(isinstance(value, str) for value in form.values()))
 
+    def test_filters_are_sent_the_way_spansh_expects(self) -> None:
+        query = client.RouteQuery("Sol", "Daedalus", 1000, 100, max_price_age_h=24, allow_planetary=False,
+                                  allow_player_owned=True, allow_permit=True)
+        form = client.build_form(query, now=1_000_000)
+        self.assertEqual(form["max_price_age"], str(1_000_000 - 24 * 3600))  # the oldest update allowed
+        self.assertEqual((form["allow_planetary"], form["allow_player_owned"], form["permit"]), ("0", "1", "1"))
+        self.assertNotIn("max_price_age", client.build_form(client.RouteQuery("Sol", "Daedalus", 1000, 100)))
+
+    def test_supply_and_demand_are_read_from_each_hop(self) -> None:
+        hops = client.parse_hops([{
+            "source": {"system": "A", "station": "a"}, "destination": {"system": "B", "station": "b"},
+            "distance": 10, "total_profit": 100,
+            "commodities": [{"name": "Gold", "amount": 5, "profit": 20, "total_profit": 100,
+                             "source_commodity": {"supply": 900}, "destination_commodity": {"demand": 700}}]}])
+        self.assertEqual((hops[0].cargo[0].supply, hops[0].cargo[0].demand), (900, 700))
+
+    def test_profit_per_hour_is_a_sensible_estimate(self) -> None:
+        hop = client.Hop("A", "a", 0, "B", "b", 1000, 30.0, profit=1_000_000)
+        seconds = client.estimate_hop_seconds(hop, 30.0)   # one jump, 1000 ls out, one stop
+        self.assertAlmostEqual(seconds, 45 + 30 + 30 + 120)
+        self.assertEqual(client.estimate_profit_per_hour([hop], 30.0), int(1_000_000 * 3600 / seconds))
+        self.assertGreater(client.estimate_hop_seconds(hop, 10.0), seconds)  # a shorter range needs more jumps
+        self.assertEqual(client.estimate_profit_per_hour([], 30.0), 0)
+
     def test_a_refusal_shows_what_spansh_said(self) -> None:
         import io
         import urllib.error

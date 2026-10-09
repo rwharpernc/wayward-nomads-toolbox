@@ -26,6 +26,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     are (`trade_spansh_client.py`: submit a job, poll every 5 s for up to 4 minutes). Uses your cargo size,
     credits and jump range; asks for large-pad stations when your ship needs one. **Cancel**, and **Copy next
     system**.
+    Route filters (Settings → Trade): ignore prices older than N hours (default 72), ground facilities, fleet carriers
+    and permit systems, all sent to Spansh's planner. Each route shows an **estimated profit per hour** (fixed
+    allowances for jumps, supercruise and the stop) and the supply and demand behind each hop. The **Hops** button
+    cycles 2 to 5; a route that ends where it began with every leg loaded is marked a repeatable loop.
     Routes start from the last real station when you're docked at a fleet carrier (Spansh can't plan from one), and a
     refusal from Spansh is shown with its reason instead of "check the EDMC log".
   - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`), a **Sell** / **Buy** choice and
