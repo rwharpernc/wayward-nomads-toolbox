@@ -384,9 +384,11 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_max_arrival_ls` | Furthest a station may be from its star | 5000 |
 | `wntb_trade_large_pad` | Always require a large pad on routes | off |
 | `wntb_trade_jump_range_override` | Jump range in ly ("" = use the ship's) | "" |
+| `wntb_trade_route_price_age_h` | Routes: ignore markets not updated within this many hours (0 = any) | 72 |
+| `wntb_trade_route_permit` | Routes may use systems that need a permit | off |
 | `wntb_trade_near_radius_ly` | "Near me" radius | 100 |
-| `wntb_trade_include_carriers` | Search fleet carriers in price results | on |
-| `wntb_trade_include_ground` | Search ground facilities (planetary ports and outposts, settlements) | on |
+| `wntb_trade_include_carriers` | Fleet carriers in price results and routes (`allow_player_owned`) | on |
+| `wntb_trade_include_ground` | Ground facilities in price results and routes (`allow_planetary`) | on |
 | `wntb_trade_ship_pad_override` | small / medium / large ("" = from the ship) | "" |
 | `wntb_trade_current_page` | Last page shown | Session |
 | `wntb_trade_market_side` | Market search side: sell or buy | sell |

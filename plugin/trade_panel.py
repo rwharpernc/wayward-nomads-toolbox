@@ -62,6 +62,8 @@ _CFG_MAX_HOPS = "wntb_trade_max_hops"
 _CFG_MAX_ARRIVAL_LS = "wntb_trade_max_arrival_ls"
 _CFG_LARGE_PAD = "wntb_trade_large_pad"
 _CFG_JUMP_RANGE = "wntb_trade_jump_range_override"
+_CFG_PRICE_AGE_H = "wntb_trade_route_price_age_h"   # routes: ignore markets older than this many hours (0 = any)
+_CFG_PERMIT = "wntb_trade_route_permit"            # routes: allow systems that need a permit
 _CFG_CURRENT_PAGE = "wntb_trade_current_page"
 _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
 _CFG_CARRIERS = "wntb_trade_include_carriers"
@@ -71,6 +73,8 @@ _CFG_COMMANDERS = "wntb_trade_commanders"  # commanders seen, "|"-separated
 _CFG_SHIP_PAD = "wntb_trade_ship_pad_override"  # "" = work it out from the ship
 
 _DEFAULT_MAX_HOPS = 3
+_DEFAULT_PRICE_AGE_H = 72
+_HOP_CHOICES = (2, 3, 4, 5)  # the Hops button on the Routes page cycles through these
 _CARRIER_STATION_TYPES = ("FleetCarrier", "SquadronCarrier")  # journal StationType values
 _DEFAULT_MAX_ARRIVAL_LS = 5000
 _FALLBACK_JUMP_RANGE_LY = 30.0
@@ -209,6 +213,8 @@ class TradePanelController:
         # Settings variables
         self._lookups_var: Optional[tk.BooleanVar] = None
         self._hops_var: Optional[tk.StringVar] = None
+        self._age_var: Optional[tk.StringVar] = None
+        self._permit_var: Optional[tk.BooleanVar] = None
         self._arrival_var: Optional[tk.StringVar] = None
         self._pad_var: Optional[tk.BooleanVar] = None
         self._range_var: Optional[tk.StringVar] = None
@@ -487,7 +493,8 @@ class TradePanelController:
             self._set_buttons(
                 ("Cancel" if busy else "Find routes", self._cancel_job if busy else self._find_routes,
                  busy or lookups_enabled()),
-                ("Copy next system", self._copy_next_system, bool(self._next_system) and not busy), None)
+                ("Copy next system", self._copy_next_system, bool(self._next_system) and not busy),
+                (f"Hops: {self._route_hops()}", self._cycle_hops, lookups_enabled() and not busy))
         else:
             blocks = self._market_blocks(busy)
             can_search = lookups_enabled() and not busy
@@ -845,6 +852,18 @@ class TradePanelController:
         self._save(force=True)
         self._refresh()
 
+    def _route_hops(self) -> int:
+        return _cfg_int(_CFG_MAX_HOPS, _DEFAULT_MAX_HOPS, 1, 10)
+
+    def _cycle_hops(self) -> None:
+        """Hops button: 2 (a back-and-forth pair), 3, 4 or 5. Shares the Settings value."""
+        current = self._route_hops()
+        following = next((n for n in _HOP_CHOICES if n > current), _HOP_CHOICES[0])
+        config.set(_CFG_MAX_HOPS, following)
+        if self._hops_var is not None:
+            self._hops_var.set(str(following))
+        self._refresh()
+
     def _copy_next_system(self) -> None:
         if self._next_system and self._parent is not None:
             panelkit.copy_to_clipboard(self._parent, self._next_system)
@@ -873,6 +892,10 @@ class TradePanelController:
             max_hop_distance_ly=self._jump_range_ly(),
             max_arrival_ls=_cfg_int(_CFG_MAX_ARRIVAL_LS, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000),
             requires_large_pad=config.get_bool(_CFG_LARGE_PAD, default=False) or self._ship_pad() == trade_ship.LARGE,
+            max_price_age_h=_cfg_int(_CFG_PRICE_AGE_H, _DEFAULT_PRICE_AGE_H, 0, 24 * 365),
+            allow_planetary=config.get_bool(_CFG_GROUND, default=True),
+            allow_player_owned=config.get_bool(_CFG_CARRIERS, default=True),
+            allow_permit=config.get_bool(_CFG_PERMIT, default=False),
         )
         self._route_blocks, self._next_system = [], None
         self._route_label = f"{start[1]} ({start[0]})"
@@ -949,17 +972,31 @@ class TradePanelController:
                                   Note("Try more hops, a longer range, or a bigger budget.")]
             return
         total = sum(hop.profit for hop in hops)
-        blocks: List[Block] = [Heading("Route"), Pair("Total profit", f"{total:+,} cr", bold=True),
+        loop = hops[-1].dest_station == hops[0].source_station and hops[-1].dest_system == hops[0].source_system
+        empty_leg = any(not hop.cargo for hop in hops)
+        blocks: List[Block] = [Heading("Route (repeatable loop)" if loop and not empty_leg else "Route"),
+                               Pair("Total profit", f"{total:+,} cr", bold=True),
+                               Pair("Est. profit / hour",
+                                    f"~{spansh_routes.estimate_profit_per_hour(hops, self._jump_range_ly()):,} cr"),
                                Pair("Hops", str(len(hops))), Columns(("Profit", "ly"))]
         for number, hop in enumerate(hops[:_ROUTES_SHOWN], start=1):
             detail = f"{_clip(hop.dest_system)} \u00b7 {hop.dest_ls:,.0f} ls"
             if hop.cargo:
                 best = max(hop.cargo, key=lambda c: c.total_profit)
                 detail += f" \u00b7 {_clip(best.name)} \u00d7 {best.tonnes} t"
+                if best.supply or best.demand:
+                    detail += f" \u00b7 supply {best.supply:,} / demand {best.demand:,}"
             blocks.append(Item(f"{number}. {_clip(hop.source_station)} \u2192 {_clip(hop.dest_station)}",
                                (f"{hop.profit:+,}", f"{hop.distance_ly:.1f}"), detail=detail))
         if len(hops) > _ROUTES_SHOWN:
             blocks.append(Note(f"+{len(hops) - _ROUTES_SHOWN} more hop(s)"))
+        if empty_leg:
+            blocks.append(Note("One leg of this route carries no cargo.", warn=True))
+        elif loop:
+            blocks.append(Note("It ends where it starts and every leg is loaded, so you can fly it again and again "
+                               "(prices shift as you trade)."))
+        elif len(hops) == 2:
+            blocks.append(Note("Not a back-and-forth pair: the second hop ends at a third station."))
         self._route_blocks = blocks
         self._next_system = hops[0].dest_system if hops[0].dest_system != "?" else None
         if self._ledger is not None:
@@ -1016,6 +1053,8 @@ class TradePanelController:
         self._hops_var = tk.StringVar(value=str(_cfg_int(_CFG_MAX_HOPS, _DEFAULT_MAX_HOPS, 1, 10)))
         self._arrival_var = tk.StringVar(value=str(_cfg_int(_CFG_MAX_ARRIVAL_LS, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000)))
         self._range_var = tk.StringVar(value=config.get_str(_CFG_JUMP_RANGE) or "")
+        self._age_var = tk.StringVar(value=str(_cfg_int(_CFG_PRICE_AGE_H, _DEFAULT_PRICE_AGE_H, 0, 24 * 365)))
+        self._permit_var = tk.BooleanVar(value=config.get_bool(_CFG_PERMIT, default=False))
         self._pad_var = tk.BooleanVar(value=config.get_bool(_CFG_LARGE_PAD, default=False))
         self._near_var = tk.StringVar(value=str(self._near_radius()))
         self._carriers_var = tk.BooleanVar(value=config.get_bool(_CFG_CARRIERS, default=True))
@@ -1028,6 +1067,7 @@ class TradePanelController:
                 ("Route hops (1-10)", self._hops_var),
                 ("Max distance from the star (ls)", self._arrival_var),
                 ("Jump range override (ly, blank = use my ship's)", self._range_var),
+                ("Routes: ignore prices older than (hours, 0 = any)", self._age_var),
                 ("'Near me' price search radius (ly)", self._near_var))):
             nb.Label(form, text=label).grid(row=row, column=0, sticky=tk.W, pady=2)
             tk.Entry(form, textvariable=var, width=8).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=2)
@@ -1035,10 +1075,12 @@ class TradePanelController:
             row=3, column=0, sticky=tk.W, padx=10, pady=2)
         where = tk.Frame(frame)
         where.grid(row=4, column=0, sticky=tk.W, padx=10, pady=2)
-        nb.Checkbutton(where, text="Search fleet carriers (listed apart; they can jump away)",
+        nb.Checkbutton(where, text="Include fleet carriers in prices and routes (they can jump away)",
                        variable=self._carriers_var).grid(row=0, column=0, sticky=tk.W)
-        nb.Checkbutton(where, text="Search ground facilities (planetary ports, outposts and settlements)",
+        nb.Checkbutton(where, text="Include ground facilities in prices and routes (ports, outposts, settlements)",
                        variable=self._ground_var).grid(row=1, column=0, sticky=tk.W)
+        nb.Checkbutton(where, text="Routes may use systems that need a permit",
+                       variable=self._permit_var).grid(row=2, column=0, sticky=tk.W)
         pad_row = tk.Frame(frame)
         pad_row.grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 2))
         nb.Label(pad_row, text="Ship size (landing pad):").pack(side=tk.LEFT, padx=(0, 6))
@@ -1096,13 +1138,15 @@ class TradePanelController:
             config.set(self._carrier_cfg_key(name), var.get() if var.get() in trade_carrier.MODES else trade_carrier.AUTO)
         config.set(_CFG_LARGE_PAD, bool(self._pad_var.get()) if self._pad_var is not None else False)
         config.set(_CFG_CARRIERS, bool(self._carriers_var.get()) if self._carriers_var is not None else True)
+        config.set(_CFG_PERMIT, bool(self._permit_var.get()) if self._permit_var is not None else False)
         config.set(_CFG_GROUND, bool(self._ground_var.get()) if self._ground_var is not None else True)
         pad_choice = (self._pad_override_var.get() if self._pad_override_var is not None else "auto").lower()
         config.set(_CFG_SHIP_PAD, pad_choice if pad_choice in (trade_ship.SMALL, trade_ship.MEDIUM, trade_ship.LARGE) else "")
         for key, var, default, low, high in (
                 (_CFG_MAX_HOPS, self._hops_var, _DEFAULT_MAX_HOPS, 1, 10),
                 (_CFG_MAX_ARRIVAL_LS, self._arrival_var, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000),
-                (_CFG_NEAR_RADIUS, self._near_var, _DEFAULT_NEAR_RADIUS_LY, 1, 100_000)):
+                (_CFG_NEAR_RADIUS, self._near_var, _DEFAULT_NEAR_RADIUS_LY, 1, 100_000),
+                (_CFG_PRICE_AGE_H, self._age_var, _DEFAULT_PRICE_AGE_H, 0, 24 * 365)):
             try:
                 value = int((var.get() if var is not None else "").strip())
             except ValueError:

@@ -587,8 +587,10 @@ budget).
 
 Spansh's planner doesn't know fleet carriers, so a route never starts from one: if you're docked at your carrier it starts from the last real station you docked at (the page says where). If Spansh refuses a search, the page shows its reason.
 
-Spansh can take a minute or two; **Cancel** stops waiting. The result is the route's total profit and each hop (stations,
-system, distance, best commodity and profit; the first four are shown, with "+N more" after). **Copy next system** puts the
+The **Hops** button on the page cycles 2, 3, 4 or 5 hops (the same setting as in Settings). **2 hops** is the choice for a back-and-forth pair: when the route ends at the station it started from and every leg carries cargo, the result is headed "repeatable loop" and says you can fly it again; otherwise the page says why it isn't one. A leg with no cargo is flagged.
+
+Spansh can take a minute or two; **Cancel** stops waiting. The result is the route's total profit, an **estimated profit per hour**, and each hop (stations,
+system, distance, best commodity and profit, with the supply at the buying station and the demand at the selling one; the first four are shown, with "+N more" after). **Copy next system** puts the
 first destination on your clipboard so you can paste it into the galaxy map.
 
 ### Market (needs the Spansh lookups on)
@@ -647,8 +649,9 @@ How it stays up to date:
 - *Enable Spansh trade lookups*: off until you tick it. The Routes and Market pages do nothing without it.
 - *Route hops* (1 to 10, default 3), *Max distance from the star* in light seconds (default 5,000), *Jump range override*
   (blank uses your ship's unladen range) and *Only stations with a large landing pad*, for Routes.
+- *Routes: ignore prices older than* a number of hours (default 72; 0 means any age), and *Routes may use systems that need a permit* (off).
 - *"Near me" price search radius* in light years (default 100).
-- *Search fleet carriers* and *Search ground facilities* in price results (both on by default).
+- *Include fleet carriers* and *Include ground facilities* in prices **and routes** (both on by default).
 - *Ship size (landing pad)*: **From my ship** (the default), or Small, Medium or Large if it guesses wrong.
 - The carrier choice for each commander (above).
 
