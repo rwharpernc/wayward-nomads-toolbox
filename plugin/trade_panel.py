@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import logging
 import os
+import queue
+import re
 import threading
 import time
 import tkinter as tk
@@ -57,6 +59,7 @@ _CFG_JUMP_RANGE = "wntb_trade_jump_range_override"
 _CFG_CURRENT_PAGE = "wntb_trade_current_page"
 _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
 _CFG_CARRIERS = "wntb_trade_include_carriers"
+_CFG_COMMANDERS = "wntb_trade_commanders"  # commanders seen, "|"-separated
 _CFG_SHIP_PAD = "wntb_trade_ship_pad_override"  # "" = work it out from the ship
 
 _DEFAULT_MAX_HOPS = 3
@@ -133,8 +136,9 @@ class TradePanelController:
     def __init__(self) -> None:
         self._plugin_dir: Optional[str] = None
         self._ledger: Optional[Dict[str, Any]] = None
-        self._carriers: Dict[str, trade_carrier.CarrierRecord] = {}  # commander -> their fleet carrier (if any)
+        self._carrier = trade_carrier.CarrierTracker()  # each commander's fleet / squadron carrier cargo space
         self._cmdr = ""
+        self._backfill: "queue.Queue[trade_carrier.CarrierTracker]" = queue.Queue()
         self._last_saved = 0.0
 
         # What the journal has told us.
@@ -181,6 +185,7 @@ class TradePanelController:
         self._range_var: Optional[tk.StringVar] = None
         self._near_var: Optional[tk.StringVar] = None
         self._carriers_var: Optional[tk.BooleanVar] = None
+        self._carrier_mode_vars: Dict[str, tk.StringVar] = {}  # commander -> their carrier choice
         self._pad_override_var: Optional[tk.StringVar] = None
 
     # --- lifecycle -----------------------------------------------------------
@@ -188,7 +193,28 @@ class TradePanelController:
     def start(self, plugin_dir: str) -> None:
         self._plugin_dir = plugin_dir
         self._ledger = ledger_mod.load_ledger(plugin_dir)
-        self._carriers = trade_carrier.load_all(plugin_dir)
+        self._carrier.records = trade_carrier.load_all(plugin_dir)
+        threading.Thread(target=self._read_carrier_history, name="WNTB-trade-carrier", daemon=True).start()
+
+    def _read_carrier_history(self) -> None:
+        """Worker thread: find each commander's last carrier baseline in the recent journals. Hands the
+        result over through a queue; the Tk thread merges it (`_merge_carrier_history`)."""
+        try:
+            self._backfill.put(trade_carrier.backfill_tracker(_journal_dir()))
+        except Exception:
+            logger.exception("Could not read fleet carrier history from the journal")
+
+    def _merge_carrier_history(self) -> None:
+        try:
+            found = self._backfill.get_nowait()
+        except queue.Empty:
+            return
+        if not self._carrier.dock_state()[0]:
+            self._carrier.set_dock(*found.dock_state())  # started while docked: carry on from where the journal left off
+        if trade_carrier.merge(self._carrier.records, found.records):
+            if self._plugin_dir is not None:
+                trade_carrier.save_all(self._plugin_dir, self._carrier.records)
+            self._refresh()
 
     def stop(self) -> None:
         if self._job is not None:
@@ -210,6 +236,9 @@ class TradePanelController:
         event = entry.get("event")
         if cmdr:
             self._cmdr = cmdr
+            self._carrier.set_cmdr(cmdr)
+            self._remember_commander(cmdr)
+        self._merge_carrier_history()
         if system:
             self._system = system
         self._station = station or None
@@ -262,23 +291,31 @@ class TradePanelController:
             self._refresh()
 
     def _track_carrier(self, event: Optional[str], entry: Dict[str, Any]) -> None:
-        """Keep the current commander's fleet carrier cargo space up to date. Commanders without
-        a carrier never produce these events, so they never get a record (and never see a line)."""
-        if not self._cmdr or event not in ("CarrierStats", "CarrierBuy", "CargoTransfer"):
-            return
-        record = self._carriers.get(self._cmdr)
-        changed = False
-        if event == "CarrierStats":
-            parsed = trade_carrier.parse_stats(entry)
-            if parsed is not None:
-                self._carriers[self._cmdr], changed = parsed, True
-        elif event == "CarrierBuy":
-            if record is None:
-                self._carriers[self._cmdr], changed = trade_carrier.note_purchase(entry), True
-        elif record is not None:  # CargoTransfer - only matters if a carrier is known
-            changed = trade_carrier.apply_transfer(record, entry)
-        if changed and self._plugin_dir is not None:
-            trade_carrier.save_all(self._plugin_dir, self._carriers)
+        """Keep each carrier's cargo space up to date. A commander without a carrier never produces a
+        record, and what is shown follows their Settings choice."""
+        if self._carrier.feed(entry) and self._plugin_dir is not None:
+            trade_carrier.save_all(self._plugin_dir, self._carrier.records)
+
+    # --- which carriers each commander has (Settings) ----------------------------------------------------
+
+    @staticmethod
+    def _carrier_cfg_key(cmdr: str) -> str:
+        return "wntb_trade_carriers_" + re.sub(r"[^a-z0-9]", "", trade_carrier.key_for(cmdr))
+
+    def _carrier_mode(self, cmdr: str) -> str:
+        mode = (config.get_str(self._carrier_cfg_key(cmdr)) or trade_carrier.AUTO).lower()
+        return mode if mode in trade_carrier.MODES else trade_carrier.AUTO
+
+    @staticmethod
+    def _known_commanders() -> List[str]:
+        return [name for name in (config.get_str(_CFG_COMMANDERS) or "").split("|") if name]
+
+    def _remember_commander(self, cmdr: str) -> None:
+        """Keep the list of commanders seen, so Settings can offer a carrier choice for each (you can
+        only be asked about commanders WNTB has met)."""
+        known = self._known_commanders()
+        if trade_carrier.key_for(cmdr) not in {trade_carrier.key_for(n) for n in known}:
+            config.set(_CFG_COMMANDERS, "|".join(known + [cmdr.replace("|", "")]))
 
     # --- panel chrome ----------------------------------------------------------
 
@@ -313,6 +350,19 @@ class TradePanelController:
         self._button_c.pack(side=tk.LEFT, padx=(6, 0))
 
         self._refresh()
+        parent.after(2000, self._poll_carrier_history)
+
+    def _poll_carrier_history(self) -> None:
+        """The journal read takes a moment at startup; pick its result up once it is ready."""
+        if not self._alive():
+            return
+        self._merge_carrier_history()
+        if self._backfill.empty() and self._backfill_thread_done():
+            return
+        self._parent.after(2000, self._poll_carrier_history)  # type: ignore[union-attr]
+
+    def _backfill_thread_done(self) -> bool:
+        return not any(t.name == "WNTB-trade-carrier" and t.is_alive() for t in threading.enumerate())
 
     def _step_page(self, direction: int) -> None:
         order = trade_pages.PAGE_ORDER
@@ -372,7 +422,8 @@ class TradePanelController:
         lines = ledger_mod.summary_lines(self._ledger)
         lines.append("")
         lines.extend(self._hold_lines())
-        carrier = trade_carrier.cargo_lines(self._carriers.get(self._cmdr))
+        carrier = trade_carrier.cargo_lines(self._carrier.records.get(trade_carrier.key_for(self._cmdr)),
+                                          self._carrier_mode(self._cmdr))
         if carrier:
             lines.append("")
             lines.extend(carrier)
@@ -713,10 +764,43 @@ class TradePanelController:
             wraplength=440, justify=tk.LEFT,
         ).grid(row=5, column=0, sticky=tk.W, padx=10, pady=(4, 10))
 
+        self._build_carrier_settings(frame, first_row=8)
+
+    def _build_carrier_settings(self, frame: tk.Misc, first_row: int) -> None:
+        """One choice per commander WNTB has met: which carriers they own. Auto shows whatever the journal
+        has revealed; the rest show exactly what you pick (and nothing for None)."""
+        nb.Label(
+            frame,
+            text=("Carriers: not every commander has a fleet carrier, and some have a squadron carrier too. "
+                  "Pick what each commander owns and Trade > Session shows only those (Auto shows whatever WNTB "
+                  "has seen in your journal)."),
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=first_row, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+        commanders = self._known_commanders()
+        if self._cmdr and trade_carrier.key_for(self._cmdr) not in {trade_carrier.key_for(n) for n in commanders}:
+            commanders.append(self._cmdr)
+        self._carrier_mode_vars = {}
+        if not commanders:
+            nb.Label(frame, text="No commander seen yet - start the game and this will list them.",
+                     wraplength=440, justify=tk.LEFT).grid(row=first_row + 1, column=0, sticky=tk.W, padx=10)
+            return
+        choices = ((trade_carrier.AUTO, "Auto"), (trade_carrier.NONE, "None"), (trade_carrier.FLEET_ONLY, "Fleet"),
+                   (trade_carrier.SQUADRON_ONLY, "Squadron"), (trade_carrier.BOTH, "Both"))
+        for offset, name in enumerate(commanders, start=1):
+            row = tk.Frame(frame)
+            row.grid(row=first_row + offset, column=0, sticky=tk.W, padx=10, pady=1)
+            nb.Label(row, text=f"{_clip(name, 20)}:", width=22, anchor=tk.W).pack(side=tk.LEFT)
+            var = tk.StringVar(value=self._carrier_mode(name))
+            self._carrier_mode_vars[name] = var
+            for value, text in choices:
+                nb.Radiobutton(row, text=text, variable=var, value=value).pack(side=tk.LEFT, padx=(0, 4))
+
     def save_settings(self) -> None:
         if self._lookups_var is None:
             return
         config.set(_CFG_LOOKUPS_ENABLED, bool(self._lookups_var.get()))
+        for name, var in self._carrier_mode_vars.items():
+            config.set(self._carrier_cfg_key(name), var.get() if var.get() in trade_carrier.MODES else trade_carrier.AUTO)
         config.set(_CFG_LARGE_PAD, bool(self._pad_var.get()) if self._pad_var is not None else False)
         config.set(_CFG_CARRIERS, bool(self._carriers_var.get()) if self._carriers_var is not None else True)
         pad_choice = (self._pad_override_var.get() if self._pad_override_var is not None else "auto").lower()
