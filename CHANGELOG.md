@@ -3,6 +3,22 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.4.1 - 2026-10-09
+
+### Fixed
+- **Settings pages taller than the screen pushed the OK button out of view.** Every Settings page now scrolls
+  inside a height-capped frame (`settings_scroll.py`), sized to the screen; short pages look as before and the
+  mouse wheel scrolls from anywhere over a page.
+- **Grey bands on the Settings pages.** Rows built from plain `tk.Frame`s were painted the system grey on EDMC's
+  white pages; they now take the page colour.
+
+### Changed
+- **Trade stock rows are clearer.** "aboard" and "elsewhere" became "in your hold" and "not in your hold", with a
+  note under the list saying that cargo not in your hold has usually been moved to your carrier and stays listed
+  until it is sold.
+- **Saving a trade session now says what to do next**: the message ends "Press Reset to start a new session."
+  Save never ends a session; only Reset starts the next one. The README and Trade spec explain the Save, then Reset flow.
+
 ## 1.4.0 - 2026-10-09
 
 ### Action needed
