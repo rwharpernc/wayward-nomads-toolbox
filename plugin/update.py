@@ -67,6 +67,7 @@ _OWN_DATA_FILES: set = {
     "colonisation_sites.json",  # Colonisation construction sites (colonisation_data.py)
     "trade_ledger.json",  # Trade mode's session ledger (trade_ledger.py)
     "trade_carrier.json",  # Trade mode's fleet/squadron carrier cargo space (trade_carrier.py)
+    "trade_stock.json",  # Trade mode's bought-not-yet-sold stock book (trade_stock.py)
 }
 _OWN_DIRS = {UPDATES_DIRNAME, BACKUPS_DIRNAME, "mining_sessions", "__pycache__"}  # mining_sessions: mining_session_archive.py
 

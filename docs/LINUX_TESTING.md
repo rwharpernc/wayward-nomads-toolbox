@@ -111,8 +111,10 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Before logging in, the first line reads "Game mode: waiting for login…" and the second "Credits this
       session: waiting for your balance…".
 - [ ] After loading into the game: "You are in Solo mode." (or Open, or Private Group with its name) and
-      "Credits this session: no change yet". Both stay visible when you switch between every mode button and
-      disappear only when you collapse the WNTB title.
+      "Credits this session: no change yet". The game-mode line stays visible on every mode button (the credits line
+      is hidden on Exploration and Trade) and both disappear when you collapse the WNTB title.
+- [ ] Switch modes: the credits line is **hidden on Exploration and Trade** and shown on Powerplay, BGS, Mining,
+      Missions and Field Ops; the game-mode line stays on every mode.
 - [ ] Earn or spend some credits: the second line changes to "+N cr earned" or "-N cr lost", and an hourly rate
       appears after a few minutes.
 - [ ] Log out to the main menu and back in: the credits total carries on (same session). Restart EDMC while the
@@ -129,6 +131,9 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
 - [ ] **Session**: after docking, the ship and its pad size show; the hold line shows used, capacity and free
       tonnes. Buy and sell something: the profit lines appear. Refuel and repair: a **Net profit** headline appears
       with Fuel and Repairs lines under it. **Reset** clears it.
+- [ ] Stock: buy some cargo and the Session page shows "Stock bought, not yet sold" with the cost and how much is
+      aboard. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "elsewhere" grows.
+      Restart EDMC after buying while it was closed: the purchase is still counted. **Clear stock** empties it.
 - [ ] Carriers (only if you have one): open Carrier Management once. The carrier's used and free cargo tonnes
       appear. Transfer cargo to it: the figure follows. Restart EDMC: it comes back without opening Carrier
       Management again (this reads the journal folder, so it also checks the Proton journal path).
@@ -136,7 +141,11 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
 - [ ] **Market**: click the Commodity box; a suggestion list appears **under the box and does not steal the
       keyboard** (this is a borderless window, so check it stacks above EDMC under your window manager). Typing
       narrows it; Up/Down/Enter/Esc work; clicking a name fills the box.
-- [ ] **Near me** and **Galaxy** each return results for a common commodity (try Gold and Liquid oxygen). A
+- [ ] The **Sell** / **Buy** buttons under the Commodity box: the chosen one is lit, switching clears the results,
+      and the results heading says "Selling" or "Buying". All the page's buttons show their full labels (**Near me**,
+      **Galaxy**, **Price finder**) with nothing cut off.
+- [ ] **Near me** and **Galaxy** each return results for a common commodity (try Gold and Liquid oxygen). Each
+      station says **orbital** or **ground** and its type. A
       fleet carrier appears in its own section, not mixed with stations. Stations without a pad for your ship are
       missing.
 - [ ] **Routes**: **Find routes** shows "Asking Spansh..." with a counting timer, and a route within a couple of

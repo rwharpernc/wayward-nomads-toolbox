@@ -135,12 +135,13 @@ default, and only looks at published releases).
 - **Switch modes** with the button row under the WNTB title (**P.P.**, **BGS**, **EXP**, **MIN**, **TRD**,
   **MSN**, **OPS**; hover for the full name). Every mode keeps working in the
   background while you look at a different one. Nothing pauses.
-- **Your game mode and credits** are shown just under the mode buttons, whichever mode you are in, with a
-  rule below them before the page itself. The first line says which mode you are flying in ("You are in
-  Solo mode.", Open, or Private Group with its name). The second is the credits you have earned or lost
-  since you logged in, such as "+1,234,567 cr earned (+411,522 cr/hr)" or "-5,000 cr lost" (your balance now
-  minus your balance at login; the rate appears once the session is a few minutes old). These two lines are
-  the only place either appears.
+- **Your game mode and credits** are shown just under the mode buttons, with a rule below them before the
+  page itself. The first line says which mode you are flying in ("You are in Solo mode.", Open, or Private
+  Group with its name) and is always there. The second is the credits you have earned or lost since you logged
+  in, such as "+1,234,567 cr earned (+411,522 cr/hr)" or "-5,000 cr lost" (your balance now minus your balance
+  at login; the rate appears once the session is a few minutes old). It is shown on **Powerplay, BGS, Mining,
+  Missions and Field Ops**, and hidden on **Exploration** (not useful there) and **Trade** (which has its own
+  net profit that already counts your running costs). It keeps counting while hidden.
 - **Pages.** Mining, Trade and Missions have several pages. Click the large orange **◀** and **▶** buttons
   at the top of the panel to move between them.
 - **Collapse the panel** by clicking the "WNTB" title. Click it again to expand (the credits line folds
@@ -215,10 +216,12 @@ Hover over any button for a moment to see its full name.
 | **I/E** | Import/export hotspots | Mining |
 | **BOOK** | Mining Book | Mining |
 | **Reset** | Start the session profit tally again | Trade (Session page) |
+| **Clear stock** | Forget the unsold stock list | Trade (Session page) |
 | **Find routes** / **Cancel** | Ask Spansh for trade routes / stop waiting | Trade (Routes page) |
 | **Copy next system** | Copy the first destination to the clipboard | Trade (Routes page) |
-| **Near me** / **Galaxy** | Best place to sell, near you / anywhere | Trade (Market page) |
-| **Price…** | Find best price (the Mining PRICE finder) | Trade (Market page) |
+| **Sell** / **Buy** | Choose whether the search is for selling or buying | Trade (Market page) |
+| **Near me** / **Galaxy** | Best place to sell or buy, near you / anywhere | Trade (Market page) |
+| **Price finder** | The Mining PRICE finder, for any commodity | Trade (Market page) |
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **SHIPS** | Manage ship builds | Field Ops |
 | **REPORT** | Colonisation sites | Field Ops |
@@ -506,8 +509,17 @@ Reads your journal only; nothing is sent anywhere. It shows:
   headline becomes **Net profit** (trade profit less those costs, and the credits per hour is the net), with
   the trade profit and each cost listed under it. Insurance rebuys and fines aren't counted, and a cost only
   counts if WNTB saw it, so a refuel before EDMC started isn't included.
-- **Reset** starts the tally again. It carries on if you log out to the menu and back, and survives restarting
-  EDMC.
+- **Reset** starts the profit tally again (it carries on if you log out to the menu and back, and survives
+  restarting EDMC). **Clear stock** forgets the unsold stock list.
+- **Stock bought, not yet sold**: what you have spent on commodities that are still waiting to be sold, with
+  the average price you paid, and how much of each is still in your hold and how much is elsewhere (usually
+  your carrier). This follows the cargo, not the login, so it carries across sessions. It is one list for both
+  ways of trading: on a station-to-station run it goes up when you buy and down when you sell; when you are
+  loading your carrier for a bulk sale, every purchase adds to it and moving cargo to or from the carrier
+  changes where it is, not what you paid. It only comes down when you **sell**. WNTB reads your recent journals
+  when it starts, so purchases made while EDMC was closed are included (a first run looks back 14 days).
+  Cargo that leaves some other way, such as your carrier selling it on a trade order, stays listed until you
+  press **Clear stock**.
 - **Your ship** and the landing pad it needs (for example "Type-9 Heavy (large pad)").
 - **Your hold**: how many tonnes are used, the capacity, how much is free, and what the station you're docked
   at would pay for the whole hold.
@@ -525,23 +537,31 @@ one are considered.
 
 ### Market (needs the Spansh lookups on)
 
-Finds where a commodity sells best.
+Finds where to **sell** or where to **buy** a commodity.
 
-1. Click the **Commodity** box and start typing. Suggestions fill in as you type, starting with what you
-   carry and what the station you're at buys, then every commodity. Leave it empty to search for the
-   commodity you carry the most of.
-2. Press **Near me** to look within a radius of your system (100 ly unless you change it in Settings), or
+1. Choose what you want to do with the **Sell** / **Buy** buttons under the Commodity box (the lit one is
+   chosen). It is remembered.
+2. Click the **Commodity** box and start typing. Suggestions fill in as you type, starting with what you
+   carry and what the station you're at buys, then every commodity. When selling, leave it empty to search for
+   the commodity you carry the most of. When buying, you type what you want.
+3. Press **Near me** to look within a radius of your system (100 ly unless you change it in Settings), or
    **Galaxy** to look everywhere. You can press both.
-3. Results are ranked by what *your load* would earn: price per tonne times the tonnes the station still
-   wants. A station paying more per tonne but wanting 40 t is worth less to a 200 t hold. If you haven't
-   got any of it, a full hold is assumed. Once you've run both searches it tells you which is better, by
-   how much, and how much further away it is.
-4. Stations with no landing pad your ship fits are left out.
-5. **Fleet carriers are listed in their own section**, marked "they can move", because a carrier can jump away
-   before you arrive. A line says when a carrier would pay more than the best station. You can hide
-   carriers in Settings.
+4. **Selling:** results are ranked by what *your load* would earn, price per tonne times the tonnes the
+   station still wants. A station paying more per tonne but wanting 40 t is worth less to a 200 t hold. If you
+   haven't got any of it, a full hold is assumed.
+   **Buying:** the amount is your *free hold space*. Stations that can supply all of it come first, cheapest
+   first; stations that can only supply part come after, marked "only N t in stock".
+5. Once you've run both searches it tells you which is better and by how much (more money when selling, a
+   lower price when buying), and how much further away it is.
+6. Every result says what kind of place it is: **orbital** or **ground** (on a planet's surface), the station
+   type (Coriolis Starport, Planetary Outpost and so on), and how far it is from the arrival star in light
+   seconds. Stations with no landing pad your ship fits are left out.
+7. **Fleet carriers are listed in their own section**, marked "they can move", because a carrier can jump away
+   before you arrive. A line says when a carrier would beat the best station. You can hide carriers in
+   Settings.
 
-**Price…** opens the same finder as Mining's **PRICE** button, which also looks up where to *buy*.
+**Price finder** opens the finder Mining's **PRICE** button also uses, for any commodity, to buy or sell, with
+its own distance box.
 
 Prices are only as fresh as the last player who docked there (markets older than 30 days are ignored), so
 check the market when you arrive.
@@ -811,6 +831,10 @@ Fixed in 1.3.1 (earlier builds released the key too early under XWayland). Updat
 **Trade: the lookup buttons are greyed out, or there is no Commodity box.**
 The Spansh lookups are off until you tick **Enable Spansh trade lookups** under **Settings → WNTB → Trade**.
 The Commodity box only appears on the Market page, and only once lookups are on.
+
+**Trade: I can't tell whether it's searching for a place to buy or to sell.**
+The **Sell** and **Buy** buttons under the Commodity box choose the side; the lit one is active, and the results
+heading says "Selling" or "Buying". Changing the side clears the old results.
 
 **Trade: the Market search finds nothing for a commodity.**
 Pick the name from the suggestion list. Spansh only knows commodities by their exact in-game name (for example

@@ -12,6 +12,7 @@ threading, persistence), see [TECHNICAL.md](TECHNICAL.md).
 3. [The three pages](#3-the-three-pages)
 4. [Data sources](#4-data-sources)
 5. [Session ledger](#5-session-ledger)
+   - [Stock bought, not yet sold](#51-stock-bought-not-yet-sold)
 6. [Hold, ship and landing pads](#6-hold-ship-and-landing-pads)
 7. [Fleet and squadron carrier cargo space](#7-fleet-and-squadron-carrier-cargo-space)
 8. [Routes (Spansh trade planner)](#8-routes-spansh-trade-planner)
@@ -47,6 +48,7 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_panel.py` | UI + controller | The feature-module contract entry point: panel chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
 | `trade_pages.py` | pure | Page names and order |
 | `trade_ledger.py` | pure + file | The session ledger and `trade_ledger.json` |
+| `trade_stock.py` | pure + file | The stock book (bought, not yet sold) and `trade_stock.json` |
 | `trade_market.py` | pure + file read | `Market.json` parsing and cargo valuation |
 | `trade_ship.py` | pure | Ship to landing-pad size, and whether a ship fits a station's pads |
 | `trade_carrier.py` | pure + file | Carrier cargo tracking, journal backfill, `trade_carrier.json` |
@@ -57,20 +59,25 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_commodity_entry.py` | UI | The type-ahead entry widget |
 
 Reused from elsewhere: `mining_spansh_client.search_best_price_stations` (the station price search, shared
-with Mining's PRICE button), `mining_price_finder_dialog` (the **Price…** button), `inventory_names`
+with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** button), `inventory_names`
 (display-name fallback), `panelkit` (wrapping labels, tooltips, the page arrows, clipboard).
 
 ## 3. The three pages
 
-**Session.** `trade_ledger.summary_lines` (profit, tonnes, best sales), then the hold block (`_hold_lines`:
+**Session.** `trade_ledger.summary_lines` (profit, tonnes, best sales), then the stock block
+(`trade_stock.stock_lines`), then the hold block (`_hold_lines`:
 ship and pad size, `used/capacity (free)`, what the docked market would pay, up to four cargo lines), then
-the carrier block (`trade_carrier.cargo_lines`). Button: **Reset**.
+the carrier block (`trade_carrier.cargo_lines`). Buttons: **Reset** (the profit tally) and **Clear stock**.
 
 **Routes.** Idle text shows the start station, ship, cargo size, jump range and budget the search will use.
 Buttons: **Find routes** (becomes **Cancel** while searching) and **Copy next system**.
 
-**Market.** A commodity box (type-ahead), then **Near me**, **Galaxy** and **Price…**. The box is shown
-only on this page and only when lookups are enabled. Empty box = the commodity you carry most of.
+**Market.** A commodity box (type-ahead), a **Sell** / **Buy** toggle, then **Near me**, **Galaxy** and
+**Price finder**. The box and toggle are shown only on this page and only when lookups are enabled. The toggle
+is two buttons using the same on/off look as the mode buttons (`panelkit.apply_toggle_button_state`), not radio
+buttons, which EDMC's theme doesn't colour reliably. Every button carries its full label (an earlier "Price…"
+was an abbreviation of the finder's name). Selling with an empty box = the commodity you carry most of; buying
+needs a typed commodity.
 
 Sizing rule (TECHNICAL.md section 5): the body is one `panelkit.wrap_label`; every station, system and
 commodity name is clipped (`_clip`, 34 characters); the buttons are fixed small widgets; the suggestion list
@@ -83,7 +90,7 @@ Journal events and EDMC state read by `trade_panel.handle_event` (every handler 
 
 | Source | Used for |
 |---|---|
-| `MarketBuy`, `MarketSell` | Ledger; learning commodity display names (`Type_Localised`) |
+| `MarketBuy`, `MarketSell` | Ledger; the stock book; learning commodity display names (`Type_Localised`) |
 | `RefuelAll`, `RefuelPartial`, `Repair`, `RepairAll`, `BuyAmmo`, `RestockVehicle`, `BuyDrones`, `SellDrones` | Running costs in the ledger |
 | `Market` (then the `Market.json` file in the journal folder) | The docked market: cargo valuation, "what this station buys" suggestions |
 | `Docked`, `Undocked`, `Location` | Route start station; which carrier you are docked at |
@@ -118,6 +125,48 @@ category to credits (an older saved ledger without it still loads).
   logout-to-menu and back; anything else starts fresh.
 - **Persistence:** `trade_ledger.json`, atomic write (temp file then `os.replace`), at most once per 30 s plus
   on a new session and on shutdown. Loads tolerate a missing or wrong-shaped file.
+
+### 5.1 Stock bought, not yet sold
+
+`trade_stock.py`. The ledger is one login; money tied up in cargo often spans several (loading a carrier for a
+bulk sale over days) and the credits are out of your account the whole time. So the stock book follows the
+*cargo*, per commander, in `trade_stock.json`, and is the **same mechanism for both ways of trading**:
+
+- Station to station: `MarketBuy` adds tonnes and `TotalCost`; `MarketSell` removes tonnes at the commodity's
+  average cost so far.
+- Loading the carrier: every purchase adds to the stock; `CargoTransfer` to or from the carrier moves the cargo
+  but not what was paid, so it is not a stock event. Stock comes out only when sold.
+
+Because there is one list, nothing needs reconciling between "route" and "carrier" tracking, and no purchase
+is counted twice. Where the cargo is *now* is derived, not stored: the panel shows `aboard` = min(held, what
+the ship's hold contains) and `elsewhere` = the rest (usually the carrier).
+
+Rules: average cost per commodity; a sale never takes stock below zero; a sale of cargo the book never saw is
+ignored. The ledger's profit still uses the game's own `AvgPricePaid`, so the two can differ slightly when
+cargo came from outside what the book saw; the ledger is the profit figure and the book is "what is tied up".
+
+**Applying each event exactly once.** The book keeps `as_of` (the timestamp of the last event applied) and
+the fingerprints (a short SHA-1 of the event) of events at exactly that second. An event older than `as_of`, or
+already fingerprinted at `as_of`, is skipped; anything else is applied. Two sales in the same second (common:
+a multi-commodity sale) are therefore both counted, and a replay never doubles one.
+
+**Catching up.** EDMC doesn't replay events and trades made while it was closed would be missed, so `start()`
+calls `trade_stock.backfill` **synchronously, before any live event can arrive** (about 0.14 s on a real
+journal folder): it replays the newest 60 journal files (chosen by modified time, see below), applying only
+events newer than each commander's `as_of`, or, for a commander with no book yet, the last 14 days. Doing it
+synchronously removes any race with live events.
+
+**Clearing.** **Clear stock** empties the items but keeps `as_of`, so a later replay can't bring the stock
+back.
+
+**Limits.** Cargo that leaves some other way (the carrier selling on a trade order, cargo jettisoned or lost,
+mission cargo) stays on the books until cleared. Stolen cargo bought nowhere has no book entry.
+
+**Journal files are ordered by modified time, not name.** The game has used two naming styles
+(`Journal.2026-10-09T053605.01.log` and `Journal.260228162446.01.log`) that do not sort chronologically
+together, so "the newest N by name" can be wrong. `trade_carrier.journal_files` sorts by `os.path.getmtime` and
+is used by both the carrier backfill and the stock backfill. The pre-filter on journal lines is a
+whitespace-tolerant regex rather than an exact `"event":"X"` substring.
 
 ## 6. Hold, ship and landing pads
 
@@ -216,20 +265,33 @@ says to check the spelling.
 **Suggestions** (`suggest`): prefix matches first, then word-start matches, then contains; names you carry and
 names the docked station buys lead each group. Empty text lists just those preferred names.
 
-**Search target** (`_search_target`): the box's text if any, else your largest load. Tonnes = what you carry of
-it, else a full hold (`CargoCapacity`, or 100 if unknown).
+**Side** (`wntb_trade_market_side`, default sell): chosen with the toggle and remembered. Changing it clears
+the results, since they belong to one side, and results are keyed by `(commodity, tonnes, pad, side)`.
+
+**Search target** (`_search_target`). Selling: the box's text if any, else your largest load; tonnes = what you
+carry of it, else a full hold (`CargoCapacity`, or 100 if unknown). Buying: only the typed commodity; tonnes =
+your *free hold space* (`CargoCapacity` less what is aboard), or a full hold's worth if the hold is already full.
 
 **Scopes.** Near me = `search_best_price_stations(system, name, "Sell", radius_ly)` with the Settings radius
 (default 100 ly). Galaxy = the same call with `max_distance_ly=None`, which omits the distance filter (Spansh
 accepts that). Results use only markets updated in the last 30 days (`_MARKET_DAYS_OLD_DEFAULT`), because an
 unfiltered search returned fleet carrier markets years old.
 
-**Ranking** (`trade_prices.rank_offers`): each station is valued for your load, `price x min(tonnes, demand)`,
-and sorted by that (ties: nearer first). Stations wanting none of it or with no suitable pad are dropped.
+**Ranking** (`trade_prices.rank_offers`, `side`). Selling: each station is valued for your load,
+`price x min(tonnes, demand)`, and sorted by that (ties: nearer first). Buying: the amount that can change hands is
+`min(tonnes, supply)`; stations that can supply all of it come first, cheapest first, then partial ones, cheapest
+first (each marked "only N t in stock"). Either way, stations with nothing to buy or sell, or with no suitable pad,
+are dropped. Spansh is asked with transaction `"Sell"` or `"Buy"` (`search_best_price_stations`), whose `price` and
+`quantity` mean sell price and demand, or buy price and supply.
 `split_carriers` separates fleet and squadron carriers; they are listed in their own section ("they can
-move") and excluded from the verdict. `verdict(near, galaxy)` says whether the galaxy-wide best beats the best
-nearby, by how much and how many ly further; `carrier_note` says when a carrier would pay more than the best
-station. Carriers can be hidden entirely in Settings.
+move") and excluded from the verdict. `verdict(near, galaxy, side)` says whether the galaxy-wide best beats the
+best nearby: selling, by how many credits and what percentage more; buying, by how many cr/t cheaper, the saving
+on the tonnes involved, and how many ly further. `carrier_note` says when a carrier would pay more (selling) or
+charge less (buying) than the best station. Carriers can be hidden entirely in Settings.
+
+**Where each place is.** Every offer carries Spansh's `is_planetary`, its station type and its distance from the
+arrival star, shown as `orbital Coriolis Starport, 1,200 ls` or `ground Planetary Outpost, 80 ls`
+(`trade_prices.describe_place`); a fleet carrier is just `carrier`.
 
 ## 10. Settings, config keys and files
 
@@ -246,11 +308,12 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_include_carriers` | Show carriers in price results | on |
 | `wntb_trade_ship_pad_override` | small / medium / large ("" = from the ship) | "" |
 | `wntb_trade_current_page` | Last page shown | Session |
+| `wntb_trade_market_side` | Market search side: sell or buy | sell |
 | `wntb_trade_commanders` | Commanders seen, `\|`-separated, so Settings can list them | "" |
 | `wntb_trade_carriers_<commander>` | auto / none / fleet / squadron / both | auto |
 
-Files in the plugin folder (both are commander data and must survive updates; see `_OWN_DATA_FILES`):
-`trade_ledger.json` and `trade_carrier.json`. `trade_carrier.json` was a flat `{commander: record}` map in
+Files in the plugin folder (all are commander data and must survive updates; see `_OWN_DATA_FILES`, which
+`tests/test_own_data_files.py` enforces): `trade_ledger.json`, `trade_carrier.json` and `trade_stock.json`. `trade_carrier.json` was a flat `{commander: record}` map in
 an earlier build; `load_all` reads that as a fleet carrier.
 
 ## 11. Limits and network behaviour
@@ -274,7 +337,8 @@ Follows TECHNICAL.md section 11 ("Keeping API traffic low").
 
 `python -m unittest discover -s tests`. Trade's suites are `tests/test_trade.py` (ledger, market parsing,
 Spansh client parsing) and `tests/test_trade_search.py` (commodity names, ship pads, offer ranking, carrier
-space, the tracker's attribution rules, the per-commander choice and the journal backfill). They run without
+space, the tracker's attribution rules, the per-commander choice and the journal backfill) and
+`tests/test_trade_stock.py` (average-cost stock, apply-once rules, the backfill, and file ordering). They run without
 EDMC or a display. The Settings tab is built by `tests/test_prefs_smoke.py` (nine top-level tabs now).
 
 Not covered by automation: the panel and the suggestion popup (Tk). During development the panel was driven in
@@ -303,6 +367,8 @@ a real Tk window with EDMC and Spansh stubbed; that is not part of the suite.
 - Spansh's route planner has no medium-pad option; routes use the unladen jump range.
 - Spansh data is player-reported and can be stale; the page can't say a price is current, only that the market
   was updated in the last 30 days.
+- Stock: cargo sold by the carrier's own orders or lost stays listed until cleared; a first run only looks back
+  14 days, so older purchases still unsold aren't known.
 - No automated UI tests.
 
 ## 14. Platform notes

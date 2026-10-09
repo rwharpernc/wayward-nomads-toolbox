@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -55,8 +56,8 @@ AUTO, NONE, FLEET_ONLY, SQUADRON_ONLY, BOTH = "auto", "none", "fleet", "squadron
 MODES = (AUTO, NONE, FLEET_ONLY, SQUADRON_ONLY, BOTH)
 _MODE_TYPES = {NONE: (), FLEET_ONLY: (FLEET,), SQUADRON_ONLY: (SQUADRON,), BOTH: (FLEET, SQUADRON)}
 
-_BACKFILL_KEYS = ('"event":"CarrierStats"', '"event":"CarrierBuy"', '"event":"CargoTransfer"', '"event":"LoadGame"',
-                  '"event":"Commander"', '"event":"Docked"', '"event":"Undocked"', '"event":"Location"')
+# Cheap test for "could this journal line matter?" before paying to parse it; tolerant of spacing.
+_WANTED = re.compile(r'"event"\s*:\s*"(?:CarrierStats|CarrierBuy|CargoTransfer|LoadGame|Commander|Docked|Undocked|Location)"')
 
 CarrierRecord = Dict[str, Any]
 Records = Dict[str, Dict[str, CarrierRecord]]  # commander key -> carrier type -> record
@@ -68,6 +69,22 @@ def _int(value: Any) -> int:
 
 def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def journal_files(journal_dir: str, max_files: int) -> List[str]:
+    """Full paths of the newest `max_files` journal files, oldest first. Ordered by modified time, not by name:
+    the game has used two naming styles (`Journal.2026-10-09T053605.01.log` and `Journal.260228162446.01.log`)
+    and they don't sort chronologically together."""
+    try:
+        found = []
+        for name in os.listdir(journal_dir):
+            if name.startswith("Journal.") and name.endswith(".log"):
+                path = os.path.join(journal_dir, name)
+                found.append((os.path.getmtime(path), name, path))
+    except OSError:
+        return []
+    found.sort()
+    return [path for _mtime, _name, path in found[-max_files:]]
 
 
 def key_for(cmdr: str) -> str:
@@ -212,15 +229,11 @@ def backfill_tracker(journal_dir: str, max_files: int = BACKFILL_FILES) -> Carri
     carriers (and where the commander was docked at the end). Only lines that can matter are parsed, so
     this is cheap even for big journals."""
     tracker = CarrierTracker()
-    try:
-        names = sorted(n for n in os.listdir(journal_dir) if n.startswith("Journal.") and n.endswith(".log"))
-    except OSError:
-        return tracker
-    for name in names[-max_files:]:
+    for path in journal_files(journal_dir, max_files):
         try:
-            with open(os.path.join(journal_dir, name), "r", encoding="utf-8", errors="replace") as handle:
+            with open(path, "r", encoding="utf-8", errors="replace") as handle:
                 for line in handle:
-                    if any(key in line for key in _BACKFILL_KEYS):
+                    if _WANTED.search(line):
                         try:
                             parsed = json.loads(line)
                         except ValueError:

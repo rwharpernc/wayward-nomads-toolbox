@@ -44,6 +44,7 @@ from . import trade_pages
 from . import trade_prices
 from . import trade_ship
 from . import trade_spansh_client as spansh_routes
+from . import trade_stock
 from .trade_commodity_entry import CommodityEntry
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -59,6 +60,7 @@ _CFG_JUMP_RANGE = "wntb_trade_jump_range_override"
 _CFG_CURRENT_PAGE = "wntb_trade_current_page"
 _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
 _CFG_CARRIERS = "wntb_trade_include_carriers"
+_CFG_MARKET_SIDE = "wntb_trade_market_side"  # "sell" or "buy": which side of the market the search is for
 _CFG_COMMANDERS = "wntb_trade_commanders"  # commanders seen, "|"-separated
 _CFG_SHIP_PAD = "wntb_trade_ship_pad_override"  # "" = work it out from the ship
 
@@ -136,6 +138,8 @@ class TradePanelController:
     def __init__(self) -> None:
         self._plugin_dir: Optional[str] = None
         self._ledger: Optional[Dict[str, Any]] = None
+        self._stock = trade_stock.StockBook()  # bought-not-yet-sold cargo, per commander, across logins
+        self._stock_saved = 0.0
         self._carrier = trade_carrier.CarrierTracker()  # each commander's fleet / squadron carrier cargo space
         self._cmdr = ""
         self._backfill: "queue.Queue[trade_carrier.CarrierTracker]" = queue.Queue()
@@ -159,7 +163,9 @@ class TradePanelController:
         self._route_lines: List[str] = []
         self._next_system: Optional[str] = None
         self._sell: Dict[str, List[trade_prices.Offer]] = {}   # scope ("near" / "galaxy") -> ranked offers
-        self._sell_for: Optional[tuple] = None                  # (commodity, tonnes) those offers were ranked for
+        self._sell_for: Optional[tuple] = None                  # (commodity, tonnes, pad, side) those offers were ranked for
+        side = (config.get_str(_CFG_MARKET_SIDE) or trade_prices.SELL).lower()
+        self._side = side if side in (trade_prices.SELL, trade_prices.BUY) else trade_prices.SELL
         self._sell_error: Optional[str] = None
         self._job: Optional[_Job] = None
 
@@ -175,6 +181,9 @@ class TradePanelController:
         self._button_b: Optional[tk.Button] = None
         self._button_c: Optional[tk.Button] = None
         self._search_row: Optional[tk.Frame] = None
+        self._side_row: Optional[tk.Frame] = None
+        self._side_buttons: Dict[str, tk.Button] = {}
+        self._side_off_colors: Optional[tuple] = None
         self._commodity_entry: Optional[CommodityEntry] = None
 
         # Settings variables
@@ -194,6 +203,13 @@ class TradePanelController:
         self._plugin_dir = plugin_dir
         self._ledger = ledger_mod.load_ledger(plugin_dir)
         self._carrier.records = trade_carrier.load_all(plugin_dir)
+        self._stock.books = trade_stock.load_all(plugin_dir)
+        try:
+            # Catch up on trades made while EDMC was closed, before any live event can arrive.
+            trade_stock.backfill(self._stock, _journal_dir())
+        except Exception:
+            logger.exception("Could not read trade history from the journal")
+        self._save_stock(force=True)
         threading.Thread(target=self._read_carrier_history, name="WNTB-trade-carrier", daemon=True).start()
 
     def _read_carrier_history(self) -> None:
@@ -220,6 +236,14 @@ class TradePanelController:
         if self._job is not None:
             self._job.cancel.set()
         self._save(force=True)
+        self._save_stock(force=True)
+
+    def _save_stock(self, force: bool = False) -> None:
+        if self._plugin_dir is None:
+            return
+        if force or time.monotonic() - self._stock_saved >= _PERSIST_EVERY_S:
+            trade_stock.save_all(self._plugin_dir, self._stock.books)
+            self._stock_saved = time.monotonic()
 
     def _save(self, force: bool = False) -> None:
         if self._plugin_dir is None or self._ledger is None:
@@ -282,6 +306,8 @@ class TradePanelController:
 
         if event in ("MarketBuy", "MarketSell") and entry.get("Type") and entry.get("Type_Localised"):
             self._names[market_mod.canonical_name(entry["Type"])] = str(entry["Type_Localised"])
+        if event in ("MarketBuy", "MarketSell") and self._stock.feed(entry, self._cmdr):
+            self._save_stock()
         changed = ledger_mod.apply_trade_event(self._ledger, entry)
         if new_session:
             self._save(force=True)
@@ -337,11 +363,23 @@ class TradePanelController:
         self._search_row.grid(row=2, column=0, columnspan=3, sticky="w", pady=(0, 2))
         tk.Label(self._search_row, text="Commodity:").pack(side=tk.LEFT, padx=(0, 4))
         self._commodity_entry = CommodityEntry(self._search_row, self._preferred_commodities,
-                                               on_submit=lambda: self._find_sell_prices("near"))
+                                               on_submit=lambda: self._find_prices("near"))
         self._commodity_entry.pack(side=tk.LEFT)
 
+        # Which side of the market the search is for. Two toggle buttons (the same on/off look as the mode
+        # buttons) rather than radio buttons, which EDMC's theme doesn't colour reliably.
+        self._side_row = tk.Frame(parent)
+        self._side_row.grid(row=3, column=0, columnspan=3, sticky="w", pady=(0, 2))
+        tk.Label(self._side_row, text="I want to:").pack(side=tk.LEFT, padx=(0, 4))
+        for value, text in ((trade_prices.SELL, "Sell"), (trade_prices.BUY, "Buy")):
+            button = tk.Button(self._side_row, text=text, command=lambda v=value: self._set_side(v))
+            button.pack(side=tk.LEFT, padx=(0, 6))
+            self._side_buttons[value] = button
+        self._side_off_colors = panelkit.capture_toggle_off_colors(self._side_buttons[trade_prices.SELL])
+        self._paint_side_buttons()
+
         buttons = tk.Frame(parent)
-        buttons.grid(row=3, column=0, columnspan=3, sticky="w")
+        buttons.grid(row=4, column=0, columnspan=3, sticky="w")
         self._button_a = tk.Button(buttons, text="")
         self._button_a.pack(side=tk.LEFT)
         self._button_b = tk.Button(buttons, text="")
@@ -383,7 +421,8 @@ class TradePanelController:
         busy = self._job is not None and not self._job.done
         if self._page == trade_pages.SESSION:
             lines = self._session_lines()
-            self._set_buttons(("Reset", self._reset_ledger, True), None, None)
+            self._set_buttons(("Reset", self._reset_ledger, True),
+                              ("Clear stock", self._clear_stock, bool(self._stock.holdings(self._cmdr))), None)
         elif self._page == trade_pages.ROUTES:
             lines = self._routes_lines(busy)
             self._set_buttons(
@@ -394,16 +433,17 @@ class TradePanelController:
             lines = self._market_lines(busy)
             can_search = lookups_enabled() and not busy
             self._set_buttons(
-                ("Cancel" if busy else "Near me", self._cancel_job if busy else lambda: self._find_sell_prices("near"),
+                ("Cancel" if busy else "Near me", self._cancel_job if busy else lambda: self._find_prices("near"),
                  busy or can_search),
-                ("Galaxy", lambda: self._find_sell_prices("galaxy"), can_search),
-                ("Price…", self._open_price_finder, lookups_enabled() and not busy))
+                ("Galaxy", lambda: self._find_prices("galaxy"), can_search),
+                ("Price finder", self._open_price_finder, lookups_enabled() and not busy))
         self._body.configure(text="\n".join(lines))
-        if self._search_row is not None:
-            if self._page == trade_pages.MARKET and lookups_enabled():
-                self._search_row.grid()
-            else:
-                self._search_row.grid_remove()
+        for row in (self._search_row, self._side_row):
+            if row is not None:
+                if self._page == trade_pages.MARKET and lookups_enabled():
+                    row.grid()
+                else:
+                    row.grid_remove()
 
     def _set_buttons(self, first, second, third) -> None:
         # Unpack all, then pack in order, so the left-to-right order can never swap.
@@ -420,6 +460,11 @@ class TradePanelController:
 
     def _session_lines(self) -> List[str]:
         lines = ledger_mod.summary_lines(self._ledger)
+        in_hold = {market_mod.canonical_name(name): tonnes for name, tonnes in self._cargo.items()}
+        stock = trade_stock.stock_lines(self._stock.holdings(self._cmdr), in_hold,
+                                        name_of=lambda holding: _clip(self._display(holding.key)))
+        if stock:
+            lines.extend(stock)
         lines.append("")
         lines.extend(self._hold_lines())
         carrier = trade_carrier.cargo_lines(self._carrier.records.get(trade_carrier.key_for(self._cmdr)),
@@ -499,6 +544,23 @@ class TradePanelController:
                 f"Budget {self._credits:,} cr" if self._credits else "Budget: unknown",
                 "Press Find routes."]
 
+    def _set_side(self, side: str) -> None:
+        """Switch between looking for a place to sell and a place to buy. The results shown belong to one side,
+        so they are cleared."""
+        if side == self._side:
+            return
+        self._side = side
+        config.set(_CFG_MARKET_SIDE, side)
+        self._sell, self._sell_for, self._sell_error = {}, None, None
+        self._paint_side_buttons()
+        self._refresh()
+
+    def _paint_side_buttons(self) -> None:
+        if self._side_off_colors is None:
+            return
+        for value, button in self._side_buttons.items():
+            panelkit.apply_toggle_button_state(button, value == self._side, self._side_off_colors)
+
     def _market_lines(self, busy: bool) -> List[str]:
         if not lookups_enabled():
             return self._lookups_off_lines()
@@ -507,16 +569,21 @@ class TradePanelController:
         if self._sell_error:
             return [self._sell_error]
         if self._sell and self._sell_for:
-            return self._sell_result_lines()
+            return self._price_result_lines()
+        buying = self._side == trade_prices.BUY
         target = self._search_target()
         lines = [self._ship_line()]
         if target is None:
-            lines += ["Type a commodity above (suggestions appear as you type),",
-                      "or load cargo and it is searched for you."]
+            lines += (["Type the commodity you want to buy above", "(suggestions appear as you type)."] if buying else
+                      ["Type a commodity above (suggestions appear as you type),",
+                       "or load cargo and it is searched for you."])
         else:
             name, tonnes, _known = target
-            lines.append(f"Will search: {_clip(name)} ({tonnes:,} t)")
-        lines += [f"Near me: best sale within {self._near_radius()} ly.", "Galaxy: best sale anywhere."]
+            lines.append(f"Will search: {_clip(name)} ({tonnes:,} t{', your free hold space' if buying else ''})")
+        if buying:
+            lines += [f"Near me: cheapest place to buy within {self._near_radius()} ly.", "Galaxy: cheapest place to buy anywhere."]
+        else:
+            lines += [f"Near me: best sale within {self._near_radius()} ly.", "Galaxy: best sale anywhere."]
         return lines
 
     def _carried(self) -> Dict[str, int]:
@@ -534,10 +601,17 @@ class TradePanelController:
         return names
 
     def _search_target(self) -> Optional[tuple]:
-        """(commodity, tonnes to value the sale for, recognised) from the search box, else your largest
-        load. Tonnes is what you carry of it, or a full hold when you carry none."""
+        """(commodity, tonnes to value the trade for, recognised). Selling: what is typed, else your largest
+        load; the tonnes are what you carry of it, or a full hold if you carry none. Buying: only what is
+        typed; the tonnes are your free hold space (a full hold's worth if the hold is already full)."""
         typed = self._commodity_entry.get() if self._commodity_entry is not None else ""
         carried = self._carried()
+        if self._side == trade_prices.BUY:
+            if not typed:
+                return None
+            name = trade_commodities.resolve(typed)
+            free = max(0, self._capacity - sum(self._cargo.values())) if self._capacity else 0
+            return name or typed, free or self._capacity or 100, name is not None
         if typed:
             name = trade_commodities.resolve(typed)
             shown = name or typed
@@ -550,9 +624,10 @@ class TradePanelController:
     def _near_radius(self) -> int:
         return _cfg_int(_CFG_NEAR_RADIUS, _DEFAULT_NEAR_RADIUS_LY, 1, 100_000)
 
-    def _sell_result_lines(self) -> List[str]:
-        commodity, tonnes, pad = self._sell_for  # type: ignore[misc]
-        lines = [f"Selling {tonnes:,} t {_clip(commodity)} ({trade_ship.label(pad)}):"]
+    def _price_result_lines(self) -> List[str]:
+        commodity, tonnes, pad, side = self._sell_for  # type: ignore[misc]
+        buying = side == trade_prices.BUY
+        lines = [f"{'Buying' if buying else 'Selling'} {tonnes:,} t {_clip(commodity)} ({trade_ship.label(pad)}):"]
         stations_by_scope: Dict[str, List[trade_prices.Offer]] = {}
         carriers_by_scope: Dict[str, List[trade_prices.Offer]] = {}
         for scope, title in (("near", f"Near me (within {self._near_radius()} ly)"), ("galaxy", "Anywhere in the galaxy")):
@@ -562,30 +637,42 @@ class TradePanelController:
             stations_by_scope[scope], carriers_by_scope[scope] = stations, carriers
             lines.append(title + ":")
             if not stations:
-                lines.append("    no station wants it right now" + (" that you can dock at" if pad else ""))
+                lines.append(f"    no station {'sells' if buying else 'wants'} it right now"
+                             + (" that you can dock at" if pad else ""))
             for offer in stations[:_SELL_SHOWN]:
                 lines += self._offer_lines(offer, tonnes)
             if carriers:
                 lines.append("  Fleet carriers (they can move):")
                 for offer in carriers[:_CARRIERS_SHOWN]:
                     lines += self._offer_lines(offer, tonnes, indent="  ")
-        verdict = trade_prices.verdict(stations_by_scope.get("near", []), stations_by_scope.get("galaxy", []))
+        verdict = trade_prices.verdict(stations_by_scope.get("near", []), stations_by_scope.get("galaxy", []), side)
         if verdict:
             lines.append(verdict)
-        best_station = sorted((o for v in stations_by_scope.values() for o in v), key=lambda o: -o.revenue)
-        best_carrier = sorted((o for v in carriers_by_scope.values() for o in v), key=lambda o: -o.revenue)
-        note = trade_prices.carrier_note(best_station, best_carrier)
+        rank = (lambda o: o.price) if buying else (lambda o: -o.revenue)
+        best_station = sorted((o for v in stations_by_scope.values() for o in v), key=rank)
+        best_carrier = sorted((o for v in carriers_by_scope.values() for o in v), key=rank)
+        note = trade_prices.carrier_note(best_station, best_carrier, side)
         if note:
             lines.append(note)
         return lines
 
     @staticmethod
     def _offer_lines(offer: trade_prices.Offer, tonnes: int, indent: str = "") -> List[str]:
-        partial = f", only {offer.sellable_t:,} t wanted" if offer.sellable_t < tonnes else ""
+        """Two lines per offer: the station, then price, total, distance and what kind of place it is (orbital
+        or on the ground, its type, and how far from the star)."""
+        short = (f", only {offer.sellable_t:,} t in stock" if offer.side == trade_prices.BUY
+                 else f", only {offer.sellable_t:,} t wanted") if offer.sellable_t < tonnes else ""
         return [f"{indent}  {_clip(offer.station)} ({_clip(offer.system)})",
-                f"{indent}    {offer.price:,} cr/t = {offer.revenue:,} cr, {offer.distance_ly:.1f} ly{partial}"]
+                f"{indent}    {offer.price:,} cr/t = {offer.revenue:,} cr, {offer.distance_ly:.1f} ly, "
+                f"{_clip(trade_prices.describe_place(offer), 40)}{short}"]
 
     # --- actions ------------------------------------------------------------------------
+
+    def _clear_stock(self) -> None:
+        """Forget the unsold stock (for cargo sold some other way, such as by the carrier's own orders)."""
+        self._stock.clear(self._cmdr)
+        self._save_stock(force=True)
+        self._refresh()
 
     def _reset_ledger(self) -> None:
         self._ledger = ledger_mod.new_ledger("", _current_logfile())
@@ -624,12 +711,14 @@ class TradePanelController:
         self._route_lines, self._next_system = [], None
         self._start_job("routes", lambda cancel: spansh_routes.search_routes(query, cancel))
 
-    def _find_sell_prices(self, scope: str) -> None:
+    def _find_prices(self, scope: str) -> None:
         if not self._system or (self._job is not None and not self._job.done):
             return
         target = self._search_target()
+        buying = self._side == trade_prices.BUY
         if target is None:
-            self._sell_error = "Type a commodity to search for, or load some cargo."
+            self._sell_error = ("Type the commodity you want to buy." if buying
+                                else "Type a commodity to search for, or load some cargo.")
             self._refresh()
             return
         display, tonnes, _known = target
@@ -637,15 +726,17 @@ class TradePanelController:
         radius = float(self._near_radius()) if scope == "near" else None
         carriers = config.get_bool(_CFG_CARRIERS, default=True)
         pad = self._ship_pad()
+        side = self._side
         fetch = _SELL_FETCH_PAD_FILTERED if pad else _SELL_FETCH
 
         def work(_cancel: threading.Event) -> Any:
-            found = spansh_prices.search_best_price_stations(system, display, "Sell", radius, max_results=fetch)
-            ranked = trade_prices.rank_offers(found, tonnes, include_carriers=carriers, ship_pad=pad)
-            return scope, (display, tonnes, pad), ranked, bool(found)
+            found = spansh_prices.search_best_price_stations(
+                system, display, "Buy" if side == trade_prices.BUY else "Sell", radius, max_results=fetch)
+            ranked = trade_prices.rank_offers(found, tonnes, include_carriers=carriers, ship_pad=pad, side=side)
+            return scope, (display, tonnes, pad, side), ranked, bool(found)
 
         self._sell_error = None
-        if self._sell_for != (display, tonnes, pad):
+        if self._sell_for != (display, tonnes, pad, side):
             self._sell = {}  # a different search: the other scope's answer no longer applies
         self._start_job("sell", work)
 
@@ -701,7 +792,8 @@ class TradePanelController:
         self._sell_for = key
         self._sell[scope] = offers
         if not any_found and not offers and not self._sell.get("galaxy" if scope == "near" else "near"):
-            self._sell_error = (f"Spansh found no market buying {_clip(key[0])}. "
+            verb = "selling" if key[3] == trade_prices.BUY else "buying"
+            self._sell_error = (f"Spansh found no market {verb} {_clip(key[0])}. "
                                 "Check the spelling, or pick a name from the suggestions.")
 
     # --- settings -----------------------------------------------------------------------------

@@ -120,6 +120,65 @@ class OfferRankingTests(unittest.TestCase):
         self.assertIn("nearby", prices.verdict(galaxy, near))
 
 
+def place(name: str, price: int, quantity: int, kind: str = "Coriolis Starport", ly: float = 10.0,
+          planetary: bool = False, ls: float = 500.0) -> prices_client.StationPrice:
+    return prices_client.StationPrice(
+        station=name, system="Sys", station_type=kind, distance_ly=ly, distance_to_arrival_ls=ls,
+        is_planetary=planetary, price=price, quantity=quantity, small_pads=4, medium_pads=4, large_pads=2)
+
+
+class BuySideTests(unittest.TestCase):
+    def test_buying_ranks_full_supply_first_then_cheapest(self) -> None:
+        results = [place("CheapButScarce", 1_000, 40), place("DearButPlenty", 1_200, 5_000),
+                   place("Cheapest", 1_100, 5_000)]
+        offers = prices.rank_offers(results, 200, side=prices.BUY)
+        self.assertEqual([o.station for o in offers], ["Cheapest", "DearButPlenty", "CheapButScarce"])
+        self.assertEqual((offers[2].sellable_t, offers[2].revenue), (40, 40_000))   # what you would pay for what is there
+        self.assertEqual(offers[0].revenue, 1_100 * 200)
+
+    def test_selling_order_is_unchanged_by_the_buy_side_existing(self) -> None:
+        results = [place("A", 95_000, 40), place("B", 90_000, 5_000)]
+        self.assertEqual([o.station for o in prices.rank_offers(results, 200)], ["B", "A"])
+
+    def test_buying_drops_stations_with_no_stock_and_unsuitable_pads(self) -> None:
+        results = [place("Empty", 1_000, 0), place("Outpost", 900, 500, "Outpost")]
+        results[1].large_pads = 0
+        self.assertEqual(prices.rank_offers(results, 100, ship_pad="large", side=prices.BUY), [])
+
+    def test_buy_verdict_names_the_cheaper_place_and_the_saving(self) -> None:
+        near = prices.rank_offers([place("Near", 1_000, 500, ly=20)], 100, side=prices.BUY)
+        galaxy = prices.rank_offers([place("Far", 800, 500, ly=120)], 100, side=prices.BUY)
+        text = prices.verdict(near, galaxy, prices.BUY)
+        self.assertIn("Far", text)
+        self.assertIn("200 cr/t cheaper (-20%)", text)
+        self.assertIn("20,000 cr saved on 100 t", text)
+        self.assertIn("nearby", prices.verdict(galaxy, near, prices.BUY))
+
+    def test_buy_carrier_note_only_when_a_carrier_is_cheaper(self) -> None:
+        stations, carriers = prices.split_carriers(prices.rank_offers(
+            [place("FC", 700, 500, "Drake-Class Carrier"), place("Port", 1_000, 500)], 100, side=prices.BUY))
+        self.assertIn("300 cr/t cheaper", prices.carrier_note(stations, carriers, prices.BUY))
+        dear, _ = prices.split_carriers(prices.rank_offers([place("Port", 500, 500)], 100, side=prices.BUY))
+        self.assertIsNone(prices.carrier_note(dear, carriers, prices.BUY))
+
+
+class WhereTests(unittest.TestCase):
+    def _offer(self, **kwargs) -> prices.Offer:
+        return prices.rank_offers([place("S", 1_000, 100, **kwargs)], 10)[0]
+
+    def test_orbital_and_ground_are_told_apart(self) -> None:
+        self.assertEqual(prices.describe_place(self._offer()), "orbital Coriolis Starport, 500 ls")
+        ground = self._offer(kind="Planetary Outpost", planetary=True, ls=80.0)
+        self.assertEqual(prices.describe_place(ground), "ground Planetary Outpost, 80 ls")
+
+    def test_a_carrier_is_just_a_carrier(self) -> None:
+        self.assertEqual(prices.describe_place(self._offer(kind="Drake-Class Carrier")), "carrier")
+
+    def test_the_side_is_recorded_on_the_offer(self) -> None:
+        self.assertEqual(prices.rank_offers([place("S", 10, 5)], 1, side=prices.BUY)[0].side, prices.BUY)
+        self.assertEqual(prices.rank_offers([place("S", 10, 5)], 1)[0].side, prices.SELL)
+
+
 def _line(**fields) -> str:
     return json.dumps(fields, separators=(",", ":")) + "\n"
 

@@ -241,6 +241,16 @@ class SessionCredits:
         if self._label is not None:
             self._label["text"] = self.text()
 
+    def set_visible(self, visible: bool) -> None:
+        """Show or hide the line (the mode in view decides: see ui.py's _MODES_WITHOUT_CREDITS). The
+        session record keeps being updated either way, so it is right when the line comes back."""
+        if self._label is None:
+            return
+        if visible:
+            self._label.grid()
+        else:
+            self._label.grid_remove()
+
 
 controller = SessionCredits()
 
@@ -261,3 +271,7 @@ def handle_event(
 
 def build(parent: tk.Frame, row: int) -> tk.Label:
     return controller.build(parent, row)
+
+
+def set_visible(visible: bool) -> None:
+    controller.set_visible(visible)

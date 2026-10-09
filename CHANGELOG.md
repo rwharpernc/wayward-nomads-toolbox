@@ -21,13 +21,21 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     are (`trade_spansh_client.py`: submit a job, poll every 5 s for up to 4 minutes). Uses your cargo size,
     credits and jump range; asks for large-pad stations when your ship needs one. **Cancel**, and **Copy next
     system**.
-  - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`) and **Near me** / **Galaxy** searches.
-    Offers are ranked by what *your load* would earn (`trade_prices.py`: price x min(tonnes, demand)); stations
-    your ship can't dock at are left out; fleet carriers get their own section; a verdict line says whether the
-    galaxy-wide best beats the best nearby and by how much. **Price…** opens Mining's price finder.
+  - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`), a **Sell** / **Buy** choice and
+    **Near me** / **Galaxy** searches. Selling ranks by what *your load* would earn (`trade_prices.py`: price x
+    min(tonnes, demand)); buying uses your free hold space and puts stations that can supply it all first,
+    cheapest first. Every result says whether the station is **orbital or on the ground**, its type and its
+    distance from the star. Stations your ship can't dock at are left out; fleet carriers get their own section;
+    a verdict line says whether the galaxy-wide best beats the best nearby and by how much. **Price finder**
+    opens Mining's price finder. All the page's buttons now carry full labels.
   - The Spansh lookups are **off until enabled** (Settings → WNTB → Trade) and only run when you press a button.
 - **Ship and landing pads** (`trade_ship.py`): the ship from the journal's `Loadout` gives the pad size it needs
   (pad classes from Coriolis ship data; EDMC's own ship-name table is used when available). Override in Settings.
+- **Stock bought, not yet sold** (`trade_stock.py`, `trade_stock.json`): what you have spent on cargo that is still
+  unsold, at average cost, with how much is aboard and how much is elsewhere. One book for both ways of trading
+  (a station-to-station run, or loading a carrier for a bulk sale): buys add, sells remove, carrier transfers
+  change nothing. It follows the cargo across logins and catches up from your recent journals at start. **Clear
+  stock** forgets it.
 - **Per-commander carrier choice** (Settings → Trade): Auto, None, Fleet, Squadron or Both, for each commander
   WNTB has seen, because not every commander has a carrier and some have both.
 - **Commodity list** (`trade_commodities.py`, generated `trade_commodities_data.py` from FDevIDs): 173 sellable
@@ -37,6 +45,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   development guide, the Linux checklist (section 6d) and the third-party notices.
 
 ### Fixed
+- **"The newest journal files" were chosen by name, which is wrong for this folder.** The game has used two
+  file-name styles that don't sort chronologically together, so the carrier backfill could pick the wrong 40 files.
+  Both backfills now order by modified time, and their line pre-filter tolerates spacing differences.
 - **Mining's price finder** now uses the game's exact commodity name. Spansh's market search is case-sensitive
   ("Liquid oxygen" finds markets, "Liquid Oxygen" finds none), so typing a name in the wrong case silently
   found nothing. The price search also accepts "no distance limit" (used by Trade's Galaxy search).
@@ -57,6 +68,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **The page arrows are much larger** in Mining, Missions and Trade: one shared `panelkit.nav_arrow`, a raised,
   bordered, padded orange button with a big bold ◀ / ▶, because the small triangles were too hard to see.
 - The mode buttons at the top of the panel are left-justified instead of centered.
+- **The "Credits this session" line** now shows on Powerplay, BGS, Mining, Missions and Field Ops, and is hidden on
+  Exploration and Trade (Trade's net profit already counts running costs). The game-mode line is unchanged.
 - Settings now has nine top-level tabs (Trade sits between Mining and BGS).
 
 ### Checked on Windows only
