@@ -178,8 +178,8 @@ stays tied up until the cargo is sold, whenever that is. So the stock book follo
   but not what was paid, so it is not a stock event. Stock comes out only when sold.
 
 Because there is one list, nothing needs reconciling between "route" and "carrier" tracking, and no purchase
-is counted twice. Where the cargo is *now* is derived, not stored: the panel shows `aboard` = min(held, what
-the ship's hold contains) and `elsewhere` = the rest (usually the carrier).
+is counted twice. Where the cargo is *now* is derived, not stored: the panel shows "in your hold" = min(held, what
+the ship's hold contains) and "not in your hold" = the rest (usually the carrier; a note under the stock rows says so).
 
 Rules: average cost per commodity; a sale never takes stock below zero; a sale of cargo the book never saw is
 ignored. The ledger's profit still uses the game's own `AvgPricePaid`, so the two can differ slightly when
