@@ -530,7 +530,8 @@ for as little as it can. These are the measures that are in the code today.
 - Every request has a timeout (8 to 60 seconds), so a slow service never leaves a request hanging.
 - Trade's route search is the one lookup that polls: Spansh queues a job and WNTB asks for the result every
   5 seconds, for at most 4 minutes (about 48 requests), then gives up. It stops at once on **Cancel**. A
-  Near me or Galaxy price search is one request per press.
+  Near me or Galaxy price search is two requests per press (stations, then fleet carriers; one if carriers are
+  hidden), because carriers are priced so differently that in one list they can fill the page.
 
 **Fewer calls by design.**
 - The Rare Goods list is bundled, with EDSM coordinates and Inara and Spansh ids looked up once, so
@@ -707,6 +708,9 @@ Full detail is in the [Trade spec](TRADE_TECH_SPEC.md); the decisions worth know
 - **A transfer goes to the carrier you are docked at.** `CargoTransfer` doesn't name one; `Docked`/`Location`
   carry the station's `MarketID`, which equals the carrier's `CarrierID`. Docked at someone else's carrier,
   nothing is counted; with two carriers and no dock information, the transfer is skipped rather than guessed.
+- **The page is blocks, not text.** Each page is a list of typed blocks (`trade_blocks.py`) drawn by `BlockView`
+  (`trade_view.py`), so headings, label/value rows and number columns are real layout instead of text padded with spaces.
+  The builders are pure and testable, and an unchanged page isn't redrawn. See the Trade spec for the sizing rules.
 - **The page arrows** are the shared `panelkit.nav_arrow` (a raised, bordered, padded label with a large bold
   glyph), also used by Mining and Missions, because the bare triangles they replaced were too small to see in
   EDMC's small window.
@@ -798,7 +802,10 @@ journal backfill). `tests/test_own_data_files.py` reads the sources and fails if
 `tests/test_import_smoke.py` additionally imports every plugin module (including `load.py`) with
 EDMC's modules stubbed, in a subprocess, to catch import-time breakage that single-module tests miss.
 
-Not covered by automation: anything that needs a live EDMC or a Tk window (panels, dialogs, overlay
+Trade mode's drawn page is the one Tk exception: `tests/trade_view_smoke.py` draws it in a real window with EDMC
+stubbed, in a subprocess (skipped when there is no display), and checks widths, redraws and column alignment.
+
+Not covered by automation: anything else that needs a live EDMC or a Tk window (panels, dialogs, overlay
 rendering). Those are checked by hand in a real EDMC install, and overlay rendering changes should
 be verified against ModernOverlay's own payload log.
 
@@ -831,6 +838,13 @@ Things that cost time once and are recorded so they don't again.
 - **A `tk.Label` can't take a tuple `padx`** (only `pack`/`grid` can); indent with spaces instead.
 - **Case in commander and system names.** Store the original, compare with `casefold()`.
 - **Never assume order between Status.json and the journal.** They are independent callbacks.
+- **A label that spans columns can stretch them.** In a Tk grid a widget spanning columns 1 to 3 that is wider than
+  those columns' combined width widens them, so a title column sized for the narrower layout overflows the window. Work
+  out the width each column really needs (the wider of the table's numbers and any spanning value) before giving the
+  title column the remainder; `tests/trade_view_smoke.py` catches it.
+- **A price-sorted list can be all fleet carriers.** Carriers sell very cheaply and pay very well, so a
+  galaxy-wide search sorted by price returned only carriers and the panel said no station had it. Ask for stations
+  and carriers separately with the `type` filter (`trade_prices.STATION_TYPES` / `CARRIER_TYPES`).
 - **Spansh market names are exact and case-sensitive.** "Liquid oxygen" works, "Liquid Oxygen" returns zero
   results with no error, and the journal's own plurals can differ from Spansh's. A search that silently finds
   nothing is the symptom; resolve every name through `trade_commodities.resolve`.

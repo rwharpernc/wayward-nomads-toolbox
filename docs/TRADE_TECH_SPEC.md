@@ -45,6 +45,8 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 
 | Module | Kind | Owns |
 |---|---|---|
+| `trade_blocks.py` | pure | The page model: `Heading`, `Pair`, `Columns`, `Item`, `Note`, and `to_text` |
+| `trade_view.py` | UI | `BlockView`: draws a list of blocks with real layout |
 | `trade_panel.py` | UI + controller | The feature-module contract entry point: panel chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
 | `trade_pages.py` | pure | Page names and order |
 | `trade_ledger.py` | pure + file | The session ledger and `trade_ledger.json` |
@@ -79,9 +81,33 @@ buttons, which EDMC's theme doesn't colour reliably. Every button carries its fu
 was an abbreviation of the finder's name). Selling with an empty box = the commodity you carry most of; buying
 needs a typed commodity.
 
-Sizing rule (TECHNICAL.md section 5): the body is one `panelkit.wrap_label`; every station, system and
-commodity name is clipped (`_clip`, 34 characters); the buttons are fixed small widgets; the suggestion list
-is a separate borderless window of at most eight rows. Nothing can widen EDMC's main window.
+**How a page is drawn.** Each page builds a list of typed blocks (`trade_blocks.py`) rather than lines of text:
+`Heading` (a section title; accent-coloured, with a rule above), `Pair` (label left, value right), `Columns` and `Item`
+(a table row: a title, up to three right-aligned number cells, and a detail line beneath, with an optional warning in
+the accent colour) and `Note` (a wrapped paragraph). The builders (`ledger.summary_blocks`, `trade_stock.stock_blocks`,
+`trade_carrier.cargo_blocks`, and the panel's `_hold_blocks`, `_routes_blocks`, `_market_blocks`,
+`_price_result_blocks`) stay free of widgets and can be tested; `to_text` renders any list as plain lines, and the
+older `*_lines` functions are thin wrappers over it. `BlockView.show(blocks)` draws them and skips the redraw when
+the blocks (frozen dataclasses, so equal by value) and the width haven't changed.
+
+**Layout.** The controls come first, then the page: nav arrows, then (Market only) the Commodity box and the
+Sell / Buy toggle, then the page's buttons, then the `BlockView`. A page is one grid of four columns: column 0 is
+flexible (titles and labels) and columns 1 to 3 hold numbers.
+
+**Sizing rule** (TECHNICAL.md section 5). Nothing can widen EDMC's main window. Every label has an explicit
+`wraplength` derived from the width actually available, never from its text. The number columns are measured with the
+real font (`font.measure`, plus the label's own padding) so this holds at any screen scaling. A label/value row puts its
+value in the same columns as a table's numbers, so those columns are sized for the wider of the two (`value_need`) and
+the title column gets what is left; getting this wrong made a stress page ask for 347 px of 330, which
+`tests/trade_view_smoke.py` now checks. When the available width changes the page is redrawn. Names are only
+bounded at 64 characters (`_NAME_MAX`), since the view wraps them. The suggestion list is a separate borderless
+window of at most eight rows.
+
+**Theming.** EDMC's theme only auto-colours a widget that had no colour when it was first registered, and leaves a
+Frame's background alone (see `missions_ui.py`). So the accent colour and fonts are set at creation, the view takes its
+parent's background, the rules are coloured after the theme pass (`panelkit.separator_colour`), and the widgets are
+themed with `panelkit.apply_theme_deep`. The shared wrapping-label registry (`panelkit.wrap_label`) is deliberately not
+used here: it never forgets a label, and these are rebuilt.
 
 ## 4. Data sources
 
@@ -285,11 +311,13 @@ unfiltered search returned fleet carrier markets years old.
 first (each marked "only N t in stock"). Either way, stations with nothing to buy or sell, or with no suitable pad,
 are dropped. Spansh is asked with transaction `"Sell"` or `"Buy"` (`search_best_price_stations`), whose `price` and
 `quantity` mean sell price and demand, or buy price and supply.
-`split_carriers` separates fleet and squadron carriers; they are listed in their own section ("they can
-move") and excluded from the verdict. `verdict(near, galaxy, side)` says whether the galaxy-wide best beats the
+`split_carriers` separates fleet and squadron carriers; they are listed in their own section, one for every
+three stations ("they can move") and excluded from the verdict. `verdict(near, galaxy, side)` says whether the galaxy-wide best beats the
 best nearby: selling, by how many credits and what percentage more; buying, by how many cr/t cheaper, the saving
 on the tonnes involved, and how many ly further. `carrier_note` says when a carrier would pay more (selling) or
-charge less (buying) than the best station. Carriers can be hidden entirely in Settings.
+charge less (buying) than the best station. Carriers can be hidden entirely in Settings, and so can ground facilities
+(`wntb_trade_include_ground`): the station search then asks Spansh only for `trade_prices.ORBITAL_TYPES`, and
+`rank_offers(include_ground=False)` also drops any planetary result. Turning off both leaves orbital stations only.
 
 **Where each place is.** Every offer carries Spansh's `is_planetary`, its station type and its distance from the
 arrival star, shown as `orbital Coriolis Starport, 1,200 ls` or `ground Planetary Outpost, 80 ls`
@@ -307,7 +335,8 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_large_pad` | Always require a large pad on routes | off |
 | `wntb_trade_jump_range_override` | Jump range in ly ("" = use the ship's) | "" |
 | `wntb_trade_near_radius_ly` | "Near me" radius | 100 |
-| `wntb_trade_include_carriers` | Show carriers in price results | on |
+| `wntb_trade_include_carriers` | Search fleet carriers in price results | on |
+| `wntb_trade_include_ground` | Search ground facilities (planetary ports and outposts, settlements) | on |
 | `wntb_trade_ship_pad_override` | small / medium / large ("" = from the ship) | "" |
 | `wntb_trade_current_page` | Last page shown | Session |
 | `wntb_trade_market_side` | Market search side: sell or buy | sell |
@@ -329,7 +358,14 @@ Follows TECHNICAL.md section 11 ("Keeping API traffic low").
   from the worker.
 - **Route polling:** one request every 5 s, at most 240 s, so at most about 48 polls plus the submit. A failure
   isn't retried. Request timeout 20 s.
-- **Price search:** one request per button press (Near me and Galaxy are two presses), 20 or 40 stations.
+- **Price search:** a press of Near me or Galaxy makes **two requests**, one for stations and one for fleet
+  carriers (one if carriers are hidden in Settings), and the two buttons are separate presses. Stations: 20, or 40
+  when filtering by pad. Carriers: a third as many (at least 5). Asking separately matters: carriers are priced very
+  differently (a galaxy-wide *buy* search sorted by price returned 40 carriers at about 325 cr/t and not one real
+  station at about 5,000 cr/t), so in one list they filled the page and the panel reported "no station sells it".
+  The `type` filter (`trade_prices.STATION_TYPES`, `CARRIER_TYPES`) was checked live on 2026-10-09; a station
+  type missing from `STATION_TYPES` would not be returned. The weighting is 75% stations to 25% carriers, both in
+  what is fetched and what is shown (three stations to one carrier per search).
 - **Identification:** every request sends `http_identity.user_agent("trade-routes")` (routes) or the mining
   finder's agent (prices).
 - **Failure is quiet:** a failed or cancelled lookup shows a short message in the panel and logs the reason;
@@ -340,10 +376,14 @@ Follows TECHNICAL.md section 11 ("Keeping API traffic low").
 `python -m unittest discover -s tests`. Trade's suites are `tests/test_trade.py` (ledger, market parsing,
 Spansh client parsing) and `tests/test_trade_search.py` (commodity names, ship pads, offer ranking, carrier
 space, the tracker's attribution rules, the per-commander choice and the journal backfill) and
-`tests/test_trade_stock.py` (average-cost stock, apply-once rules, the backfill, and file ordering). They run without
+`tests/test_trade_stock.py` (average-cost stock, apply-once rules, the backfill, and file ordering) and
+`tests/test_trade_blocks.py` (the page model's plain-text form, and the ground-facilities switch). The drawn page is
+checked by `tests/trade_view_smoke.py` (run by `test_trade_view_smoke.py` in a subprocess, skipped without a display):
+no label asks for more than the width available, unchanged blocks aren't redrawn, and a table's number columns end
+at the same place. They run without
 EDMC or a display. The Settings tab is built by `tests/test_prefs_smoke.py` (nine top-level tabs now).
 
-Not covered by automation: the panel and the suggestion popup (Tk). During development the panel was driven in
+Not covered by automation: the panel's controls and the suggestion popup (Tk). During development the panel was driven in
 a real Tk window with EDMC and Spansh stubbed; that is not part of the suite.
 
 ## 13. Verified, assumed and known gaps

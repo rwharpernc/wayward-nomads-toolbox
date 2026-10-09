@@ -30,7 +30,7 @@ from __future__ import annotations
 import json
 import urllib.request
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Sequence
 
 from . import http_identity, trade_commodities
 
@@ -202,7 +202,8 @@ since moved or stopped trading."""
 
 def search_best_price_stations(reference_system: str, commodity: str, transaction: str,
                                max_distance_ly: Optional[float], max_results: int = 10,
-                               market_days_old: int = _MARKET_DAYS_OLD_DEFAULT) -> list[StationPrice]:
+                               market_days_old: int = _MARKET_DAYS_OLD_DEFAULT,
+                               station_types: Optional[Sequence[str]] = None) -> list[StationPrice]:
     """Queries Spansh for the best-price stations trading `commodity`
     within `max_distance_ly` of `reference_system` (None = no distance limit,
     i.e. the whole galaxy, still sorted by price; Spansh accepts that,
@@ -230,6 +231,11 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
     }
     if max_distance_ly is not None:
         filters["distance"] = {"min": "0", "max": str(max_distance_ly)}
+    if station_types:
+        # Only these kinds of station (Spansh's own names). Used to ask for stations and fleet carriers
+        # separately: carriers are priced very differently, so in one price-sorted list they can crowd
+        # every real station out of the first page of results (checked live, 2026-10-09).
+        filters["type"] = {"value": list(station_types)}
     request_body = {
         "filters": filters,
         "sort": [sort_object],

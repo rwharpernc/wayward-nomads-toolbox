@@ -46,6 +46,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   development guide, the Linux checklist (section 6d) and the third-party notices.
 
 ### Fixed
+- **A galaxy-wide Buy search could say "no station sells it" when many did.** Fleet carriers sell very cheaply, so
+  in one price-sorted list they filled all 40 results and left no real station. Stations and carriers are now
+  asked for separately (Spansh's `type` filter, two requests per search, or one if carriers are hidden), weighted
+  75% stations to 25% carriers, and the "no station" message says how many were left out for pad size.
 - **"The newest journal files" were chosen by name, which is wrong for this folder.** The game has used two
   file-name styles that don't sort chronologically together, so the carrier backfill could pick the wrong 40 files.
   Both backfills now order by modified time, and their line pre-filter tolerates spacing differences.
@@ -69,6 +73,14 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **The page arrows are much larger** in Mining, Missions and Trade: one shared `panelkit.nav_arrow`, a raised,
   bordered, padded orange button with a big bold ◀ / ▶, because the small triangles were too hard to see.
 - The mode buttons at the top of the panel are left-justified instead of centered.
+- **Trade's pages are laid out properly.** They were one block of text lines padded with spaces. Each page is now
+  drawn in sections (orange headings with rules between them), label/value rows with the value on the right, and
+  tables whose numbers line up in columns, with the station's system, type and distance on a smaller line beneath.
+  Long names wrap instead of being cut off, and the page's controls (Commodity box, Sell / Buy, buttons) sit above the
+  results instead of below them. New: `trade_blocks.py` (the page model), `trade_view.py` (the drawing),
+  `tests/test_trade_blocks.py` and `tests/trade_view_smoke.py`.
+- **Ground facilities can be left out of price searches** (Settings → Trade), like fleet carriers, so you can search
+  orbital stations only.
 - **The "Credits this session" line** now shows on Powerplay, BGS, Mining, Missions and Field Ops, and is hidden on
   Exploration and Trade (Trade's net profit already counts running costs). The game-mode line is unchanged.
 - Settings now has nine top-level tabs (Trade sits between Mining and BGS).

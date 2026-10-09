@@ -30,6 +30,21 @@ from .mining_spansh_client import StationPrice
 SELL = "sell"
 BUY = "buy"
 
+# Spansh station types, for the `type` filter (checked live, 2026-10-09). A carrier-only search returns
+# only these; a search for STATION_TYPES returns no carriers. The station list is the set Spansh returned
+# across several searches; a kind not listed here would be missed, which is the price of asking for
+# stations and carriers separately (see mining_spansh_client.search_best_price_stations).
+CARRIER_TYPES = ["Drake-Class Carrier"]
+ORBITAL_TYPES = ["Coriolis Starport", "Orbis Starport", "Ocellus Starport", "Dodec Starport", "Asteroid base",
+                 "Outpost", "Mega ship"]
+GROUND_TYPES = ["Planetary Outpost", "Planetary Port", "Settlement", "Planetary Construction Depot"]
+STATION_TYPES = ORBITAL_TYPES + GROUND_TYPES
+
+
+def station_types(include_ground: bool = True) -> List[str]:
+    """The station types to ask Spansh for: orbital ones always, ground facilities when wanted."""
+    return list(STATION_TYPES if include_ground else ORBITAL_TYPES)
+
 
 @dataclass
 class Offer:
@@ -61,14 +76,17 @@ def describe_place(offer: Offer) -> str:
 
 
 def rank_offers(results: List[StationPrice], tonnes: int, include_carriers: bool = True,
-                ship_pad: Optional[str] = None, side: str = SELL) -> List[Offer]:
+                ship_pad: Optional[str] = None, side: str = SELL, include_ground: bool = True) -> List[Offer]:
     """Value each station for `tonnes` and rank them. Selling: best total sale first. Buying: stations that
     can supply all of it first, cheapest first, then partial ones, cheapest first. Ties: nearer first.
-    Stations with none to buy/sell, or with no pad your ship fits, are dropped."""
+    Stations with none to buy/sell, or with no pad your ship fits, are dropped, and so are ground facilities
+    when `include_ground` is off (fleet carriers are never ground facilities)."""
     offers: List[Offer] = []
     for item in results:
         carrier = is_carrier(item.station_type)
         if carrier and not include_carriers:
+            continue
+        if not carrier and not include_ground and item.is_planetary:
             continue
         if not carrier and not trade_ship.fits(ship_pad, item.small_pads, item.medium_pads, item.large_pads):
             continue
@@ -86,6 +104,20 @@ def rank_offers(results: List[StationPrice], tonnes: int, include_carriers: bool
     else:
         offers.sort(key=lambda o: (-o.revenue, o.distance_ly))
     return offers
+
+
+def merge_results(*lists: List[StationPrice]) -> List[StationPrice]:
+    """Combine result lists, keeping the first of any station that appears twice (same name and system). The station
+    and carrier searches shouldn't overlap, but a service that ignored a filter must not show a place twice."""
+    seen = set()
+    merged: List[StationPrice] = []
+    for results in lists:
+        for item in results:
+            key = (item.station.casefold(), item.system.casefold())
+            if key not in seen:
+                seen.add(key)
+                merged.append(item)
+    return merged
 
 
 def split_carriers(offers: List[Offer]) -> tuple[List[Offer], List[Offer]]:

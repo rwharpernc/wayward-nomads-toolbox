@@ -35,6 +35,8 @@ import re
 import time
 from typing import Any, Dict, Iterable, List, Optional
 
+from .trade_blocks import Block, Heading, Note, Pair, to_text
+
 try:
     from config import appname
 except ImportError:  # unit tests outside EDMC
@@ -255,24 +257,30 @@ def visible_types(mode: str, present: Iterable[str]) -> List[str]:
     return [t for t in TYPE_ORDER if t in seen]
 
 
-def cargo_lines(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) -> List[str]:
-    """Display lines for the Session page, one block per visible carrier. Empty when there is nothing to show."""
+def cargo_blocks(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) -> List[Block]:
+    """Session-page sections, one per visible carrier. Empty when there is nothing to show."""
     records = records or {}
-    lines: List[str] = []
+    blocks: List[Block] = []
     for ctype in visible_types(mode, records):
         record = records.get(ctype)
         label = TYPE_LABEL[ctype]
         who = (record or {}).get("name") or (record or {}).get("callsign")
-        lines.append(f"{label}: {who}" if who else label)
+        blocks.append(Heading(f"{label}: {who}" if who else label))
         capacity = (record or {}).get("capacity", 0)
         if not record or not capacity:
-            lines.append("  Open Carrier Management once to read its cargo space.")
+            blocks.append(Note("Open Carrier Management once to read its cargo space.", warn=True))
             continue
         used, reserved, free = record.get("cargo", 0), record.get("reserved", 0), record.get("free", 0)
-        lines.append(f"  Cargo: {used:,}/{capacity:,} t used, {free:,} t free")
+        blocks.append(Pair("Cargo used", f"{used:,} / {capacity:,} t"))
+        blocks.append(Pair("Free", f"{free:,} t", bold=True))
         if reserved:
-            lines.append(f"  {reserved:,} t reserved for trade orders")
-    return lines
+            blocks.append(Pair("Reserved for trade orders", f"{reserved:,} t"))
+    return blocks
+
+
+def cargo_lines(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) -> List[str]:
+    """`cargo_blocks` as plain lines (for tests and logs)."""
+    return to_text(cargo_blocks(records, mode))
 
 
 def newer(candidate: CarrierRecord, existing: Optional[CarrierRecord]) -> bool:

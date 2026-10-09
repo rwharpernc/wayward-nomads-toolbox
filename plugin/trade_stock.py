@@ -46,6 +46,7 @@ try:
 except ImportError:  # unit tests outside EDMC
     appname = "EDMarketConnector"
 
+from .trade_blocks import Block, Columns, Heading, Item, Note, Pair, to_text
 from .trade_carrier import journal_files, key_for
 from .trade_market import canonical_name
 
@@ -163,29 +164,37 @@ class StockBook:
             book["items"] = {}
 
 
-def stock_lines(holdings: List[Holding], in_hold: Dict[str, int],
-                name_of: Optional[Callable[[Holding], str]] = None) -> List[str]:
-    """Session-page lines. `in_hold` maps a commodity's canonical name to the tonnes in the ship's hold now,
-    so each line can say how much of it is still aboard and how much is elsewhere (a carrier, usually).
+def stock_blocks(holdings: List[Holding], in_hold: Dict[str, int],
+                 name_of: Optional[Callable[[Holding], str]] = None) -> List[Block]:
+    """Session-page section. `in_hold` maps a commodity's canonical name to the tonnes in the ship's hold now,
+    so each row can say how much of it is still aboard and how much is elsewhere (a carrier, usually).
     `name_of` can supply a nicer display name than the one the journal gave."""
     if not holdings:
         return []
     tonnes = sum(h.tonnes for h in holdings)
     cost = sum(h.cost for h in holdings)
-    lines = [f"Stock bought, not yet sold: {tonnes:,} t, {cost:,} cr"]
+    blocks: List[Block] = [Heading("Stock bought, not yet sold"),
+                           Pair("Total", f"{tonnes:,} t, {cost:,} cr", bold=True),
+                           Columns(("Held", "Avg cost"))]
     for holding in holdings[:SHOWN]:
         aboard = min(holding.tonnes, max(0, in_hold.get(holding.key, 0)))
         elsewhere = holding.tonnes - aboard
         where = []
         if aboard:
-            where.append(f"{aboard:,} aboard")
+            where.append(f"{aboard:,} t aboard")
         if elsewhere:
-            where.append(f"{elsewhere:,} elsewhere")
+            where.append(f"{elsewhere:,} t elsewhere")
         shown = name_of(holding) if name_of else holding.name
-        lines.append(f"  {shown}: {holding.tonnes:,} t @ {holding.average:,} avg ({', '.join(where)})")
+        blocks.append(Item(shown, (f"{holding.tonnes:,} t", f"{holding.average:,}"), detail=", ".join(where)))
     if len(holdings) > SHOWN:
-        lines.append(f"  +{len(holdings) - SHOWN} more")
-    return lines
+        blocks.append(Note(f"+{len(holdings) - SHOWN} more"))
+    return blocks
+
+
+def stock_lines(holdings: List[Holding], in_hold: Dict[str, int],
+                name_of: Optional[Callable[[Holding], str]] = None) -> List[str]:
+    """`stock_blocks` as plain lines (for tests and logs)."""
+    return to_text(stock_blocks(holdings, in_hold, name_of))
 
 
 # --- catching up from the journals ------------------------------------------------------------------
