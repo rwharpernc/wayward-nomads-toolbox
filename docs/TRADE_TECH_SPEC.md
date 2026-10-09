@@ -61,7 +61,8 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_commodities.py` | pure | Matching typed or journal commodity names to Spansh's names; type-ahead suggestions |
 | `trade_commodities_data.py` | generated data | The commodity table (from FDevIDs) |
 | `trade_prices.py` | pure | Valuing and ranking station offers for your load; carrier split; verdict lines |
-| `trade_spansh_client.py` | network | The route planner client (submit, poll, parse) |
+| `trade_spansh_client.py` | network | The route planner client (submit, poll, parse) and the profit-per-hour estimate |
+| `trade_roundtrip.py` | pure + network | The back-and-forth pair finder (one station search, then local pairing) |
 | `trade_commodity_entry.py` | UI | The type-ahead entry widget |
 
 Reused from elsewhere: `mining_spansh_client.search_best_price_stations` (the station price search, shared
@@ -329,6 +330,42 @@ Hops default to 3, arrival distance to 5,000 ls.
 four hops (station to station, system, ly, ls, best commodity and profit) and a "+N more" line, and remembers
 the first hop's destination system for **Copy next system**.
 
+### 8.1 Route filters and the time estimate
+
+`build_form` also sends `allow_planetary`, `allow_player_owned` and `permit` (0/1) and, when set, `max_price_age`.
+The last is **the oldest update time allowed, as Unix seconds** (now minus the hours in Settings), not an age; this is
+how Spansh's own page sends it (read from its app script, 2026-10-09, and accepted by a live request). Spansh's planner
+has no minimum supply or demand and no loop or round-trip option (its only `loop` belongs to the tourist router); each hop's
+`source_commodity.supply` and `destination_commodity.demand` are shown instead (`Cargo.supply`, `Cargo.demand`).
+
+`estimate_hop_seconds` / `estimate_profit_per_hour` give the "~N cr" shown on routes: 45 s per jump (hop distance over
+the jump range, rounded up), 30 s plus 0.03 s per ls of supercruise to the destination, and 120 s at the station. These are
+fixed allowances for comparing routes, not measurements.
+
+The **Hops** button cycles 2, 3, 4, 5 and writes the Settings value. `_finish_routes` marks a result a repeatable loop when
+the last hop ends at the first hop's start and every hop has cargo.
+
+### 8.2 Round trip (`trade_roundtrip.py`)
+
+Spansh's planner can't be asked for a pair that comes back, so the pair is found locally.
+
+1. `fetch_stations` posts to `https://spansh.co.uk/api/stations/search` with `distance` (radius = twice the jump range,
+   20 to 100 ly), `market_updated_at` (`now-<hours>h`, else `now-30d`), sorted nearest first, 100 per page, at most 3
+   pages. With no `market` filter each result still carries the station's **entire** `market` (`commodity`,
+   `buy_price` = what it charges you, `sell_price` = what it pays you, `supply`, `demand`), checked live on 2026-10-09
+   (300 stations in about 22 s). `Station` also keeps position (`system_x/y/z`), `distance_to_arrival`, `is_planetary`,
+   `type` (carriers are `Drake-Class Carrier`) and the pad counts.
+2. `best_load(source, dest, cargo, capital, min_supply, min_demand)`: commodities that sell for more at `dest` than they
+   cost at `source`, best profit per tonne first, each limited by supply, demand and money left, until the hold is full.
+3. `find_round_trips` takes the start station (`find_start`, matched ignoring case; if Spansh has no recent market for
+   it the panel says so), and for every other station that passes the filters (ground, carriers, pad size, arrival
+   distance) builds the outbound and return loads. **If either is missing the pair is dropped**: that is the no-empty-leg rule.
+   The return trip may spend the outbound profit. Pairs are ranked by estimated profit per hour for the whole loop.
+
+The panel shows the top three (`RESULTS_KEPT`) with what to carry each way, remembers the best pair's destination for
+**Copy next system** and records it in the session's lookups (two hops). Settings: `wntb_trade_min_supply` and
+`wntb_trade_min_demand` (default 200 t). Tested by `tests/test_trade_roundtrip.py`.
+
 ## 9. Market: commodity search and ranking
 
 **Names.** Spansh's market search is **case-sensitive and exact**: "Liquid oxygen" finds 10,000 stations,
@@ -386,6 +423,8 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_jump_range_override` | Jump range in ly ("" = use the ship's) | "" |
 | `wntb_trade_route_price_age_h` | Routes: ignore markets not updated within this many hours (0 = any) | 72 |
 | `wntb_trade_route_permit` | Routes may use systems that need a permit | off |
+| `wntb_trade_min_supply` | Round trip: least tonnes the buying station must have | 200 |
+| `wntb_trade_min_demand` | Round trip: least tonnes the selling station must want | 200 |
 | `wntb_trade_near_radius_ly` | "Near me" radius | 100 |
 | `wntb_trade_include_carriers` | Fleet carriers in price results and routes (`allow_player_owned`) | on |
 | `wntb_trade_include_ground` | Ground facilities in price results and routes (`allow_planetary`) | on |
@@ -413,6 +452,8 @@ Follows TECHNICAL.md section 11 ("Keeping API traffic low").
   from the worker.
 - **Route polling:** one request every 5 s, at most 240 s, so at most about 48 polls plus the submit. A failure
   isn't retried. Request timeout 20 s.
+- **Round trip:** one to three station-search requests (100 stations each, nearest first, stops at the first short
+  page), about 20 s, request timeout 30 s, identified as `trade-roundtrip`.
 - **Price search:** a press of Near me or Galaxy makes **two requests**, one for stations and one for fleet
   carriers (one if carriers are hidden in Settings), and the two buttons are separate presses. Stations: 20, or 40
   when filtering by pad. Carriers: a third as many (at least 5). Asking separately matters: carriers are priced very
@@ -432,6 +473,8 @@ Follows TECHNICAL.md section 11 ("Keeping API traffic low").
 Spansh client parsing) and `tests/test_trade_search.py` (commodity names, ship pads, offer ranking, carrier
 space, the tracker's attribution rules, the per-commander choice and the journal backfill) and
 `tests/test_trade_stock.py` (average-cost stock, apply-once rules, the backfill, and file ordering) and
+`tests/test_trade_roundtrip.py` (the hold fill, supply and demand limits, the no-empty-leg rule, ranking by profit per hour, the
+carrier, ground, pad and distance filters) and
 `tests/test_trade_blocks.py` (the page model's plain-text form, and the ground-facilities switch) and
 `tests/test_trade_history.py` (the ledger's log, jumps and start, rebuilding a session from a journal file and
 skipping the events it already counted, the record and book, and every number and row in `trade_stats`). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
