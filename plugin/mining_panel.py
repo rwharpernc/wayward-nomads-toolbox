@@ -79,7 +79,6 @@ _PERIODIC_TICK_MS = 1000
 the "Refining rate" hint (mining_rate.py) visibly decays back toward
 zero during a mining lull rather than freezing at its last value."""
 
-ACCENT = "#ff8c0d"  # Elite orange - nav arrows
 
 
 def _cfg_bool(key: str, default: bool) -> bool:
@@ -179,14 +178,10 @@ class MiningPanelController:
 
         self._nav = tk.Frame(parent)
         self._nav.grid(column=0, row=0, columnspan=2, sticky="ew")
-        prev_arrow = tk.Label(self._nav, text="◂", fg=ACCENT, cursor="hand2")
-        prev_arrow.pack(side=tk.LEFT)
-        prev_arrow.bind("<Button-1>", lambda _e: self._step_page(-1))
+        panelkit.nav_arrow(self._nav, -1, lambda: self._step_page(-1)).pack(side=tk.LEFT)
         self._page_label = tk.Label(self._nav, anchor=tk.CENTER)
         self._page_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        next_arrow = tk.Label(self._nav, text="▸", fg=ACCENT, cursor="hand2")
-        next_arrow.pack(side=tk.LEFT)
-        next_arrow.bind("<Button-1>", lambda _e: self._step_page(1))
+        panelkit.nav_arrow(self._nav, 1, lambda: self._step_page(1)).pack(side=tk.LEFT)
 
         # width=1: a bare Canvas requests 10 cm of width, which would widen EDMC's window; it
         # stretches to the panel's width instead (sticky="ew").

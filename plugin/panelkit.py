@@ -72,6 +72,33 @@ def bold_font(_widget: tk.Widget) -> tuple:
         return ("TkDefaultFont", 9, "bold")
 
 
+NAV_ARROW_COLOR = "#ff8c0d"  # Elite orange
+_NAV_ARROW_EXTRA_PT = 7
+_nav_arrow_font: "tkfont.Font | None" = None
+
+
+def nav_arrow(parent: tk.Misc, direction: int, command) -> tk.Label:
+    """The page-switching arrow (previous = -1, next = +1) used by every paged panel. It is a
+    raised, bordered, padded label in a large bold font, so it reads as a button and is easy to
+    hit - the bare triangle it replaced was too small to see in EDMC's small main window. Not packed
+    or gridded here; the caller places it. Its size is fixed (a glyph plus padding), so it can't
+    widen the main window."""
+    global _nav_arrow_font
+    if _nav_arrow_font is None:
+        try:
+            base = tkfont.nametofont("TkDefaultFont")
+            size = int(base.actual("size")) or 9
+            _nav_arrow_font = tkfont.Font(
+                family=base.actual("family"), weight="bold",
+                size=size + _NAV_ARROW_EXTRA_PT if size > 0 else size - _NAV_ARROW_EXTRA_PT)
+        except tk.TclError:
+            _nav_arrow_font = tkfont.Font(family="TkDefaultFont", weight="bold", size=16)
+    arrow = tk.Label(parent, text="◀" if direction < 0 else "▶", font=_nav_arrow_font, fg=NAV_ARROW_COLOR,
+                     cursor="hand2", relief="raised", borderwidth=2, padx=10, pady=0)
+    arrow.bind("<Button-1>", lambda _e: command())
+    return arrow
+
+
 # --- Toggle-button coloring (shared by every feature's own main-panel quick-
 # toggle button, and by ui.py's mode-select buttons) -----------------------
 
