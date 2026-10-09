@@ -105,6 +105,9 @@ _MODE_TOOLTIPS = {
     "fieldops": "Field Ops - screenshots, backpack/locker/cargo, saved ship builds and colonisation sites",
 }
 _DEFAULT_PANEL_MODE = PANEL_MODES[0][0]
+# The "Credits this session" line sits under the mode buttons and is shown on the modes where it is useful.
+# Exploration doesn't need it, and Trade has a net profit of its own that already counts running costs.
+_MODES_WITHOUT_CREDITS = {"exploration", "trade"}
 _MODE_KEYS = {key for key, _ in PANEL_MODES}
 
 _UPDATED_COLOR = "#2e7d32"
@@ -405,6 +408,7 @@ def _apply_panel_mode_visibility() -> None:
             frame.grid()
         else:
             frame.grid_remove()
+    session_credits.set_visible(_panel_mode not in _MODES_WITHOUT_CREDITS)
     _sync_mode_holder_height()
 
 

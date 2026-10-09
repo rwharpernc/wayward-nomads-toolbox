@@ -329,7 +329,7 @@ several requests in flight, use the generation counter above instead.
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
   `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`,
-  `trade_ledger.json`, `trade_carrier.json`. `codex_catalog.json` is a cache of a downloaded list rather
+  `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
 **Why files instead of `config`?** `config` is for settings, not structured or growing data. JSON
@@ -699,6 +699,11 @@ Full detail is in the [Trade spec](TRADE_TECH_SPEC.md); the decisions worth know
 - **Pad filtering is client-side.** Stations your ship can't dock at are dropped after the search (so a
   filtered search asks for 40 stations, not 20). Unknown ship or missing pad data means "don't filter", never
   a guess. Carriers always fit and are listed apart because they can move.
+- **Unsold stock is one book, not two trackers.** `trade_stock.py` follows cargo bought and not yet sold per
+  commander across logins, with average cost; a carrier-loading run and a station-to-station run are the same
+  thing to it (buys add, sells remove, carrier transfers change nothing). It applies each event once using the
+  last-event time plus fingerprints of same-second events, and catches up at start by replaying recent journals
+  synchronously, before any live event.
 - **A transfer goes to the carrier you are docked at.** `CargoTransfer` doesn't name one; `Docked`/`Location`
   carry the station's `MarketID`, which equals the carrier's `CarrierID`. Docked at someone else's carrier,
   nothing is counted; with two carriers and no dock information, the transfer is skipped rather than guessed.
@@ -829,6 +834,9 @@ Things that cost time once and are recorded so they don't again.
 - **Spansh market names are exact and case-sensitive.** "Liquid oxygen" works, "Liquid Oxygen" returns zero
   results with no error, and the journal's own plurals can differ from Spansh's. A search that silently finds
   nothing is the symptom; resolve every name through `trade_commodities.resolve`.
+- **Journal files don't sort by name.** The game has used two file-name styles
+  (`Journal.2026-10-09T053605.01.log`, `Journal.260228162446.01.log`), so "the newest N" must come from modified
+  time (`trade_carrier.journal_files`); sorting by name quietly picked the wrong files once it mattered.
 - **Journal names and EDMC names differ in case.** `BOCHEAUX` in the journal, `Bocheaux` from EDMC. Key
   anything per commander by `casefold()`.
 - **`CarrierStats` isn't automatic and isn't replayed.** It exists only if the player opened Carrier
@@ -987,7 +995,8 @@ Both modules are platform-neutral by construction; what was checked, and why it 
 - **Display.** Number formatting is fixed (`f"{n:,}"`), not locale-dependent. The glyphs used are the ellipsis
   and ordinary punctuation. Both labels are `panelkit.wrap_label`s inside one frame, so a long private-group
   name wraps instead of widening EDMC's window, which matters most on Linux where window managers resize
-  more eagerly.
+  more eagerly. The credits line is hidden (`grid_remove`) on the Exploration and Trade modes
+  (`ui._MODES_WITHOUT_CREDITS`) and its record keeps updating while hidden.
 
 ### 18.3 Platform notes for Trade mode (`trade_*.py`)
 
