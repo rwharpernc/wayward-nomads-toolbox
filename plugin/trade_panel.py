@@ -830,7 +830,7 @@ class TradePanelController:
         self._saved_marks[record["id"]] = self._session_mark()
         trade_history_window.refresh_if_open(self._history, select=record["id"])
         self._say(("Updated this session in Trade History." if replaced else "Saved to Trade History.")
-                  + f" ({len(self._history.sessions)} saved)")
+                  + f" ({len(self._history.sessions)} saved). Press Reset to start a new session.")
         return True
 
     def _persist_history(self) -> None:

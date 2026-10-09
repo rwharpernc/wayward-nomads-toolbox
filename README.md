@@ -220,8 +220,8 @@ Hover over any button for a moment to see its full name.
 | **RES** | Check ring reserve level | Mining |
 | **I/E** | Import/export hotspots | Mining |
 | **BOOK** | Mining Book | Mining |
-| **Reset** | Start the session profit tally again | Trade (Session page) |
-| **Save session** | Keep this session in Trade History | Trade (Session page) |
+| **Reset** | End this session and start a new tally (offers to save first) | Trade (Session page) |
+| **Save session** | Keep this session in Trade History (the tally keeps running; press Reset to start a new one) | Trade (Session page) |
 | **History** | Open the Trade History window | Trade (Session page) |
 | **Clear stock** | Forget the unsold stock list | Trade (Session page) |
 | **Find routes** / **Cancel** | Ask Spansh for trade routes / stop waiting | Trade (Routes page) |
@@ -523,6 +523,11 @@ buttons are at the top, under the page arrows.
   needs EDMC's **Journal directory** to be set; see [Using WNTB on Linux](#using-wntb-on-linux).)
 - **Only what WNTB has seen is counted.** Trades made before WNTB first ran, or in a session you reset, aren't included.
 - **Nothing is kept for good unless you ask.** Press **Save session** to put it in Trade History (below).
+- **Finishing a session and starting the next: Save session, then Reset.** There is no Start or Track button, because
+  tracking never stops. **Save session** only copies the tally into Trade History; the tally keeps running and the
+  button stays **Save session** (saving again updates the same entry). **Reset** is what begins a new session, and if
+  the current one has unsaved trades it offers to save it first. If you skip Reset, your next trades are added to the
+  old session.
 
 ### The Session page (works offline)
 
