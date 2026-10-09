@@ -504,8 +504,9 @@ Reads your journal only; nothing is sent anywhere. It shows:
 - **Profit** since you logged in, and credits per hour once you've traded for a few minutes, with the tonnes
   you bought and sold and your best-selling commodities. Trade profit is what you were paid minus what the
   sold tonnes cost you, as the game reports it; stolen or black-market cargo counts the whole sale.
-- **Running costs**, so the profit is honest: **fuel** (refuelling), **repairs**, **rearm** (ammunition and
-  restocking an SRV or fighter) and **limpets** (bought, less any sold back). Once you've spent anything the
+- **Running costs**, so the profit is honest: **fuel** (refuelling), **repairs**, **advanced maintenance**
+  (the game logs it as a repair that includes module "Wear"; the whole charge goes on its own line), **rearm**
+  (ammunition and restocking an SRV or fighter) and **limpets** (bought, less any sold back). Once you've spent anything the
   headline becomes **Net profit** (trade profit less those costs, and the credits per hour is the net), with
   the trade profit and each cost listed under it. Insurance rebuys and fines aren't counted, and a cost only
   counts if WNTB saw it, so a refuel before EDMC started isn't included.

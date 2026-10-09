@@ -14,7 +14,8 @@ A session is one game login, tied to the journal file it started in, the same
 rule session_credits.py uses (a logout to the menu and back continues it).
 
 Running costs are tracked too, so the headline is a net figure: refuelling (`RefuelAll`,
-`RefuelPartial`), repairs (`Repair`, `RepairAll`), rearm (`BuyAmmo`, `RestockVehicle`) and limpets
+`RefuelPartial`), repairs (`Repair`, `RepairAll`), Advanced Maintenance (a `Repair` whose `Items` include
+"Wear"), rearm (`BuyAmmo`, `RestockVehicle`) and limpets
 (`BuyDrones` bought, `SellDrones` sold back). Each carries a credit cost in the journal (field names
 checked against a real journal, 2026-10-09). Insurance rebuys (`Resurrect`) and fines are not counted.
 Costs only count from when WNTB saw them, like trades, so a refuel before EDMC started isn't included.
@@ -46,7 +47,8 @@ TOP_ROWS_SHOWN = 5
 _ROW_FIELDS = ("bought", "spent", "sold", "revenue", "cost_basis")
 
 # Running costs: category -> (heading, journal events that add to it).
-EXPENSE_LABELS = {"fuel": "Fuel", "repairs": "Repairs", "rearm": "Rearm", "limpets": "Limpets"}
+EXPENSE_LABELS = {"fuel": "Fuel", "repairs": "Repairs", "maintenance": "Advanced maintenance",
+                  "rearm": "Rearm", "limpets": "Limpets"}
 _EXPENSE_OF_EVENT = {
     "RefuelAll": "fuel", "RefuelPartial": "fuel", "Repair": "repairs", "RepairAll": "repairs",
     "BuyAmmo": "rearm", "RestockVehicle": "rearm", "BuyDrones": "limpets", "SellDrones": "limpets",
@@ -92,6 +94,13 @@ def _int(value: Any) -> int:
     return int(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else 0
 
 
+def _is_maintenance(entry: Dict[str, Any]) -> bool:
+    """Advanced Maintenance shows up as an ordinary `Repair` event whose `Items` include "Wear" (module wear),
+    confirmed on a real journal. The charge covers everything in that event, so it can't be split further."""
+    items = entry.get("Items")
+    return isinstance(items, list) and any(str(item).strip().lower() == "wear" for item in items)
+
+
 def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str) -> bool:
     """Add one cost event. `SellDrones` is limpets sold back, so it reduces the limpet cost (the
     category can go negative if you sell more than you bought this session)."""
@@ -104,6 +113,8 @@ def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str) ->
     if amount == 0:
         return False
     category = _EXPENSE_OF_EVENT[event]
+    if event == "Repair" and _is_maintenance(entry):
+        category = "maintenance"
     expenses = ledger.setdefault("expenses", {})
     expenses[category] = expenses.get(category, 0) + amount
     return True

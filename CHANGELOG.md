@@ -10,7 +10,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   - **Session** (works offline):
     - Profit, credits per hour, tonnes bought and sold and your best sales for this login (`trade_ledger.py`,
       saved to `trade_ledger.json` so an EDMC restart keeps it). Profit uses the game's `AvgPricePaid`.
-    - **Running costs**: fuel (`RefuelAll`, `RefuelPartial`), repairs (`Repair`, `RepairAll`), rearm (`BuyAmmo`,
+    - **Running costs**: fuel (`RefuelAll`, `RefuelPartial`), repairs (`Repair`, `RepairAll`), **Advanced
+      Maintenance** (its own line: a `Repair` whose items include "Wear"), rearm (`BuyAmmo`,
       `RestockVehicle`) and limpets (`BuyDrones` less `SellDrones`). Once any is recorded the headline is
       **Net profit** (credits per hour is the net), with the trade profit and each cost under it. Insurance
       rebuys and fines aren't counted.
