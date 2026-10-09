@@ -329,7 +329,7 @@ several requests in flight, use the generation counter above instead.
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
   `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`,
-  `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`. `codex_catalog.json` is a cache of a downloaded list rather
+  `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
 **Why files instead of `config`?** `config` is for settings, not structured or growing data. JSON
@@ -700,6 +700,11 @@ Full detail is in the [Trade spec](TRADE_TECH_SPEC.md); the decisions worth know
 - **Pad filtering is client-side.** Stations your ship can't dock at are dropped after the search (so a
   filtered search asks for 40 stations, not 20). Unknown ship or missing pad data means "don't filter", never
   a guess. Carriers always fit and are listed apart because they can move.
+- **History is saved on request, from a richer ledger.** The live ledger keeps a bounded log of every trade and cost
+  with its station, plus jumps and the starting balance; **Save session** snapshots it (and the stock, hold and carrier) into
+  `trade_history.json`, re-saving the same login updates the same record, and `trade_stats.py` works out every figure and
+  table row so the Trade History window (`trade_history_window.py`) only lays them out. Totals are exact; the log can be
+  shorter on a very long session.
 - **Unsold stock is one book, not two trackers.** `trade_stock.py` follows cargo bought and not yet sold per
   commander across logins, with average cost; a carrier-loading run and a station-to-station run are the same
   thing to it (buys add, sells remove, carrier transfers change nothing). It applies each event once using the
@@ -802,7 +807,8 @@ journal backfill). `tests/test_own_data_files.py` reads the sources and fails if
 `tests/test_import_smoke.py` additionally imports every plugin module (including `load.py`) with
 EDMC's modules stubbed, in a subprocess, to catch import-time breakage that single-module tests miss.
 
-Trade mode's drawn page is the one Tk exception: `tests/trade_view_smoke.py` draws it in a real window with EDMC
+Trade mode's drawn page and its History window are the Tk exceptions:
+`tests/trade_history_window_smoke.py` opens the History window the same way and visits every tab. The drawn page: `tests/trade_view_smoke.py` draws it in a real window with EDMC
 stubbed, in a subprocess (skipped when there is no display), and checks widths, redraws and column alignment.
 
 Not covered by automation: anything else that needs a live EDMC or a Tk window (panels, dialogs, overlay

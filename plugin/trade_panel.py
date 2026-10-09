@@ -27,6 +27,7 @@ import re
 import threading
 import time
 import tkinter as tk
+from tkinter import messagebox
 from typing import Any, Callable, Dict, List, Optional
 
 import myNotebook as nb
@@ -39,6 +40,8 @@ from . import panelkit
 from . import trade_ledger as ledger_mod
 from . import trade_market as market_mod
 from . import trade_carrier
+from . import trade_history
+from . import trade_history_window
 from . import trade_commodities
 from . import trade_pages
 from . import trade_prices
@@ -148,6 +151,10 @@ class TradePanelController:
         self._ledger: Optional[Dict[str, Any]] = None
         self._stock = trade_stock.StockBook()  # bought-not-yet-sold cargo, per commander, across logins
         self._stock_saved = 0.0
+        self._history = trade_history.HistoryBook()   # sessions saved on request (Save session)
+        self._saved_marks: Dict[str, tuple] = {}      # session id -> how it looked when last saved
+        self._save_message: Optional[str] = None      # shown at the top of the Session page for a few seconds
+        self._route_label = ""                        # where the route search being run started from
         self._carrier = trade_carrier.CarrierTracker()  # each commander's fleet / squadron carrier cargo space
         self._cmdr = ""
         self._backfill: "queue.Queue[trade_carrier.CarrierTracker]" = queue.Queue()
@@ -189,6 +196,7 @@ class TradePanelController:
         self._button_a: Optional[tk.Button] = None
         self._button_b: Optional[tk.Button] = None
         self._button_c: Optional[tk.Button] = None
+        self._button_d: Optional[tk.Button] = None
         self._search_row: Optional[tk.Frame] = None
         self._side_row: Optional[tk.Frame] = None
         self._side_buttons: Dict[str, tk.Button] = {}
@@ -214,6 +222,7 @@ class TradePanelController:
         self._ledger = ledger_mod.load_ledger(plugin_dir)
         self._carrier.records = trade_carrier.load_all(plugin_dir)
         self._stock.books = trade_stock.load_all(plugin_dir)
+        self._history.sessions = trade_history.load_all(plugin_dir)
         try:
             # Catch up on trades made while EDMC was closed, before any live event can arrive.
             trade_stock.backfill(self._stock, _journal_dir())
@@ -245,6 +254,7 @@ class TradePanelController:
     def stop(self) -> None:
         if self._job is not None:
             self._job.cancel.set()
+        trade_history_window.close()
         self._save(force=True)
         self._save_stock(force=True)
 
@@ -295,6 +305,10 @@ class TradePanelController:
             new_session = not continued
         if self._ledger is None:
             self._ledger = ledger_mod.new_ledger(cmdr, _current_logfile())
+        # When this session began and the balance then: LoadGame carries the balance at login.
+        opening = entry.get("Credits") if event == "LoadGame" else None
+        ledger_mod.note_start(self._ledger, str(entry.get("timestamp") or "") or None,
+                              opening if isinstance(opening, int) else (self._credits or None))
 
         self._track_carrier(event, entry)
 
@@ -318,7 +332,8 @@ class TradePanelController:
             self._names[market_mod.canonical_name(entry["Type"])] = str(entry["Type_Localised"])
         if event in ("MarketBuy", "MarketSell") and self._stock.feed(entry, self._cmdr):
             self._save_stock()
-        changed = ledger_mod.apply_trade_event(self._ledger, entry)
+        changed = ledger_mod.apply_trade_event(self._ledger, entry, (self._system, self._station))
+        changed = ledger_mod.note_jump(self._ledger, entry) or changed
         if new_session:
             self._save(force=True)
         elif changed:
@@ -396,6 +411,8 @@ class TradePanelController:
         self._button_b.pack(side=tk.LEFT, padx=(6, 0))
         self._button_c = tk.Button(buttons, text="")
         self._button_c.pack(side=tk.LEFT, padx=(6, 0))
+        self._button_d = tk.Button(buttons, text="")
+        self._button_d.pack(side=tk.LEFT, padx=(6, 0))
 
         self._refresh()
         parent.after(2000, self._poll_carrier_history)
@@ -432,7 +449,9 @@ class TradePanelController:
         if self._page == trade_pages.SESSION:
             blocks = self._session_blocks()
             self._set_buttons(("Reset", self._reset_ledger, True),
-                              ("Clear stock", self._clear_stock, bool(self._stock.holdings(self._cmdr))), None)
+                              ("Clear stock", self._clear_stock, bool(self._stock.holdings(self._cmdr))),
+                              ("Save session", self._save_session, trade_history.has_content(self._ledger)),
+                              ("History", self._open_history, True))
         elif self._page == trade_pages.ROUTES:
             blocks = self._routes_blocks(busy)
             self._set_buttons(
@@ -455,13 +474,13 @@ class TradePanelController:
                 else:
                     row.grid_remove()
 
-    def _set_buttons(self, first, second, third) -> None:
+    def _set_buttons(self, first, second, third, fourth=None) -> None:
         # Unpack all, then pack in order, so the left-to-right order can never swap.
-        for button in (self._button_a, self._button_b, self._button_c):
+        for button in (self._button_a, self._button_b, self._button_c, self._button_d):
             if button is not None:
                 button.pack_forget()
         for button, spec, padx in ((self._button_a, first, (0, 0)), (self._button_b, second, (6, 0)),
-                                   (self._button_c, third, (6, 0))):
+                                   (self._button_c, third, (6, 0)), (self._button_d, fourth, (6, 0))):
             if button is None or spec is None:
                 continue
             text, command, enabled = spec
@@ -471,6 +490,8 @@ class TradePanelController:
     def _session_blocks(self) -> List[Block]:
         in_hold = {market_mod.canonical_name(name): tonnes for name, tonnes in self._cargo.items()}
         blocks: List[Block] = [Heading("This session")]
+        if self._save_message:
+            blocks.append(Note(self._save_message, strong=True))
         blocks += ledger_mod.summary_blocks(self._ledger)
         blocks += trade_stock.stock_blocks(self._stock.holdings(self._cmdr), in_hold,
                                            name_of=lambda holding: _clip(self._display(holding.key)))
@@ -691,8 +712,93 @@ class TradePanelController:
         self._save_stock(force=True)
         self._refresh()
 
+    def _now(self) -> str:
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+    def _session_id(self) -> str:
+        """The id this session would be saved under (the same one every time it is saved during this login)."""
+        info = ledger_mod.meta(self._ledger) if self._ledger else {}
+        started = info.get("started") or (self._ledger or {}).get("first_trade")
+        return trade_history.session_id((self._ledger or {}).get("cmdr") or self._cmdr,
+                                        (self._ledger or {}).get("journal_file"), started)
+
+    def _session_mark(self) -> tuple:
+        """How the session looks right now, to tell whether anything has happened since it was last saved."""
+        ledger = self._ledger or {}
+        return len(ledger.get("log") or []), ledger_mod.totals(ledger).net if ledger else 0
+
+    def _unsaved(self) -> bool:
+        return trade_history.has_content(self._ledger) and self._saved_marks.get(self._session_id()) != self._session_mark()
+
+    def _say(self, text: str, seconds: int = 9) -> None:
+        """A short message at the top of the Session page that goes away by itself."""
+        self._save_message = text
+        if self._parent is not None:
+            self._parent.after(seconds * 1000, self._clear_message)
+        self._refresh()
+
+    def _clear_message(self) -> None:
+        self._save_message = None
+        if self._alive():
+            self._refresh()
+
+    def _stock_snapshot(self) -> List[Dict[str, Any]]:
+        return [{"name": self._display(h.key), "tonnes": h.tonnes, "cost": h.cost}
+                for h in self._stock.holdings(self._cmdr)]
+
+    def _hold_snapshot(self) -> List[Dict[str, Any]]:
+        return [{"name": self._display(name), "tonnes": tonnes}
+                for name, tonnes in sorted(self._cargo.items(), key=lambda item: -item[1])]
+
+    def _carrier_snapshot(self) -> List[Dict[str, Any]]:
+        records = self._carrier.records.get(trade_carrier.key_for(self._cmdr)) or {}
+        return [{"type": trade_carrier.TYPE_LABEL.get(kind, kind), "name": rec.get("name", ""), "callsign": rec.get("callsign", ""),
+                 "capacity": rec.get("capacity", 0), "cargo": rec.get("cargo", 0), "reserved": rec.get("reserved", 0),
+                 "free": rec.get("free", 0)} for kind, rec in records.items()]
+
+    def _save_session(self) -> bool:
+        """Keep this session in Trade History (only ever done on request). Saving again during the same login
+        updates its entry. Returns True if it was saved."""
+        if not trade_history.has_content(self._ledger):
+            self._say("Nothing to save yet: no trades or running costs this session.")
+            return False
+        name = trade_ship.ship_display_name(self._ship) if self._ship else ""
+        record = trade_history.build_record(
+            self._ledger, self._ledger.get("cmdr") or self._cmdr, ship=name, pad=self._ship_pad(),
+            credits_end=self._credits or None, stock=self._stock_snapshot(), hold=self._hold_snapshot(),
+            capacity=self._capacity, carriers=self._carrier_snapshot(), saved_at=self._now())
+        replaced = self._history.save(record)
+        if self._plugin_dir is not None and not trade_history.save_all(self._plugin_dir, self._history.sessions):
+            self._say("Could not write the history file (see the EDMC log). The session is kept until EDMC closes.")
+            return False
+        self._saved_marks[record["id"]] = self._session_mark()
+        trade_history_window.refresh_if_open(self._history, select=record["id"])
+        self._say(("Updated this session in Trade History." if replaced else "Saved to Trade History.")
+                  + f" ({len(self._history.sessions)} saved)")
+        return True
+
+    def _persist_history(self) -> None:
+        """The history window deleted something: write the book out."""
+        if self._plugin_dir is not None:
+            trade_history.save_all(self._plugin_dir, self._history.sessions)
+
+    def _open_history(self) -> None:
+        if self._parent is not None:
+            trade_history_window.show(self._parent, self._history, self._persist_history)
+
     def _reset_ledger(self) -> None:
-        self._ledger = ledger_mod.new_ledger("", _current_logfile())
+        """Start the tally again. If this session has trades that were never saved, offer to save it first."""
+        if self._unsaved() and self._parent is not None:
+            answer = messagebox.askyesnocancel(
+                "Reset trade session",
+                "This session has trades that haven't been saved to Trade History.\n\n"
+                "Save it before starting again?", parent=self._parent)
+            if answer is None:
+                return
+            if answer and not self._save_session():
+                return
+        self._ledger = ledger_mod.new_ledger("", _current_logfile(), started=self._now(), credits=self._credits or None)
+        self._ledger["cmdr"] = self._cmdr
         self._save(force=True)
         self._refresh()
 
@@ -726,6 +832,7 @@ class TradePanelController:
             requires_large_pad=config.get_bool(_CFG_LARGE_PAD, default=False) or self._ship_pad() == trade_ship.LARGE,
         )
         self._route_blocks, self._next_system = [], None
+        self._route_label = f"{start[1]} ({start[0]})"
         self._start_job("routes", lambda cancel: spansh_routes.search_routes(query, cancel))
 
     def _find_prices(self, scope: str) -> None:
@@ -812,6 +919,13 @@ class TradePanelController:
             blocks.append(Note(f"+{len(hops) - _ROUTES_SHOWN} more hop(s)"))
         self._route_blocks = blocks
         self._next_system = hops[0].dest_system if hops[0].dest_system != "?" else None
+        if self._ledger is not None:
+            ledger_mod.add_route(self._ledger, {
+                "t": self._now(), "start": self._route_label, "total": total,
+                "hops": [{"from": hop.source_station, "to": hop.dest_station, "system": hop.dest_system,
+                          "ly": round(hop.distance_ly, 1), "profit": hop.profit,
+                          "cargo": [{"name": c.name, "tonnes": c.tonnes, "profit": c.total_profit} for c in hop.cargo]}
+                         for hop in hops]})
 
     def _finish_sell(self, job: _Job) -> None:
         if job.error:
@@ -823,6 +937,13 @@ class TradePanelController:
         self._sell_for = key
         self._sell[scope] = offers
         self._pad_dropped[scope] = dropped
+        if self._ledger is not None:
+            stations_only, _carriers = trade_prices.split_carriers(offers)
+            top = (stations_only or offers or [None])[0]
+            ledger_mod.add_search(self._ledger, {
+                "t": self._now(), "side": key[3], "commodity": key[0], "tonnes": key[1], "scope": scope,
+                "best": ({"station": top.station, "system": top.system, "price": top.price, "ly": round(top.distance_ly, 1)}
+                         if top else None)})
         if not any_found and not offers and not self._sell.get("galaxy" if scope == "near" else "near"):
             verb = "selling" if key[3] == trade_prices.BUY else "buying"
             self._sell_error = (f"Spansh found no market {verb} {_clip(key[0])}. "

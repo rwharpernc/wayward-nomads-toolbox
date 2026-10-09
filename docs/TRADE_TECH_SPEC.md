@@ -13,6 +13,7 @@ threading, persistence), see [TECHNICAL.md](TECHNICAL.md).
 4. [Data sources](#4-data-sources)
 5. [Session ledger](#5-session-ledger)
    - [Stock bought, not yet sold](#51-stock-bought-not-yet-sold)
+   - [Trade History: saved sessions](#52-trade-history-saved-sessions)
 6. [Hold, ship and landing pads](#6-hold-ship-and-landing-pads)
 7. [Fleet and squadron carrier cargo space](#7-fleet-and-squadron-carrier-cargo-space)
 8. [Routes (Spansh trade planner)](#8-routes-spansh-trade-planner)
@@ -51,6 +52,9 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_pages.py` | pure | Page names and order |
 | `trade_ledger.py` | pure + file | The session ledger and `trade_ledger.json` |
 | `trade_stock.py` | pure + file | The stock book (bought, not yet sold) and `trade_stock.json` |
+| `trade_history.py` | pure + file | Saved-session records, the `HistoryBook`, and `trade_history.json` |
+| `trade_stats.py` | pure | Every number and table row shown from a saved session |
+| `trade_history_window.py` | UI | The Trade History pop-out window (uikit) |
 | `trade_market.py` | pure + file read | `Market.json` parsing and cargo valuation |
 | `trade_ship.py` | pure | Ship to landing-pad size, and whether a ship fits a station's pads |
 | `trade_carrier.py` | pure + file | Carrier cargo tracking, journal backfill, `trade_carrier.json` |
@@ -195,6 +199,54 @@ mission cargo) stays on the books until cleared. Stolen cargo bought nowhere has
 together, so "the newest N by name" can be wrong. `trade_carrier.journal_files` sorts by `os.path.getmtime` and
 is used by both the carrier backfill and the stock backfill. The pre-filter on journal lines is a
 whitespace-tolerant regex rather than an exact `"event":"X"` substring.
+
+### 5.2 Trade History: saved sessions
+
+Sessions are kept **only when the commander presses Save session** (nothing is saved automatically). The live ledger is
+a working tally; History is the record the commander chose to keep.
+
+**What the ledger remembers for it.** Beyond the totals, `trade_ledger` keeps:
+- `log`: one entry per trade or cost: `{t, e: buy|sell|cost, c, n, u (unit price), tot, paid (average price paid, on
+  a sale), sys, stn}`, plus `bm` on a black-market sale. The station and system come from the panel (the `system` and
+  `station` EDMC passes to `journal_entry`). Bounded at `LOG_LIMIT` = 5,000; past that the oldest are dropped, which
+  affects only the route and trade list, never the totals.
+- `meta`: `started` (the `LoadGame` timestamp), `credits_start` (the `LoadGame` `Credits`), `jumps` and `jump_ly`
+  (from `FSDJump` and its `JumpDist`).
+- `routes` (the last 5 Spansh route searches: start, total, hops) and `searches` (the last 10 market searches: side,
+  commodity, tonnes, scope and the best result).
+An older ledger without any of this still loads (`meta()` fills in defaults).
+
+**The record** (`trade_history.build_record`) is a deep-copied snapshot: id, commander, saved/started/ended times,
+first and last trade, balance at start and at save, ship and pad size, jumps and light years, `rows`, `expenses`, `log`,
+`routes`, `searches`, plus what was true at the moment of saving: the unsold `stock`, the `hold` and its `capacity`, and
+the commander's `carriers`. Later changes to the live ledger never alter it.
+
+**Identity.** `id` = a short SHA-1 of the commander, the journal file and the start time, so saving again during the
+same login *replaces* that record (`HistoryBook.save` returns True when it did) instead of adding a duplicate, and
+**Reset** (a new start time) is a new session. Reset asks to save first when `_unsaved()`: the session has content and
+its `(log length, net)` differs from the mark taken at the last save.
+
+**Numbers** (`trade_stats.py`, all pure) come from `rows` and `expenses` (exact), with the log supplying the detail:
+- *Trade profit* = revenue - cost basis; *net* = trade profit - running costs; *per hour* uses trading time (first to
+  last trade), shown only after 3 minutes; *balance change* is the real credits difference (it includes everything
+  else earned); per tonne sold, margin on cost, per jump and per light year.
+- A **visit** is a run of consecutive log entries at one station; the **route** is the visits in order, and a station
+  returned to is a new visit. Per-station figures add the visits up. The running net in the Route table adds each
+  visit's net (trade profit made there minus fuel and repairs paid there).
+- The Commodities table adds average buy and sell price, margin, profit per tonne and unsold tonnes.
+
+**Storage.** `trade_history.json` (`{"sessions": [...]}`, atomic write, tolerant load that drops junk entries), at most
+`MAX_SESSIONS` = 500, oldest first out. It is in `update.py`'s `_OWN_DATA_FILES`.
+
+**The window** (`trade_history_window.py`) follows the BGS Report and Powerplay Sessions windows: `WindowShell`
+(saved geometry under `wntb_trade_history_window_geometry`, minimum 1,080 px wide, default 1,180 x 700), a session
+`Combobox` newest first with a commander filter shown only when there is more than one commander, and `Tabs`:
+Overview, Commodities, Stations, Route, Trades, Stock & carrier, Lookups. Only the tab on screen is filled (`Tabs.on_select`),
+once per session. The Trades tab is paged at 200 rows (each row is a set of widgets, and a session can have thousands),
+opening on the newest page. Actions: **Copy summary** (clipboard), **Export log (CSV)** (a file dialog, UTF-8, the full
+log), **Delete session** (confirms, then calls back so the panel writes the file). `refresh_if_open` updates an open
+window when a session is saved. Column widths are chosen so every table fits at the minimum window size (a table wider
+than its window is clipped, not scrolled); `tests/trade_history_window_smoke.py` checks that.
 
 ## 6. Hold, ship and landing pads
 
@@ -344,7 +396,8 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_carriers_<commander>` | auto / none / fleet / squadron / both | auto |
 
 Files in the plugin folder (all are commander data and must survive updates; see `_OWN_DATA_FILES`, which
-`tests/test_own_data_files.py` enforces): `trade_ledger.json`, `trade_carrier.json` and `trade_stock.json`. `trade_carrier.json` was a flat `{commander: record}` map in
+`tests/test_own_data_files.py` enforces): `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json` and
+`trade_history.json`. `trade_carrier.json` was a flat `{commander: record}` map in
 an earlier build; `load_all` reads that as a fleet carrier.
 
 ## 11. Limits and network behaviour
@@ -377,11 +430,18 @@ Follows TECHNICAL.md section 11 ("Keeping API traffic low").
 Spansh client parsing) and `tests/test_trade_search.py` (commodity names, ship pads, offer ranking, carrier
 space, the tracker's attribution rules, the per-commander choice and the journal backfill) and
 `tests/test_trade_stock.py` (average-cost stock, apply-once rules, the backfill, and file ordering) and
-`tests/test_trade_blocks.py` (the page model's plain-text form, and the ground-facilities switch). The drawn page is
+`tests/test_trade_blocks.py` (the page model's plain-text form, and the ground-facilities switch) and
+`tests/test_trade_history.py` (the ledger's log, jumps and start, the record and book, and every number and row in
+`trade_stats`). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
 checked by `tests/trade_view_smoke.py` (run by `test_trade_view_smoke.py` in a subprocess, skipped without a display):
 no label asks for more than the width available, unchanged blocks aren't redrawn, and a table's number columns end
 at the same place. They run without
 EDMC or a display. The Settings tab is built by `tests/test_prefs_smoke.py` (nine top-level tabs now).
+
+The History window is also drawn in a real Tk window by `tests/trade_history_window_smoke.py` (run by
+`test_trade_history_window_smoke.py`, skipped without a display): every tab is visited at the minimum window size and
+each table must fit, and the picker, commander filter, Copy, Delete (with and without confirmation), the empty state
+and refresh-on-save are exercised.
 
 Not covered by automation: the panel's controls and the suggestion popup (Tk). During development the panel was driven in
 a real Tk window with EDMC and Spansh stubbed; that is not part of the suite.

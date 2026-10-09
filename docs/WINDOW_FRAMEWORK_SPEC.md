@@ -13,7 +13,7 @@ The kit covers external windows only. The main-window panels (`plugin_app`) are 
 follow EDMC's theme and must obey the width-bounding rules in TECHNICAL.md section 5.
 
 Windows that use it: the Mining Book and the Mining dialogs, Powerplay Sessions, Rare Goods, Inventory,
-the BGS Report, Codex Completionist, Ship Builds (window and dialog), the Missions pop-ups and the
+the BGS Report, Trade History, Codex Completionist, Ship Builds (window and dialog), the Missions pop-ups and the
 Screenshots preview. Settings tabs are not converted, because they live inside EDMC's own preferences
 window and follow its theme.
 

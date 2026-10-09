@@ -131,6 +131,12 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
 - [ ] **Session**: after docking, the ship and its pad size show; the hold line shows used, capacity and free
       tonnes. Buy and sell something: the profit lines appear. Refuel and repair: a **Net profit** headline appears
       with Fuel and Repairs lines under it. **Reset** clears it.
+- [ ] Trade History: do some trading, press **Save session** (the message at the top says it saved), then **History**.
+      The window opens like the BGS and Powerplay ones, with the session in the drop-down. Visit every tab: the tables fit
+      the window with no column cut off at the right, the numbers look right, **Route** lists the stations in the order you
+      flew them, **Trades** pages with Earlier / Later. Press **Save session** again after another trade: the entry updates
+      (no duplicate). **Copy summary** pastes into another app; **Export log (CSV)** opens a file dialog and writes the file;
+      **Delete session** asks first. **Reset** with unsaved trades asks whether to save first.
 - [ ] Stock: buy some cargo and the Session page shows "Stock bought, not yet sold" with the cost and how much is
       aboard. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "elsewhere" grows.
       Restart EDMC after buying while it was closed: the purchase is still counted. **Clear stock** empties it.

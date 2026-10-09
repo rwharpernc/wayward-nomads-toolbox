@@ -21,6 +21,11 @@ checked against a real journal, 2026-10-09). Insurance rebuys (`Resurrect`) and 
 Costs only count from when WNTB saw them, like trades, so a refuel before EDMC started isn't included.
 The credits-per-hour clock still runs first trade to last trade, so a refuel before the first sale
 doesn't stretch it.
+
+Beyond the totals the ledger keeps what a saved session needs to be looked at later (docs/TRADE_TECH_SPEC.md, "Trade
+history"): `log`, one entry per trade or cost with the station and system it happened at (so routes can be worked
+out), `meta` (when the session started, the balance at login, jumps and light years travelled), and the `routes` and
+`searches` done during it. It is all bounded, and an older saved ledger without any of it still loads.
 """
 from __future__ import annotations
 
@@ -43,6 +48,9 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 STATE_FILENAME = "trade_ledger.json"
+LOG_LIMIT = 5000       # trade and cost entries kept per session; the oldest are dropped past this
+ROUTES_KEPT = 5        # Spansh route searches remembered for a saved session
+SEARCHES_KEPT = 10     # market searches remembered for a saved session
 MIN_HOURS_FOR_RATE = 0.05  # about three minutes
 TOP_ROWS_SHOWN = 5
 
@@ -66,9 +74,72 @@ def _parse_timestamp(value: Any) -> Optional[float]:
         return None
 
 
-def new_ledger(cmdr: str, journal_file: Optional[str]) -> Dict[str, Any]:
+def new_ledger(cmdr: str, journal_file: Optional[str], started: Optional[str] = None,
+               credits: Optional[int] = None) -> Dict[str, Any]:
+    """A fresh session. `started` (an ISO timestamp) and `credits` (the balance at that moment) are what the
+    saved history shows as the start; both are optional."""
     return {"cmdr": cmdr, "journal_file": journal_file, "first_trade": None, "last_trade": None, "rows": {},
-            "expenses": {}}
+            "expenses": {}, "log": [], "routes": [], "searches": [],
+            "meta": {"started": started, "credits_start": credits, "jumps": 0, "jump_ly": 0.0}}
+
+
+def meta(ledger: Dict[str, Any]) -> Dict[str, Any]:
+    """The session's meta record, created (with defaults) on a ledger saved before it existed."""
+    record = ledger.setdefault("meta", {})
+    record.setdefault("started", None)
+    record.setdefault("credits_start", None)
+    record.setdefault("jumps", 0)
+    record.setdefault("jump_ly", 0.0)
+    return record
+
+
+def note_start(ledger: Dict[str, Any], started: Optional[str], credits: Optional[int]) -> None:
+    """Record when the session began and the balance then, if they aren't known yet."""
+    record = meta(ledger)
+    if not record["started"] and started:
+        record["started"] = started
+    if record["credits_start"] is None and credits is not None:
+        record["credits_start"] = credits
+
+
+def note_jump(ledger: Dict[str, Any], entry: Dict[str, Any]) -> bool:
+    """Count an `FSDJump` and the light years it covered."""
+    if entry.get("event") != "FSDJump":
+        return False
+    record = meta(ledger)
+    record["jumps"] += 1
+    distance = entry.get("JumpDist")
+    if isinstance(distance, (int, float)) and not isinstance(distance, bool) and distance > 0:
+        record["jump_ly"] = round(record["jump_ly"] + float(distance), 2)
+    return True
+
+
+def _log(ledger: Dict[str, Any], item: Dict[str, Any], entry: Dict[str, Any],
+         where: Optional[Tuple[Optional[str], Optional[str]]]) -> None:
+    item["t"] = str(entry.get("timestamp") or "")
+    if where:
+        if where[0]:
+            item["sys"] = str(where[0])
+        if where[1]:
+            item["stn"] = str(where[1])
+    log = ledger.setdefault("log", [])
+    log.append(item)
+    if len(log) > LOG_LIMIT:
+        del log[: len(log) - LOG_LIMIT]
+
+
+def add_route(ledger: Dict[str, Any], route: Dict[str, Any]) -> None:
+    """Remember a Spansh route search (a dict of start, total and hops) for the saved session."""
+    routes = ledger.setdefault("routes", [])
+    routes.append(route)
+    del routes[: max(0, len(routes) - ROUTES_KEPT)]
+
+
+def add_search(ledger: Dict[str, Any], search: Dict[str, Any]) -> None:
+    """Remember a market search (side, commodity, scope and its best result) for the saved session."""
+    searches = ledger.setdefault("searches", [])
+    searches.append(search)
+    del searches[: max(0, len(searches) - SEARCHES_KEPT)]
 
 
 def sync_ledger(
@@ -103,7 +174,8 @@ def _is_maintenance(entry: Dict[str, Any]) -> bool:
     return isinstance(items, list) and any(str(item).strip().lower() == "wear" for item in items)
 
 
-def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str) -> bool:
+def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str,
+                   where: Optional[Tuple[Optional[str], Optional[str]]] = None) -> bool:
     """Add one cost event. `SellDrones` is limpets sold back, so it reduces the limpet cost (the
     category can go negative if you sell more than you bought this session)."""
     if event == "BuyDrones":
@@ -119,15 +191,17 @@ def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str) ->
         category = "maintenance"
     expenses = ledger.setdefault("expenses", {})
     expenses[category] = expenses.get(category, 0) + amount
+    _log(ledger, {"e": "cost", "c": category, "tot": amount}, entry, where)
     return True
 
 
-def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any]) -> bool:
+def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any],
+                      where: Optional[Tuple[Optional[str], Optional[str]]] = None) -> bool:
     """Fold one trade (`MarketBuy` / `MarketSell`) or running-cost event into the ledger. Returns True
-    if the ledger changed."""
+    if the ledger changed. `where` is (system, station) at the time, kept in the log so routes can be worked out."""
     event = entry.get("event")
     if event in _EXPENSE_OF_EVENT:
-        return _apply_expense(ledger, entry, event)
+        return _apply_expense(ledger, entry, event, where)
     if event not in ("MarketBuy", "MarketSell"):
         return False
     count = _int(entry.get("Count"))
@@ -138,10 +212,17 @@ def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any]) -> bool:
     if event == "MarketBuy":
         row["bought"] += count
         row["spent"] += _int(entry.get("TotalCost"))
+        _log(ledger, {"e": "buy", "c": name, "n": count, "u": _int(entry.get("BuyPrice")),
+                      "tot": _int(entry.get("TotalCost"))}, entry, where)
     else:
         row["sold"] += count
         row["revenue"] += _int(entry.get("TotalSale"))
         row["cost_basis"] += _int(entry.get("AvgPricePaid")) * count
+        item = {"e": "sell", "c": name, "n": count, "u": _int(entry.get("SellPrice")),
+                "tot": _int(entry.get("TotalSale")), "paid": _int(entry.get("AvgPricePaid"))}
+        if entry.get("BlackMarket") or entry.get("IllegalGoods") or entry.get("StolenGoods"):
+            item["bm"] = True
+        _log(ledger, item, entry, where)
     stamp = entry.get("timestamp")
     if _parse_timestamp(stamp) is not None:
         ledger["first_trade"] = ledger.get("first_trade") or stamp
