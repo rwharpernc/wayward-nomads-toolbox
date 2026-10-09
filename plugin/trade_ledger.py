@@ -32,6 +32,8 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
+from .trade_blocks import Block, Heading, Note, Pair, to_text
+
 try:
     from config import appname
 except ImportError:  # unit tests outside EDMC
@@ -196,42 +198,45 @@ def commodity_profits(ledger: Dict[str, Any]) -> List[Tuple[str, int, int]]:
     return rows
 
 
-def _cost_lines(expenses: Dict[str, int]) -> List[str]:
+def _cost_pairs(expenses: Dict[str, int]) -> List[Block]:
     """'Fuel: -12,300 cr' (a negative cost, such as limpets sold back, reads '+500 cr')."""
-    return [f"{EXPENSE_LABELS[category]}: {-amount:+,} cr" for category, amount in expenses.items()]
+    return [Pair(EXPENSE_LABELS[category], f"{-amount:+,} cr") for category, amount in expenses.items()]
 
 
-def summary_lines(ledger: Optional[Dict[str, Any]]) -> List[str]:
-    """The Session page's text, one entry per line. With running costs it leads with the net figure
-    and then the trade profit and each cost; without any it is just the profit, as before."""
+def summary_blocks(ledger: Optional[Dict[str, Any]]) -> List[Block]:
+    """The Session page's top section. With running costs it leads with the net figure and then the trade profit
+    and each cost; without any it is just the profit."""
     expenses = expenses_by_category(ledger)
     has_trades = bool(ledger and ledger.get("rows"))
     if not has_trades and not expenses:
-        return ["No trades yet this session.", "Buy or sell at a market and they are counted here."]
+        return [Note("No trades yet this session."), Note("Buy or sell at a market and they are counted here.")]
     t = totals(ledger)
     if not has_trades:
-        return ["No trades yet this session.", *_cost_lines(expenses), f"Net: {t.net:+,} cr"]
+        return [Note("No trades yet this session."), *_cost_pairs(expenses), Pair("Net", f"{t.net:+,} cr", bold=True)]
     hours = hours_traded(ledger)
-    headline = f"Net profit: {t.net:+,} cr" if expenses else f"Profit: {t.profit:+,} cr"
+    value = f"{t.net:+,} cr" if expenses else f"{t.profit:+,} cr"
     if hours >= MIN_HOURS_FOR_RATE:
-        headline += f" ({t.net / hours:+,.0f} cr/hr)"
-    lines = [headline]
+        value += f" ({t.net / hours:+,.0f} cr/hr)"
+    blocks: List[Block] = [Pair("Net profit" if expenses else "Profit", value, bold=True)]
     if expenses:
-        lines.append(f"Trade profit: {t.profit:+,} cr")
-        lines.extend(_cost_lines(expenses))
-    lines += [
-        f"Bought {t.bought_t:,} t for {t.spent:,} cr",
-        f"Sold {t.sold_t:,} t for {t.revenue:,} cr",
-    ]
+        blocks.append(Pair("Trade profit", f"{t.profit:+,} cr"))
+        blocks.extend(_cost_pairs(expenses))
+    blocks.append(Pair("Bought", f"{t.bought_t:,} t for {t.spent:,} cr"))
+    blocks.append(Pair("Sold", f"{t.sold_t:,} t for {t.revenue:,} cr"))
     ranked = commodity_profits(ledger)
     if ranked:
-        lines.append("Best sales:")
+        blocks.append(Heading("Best sales", minor=True))
         for name, tonnes, profit in ranked[:TOP_ROWS_SHOWN]:
-            lines.append(f"  {name}: {profit:+,} cr on {tonnes:,} t")
+            blocks.append(Pair(name, f"{profit:+,} cr on {tonnes:,} t", indent=1))
         worst_name, worst_t, worst_profit = ranked[-1]
         if len(ranked) > TOP_ROWS_SHOWN and worst_profit < 0:
-            lines.append(f"Worst: {worst_name} {worst_profit:+,} cr on {worst_t:,} t")
-    return lines
+            blocks.append(Pair("Worst", f"{worst_name} {worst_profit:+,} cr on {worst_t:,} t"))
+    return blocks
+
+
+def summary_lines(ledger: Optional[Dict[str, Any]]) -> List[str]:
+    """`summary_blocks` as plain lines (for tests and logs)."""
+    return to_text(summary_blocks(ledger))
 
 
 # --- persistence --------------------------------------------------------------

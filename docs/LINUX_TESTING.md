@@ -141,6 +141,12 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
 - [ ] **Market**: click the Commodity box; a suggestion list appears **under the box and does not steal the
       keyboard** (this is a borderless window, so check it stacks above EDMC under your window manager). Typing
       narrows it; Up/Down/Enter/Esc work; clicking a name fills the box.
+- [ ] Layout: the Session, Routes and Market pages show orange section headings with a rule between them, values on the
+      right, and aligned number columns; long station names wrap instead of being cut off; nothing is clipped on the
+      right edge or makes the EDMC window wider. The buttons and (on Market) the Commodity box and **Sell** / **Buy**
+      are **above** the results.
+- [ ] Settings → Trade: untick **Search ground facilities** and **Search fleet carriers**; the results then show
+      orbital stations only, and a search makes one request instead of two.
 - [ ] The **Sell** / **Buy** buttons under the Commodity box: the chosen one is lit, switching clears the results,
       and the results heading says "Selling" or "Buying". All the page's buttons show their full labels (**Near me**,
       **Galaxy**, **Price finder**) with nothing cut off.

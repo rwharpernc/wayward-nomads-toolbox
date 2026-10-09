@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugin import mining_spansh_client as prices_client  # noqa: E402
 from plugin import trade_carrier as carrier  # noqa: E402
+from plugin.trade_blocks import Columns, Heading, Item, Note, Pair  # noqa: E402
 from plugin import trade_commodities as commodities  # noqa: E402
 from plugin import trade_prices as prices  # noqa: E402
 from plugin import trade_ship as ship  # noqa: E402
@@ -162,6 +163,66 @@ class BuySideTests(unittest.TestCase):
         self.assertIsNone(prices.carrier_note(dear, carriers, prices.BUY))
 
 
+class SearchRequestTests(unittest.TestCase):
+    """What is sent to Spansh, with the network replaced by a recorder."""
+
+    class _Response:
+        def __init__(self, payload: bytes) -> None:
+            self._payload = payload
+
+        def read(self) -> bytes:
+            return self._payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc) -> None:
+            return None
+
+    def _sent(self, **kwargs) -> dict:
+        from unittest import mock
+        captured = {}
+
+        def fake_urlopen(request, timeout=0):
+            captured["body"] = json.loads(request.data.decode("utf-8"))
+            return self._Response(b'{"results": []}')
+
+        with mock.patch.object(prices_client.urllib.request, "urlopen", fake_urlopen):
+            prices_client.search_best_price_stations("Sol", "Gold", "Buy", kwargs.pop("radius", None), **kwargs)
+        return captured["body"]
+
+    def test_station_types_become_a_type_filter(self) -> None:
+        body = self._sent(station_types=prices.CARRIER_TYPES)
+        self.assertEqual(body["filters"]["type"], {"value": ["Drake-Class Carrier"]})
+
+    def test_without_station_types_there_is_no_type_filter(self) -> None:
+        self.assertNotIn("type", self._sent()["filters"])
+
+    def test_no_radius_means_no_distance_filter_and_a_radius_adds_one(self) -> None:
+        self.assertNotIn("distance", self._sent()["filters"])
+        self.assertEqual(self._sent(radius=100.0)["filters"]["distance"], {"min": "0", "max": "100.0"})
+
+    def test_station_and_carrier_lists_do_not_overlap(self) -> None:
+        self.assertFalse(any("carrier" in t.lower() for t in prices.STATION_TYPES))
+        self.assertTrue(all("carrier" in t.lower() for t in prices.CARRIER_TYPES))
+
+
+class MergeResultsTests(unittest.TestCase):
+    def test_a_station_returned_by_both_searches_is_shown_once(self) -> None:
+        a, b = place("Port", 100, 10), place("Port", 100, 10)
+        other = place("Other", 90, 10)
+        self.assertEqual([r.station for r in prices.merge_results([a, other], [b])], ["Port", "Other"])
+
+    def test_same_name_in_another_system_is_a_different_station(self) -> None:
+        a, b = place("Port", 100, 10), place("Port", 100, 10)
+        b.system = "Elsewhere"
+        self.assertEqual(len(prices.merge_results([a], [b])), 2)
+
+    def test_names_are_matched_ignoring_case(self) -> None:
+        a, b = place("PORT", 100, 10), place("port", 100, 10)
+        self.assertEqual(len(prices.merge_results([a], [b])), 1)
+
+
 class WhereTests(unittest.TestCase):
     def _offer(self, **kwargs) -> prices.Offer:
         return prices.rank_offers([place("S", 1_000, 100, **kwargs)], 10)[0]
@@ -210,10 +271,11 @@ class CarrierCargoTests(unittest.TestCase):
         self.assertEqual((record["capacity"], record["cargo"], record["reserved"], record["free"]),
                          (18_000, 4_000, 500, 13_500))
         self.assertEqual((record["type"], record["id"]), (FLEET, 111))
-        lines = carrier.cargo_lines({FLEET: record})
-        self.assertEqual(lines[0], "Fleet carrier: Wayward Hauler")
-        self.assertIn("4,000/18,000 t used, 13,500 t free", lines[1])
-        self.assertIn("500 t reserved", lines[2])
+        blocks = carrier.cargo_blocks({FLEET: record})
+        self.assertEqual(blocks[0], Heading("Fleet carrier: Wayward Hauler"))
+        self.assertIn(Pair("Cargo used", "4,000 / 18,000 t"), blocks)
+        self.assertIn(Pair("Free", "13,500 t", bold=True), blocks)
+        self.assertIn(Pair("Reserved for trade orders", "500 t"), blocks)
 
     def test_free_space_is_worked_out_when_the_journal_omits_it(self) -> None:
         event = stats_event()
@@ -276,10 +338,12 @@ class CarrierChoiceTests(unittest.TestCase):
         self.assertEqual(carrier.cargo_lines(records, carrier.NONE), [])
 
     def test_a_chosen_carrier_not_yet_seen_asks_for_a_visit(self) -> None:
-        lines = carrier.cargo_lines({FLEET: carrier.parse_stats(stats_event())}, carrier.BOTH)
-        self.assertEqual([l for l in lines if "carrier" in l.lower() and not l.startswith(" ")],
+        blocks = carrier.cargo_blocks({FLEET: carrier.parse_stats(stats_event())}, carrier.BOTH)
+        self.assertEqual([b.text for b in blocks if isinstance(b, Heading)],
                          ["Fleet carrier: Wayward Hauler", "Squadron carrier"])
-        self.assertIn("Carrier Management", lines[-1])
+        self.assertIsInstance(blocks[-1], Note)
+        self.assertIn("Carrier Management", blocks[-1].text)
+        self.assertTrue(blocks[-1].warn)
 
     def test_both_carriers_are_listed_separately(self) -> None:
         records = {FLEET: carrier.parse_stats(stats_event(FLEET, 1_000, name="Fleety")),
@@ -287,8 +351,9 @@ class CarrierChoiceTests(unittest.TestCase):
         text = "\n".join(carrier.cargo_lines(records))
         self.assertIn("Fleet carrier: Fleety", text)
         self.assertIn("Squadron carrier: Squaddy", text)
-        self.assertIn("1,000/18,000", text)
-        self.assertIn("2,000/18,000", text)
+        self.assertIn("1,000 / 18,000", text)
+        self.assertIn("2,000 / 18,000", text)
+
 
 
 class CarrierTrackerTests(unittest.TestCase):

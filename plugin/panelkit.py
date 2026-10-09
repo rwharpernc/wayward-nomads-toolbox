@@ -22,7 +22,7 @@ import logging
 import os
 import tkinter as tk
 import tkinter.font as tkfont
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from config import appname, config
 from theme import theme
@@ -70,6 +70,34 @@ def bold_font(_widget: tk.Widget) -> tuple:
         return (base.actual("family"), base.actual("size"), "bold")
     except tk.TclError:
         return ("TkDefaultFont", 9, "bold")
+
+
+_view_fonts: "Dict[str, tkfont.Font] | None" = None
+
+
+def view_fonts() -> "Dict[str, tkfont.Font]":
+    """Fonts for Trade mode's page (trade_view.py), made once from EDMC's default UI font: normal, bold, a size
+    smaller for detail lines, and that small size in bold for column headings."""
+    global _view_fonts
+    if _view_fonts is None:
+        try:
+            base = tkfont.nametofont("TkDefaultFont")
+            family, size = base.actual("family"), int(base.actual("size")) or 9
+        except tk.TclError:
+            family, size = "TkDefaultFont", 9
+        small = size - 1 if size > 0 else size + 1   # a negative size is in pixels, so "smaller" runs the other way
+        _view_fonts = {
+            "normal": tkfont.Font(family=family, size=size),
+            "bold": tkfont.Font(family=family, size=size, weight="bold"),
+            "small": tkfont.Font(family=family, size=small),
+            "small_bold": tkfont.Font(family=family, size=small, weight="bold"),
+        }
+    return _view_fonts
+
+
+def separator_colour() -> str:
+    """The rule colour `add_separator` uses, for rules drawn elsewhere."""
+    return _SEPARATOR_DARK if is_dark_theme() else _SEPARATOR_LIGHT
 
 
 NAV_ARROW_COLOR = "#ff8c0d"  # Elite orange

@@ -17,6 +17,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugin import trade_stock as stock  # noqa: E402
+from plugin.trade_blocks import Columns, Heading, Item, Note, Pair  # noqa: E402
 
 
 def buy(name: str, count: int, total: int, stamp: str = "2026-10-09T10:00:00Z", raw: str = "") -> dict:
@@ -113,23 +114,28 @@ class StockLinesTests(unittest.TestCase):
     def test_nothing_unsold_means_no_lines(self) -> None:
         self.assertEqual(stock.stock_lines([], {}), [])
 
-    def test_lines_say_how_much_is_aboard_and_how_much_is_elsewhere(self) -> None:
+    def test_rows_say_how_much_is_aboard_and_how_much_is_elsewhere(self) -> None:
         holding = stock.Holding("superconductors", "Superconductors", 6_325, 35_767_875)
-        lines = stock.stock_lines([holding], {"superconductors": 1_265})
-        self.assertEqual(lines[0], "Stock bought, not yet sold: 6,325 t, 35,767,875 cr")
-        self.assertIn("6,325 t @ 5,655 avg (1,265 aboard, 5,060 elsewhere)", lines[1])
+        blocks = stock.stock_blocks([holding], {"superconductors": 1_265})
+        self.assertEqual(blocks[0], Heading("Stock bought, not yet sold"))
+        self.assertEqual(blocks[1], Pair("Total", "6,325 t, 35,767,875 cr", bold=True))
+        self.assertEqual(blocks[2], Columns(("Held", "Avg cost")))
+        self.assertEqual(blocks[3], Item("Superconductors", ("6,325 t", "5,655"),
+                                         detail="1,265 t aboard, 5,060 t elsewhere"))
 
     def test_all_aboard_or_all_elsewhere(self) -> None:
         holding = stock.Holding("gold", "Gold", 10, 100)
-        self.assertIn("(10 aboard)", stock.stock_lines([holding], {"gold": 50})[1])
-        self.assertIn("(10 elsewhere)", stock.stock_lines([holding], {})[1])
+        self.assertEqual(stock.stock_blocks([holding], {"gold": 50})[-1].detail, "10 t aboard")
+        self.assertEqual(stock.stock_blocks([holding], {})[-1].detail, "10 t elsewhere")
 
     def test_the_list_is_capped_and_names_can_be_replaced(self) -> None:
         many = [stock.Holding(f"c{i}", f"C{i}", 1, 100 - i) for i in range(6)]
-        lines = stock.stock_lines(many, {}, name_of=lambda h: h.name.lower())
-        self.assertEqual(len(lines), 1 + stock.SHOWN + 1)
-        self.assertIn("  c0:", lines[1])
-        self.assertEqual(lines[-1], "  +2 more")
+        blocks = stock.stock_blocks(many, {}, name_of=lambda h: h.name.lower())
+        items = [b for b in blocks if isinstance(b, Item)]
+        self.assertEqual(len(items), stock.SHOWN)
+        self.assertEqual(items[0].title, "c0")
+        self.assertEqual(blocks[-1], Note("+2 more"))
+
 
 
 class BackfillAndSaveTests(unittest.TestCase):

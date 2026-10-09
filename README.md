@@ -243,7 +243,7 @@ feature that contacts an outside site, so you can decide what you're comfortable
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons; some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings |
-| Trade lookups (best routes, best sell price) | Spansh | **Off** until you turn them on in Settings. Only when you press **Find routes** (it then checks for the answer every 5 seconds, for up to 4 minutes, until you press **Cancel**) or **Near me** / **Galaxy** (one request each) |
+| Trade lookups (best routes, best sell price) | Spansh | **Off** until you turn them on in Settings. Only when you press **Find routes** (it then checks for the answer every 5 seconds, for up to 4 minutes, until you press **Cancel**) or **Near me** / **Galaxy** (two requests each: stations, then fleet carriers; one if you hide carriers) |
 | BGS tick detection | A community tick-time service | Every 60 seconds while BGS is on; can be turned off in Settings |
 | Automatic updates | GitHub | **Off** by default |
 
@@ -497,6 +497,10 @@ Everything about buying and selling: what you've made this session, your ship's 
 where to find the best routes and prices. Use the **◀** and **▶** buttons at the top of the panel to move
 between its three pages.
 
+The buttons for each page sit at the top, under the page arrows, and the page itself is laid out in sections
+(orange headings, with a rule between them): label-and-value rows with the value on the right, and tables where the
+numbers line up in columns. Long station names wrap instead of being cut off.
+
 ### Session (works offline)
 
 Reads your journal only; nothing is sent anywhere. It shows:
@@ -557,8 +561,11 @@ Finds where to **sell** or where to **buy** a commodity.
 6. Every result says what kind of place it is: **orbital** or **ground** (on a planet's surface), the station
    type (Coriolis Starport, Planetary Outpost and so on), and how far it is from the arrival star in light
    seconds. Stations with no landing pad your ship fits are left out.
-7. **Fleet carriers are listed in their own section**, marked "they can move", because a carrier can jump away
-   before you arrive. A line says when a carrier would beat the best station. You can hide carriers in
+7. **Fleet carriers and ground facilities can be left out.** **Fleet carriers are listed in their own section**, marked "they can move", because a carrier can jump away
+   before you arrive. They are asked for separately and weighted about one carrier to every three stations, so
+   cheap carriers never crowd the real stations out of the list. Under **Settings → WNTB → Trade** you can stop
+   searching for fleet carriers, for **ground facilities** (planetary ports and outposts, and settlements), or
+   both, which leaves only stations in space. A line says when a carrier would beat the best station. You can hide carriers in
    Settings.
 
 **Price finder** opens the finder Mining's **PRICE** button also uses, for any commodity, to buy or sell, with
@@ -588,8 +595,8 @@ How it stays up to date:
 ### Trade settings
 
 **Settings → WNTB → Trade**: *Enable Spansh trade lookups* (off until you tick it), the number of route hops,
-the furthest a station may be from its star, a jump-range override, the "near me" radius, whether to show fleet
-carriers in price results, your ship size (read from your ship by default; pick a size only if it guesses
+the furthest a station may be from its star, a jump-range override, the "near me" radius, whether to search fleet
+carriers and ground facilities in price results, your ship size (read from your ship by default; pick a size only if it guesses
 wrong) and the carrier choice for each commander. See [What goes on the internet](#what-goes-on-the-internet)
 for exactly what is contacted.
 

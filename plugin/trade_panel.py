@@ -45,6 +45,8 @@ from . import trade_prices
 from . import trade_ship
 from . import trade_spansh_client as spansh_routes
 from . import trade_stock
+from .trade_blocks import Block, Columns, Heading, Item, Note, Pair
+from .trade_view import BlockView
 from .trade_commodity_entry import CommodityEntry
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -60,6 +62,7 @@ _CFG_JUMP_RANGE = "wntb_trade_jump_range_override"
 _CFG_CURRENT_PAGE = "wntb_trade_current_page"
 _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
 _CFG_CARRIERS = "wntb_trade_include_carriers"
+_CFG_GROUND = "wntb_trade_include_ground"  # ground (planetary) facilities in price results
 _CFG_MARKET_SIDE = "wntb_trade_market_side"  # "sell" or "buy": which side of the market the search is for
 _CFG_COMMANDERS = "wntb_trade_commanders"  # commanders seen, "|"-separated
 _CFG_SHIP_PAD = "wntb_trade_ship_pad_override"  # "" = work it out from the ship
@@ -70,11 +73,16 @@ _FALLBACK_JUMP_RANGE_LY = 30.0
 _DEFAULT_NEAR_RADIUS_LY = 100
 _SELL_FETCH = 20   # stations asked for; ranked for your load, then the top few shown
 _SELL_FETCH_PAD_FILTERED = 40  # pads are filtered after the search, so ask for more
+# Fleet carriers are asked for separately, so they can't crowd stations out, and weighted 75% stations to
+# 25% carriers: a third as many carriers are fetched as stations, and one carrier is shown for every three stations.
+_CARRIER_FETCH_DIVISOR = 3
+_CARRIER_FETCH_MIN = 5
 _SELL_SHOWN = 3
-_CARRIERS_SHOWN = 2
+_OFFER_COLUMNS = ("cr/t", "Total", "ly")
+_CARRIERS_SHOWN = 1   # with _SELL_SHOWN = 3 stations: 75% stations, 25% carriers
 _ROUTES_SHOWN = 4  # hops
 _CARGO_LINES = 4
-_NAME_MAX = 34  # clip station / system / commodity names; the body also wraps to the panel width
+_NAME_MAX = 64  # a safety bound on station / system / commodity names; the view wraps anything long
 _PERSIST_EVERY_S = 30.0
 _POLL_MS = 500
 
@@ -160,13 +168,14 @@ class TradePanelController:
         self._names: Dict[str, str] = {}  # canonical commodity name -> the game's display name
 
         # Lookup results (text lines kept until the next search) and the running job.
-        self._route_lines: List[str] = []
+        self._route_blocks: List[Block] = []
         self._next_system: Optional[str] = None
         self._sell: Dict[str, List[trade_prices.Offer]] = {}   # scope ("near" / "galaxy") -> ranked offers
         self._sell_for: Optional[tuple] = None                  # (commodity, tonnes, pad, side) those offers were ranked for
         side = (config.get_str(_CFG_MARKET_SIDE) or trade_prices.SELL).lower()
         self._side = side if side in (trade_prices.SELL, trade_prices.BUY) else trade_prices.SELL
         self._sell_error: Optional[str] = None
+        self._pad_dropped: Dict[str, int] = {}                  # scope -> stations left out for pad size
         self._job: Optional[_Job] = None
 
         self._page = config.get_str(_CFG_CURRENT_PAGE) or trade_pages.PAGE_ORDER[0]
@@ -176,7 +185,7 @@ class TradePanelController:
         # Widgets
         self._parent: Optional[tk.Frame] = None
         self._page_label: Optional[tk.Label] = None
-        self._body: Optional[tk.Label] = None
+        self._view: Optional[BlockView] = None
         self._button_a: Optional[tk.Button] = None
         self._button_b: Optional[tk.Button] = None
         self._button_c: Optional[tk.Button] = None
@@ -194,6 +203,7 @@ class TradePanelController:
         self._range_var: Optional[tk.StringVar] = None
         self._near_var: Optional[tk.StringVar] = None
         self._carriers_var: Optional[tk.BooleanVar] = None
+        self._ground_var: Optional[tk.BooleanVar] = None
         self._carrier_mode_vars: Dict[str, tk.StringVar] = {}  # commander -> their carrier choice
         self._pad_override_var: Optional[tk.StringVar] = None
 
@@ -356,11 +366,11 @@ class TradePanelController:
         self._page_label = tk.Label(nav, anchor=tk.CENTER)
         self._page_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        self._body = panelkit.wrap_label(parent, text="", anchor="w")
-        self._body.grid(row=1, column=0, columnspan=3, sticky="w", pady=(2, 2))
+        self._view = BlockView(parent)
+        self._view.grid(row=4, column=0, columnspan=3, sticky="ew", pady=(4, 2))
 
         self._search_row = tk.Frame(parent)
-        self._search_row.grid(row=2, column=0, columnspan=3, sticky="w", pady=(0, 2))
+        self._search_row.grid(row=1, column=0, columnspan=3, sticky="w", pady=(2, 2))
         tk.Label(self._search_row, text="Commodity:").pack(side=tk.LEFT, padx=(0, 4))
         self._commodity_entry = CommodityEntry(self._search_row, self._preferred_commodities,
                                                on_submit=lambda: self._find_prices("near"))
@@ -369,7 +379,7 @@ class TradePanelController:
         # Which side of the market the search is for. Two toggle buttons (the same on/off look as the mode
         # buttons) rather than radio buttons, which EDMC's theme doesn't colour reliably.
         self._side_row = tk.Frame(parent)
-        self._side_row.grid(row=3, column=0, columnspan=3, sticky="w", pady=(0, 2))
+        self._side_row.grid(row=2, column=0, columnspan=3, sticky="w", pady=(0, 2))
         tk.Label(self._side_row, text="I want to:").pack(side=tk.LEFT, padx=(0, 4))
         for value, text in ((trade_prices.SELL, "Sell"), (trade_prices.BUY, "Buy")):
             button = tk.Button(self._side_row, text=text, command=lambda v=value: self._set_side(v))
@@ -379,7 +389,7 @@ class TradePanelController:
         self._paint_side_buttons()
 
         buttons = tk.Frame(parent)
-        buttons.grid(row=4, column=0, columnspan=3, sticky="w")
+        buttons.grid(row=3, column=0, columnspan=3, sticky="w")
         self._button_a = tk.Button(buttons, text="")
         self._button_a.pack(side=tk.LEFT)
         self._button_b = tk.Button(buttons, text="")
@@ -414,30 +424,30 @@ class TradePanelController:
     # --- rendering ----------------------------------------------------------------
 
     def _refresh(self) -> None:
-        if not self._alive() or self._body is None or self._page_label is None:
+        if not self._alive() or self._view is None or self._page_label is None:
             return
         index = trade_pages.PAGE_ORDER.index(self._page) + 1
         self._page_label.configure(text=f"{self._page} ({index}/{len(trade_pages.PAGE_ORDER)})")
         busy = self._job is not None and not self._job.done
         if self._page == trade_pages.SESSION:
-            lines = self._session_lines()
+            blocks = self._session_blocks()
             self._set_buttons(("Reset", self._reset_ledger, True),
                               ("Clear stock", self._clear_stock, bool(self._stock.holdings(self._cmdr))), None)
         elif self._page == trade_pages.ROUTES:
-            lines = self._routes_lines(busy)
+            blocks = self._routes_blocks(busy)
             self._set_buttons(
                 ("Cancel" if busy else "Find routes", self._cancel_job if busy else self._find_routes,
                  busy or lookups_enabled()),
                 ("Copy next system", self._copy_next_system, bool(self._next_system) and not busy), None)
         else:
-            lines = self._market_lines(busy)
+            blocks = self._market_blocks(busy)
             can_search = lookups_enabled() and not busy
             self._set_buttons(
                 ("Cancel" if busy else "Near me", self._cancel_job if busy else lambda: self._find_prices("near"),
                  busy or can_search),
                 ("Galaxy", lambda: self._find_prices("galaxy"), can_search),
                 ("Price finder", self._open_price_finder, lookups_enabled() and not busy))
-        self._body.configure(text="\n".join(lines))
+        self._view.show(blocks)
         for row in (self._search_row, self._side_row):
             if row is not None:
                 if self._page == trade_pages.MARKET and lookups_enabled():
@@ -458,21 +468,16 @@ class TradePanelController:
             button.configure(text=text, command=command, state=tk.NORMAL if enabled else tk.DISABLED)
             button.pack(side=tk.LEFT, padx=padx)
 
-    def _session_lines(self) -> List[str]:
-        lines = ledger_mod.summary_lines(self._ledger)
+    def _session_blocks(self) -> List[Block]:
         in_hold = {market_mod.canonical_name(name): tonnes for name, tonnes in self._cargo.items()}
-        stock = trade_stock.stock_lines(self._stock.holdings(self._cmdr), in_hold,
-                                        name_of=lambda holding: _clip(self._display(holding.key)))
-        if stock:
-            lines.extend(stock)
-        lines.append("")
-        lines.extend(self._hold_lines())
-        carrier = trade_carrier.cargo_lines(self._carrier.records.get(trade_carrier.key_for(self._cmdr)),
-                                          self._carrier_mode(self._cmdr))
-        if carrier:
-            lines.append("")
-            lines.extend(carrier)
-        return lines
+        blocks: List[Block] = [Heading("This session")]
+        blocks += ledger_mod.summary_blocks(self._ledger)
+        blocks += trade_stock.stock_blocks(self._stock.holdings(self._cmdr), in_hold,
+                                           name_of=lambda holding: _clip(self._display(holding.key)))
+        blocks += self._hold_blocks()
+        blocks += trade_carrier.cargo_blocks(self._carrier.records.get(trade_carrier.key_for(self._cmdr)),
+                                             self._carrier_mode(self._cmdr))
+        return blocks
 
     def _display(self, name: str) -> str:
         """The game's name for a cargo item: learned from market events, else the shared name table."""
@@ -486,30 +491,35 @@ class TradePanelController:
             return override
         return trade_ship.pad_size(self._ship)
 
-    def _ship_line(self) -> str:
-        name = trade_ship.ship_display_name(self._ship) if self._ship else "Ship unknown"
-        return f"Ship: {_clip(name)} ({trade_ship.label(self._ship_pad())})"
+    def _ship_pairs(self) -> List[Block]:
+        name = trade_ship.ship_display_name(self._ship) if self._ship else "Unknown"
+        pad = self._ship_pad()
+        return [Pair("Ship", _clip(name)), Pair("Landing pad", pad.capitalize() if pad else "Unknown")]
 
-    def _hold_lines(self) -> List[str]:
+    def _hold_blocks(self) -> List[Block]:
         used = sum(self._cargo.values())
+        blocks: List[Block] = [Heading("Ship and hold"), *self._ship_pairs()]
         if not self._capacity and not used:
-            return [self._ship_line(), "Hold: empty"]
-        head = (f"Hold: {used:,}/{self._capacity:,} t ({max(0, self._capacity - used):,} free)"
-                if self._capacity else f"Hold: {used:,} t")
+            return blocks + [Pair("Hold", "empty")]
+        blocks.append(Pair("Hold", f"{used:,} / {self._capacity:,} t ({max(0, self._capacity - used):,} free)"
+                           if self._capacity else f"{used:,} t", bold=True))
         value = market_mod.cargo_value(self._cargo, self._market) if self._market else None
         if value is not None:
-            head += f" - worth {value:,} cr at {_clip(self._market_station or 'this station')}"
-        lines = [self._ship_line(), head]
-        for name, tonnes in sorted(self._cargo.items(), key=lambda item: -item[1])[:_CARGO_LINES]:
-            item = self._market.get(market_mod.canonical_name(name))
-            price = f" @ {item.sell_price:,} cr" if item and item.sell_price > 0 else ""
-            lines.append(f"  {_clip(self._display(name))}: {tonnes:,} t{price}")
-        if len(self._cargo) > _CARGO_LINES:
-            lines.append(f"  +{len(self._cargo) - _CARGO_LINES} more")
-        return lines
+            blocks.append(Pair(f"Worth at {_clip(self._market_station or 'this station', 22)}", f"{value:,} cr"))
+        if self._cargo:
+            blocks.append(Columns(("Held", "Sells here")))
+            for name, tonnes in sorted(self._cargo.items(), key=lambda item: -item[1])[:_CARGO_LINES]:
+                market_item = self._market.get(market_mod.canonical_name(name))
+                price = f"{market_item.sell_price:,} cr" if market_item and market_item.sell_price > 0 else ""
+                blocks.append(Item(_clip(self._display(name)), (f"{tonnes:,} t", price)))
+            if len(self._cargo) > _CARGO_LINES:
+                blocks.append(Note(f"+{len(self._cargo) - _CARGO_LINES} more"))
+        return blocks
 
-    def _lookups_off_lines(self) -> List[str]:
-        return ["Spansh lookups are off.", "Turn them on in Settings > WNTB > Trade."]
+    @staticmethod
+    def _lookups_off_blocks(title: str) -> List[Block]:
+        return [Heading(title), Note("Spansh lookups are off.", warn=True),
+                Note("Turn them on in Settings > WNTB > Trade.")]
 
     def _route_start(self) -> Optional[tuple[str, str]]:
         """(system, station) a route starts from: where we are docked, else the last place we docked."""
@@ -528,21 +538,22 @@ class TradePanelController:
             pass
         return self._jump_range or _FALLBACK_JUMP_RANGE_LY
 
-    def _routes_lines(self, busy: bool) -> List[str]:
+    def _routes_blocks(self, busy: bool) -> List[Block]:
         if not lookups_enabled():
-            return self._lookups_off_lines()
+            return self._lookups_off_blocks("Routes")
         if busy and self._job is not None:
-            return [f"Asking Spansh for routes... {int(time.monotonic() - self._job.started)} s",
-                    "This can take a minute or two."]
-        if self._route_lines:
-            return self._route_lines
+            return [Heading("Routes"), Note(f"Asking Spansh for routes... {int(time.monotonic() - self._job.started)} s"),
+                    Note("This can take a minute or two.")]
+        if self._route_blocks:
+            return self._route_blocks
         start = self._route_start()
         if start is None:
-            return ["Dock at a station once so WNTB knows where to start,", "then press Find routes."]
-        return [f"Start: {_clip(start[1])} ({_clip(start[0])})", self._ship_line(),
-                f"Cargo {self._capacity or '?'} t, jump range {self._jump_range_ly():g} ly",
-                f"Budget {self._credits:,} cr" if self._credits else "Budget: unknown",
-                "Press Find routes."]
+            return [Heading("Routes"),
+                    Note("Dock at a station once so WNTB knows where to start, then press Find routes.")]
+        return [Heading("Next route"), Pair("Start", f"{_clip(start[1])} ({_clip(start[0])})"), *self._ship_pairs(),
+                Pair("Cargo", f"{self._capacity or '?'} t"), Pair("Jump range", f"{self._jump_range_ly():g} ly"),
+                Pair("Budget", f"{self._credits:,} cr" if self._credits else "unknown"),
+                Note("Press Find routes.")]
 
     def _set_side(self, side: str) -> None:
         """Switch between looking for a place to sell and a place to buy. The results shown belong to one side,
@@ -551,7 +562,7 @@ class TradePanelController:
             return
         self._side = side
         config.set(_CFG_MARKET_SIDE, side)
-        self._sell, self._sell_for, self._sell_error = {}, None, None
+        self._sell, self._sell_for, self._sell_error, self._pad_dropped = {}, None, None, {}
         self._paint_side_buttons()
         self._refresh()
 
@@ -561,30 +572,28 @@ class TradePanelController:
         for value, button in self._side_buttons.items():
             panelkit.apply_toggle_button_state(button, value == self._side, self._side_off_colors)
 
-    def _market_lines(self, busy: bool) -> List[str]:
+    def _market_blocks(self, busy: bool) -> List[Block]:
         if not lookups_enabled():
-            return self._lookups_off_lines()
+            return self._lookups_off_blocks("Market")
         if busy and self._job is not None:
-            return [f"Asking Spansh... {int(time.monotonic() - self._job.started)} s"]
+            return [Heading("Market"), Note(f"Asking Spansh... {int(time.monotonic() - self._job.started)} s")]
         if self._sell_error:
-            return [self._sell_error]
+            return [Heading("Market"), Note(self._sell_error, warn=True)]
         if self._sell and self._sell_for:
-            return self._price_result_lines()
+            return self._price_result_blocks()
         buying = self._side == trade_prices.BUY
         target = self._search_target()
-        lines = [self._ship_line()]
+        blocks: List[Block] = [Heading("Market search"), *self._ship_pairs(),
+                               Pair("Looking to", "buy" if buying else "sell", bold=True)]
         if target is None:
-            lines += (["Type the commodity you want to buy above", "(suggestions appear as you type)."] if buying else
-                      ["Type a commodity above (suggestions appear as you type),",
-                       "or load cargo and it is searched for you."])
+            blocks.append(Note("Type the commodity you want to buy above (suggestions appear as you type)." if buying else
+                               "Type a commodity above (suggestions appear as you type), or load cargo and it is "
+                               "searched for you."))
         else:
             name, tonnes, _known = target
-            lines.append(f"Will search: {_clip(name)} ({tonnes:,} t{', your free hold space' if buying else ''})")
-        if buying:
-            lines += [f"Near me: cheapest place to buy within {self._near_radius()} ly.", "Galaxy: cheapest place to buy anywhere."]
-        else:
-            lines += [f"Near me: best sale within {self._near_radius()} ly.", "Galaxy: best sale anywhere."]
-        return lines
+            blocks += [Pair("Commodity", _clip(name)),
+                       Pair("Amount", f"{tonnes:,} t" + (" (your free hold space)" if buying else ""))]
+        return blocks + [Pair("Near me", f"within {self._near_radius()} ly"), Pair("Galaxy", "anywhere")]
 
     def _carried(self) -> Dict[str, int]:
         """Cargo by the name Spansh knows (falls back to the game's name for anything unlisted)."""
@@ -624,47 +633,55 @@ class TradePanelController:
     def _near_radius(self) -> int:
         return _cfg_int(_CFG_NEAR_RADIUS, _DEFAULT_NEAR_RADIUS_LY, 1, 100_000)
 
-    def _price_result_lines(self) -> List[str]:
+    def _price_result_blocks(self) -> List[Block]:
         commodity, tonnes, pad, side = self._sell_for  # type: ignore[misc]
         buying = side == trade_prices.BUY
-        lines = [f"{'Buying' if buying else 'Selling'} {tonnes:,} t {_clip(commodity)} ({trade_ship.label(pad)}):"]
+        blocks: List[Block] = [Heading(f"{'Buying' if buying else 'Selling'} {_clip(commodity)}"),
+                               Pair("Amount", f"{tonnes:,} t · {pad} pad" if pad else f"{tonnes:,} t")]
+        if buying:
+            blocks.append(Note("Stations that can supply all of it come first, cheapest first."))
         stations_by_scope: Dict[str, List[trade_prices.Offer]] = {}
         carriers_by_scope: Dict[str, List[trade_prices.Offer]] = {}
-        for scope, title in (("near", f"Near me (within {self._near_radius()} ly)"), ("galaxy", "Anywhere in the galaxy")):
+        for scope, title in (("near", f"Near me, within {self._near_radius()} ly"), ("galaxy", "Anywhere in the galaxy")):
             if scope not in self._sell:
                 continue
             stations, carriers = trade_prices.split_carriers(self._sell[scope])
             stations_by_scope[scope], carriers_by_scope[scope] = stations, carriers
-            lines.append(title + ":")
-            if not stations:
-                lines.append(f"    no station {'sells' if buying else 'wants'} it right now"
-                             + (" that you can dock at" if pad else ""))
-            for offer in stations[:_SELL_SHOWN]:
-                lines += self._offer_lines(offer, tonnes)
+            blocks.append(Heading(title))
+            if stations:
+                blocks.append(Columns(_OFFER_COLUMNS))
+                blocks += [self._offer_item(offer, tonnes) for offer in stations[:_SELL_SHOWN]]
+            else:
+                dropped = self._pad_dropped.get(scope, 0)
+                blocks.append(Note(f"No station {'sells' if buying else 'wants'} it right now"
+                                   + (f" that you can dock at ({dropped} too small for a {pad} pad were left out)"
+                                      if pad and dropped else "") + "."))
             if carriers:
-                lines.append("  Fleet carriers (they can move):")
-                for offer in carriers[:_CARRIERS_SHOWN]:
-                    lines += self._offer_lines(offer, tonnes, indent="  ")
+                blocks.append(Heading("Fleet carriers (they can move)", minor=True))
+                blocks.append(Columns(_OFFER_COLUMNS))
+                blocks += [self._offer_item(offer, tonnes) for offer in carriers[:_CARRIERS_SHOWN]]
         verdict = trade_prices.verdict(stations_by_scope.get("near", []), stations_by_scope.get("galaxy", []), side)
         if verdict:
-            lines.append(verdict)
+            blocks.append(Note(verdict, strong=True))
         rank = (lambda o: o.price) if buying else (lambda o: -o.revenue)
         best_station = sorted((o for v in stations_by_scope.values() for o in v), key=rank)
         best_carrier = sorted((o for v in carriers_by_scope.values() for o in v), key=rank)
         note = trade_prices.carrier_note(best_station, best_carrier, side)
         if note:
-            lines.append(note)
-        return lines
+            blocks.append(Note(note, warn=True))
+        return blocks
 
     @staticmethod
-    def _offer_lines(offer: trade_prices.Offer, tonnes: int, indent: str = "") -> List[str]:
-        """Two lines per offer: the station, then price, total, distance and what kind of place it is (orbital
-        or on the ground, its type, and how far from the star)."""
-        short = (f", only {offer.sellable_t:,} t in stock" if offer.side == trade_prices.BUY
-                 else f", only {offer.sellable_t:,} t wanted") if offer.sellable_t < tonnes else ""
-        return [f"{indent}  {_clip(offer.station)} ({_clip(offer.system)})",
-                f"{indent}    {offer.price:,} cr/t = {offer.revenue:,} cr, {offer.distance_ly:.1f} ly, "
-                f"{_clip(trade_prices.describe_place(offer), 40)}{short}"]
+    def _offer_item(offer: trade_prices.Offer, tonnes: int) -> Item:
+        """One result: the station and its three numbers (price per tonne, total, distance), then the system and
+        what kind of place it is (orbital or ground, its type, how far from the star), then any shortfall: the
+        station has (buying) or wants (selling) less than the amount you asked about."""
+        short = ""
+        if offer.sellable_t < tonnes:
+            short = (f"Only {offer.sellable_t:,} t in stock" if offer.side == trade_prices.BUY
+                     else f"Only {offer.sellable_t:,} t wanted")
+        return Item(_clip(offer.station), (f"{offer.price:,}", f"{offer.revenue:,}", f"{offer.distance_ly:.1f}"),
+                    detail=f"{_clip(offer.system)} · {trade_prices.describe_place(offer)}", warn=short)
 
     # --- actions ------------------------------------------------------------------------
 
@@ -698,7 +715,7 @@ class TradePanelController:
             return
         start = self._route_start()
         if start is None:
-            self._route_lines = ["Dock at a station once so WNTB knows where to start."]
+            self._route_blocks = [Heading("Routes"), Note("Dock at a station once so WNTB knows where to start.", warn=True)]
             self._refresh()
             return
         query = spansh_routes.RouteQuery(
@@ -708,7 +725,7 @@ class TradePanelController:
             max_arrival_ls=_cfg_int(_CFG_MAX_ARRIVAL_LS, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000),
             requires_large_pad=config.get_bool(_CFG_LARGE_PAD, default=False) or self._ship_pad() == trade_ship.LARGE,
         )
-        self._route_lines, self._next_system = [], None
+        self._route_blocks, self._next_system = [], None
         self._start_job("routes", lambda cancel: spansh_routes.search_routes(query, cancel))
 
     def _find_prices(self, scope: str) -> None:
@@ -725,15 +742,26 @@ class TradePanelController:
         system = self._system
         radius = float(self._near_radius()) if scope == "near" else None
         carriers = config.get_bool(_CFG_CARRIERS, default=True)
+        ground = config.get_bool(_CFG_GROUND, default=True)
         pad = self._ship_pad()
         side = self._side
         fetch = _SELL_FETCH_PAD_FILTERED if pad else _SELL_FETCH
 
         def work(_cancel: threading.Event) -> Any:
+            transaction = "Buy" if side == trade_prices.BUY else "Sell"
+            # Stations and carriers are asked for separately: carriers are priced very differently, and in one
+            # price-sorted list they filled the whole first page, leaving no real station to show.
             found = spansh_prices.search_best_price_stations(
-                system, display, "Buy" if side == trade_prices.BUY else "Sell", radius, max_results=fetch)
-            ranked = trade_prices.rank_offers(found, tonnes, include_carriers=carriers, ship_pad=pad, side=side)
-            return scope, (display, tonnes, pad, side), ranked, bool(found)
+                system, display, transaction, radius, max_results=fetch, station_types=trade_prices.station_types(ground))
+            carrier_found = (spansh_prices.search_best_price_stations(
+                system, display, transaction, radius, max_results=max(_CARRIER_FETCH_MIN, fetch // _CARRIER_FETCH_DIVISOR),
+                station_types=trade_prices.CARRIER_TYPES) if carriers else [])
+            ranked = trade_prices.rank_offers(trade_prices.merge_results(found, carrier_found), tonnes,
+                                              include_carriers=carriers, ship_pad=pad, side=side, include_ground=ground)
+            unfiltered = trade_prices.rank_offers(found, tonnes, include_carriers=False, side=side,
+                                                  include_ground=ground)
+            dropped = len(unfiltered) - len(trade_prices.split_carriers(ranked)[0]) if pad else 0
+            return scope, (display, tonnes, pad, side), ranked, bool(found or carrier_found), dropped
 
         self._sell_error = None
         if self._sell_for != (display, tonnes, pad, side):
@@ -763,34 +791,38 @@ class TradePanelController:
 
     def _finish_routes(self, job: _Job) -> None:
         if job.error:
-            self._route_lines = [job.error]
+            self._route_blocks = [Heading("Routes"), Note(job.error, warn=True)]
             return
         hops: List[spansh_routes.Hop] = job.result or []
         if not hops:
-            self._route_lines = ["No profitable route found.", "Try more hops, a longer range, or a bigger budget."]
+            self._route_blocks = [Heading("Routes"), Note("No profitable route found."),
+                                  Note("Try more hops, a longer range, or a bigger budget.")]
             return
         total = sum(hop.profit for hop in hops)
-        lines = [f"Route profit: {total:,} cr over {len(hops)} hop(s)"]
+        blocks: List[Block] = [Heading("Route"), Pair("Total profit", f"{total:+,} cr", bold=True),
+                               Pair("Hops", str(len(hops))), Columns(("Profit", "ly"))]
         for number, hop in enumerate(hops[:_ROUTES_SHOWN], start=1):
-            lines.append(f"{number}. {_clip(hop.source_station)} > {_clip(hop.dest_station)}")
-            lines.append(f"    {_clip(hop.dest_system)}, {hop.distance_ly:.1f} ly, {hop.dest_ls:,.0f} ls")
+            detail = f"{_clip(hop.dest_system)} \u00b7 {hop.dest_ls:,.0f} ls"
             if hop.cargo:
                 best = max(hop.cargo, key=lambda c: c.total_profit)
-                lines.append(f"    {_clip(best.name)} x{best.tonnes} t: +{hop.profit:,} cr")
+                detail += f" \u00b7 {_clip(best.name)} \u00d7 {best.tonnes} t"
+            blocks.append(Item(f"{number}. {_clip(hop.source_station)} \u2192 {_clip(hop.dest_station)}",
+                               (f"{hop.profit:+,}", f"{hop.distance_ly:.1f}"), detail=detail))
         if len(hops) > _ROUTES_SHOWN:
-            lines.append(f"  +{len(hops) - _ROUTES_SHOWN} more hop(s)")
-        self._route_lines = lines
+            blocks.append(Note(f"+{len(hops) - _ROUTES_SHOWN} more hop(s)"))
+        self._route_blocks = blocks
         self._next_system = hops[0].dest_system if hops[0].dest_system != "?" else None
 
     def _finish_sell(self, job: _Job) -> None:
         if job.error:
             self._sell_error = job.error
             return
-        scope, key, offers, any_found = job.result
+        scope, key, offers, any_found, dropped = job.result
         if self._sell_for != key:
-            self._sell = {}
+            self._sell, self._pad_dropped = {}, {}
         self._sell_for = key
         self._sell[scope] = offers
+        self._pad_dropped[scope] = dropped
         if not any_found and not offers and not self._sell.get("galaxy" if scope == "near" else "near"):
             verb = "selling" if key[3] == trade_prices.BUY else "buying"
             self._sell_error = (f"Spansh found no market {verb} {_clip(key[0])}. "
@@ -823,6 +855,7 @@ class TradePanelController:
         self._pad_var = tk.BooleanVar(value=config.get_bool(_CFG_LARGE_PAD, default=False))
         self._near_var = tk.StringVar(value=str(self._near_radius()))
         self._carriers_var = tk.BooleanVar(value=config.get_bool(_CFG_CARRIERS, default=True))
+        self._ground_var = tk.BooleanVar(value=config.get_bool(_CFG_GROUND, default=True))
         self._pad_override_var = tk.StringVar(value=(config.get_str(_CFG_SHIP_PAD) or "auto").lower())
 
         form = tk.Frame(frame)
@@ -836,8 +869,12 @@ class TradePanelController:
             tk.Entry(form, textvariable=var, width=8).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=2)
         nb.Checkbutton(frame, text="Only stations with a large landing pad", variable=self._pad_var).grid(
             row=3, column=0, sticky=tk.W, padx=10, pady=2)
-        nb.Checkbutton(frame, text="Show fleet carriers in price results (listed apart; they can jump away)",
-                       variable=self._carriers_var).grid(row=4, column=0, sticky=tk.W, padx=10, pady=2)
+        where = tk.Frame(frame)
+        where.grid(row=4, column=0, sticky=tk.W, padx=10, pady=2)
+        nb.Checkbutton(where, text="Search fleet carriers (listed apart; they can jump away)",
+                       variable=self._carriers_var).grid(row=0, column=0, sticky=tk.W)
+        nb.Checkbutton(where, text="Search ground facilities (planetary ports, outposts and settlements)",
+                       variable=self._ground_var).grid(row=1, column=0, sticky=tk.W)
         pad_row = tk.Frame(frame)
         pad_row.grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 2))
         nb.Label(pad_row, text="Ship size (landing pad):").pack(side=tk.LEFT, padx=(0, 6))
@@ -895,6 +932,7 @@ class TradePanelController:
             config.set(self._carrier_cfg_key(name), var.get() if var.get() in trade_carrier.MODES else trade_carrier.AUTO)
         config.set(_CFG_LARGE_PAD, bool(self._pad_var.get()) if self._pad_var is not None else False)
         config.set(_CFG_CARRIERS, bool(self._carriers_var.get()) if self._carriers_var is not None else True)
+        config.set(_CFG_GROUND, bool(self._ground_var.get()) if self._ground_var is not None else True)
         pad_choice = (self._pad_override_var.get() if self._pad_override_var is not None else "auto").lower()
         config.set(_CFG_SHIP_PAD, pad_choice if pad_choice in (trade_ship.SMALL, trade_ship.MEDIUM, trade_ship.LARGE) else "")
         for key, var, default, low, high in (
