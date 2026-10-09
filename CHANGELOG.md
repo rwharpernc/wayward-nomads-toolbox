@@ -40,6 +40,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   session**. **Reset** now offers to save an unsaved session first. New: `trade_history.py`, `trade_stats.py`,
   `trade_history_window.py`, `trade_history.json`; the live ledger now also keeps a bounded log of trades and costs with
   their station, jumps and the starting balance.
+- **A session in progress when EDMC starts is rebuilt from its journal file** (`trade_ledger.rebuild_from_journal`), so
+  trades, costs, jumps and stations from before EDMC started are included, with the station-by-station route. Only the
+  current login is read, never earlier ones, and nothing is kept in History unless you press Save session. Events EDMC
+  then delivers live that the replay already counted are skipped (`already_replayed`). On a real journal this recovered
+  the 3,795 t of purchases a running plugin had missed across an EDMC restart. Commodity names the journal gives in
+  lowercase (`superconductors`) are now resolved to the game's name in the ledger.
 - **Ship and landing pads** (`trade_ship.py`): the ship from the journal's `Loadout` gives the pad size it needs
   (pad classes from Coriolis ship data; EDMC's own ship-name table is used when available). Override in Settings.
 - **Stock bought, not yet sold** (`trade_stock.py`, `trade_stock.json`): what you have spent on cargo that is still

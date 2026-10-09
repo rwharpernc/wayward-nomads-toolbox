@@ -303,6 +303,14 @@ class TradePanelController:
         if event in ("LoadGame", "StartUp"):
             self._ledger, continued = ledger_mod.sync_ledger(self._ledger, cmdr, _current_logfile())
             new_session = not continued
+        if event == "StartUp" and cmdr:
+            # EDMC started with the game already running and doesn't replay old events: rebuild this login's
+            # session from its journal file so it includes everything before now (trades, costs, jumps, stations).
+            logfile = _current_logfile()
+            rebuilt = ledger_mod.rebuild_from_journal(logfile, cmdr, keep=self._ledger) if logfile else None
+            if rebuilt is not None:
+                self._ledger, new_session = rebuilt, True
+                logger.info("Trade session rebuilt from %s", logfile)
         if self._ledger is None:
             self._ledger = ledger_mod.new_ledger(cmdr, _current_logfile())
         # When this session began and the balance then: LoadGame carries the balance at login.
@@ -332,8 +340,9 @@ class TradePanelController:
             self._names[market_mod.canonical_name(entry["Type"])] = str(entry["Type_Localised"])
         if event in ("MarketBuy", "MarketSell") and self._stock.feed(entry, self._cmdr):
             self._save_stock()
-        changed = ledger_mod.apply_trade_event(self._ledger, entry, (self._system, self._station))
-        changed = ledger_mod.note_jump(self._ledger, entry) or changed
+        counted = not ledger_mod.already_replayed(self._ledger, entry)   # a rebuilt session already has older events
+        changed = ledger_mod.apply_trade_event(self._ledger, entry, (self._system, self._station)) if counted else False
+        changed = (ledger_mod.note_jump(self._ledger, entry) if counted else False) or changed
         if new_session:
             self._save(force=True)
         elif changed:
