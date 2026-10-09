@@ -605,7 +605,18 @@ class TradePanelController:
         return [Heading("Next route"), Pair("Start", f"{_clip(start[1])} ({_clip(start[0])})"), *self._ship_pairs(),
                 Pair("Cargo", f"{self._capacity or '?'} t"), Pair("Jump range", f"{self._jump_range_ly():g} ly"),
                 Pair("Budget", f"{self._credits:,} cr" if self._credits else "unknown"),
-                Note("Press Find routes.")]
+                *self._start_notes(), Note("Press Find routes.")]
+
+    def _start_notes(self) -> List[Block]:
+        """Say where the route starts from and why, because lookups are mostly done while docked and the start is
+        not always the place the player is at."""
+        if self._station and self._station in self._carrier_names:
+            return [Note("You're docked at a fleet carrier. Spansh can't plan from one, so the route starts from the "
+                         "last station you docked at.", warn=True)]
+        if not self._station:
+            return [Note("You're not docked. The route starts from the last station you docked at; dock first to "
+                         "start from where you are.", warn=True)]
+        return [Note("Docked here: the route starts at this station.")]
 
     def _set_side(self, side: str) -> None:
         """Switch between looking for a place to sell and a place to buy. The results shown belong to one side,
