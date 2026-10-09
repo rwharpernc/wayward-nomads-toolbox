@@ -75,7 +75,8 @@ with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** 
 plain-text twin), then the stock block, then the hold block (ship and pad size, `used/capacity (free)`, what the docked
 market would pay, up to four cargo lines), then the carrier block (`trade_carrier.cargo_blocks`; `cargo_lines` is the
 plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first), **Clear stock**,
-**Save session** (greyed out until there is something to save) and **History**.
+**Save session** (greyed out until there is something to save) and **History**. Save does not end or restart the
+session: tracking is always on, the label never changes, and only **Reset** begins a new session.
 
 **Routes.** Idle text shows the start station, ship, cargo size, jump range and budget the search will use.
 Buttons: **Find routes** (becomes **Cancel** while searching), **Copy next system**, **Hops: N** (cycles 2 to 5, section 8.1)
