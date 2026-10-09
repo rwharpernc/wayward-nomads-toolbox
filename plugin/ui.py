@@ -38,7 +38,7 @@ from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
     notable, organic_scan_panel, overlay, panelkit, powerplay, screenshots, ship_builds_panel,
-    game_mode, session_credits,
+    game_mode, session_credits, trade_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
 
@@ -60,6 +60,7 @@ FEATURES = (
     screenshots,
     inventory_panel, ship_builds_panel, colonisation_panel,
     mining_panel,
+    trade_panel,
     bgs_panel,
     interdiction, landing,
 )
@@ -84,19 +85,22 @@ PANEL_MODES: Tuple[Tuple[str, str], ...] = (
     ("bgs", "BGS"),
     ("exploration", "Exploration"),
     ("mining", "Mining"),
+    ("trade", "Trade"),
     ("missions", "Missions"),
     ("fieldops", "Field Ops"),
 )
 # Short text for the mode-select buttons - EDMC's main window is small and shared
 # with every other plugin - with the full label plus a one-line description (_MODE_TOOLTIPS) as the tooltip.
 _MODE_BUTTON_TEXT = {
-    "powerplay": "P.P.", "bgs": "BGS", "exploration": "EXP", "mining": "MIN", "missions": "MSN", "fieldops": "OPS",
+    "powerplay": "P.P.", "bgs": "BGS", "exploration": "EXP", "mining": "MIN", "trade": "TRD", "missions": "MSN",
+    "fieldops": "OPS",
 }
 _MODE_TOOLTIPS = {
     "powerplay": "Powerplay - merits and Control Points you earn for your Power, and the rare goods finder",
     "bgs": "BGS - faction states in the Background Simulation, and what your own activity does to them",
     "exploration": "Exploration - auto-honk, first-discovery alerts, boxel survey, scan values, exobiology help and Codex tally",
     "mining": "Mining - space and surface (SRV) mining, and your own catalogue of mining hotspots",
+    "trade": "Trade - what you bought and sold this session, the value of your hold, and Spansh route and price lookups",
     "missions": "Missions - every mission you have in one view, with kill-progress bars for massacres",
     "fieldops": "Field Ops - screenshots, backpack/locker/cargo, saved ship builds and colonisation sites",
 }
@@ -530,7 +534,7 @@ def _build_settings_tabs(tabs: nb.Notebook) -> None:
         *settings_of(boxel_survey),
         _stacked_page("Alerts", settings_of(autohonk, discovery, notable)),
     ])
-    for feature in (mining_panel, bgs_panel):
+    for feature in (mining_panel, trade_panel, bgs_panel):
         for build in settings_of(feature):
             build(tabs)
     _settings_group(tabs, "Field Ops", settings_of(screenshots, inventory_panel, ship_builds_panel, colonisation_panel))

@@ -135,7 +135,7 @@ class ScreenshotConfig:
     mask: str = screenshot_naming.DEFAULT_MASK
     hires_on_timer: bool = False
     thargoid_capture: bool = True
-    overlay_enabled: bool = True
+    overlay_enabled: bool = False
     poll_interval_s: float = _DEFAULT_POLL_INTERVAL_S
 
 
@@ -228,7 +228,7 @@ def load_config() -> ScreenshotConfig:
         mask=config.get_str(_CFG_MASK) or screenshot_naming.DEFAULT_MASK,
         hires_on_timer=config.get_bool(_CFG_HIRES_ON_TIMER, default=False),
         thargoid_capture=config.get_bool(_CFG_THARGOID_CAPTURE, default=True),
-        overlay_enabled=config.get_bool(_CFG_OVERLAY_ENABLED, default=True),
+        overlay_enabled=config.get_bool(_CFG_OVERLAY_ENABLED, default=False),
         poll_interval_s=max(_get_float(_CFG_POLL_INTERVAL_S, _DEFAULT_POLL_INTERVAL_S), _MIN_POLL_INTERVAL_S),
     )
 

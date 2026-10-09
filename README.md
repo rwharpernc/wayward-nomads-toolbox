@@ -31,26 +31,28 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CM
 7. [Powerplay](#powerplay)
 8. [Exploration](#exploration)
 9. [Mining](#mining)
-10. [Missions](#missions)
-11. [Field Ops](#field-ops)
-12. [BGS](#bgs)
-13. [Landing Assist and Interdiction Warning](#landing-assist-and-interdiction-warning)
-14. [Using WNTB on Linux](#using-wntb-on-linux)
-15. [Troubleshooting](#troubleshooting)
-16. [Getting help](#getting-help)
-17. [For developers, credits and licence](#for-developers-credits-and-licence)
+10. [Trade](#trade)
+11. [Missions](#missions)
+12. [Field Ops](#field-ops)
+13. [BGS](#bgs)
+14. [Landing Assist and Interdiction Warning](#landing-assist-and-interdiction-warning)
+15. [Using WNTB on Linux](#using-wntb-on-linux)
+16. [Troubleshooting](#troubleshooting)
+17. [Getting help](#getting-help)
+18. [For developers, credits and licence](#for-developers-credits-and-licence)
 
 ---
 
 ## What's in the toolbox
 
-WNTB has one panel with six **modes**. You click a button to switch between them.
+WNTB has one panel with seven **modes**. You click a button to switch between them.
 
 | Mode | What it's for |
 |---|---|
 | **Powerplay** | Tracks the merits and Control Points you earn for your Power, and finds rare goods. |
 | **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values, exobiology help, and a lifetime tally of everything you've scanned. |
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalogue of mining hotspots. |
+| **Trade** | What you bought and sold this session, the value of your hold, and Spansh lookups for the best trade routes and prices near you. |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions. |
 | **Field Ops** | Screenshots, your backpack/locker/cargo, saved ship builds, and colonisation sites. |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. |
@@ -188,6 +190,7 @@ Hover over any button for a moment to see its full name.
 | **BGS** | BGS | Mode buttons |
 | **EXP** | Exploration | Mode buttons |
 | **MIN** | Mining | Mode buttons |
+| **TRD** | Trade | Mode buttons |
 | **MSN** | Missions | Mode buttons |
 | **OPS** | Field Ops | Mode buttons |
 | **SES** | Sessions | Powerplay |
@@ -229,6 +232,7 @@ feature that contacts an outside site, so you can decide what you're comfortable
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons; some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings |
+| Trade lookups (best routes, best sell price) | Spansh | **Off** until you turn them on in Settings; only when you press a button |
 | BGS tick detection | A community tick-time service | Every 60 seconds while BGS is on; can be turned off in Settings |
 | Automatic updates | GitHub | **Off** by default |
 
@@ -475,6 +479,39 @@ your current run. Buttons appear when they're useful, side by side in one row (h
 **Settings:** turn on the lookups above, show live stats on your game screen, show a surface arrow
 pointing to the nearest known hotspot, show a small "where have I driven" minimap, and archive
 completed runs automatically.
+
+## Trade
+
+Three pages; use the ◂ and ▸ arrows to switch.
+
+- **Session** works offline from your journal. It shows your profit since you logged in (and credits per
+  hour once you've traded for a few minutes), tonnes bought and sold, your best-selling commodities, your
+  ship and the landing pad it needs, and your hold: its capacity, how much is free, and what the station
+  you're docked at would pay for it. If you have a **fleet carrier**, it also shows the carrier's cargo
+  space (used, free and reserved for trade orders). A commander without a carrier never sees that line.
+  Open Carrier Management in the game once so WNTB can read the carrier's space; after that it follows
+  your cargo transfers, and it is remembered per commander. **Reset** starts the tally again. Profit is what you were paid minus what the sold tonnes cost you, as the game reports it;
+  stolen or black-market cargo counts the whole sale.
+- **Routes** asks Spansh for the most profitable trade route from where you are. Press **Find routes**; it
+  starts from the station you're docked at, or the last one you docked at. It uses your cargo size and
+  credits from the game and your ship's jump range (unladen, so lower it in Settings if a full hold jumps
+  shorter). Spansh can take a minute or two; **Cancel** stops waiting. **Copy next system** puts the first
+  destination on your clipboard so you can paste it into the galaxy map.
+- **Market** finds where a commodity sells best. Type a commodity in the box (suggestions fill in as you
+  type, starting with what you carry and what the station you're at buys), or leave it empty to search for
+  the commodity you carry most of. **Near me** looks within a radius of your system (100 ly unless you change
+  it in Settings); **Galaxy** looks everywhere. Results are ranked by what *your load* would earn (price
+  times the tonnes the station still wants), not just price per tonne, and once you've run both it says
+  which is better and by how much. Stations with no landing pad your ship fits are left out, and **fleet
+  carriers are listed in their own section** because they can jump away. **Price…** is the same finder as
+  Mining's **PRICE** button, for any commodity or for buying.
+
+**Settings:** the Routes and Market lookups are **off** until you tick *Enable Spansh trade lookups*. You
+can also set the number of hops, the furthest a station may be from its star, a jump-range override, the
+"near me" radius, whether to show fleet carriers, and your ship size (by default read from your ship;
+pick a size only if it guesses wrong). Routes ask for large-pad stations automatically when your ship needs
+a large pad. Prices and routes are only as fresh as the last player who docked
+there, so check the market when you arrive.
 
 ## Missions
 

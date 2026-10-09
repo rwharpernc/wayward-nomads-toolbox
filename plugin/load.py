@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
-    missions, notable, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, session_credits, ship_builds_panel, ui,
+    missions, notable, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, session_credits, ship_builds_panel, trade_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -51,7 +51,7 @@ if not logger.hasHandlers():
 _FEATURES = (
     powerplay, missions, autohonk, interdiction, landing, discovery, notable, boxel_survey, exploration_value,
     organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, ship_builds_panel, colonisation_panel, screenshots,
-    inventory_panel, mining_panel, bgs_panel, game_mode, session_credits,
+    inventory_panel, mining_panel, trade_panel, bgs_panel, game_mode, session_credits,
 )
 
 _ui_frame: Optional[tk.Frame] = None
@@ -63,10 +63,37 @@ _updater: Optional[UpdateManager] = None
 _overlay = overlay.OverlayClient()
 
 
+# One-time reset: every overlay is off by default, and users who had overlays on from
+# earlier versions are switched off once so they opt back in deliberately. The marker
+# key makes it run exactly once per install; bump the suffix to force another reset.
+_CFG_OVERLAY_RESET_DONE = "wntb_overlay_reset_v1"
+_OVERLAY_ENABLE_KEYS = (
+    "wntb_discovery_enabled",
+    "wntb_interdiction_enabled",
+    "wntb_notable_enabled",
+    "wntb_landing_overlay_enabled",
+    "wntb_inventory_overlay_enabled",
+    "wntb_mining_overlay_enabled",
+    "wntb_mining_waypoint_overlay_enabled",
+    "wntb_screenshot_overlay_enabled",
+)
+
+
+def _reset_overlays_once() -> None:
+    if config.get_bool(_CFG_OVERLAY_RESET_DONE, default=False):
+        return
+    for key in _OVERLAY_ENABLE_KEYS:
+        config.set(key, False)
+    config.set(_CFG_OVERLAY_RESET_DONE, True)
+    logger.info("All WNTB overlays reset to disabled (one-time); re-enable them in Settings")
+
+
 def plugin_start3(plugin_dir: str) -> str:
     """Load WNTB into EDMarketConnector."""
     global _updater
     logger.info("WNTB v%s starting from %s", __version__, plugin_dir)
+
+    _reset_overlays_once()  # before any feature module reads its settings
 
     powerplay.controller.start(plugin_dir)
     missions.start(plugin_dir)
@@ -79,6 +106,7 @@ def plugin_start3(plugin_dir: str) -> str:
     colonisation_panel.start(plugin_dir)
     inventory_panel.start(plugin_dir)
     mining_panel.start(plugin_dir)
+    trade_panel.start(plugin_dir)
     interdiction.set_overlay_client(_overlay)
     landing.set_overlay_client(_overlay)
     discovery.set_overlay_client(_overlay)
@@ -136,6 +164,7 @@ def plugin_stop() -> None:
     session_credits.stop()
     inventory_panel.stop()
     mining_panel.stop()
+    trade_panel.stop()
     powerplay_window.close()
     rare_goods_window.close()
     _overlay.close()

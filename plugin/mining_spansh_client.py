@@ -30,8 +30,9 @@ from __future__ import annotations
 import json
 import urllib.request
 from dataclasses import dataclass
+from typing import Optional
 
-from . import http_identity
+from . import http_identity, trade_commodities
 
 BODIES_SEARCH_URL = "https://spansh.co.uk/api/bodies/search"
 STATIONS_SEARCH_URL = "https://spansh.co.uk/api/stations/search"
@@ -93,6 +94,9 @@ def _normalize_commodity_name(commodity: str) -> str:
     casing convention for the large majority of commodity names) for
     anything not in the known list, rather than sending whatever case
     the commander happened to type straight through."""
+    known = trade_commodities.resolve(commodity)
+    if known:
+        return known  # Spansh's market search is case-sensitive: use the game's exact name
     query = commodity.strip().casefold()
     for name in KNOWN_MINING_COMMODITIES:
         if name.casefold() == query:
@@ -179,6 +183,13 @@ class StationPrice:
     is_planetary: bool
     price: int
     quantity: int
+    small_pads: Optional[int] = None    # pad counts as Spansh reports them; None = not given
+    medium_pads: Optional[int] = None
+    large_pads: Optional[int] = None
+
+
+def _count(value) -> Optional[int]:
+    return int(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
 
 
 _MARKET_DAYS_OLD_DEFAULT = 30
@@ -190,10 +201,12 @@ since moved or stopped trading."""
 
 
 def search_best_price_stations(reference_system: str, commodity: str, transaction: str,
-                               max_distance_ly: float, max_results: int = 10,
+                               max_distance_ly: Optional[float], max_results: int = 10,
                                market_days_old: int = _MARKET_DAYS_OLD_DEFAULT) -> list[StationPrice]:
     """Queries Spansh for the best-price stations trading `commodity`
-    within `max_distance_ly` of `reference_system`. `transaction` is
+    within `max_distance_ly` of `reference_system` (None = no distance limit,
+    i.e. the whole galaxy, still sorted by price; Spansh accepts that,
+    checked live 2026-10-09). `transaction` is
     "Sell" (commander sells to the station - sorted by highest sell
     price) or "Buy" (commander buys from the station - sorted by lowest
     buy price); anything else raises ValueError. Raises on any network/
@@ -211,12 +224,14 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
         market_filter["supply"] = {"value": ["1", "999999999"], "comparison": "<=>"}
         sort_object = {"market_buy_price": [{"name": commodity, "direction": "asc"}]}
 
+    filters: dict = {
+        "market_updated_at": {"comparison": "<=>", "value": [f"now-{market_days_old}d", "now"]},
+        "market": [market_filter],
+    }
+    if max_distance_ly is not None:
+        filters["distance"] = {"min": "0", "max": str(max_distance_ly)}
     request_body = {
-        "filters": {
-            "distance": {"min": "0", "max": str(max_distance_ly)},
-            "market_updated_at": {"comparison": "<=>", "value": [f"now-{market_days_old}d", "now"]},
-            "market": [market_filter],
-        },
+        "filters": filters,
         "sort": [sort_object],
         "size": max_results,
         "page": 0,
@@ -255,5 +270,8 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
             is_planetary=bool(station.get("is_planetary", False)),
             price=price,
             quantity=quantity,
+            small_pads=_count(station.get("small_pads")),
+            medium_pads=_count(station.get("medium_pads")),
+            large_pads=_count(station.get("large_pads")),
         ))
     return results
