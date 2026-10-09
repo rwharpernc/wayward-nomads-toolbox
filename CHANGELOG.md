@@ -5,6 +5,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ## Unreleased
 
+### Action needed
+- **Every overlay is switched off once on first start** (see Changed). Tick the overlays you want again in Settings.
+
 ### Added
 - **Trade mode** (the new **TRD** button), with three pages (see [docs/TRADE_TECH_SPEC.md](docs/TRADE_TECH_SPEC.md)):
   - **Session** (works offline):
@@ -23,6 +26,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     are (`trade_spansh_client.py`: submit a job, poll every 5 s for up to 4 minutes). Uses your cargo size,
     credits and jump range; asks for large-pad stations when your ship needs one. **Cancel**, and **Copy next
     system**.
+    Routes start from the last real station when you're docked at a fleet carrier (Spansh can't plan from one), and a
+    refusal from Spansh is shown with its reason instead of "check the EDMC log".
   - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`), a **Sell** / **Buy** choice and
     **Near me** / **Galaxy** searches. Selling ranks by what *your load* would earn (`trade_prices.py`: price x
     min(tonnes, demand)); buying uses your free hold space and puts stations that can supply it all first,
@@ -104,6 +109,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **The "Credits this session" line** now shows on Powerplay, BGS, Mining, Missions and Field Ops, and is hidden on
   Exploration and Trade (Trade's net profit already counts running costs). The game-mode line is unchanged.
 - Settings now has nine top-level tabs (Trade sits between Mining and BGS).
+- **The screenshot overlay message stays up longer** (10 seconds, 20 for the Settings test message) so it isn't
+  missed when switching from EDMC to the game.
 
 ### Checked on Windows only
 - The Trade panel, its type-ahead popup and the larger arrows still need a look on Linux (checklist section 6d).

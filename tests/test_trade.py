@@ -288,6 +288,17 @@ class SpanshClientTests(unittest.TestCase):
         self.assertEqual(form["requires_large_pad"], "1")
         self.assertTrue(all(isinstance(value, str) for value in form.values()))
 
+    def test_a_refusal_shows_what_spansh_said(self) -> None:
+        import io
+        import urllib.error
+        from unittest import mock
+        body = io.BytesIO(b'{"error":"Could not find station"}')
+        refusal = urllib.error.HTTPError(client.ROUTE_URL, 400, "Bad Request", {}, body)
+        with mock.patch("urllib.request.urlopen", side_effect=refusal):
+            with self.assertRaises(client.RouteSearchError) as caught:
+                client.search_routes(client.RouteQuery("Candiaei", "WLF-LXW", 1000, 100))
+        self.assertIn("Could not find station", str(caught.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
