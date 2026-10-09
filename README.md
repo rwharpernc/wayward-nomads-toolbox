@@ -558,8 +558,10 @@ the tabs show everything about it:
 **Copy summary** puts a plain-text report on the clipboard, **Export log (CSV)** saves the full trade log to a file you
 choose, and **Delete session** removes a saved session (it asks first).
 
-Good to know: the figures only cover what WNTB saw, so trades made before EDMC started aren't in a session; the balance
-change is your real credits difference and so also includes anything else you earned; times are UTC; and a session
+Good to know: if you start EDMC while the game is already running, WNTB rebuilds the *current* login's session from the
+game's journal file, so trades made before EDMC started are included (earlier logins are never looked at, and nothing is
+kept unless you press Save session); the balance change is your real credits difference and so also includes anything
+else you earned; times are UTC; and a session
 keeps the most recent 5,000 trades and costs (the totals are always exact). History is kept in `trade_history.json` in
 the WNTB plugin folder, which updates leave alone.
 

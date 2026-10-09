@@ -388,6 +388,10 @@ Two situations mean a feature can start with an incomplete picture:
   `FSSBodySignals`, `Scan` or `ScanOrganic` events. So Organic Scanning persists per-body state to
   disk (`organic_scan_state.json`) rather than relying on the journal to re-tell it.
 
+- **A session that started before EDMC did.** The Trade session ledger is rebuilt on `StartUp` by replaying the current
+  login's journal file through the same code the live events use, and de-duplicated by time and event fingerprint
+  (`meta["replay_ts"]`, `already_replayed`) because EDMC may still deliver some of those events live. Only that one
+  file is read; earlier logins are never looked at.
 - **A baseline event that is only written on request.** `CarrierStats` (the fleet or squadron carrier's
   cargo space) is written only when the Carrier Management screen is opened, and EDMC does not replay it when
   it starts. Trade mode therefore replays the newest 40 journal files on a background thread at startup,

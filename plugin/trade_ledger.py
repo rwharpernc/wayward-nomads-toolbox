@@ -26,17 +26,26 @@ Beyond the totals the ledger keeps what a saved session needs to be looked at la
 history"): `log`, one entry per trade or cost with the station and system it happened at (so routes can be worked
 out), `meta` (when the session started, the balance at login, jumps and light years travelled), and the `routes` and
 `searches` done during it. It is all bounded, and an older saved ledger without any of it still loads.
+
+EDMC doesn't replay old events when it starts, so a session that began before WNTB was running (or before it kept the
+log) would be missing that part. `rebuild_from_journal` fixes it: when EDMC starts with the game already running, it
+replays that login's journal file through the *same* functions the live events use, so the result is what live
+tracking would have produced. The events replayed are remembered (`meta["replay_ts"]` and a fingerprint of those at
+that exact second) so `already_replayed` can skip them if EDMC then delivers them live as well.
 """
 from __future__ import annotations
 
 import calendar
+import hashlib
 import json
 import logging
 import os
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
+from . import trade_commodities
 from .trade_blocks import Block, Heading, Note, Pair, to_text
 
 try:
@@ -128,6 +137,107 @@ def _log(ledger: Dict[str, Any], item: Dict[str, Any], entry: Dict[str, Any],
         del log[: len(log) - LOG_LIMIT]
 
 
+# --- rebuilding a session from its journal file -----------------------------------------------------------------
+
+_WANTED = re.compile(
+    r'"event"\s*:\s*"(?:MarketBuy|MarketSell|RefuelAll|RefuelPartial|Repair|RepairAll|BuyAmmo|RestockVehicle|BuyDrones|'
+    r'SellDrones|FSDJump|CarrierJump|Docked|Undocked|Location|LoadGame|Commander)"')
+
+
+def _fingerprint(entry: Dict[str, Any]) -> str:
+    return hashlib.sha1(json.dumps(entry, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:12]
+
+
+def _key(cmdr: str) -> str:
+    return str(cmdr or "").strip().casefold()
+
+
+def rebuild_from_journal(path: str, cmdr: str, keep: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    """A fresh ledger for `cmdr` built by replaying one journal file, oldest event first, through the same functions
+    the live events use (`apply_trade_event`, `note_jump`, `note_start`), tracking the system and the station the
+    commander was docked at as EDMC would have reported them. Only the commander's own events count (a journal can
+    hold more than one). `keep` is the existing ledger: its Spansh routes and market searches (which the journal
+    doesn't record) are carried over. Returns None if the file can't be read or has nothing for this commander.
+
+    The returned ledger carries `meta["replay_ts"]` and `meta["replay_seen"]`, which `already_replayed` uses."""
+    wanted = _key(cmdr)
+    if not wanted:
+        return None
+    ledger = new_ledger(cmdr, path)
+    system: Optional[str] = None
+    station: Optional[str] = None
+    current = ""
+    saw_commander = False
+    last_ts = ""
+    last_seen: List[str] = []
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as handle:
+            for line in handle:
+                if not _WANTED.search(line):
+                    continue
+                try:
+                    entry = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(entry, dict):
+                    continue
+                event = entry.get("event")
+                if event == "Commander" and entry.get("Name"):
+                    current = _key(entry["Name"])
+                    continue
+                if event == "LoadGame":
+                    current = _key(entry.get("Commander") or current)
+                    station = None
+                    if current == wanted:
+                        saw_commander = True
+                        credits = entry.get("Credits")
+                        note_start(ledger, str(entry.get("timestamp") or "") or None,
+                                   credits if isinstance(credits, int) and not isinstance(credits, bool) else None)
+                    continue
+                if current != wanted:
+                    continue
+                if event in ("Location", "FSDJump", "CarrierJump", "Docked") and entry.get("StarSystem"):
+                    system = str(entry["StarSystem"])
+                if event == "Docked" or (event == "Location" and entry.get("Docked")):
+                    station = str(entry.get("StationName") or "") or None
+                elif event == "Undocked" or (event == "Location" and not entry.get("Docked")):
+                    station = None
+                changed = apply_trade_event(ledger, entry, (system, station))
+                changed = note_jump(ledger, entry) or changed
+                if changed:
+                    stamp = str(entry.get("timestamp") or "")
+                    if stamp != last_ts:
+                        last_ts, last_seen = stamp, []
+                    last_seen.append(_fingerprint(entry))
+    except OSError:
+        return None
+    if not saw_commander:
+        return None
+    if keep:
+        ledger["routes"] = list(keep.get("routes") or [])
+        ledger["searches"] = list(keep.get("searches") or [])
+    record = meta(ledger)
+    record["replay_ts"] = last_ts
+    record["replay_seen"] = last_seen
+    return ledger
+
+
+def already_replayed(ledger: Dict[str, Any], entry: Dict[str, Any]) -> bool:
+    """Was this event already counted by `rebuild_from_journal`? EDMC can still deliver, live, events the replay read
+    (the ones written between EDMC's own read position and the end of the file), so they are skipped by time and, for
+    events in the replay's last second, by fingerprint. Always False for a ledger that wasn't rebuilt."""
+    record = (ledger or {}).get("meta") or {}
+    last = record.get("replay_ts")
+    if not last:
+        return False
+    stamp = str(entry.get("timestamp") or "")
+    if not stamp or stamp > last:
+        return False
+    if stamp < last:
+        return True
+    return _fingerprint(entry) in (record.get("replay_seen") or [])
+
+
 def add_route(ledger: Dict[str, Any], route: Dict[str, Any]) -> None:
     """Remember a Spansh route search (a dict of start, total and hops) for the saved session."""
     routes = ledger.setdefault("routes", [])
@@ -207,7 +317,9 @@ def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any],
     count = _int(entry.get("Count"))
     if count <= 0:
         return False
-    name = str(entry.get("Type_Localised") or entry.get("Type") or "?").strip() or "?"
+    # The journal only adds Type_Localised when the display name differs from the internal one, so a commodity can arrive as
+    # "superconductors"; resolve it to the game's name ("Superconductors") so it reads the same everywhere.
+    name = str(entry.get("Type_Localised") or trade_commodities.resolve(entry.get("Type")) or entry.get("Type") or "?").strip() or "?"
     row = _row(ledger, name)
     if event == "MarketBuy":
         row["bought"] += count

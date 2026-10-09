@@ -221,6 +221,20 @@ first and last trade, balance at start and at save, ship and pad size, jumps and
 `routes`, `searches`, plus what was true at the moment of saving: the unsold `stock`, the `hold` and its `capacity`, and
 the commander's `carriers`. Later changes to the live ledger never alter it.
 
+**Rebuilding the current session from the journal.** EDMC doesn't replay old events when it starts, so a session that
+was running before WNTB started (or before the log existed) would be missing that part. On the `StartUp` event (EDMC
+started with the game already running) the panel calls `trade_ledger.rebuild_from_journal(logfile, cmdr, keep=ledger)`:
+it replays **that login's journal file only** (never earlier logins) through the same functions the live events use
+(`apply_trade_event`, `note_jump`, `note_start`), tracking the system and the docked station as EDMC reports them
+(`Location`, `FSDJump`, `CarrierJump`, `Docked`, `Undocked`). A journal can hold several commanders, so only the
+commander's own events count (`Commander` and `LoadGame` switch who is current), and a logout-to-menu-and-back carries
+on the same session. The result replaces the ledger; its Spansh routes and market searches (not in the journal) are
+carried over. Because EDMC can still deliver live some events the replay already read, the ledger records
+`meta["replay_ts"]` (the time of the last event replayed) and `meta["replay_seen"]` (fingerprints of the events at
+exactly that second); `already_replayed` makes the panel skip anything at or before that point, counting two events in
+the same second correctly. The replay changes only the live working session: nothing reaches History until Save session.
+Checked on a real journal, where it recovered the 3,795 t of purchases the running plugin had missed while EDMC restarted.
+
 **Identity.** `id` = a short SHA-1 of the commander, the journal file and the start time, so saving again during the
 same login *replaces* that record (`HistoryBook.save` returns True when it did) instead of adding a duplicate, and
 **Reset** (a new start time) is a new session. Reset asks to save first when `_unsaved()`: the session has content and
@@ -431,8 +445,8 @@ Spansh client parsing) and `tests/test_trade_search.py` (commodity names, ship p
 space, the tracker's attribution rules, the per-commander choice and the journal backfill) and
 `tests/test_trade_stock.py` (average-cost stock, apply-once rules, the backfill, and file ordering) and
 `tests/test_trade_blocks.py` (the page model's plain-text form, and the ground-facilities switch) and
-`tests/test_trade_history.py` (the ledger's log, jumps and start, the record and book, and every number and row in
-`trade_stats`). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
+`tests/test_trade_history.py` (the ledger's log, jumps and start, rebuilding a session from a journal file and
+skipping the events it already counted, the record and book, and every number and row in `trade_stats`). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
 checked by `tests/trade_view_smoke.py` (run by `test_trade_view_smoke.py` in a subprocess, skipped without a display):
 no label asks for more than the width available, unchanged blocks aren't redrawn, and a table's number columns end
 at the same place. They run without
