@@ -248,7 +248,7 @@ feature that contacts an outside site, so you can decide what you're comfortable
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons; some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings |
-| Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. Only when you press **Find routes** (it then checks for the answer every 5 seconds, for up to 4 minutes, until you press **Cancel**) or **Near me** / **Galaxy** (two requests each: stations, then fleet carriers; one if you hide carriers) |
+| Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. Only when you press **Find routes** (it then checks for the answer every 5 seconds, for up to 4 minutes, until you press **Cancel**) or **Near me** / **Galaxy** (two requests each: stations, then fleet carriers; one if you hide carriers) or **Round trip** (one to three requests of up to 100 stations each) |
 | BGS tick detection | A community tick-time service | Every 60 seconds while BGS is on; can be turned off in Settings |
 | Automatic updates | GitHub | **Off** by default |
 
@@ -589,6 +589,8 @@ Spansh's planner doesn't know fleet carriers, so a route never starts from one: 
 
 The **Hops** button on the page cycles 2, 3, 4 or 5 hops (the same setting as in Settings). **2 hops** is the choice for a back-and-forth pair: when the route ends at the station it started from and every leg carries cargo, the result is headed "repeatable loop" and says you can fly it again; otherwise the page says why it isn't one. A leg with no cargo is flagged.
 
+**Round trip** finds the best back-and-forth pair itself, because Spansh's planner returns the best *chain*, which doesn't always come back. One search asks Spansh for the markets of the nearest stations (up to 300, within twice your jump range, at most 100 ly), then works out for each neighbour what to carry out and what to bring back. A pair only counts when **both legs make a profit, so you never fly empty**. Each leg fills the hold with the most profitable commodity first and tops up with the next, limited by the supply where you buy, the demand where you sell and what you can afford. Pairs are ranked by estimated profit per hour and the top three are shown with what to carry each way. It uses the same filters as Find routes (price age, ground facilities, fleet carriers, your ship's pad size, distance from the star) plus the **least supply** and **least demand** settings (200 t each by default), so thin markets are left out. It takes about 20 seconds and makes one to three Spansh requests (100 stations each).
+
 Spansh can take a minute or two; **Cancel** stops waiting. The result is the route's total profit, an **estimated profit per hour**, and each hop (stations,
 system, distance, best commodity and profit, with the supply at the buying station and the demand at the selling one; the first four are shown, with "+N more" after). **Copy next system** puts the
 first destination on your clipboard so you can paste it into the galaxy map.
@@ -649,7 +651,7 @@ How it stays up to date:
 - *Enable Spansh trade lookups*: off until you tick it. The Routes and Market pages do nothing without it.
 - *Route hops* (1 to 10, default 3), *Max distance from the star* in light seconds (default 5,000), *Jump range override*
   (blank uses your ship's unladen range) and *Only stations with a large landing pad*, for Routes.
-- *Routes: ignore prices older than* a number of hours (default 72; 0 means any age), and *Routes may use systems that need a permit* (off).
+- *Round trip: least supply / least demand* in tonnes (200 each), *Routes: ignore prices older than* a number of hours (default 72; 0 means any age), and *Routes may use systems that need a permit* (off).
 - *"Near me" price search radius* in light years (default 100).
 - *Include fleet carriers* and *Include ground facilities* in prices **and routes** (both on by default).
 - *Ship size (landing pad)*: **From my ship** (the default), or Small, Medium or Large if it guesses wrong.

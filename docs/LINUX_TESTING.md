@@ -167,6 +167,9 @@ Tested on Windows only so far. Settings → WNTB → Trade first: tick **Enable 
       missing.
 - [ ] **Routes**: **Find routes** shows "Asking Spansh..." with a counting timer, and a route within a couple of
       minutes. **Cancel** stops it. **Copy next system** puts the system name on the clipboard.
+- [ ] **Hops** button cycles 2, 3, 4, 5. **Round trip** (docked at a normal station, not a carrier) answers in about
+      20 seconds with up to three pairs, each showing what to carry out and back; both legs are loaded. A route's page
+      shows an estimated profit per hour and supply/demand per hop.
 - [ ] No Python errors in the EDMC log, and the EDMC window did not get wider when you opened Trade.
 
 ## 7. BGS (rebuilt in 1.1.0)

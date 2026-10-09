@@ -45,6 +45,7 @@ from . import trade_history_window
 from . import trade_commodities
 from . import trade_pages
 from . import trade_prices
+from . import trade_roundtrip
 from . import trade_ship
 from . import trade_spansh_client as spansh_routes
 from . import trade_stock
@@ -64,6 +65,8 @@ _CFG_LARGE_PAD = "wntb_trade_large_pad"
 _CFG_JUMP_RANGE = "wntb_trade_jump_range_override"
 _CFG_PRICE_AGE_H = "wntb_trade_route_price_age_h"   # routes: ignore markets older than this many hours (0 = any)
 _CFG_PERMIT = "wntb_trade_route_permit"            # routes: allow systems that need a permit
+_CFG_MIN_SUPPLY = "wntb_trade_min_supply"          # round trip: least tonnes the buying station must have
+_CFG_MIN_DEMAND = "wntb_trade_min_demand"          # round trip: least tonnes the selling station must want
 _CFG_CURRENT_PAGE = "wntb_trade_current_page"
 _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
 _CFG_CARRIERS = "wntb_trade_include_carriers"
@@ -74,6 +77,7 @@ _CFG_SHIP_PAD = "wntb_trade_ship_pad_override"  # "" = work it out from the ship
 
 _DEFAULT_MAX_HOPS = 3
 _DEFAULT_PRICE_AGE_H = 72
+_DEFAULT_MIN_STOCK = 200
 _HOP_CHOICES = (2, 3, 4, 5)  # the Hops button on the Routes page cycles through these
 _CARRIER_STATION_TYPES = ("FleetCarrier", "SquadronCarrier")  # journal StationType values
 _DEFAULT_MAX_ARRIVAL_LS = 5000
@@ -214,6 +218,8 @@ class TradePanelController:
         self._lookups_var: Optional[tk.BooleanVar] = None
         self._hops_var: Optional[tk.StringVar] = None
         self._age_var: Optional[tk.StringVar] = None
+        self._supply_var: Optional[tk.StringVar] = None
+        self._demand_var: Optional[tk.StringVar] = None
         self._permit_var: Optional[tk.BooleanVar] = None
         self._arrival_var: Optional[tk.StringVar] = None
         self._pad_var: Optional[tk.BooleanVar] = None
@@ -494,7 +500,8 @@ class TradePanelController:
                 ("Cancel" if busy else "Find routes", self._cancel_job if busy else self._find_routes,
                  busy or lookups_enabled()),
                 ("Copy next system", self._copy_next_system, bool(self._next_system) and not busy),
-                (f"Hops: {self._route_hops()}", self._cycle_hops, lookups_enabled() and not busy))
+                (f"Hops: {self._route_hops()}", self._cycle_hops, lookups_enabled() and not busy),
+                ("Round trip", self._find_round_trip, lookups_enabled() and not busy))
         else:
             blocks = self._market_blocks(busy)
             can_search = lookups_enabled() and not busy
@@ -957,10 +964,84 @@ class TradePanelController:
             return
         if job.kind == "routes":
             self._finish_routes(job)
+        elif job.kind == "roundtrip":
+            self._finish_round_trip(job)
         else:
             self._finish_sell(job)
         self._job = None
         self._refresh()
+
+    def _find_round_trip(self) -> None:
+        """Best back-and-forth pair with the station the route would start from, loaded both ways."""
+        if self._job is not None and not self._job.done:
+            return
+        start = self._route_start()
+        if start is None:
+            self._route_blocks = [Heading("Round trip"), Note("Dock at a station once so WNTB knows where to start.", warn=True)]
+            self._refresh()
+            return
+        system, station = start
+        jump = self._jump_range_ly()
+        radius = max(20.0, min(100.0, jump * 2))
+        age = _cfg_int(_CFG_PRICE_AGE_H, _DEFAULT_PRICE_AGE_H, 0, 24 * 365)
+        cargo, capital = self._capacity or 100, self._credits or 1_000_000
+        ship_pad = self._ship_pad()
+        min_supply = _cfg_int(_CFG_MIN_SUPPLY, _DEFAULT_MIN_STOCK, 0, 1_000_000)
+        min_demand = _cfg_int(_CFG_MIN_DEMAND, _DEFAULT_MIN_STOCK, 0, 1_000_000)
+        ground = config.get_bool(_CFG_GROUND, default=True)
+        carriers = config.get_bool(_CFG_CARRIERS, default=True)
+        arrival = _cfg_int(_CFG_MAX_ARRIVAL_LS, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000)
+        self._route_blocks, self._next_system = [], None
+        self._route_label = f"{station} ({system})"
+
+        def work(cancel: threading.Event) -> Any:
+            stations = trade_roundtrip.fetch_stations(system, radius, age)
+            origin = trade_roundtrip.find_start(stations, system, station)
+            if origin is None:
+                raise spansh_routes.RouteSearchError(
+                    f"Spansh has no recent market for {station}. Dock and open its commodity market so it is "
+                    "reported, or raise the price-age limit in Settings.")
+            trips = trade_roundtrip.find_round_trips(
+                origin, stations, cargo, capital, jump, ship_pad=ship_pad, min_supply=min_supply,
+                min_demand=min_demand, include_ground=ground, include_carriers=carriers, max_arrival_ls=arrival)
+            return {"trips": trips, "searched": len(stations), "radius": radius}
+
+        self._start_job("roundtrip", work)
+
+    def _finish_round_trip(self, job: _Job) -> None:
+        if job.error:
+            self._route_blocks = [Heading("Round trip"), Note(job.error, warn=True)]
+            return
+        found = job.result or {}
+        trips: List[trade_roundtrip.RoundTrip] = found.get("trips") or []
+        if not trips:
+            self._route_blocks = [
+                Heading("Round trip"), Note("No pair of stations is profitable both ways.", warn=True),
+                Note(f"Looked at {found.get('searched', 0)} stations within {found.get('radius', 0):.0f} ly. Try a "
+                     "longer price-age limit, lower minimum supply and demand, or a bigger jump range.")]
+            return
+        blocks: List[Block] = [Heading("Round trip (loaded both ways)"),
+                               Note(f"Best of {found.get('searched', 0)} stations within {found.get('radius', 0):.0f} ly, "
+                                    "ranked by estimated profit per hour."), Columns(("Per loop", "ly"))]
+        for number, trip in enumerate(trips, start=1):
+            blocks.append(Item(f"{number}. {_clip(trip.a.name)} \u21c4 {_clip(trip.b.name)}",
+                               (f"{trip.profit:+,}", f"{trip.distance_ly:.1f}"),
+                               detail=f"{_clip(trip.b.system)} \u00b7 {trip.b.arrival_ls:,.0f} ls \u00b7 "
+                                      f"~{trip.per_hour:,} cr/hr"))
+            for arrow, load, dest in (("Out", trip.out, trip.b), ("Back", trip.back, trip.a)):
+                what = ", ".join(f"{_clip(name)} \u00d7 {tonnes} t" for name, tonnes, _ in load.items[:3])
+                blocks.append(Note(f"{arrow}: {what} ({load.profit:+,} cr, to {_clip(dest.name)})"))
+        self._route_blocks = blocks
+        best = trips[0]
+        self._next_system = best.b.system
+        if self._ledger is not None:
+            ledger_mod.add_route(self._ledger, {
+                "t": self._now(), "start": self._route_label, "total": best.profit,
+                "hops": [{"from": a.name, "to": b.name, "system": b.system, "ly": round(best.distance_ly, 1),
+                          "profit": load.profit,
+                          "cargo": [{"name": n, "tonnes": t, "profit": t * p} for n, t, p in load.items]}
+                         for a, b, load in ((best.a, best.b, best.out), (best.b, best.a, best.back))]})
+            self._save()
 
     def _finish_routes(self, job: _Job) -> None:
         if job.error:
@@ -1054,6 +1135,8 @@ class TradePanelController:
         self._arrival_var = tk.StringVar(value=str(_cfg_int(_CFG_MAX_ARRIVAL_LS, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000)))
         self._range_var = tk.StringVar(value=config.get_str(_CFG_JUMP_RANGE) or "")
         self._age_var = tk.StringVar(value=str(_cfg_int(_CFG_PRICE_AGE_H, _DEFAULT_PRICE_AGE_H, 0, 24 * 365)))
+        self._supply_var = tk.StringVar(value=str(_cfg_int(_CFG_MIN_SUPPLY, _DEFAULT_MIN_STOCK, 0, 1_000_000)))
+        self._demand_var = tk.StringVar(value=str(_cfg_int(_CFG_MIN_DEMAND, _DEFAULT_MIN_STOCK, 0, 1_000_000)))
         self._permit_var = tk.BooleanVar(value=config.get_bool(_CFG_PERMIT, default=False))
         self._pad_var = tk.BooleanVar(value=config.get_bool(_CFG_LARGE_PAD, default=False))
         self._near_var = tk.StringVar(value=str(self._near_radius()))
@@ -1068,6 +1151,8 @@ class TradePanelController:
                 ("Max distance from the star (ls)", self._arrival_var),
                 ("Jump range override (ly, blank = use my ship's)", self._range_var),
                 ("Routes: ignore prices older than (hours, 0 = any)", self._age_var),
+                ("Round trip: least supply at the buying station (t)", self._supply_var),
+                ("Round trip: least demand at the selling station (t)", self._demand_var),
                 ("'Near me' price search radius (ly)", self._near_var))):
             nb.Label(form, text=label).grid(row=row, column=0, sticky=tk.W, pady=2)
             tk.Entry(form, textvariable=var, width=8).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=2)
@@ -1146,7 +1231,9 @@ class TradePanelController:
                 (_CFG_MAX_HOPS, self._hops_var, _DEFAULT_MAX_HOPS, 1, 10),
                 (_CFG_MAX_ARRIVAL_LS, self._arrival_var, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000),
                 (_CFG_NEAR_RADIUS, self._near_var, _DEFAULT_NEAR_RADIUS_LY, 1, 100_000),
-                (_CFG_PRICE_AGE_H, self._age_var, _DEFAULT_PRICE_AGE_H, 0, 24 * 365)):
+                (_CFG_PRICE_AGE_H, self._age_var, _DEFAULT_PRICE_AGE_H, 0, 24 * 365),
+                (_CFG_MIN_SUPPLY, self._supply_var, _DEFAULT_MIN_STOCK, 0, 1_000_000),
+                (_CFG_MIN_DEMAND, self._demand_var, _DEFAULT_MIN_STOCK, 0, 1_000_000)):
             try:
                 value = int((var.get() if var is not None else "").strip())
             except ValueError:

@@ -30,6 +30,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     and permit systems, all sent to Spansh's planner. Each route shows an **estimated profit per hour** (fixed
     allowances for jumps, supercruise and the stop) and the supply and demand behind each hop. The **Hops** button
     cycles 2 to 5; a route that ends where it began with every leg loaded is marked a repeatable loop.
+    **Round trip** (Routes page) finds the best back-and-forth pair itself (`trade_roundtrip.py`): one station search
+    for the markets near you, then a pair only counts if both legs make a profit, so there is never an empty leg. Each
+    leg fills the hold best commodity first, limited by supply, demand and your credits; pairs are ranked by estimated
+    profit per hour; least supply and least demand are settings (200 t). `tests/test_trade_roundtrip.py`.
     Routes start from the last real station when you're docked at a fleet carrier (Spansh can't plan from one), and a
     refusal from Spansh is shown with its reason instead of "check the EDMC log".
   - **Market**: a commodity box with type-ahead (`trade_commodity_entry.py`), a **Sell** / **Buy** choice and
