@@ -23,6 +23,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     Override in Settings.
   - **Fleet carrier cargo space** (`trade_carrier.py`): used, free and reserved cargo tonnes from `CarrierStats`
     and `CargoTransfer`, kept per commander in `trade_carrier.json`; hidden for commanders without a carrier.
+  - The carrier figure is rebuilt from your recent journals at startup (last `CarrierStats` plus the `CargoTransfer`s since),
+    because `CarrierStats` is only written when Carrier Management is opened and EDMC does not replay old events. Commander
+    names are matched ignoring case (the journal says `BOCHEAUX`).
   - The hold line now shows free tonnes, and the Session page shows the ship and its pad size.
   - The Spansh lookups are off until enabled in Settings > Trade, and only run when you press a button.
   - Tests: `tests/test_trade.py`. Checked on Windows only; the lookups and panel layout still need a look on Linux.

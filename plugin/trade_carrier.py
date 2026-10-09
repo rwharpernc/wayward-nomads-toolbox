@@ -1,20 +1,30 @@
 """
-Fleet carrier cargo space for Trade mode: how much of the carrier's cargo capacity is used and
-free. Pure logic plus a small per-commander JSON file (`trade_carrier.json` beside the plugin).
+Your fleet carrier and squadron carrier cargo space, for Trade mode: how much of each carrier's
+cargo bay is used and free. Pure logic plus a small JSON file (`trade_carrier.json` beside the
+plugin).
 
-Not every commander owns a carrier, so nothing is shown until one has been seen for the
-current commander; a commander with none never sees a carrier line.
+Not every commander owns a carrier, and some own a fleet carrier, a squadron carrier or both, so
+Settings has a per-commander choice (`visible_types`): Auto (show whatever has been seen), None,
+Fleet, Squadron or Both. Nothing is shown for a carrier that is not in that choice.
 
-Where the numbers come from (journal events, as documented by Frontier):
-- `CarrierStats` - written when the carrier management screen is opened - carries
-  `SpaceUsage`: `TotalCapacity`, `Crew`, `Cargo`, `CargoSpaceReserved`, `ShipPacks`,
-  `ModulePacks`, `FreeSpace`. The cargo bay is what is left after crew services and any
-  ship/module packs, so cargo capacity = TotalCapacity - Crew - ShipPacks - ModulePacks.
-- `CargoTransfer` with `Direction` "tocarrier" / "toship" moves tonnes in and out, so the used
-  figure follows transfers between management-screen visits.
-- `CarrierBuy` says a carrier exists (name and callsign) before any usage is known.
-Trade orders and market sales made by the carrier itself are only reflected on the next
-`CarrierStats`, so the figure is "as of" the last time the management screen was opened.
+Where the numbers come from (journal events):
+- `CarrierStats` (written only when the Carrier Management screen is opened) carries `CarrierID`,
+  `CarrierType` (`FleetCarrier` / `SquadronCarrier`) and `SpaceUsage`: `TotalCapacity`, `Crew`,
+  `Cargo`, `CargoSpaceReserved`, `ShipPacks`, `ModulePacks`, `FreeSpace`. The cargo bay is what is left
+  after crew services and any ship/module packs: capacity = TotalCapacity - Crew - ShipPacks - ModulePacks.
+- `CargoTransfer` (`Direction` "tocarrier" / "toship") moves tonnes in and out. It does not say which
+  carrier, so the transfer goes to the carrier you are docked at: `Docked` / `Location` carry the
+  station's `MarketID` (equal to the carrier's `CarrierID`) and `StationType`. Docked at anyone else's
+  carrier, nothing is counted. With only one carrier of yours on record and no dock information, it
+  goes to that one.
+- `CarrierBuy` says a carrier exists before any usage is known.
+Trade orders and sales made by the carrier itself show only on the next `CarrierStats`, so the figure
+is "as of" the last visit to Carrier Management.
+
+`CarrierStats` is not written at login and EDMC does not replay old events when it starts, so a baseline
+seen before WNTB started would be missed. `backfill` replays the recent journal files for the last
+baseline and the transfers after it. Commander names are matched ignoring case (the journal may say
+"BOCHEAUX" where EDMC says "Bocheaux").
 """
 from __future__ import annotations
 
@@ -22,7 +32,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 try:
     from config import appname
@@ -33,8 +43,23 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 STATE_FILENAME = "trade_carrier.json"
+BACKFILL_FILES = 40  # newest journal files read at startup
+
+FLEET = "FleetCarrier"
+SQUADRON = "SquadronCarrier"
+TYPE_ORDER = (FLEET, SQUADRON)
+TYPE_LABEL = {FLEET: "Fleet carrier", SQUADRON: "Squadron carrier"}
+
+# Settings choices, per commander.
+AUTO, NONE, FLEET_ONLY, SQUADRON_ONLY, BOTH = "auto", "none", "fleet", "squadron", "both"
+MODES = (AUTO, NONE, FLEET_ONLY, SQUADRON_ONLY, BOTH)
+_MODE_TYPES = {NONE: (), FLEET_ONLY: (FLEET,), SQUADRON_ONLY: (SQUADRON,), BOTH: (FLEET, SQUADRON)}
+
+_BACKFILL_KEYS = ('"event":"CarrierStats"', '"event":"CarrierBuy"', '"event":"CargoTransfer"', '"event":"LoadGame"',
+                  '"event":"Commander"', '"event":"Docked"', '"event":"Undocked"', '"event":"Location"')
 
 CarrierRecord = Dict[str, Any]
+Records = Dict[str, Dict[str, CarrierRecord]]  # commander key -> carrier type -> record
 
 
 def _int(value: Any) -> int:
@@ -43,6 +68,15 @@ def _int(value: Any) -> int:
 
 def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def key_for(cmdr: str) -> str:
+    """Records and settings are keyed by commander name ignoring case."""
+    return str(cmdr or "").strip().casefold()
+
+
+def _type_of(entry: Dict[str, Any]) -> str:
+    return SQUADRON if str(entry.get("CarrierType") or "") == SQUADRON else FLEET
 
 
 def parse_stats(entry: Dict[str, Any]) -> Optional[CarrierRecord]:
@@ -56,6 +90,7 @@ def parse_stats(entry: Dict[str, Any]) -> Optional[CarrierRecord]:
     cargo, reserved = _int(usage.get("Cargo")), _int(usage.get("CargoSpaceReserved"))
     free = _int(usage["FreeSpace"]) if "FreeSpace" in usage else max(0, capacity - cargo - reserved)
     return {
+        "type": _type_of(entry), "id": _int(entry.get("CarrierID")),
         "name": str(entry.get("Name") or ""), "callsign": str(entry.get("Callsign") or ""),
         "total": total, "capacity": capacity, "cargo": cargo, "reserved": reserved, "free": free,
         "updated": str(entry.get("timestamp") or _now()),
@@ -64,8 +99,9 @@ def parse_stats(entry: Dict[str, Any]) -> Optional[CarrierRecord]:
 
 def note_purchase(entry: Dict[str, Any]) -> CarrierRecord:
     """`CarrierBuy`: a carrier now exists; usage stays unknown until its first CarrierStats."""
-    return {"name": "", "callsign": str(entry.get("Callsign") or ""), "total": 0, "capacity": 0,
-            "cargo": 0, "reserved": 0, "free": 0, "updated": str(entry.get("timestamp") or _now())}
+    return {"type": _type_of(entry), "id": _int(entry.get("CarrierID")), "name": "",
+            "callsign": str(entry.get("Callsign") or ""), "total": 0, "capacity": 0, "cargo": 0, "reserved": 0,
+            "free": 0, "updated": str(entry.get("timestamp") or _now())}
 
 
 def apply_transfer(record: CarrierRecord, entry: Dict[str, Any]) -> bool:
@@ -89,34 +125,180 @@ def apply_transfer(record: CarrierRecord, entry: Dict[str, Any]) -> bool:
     return changed
 
 
-def cargo_lines(record: Optional[CarrierRecord]) -> List[str]:
-    """Display lines for the Session page. Empty when there is no carrier to show."""
-    if not record:
-        return []
-    who = record.get("name") or record.get("callsign") or "Fleet carrier"
-    head = f"Fleet carrier: {who}"
-    capacity = record.get("capacity", 0)
-    if not capacity:
-        return [head, "  Open Carrier Management once to read its cargo space."]
-    used, reserved, free = record.get("cargo", 0), record.get("reserved", 0), record.get("free", 0)
-    lines = [head, f"  Cargo: {used:,}/{capacity:,} t used, {free:,} t free"]
-    if reserved:
-        lines.append(f"  {reserved:,} t reserved for trade orders")
+class CarrierTracker:
+    """Folds journal events into per-commander, per-type carrier records. Used live by the panel and,
+    event by event, by `backfill`."""
+
+    def __init__(self, records: Optional[Records] = None) -> None:
+        self.records: Records = records if records is not None else {}
+        self.cmdr = ""
+        self._docked_id = 0
+        self._docked_type = ""
+
+    def set_cmdr(self, cmdr: str) -> None:
+        self.cmdr = key_for(cmdr)
+
+    def dock_state(self) -> tuple:
+        return self._docked_id, self._docked_type
+
+    def set_dock(self, market_id: int, station_type: str) -> None:
+        self._docked_id, self._docked_type = market_id, station_type
+
+    def _mine(self) -> Dict[str, CarrierRecord]:
+        return self.records.get(self.cmdr, {})
+
+    def feed(self, entry: Dict[str, Any]) -> bool:
+        """Returns True if a record changed."""
+        event = entry.get("event")
+        if event == "Commander" and entry.get("Name"):
+            self.cmdr = key_for(entry["Name"])
+            return False
+        if event == "LoadGame":
+            if entry.get("Commander"):
+                self.cmdr = key_for(entry["Commander"])
+            self._docked_id, self._docked_type = 0, ""
+            return False
+        if event in ("Docked", "Location"):
+            docked = event == "Docked" or bool(entry.get("Docked"))
+            self._docked_id = _int(entry.get("MarketID")) if docked else 0
+            self._docked_type = str(entry.get("StationType") or "") if docked else ""
+            return False
+        if event == "Undocked":
+            self._docked_id, self._docked_type = 0, ""
+            return False
+        if not self.cmdr:
+            return False
+        if event == "CarrierStats":
+            parsed = parse_stats(entry)
+            if parsed is None:
+                return False
+            self.records.setdefault(self.cmdr, {})[parsed["type"]] = parsed
+            return True
+        if event == "CarrierBuy":
+            note = note_purchase(entry)
+            return self.records.setdefault(self.cmdr, {}).setdefault(note["type"], note) is note
+        if event == "CargoTransfer":
+            target = self._transfer_target()
+            return target is not None and apply_transfer(target, entry)
+        return False
+
+    def _transfer_target(self) -> Optional[CarrierRecord]:
+        """The carrier a transfer just now went to: the one we are docked at, else (no dock information)
+        the commander's only carrier. Docked at a carrier that is not theirs: none."""
+        mine = self._mine()
+        if self._docked_id:
+            for record in mine.values():
+                if record.get("id") == self._docked_id:
+                    return record
+            if self._docked_type in mine and not mine[self._docked_type].get("id"):
+                return mine[self._docked_type]  # a purchase noted without its id
+            return None
+        return next(iter(mine.values())) if len(mine) == 1 else None
+
+
+def replay(events: Iterable[Dict[str, Any]], tracker: Optional[CarrierTracker] = None) -> Records:
+    tracker = tracker or CarrierTracker()
+    for entry in events:
+        tracker.feed(entry)
+    return tracker.records
+
+
+def backfill(journal_dir: str, max_files: int = BACKFILL_FILES) -> Records:
+    return backfill_tracker(journal_dir, max_files).records
+
+
+def backfill_tracker(journal_dir: str, max_files: int = BACKFILL_FILES) -> CarrierTracker:
+    """Read the newest journal files and return a tracker holding what they say about each commander's
+    carriers (and where the commander was docked at the end). Only lines that can matter are parsed, so
+    this is cheap even for big journals."""
+    tracker = CarrierTracker()
+    try:
+        names = sorted(n for n in os.listdir(journal_dir) if n.startswith("Journal.") and n.endswith(".log"))
+    except OSError:
+        return tracker
+    for name in names[-max_files:]:
+        try:
+            with open(os.path.join(journal_dir, name), "r", encoding="utf-8", errors="replace") as handle:
+                for line in handle:
+                    if any(key in line for key in _BACKFILL_KEYS):
+                        try:
+                            parsed = json.loads(line)
+                        except ValueError:
+                            continue
+                        if isinstance(parsed, dict):
+                            tracker.feed(parsed)
+        except OSError:
+            continue
+    return tracker
+
+
+# --- what to show --------------------------------------------------------------------------------
+
+def visible_types(mode: str, present: Iterable[str]) -> List[str]:
+    """Which carrier types to show for a commander's Settings choice. Auto shows what has been seen."""
+    if mode in _MODE_TYPES:
+        return list(_MODE_TYPES[mode])
+    seen = set(present)
+    return [t for t in TYPE_ORDER if t in seen]
+
+
+def cargo_lines(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) -> List[str]:
+    """Display lines for the Session page, one block per visible carrier. Empty when there is nothing to show."""
+    records = records or {}
+    lines: List[str] = []
+    for ctype in visible_types(mode, records):
+        record = records.get(ctype)
+        label = TYPE_LABEL[ctype]
+        who = (record or {}).get("name") or (record or {}).get("callsign")
+        lines.append(f"{label}: {who}" if who else label)
+        capacity = (record or {}).get("capacity", 0)
+        if not record or not capacity:
+            lines.append("  Open Carrier Management once to read its cargo space.")
+            continue
+        used, reserved, free = record.get("cargo", 0), record.get("reserved", 0), record.get("free", 0)
+        lines.append(f"  Cargo: {used:,}/{capacity:,} t used, {free:,} t free")
+        if reserved:
+            lines.append(f"  {reserved:,} t reserved for trade orders")
     return lines
 
 
-# --- persistence (one record per commander) ---------------------------------------------------
+def newer(candidate: CarrierRecord, existing: Optional[CarrierRecord]) -> bool:
+    """Is `candidate` more recent than what is held? (ISO timestamps compare as text.)"""
+    return existing is None or str(candidate.get("updated", "")) > str(existing.get("updated", ""))
 
-def load_all(plugin_dir: str) -> Dict[str, CarrierRecord]:
+
+def merge(target: Records, found: Records) -> bool:
+    """Take every record in `found` that is newer than the one in `target`. Returns True if any changed."""
+    changed = False
+    for cmdr, by_type in found.items():
+        for ctype, record in by_type.items():
+            if newer(record, target.get(cmdr, {}).get(ctype)):
+                target.setdefault(cmdr, {})[ctype] = record
+                changed = True
+    return changed
+
+
+# --- persistence ----------------------------------------------------------------------------------
+
+def load_all(plugin_dir: str) -> Records:
+    """Saved records. An older save held one flat record per commander; that was always a fleet carrier."""
     try:
         with open(os.path.join(plugin_dir, STATE_FILENAME), "r", encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, ValueError):
         return {}
-    return {str(k): v for k, v in data.items() if isinstance(v, dict)} if isinstance(data, dict) else {}
+    records: Records = {}
+    for cmdr, value in (data.items() if isinstance(data, dict) else []):
+        if not isinstance(value, dict):
+            continue
+        if "capacity" in value or "cargo" in value:  # old flat format
+            records[key_for(cmdr)] = {FLEET: {**value, "type": FLEET}}
+        else:
+            records[key_for(cmdr)] = {t: r for t, r in value.items() if t in TYPE_ORDER and isinstance(r, dict)}
+    return records
 
 
-def save_all(plugin_dir: str, records: Dict[str, CarrierRecord]) -> None:
+def save_all(plugin_dir: str, records: Records) -> None:
     path = os.path.join(plugin_dir, STATE_FILENAME)
     tmp = f"{path}.tmp"
     try:
