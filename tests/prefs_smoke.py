@@ -104,6 +104,14 @@ try:
     root.update_idletasks()
     print("SETTINGS BUILT OK:", len(names), "top-level tabs:", ", ".join(names))
     print("LEAF TABS:", len(leaves), "|", "; ".join(leaves))
+    from plugin import settings_scroll
+    def _pages(w):
+        for c in w.winfo_children():
+            if isinstance(c, settings_scroll.ScrolledPage):
+                yield c
+            yield from _pages(c)
+    over = [p for p in _pages(outer) if p._canvas.winfo_reqheight() > p._cap]
+    print("PAGES OVER HEIGHT CAP:", len(over), "of", len(list(_pages(outer))))
     print("TALLEST PAGE (px):", max(tabs.nametowidget(t).winfo_reqheight() for t in tabs.tabs()) if tabs else 0)
     code = 0 if names else 1
 except Exception as exc:  # noqa: BLE001
