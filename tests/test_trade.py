@@ -124,6 +124,27 @@ class RunningCostTests(unittest.TestCase):
         self.assertEqual(ledger_mod.expenses_by_category(ledger),
                          {"fuel": 257, "repairs": 3352, "rearm": 5286, "limpets": 4060})
 
+    def test_a_repair_that_includes_wear_is_advanced_maintenance(self) -> None:
+        ledger = self._ledger()
+        # Both shapes copied from a real journal (2026-10-09): the second one is Advanced Maintenance.
+        ledger_mod.apply_trade_event(ledger, {"event": "RepairAll", "Cost": 50_083})
+        ledger_mod.apply_trade_event(ledger, {"event": "Repair", "Cost": 905, "Items": [
+            "$panthermkii_cockpit_name;", "Hull", "$modularcargobaydoor_name;", "Wear"]})
+        ledger_mod.apply_trade_event(ledger, {"event": "Repair", "Cost": 1_731, "Items": ["Hull", "$x_name;"]})
+        self.assertEqual(ledger_mod.expenses_by_category(ledger),
+                         {"repairs": 51_814, "maintenance": 905})
+        lines = ledger_mod.summary_lines(ledger)
+        self.assertIn("Repairs: -51,814 cr", lines)
+        self.assertIn("Advanced maintenance: -905 cr", lines)
+        self.assertLess(lines.index("Repairs: -51,814 cr"), lines.index("Advanced maintenance: -905 cr"))
+
+    def test_wear_is_matched_ignoring_case_and_only_as_a_whole_item(self) -> None:
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, {"event": "Repair", "Cost": 10, "Items": [" WEAR "]})
+        ledger_mod.apply_trade_event(ledger, {"event": "Repair", "Cost": 20, "Items": ["Wearable Thing"]})
+        ledger_mod.apply_trade_event(ledger, {"event": "Repair", "Cost": 30})
+        self.assertEqual(ledger_mod.expenses_by_category(ledger), {"repairs": 50, "maintenance": 10})
+
     def test_a_free_or_empty_cost_changes_nothing(self) -> None:
         ledger = self._ledger()
         self.assertFalse(ledger_mod.apply_trade_event(ledger, {"event": "RefuelAll", "Cost": 0}))

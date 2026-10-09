@@ -111,7 +111,9 @@ category to credits (an older saved ledger without it still loads).
   `AvgPricePaid` 0, so the whole sale counts as profit, which matches the credits that arrived.
 - **Running costs** are folded in too (`_apply_expense`), from events whose field names were checked against a
   real journal (2026-10-09): `RefuelAll`/`RefuelPartial` (`Cost`) are *fuel*; `Repair`/`RepairAll` (`Cost`) are
-  *repairs*; `BuyAmmo` and `RestockVehicle` (`Cost`) are *rearm*; `BuyDrones` (`TotalCost`) adds and `SellDrones`
+  *repairs*; `BuyAmmo` and `RestockVehicle` (`Cost`) are *rearm*; a `Repair` whose `Items` include `"Wear"` is *Advanced Maintenance* (shown
+  as its own line; confirmed with the commander against a real journal, 2026-10-09, where one `Repair` listing the
+  cockpit, hull, cargo bay door and Wear cost 905 cr, so the whole charge counts and can't be split); `BuyDrones` (`TotalCost`) adds and `SellDrones`
   (`TotalSale`) subtracts for *limpets*, so that category can read as a gain if you sell back more than you
   bought this session. A zero or missing cost changes nothing. Not counted: insurance rebuys (`Resurrect`) and
   fines (`PayFines`). Costs only count from when WNTB saw them, like trades.
