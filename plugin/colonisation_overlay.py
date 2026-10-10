@@ -71,7 +71,9 @@ class Visibility:
     """Should the card show right now? Fed every journal event and every `Status.json` change. Two cases:
 
     - in a commodity market: a station-services screen is open (`GuiFocus`) and the service opened last was the market.
-      Backing out of the market to the station-services menu cannot be seen, so the card stays until that menu is left;
+      Backing out of the market to the station-services menu cannot be seen, so the card stays until that menu is left.
+      At the commander's own carrier the game writes no `Market` event when its market is opened, so there any
+      station-services screen counts unless Outfitting or the Shipyard was the last one opened (they do write events);
     - docked at a carrier with the right-hand cockpit panel open (`GuiFocus` 1), where the ship's cargo and the transfer to
       the carrier live. The game writes nothing when that is opened (`CargoTransfer` comes only after a transfer is made),
       so the open panel is the signal. SRVSurvey does the same with its "Show when looking at right-hand panel" setting,
@@ -129,7 +131,8 @@ class Visibility:
 
     @property
     def visible(self) -> bool:
-        if self._focus == GUI_FOCUS_STATION_SERVICES and self._service in ("market", "carrier"):
+        if self._focus == GUI_FOCUS_STATION_SERVICES and (
+                self._service in ("market", "carrier") or (self._at_carrier and self._service != "other")):
             return True
         if self._managing:
             return True

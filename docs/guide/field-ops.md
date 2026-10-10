@@ -208,9 +208,12 @@ trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips 
 cargo capacity, which EDMC supplies).
 
 - **When it shows:**
-  - In a **commodity market** at a station or carrier. It hides when you leave the screen, open another service such
-    as outfitting or the shipyard, or undock. Backing out of the market to the station-services menu can't be detected,
-    so the card stays until you leave that menu.
+  - In a **commodity market** at a station. It hides when you leave the screen, open another service such as
+    outfitting or the shipyard, or undock. Backing out of the market to the station-services menu can't be detected, so
+    the card stays until you leave that menu.
+  - At **your own carrier**, in the station-services screens. The game writes nothing when you open a carrier's market,
+    so any services screen shows it there, except after the carrier's outfitting or shipyard screens (which are
+    logged).
   - Whenever you are **docked at a carrier** and have the **right-hand cockpit panel** open (where your cargo is and
     where you transfer to the carrier). The game writes nothing when you open that, so the open panel is what WNTB
     goes by; it hides when you close the panel or undock. SRVSurvey shows its list on that panel too, but anywhere

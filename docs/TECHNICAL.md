@@ -843,7 +843,8 @@ character counts, since the overlay has no text metrics. The controller redraws 
 or half the 3600 s time to live has passed, sends on a short-lived daemon thread, and clears synchronously in
 `plugin_stop`. The card is drawn only while `Visibility` says so, in one of three cases. (1) `Status.json` `GuiFocus` is Station
 Services (5, from `dashboard_entry`) and the service opened last was the market (`Market`, or `CarrierStats` /
-`CargoTransfer`); `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear that, and
+`CargoTransfer`), or the commander is docked at a carrier (the game writes no `Market` event for a carrier's market) and
+the last service was not `Outfitting` / `Shipyard`; `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear that, and
 so does `GuiFocus` leaving 5. (2) The commander is docked at a `FleetCarrier` / `SquadronCarrier` and `GuiFocus` is 1,
 the right-hand cockpit panel where the cargo transfer to the carrier is done (the game writes no event for opening it,
 and `CargoTransfer` comes only after a transfer is made). (3) The commander is docked at a construction depot (station

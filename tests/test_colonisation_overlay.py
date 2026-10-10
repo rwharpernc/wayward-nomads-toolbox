@@ -109,6 +109,22 @@ class VisibilityTests(unittest.TestCase):
         self.v.feed({"event": "Undocked"})
         self.assertFalse(self.v.visible)
 
+    def test_a_carriers_services_screen_shows_without_a_market_event_unless_outfitting_or_shipyard(self) -> None:
+        # the game writes no Market event for the commander's own carrier (checked against a real journal)
+        self.v.feed({"event": "Docked", "StationType": "FleetCarrier", "StationName": "WLF-LXW"})
+        self.v.set_focus(5)
+        self.assertTrue(self.v.visible)
+        self.v.feed({"event": "Shipyard"})
+        self.assertFalse(self.v.visible)
+        self.v.set_focus(0)
+        self.v.set_focus(5)                      # the screen was closed and opened again
+        self.assertTrue(self.v.visible)
+
+    def test_an_ordinary_stations_services_screen_still_needs_the_market_event(self) -> None:
+        self.v.feed({"event": "Docked", "StationType": "Coriolis", "StationName": "Jameson Memorial"})
+        self.v.set_focus(5)
+        self.assertFalse(self.v.visible)
+
     def test_right_hand_panel_elsewhere_does_not_show(self) -> None:
         self.v.feed({"event": "Docked", "StationType": "Coriolis", "StationName": "Jameson Memorial"})
         self.v.set_focus(1)
