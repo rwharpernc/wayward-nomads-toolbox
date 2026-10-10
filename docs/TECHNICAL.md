@@ -838,7 +838,10 @@ features always agree, falling back to what this module has seen itself. It is f
 `card_lines` (pure) turns the most recently updated active site, the hold and the carrier tonnes into lines, and
 `render` / `clear` send them through the shared `OverlayClient` (ids prefixed `wntb_colonisation_`, registered as a
 Plugin Group in `load.py`). The controller redraws only when the lines or position change or half the 3600 s time to
-live has passed, sends on a short-lived daemon thread, and clears synchronously in `plugin_stop`. Settings keys:
+live has passed, sends on a short-lived daemon thread, and clears synchronously in `plugin_stop`. The card is drawn only while `Visibility` says so: `Status.json` `GuiFocus` is Station Services (5, from
+`dashboard_entry`) and the service opened last was the market (`Market`) or the carrier's inventory (`CarrierStats`,
+`CargoTransfer`); `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear it, and so
+does `GuiFocus` leaving 5. Settings keys:
 `wntb_colonisation_overlay_enabled` / `_x` / `_y` / `_rows`.
 
 ### Auto-Honk (`autohonk.py`)

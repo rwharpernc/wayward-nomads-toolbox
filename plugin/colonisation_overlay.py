@@ -7,6 +7,12 @@ Which site: the commander's most recently updated active site (the one the Field
 commodity and the tonnes still to find after what is in the hold; where the commander has moved some onto a fleet
 carrier, that is shown too (`colonisation_carrier.py`), since it is stock they can pick up there.
 
+The card is only shown while the commander is in a commodity market, or in the carrier's inventory (Carrier Management /
+cargo transfer), at a station or carrier: that is `Visibility`. The journal says which service was opened (`Market`,
+`CarrierStats`, `CargoTransfer`), and `Status.json`'s `GuiFocus` says whether a station-services screen is open at all
+(it drops to another value when the commander leaves it, or undocks). Neither alone is enough: `GuiFocus` cannot tell the
+commodity market from outfitting, and the journal does not say when a screen is closed.
+
 Pure formatting (`card_lines`) is kept apart from the drawing (`render` / `clear`) so it can be tested without an overlay.
 Drawing goes through the shared `overlay.OverlayClient`, like every other WNTB overlay; the card registers an
 EDMCModernOverlay Plugin Group (`GROUP_NAME` / `GROUP_PREFIX`, wired up in load.py) so its background renders.
@@ -17,6 +23,7 @@ from typing import List, Mapping, Optional, Tuple
 
 from . import colonisation, overlay
 from .colonisation import Site
+from .screenshot_gui_focus import GUI_FOCUS_STATION_SERVICES
 
 ID_PREFIX = "wntb_colonisation_"
 GROUP_NAME = "wntb_colonisation"
@@ -46,6 +53,43 @@ TEXT_COLOUR = "#e5e7eb"
 CARRIER_COLOUR = "#7dd3fc"
 
 Line = Tuple[str, str]   # (text, colour)
+
+
+MARKET_EVENT = "Market"                                       # opening the commodity market
+CARRIER_EVENTS = ("CarrierStats", "CargoTransfer")            # opening Carrier Management, moving cargo to or from it
+OTHER_SERVICE_EVENTS = ("Outfitting", "Shipyard", "StoreCargo")   # another station service screen opened
+RESET_EVENTS = ("Docked", "Undocked", "LoadGame", "StartUp", "Shutdown")
+
+
+class Visibility:
+    """Is the commander in a commodity market or carrier inventory right now? Fed every journal event and every
+    `Status.json` change. Shown only while a station-services screen is open (`GuiFocus`) and the service opened last
+    was the market or the carrier's inventory. Backing out of the market to the station-services menu cannot be
+    seen, so the card stays until that menu is left."""
+
+    def __init__(self) -> None:
+        self._service = ""
+        self._focus = 0
+
+    def feed(self, entry: Mapping[str, object]) -> None:
+        event = entry.get("event")
+        if event in RESET_EVENTS:
+            self._service = ""
+        elif event == MARKET_EVENT:
+            self._service = "market"
+        elif event in CARRIER_EVENTS:
+            self._service = "carrier"
+        elif event in OTHER_SERVICE_EVENTS:
+            self._service = "other"
+
+    def set_focus(self, focus: object) -> None:
+        self._focus = focus if isinstance(focus, int) else 0
+        if self._focus != GUI_FOCUS_STATION_SERVICES:
+            self._service = ""   # the screen was closed; the next one opened announces itself
+
+    @property
+    def visible(self) -> bool:
+        return self._focus == GUI_FOCUS_STATION_SERVICES and self._service in ("market", "carrier")
 
 
 def _clip(text: str, limit: int) -> str:

@@ -246,4 +246,5 @@ def dashboard_entry(cmdr: str, is_beta: bool, entry: Dict[str, Any]) -> None:
     if isinstance(flags, int):
         interdiction.handle_dashboard_flags(flags)
     mining_panel.dashboard_status(entry)
+    colonisation_panel.dashboard_status(entry)
     organic_scan_panel.dashboard_status(entry)
