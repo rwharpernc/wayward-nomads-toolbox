@@ -39,23 +39,31 @@ class FakeClient:
         self.sent.append(("msg", msg_id, text, ttl))
 
 
-class CardLinesTests(unittest.TestCase):
-    def test_lists_what_is_left_after_the_hold_biggest_first(self) -> None:
-        lines = card.card_lines(site(), {"steel": 100}, {})
-        self.assertEqual([text for text, _ in lines], ["To source: Depot One", "300 t  Steel", "50 t  Water"])
+class BuildCardTests(unittest.TestCase):
+    def test_need_is_not_reduced_by_the_hold_and_rows_are_alphabetical(self) -> None:
+        built = card.build_card(site(), {"steel": 100}, {}, show_fc=False)
+        self.assertEqual([(r.name, r.need, r.ship) for r in built.rows], [("Steel", 400, 100), ("Water", 50, 0)])
+        self.assertEqual(built.remaining, 450)
 
-    def test_shows_stock_on_the_carrier(self) -> None:
-        lines = card.card_lines(site(), {}, {"water": 40})
-        self.assertIn("50 t  Water  (FC 40)", [text for text, _ in lines])
+    def test_covered_and_surplus(self) -> None:
+        built = card.build_card(site(), {"steel": 400, "water": 80}, {}, show_fc=False)
+        steel, water = built.rows
+        self.assertTrue(steel.covered and not steel.surplus)
+        self.assertTrue(water.covered and water.surplus)
+
+    def test_carrier_tonnes_and_trips(self) -> None:
+        built = card.build_card(site(), {}, {"water": 40}, show_fc=True, capacity=200)
+        self.assertEqual([r.fc for r in built.rows], [0, 40])
+        self.assertEqual(built.trips, 3)          # 450 t in a 200 t ship
+        self.assertEqual(card.build_card(site(), {}, {}, show_fc=False, capacity=0).trips, 0)
 
     def test_row_limit_is_summarized(self) -> None:
-        lines = card.card_lines(site(), {}, {}, max_rows=1)
-        self.assertEqual([text for text, _ in lines][-2:], ["400 t  Steel", "+1 more"])
+        built = card.build_card(site(), {}, {}, show_fc=False, max_rows=1)
+        self.assertEqual((len(built.rows), built.hidden), (1, 1))
 
     def test_nothing_to_draw(self) -> None:
-        self.assertEqual(card.card_lines(None, {}, {}), [])
-        self.assertEqual(card.card_lines(site(complete=True), {}, {}), [])
-        self.assertEqual(card.card_lines(site(), {"steel": 400, "water": 50}, {}), [])
+        self.assertIsNone(card.build_card(None, {}, {}, False))
+        self.assertIsNone(card.build_card(site(complete=True), {}, {}, False))
 
 
 class VisibilityTests(unittest.TestCase):
@@ -133,24 +141,42 @@ class VisibilityTests(unittest.TestCase):
 
 
 class RenderTests(unittest.TestCase):
-    def test_draws_card_and_rows(self) -> None:
+    def texts(self, client):
+        return {item[1].split("_", 2)[-1]: item[2] for item in client.sent if item[0] == "msg" and item[2]}
+
+    def test_draws_card_columns_and_footer(self) -> None:
         client = FakeClient()
-        rows = card.render(client, card.preview_lines(), 20, 300)
-        self.assertEqual(rows, len(card.preview_lines()))
+        slots = card.render(client, card.preview_card(), 20, 300)
+        self.assertEqual(slots, card.preview_card().slot_count)
         self.assertEqual(client.sent[0][:2], ("shape", card.CARD_ID))
-        self.assertEqual(sum(1 for item in client.sent if item[0] == "msg"), rows)
+        texts = self.texts(client)
+        self.assertEqual(texts["s1_1"], "Need")
+        self.assertEqual(texts["s1_3"], "Ship")
+        self.assertEqual(texts["s3_0"], "Steel ✓")
+        self.assertEqual(texts["s3_3"], "14,000")
+        self.assertTrue(texts[f"s{slots - 1}_0"].startswith("► 32,769 remaining  ► 33 trips"))
 
-    def test_shorter_list_clears_leftover_rows(self) -> None:
+    def test_no_fc_column_without_a_carrier(self) -> None:
         client = FakeClient()
-        card.render(client, card.preview_lines()[:2], 20, 300, previous_rows=4)
-        cleared = [item for item in client.sent if item[0] == "msg" and item[2] == ""]
-        self.assertEqual(len(cleared), 2)
+        built = card.build_card(site(), {"steel": 10}, {}, show_fc=False, capacity=100)
+        card.render(client, built, 20, 300)
+        texts = self.texts(client)
+        self.assertNotIn("FC", texts.values())
+        self.assertEqual(texts["s2_2"], "10")     # Ship is the third column
 
-    def test_empty_clears_everything(self) -> None:
+    def test_shorter_card_clears_leftover_lines(self) -> None:
         client = FakeClient()
-        self.assertEqual(card.render(client, [], 20, 300, previous_rows=3), 0)
+        built = card.build_card(site(), {}, {}, show_fc=False)
+        card.render(client, built, 20, 300, previous_slots=built.slot_count + 2)
+        cleared_slots = {item[1].split("_")[2] for item in client.sent if item[0] == "msg" and item[2] == ""}
+        self.assertIn(f"s{built.slot_count}", cleared_slots)
+        self.assertIn(f"s{built.slot_count + 1}", cleared_slots)
+
+    def test_clear_removes_card_and_text(self) -> None:
+        client = FakeClient()
+        card.clear(client, 20, 300, 2)
         self.assertEqual(client.sent[0][1], card.CARD_ID)
-        self.assertEqual(sum(1 for item in client.sent if item[0] == "msg"), 3)
+        self.assertEqual(sum(1 for item in client.sent if item[0] == "msg"), 8)
 
 
 if __name__ == "__main__":

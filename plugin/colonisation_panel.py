@@ -74,6 +74,7 @@ class ColonisationController:
         # remembered from the latest Docked (MarketID -> (station, system)).
         self._docked: Dict[int, tuple] = {}
         self._cargo: Dict[str, int] = {}
+        self._capacity = 0   # the ship's cargo capacity, for the trips figure on the overlay
         self._carrier_cargo = colonisation_carrier.carrier_cargo
         self._carrier_feed = colonisation_carrier.Feeder(self._carrier_cargo)
 
@@ -82,7 +83,7 @@ class ColonisationController:
 
         # Overlay card state: what was last sent, when, and where (so it can be cleared or moved).
         self._overlay_client = overlay.OverlayClient()
-        self._overlay_sent: List[card.Line] = []
+        self._overlay_sent: Optional[card.Card] = None
         self._overlay_sent_at = 0.0
         self._overlay_pos = (card.DEFAULT_X, card.DEFAULT_Y)
         self._visibility = card.Visibility()
@@ -142,6 +143,9 @@ class ColonisationController:
         except Exception:
             logger.exception("Fleet carrier transfer tracking failed")
 
+        capacity = state.get("CargoCapacity")
+        if isinstance(capacity, (int, float)) and not isinstance(capacity, bool):
+            self._capacity = int(capacity)
         cargo = colonisation.cargo_by_key(state.get("Cargo"))
         if cargo != self._cargo:
             self._cargo = cargo
@@ -180,33 +184,41 @@ class ColonisationController:
         self._visibility.set_focus(entry.get("GuiFocus"))
         self._update_overlay()
 
-    def _current_lines(self) -> List[card.Line]:
+    def _current_card(self) -> Optional[card.Card]:
         if not overlay_enabled() or not self._cmdr or not self._visibility.visible:
-            return []
+            return None
         sites = [s for s in self._repository.for_cmdr(self._cmdr) if s.active]
-        site = sites[0] if sites else None
-        return card.card_lines(site, self._cargo, self._carrier_cargo.tonnes(self._cmdr), overlay_rows())
+        return card.build_card(sites[0] if sites else None, self._cargo, self._carrier_cargo.tonnes(self._cmdr),
+                               self._carrier_cargo.has_carrier(self._cmdr), self._capacity, overlay_rows())
 
     def _update_overlay(self) -> None:
         """Redraw the shopping-list card if its content or position changed, or it is due a re-send before its time to
-        live runs out; clear it when disabled or nothing is left to source. Cheap enough to call on every event."""
-        lines = self._current_lines()
+        live runs out; clear it when disabled, out of view, or nothing is left to source. Cheap enough to call on every
+        event."""
+        shown = self._current_card()
         position = overlay_position()
         now = time.monotonic()
-        if (lines == self._overlay_sent and position == self._overlay_pos
-                and (not lines or now - self._overlay_sent_at < card.RESEND_AFTER_S)):
+        if (shown == self._overlay_sent and position == self._overlay_pos
+                and (shown is None or now - self._overlay_sent_at < card.RESEND_AFTER_S)):
             return
         previous, old_pos = self._overlay_sent, self._overlay_pos
-        self._overlay_sent, self._overlay_pos, self._overlay_sent_at = lines, position, now
-        if not lines and not previous:
+        self._overlay_sent, self._overlay_pos, self._overlay_sent_at = shown, position, now
+        if shown is None and previous is None:
             return
+        previous_slots = previous.slot_count if previous is not None else 0
 
         def worker() -> None:
             with self._overlay_lock:
                 try:
-                    if old_pos != position and previous:
-                        card.clear(self._overlay_client, old_pos[0], old_pos[1], len(previous))
-                    card.render(self._overlay_client, lines, position[0], position[1], len(previous))
+                    if old_pos != position and previous is not None:
+                        card.clear(self._overlay_client, old_pos[0], old_pos[1], previous_slots)
+                        previous_slots_now = 0
+                    else:
+                        previous_slots_now = previous_slots
+                    if shown is None:
+                        card.clear(self._overlay_client, position[0], position[1], previous_slots)
+                    else:
+                        card.render(self._overlay_client, shown, position[0], position[1], previous_slots_now)
                 except OSError:
                     logger.debug("Could not reach EDMCOverlay for the colonization shopping list", exc_info=True)
 
@@ -215,11 +227,11 @@ class ColonisationController:
     def stop(self) -> None:
         """Synchronous clear at shutdown (EDMC does not wait for background threads)."""
         try:
-            if self._overlay_sent:
-                card.clear(self._overlay_client, self._overlay_pos[0], self._overlay_pos[1], len(self._overlay_sent))
+            if self._overlay_sent is not None:
+                card.clear(self._overlay_client, self._overlay_pos[0], self._overlay_pos[1], self._overlay_sent.slot_count)
         except OSError:
             logger.debug("Could not reach EDMCOverlay to clear on shutdown", exc_info=True)
-        self._overlay_sent = []
+        self._overlay_sent = None
 
     def _refresh_summary(self) -> None:
         if self._summary_var is None:
@@ -289,8 +301,9 @@ class ColonisationController:
         nb.Label(
             frame,
             text=(
-                "Shown only while you are in a commodity market, the carrier inventory, or docked at a construction site. Lists what is still to source for your most recently updated active site (the To Source "
-                "figures), biggest first, with any stock you have moved onto your fleet carrier shown as FC."
+                "Shown only while you are in a commodity market, the carrier inventory, or docked at a construction site. "
+                "A table for your most recently updated active site: what it still needs, what is in your ship's hold "
+                "(a tick when it is covered), and, if you have a fleet carrier, what you have moved onto it."
             ),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(0, 6))
@@ -336,10 +349,9 @@ class ColonisationController:
 
         def worker() -> None:
             try:
-                lines = card.preview_lines()
-                card.render(client, lines, x, y)
+                slots = card.render(client, card.preview_card(), x, y)
                 time.sleep(8)
-                card.clear(client, x, y, len(lines))
+                card.clear(client, x, y, slots)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
