@@ -287,8 +287,7 @@ class BoxelSurveyController:
         # actual restore happens in _switch_cmdr(), called from
         # handle_event() below.
 
-        with self._survey_log_lock:
-            self._survey_log = survey_log.load_log(plugin_dir)
+        # The survey log is per commander too (survey_log.py); it is loaded in _switch_cmdr().
 
         self._region_sweep.start(plugin_dir)
         self._waypoint_route.start(plugin_dir)
@@ -298,6 +297,7 @@ class BoxelSurveyController:
         self._waypoint_route.stop()
         self._save_walker_state()
         self._save_visited_systems()
+        self._persist_survey_log()
 
     def _save_visited_systems(self) -> None:
         if self._plugin_dir is None or self._current_cmdr is None:
@@ -332,7 +332,10 @@ class BoxelSurveyController:
         never share or overwrite one boxel position or visited log."""
         self._save_walker_state()
         self._save_visited_systems()
+        self._persist_survey_log()
         self._current_cmdr = cmdr
+        with self._survey_log_lock:
+            self._survey_log = survey_log.load_log(self._plugin_dir, cmdr) if self._plugin_dir else survey_log.SurveyLog()
         with self._visited_lock:
             self._visited_systems = visited_systems.load_visited(self._plugin_dir, cmdr) if self._plugin_dir else set()
         self._update_visited_count_label()
@@ -508,10 +511,15 @@ class BoxelSurveyController:
             )
         self._persist_survey_log_and_refresh(system)
 
+    def _persist_survey_log(self) -> None:
+        """Save the current commander's survey log (nothing to save before a commander is known)."""
+        if self._plugin_dir is None or not self._current_cmdr:
+            return
+        with self._survey_log_lock:
+            survey_log.save_log(self._plugin_dir, self._current_cmdr, self._survey_log)
+
     def _persist_survey_log_and_refresh(self, system: str) -> None:
-        if self._plugin_dir is not None:
-            with self._survey_log_lock:
-                survey_log.save_log(self._plugin_dir, self._survey_log)
+        self._persist_survey_log()
         self._refresh_survey_stats(system)
 
     def _refresh_survey_stats(self, system: Optional[str]) -> None:

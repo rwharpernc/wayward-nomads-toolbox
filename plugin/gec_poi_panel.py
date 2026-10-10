@@ -32,7 +32,7 @@ import myNotebook as nb
 from config import appname
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import gec_poi_edastro, panelkit
+from . import gec_poi_edastro, journal_files, panelkit
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -41,7 +41,7 @@ PANEL_PLACEMENT = "exploration"
 
 _IDLE_TEXT = "Nearby POI: (jump into a system, then click Find Nearest POI)"
 _NO_POSITION_TEXT = "Nearby POI: current position unknown — jump or reload first"
-_CHECKING_TEXT = "Nearby POI: checking edastro.com..."
+_CHECKING_TEXT = "Nearby POI: checking edastro.com (the first lookup downloads their list)..."
 _ERROR_TEXT = "Nearby POI: lookup failed — see EDMarketConnector.log"
 
 
@@ -64,12 +64,33 @@ class GecPoiController:
 
     def handle_event(self, entry: Mapping[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
         event = entry.get("event")
-        if event not in ("FSDJump", "Location"):
+        if event == "StartUp":
+            # EDMC started with the game running: it replays nothing, so take the position from the current journal.
+            self._star_pos = self._star_pos or self._position_from_journal()
+            return
+        if event not in ("FSDJump", "Location", "CarrierJump"):
             return
         star_pos = entry.get("StarPos")
         if (isinstance(star_pos, list) and len(star_pos) == 3
                 and all(isinstance(v, (int, float)) for v in star_pos)):
             self._star_pos = tuple(star_pos)
+
+    @staticmethod
+    def _position_from_journal() -> Optional[Tuple[float, float, float]]:
+        """The last `StarPos` in the newest journal file (the one being played), or None."""
+        try:
+            files = journal_files.files_modified_since(0.0)
+            if not files:
+                return None
+            found = None
+            for event in journal_files.read_events(files[-1], journal_files.event_pattern("FSDJump", "Location", "CarrierJump")):
+                pos = event.get("StarPos")
+                if isinstance(pos, list) and len(pos) == 3 and all(isinstance(v, (int, float)) for v in pos):
+                    found = (float(pos[0]), float(pos[1]), float(pos[2]))
+            return found
+        except Exception:
+            logger.exception("GEC Nearby POI: couldn't read the current journal for a position")
+            return None
 
     # --- lookup -----------------------------------------------------------
 
@@ -117,10 +138,13 @@ class GecPoiController:
                         self._result_var.set(_ERROR_TEXT)
                 elif result is not None and self._result_var is not None:
                     rating = f", rating {result.rating:.1f}" if result.rating is not None else ""
+                    where = f" in {result.system}" if result.system else ""
                     self._result_var.set(
-                        f"Nearby POI: {result.name} ({result.category}) — "
+                        f"Nearby POI: {result.name} ({result.category}){where} — "
                         f"{result.distance_ly:,.1f} ly, {result.region}{rating}"
                     )
+                    if result.system and self._parent is not None:
+                        panelkit.copy_to_clipboard(self._parent, result.system)   # paste it into the galaxy map
                     if result.url and self._link_label is not None:
                         self._link_label.configure(url=result.url)
                         self._link_label.grid()

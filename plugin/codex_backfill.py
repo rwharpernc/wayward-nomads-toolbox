@@ -1,28 +1,24 @@
 """
-Full-journal-history scan for Codex Completionist's "Backfill from Journal
-History" button.
+Journal readers for Codex Completionist. A Codex tally belongs to one commander, so both readers take the commander and
+return only that commander's `CodexEntry` events (a journal file says whose events follow in its `Commander` /
+`LoadGame` lines, and one file can hold more than one commander).
 
-journal_scan.py (Missions mode) already globs every `*.log` file in the
-journal directory and replays events from them, but it's bounded to a
-2-week lookback (`_JOURNAL_SCAN_LOOKBACK`) - appropriate for missions
-(which expire) but far too short for a lifetime codex tally. This module
-is deliberately a separate, small glob function rather than reaching into
-journal_scan.py's own name-mangled private helpers across modules: no
-date cutoff at all, and filtered to `CodexEntry` events only.
-
-The full scan is explicitly user-triggered (a button) - scanning years of journal files is real I/O
-cost. `scan_since` is the small automatic one: only the files written since the tally last saw an event.
+`scan_all_codex_entries` is the full-history scan for the "Backfill from Journal History" button and the one-time rebuild
+after codex tallies became per commander. journal_scan.py (Missions mode) is bounded to two weeks, which is far too
+short for a lifetime codex tally, so this has no date cutoff. It is real I/O (years of journal files), so it is
+explicitly user-triggered or one-time. `scan_since` is the small automatic one: only the files written since the tally
+last saw an event.
 """
 
 from __future__ import annotations
 
-import json
 import logging
 import os
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from config import appname, config
+
+from . import commander_data, journal_files
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -39,65 +35,58 @@ def _journal_dir() -> str:
     return location or config.default_journal_dir
 
 
-def scan_since(stamp: str, folder: Optional[str] = None) -> List[Dict[str, Any]]:
-    """The `CodexEntry` events written after `stamp` (an ISO timestamp), oldest first. Reads only the journal files
+_WANTED = journal_files.event_pattern("Commander", "LoadGame", "CodexEntry")
+
+
+def _commander_events(path: str, wanted_key: str):
+    """The `CodexEntry` events in one journal file that belong to the commander with this key. A file names whose events
+    follow in its `Commander` / `LoadGame` lines (one file can hold more than one commander)."""
+    current = ""
+    for entry in journal_files.read_events(path, _WANTED):
+        kind = entry.get("event")
+        if kind == "Commander" and entry.get("Name"):
+            current = commander_data.key_for(entry["Name"])
+        elif kind == "LoadGame" and entry.get("Commander"):
+            current = commander_data.key_for(entry["Commander"])
+        elif kind == "CodexEntry" and current == wanted_key:
+            yield entry
+
+
+def scan_since(stamp: str, cmdr: str, folder: Optional[str] = None) -> List[Dict[str, Any]]:
+    """`cmdr`'s `CodexEntry` events written after `stamp` (an ISO timestamp), oldest first. Reads only the journal files
     modified since then, so it is cheap enough to run at every start-up (unlike the full history scan)."""
     import calendar
     import time
-
-    from . import journal_files
 
     try:
         since = calendar.timegm(time.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ")) - 86400   # a day's slack for clock drift
     except ValueError:
         return []
-    wanted = journal_files.event_pattern("CodexEntry")
+    key = commander_data.key_for(cmdr)
     events: List[Dict[str, Any]] = []
     for path in journal_files.files_modified_since(since, folder):
-        events.extend(e for e in journal_files.read_events(path, wanted) if (e.get("timestamp") or "") > stamp)
+        events.extend(e for e in _commander_events(path, key) if (e.get("timestamp") or "") > stamp)
     return events
 
 
-def scan_all_codex_entries() -> List[Dict[str, Any]]:
-    """Reads every `*.log` file in the journal directory (oldest first) and
-    returns every `CodexEntry` event found, in chronological order. Runs
-    synchronously - callers must run this off the Tk main thread (see
-    codex_completionist_panel.py's own worker-thread/queue pattern), since
-    a commander with years of journal history means real disk I/O time."""
-    location = _journal_dir()
+def scan_all_codex_entries(cmdr: str, folder: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Every `CodexEntry` event `cmdr` has in the journal directory (oldest file first), for the Backfill button and the
+    one-time rebuild. Other commanders' events in the same files are left out. Runs synchronously - callers must run it
+    off the Tk main thread (see codex_completionist_panel.py's worker-thread/queue pattern), since years of journal
+    history means real disk I/O time."""
+    location = _journal_dir() if folder is None else folder
     if not location:
-        # No configured journal folder and no EDMC default (common on Linux,
-        # where it lives inside the Wine/Proton prefix): Path("") would
-        # silently scan the current directory instead.
+        # No configured journal folder and no EDMC default (common on Linux, where it lives inside the Wine/Proton
+        # prefix): an empty path would silently mean the current directory.
         logger.warning("No journal directory configured; set one in EDMC's settings")
         return []
-    journal_dir = Path(location)
-    if not journal_dir.is_dir():
-        logger.warning("Journal directory not found: %s", journal_dir)
+    if not os.path.isdir(location):
+        logger.warning("Journal directory not found: %s", location)
         return []
-
-    log_files = sorted(
-        (p for p in journal_dir.glob("*.log") if p.is_file()),
-        key=lambda p: p.stat().st_mtime,
-    )
-
+    key = commander_data.key_for(cmdr)
+    files = journal_files.files_modified_since(0.0, location)
     entries: List[Dict[str, Any]] = []
-    for log_file in log_files:
-        try:
-            with open(log_file, "r", encoding="utf-8", errors="replace") as fh:
-                for line in fh:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        event = json.loads(line)
-                    except ValueError:
-                        continue
-                    if event.get("event") == "CodexEntry":
-                        entries.append(event)
-        except OSError as exc:
-            logger.warning("Could not read journal file %s: %s", log_file, exc)
-            continue
-
-    logger.info("Backfill scanned %d journal file(s), found %d CodexEntry event(s)", len(log_files), len(entries))
+    for path in files:
+        entries.extend(_commander_events(path, key))
+    logger.info("Backfill scanned %d journal file(s) for %s, found %d CodexEntry event(s)", len(files), cmdr, len(entries))
     return entries

@@ -112,14 +112,16 @@ _MARKET_SEARCH_COLUMNS = (
 _window: Optional["HistoryWindow"] = None
 
 
-def show(parent: tk.Misc, book: HistoryBook, on_change: Callable[[], None], select: Optional[str] = None) -> None:
-    """Open the history window, or refresh and raise it if already open. `select` is a session id to show."""
+def show(parent: tk.Misc, book: HistoryBook, on_change: Callable[[], None], select: Optional[str] = None,
+         cmdr: str = "") -> None:
+    """Open the history window, or refresh and raise it if already open. `select` is a session id to show. `cmdr` is the
+    active commander: the window opens on their sessions (the other commanders' stay one drop-down choice away)."""
     global _window
     if _window is not None and _window.alive:
-        _window.refresh(book, select)
+        _window.refresh(book, select, cmdr)
         _window.lift()
         return
-    _window = HistoryWindow(parent, book, on_change, select)
+    _window = HistoryWindow(parent, book, on_change, select, cmdr)
 
 
 def refresh_if_open(book: HistoryBook, select: Optional[str] = None) -> None:
@@ -300,8 +302,10 @@ class _LookupsTab:
 
 
 class HistoryWindow:
-    def __init__(self, parent: tk.Misc, book: HistoryBook, on_change: Callable[[], None], select: Optional[str]) -> None:
+    def __init__(self, parent: tk.Misc, book: HistoryBook, on_change: Callable[[], None], select: Optional[str],
+                 cmdr: str = "") -> None:
         self._book = book
+        self._home = ""   # the active commander the picker last opened on
         self._on_change = on_change
         self._shell = WindowShell(
             parent, "Trade History", "", size=DEFAULT_SIZE, min_size=(MIN_WIDTH, MIN_HEIGHT),
@@ -349,7 +353,7 @@ class HistoryWindow:
         self._labels: Dict[str, Dict[str, Any]] = {}
         self._selected_id: Optional[str] = None
         self._drawn: Dict[int, Optional[str]] = {}
-        self.refresh(book, select)
+        self.refresh(book, select, cmdr)
 
     @property
     def alive(self) -> bool:
@@ -361,11 +365,17 @@ class HistoryWindow:
 
     # --- data ----------------------------------------------------------------------------------
 
-    def refresh(self, book: HistoryBook, select: Optional[str] = None) -> None:
+    def refresh(self, book: HistoryBook, select: Optional[str] = None, cmdr: Optional[str] = None) -> None:
         if not self.alive:
             return
         self._book = book
         commanders = book.commanders()
+        if cmdr is not None and cmdr != self._home:
+            # Open on the active commander's sessions, not everyone's.
+            self._home = cmdr
+            match = next((c for c in commanders if c.strip().casefold() == cmdr.strip().casefold()), None)
+            if match is not None:
+                self._cmdr_var.set(match)
         self._cmdr_box.configure(values=[ALL_COMMANDERS] + commanders)
         if len(commanders) > 1:
             self._cmdr_label.pack(side="right", padx=(0, P.PAD_SM))

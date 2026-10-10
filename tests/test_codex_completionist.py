@@ -259,10 +259,13 @@ class CatchUpTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as folder:
                 path = os.path.join(folder, "Journal.1.log")
                 with open(path, "w", encoding="utf-8") as handle:
-                    for event in (self.find("2026-01-01T00:00:00Z"), self.find("2026-01-05T00:00:00Z"),
-                                  {"event": "Scan", "timestamp": "2026-01-06T00:00:00Z"}):
+                    for event in ({"event": "Commander", "Name": "ALICE"},
+                                  self.find("2026-01-01T00:00:00Z"), self.find("2026-01-05T00:00:00Z"),
+                                  {"event": "Scan", "timestamp": "2026-01-06T00:00:00Z"},
+                                  {"event": "LoadGame", "Commander": "Bob"},
+                                  self.find("2026-01-07T00:00:00Z", "$Codex_Ent_Bobs;")):
                         handle.write(json.dumps(event) + chr(10))
-                found = backfill.scan_since("2026-01-02T00:00:00Z", folder)
+                found = backfill.scan_since("2026-01-02T00:00:00Z", "Alice", folder)
             sys.modules.pop("plugin.codex_backfill", None)
         self.assertEqual([e["timestamp"] for e in found], ["2026-01-05T00:00:00Z"])
 

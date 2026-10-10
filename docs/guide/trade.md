@@ -101,7 +101,8 @@ Press **Save session** to keep a session. You can keep trading and press it agai
 instead of adding a second one. **Reset** starts a new session, which becomes a new entry if you save it.
 
 Press **History** to open the **Trade History** window. It has a drop-down at the top to pick a saved session
-(newest first), and, with more than one commander, a commander filter. The tabs:
+(newest first), and, with more than one commander, a commander filter. **It opens on the commander you are playing**;
+the others are one drop-down choice away (or **All commanders**). The tabs:
 
 | Tab | What it shows |
 |---|---|

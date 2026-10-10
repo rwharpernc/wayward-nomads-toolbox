@@ -353,6 +353,8 @@ class MiningPanelController:
     def handle_event(self, entry: Dict[str, Any], cmdr: Optional[str], system: Optional[str],
                      station: Optional[str], state: Dict[str, Any]) -> None:
         if cmdr:
+            hotspots.hotspot_repository.set_commander(cmdr)
+            coverage.coverage_repository.set_commander(cmdr)
             space_mining.space_mining_repository.set_current_cmdr(cmdr)
             surface_mining.surface_mining_repository.set_current_cmdr(cmdr)
         location.set_current_system(system)

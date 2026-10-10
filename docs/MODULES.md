@@ -20,6 +20,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 
 | Module | What it is |
 |---|---|
+| `commander_data.py` | Per-commander JSON files: a separate payload per commander in one file, the first commander seen claiming data saved before it was per commander |
 | `journal_files.py` | Shared start-up catch-up helpers: the journal folder, files changed since a moment, and a filtered event reader |
 | `__init__.py` | The package marker; holds `__version__`, the one place the version number lives (mirrored in `package.json`) |
 | `http_identity.py` | The User-Agent every web request sends, so services can tell which WNTB feature is calling |
@@ -57,7 +58,7 @@ Spec: [POWERPLAY_TECH_SPEC.md](POWERPLAY_TECH_SPEC.md)
 | `rare_goods.py` | Finds the nearest rare commodities to the current system (data in `rare_goods.json`) |
 | `rare_goods_window.py` | The Rare Goods Finder window |
 | `session.py` | Merit tallies for the current game login |
-| `store.py` | JSON persistence for Powerplay session history |
+| `store.py` | JSON persistence for Powerplay session history; every session names its commander, and the history limit and views are per commander |
 
 ## Exploration
 
@@ -68,17 +69,17 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `autohonk.py` | Auto-Honk: holds the Discovery Scanner key on arrival in a system |
 | `canonn_poi_data.py` | Canonn's published Thargoid and Guardian site lists, fetched on demand |
 | `canonn_poi_panel.py` | The Canonn Nearby POI section: nearest Thargoid or Guardian site |
-| `codex_backfill.py` | Journal readers for Codex Completionist: the full-history scan behind the BKF button, and `scan_since` for the start-up catch-up |
+| `codex_backfill.py` | Journal readers for Codex Completionist, per commander: the full-history scan behind the BKF button and the one-time rebuild, and `scan_since` for the start-up catch-up |
 | `codex_catalog.py` | The catalogue of every codex entry, for the "Not found" tab |
 | `codex_completionist.py` | Pure logic for the lifetime tally of everything scanned, with the `last_event_at` watermark |
 | `codex_completionist_panel.py` | The Codex Completionist section of Exploration |
-| `codex_completionist_state.py` | JSON persistence for the tally |
+| `codex_completionist_state.py` | JSON persistence for the tally, one per commander (the old shared tally is kept untouched, then tidied away) |
 | `codex_completionist_window.py` | The Codex Completionist detail window (found and not found) |
 | `discovery.py` | Discovery Alerts: overlay alerts for never-before-discovered systems and bodies, plus the N.S./W.D. buttons |
 | `elw_rarity_spansh.py` | Spansh count of known Earth-like worlds around a system |
 | `exploration_progress.py` | Bodies scanned against the honk's body count, and what the last exploration and organic data sales paid |
 | `exploration_value.py` | Estimated scan payout for the last body scanned, the system's age and region, system scan progress and the last data sales |
-| `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog lookup |
+| `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog: downloads the full list once and finds the nearest point of interest locally (their own nearest endpoint stopped using the position) |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
 | `neutron_finder.py` | Spansh search for the nearest neutron-star or white-dwarf primary |
 | `notable.py` | Notable Bodies: the overlay banners, queueing and Settings page |
@@ -104,7 +105,7 @@ Spec: [BOXEL_SURVEY_TECH_SPEC.md](BOXEL_SURVEY_TECH_SPEC.md)
 | `region_sweep_queue.py` | Pure logic for the Region Sweep cube queue |
 | `region_sweep_spansh.py` | Spansh systems typeahead used by Region Sweep |
 | `region_sweep_state.py` | JSON persistence for the Region Sweep queue |
-| `survey_log.py` | Per-system and per-boxel findings and rollups |
+| `survey_log.py` | The notable-finds log, one per commander, and its JSON persistence |
 | `visited_systems.py` | JSON persistence for the per-commander visited-systems log, and the start-up catch-up of jumps made while EDMC was closed |
 | `waypoint_route.py` | Pure logic for Waypoint Route, Boxel Survey's third sub-mode |
 | `waypoint_route_panel.py` | The Waypoint Route section |
@@ -118,7 +119,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 |---|---|
 | `mining_bearing.py` | Great-circle distance and bearing to a saved hotspot, for the waypoint arrow |
 | `mining_body_survey.py` | The landable bodies in the current system, for the System Bodies overview |
-| `mining_coverage.py` | Where the SRV's scanner has driven, per body |
+| `mining_coverage.py` | Where the SRV's scanner has driven, per body, one map per commander |
 | `mining_coverage_render.py` | Draws that coverage as a small map (PIL, no Tk) |
 | `mining_deposit.py` | Estimates tonnes left in a recorded hotspot deposit |
 | `mining_ground.py` | Ground type of a body and your own base rates of deposits on it |
@@ -126,7 +127,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 | `mining_hotspot_finder_dialog.py` | The Find Nearby Hotspots dialog (Spansh) |
 | `mining_hotspot_import_export.py` | JSON import and export of the hotspot list |
 | `mining_hotspot_settings.py` | The hotspot list section of Mining's Settings tab |
-| `mining_hotspots.py` | The saved surface-hotspot list |
+| `mining_hotspots.py` | The saved surface-hotspot list, one per commander |
 | `mining_journal_backfill.py` | Replays the current journal when EDMC starts mid-session |
 | `mining_ledger.py` | The Mining Book window (bodies, hotspots, detail card with map) |
 | `mining_ledger_data.py` | The data side of the Mining Book: grouping and map projection |
@@ -166,7 +167,6 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_pages.py` | Trade's page order |
 | `trade_panel.py` | Trade mode's entry point: chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
 | `trade_prices.py` | Ranks station offers for your load (sell and buy), carrier split and verdict lines |
-| `trade_route_start.py` | Each commander's route start (last real station docked at) and `trade_route_start.json`; the journal scan feeds it docks, newest wins |
 | `trade_route_start.py` | Each commander's route start (last real station docked at) and `trade_route_start.json`; the journal scan feeds it docks, newest wins |
 | `trade_roundtrip.py` | Finds the best back-and-forth station pair, loaded both ways |
 | `trade_ship.py` | Ship to landing-pad size and the fit rule |

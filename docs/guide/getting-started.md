@@ -5,6 +5,7 @@ No programming is needed.
 
 **On this page:** [What you need](#what-you-need) · [Installing](#installing) ·
 [Updating](#updating) · [A first five minutes](#a-first-five-minutes) · [Finding your way around](#finding-your-way-around) ·
+[Commanders and your data](#commanders-and-your-data) · [If EDMC wasn't running](#if-edmc-wasnt-running) ·
 [Opening the pop-out windows](#opening-the-pop-out-windows) · [Button names](#button-names)
 
 ## What you need
@@ -127,6 +128,28 @@ position alone.
 If you'd rather set the height yourself, untick *Resize the EDMC window's height to fit WNTB automatically* under
 **File → Settings → WNTB → General → Window**.
 
+## Commanders and your data
+
+**Everything WNTB saves about your play belongs to one commander.** Nothing is shared between commanders, and switching
+commander in EDMC switches what every feature shows: Trade sessions and route start, Powerplay and BGS ledgers,
+Missions, Mining hotspots and the ground your Rhino has driven, the Boxel Survey position and finds, the Codex tally,
+Colonisation sites, Ship Builds, Organic Scanning and Powerplay history. Names are matched ignoring case, so
+`BOCHEAUX` in the journal and `Bocheaux` in EDMC are the same commander.
+
+The few things that are not about a commander are the same for everyone: your Settings, the downloaded Codex catalogue
+and the record of which journal files Trade has read.
+
+**After updating from a version before this** (1.5.x or earlier), some data was one shared pile:
+
+| Data | What happens |
+|---|---|
+| Mining hotspots and driven ground | Given to the **first commander who logs in** (it can't tell whose they were); every other commander starts empty. To give hotspots to another commander, use **I/E** in Mining. |
+| Boxel Survey finds | Given to the first commander who logs in, the same way. |
+| Codex tally | Not given to anyone: it mixed every commander's finds. Each commander's is **rebuilt from their own journals** the first time they log in. The old tally is removed after 60 days. |
+| Powerplay history | Each session already named its commander, so nothing moves; the History tab now shows only yours. |
+
+So log in first as the commander who owns your hotspots and survey finds.
+
 ### If EDMC wasn't running
 
 EDMC only hands WNTB the events that happen while it runs. For anything played with EDMC closed, WNTB reads the game's
@@ -140,7 +163,7 @@ adds what is new, so nothing is counted twice:
 | **BGS** | Your effect on factions this tick | From the start of the tick |
 | **Missions** | Active missions, kill progress, cargo progress, Community Goals | The last 2 weeks |
 | **Colonisation** | Deliveries and sites docked at | 14 days, or back to your oldest site (30 days at most) |
-| **Codex Completionist** | Codex finds | Everything since the last find it counted |
+| **Codex Completionist** | Codex finds, for the active commander | Everything since the last find it counted (a one-time rebuild from all their journals after updating) |
 | **Boxel Survey** | Systems you arrived at | The last 14 days |
 | **Mining** | The run in progress | The current journal file |
 | **Exploration Value** | Region, system scan progress, last data sales | The current journal file |

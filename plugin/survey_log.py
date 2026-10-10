@@ -21,12 +21,13 @@ events.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
+from . import commander_data
 
 try:
     from config import appname
@@ -217,27 +218,27 @@ class SurveyLog:
         return log
 
 
-def load_log(plugin_dir: str) -> SurveyLog:
-    """Load the persisted survey log, or an empty one if there's nothing saved / it's unreadable."""
+def load_log(plugin_dir: str, cmdr: str) -> SurveyLog:
+    """This commander's survey log, or an empty one if they have none / the file is unreadable. One file holds a separate
+    log per commander (commander_data.py); a log saved before that is claimed by the first commander seen."""
     path = os.path.join(plugin_dir, LOG_FILENAME)
     try:
-        with open(path, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        return SurveyLog.from_dict(data)
-    except FileNotFoundError:
-        return SurveyLog()
-    except (OSError, json.JSONDecodeError, TypeError, AttributeError) as exc:
+        store = commander_data.read(path, is_legacy=lambda raw: isinstance(raw, dict))
+        claiming = not commander_data.known(store, cmdr) and store.get("legacy") is not None
+        log = SurveyLog.from_dict(commander_data.payload_for(store, cmdr, dict))
+        if claiming:
+            commander_data.write(path, store)   # save the claim now, or the next commander to load would claim it too
+        return log
+    except (OSError, TypeError, AttributeError, ValueError) as exc:
         logger.warning("Could not read %s: %s", path, exc)
         return SurveyLog()
 
 
-def save_log(plugin_dir: str, log: SurveyLog) -> None:
-    """Save the log, writing to a temp file and replacing atomically (same as boxel_state.py)."""
+def save_log(plugin_dir: str, cmdr: str, log: SurveyLog) -> None:
+    """Save this commander's log, leaving every other commander's untouched (atomic write, same as boxel_state.py)."""
+    if not commander_data.key_for(cmdr):
+        return
     path = os.path.join(plugin_dir, LOG_FILENAME)
-    tmp_path = f"{path}.tmp"
-    try:
-        with open(tmp_path, "w", encoding="utf-8") as fh:
-            json.dump(log.to_dict(), fh, indent=2, sort_keys=True)
-        os.replace(tmp_path, path)
-    except OSError as exc:
-        logger.warning("Could not write %s: %s", path, exc)
+    store = commander_data.read(path, is_legacy=lambda raw: isinstance(raw, dict))
+    commander_data.put(store, cmdr, log.to_dict())
+    commander_data.write(path, store)

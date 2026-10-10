@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from config import appname, config
 
-from . import panelkit
+from . import panelkit, store
 from .formulas import ACTIVITIES, ACTIVITY_LABELS, NO_CP_ACTIVITIES, merits_to_cp
 from .powerplay import PowerplayTracker, clipboard_template, ratio_for
 from .powerplay_clipboard import format_system_line
@@ -418,7 +418,9 @@ class _HistoryTab:
 
     def update(self, history: List[Dict[str, Any]], current: Dict[str, Any]) -> None:
         rows = []
-        sessions = list(history) + [current]
+        # Only this commander's sessions: the file holds everyone's, but a total or a list that mixed commanders would
+        # be wrong for all of them.
+        sessions = store.sessions_of(history, current.get("cmdr")) + [current]
         self._summary_label.configure(text=_cumulative_summary(sessions))
         for session in reversed(sessions):
             hours = duration_hours(session)

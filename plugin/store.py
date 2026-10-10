@@ -14,8 +14,34 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 FILENAME = "sessions.json"
-# Keep history bounded so the file can't grow forever across years of play.
+# Keep history bounded so the file can't grow forever across years of play. The limit is **per commander**, so one
+# commander's heavy use never pushes another's sessions out.
 MAX_HISTORY = 200
+
+
+def commander_of(session: Dict[str, Any]) -> str:
+    """A session's commander as a comparison key (trimmed, case-folded; "" if it has none)."""
+    return str(session.get("cmdr") or "").strip().casefold()
+
+
+def sessions_of(history: List[Dict[str, Any]], cmdr: Any) -> List[Dict[str, Any]]:
+    """The sessions in `history` that belong to `cmdr`, oldest first. With no commander named there is nobody to show
+    them to, so none are returned (sessions saved before commanders were recorded can't be given to anyone)."""
+    key = str(cmdr or "").strip().casefold()
+    return [s for s in history if key and commander_of(s) == key]
+
+
+def trim(history: List[Dict[str, Any]], limit: int = MAX_HISTORY) -> List[Dict[str, Any]]:
+    """Keep each commander's newest `limit` sessions, in the original order."""
+    seen: Dict[str, int] = {}
+    keep = []
+    for session in reversed(history):
+        key = commander_of(session)
+        seen[key] = seen.get(key, 0) + 1
+        if seen[key] <= limit:
+            keep.append(session)
+    keep.reverse()
+    return keep
 
 
 class SessionStore:
@@ -43,7 +69,7 @@ class SessionStore:
         return [], None
 
     def save(self, history: List[Dict[str, Any]], current: Dict[str, Any]) -> None:
-        trimmed = history[-MAX_HISTORY:]
+        trimmed = trim(history)
         payload = {"history": trimmed, "current": current}
         try:
             with open(self._path, "w", encoding="utf-8") as fh:

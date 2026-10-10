@@ -39,7 +39,7 @@ Click **SES**. It has five tabs.
 | **Systems** | One tab per system for the cycle, with the system's standing and what you earned there. |
 | **Cycles** | One row per Powerplay cycle, newest first: period, the Power you were pledged to, systems worked, merits, estimated CP, merits by activity. |
 | **Daily** | Merits and estimated CP (whole numbers) for each day of a cycle, with a total. |
-| **History** | Every past session. |
+| **History** | Every past session of the commander you are playing, with their running total. Other commanders' sessions are kept but not shown, and each commander keeps their own last 200. |
 
 ### Cycles
 

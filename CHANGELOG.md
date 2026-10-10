@@ -36,6 +36,21 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   checklist has a new section for the catch-up features, which have only been tried on Windows.
 
 ### Fixed
+- **GEC Nearby POI always gave the same answer.** edastro's own "nearest" lookup stopped using the position (a live check
+  returned "The Solar System" for every coordinate, and for a system name). FIND now downloads edastro's full list once
+  (about 2 MB, kept for six hours) and works out the nearest point of interest itself. The result also names the system
+  to look for in the galaxy map and copies it to the clipboard, and the position is read from the current journal if EDMC
+  started after you were already in the game.
+- **Nothing is shared between commanders any more.** An audit found four things that were one pile for everyone:
+  **Mining hotspots and the Rhino's driven ground**, the **Boxel Survey finds**, the **Codex tally**, and the
+  **Powerplay History** tab (which listed every commander's sessions and added their merits into one total; the
+  200-session limit was also shared). Each is now per commander. After updating, hotspots, driven ground and survey
+  finds go to the **first commander who logs in** (it can't tell whose they were); the Codex tally mixed everyone's finds,
+  so each commander's is rebuilt from their own journals once, and the old tally is removed after 60 days. Powerplay
+  sessions already named their commander, so nothing moves. Trade History now opens on the active commander. Switching
+  commander also clears the previous commander's ship, hold, route results and last data sales from the screen, and
+  cancels a search still running for them. New `commander_data.py` helper, and tests that fail for any new data file
+  that isn't classified as per commander.
 - **Missions: combat-bond kills count toward massacre missions.** Combat-zone kills are written as
   `FactionKillBond`, not `Bounty`, and were ignored. In a check against real journals, some massacre missions reached
   their kill count only with the bonds included.

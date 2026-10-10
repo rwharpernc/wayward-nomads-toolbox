@@ -52,6 +52,9 @@ Most individual features have their own on/off switch in Settings, and the alert
 them on. The seven mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC
 and Canonn POI finders) can only be folded away, not switched off.
 
+**Each commander's data is separate.** Hotspots, surveys, sessions, Codex tallies and everything else WNTB saves belong
+to the commander you are playing; nothing is shared between commanders.
+
 **Playing with EDMC closed is fine.** When EDMC starts, WNTB reads the recent journal files and catches up on what it
 missed (trades, missions, colonisation deliveries, Codex finds, merits and more), counting nothing twice. Getting
 started has a table of what each feature catches up on and how far back.

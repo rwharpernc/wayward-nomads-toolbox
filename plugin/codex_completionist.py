@@ -71,9 +71,16 @@ class CodexTally:
 
     def __init__(self) -> None:
         self._records: Dict[str, CodexEntryRecord] = {}
+        self.owner: str = ""
+        """The commander this tally belongs to (shown in the details window). A tally is per commander."""
         self.last_event_at: str = ""
         """Timestamp of the newest CodexEntry counted, live or from the journals. The start-up catch-up counts only
         events after it, so a find made with EDMC closed is counted once. Empty until the first run sets it."""
+
+    def clear(self) -> None:
+        """Empty the tally (used when the active commander changes and another commander's is loaded)."""
+        self._records = {}
+        self.last_event_at = ""
 
     def advance_watermark(self, stamp: Any) -> None:
         if isinstance(stamp, str) and stamp > self.last_event_at:

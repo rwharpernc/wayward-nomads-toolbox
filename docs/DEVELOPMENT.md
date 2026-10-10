@@ -70,6 +70,14 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
 4. Check it works: `python -m unittest discover -s tests`, `python tests/import_smoke.py`,
    `npm run build` (the first line should name the right OS) and `npm run package`.
 
+**Rules that apply on both machines**
+
+- Everything saved about a player's play is **per commander** (`plugin/commander_data.py`); nothing is shared between
+  commanders. A new data file is classified in `tests/test_data_files_per_commander.py`, and a commander's name is never
+  used in a file name (Windows is case-insensitive and rejects some characters; Linux is case-sensitive).
+- Read and write files as UTF-8, write through a temporary file and `os.replace`, and keep OS-specific calls behind
+  `platform_support.py`. Say in `LINUX_TESTING.md` what has only been tried on one OS.
+
 **Day to day**
 
 - Before starting on a machine: `git pull`. Before switching machines: commit and `git push`.

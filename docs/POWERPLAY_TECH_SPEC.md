@@ -97,10 +97,12 @@ A session covers one **game login**, tied to the journal file it started in. Thi
   counted from one missed while EDMC was closed.
 
 Each session stores raw merits and event counts per activity, the same broken out **per system**, the
-Power. History is kept in
-`sessions.json` in the plugin folder, **capped at 200 sessions** so it can't grow forever, and is
-protected from updates. The **Sessions** window shows the live breakdown and the history, and **Copy**
-puts a summary on the clipboard using a format you can edit in Settings.
+Power, and its **commander**. History is kept in `sessions.json` in the plugin folder (one list for every commander,
+because each record names its own), **capped at 200 sessions per commander** (`store.trim`) so it can't grow forever,
+and is protected from updates. A session is never shared: starting one for a different commander ends the previous one
+(even in the same journal file), and the **Sessions** window's History tab and its running total show only the active
+commander's sessions (`store.sessions_of`); sessions with no recorded commander can't be given to anyone and are
+hidden (kept in the file). **Copy** puts the current session on the clipboard using a format you can edit in Settings.
 
 ## 7. Rare Goods Finder
 
@@ -258,7 +260,8 @@ updates (`update.py`). The controller switches ledger and pins whenever the comm
 ### 11.5 Tests
 `tests/test_powerplay_ledger.py` covers cycle boundaries, snapshot parsing, standing changes, merit
 tallies, rollover and carried baselines, the archive cap, tab ordering, the pin cap, serialisation and the
-per-commander state file. `tests/test_powerplay_backfill.py` covers the replay (attribution, commanders kept apart, files
+per-commander state file. `tests/test_per_commander_data.py` covers the History tab's per-commander view and limit.
+`tests/test_powerplay_backfill.py` covers the replay (attribution, commanders kept apart, files
 and the window), applying ops twice, same-second merits, a gap across a cycle boundary, rebuild and adoption, the
 scan plan in every mode, empty-cycle rows, the per-day tally (boundaries, archiving, saving, the one-time rebuild), reading real files and
 the delivery classification (a hand-in claiming the merit events that follow, a late first merit, the legacy signals ignored once `PowerplayDeliver` is seen). The widgets are exercised by hand in EDMC.

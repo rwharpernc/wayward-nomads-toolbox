@@ -303,7 +303,11 @@ settings (`wntb_boxel_sweep_*`) mirror Sequence's tiers 1-2 plus its own "requir
 ## 5a. Survey log (notable finds)
 
 Separate concern from visited/skip filtering — this is about *recording what was found*, not
-deciding what to skip. `survey_log.py`'s `SurveyLog`, keyed by system name:
+deciding what to skip. `survey_log.py`'s `SurveyLog`, keyed by system name, **one log per commander** in
+`survey_log.json` (`commander_data.py`; `load_log(plugin_dir, cmdr)` / `save_log(plugin_dir, cmdr, log)`). The
+controller loads the active commander's log in `_switch_cmdr` and saves the previous one first; a log from before this
+was a single shared one and is claimed by the first commander seen (the claim is saved at once, so a second commander
+cannot claim it too). The CSV export holds the active commander's rows.
 
 - `bodies_scanned` (every `Scan` event counts, regardless of notability) and a dict of **notable
   bodies only** — deliberately not a full per-body log, to stay a readable highlights list.
@@ -397,7 +401,7 @@ small scalars):
 - `waypoint_route_state.py` — the Waypoint Route list.
 - `visited_systems.py` — every system the commander has arrived at (`visited_systems.json`), caught up from the
   journals at start-up (§4.4.1).
-- `survey_log.py`'s `save_log`/`load_log` — the notable-finds log, saved after every recorded finding
+- `survey_log.py`'s `save_log`/`load_log` — the notable-finds log, per commander (`commander_data.py`), saved after every recorded finding
   (not just at `plugin_stop`), since scan findings are worth more than walker position and shouldn't
   be lost to an ungraceful shutdown.
 

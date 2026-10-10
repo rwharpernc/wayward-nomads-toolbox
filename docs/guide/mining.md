@@ -46,6 +46,12 @@ It lists the bodies you've scanned in this system and every hotspot you've saved
 - copy its coordinates,
 - view a zoomable map.
 
+**Your hotspots, tons mined, depleted marks and the ground your Rhino has driven over belong to the commander you are
+playing.** Switching commander switches the Mining Book and the coverage map; one commander never sees or changes
+another's. **After updating from a version before this**, the one shared list and map are given to the first commander
+who logs in (it can't tell whose they were), and every other commander starts empty. To give a hotspot list to another
+commander, use **I/E** to export it as the first commander and import it as the second.
+
 For a scanned body it also shows what *you've* found so far on that kind of body. That starts empty and fills in as
 you save hotspots. It describes your own finds, not what a body actually holds.
 

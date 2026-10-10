@@ -195,19 +195,27 @@ def add_tooltip(widget: tk.Widget, text: str) -> None:
 def collapsible_section(parent: tk.Frame, title: str, config_key: str, default_collapsed: bool = True) -> tk.Frame:
     """A bold, click-to-toggle title (▸ collapsed / ▾ expanded) in row 0 of
     `parent`, with a body frame in row 1 that the caller builds its widgets
-    into. The state is remembered in EDMC's config under `config_key`; with
+    into (`body.set_title_suffix(text)` adds a note to the title that shows even when folded). The state is remembered in
+    EDMC's config under `config_key`; with
     nothing saved yet the section starts collapsed (`default_collapsed`) -
     same convention as Boxel Survey's own title (boxel_survey.py) and ui.py's
     main-panel collapse."""
     collapsed = config.get_bool(config_key, default=default_collapsed)
+    suffix = ""
     title_label = tk.Label(parent, font=bold_font(parent), cursor="hand2")
     title_label.grid(row=0, column=0, columnspan=3, sticky=tk.W)
     body = tk.Frame(parent)
     body.grid(row=1, column=0, columnspan=3, sticky=tk.W)
 
     def apply() -> None:
-        title_label.config(text=f"{'▸' if collapsed else '▾'} {title}")
+        title_label.config(text=f"{'▸' if collapsed else '▾'} {title}{suffix}")
         (body.grid_remove if collapsed else body.grid)()
+
+    def set_suffix(text: str) -> None:
+        """Short text after the title that stays visible while the section is folded (for example "- rebuilding...")."""
+        nonlocal suffix
+        suffix = text
+        apply()
 
     def toggle(_event: tk.Event) -> None:
         nonlocal collapsed
@@ -217,6 +225,7 @@ def collapsible_section(parent: tk.Frame, title: str, config_key: str, default_c
 
     title_label.bind("<Button-1>", toggle)
     apply()
+    body.set_title_suffix = set_suffix  # type: ignore[attr-defined]
     return body
 
 
