@@ -289,7 +289,7 @@ class ColonisationController:
         nb.Label(
             frame,
             text=(
-                "Shown only while you are in a commodity market or the carrier inventory. Lists what is still to source for your most recently updated active site (the To Source "
+                "Shown only while you are in a commodity market, the carrier inventory, or docked at a construction site. Lists what is still to source for your most recently updated active site (the To Source "
                 "figures), biggest first, with any stock you have moved onto your fleet carrier shown as FC."
             ),
             wraplength=440, justify=tk.LEFT,
