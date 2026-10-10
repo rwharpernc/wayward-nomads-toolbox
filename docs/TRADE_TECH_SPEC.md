@@ -2,7 +2,7 @@
 
 How Trade mode (the **TRD** button) works, what each module owns, which journal events and web services it
 reads, and what has and hasn't been verified. For what it does for the user, see the
-[README](../README.md#trade). For the plugin-wide rules it follows (feature contract, main-window sizing,
+[README](guide/trade.md). For the plugin-wide rules it follows (feature contract, main-window sizing,
 threading, persistence), see [TECHNICAL.md](TECHNICAL.md).
 
 **Contents**

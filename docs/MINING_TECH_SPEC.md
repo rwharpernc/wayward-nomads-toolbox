@@ -5,7 +5,7 @@
 
 The standing reference for Mining mode: what it tracks, the rules and numbers behind its estimates, the
 files it keeps, and the outside lookups it can make. For how to use it, see the
-[README](../README.md#mining). For how the code is organised in general, see
+[README](guide/mining.md). For how the code is organised in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 ## 1. Goals

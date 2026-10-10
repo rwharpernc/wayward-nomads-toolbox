@@ -150,7 +150,7 @@ is packed with the same 6px gap as the mode buttons; the N.S./W.D. result line a
 below the row.
 
 **Short button names and tooltips.** The EDMC window is small and shared, so main-panel buttons use
-abbreviations (the table is in the README's "Button names"), and `panelkit.add_tooltip` shows the full name on
+abbreviations (the table is in the user guide's "Button names"), and `panelkit.add_tooltip` shows the full name on
 hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
 `ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder. EDMC sizes its window to the widest row across all plugins, and the mode row used to be WNTB's widest, so the mode row is held at the size measured from a throwaway row of full-label buttons (`ui._mode_row_full_label_size`), with the short buttons centered inside it; without that the shortened labels made EDMC open far narrower. Don't implement this with a thin spacer widget in the same grid cell: it draws a line across the buttons.
 
@@ -502,7 +502,7 @@ Design decisions that apply to all of them:
 - **Respect documented limits.** EDSM's `cube-systems` caps edge length at 200 ly; WNTB uses 100 as a
   middle ground between catching a few procedural systems and keeping responses small.
 - **Opt-in by default, and stated.** Anything that phones home on its own is off until enabled.
-  The README lists which features make network calls.
+  The user guide lists which features make network calls.
 - **Bundle no service data.** Live queries mean nothing goes stale in the release and no service's
   content is redistributed. The exceptions are static game facts (section 12).
 - **Plain HTTP for the tick API.** That is the only address the service offers. It carries a public
@@ -976,7 +976,7 @@ after probing that the host has it (only a successful probe is cached). `pgrep` 
 the sandbox only sees its own processes. `--directory=/` is required: `flatpak-spawn` starts the host command
 in the sandbox's working directory, which for EDMC (`/app/edmarketconnector`) does not exist on the host. The
 user must grant `--talk-name=org.freedesktop.Flatpak` and filesystem access to the journals, Bindings and
-Pictures folders (see the README, Linux, Step 3). EDMCModernOverlay needs the same talk permission to start
+Pictures folders (see the Linux guide, Step 3). EDMCModernOverlay needs the same talk permission to start
 its overlay window, so a missing one makes the overlay's port answer while nothing is drawn.
 
 **Failure behavior.** Every wrapper returns `False`, `None` or an empty list, never raises. A missing

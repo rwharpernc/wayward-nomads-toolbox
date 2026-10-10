@@ -6,7 +6,7 @@
 Two WNTB features press keys in the game for you: **Auto-Honk** and **timed or automatic screenshot
 capture**. This document explains exactly what they do and don't do, how Screenshots converts and crops
 pictures, and how it all differs on Linux. For how to use them, see the
-[README](../README.md#field-ops). For how the code is organised in general, see
+[README](guide/field-ops.md). For how the code is organised in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 ## 1. Input automation: what it is, and isn't

@@ -145,7 +145,7 @@ feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and is
    Any new network call must follow the API-usage rules in
    [TECHNICAL.md](TECHNICAL.md#keeping-api-traffic-low): opt-in or user-triggered, cached, capped, with a
    timeout, and identified through `http_identity.user_agent()`.
-5. Update the README, the changelog and any affected docs in the same change, including a row in
+5. Update the README and the user guides in `docs/guide/`, the changelog and any affected docs in the same change, including a row in
    [MODULES.md](MODULES.md) for any new module.
 
 ### Using other people's work

@@ -6,7 +6,7 @@
 
 The standing reference for Powerplay mode: how merits are attributed to an activity, how Control Points
 are estimated, how sessions work, and how the Rare Goods Finder fits in. For how to use it, see the
-[README](../README.md#powerplay). For how the code is organised in general, see
+[README](guide/powerplay.md). For how the code is organised in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 ## 1. Goals
