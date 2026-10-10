@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.5.1 - 2026-10-10
 
 ### Fixed
 - **Trade: the route start is remembered per commander.** Switching commander could start a route from the previous
