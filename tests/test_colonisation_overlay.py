@@ -99,6 +99,33 @@ class VisibilityTests(unittest.TestCase):
         self.v.feed({"event": "Market"})         # e.g. the focus never reported as services
         self.assertFalse(self.v.visible)
 
+    def test_docked_at_a_construction_depot_shows_without_the_market(self) -> None:
+        self.v.feed({"event": "Docked", "StationType": "SpaceConstructionDepot",
+                     "StationName": "Orbital Construction Site: Grinning Station"})
+        self.v.set_focus(0)                      # looking out of the cockpit
+        self.assertTrue(self.v.visible)
+        self.v.set_focus(5)
+        self.assertTrue(self.v.visible)
+        self.v.set_focus(6)                      # galaxy map
+        self.assertFalse(self.v.visible)
+        self.v.set_focus(0)
+        self.v.feed({"event": "Undocked"})
+        self.assertFalse(self.v.visible)
+
+    def test_depot_found_by_name_or_by_its_own_event(self) -> None:
+        self.v.feed({"event": "Docked", "StationType": "Unknown", "StationName": "Planetary Construction Site: X"})
+        self.assertTrue(self.v.visible)
+        self.v.feed({"event": "Undocked"})
+        self.v.feed({"event": "Docked", "StationType": "Coriolis", "StationName": "Somewhere"})
+        self.assertFalse(self.v.visible)
+        self.v.feed({"event": "ColonisationConstructionDepot"})
+        self.assertTrue(self.v.visible)
+
+    def test_an_ordinary_station_is_not_a_depot(self) -> None:
+        self.v.feed({"event": "Docked", "StationType": "Coriolis", "StationName": "Jameson Memorial"})
+        self.v.set_focus(0)
+        self.assertFalse(self.v.visible)
+
     def test_a_bad_focus_value_is_treated_as_none(self) -> None:
         self.v.feed({"event": "Market"})
         self.v.set_focus(None)

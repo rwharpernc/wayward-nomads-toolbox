@@ -197,10 +197,12 @@ It draws a small card with the title `To source: <site name>`, then one line per
 `12,900 t  Steel`. These are the same **To Source** figures as the window and **Copy Shopping List**: what the site
 still needs, less what is in your hold. It follows your cargo as it changes, so it shrinks as you load up.
 
-- **When it shows:** only while you are in a commodity market, or in the carrier's inventory (Carrier Management and
-  cargo transfer), at a station or carrier. It hides when you leave that screen, open another station service such as
-  outfitting or the shipyard, or undock. Backing out of the market to the station-services menu can't be detected, so
-  the card stays until you leave that menu. It relies on the game's `Status.json` reporting which screen is open.
+- **When it shows:** while you are in a commodity market, or in the carrier's inventory (Carrier Management and cargo
+  transfer), at a station or carrier; and also whenever you are **docked at a construction site** (looking out of the
+  cockpit or at the station services, but not in a map or another panel). It hides when you leave the market or
+  inventory screen, open another station service such as outfitting or the shipyard (except at a construction site),
+  or undock. Backing out of the market to the station-services menu can't be detected, so the card stays until you
+  leave that menu. It relies on the game's `Status.json` reporting which screen is open.
 - **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
   failed sites are never shown. The card disappears when nothing is left to source.
 - **FC:** if you have moved some of a commodity onto your fleet carrier (see the FC column above), the line ends with
