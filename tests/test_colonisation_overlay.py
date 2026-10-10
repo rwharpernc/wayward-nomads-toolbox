@@ -94,6 +94,28 @@ class VisibilityTests(unittest.TestCase):
         self.v.feed({"event": "CarrierStats"})
         self.assertTrue(self.v.visible)
 
+    def test_docked_at_a_carrier_shows_in_any_station_service_screen(self) -> None:
+        # opening the carrier's transfer screen writes no journal event, so only the dock and the screen can be used
+        self.v.feed({"event": "Docked", "StationType": "FleetCarrier", "StationName": "WLF-LXW"})
+        self.v.set_focus(0)
+        self.assertFalse(self.v.visible)
+        self.v.set_focus(5)
+        self.assertTrue(self.v.visible)
+        self.v.feed({"event": "Outfitting"})     # and there is no event for coming back out of it
+        self.assertTrue(self.v.visible)
+        self.v.set_focus(6)
+        self.assertFalse(self.v.visible)
+        self.v.set_focus(5)
+        self.v.feed({"event": "Undocked"})
+        self.assertFalse(self.v.visible)
+
+    def test_a_carrier_found_by_location_at_start_up(self) -> None:
+        self.v.feed({"event": "Location", "Docked": True, "StationType": "SquadronCarrier"})
+        self.v.set_focus(5)
+        self.assertTrue(self.v.visible)
+        self.v.feed({"event": "Location", "Docked": False})
+        self.assertFalse(self.v.visible)
+
     def test_other_services_and_undocking_hide_it(self) -> None:
         self.v.set_focus(5)
         self.v.feed({"event": "Market"})

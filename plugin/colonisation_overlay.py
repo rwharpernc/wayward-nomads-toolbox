@@ -62,14 +62,18 @@ RESET_EVENTS = ("Docked", "Undocked", "LoadGame", "StartUp", "Shutdown")
 GUI_FOCUS_NONE = 0
 # Station types of a construction depot (the colonisation ship is one too); a depot's own market-free screens count.
 DEPOT_STATION_TYPES = ("SpaceConstructionDepot", "PlanetaryConstructionDepot", "ColonisationShip")
+CARRIER_STATION_TYPES = ("FleetCarrier", "SquadronCarrier")
 
 
 class Visibility:
     """Should the card show right now? Fed every journal event and every `Status.json` change. Two cases:
 
-    - in a commodity market or the carrier's inventory: a station-services screen is open (`GuiFocus`) and the service
-      opened last was the market or the carrier's inventory. Backing out of the market to the station-services menu
-      cannot be seen, so the card stays until that menu is left;
+    - in a commodity market: a station-services screen is open (`GuiFocus`) and the service opened last was the market.
+      Backing out of the market to the station-services menu cannot be seen, so the card stays until that menu is left;
+    - docked at a carrier with a station-services screen open. The game writes nothing when the carrier's cargo transfer
+      screen is opened (`CargoTransfer` comes only after a transfer is made, `CarrierStats` only for Carrier Management),
+      so the carrier inventory cannot be told apart from the other services; it shows throughout, including Outfitting
+      and the Shipyard, as there is no event for closing those either;
     - docked at a construction depot (where the shopping list is what the commander is there for), whether looking at
       the ship's view or the station services, but not in a map or another panel."""
 
@@ -77,14 +81,17 @@ class Visibility:
         self._service = ""
         self._focus = 0
         self._at_depot = False
+        self._at_carrier = False
 
     def feed(self, entry: Mapping[str, object]) -> None:
         event = entry.get("event")
         if event in RESET_EVENTS:
             self._service = ""
             self._at_depot = False
+            self._at_carrier = False
         if event in ("Docked", "Location"):
             docked = event == "Docked" or bool(entry.get("Docked"))
+            self._at_carrier = docked and entry.get("StationType") in CARRIER_STATION_TYPES
             self._at_depot = docked and (entry.get("StationType") in DEPOT_STATION_TYPES
                                          or "Construction Site" in str(entry.get("StationName") or ""))
         elif event == colonisation.EVENT_DEPOT:
@@ -103,7 +110,7 @@ class Visibility:
 
     @property
     def visible(self) -> bool:
-        if self._focus == GUI_FOCUS_STATION_SERVICES and self._service in ("market", "carrier"):
+        if self._focus == GUI_FOCUS_STATION_SERVICES and (self._at_carrier or self._service in ("market", "carrier")):
             return True
         return self._at_depot and self._focus in (GUI_FOCUS_NONE, GUI_FOCUS_STATION_SERVICES)
 
