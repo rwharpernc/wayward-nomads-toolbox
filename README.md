@@ -581,7 +581,9 @@ It reads your journal only; nothing is sent anywhere. Top to bottom:
   an SRV or fighter) and **limpets** (bought, less any sold back). Once you've spent anything the headline becomes **Net
   profit** (trade profit less those costs; the credits per hour is the net), with the trade profit and each cost listed
   under it. Insurance rebuys and fines aren't counted, and a cost only counts once WNTB has seen it.
-- **Stock bought, not yet sold**: what you've spent on commodities still waiting to be sold, at the average price you
+- **Stock bought, not yet sold**: the **Unsold** column is the tonnes you bought (every purchase in your journals) minus
+  the tonnes you sold, a running total rather than a count of any hold; each row then splits it into the part in your ship
+  hold and the part not. It shows what you've spent on commodities still waiting to be sold, at the average price you
   paid, and how much of each is **in ship hold** and how much is **not in ship hold** (usually moved to your carrier
   cargo storage). It follows the cargo, not
   the session, so it carries on after a Reset. It is one list for both ways of trading: on a station-to-station run it

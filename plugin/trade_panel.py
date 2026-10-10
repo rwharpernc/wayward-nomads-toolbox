@@ -645,7 +645,7 @@ class TradePanelController:
         if value is not None:
             blocks.append(Pair(f"Worth at {_clip(self._market_station or 'this station', 22)}", f"{value:,} cr"))
         if self._cargo:
-            blocks.append(Columns(("Held", "Sells here")))
+            blocks.append(Columns(("In hold", "Sells here")))
             for name, tonnes in sorted(self._cargo.items(), key=lambda item: -item[1])[:_CARGO_LINES]:
                 market_item = self._market.get(market_mod.canonical_name(name))
                 price = f"{market_item.sell_price:,} cr" if market_item and market_item.sell_price > 0 else ""
