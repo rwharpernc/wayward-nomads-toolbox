@@ -288,8 +288,9 @@ Copying these between computers is not needed and not recommended.
    minute**. It reads each new file (and any file that has grown since) once, and adds its trades, costs, stock and
    carrier transfers to this computer's records.
 
-   The foot of the Session page tells you how it's going, for example: *"Journals read: 85 file(s). Last check
-   08:12 UTC, 1 new or grown."*
+   The foot of the Session page tells you how it's going, for example: *"Journals reviewed 10 Oct 2026 08:12. 1 new
+   journal since the last review."* or *"... No new journals since the last review."* The time is your computer's
+   local time. A "new" journal is one that was not there at the previous review, or that has grown since.
 3. It only ever **adds what is new**. Reading a file twice, or out of order, never counts anything twice and never
    overwrites a newer carrier figure with an older one.
 
