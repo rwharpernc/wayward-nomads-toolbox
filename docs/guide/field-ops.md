@@ -193,9 +193,19 @@ enough):
 Optional, and **off by default**. It needs an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md). Turn
 it on in Settings under Field Ops, in the Colonisation settings: **Show the shopping list on the in-game overlay**.
 
-It draws a small card with the title `To source: <site name>`, then one line per commodity, biggest first, such as
-`12,900 t  Steel`. These are the same **To Source** figures as the window and **Copy Shopping List**: what the site
-still needs, less what is in your hold. It follows your cargo as it changes, so it shrinks as you load up.
+It draws a table laid out like SRVSurvey's, with the site name as its title and the columns **Commodity**, **Need**,
+**FC** and **Ship**:
+
+- **Need** is what the site still requires (required less delivered). It does **not** drop as you load up, so you can
+  see what you need and what you have side by side. It falls when you deliver.
+- **FC** appears only if you have a fleet carrier (see the FC column above): what you have moved onto it. It is blue
+  once it covers the need, grey while it doesn't, and blank when none.
+- **Ship** is what is in your ship's hold right now, so you can see what you just bought. A **✓** after the name means
+  your hold already covers it (the row turns green); the row turns amber if you carry **more** than the site needs.
+
+Commodities are alphabetical so rows stay put while numbers change. A last line gives the tonnes remaining and the
+trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the trips need your ship's
+cargo capacity, which EDMC supplies).
 
 - **When it shows:** while you are in a commodity market, or in the carrier's inventory (Carrier Management and cargo
   transfer), at a station or carrier; and also whenever you are **docked at a construction site** (looking out of the
@@ -205,10 +215,8 @@ still needs, less what is in your hold. It follows your cargo as it changes, so 
   leave that menu. It relies on the game's `Status.json` reporting which screen is open.
 - **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
   failed sites are never shown. The card disappears when nothing is left to source.
-- **FC:** if you have moved some of a commodity onto your fleet carrier (see the FC column above), the line ends with
-  `(FC 1,265)` and is tinted blue, since that is stock you can pick up there.
 - **Settings:** the card's X and Y position on the overlay's 1280 x 960 virtual screen (default 20, 300), and **Rows**,
-  how many commodities to list (1 to 25, default 10); any more are summarized as `+N more`. **Test Overlay** shows a
+  how many commodities to list (1 to 40, default 20); any more are summarized as `+N more`. **Test Overlay** shows a
   sample card for a few seconds, even while the option is off.
 - It is cleared when EDMC closes. If the overlay program isn't running, nothing is drawn and nothing breaks.
 

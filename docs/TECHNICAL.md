@@ -834,11 +834,14 @@ repository (see "Catching up on state EDMC missed"). `colonisation_carrier.py` k
 transferred to the commander's fleet carrier, per commander through `commander_data.py`. Whether a commander has a fleet carrier is asked of Trade first
 (`trade_panel.fleet_carrier`: the Settings choice, else a recorded fleet carrier; `None` means unknown) so the two
 features always agree, falling back to what this module has seen itself. It is fed live and caught up from
-`CargoTransfer` events the same way. `colonisation_overlay.py` draws the optional shopping-list card on the overlay:
-`card_lines` (pure) turns the most recently updated active site, the hold and the carrier tonnes into lines, and
-`render` / `clear` send them through the shared `OverlayClient` (ids prefixed `wntb_colonisation_`, registered as a
-Plugin Group in `load.py`). The controller redraws only when the lines or position change or half the 3600 s time to
-live has passed, sends on a short-lived daemon thread, and clears synchronously in `plugin_stop`. The card is drawn only while `Visibility` says so: `Status.json` `GuiFocus` is Station Services (5, from
+`CargoTransfer` events the same way. `colonisation_overlay.py` draws the optional shopping-list card, laid out like SRVSurvey's (Commodity, Need, FC, Ship):
+`build_card` (pure) turns the most recently updated active site, the hold, the carrier tonnes and the ship's
+`CargoCapacity` into a frozen `Card` (Need is required less delivered and is not reduced by the hold; rows alphabetical;
+footer with tonnes remaining and trips), and `render` / `clear` send it through the shared `OverlayClient` (ids
+`wntb_colonisation_s<line>_<column>`, registered as a Plugin Group in `load.py`). Columns are right-aligned from
+character counts, since the overlay has no text metrics. The controller redraws only when the card or position changes
+or half the 3600 s time to live has passed, sends on a short-lived daemon thread, and clears synchronously in
+`plugin_stop`. The card is drawn only while `Visibility` says so: `Status.json` `GuiFocus` is Station Services (5, from
 `dashboard_entry`) and the service opened last was the market (`Market`) or the carrier's inventory (`CarrierStats`,
 `CargoTransfer`); `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear it, and so
 does `GuiFocus` leaving 5. Settings keys:
