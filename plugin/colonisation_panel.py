@@ -92,6 +92,8 @@ class ColonisationController:
         self._overlay_sent_at = 0.0
         self._overlay_pos = (card.DEFAULT_X, card.DEFAULT_Y)
         self._visibility = card.Visibility()
+        self._last_focus: Any = None
+        self._last_reason = ""
         self._overlay_lock = threading.Lock()
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
         self._right_panel_var: Optional[tk.BooleanVar] = None
@@ -133,6 +135,10 @@ class ColonisationController:
     # --- journal dispatch -----------------------------------------------
 
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
+        if entry.get("event") in ("Market", "Music", "Docked", "Undocked", "CarrierStats", "CargoTransfer", "Outfitting",
+                                  "Shipyard", "ColonisationConstructionDepot"):
+            logger.debug("Colonization overlay: journal event %s %s", entry.get("event"),
+                         entry.get("MusicTrack") or entry.get("StationType") or "")
         self._visibility.feed(entry)
         self._handle_event(entry, cmdr, system, station, state)
         self._update_overlay()
@@ -188,7 +194,11 @@ class ColonisationController:
 
     def dashboard_status(self, entry: Dict[str, Any]) -> None:
         """From `Status.json` (about once a second while it changes): which screen is open."""
-        self._visibility.set_focus(entry.get("GuiFocus"))
+        focus = entry.get("GuiFocus")
+        if focus != self._last_focus:
+            self._last_focus = focus
+            logger.debug("Colonization overlay: Status GuiFocus is now %r", focus)
+        self._visibility.set_focus(focus)
         self._update_overlay()
 
     def _current_card(self) -> Optional[card.Card]:
@@ -206,6 +216,11 @@ class ColonisationController:
         live runs out; clear it when disabled, out of view, or nothing is left to source. Cheap enough to call on every
         event."""
         shown = self._current_card()
+        reason = (f"{'show' if shown else 'hide'}: enabled={overlay_enabled()} cmdr={bool(self._cmdr)} "
+                  f"{self._visibility.describe()}")
+        if reason != self._last_reason:
+            self._last_reason = reason
+            logger.debug("Colonization overlay %s", reason)
         position = overlay_position()
         now = time.monotonic()
         if (shown == self._overlay_sent and position == self._overlay_pos
@@ -229,6 +244,7 @@ class ColonisationController:
                         card.clear(self._overlay_client, position[0], position[1], previous_slots)
                     else:
                         card.render(self._overlay_client, shown, position[0], position[1], previous_slots_now)
+                    logger.debug("Colonization overlay sent (%s)", "card" if shown else "clear")
                 except OSError:
                     logger.debug("Could not reach EDMCOverlay for the colonization shopping list", exc_info=True)
 

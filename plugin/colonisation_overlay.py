@@ -122,6 +122,11 @@ class Visibility:
         if self._focus != GUI_FOCUS_STATION_SERVICES:
             self._service = ""   # the screen was closed; the next one opened announces itself
 
+    def describe(self) -> str:
+        """The state behind `visible`, for the debug log."""
+        return (f"focus={self._focus} service={self._service or '-'} depot={self._at_depot} carrier={self._at_carrier} "
+                f"mgmt={self._managing} anywhere={self.right_panel_anywhere} forced={self.forced}")
+
     @property
     def visible(self) -> bool:
         if self._focus == GUI_FOCUS_STATION_SERVICES and self._service in ("market", "carrier"):
