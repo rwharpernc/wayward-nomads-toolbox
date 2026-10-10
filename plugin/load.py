@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
     exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
-    missions, notable, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, session_credits, ship_builds_panel, trade_panel, ui,
+    missions, notable, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, ship_builds_panel, trade_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -55,6 +55,8 @@ _FEATURES = (
 )
 
 _ui_frame: Optional[tk.Frame] = None
+_live_event_seen = False   # any journal event from EDMC (a running game sends StartUp straight away)
+RESTORE_DELAY_MS = 4000
 _updater: Optional[UpdateManager] = None
 
 # One shared EDMCOverlay connection for every overlay-drawing feature
@@ -178,7 +180,22 @@ def plugin_app(parent: tk.Frame) -> tk.Frame:
     """Create WNTB's widgets on the EDMC main window."""
     global _ui_frame
     _ui_frame = ui.create_plugin_app(parent)
+    _ui_frame.after(RESTORE_DELAY_MS, _restore_commander_if_idle)
     return _ui_frame
+
+
+def _restore_commander_if_idle() -> None:
+    """EDMC started without the game running, so no event will say who is playing until the next login. Tell every
+    feature the last commander from the newest journal so nothing waits for a login (see restore.py)."""
+    if _live_event_seen:
+        return
+    try:
+        cmdr = restore.latest_commander()
+        if cmdr:
+            handled = restore.dispatch(_FEATURES, cmdr)
+            logger.info("No game running at start-up; restored commander %s in %d feature(s)", cmdr, handled)
+    except Exception:
+        logger.exception("Could not restore the last commander")
 
 
 def plugin_prefs(parent, cmdr: str, is_beta: bool):
@@ -205,6 +222,8 @@ def journal_entry(
     state: Dict[str, Any],
 ) -> None:
     """Dispatches journal events to every feature module's own handle_event."""
+    global _live_event_seen
+    _live_event_seen = True
     for feature in _FEATURES:
         feature.handle_event(entry, cmdr, system, station, state)
 

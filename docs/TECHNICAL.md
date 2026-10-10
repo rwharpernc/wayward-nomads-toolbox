@@ -406,6 +406,14 @@ Two situations mean a feature can start with an incomplete picture:
 - **EDMC starts while the game is already running.** EDMC synthesizes a `StartUp` event. Features
   that need current state (current system, region, active mining run) handle it by reading the
   current journal file backward for the last `FSDJump` or `Location`.
+- **EDMC starts and the game is not running.** No event arrives, so no feature would know the commander until the
+  next login. About four seconds after the panel is built, if no live event has arrived, `load.py` calls
+  `restore.dispatch`: the commander is read from the newest journal (`restore.latest_commander`, falling back to
+  EDMC's own value) and every feature gets one neutral `WNTBRestoreCommander` event with that `cmdr`. It is not
+  `StartUp` or `LoadGame`, which mean a game is running (Game Mode, Powerplay and Credits would act on that), so
+  features treat it as any unknown event and only learn the commander and load that commander's saved data. A real
+  login later behaves as before, for the same or another commander. A feature that fails is logged and the rest still
+  get it.
 - **The player relogs.** A relog creates a new journal file that does *not* replay earlier
   `FSSBodySignals`, `Scan` or `ScanOrganic` events. So Organic Scanning persists per-body state to
   disk (`organic_scan_state.json`) rather than relying on the journal to re-tell it.

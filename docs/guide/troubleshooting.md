@@ -31,6 +31,9 @@ back. Things to try if a figure is still off:
   [How a trading session works](trade.md#how-a-trading-session-works).
 - Missions shows what the journals say is active. If a mission expired without the game writing anything, log in
   again and the game's own list replaces it.
+- **Starting EDMC before the game.** WNTB reads the last commander from your newest journal a few seconds after
+  start-up, so your saved data and panels appear without logging in. If you then log in as someone else, everything
+  switches to them.
 - A feature can only look back a limited way (Missions two weeks, Colonisation, including its FC column, 14 to 30 days, Boxel Survey 14 days).
   Older play with EDMC closed isn't found.
 
