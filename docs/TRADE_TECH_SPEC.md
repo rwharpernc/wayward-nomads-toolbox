@@ -56,11 +56,13 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_route_start.py` | pure + file | Each commander's route start and `trade_route_start.json` |
 | `trade_stock.py` | pure + file | The stock book (bought, not yet sold) and `trade_stock.json` |
 | `trade_history.py` | pure + file | Saved-session records, the `HistoryBook`, and `trade_history.json` |
+| `trade_hold.py` | pure + file read | Mission and stolen tonnes in the hold from the `Cargo` inventory / `Cargo.json` |
 | `trade_stats.py` | pure | Every number and table row shown from a saved session |
 | `trade_history_window.py` | UI | The Trade History pop-out window (uikit) |
 | `trade_market.py` | pure + file read | `Market.json` parsing and cargo valuation |
 | `trade_ship.py` | pure | Ship to landing-pad size, and whether a ship fits a station's pads |
 | `trade_carrier.py` | pure + file | Carrier cargo tracking, journal backfill, `trade_carrier.json` |
+| `trade_carrier_ops.py` | pure | Running the carrier (tritium, location, planned jump, orders, balance) from `CarrierDepositFuel`, `CarrierLocation`, `CarrierJumpRequest`/`Cancelled`, `CarrierTradeOrder`, `CarrierFinance` and the extra `CarrierStats` fields; every fact carries its event time and only a newer event replaces it |
 | `trade_commodities.py` | pure | Matching typed or journal commodity names to Spansh's names; type-ahead suggestions |
 | `trade_commodities_data.py` | generated data | The commodity table (from FDevIDs) |
 | `trade_prices.py` | pure | Valuing and ranking station offers for your load; carrier split; verdict lines |

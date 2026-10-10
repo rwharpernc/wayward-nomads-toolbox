@@ -36,6 +36,7 @@ import os
 import queue
 import random
 import threading
+import time
 from dataclasses import dataclass, replace
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
@@ -258,6 +259,9 @@ class BoxelSurveyController:
         self._visited_lock = threading.Lock()
         self._visited_systems: Set[str] = set()
         self._visited_count_var: Optional[tk.StringVar] = None
+        # Systems found in recent journals for a commander, read on a worker thread at start-up and merged on the Tk
+        # thread (see _poll_visited_catchup).
+        self._visited_catchup: "queue.Queue[Tuple[str, Set[str]]]" = queue.Queue()
 
         # Main-panel widgets/vars.
         self._target_var: Optional[tk.StringVar] = None
@@ -332,6 +336,7 @@ class BoxelSurveyController:
         with self._visited_lock:
             self._visited_systems = visited_systems.load_visited(self._plugin_dir, cmdr) if self._plugin_dir else set()
         self._update_visited_count_label()
+        self._start_visited_catchup(cmdr)
         saved = boxel_state.load_state(self._plugin_dir, cmdr) if self._plugin_dir else None
         with self._walker_lock:
             self._walker = BoxelWalker()
@@ -351,6 +356,37 @@ class BoxelSurveyController:
         self._consecutive_skips = 0
         self._set_target(current)
         self._refresh_survey_stats(current)
+
+    def _start_visited_catchup(self, cmdr: str) -> None:
+        """Find the systems this commander jumped to while EDMC was closed (the journals have every FSDJump), so
+        "skip systems already visited" and Random know about them. Read off the Tk thread."""
+        def work() -> None:
+            try:
+                since = time.time() - visited_systems.CATCH_UP_DAYS * 86400
+                self._visited_catchup.put((cmdr, visited_systems.arrivals_since(cmdr, since)))
+            except Exception:
+                logger.exception("Could not read visited systems from the journals")
+
+        threading.Thread(target=work, name="WNTB-boxel-visited", daemon=True).start()
+
+    def _poll_visited_catchup(self) -> None:
+        """On the Tk thread: merge what the worker found, if it is still the active commander's."""
+        try:
+            cmdr, systems = self._visited_catchup.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            if cmdr == self._current_cmdr and systems:
+                with self._visited_lock:
+                    before = len(self._visited_systems)
+                    self._visited_systems |= systems
+                    added = len(self._visited_systems) - before
+                if added:
+                    logger.info("Boxel Survey: %d visited system(s) found in recent journals for %s", added, cmdr)
+                    self._save_visited_systems()
+                    self._update_visited_count_label()
+        if self._parent is not None:
+            self._parent.after(1000, self._poll_visited_catchup)
 
     # --- journal dispatch -----------------------------------------------------
 
@@ -661,6 +697,7 @@ class BoxelSurveyController:
         parent.after(200, self._poll_nearby_queue)
         parent.after(200, self._poll_edsm_skip_queue)
         parent.after(200, self._poll_alias_queue)
+        parent.after(1000, self._poll_visited_catchup)
 
     def _set_target(self, name: Optional[str]) -> None:
         if self._target_var is not None:

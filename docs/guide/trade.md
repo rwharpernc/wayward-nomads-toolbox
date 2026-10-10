@@ -75,7 +75,9 @@ cost only counts once WNTB has seen it.
 **Ship hold.** Your ship and the landing pad it needs (for example "Type-9 Heavy, large"), how many tonnes are used,
 the capacity and how much is free, what the station you're docked at would pay for the whole hold, and what each
 commodity aboard would sell for there. **Hold space**, just under the landing pad, splits the hold into cargo,
-limpets (they take hold space like any cargo) and free space, for example "312 t cargo, 16 t limpets, 40 t free".
+limpets (they take hold space like any cargo) and free space, for example "312 t cargo (40 t mission, 12 t stolen), 16 t
+limpets, 40 t free". The mission and stolen figures come from the game's cargo list (`Cargo.json`) and appear only
+when there is some.
 
 **Carrier cargo.** Your carrier's cargo storage, shown as **Carrier cargo used**, **Carrier cargo free** and
 **Carrier reserved for orders**, so it is never mistaken for your ship hold. Under the free line, **Carrier crew
@@ -238,7 +240,10 @@ Not every commander has a carrier, and some have a fleet carrier, a squadron car
 **Auto** (show whatever your journal has revealed) · **None** · **Fleet** · **Squadron** · **Both**
 
 Nothing is shown for a carrier you haven't chosen. For each one, the Session page shows cargo used, free, and
-reserved for orders, for example "5,060 / 23,720 t used, 18,660 t free".
+reserved for orders, for example "5,060 / 23,720 t used, 18,660 t free", then what the rest of the space is spent on
+(crew, packs), then, when the journal has told WNTB: **Carrier tritium**, **Carrier is at**, **Carrier jump planned**,
+**Carrier balance**, and one line per order you have set (**Carrier selling Gold** 300 t @ 12,000 cr, **Carrier buying
+Tritium**). A carrier being decommissioned is flagged.
 
 ### How the number stays up to date
 
@@ -278,9 +283,10 @@ the figure it has and says how sure it is. Here is every gap we know about, what
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | The carrier's space to be known as soon as you log in | The space report (`CarrierStats`) is written **only when you open Carrier Management**. It is not written at login. | Open Carrier Management once per session. WNTB reads recent journals at start-up, so the last time you did still counts after an EDMC restart. |
-| A list of what commodities are in the carrier's bay | Only the **total tonnes** in the bay. Commodity names are not in the report. | None inside the game's files. Carrier Management in the game itself lists the contents. WNTB deliberately does not invent a per-commodity list. |
-| Trade orders and sales made by the carrier to show up | They are **not written** when they happen. They only show in the next space report. | Open Carrier Management after a carrier order completes. Until then the cargo figure may be too high and shows a `~`. |
+| A list of what commodities are in the carrier's bay | Only the **total tonnes** in the bay. Commodity names are not in the space report. | The carrier's own orders are the closest thing: WNTB lists them (below), and a sale order names a commodity that is aboard. Carrier Management in the game lists the contents. WNTB does not invent a per-commodity list. |
+| Trade orders to be tracked as they fill | The game writes an order **when you place or cancel it** (`CarrierTradeOrder`), not each tonne it later moves. | WNTB shows the orders you have set (commodity, tonnes, price). The tonnes that have moved, and the cargo figure, only update in the next space report: open Carrier Management after an order completes. Until then the cargo figure may be too high and shows a `~`. |
 | Space reserved for orders to follow along | Only updates in the space report. | Same: open Carrier Management. |
+| Tritium, location and jump plans | Tritium comes from the space report and from each fuel deposit you make; the location is written at login and after a jump; a jump request carries the destination and departure time. Fuel the carrier burns jumping is **not** written. | WNTB shows the tritium, where the carrier is and a planned jump. After a jump, open Carrier Management for the real tritium figure. A plan is dropped once its departure time is well past. |
 | Cargo moved by someone else to be seen | WNTB follows the transfers **your** journal records while you are docked at the carrier. We have not seen the game report anyone else's. | Open Carrier Management when someone else may have used the bay (a squadron carrier especially). |
 | The figure to be right right after unloading | The transfer is in the journal but the total is not updated. | WNTB counts the transfer itself; open Carrier Management after a big load to put the exact number back. |
 | Crew and pack space to be listed by type | Crew services, ship packs and module packs are reported, but only in the same report as above. | Same. A carrier last read by an older WNTB shows one combined "Carrier crew and packs" line until the next report. |
@@ -291,6 +297,9 @@ it goes away.
 
 ### Your ship's hold
 
+- **Mission and stolen cargo** are told apart from the cargo list the game writes whenever the hold changes (each
+  entry says if it is stolen, or belongs to a mission). If that list is missing or unreadable, the line shows the
+  total without the split.
 - **Limpets are counted as cargo by the game**, which is why they are shown as their own part of **Hold space**:
   they use tonnes you might think are free.
 - **Some SRV and vehicle capacities are unknown**; the Inventory window shows the count with "capacity unknown" rather

@@ -18,8 +18,10 @@ Where the numbers come from (journal events):
   carrier, nothing is counted. With only one carrier of yours on record and no dock information, it
   goes to that one.
 - `CarrierBuy` says a carrier exists before any usage is known.
-Trade orders and sales made by the carrier itself show only on the next `CarrierStats`, so the figure
-is "as of" the last visit to Carrier Management. When transfers alone add up to more than the bay can
+- Running the carrier (tritium, location, planned jump, trade orders, balance) comes from the events listed in
+  `trade_carrier_ops`.
+A trade order being placed or cancelled is recorded (`CarrierTradeOrder`), but the tonnes an order later moves are
+not: they show only on the next `CarrierStats`, so the figure is "as of" the last visit to Carrier Management. When transfers alone add up to more than the bay can
 hold (or take out more than it holds), something unlogged changed it: the record is flagged `estimate`
 and the panel asks for a visit to Carrier Management. A `CarrierStats` replaces the record and clears it.
 
@@ -37,6 +39,7 @@ import re
 import time
 from typing import Any, Dict, Iterable, List, Optional
 
+from . import trade_carrier_ops as ops
 from .trade_blocks import Block, Heading, Note, Pair, to_text
 
 try:
@@ -61,7 +64,8 @@ MODES = (AUTO, NONE, FLEET_ONLY, SQUADRON_ONLY, BOTH)
 _MODE_TYPES = {NONE: (), FLEET_ONLY: (FLEET,), SQUADRON_ONLY: (SQUADRON,), BOTH: (FLEET, SQUADRON)}
 
 # Cheap test for "could this journal line matter?" before paying to parse it; tolerant of spacing.
-_WANTED = re.compile(r'"event"\s*:\s*"(?:CarrierStats|CarrierBuy|CargoTransfer|LoadGame|Commander|Docked|Undocked|Location)"')
+_WANTED = re.compile(r'"event"\s*:\s*"(?:CarrierStats|CarrierBuy|CargoTransfer|LoadGame|Commander|Docked|Undocked|Location|'
+                     r'CarrierDepositFuel|CarrierLocation|CarrierJumpRequest|CarrierJumpCancelled|CarrierTradeOrder|CarrierFinance)"')
 
 CarrierRecord = Dict[str, Any]
 Records = Dict[str, Dict[str, CarrierRecord]]  # commander key -> carrier type -> record
@@ -116,6 +120,7 @@ def parse_stats(entry: Dict[str, Any]) -> Optional[CarrierRecord]:
         "total": total, "capacity": capacity, "cargo": cargo, "reserved": reserved, "free": free,
         "crew": crew, "packs": ship_packs + module_packs,
         "updated": str(entry.get("timestamp") or _now()),
+        **ops.stats_facts(entry, str(entry.get("timestamp") or _now())),
     }
 
 
@@ -201,8 +206,13 @@ class CarrierTracker:
             held = self._mine().get(parsed["type"])
             if held is not None and held.get("updated") and str(parsed["updated"]) < str(held["updated"]):
                 return False   # an older baseline (a journal scanned late) never replaces a newer figure
+            if held is not None:
+                ops.merge_facts(parsed, held)   # keep location, jump and orders; a newer fuel or balance beats the report's
             self.records.setdefault(self.cmdr, {})[parsed["type"]] = parsed
             return True
+        if event in ops.OPS_EVENTS:
+            target = self._ops_target(entry)
+            return target is not None and ops.apply_event(target, entry)
         if event == "CarrierBuy":
             note = note_purchase(entry)
             return self.records.setdefault(self.cmdr, {}).setdefault(note["type"], note) is note
@@ -213,6 +223,28 @@ class CarrierTracker:
                 return False   # already inside this figure (a journal read twice, or scanned after a newer one)
             return target is not None and apply_transfer(target, entry)
         return False
+
+    def _ops_target(self, entry: Dict[str, Any]) -> Optional[CarrierRecord]:
+        """The record a running-the-carrier event is about: the carrier with that `CarrierID`, else the commander's
+        carrier of that `CarrierType`. A carrier first met through such an event gets a record with no space figures."""
+        mine = self._mine()
+        carrier_id = _int(entry.get("CarrierID"))
+        if carrier_id:
+            for record in mine.values():
+                if record.get("id") == carrier_id:
+                    return record
+        ctype = str(entry.get("CarrierType") or "")
+        if ctype not in TYPE_ORDER:
+            return None
+        record = mine.get(ctype)
+        if record is not None:
+            return record if (not record.get("id") or not carrier_id) else None   # a different carrier of the same type
+        if entry.get("event") not in ops.CREATES_RECORD:
+            return None
+        stub = note_purchase({"CarrierType": ctype, "CarrierID": carrier_id, "timestamp": ""})
+        stub["updated"] = ""   # no space report behind it, so any real CarrierStats (or saved record) wins
+        self.records.setdefault(self.cmdr, {})[ctype] = stub
+        return stub
 
     def _transfer_target(self) -> Optional[CarrierRecord]:
         """The carrier a transfer just now went to: the one we are docked at, else (no dock information)
@@ -292,6 +324,7 @@ def cargo_blocks(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) 
         blocks.append(Heading(f"{label}: {who}" if who else label))
         capacity = (record or {}).get("capacity", 0)
         if not record or not capacity:
+            blocks += ops.ops_blocks(record) if record else []
             blocks.append(Note("Open Carrier Management once to read its cargo space.", warn=True))
             continue
         used, reserved, free = record.get("cargo", 0), record.get("reserved", 0), record.get("free", 0)
@@ -301,6 +334,7 @@ def cargo_blocks(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) 
         blocks += _space_breakdown(record)
         if reserved:
             blocks.append(Pair("Carrier reserved for orders", f"{reserved:,} t"))
+        blocks += ops.ops_blocks(record)
         if guess:
             blocks.append(Note("Estimate: the transfers seen add up to more than the bay holds, so cargo left the carrier "
                                "without a journal entry (a trade order or sale). Open Carrier Management for the real figure.",
@@ -323,9 +357,14 @@ def merge(target: Records, found: Records) -> bool:
     changed = False
     for cmdr, by_type in found.items():
         for ctype, record in by_type.items():
-            if newer(record, target.get(cmdr, {}).get(ctype)):
+            held = target.get(cmdr, {}).get(ctype)
+            if newer(record, held):
+                if held is not None:
+                    ops.merge_facts(record, held)   # facts the held record learned live may be newer
                 target.setdefault(cmdr, {})[ctype] = record
                 changed = True
+            elif held is not None:
+                changed = ops.merge_facts(held, record) or changed
     return changed
 
 

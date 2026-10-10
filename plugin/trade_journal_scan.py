@@ -46,7 +46,8 @@ Registry = Dict[str, Any]   # {"files": {name: {"size": int, "scanned": iso}}, "
 # Cheap test for "could this journal line matter?" before paying to parse it. Everything Trade uses.
 _WANTED = re.compile(
     r'"event"\s*:\s*"(?:MarketBuy|MarketSell|RefuelAll|RefuelPartial|Repair|RepairAll|BuyAmmo|RestockVehicle|BuyDrones|'
-    r'SellDrones|FSDJump|CarrierJump|Docked|Undocked|Location|LoadGame|Commander|CarrierStats|CarrierBuy|CargoTransfer)"')
+    r'SellDrones|FSDJump|CarrierJump|Docked|Undocked|Location|LoadGame|Commander|CarrierStats|CarrierBuy|CargoTransfer|'
+    r'CarrierDepositFuel|CarrierLocation|CarrierJumpRequest|CarrierJumpCancelled|CarrierTradeOrder|CarrierFinance)"')
 
 
 def _now() -> str:

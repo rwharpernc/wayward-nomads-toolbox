@@ -71,6 +71,26 @@ class CodexTally:
 
     def __init__(self) -> None:
         self._records: Dict[str, CodexEntryRecord] = {}
+        self.last_event_at: str = ""
+        """Timestamp of the newest CodexEntry counted, live or from the journals. The start-up catch-up counts only
+        events after it, so a find made with EDMC closed is counted once. Empty until the first run sets it."""
+
+    def advance_watermark(self, stamp: Any) -> None:
+        if isinstance(stamp, str) and stamp > self.last_event_at:
+            self.last_event_at = stamp
+
+    def apply_new(self, entries: List[Dict[str, Any]]) -> int:
+        """Count the events newer than the watermark (oldest first) and move the watermark up. Returns how many were
+        counted. Safe to run any number of times: an event at or before the watermark is never counted again."""
+        counted = 0
+        for entry in sorted(entries, key=lambda e: e.get("timestamp") or ""):
+            stamp = entry.get("timestamp") or ""
+            if not stamp or stamp <= self.last_event_at:
+                continue
+            if self.record(entry, entry.get("System")) is not None:
+                counted += 1
+            self.advance_watermark(stamp)
+        return counted
 
     @property
     def records(self) -> List[CodexEntryRecord]:

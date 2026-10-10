@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Mapping, Optional
+from typing import Iterable, Mapping, Optional
 
 from config import appname
 
@@ -58,10 +58,17 @@ class ActiveMissions:
 
     # --- feeding ---------------------------------------------------------------
 
-    def load_history(self, accepted_by_cmdr: Mapping[str, Mapping[int, dict]]) -> None:
-        """Start over from missions found in old journals. Nothing counts as
-        active until each commander's login event arrives."""
+    def load_history(self, accepted_by_cmdr: Mapping[str, Mapping[int, dict]],
+                     active_ids_by_cmdr: Optional[Mapping[str, Iterable[int]]] = None) -> None:
+        """Start over from missions found in old journals. Without `active_ids_by_cmdr`, nothing counts as
+        active until each commander's login event arrives. With it (the set the journals leave active), a
+        commander's missions show straight away, which is what restarting EDMC mid-game needs because the game
+        sends no login event then. The login event, when it comes, replaces this with the authoritative list."""
         self._rosters = {cmdr: _Roster(accepted=dict(events)) for cmdr, events in accepted_by_cmdr.items()}
+        for cmdr, ids in (active_ids_by_cmdr or {}).items():
+            roster = self._rosters.setdefault(cmdr, _Roster())
+            roster.active = {i: roster.accepted[i] for i in ids if i in roster.accepted}
+            roster.synced = True
         self._focus = None
 
     def switch_to(self, cmdr: str) -> None:

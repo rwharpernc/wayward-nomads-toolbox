@@ -82,6 +82,9 @@ class Site:
     failed: bool = False
     resources: List[Resource] = field(default_factory=list)
     updated: str = field(default_factory=_now_iso)
+    journal_at: str = ""
+    """Time of the newest journal event folded into this site; "" for a site saved before this was kept (its `updated`
+    time stands in). An event is applied only if it is newer, so catching up never counts a delivery twice."""
 
     @property
     def remaining_total(self) -> int:
@@ -98,7 +101,7 @@ class Site:
         return {
             "market_id": self.market_id, "name": self.name, "system": self.system,
             "progress": self.progress, "complete": self.complete, "failed": self.failed,
-            "updated": self.updated,
+            "updated": self.updated, "journal_at": self.journal_at,
             "resources": [
                 {"key": r.key, "label": r.label, "required": r.required,
                  "provided": r.provided, "payment": r.payment}
@@ -116,6 +119,7 @@ class Site:
             complete=bool(raw.get("complete")),
             failed=bool(raw.get("failed")),
             updated=str(raw.get("updated") or _now_iso()),
+            journal_at=str(raw.get("journal_at") or ""),
             resources=[
                 Resource(
                     key=str(r.get("key") or ""), label=str(r.get("label") or ""),
@@ -125,6 +129,35 @@ class Site:
                 for r in raw.get("resources", []) if isinstance(r, Mapping)
             ],
         )
+
+
+def _parse_time(value: Any) -> Optional[datetime]:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def event_time(entry: Mapping[str, Any]) -> Optional[datetime]:
+    return _parse_time(entry.get("timestamp"))
+
+
+def site_watermark(site: Site) -> Optional[datetime]:
+    """How far the journal has been folded into `site`: its `journal_at`, else when it was last updated."""
+    return _parse_time(site.journal_at) or _parse_time(site.updated)
+
+
+def is_newer(site: Site, entry: Mapping[str, Any], inclusive: bool) -> bool:
+    """Should this journal event be applied to `site`? Yes if it is newer than what the site has seen (a depot
+    snapshot, which replaces the figures, is also applied at the very same time). An event with no usable time is
+    applied, as before."""
+    when, mark = event_time(entry), site_watermark(site)
+    if when is None or mark is None:
+        return True
+    return when >= mark if inclusive else when > mark
 
 
 def apply_depot_event(entry: Mapping[str, Any], existing: Optional[Site],
@@ -164,6 +197,7 @@ def apply_depot_event(entry: Mapping[str, Any], existing: Optional[Site],
         ))
     site.resources = resources
     site.updated = _now_iso()
+    site.journal_at = str(entry.get("timestamp") or site.journal_at)
     return site
 
 
@@ -189,6 +223,7 @@ def apply_contribution(site: Site, entry: Mapping[str, Any]) -> bool:
                 break
     if changed:
         site.updated = _now_iso()
+    site.journal_at = str(entry.get("timestamp") or site.journal_at)
     return changed
 
 

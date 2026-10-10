@@ -13,7 +13,7 @@ from typing import Optional
 
 from config import appname
 
-from . import active_missions, kill_tracker, mission_types
+from . import active_missions, kill_tracker, mission_cargo, mission_types
 from .notifier import Notifier
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -51,11 +51,17 @@ class MissionSummary:
     this field but not `commodity`, since collecting isn't mining. Backs the
     Trade & Mining page's "Commodities needed" summary in missions_ui.py."""
     needed_commodity_count: int
-    """Units still needed of `needed_commodity`; 0 when that's empty."""
+    """Units still needed of `needed_commodity`; 0 when that's empty. Less what a CargoDepot event says is already
+    collected."""
+    cargo: Optional[mission_cargo.CargoProgress] = None
+    """Collect / delivery progress from the journal's CargoDepot events, when it has reported any."""
 
     @classmethod
-    def from_event(cls, event: dict) -> "MissionSummary":
+    def from_event(cls, event: dict, cargo: Optional[mission_cargo.CargoProgress] = None) -> "MissionSummary":
         supplied = mission_types.needs_commodity_supply(event)
+        needed = event.get("Count", 0) if supplied else 0
+        if supplied and cargo is not None:
+            needed = cargo.still_to_collect
         commodity = event.get("Commodity_Localised", "")
         return cls(
             id=event["MissionID"],
@@ -71,7 +77,8 @@ class MissionSummary:
             is_illegal=mission_types.is_illegal(event),
             commodity=commodity if mission_types.is_mining_mission(event) else "",
             needed_commodity=commodity if supplied else "",
-            needed_commodity_count=event.get("Count", 0) if supplied else 0,
+            needed_commodity_count=needed,
+            cargo=cargo,
         )
 
 
@@ -90,21 +97,30 @@ class AllMissionsView:
         self.changed = Notifier()
         self.missions: Optional[dict[int, MissionSummary]] = None
         """The current commander's active missions, or None if unknown."""
+        self._active: Optional[dict[int, dict]] = None
         source.changed.connect(self._on_active_missions)
         kill_tracker.kill_data_changed_listeners.append(self.refresh)
+        mission_cargo.tracker.changed.connect(self._on_cargo_progress)
 
     def _on_active_missions(self, active: Optional[dict[int, dict]]) -> None:
+        self._active = active
         if active is None:
             self.missions = None
             self.changed.notify(None)
             return
         # Colonisation missions are dropped entirely (not just recategorized);
         # every other active mission is included.
-        self.missions = {mission_id: MissionSummary.from_event(event)
+        cmdr = active_missions.tracker.commander
+        self.missions = {mission_id: MissionSummary.from_event(event, mission_cargo.tracker.get(cmdr, mission_id))
                          for mission_id, event in active.items()
                          if not mission_types.is_colonisation_mission(event)}
         logger.info(f"All-missions view tracking {len(self.missions)} active mission(s)")
         self.changed.notify(self.missions)
+
+    def _on_cargo_progress(self) -> None:
+        """A CargoDepot event moved a mission's cargo progress: rebuild the summaries so the counts follow."""
+        if self._active is not None:
+            self._on_active_missions(self._active)
 
     def refresh(self) -> None:
         """Tell subscribers again (e.g. after a live MissionRedirected), so

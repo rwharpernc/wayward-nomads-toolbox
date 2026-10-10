@@ -110,7 +110,8 @@ either of the other two from nothing.
   (Sequence) / each active `CubeEntry`'s own walker (Region Sweep) / route position (Waypoints);
   `Scan`/`FSSBodySignals`/`SAASignalsFound` → `survey_log.py` (notable-finds recording, all
   sub-modes, keyed by whatever boxel the *live* system is in — not the walker's target, so it stays
-  accurate even when the commander wanders off-sequence).
+  accurate even when the commander wanders off-sequence). Region Sweep's "require a full FSS scan" is decided by
+  `FSSAllBodiesFound` (journal only); it no longer asks EDSM after every scan.
 - `build_panel(parent)` → main-panel widgets, per the feature-module contract every WNTB mode module
   follows.
 - `build_settings(notebook)` / `save_settings()` → the "Boxel Survey" Settings tab (Sequence's own

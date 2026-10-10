@@ -52,11 +52,15 @@ these rules in order:
 6. **No state at all:** *Unattributed*.
 
 ### 3.3 Deliveries
-Handing in Powerplay commodities (`SearchAndRescue` with a Power commodity) or on-foot data
-(`DeliverPowerMicroResources`) earns merits through a separate path. The journal doesn't link the hand-in
-to the `PowerplayMerits` event it triggers, and the target (Acquisition, Reinforcement or Undermining) is
-chosen in the game and isn't reported either. So WNTB marks the **next merit gain** as *Delivery* and
-counts it in merits only, never Control Points. The same goes for *Unattributed*.
+Powerplay 2.0 writes `PowerplayDeliver` (`Power`, `Type`, `Count`) for every commodity or data hand-in, just
+before the `PowerplayMerits` it earns (checked against a real journal: usually one or two merit events within a
+second or two, occasionally minutes later). It doesn't name the target (Acquisition, Reinforcement or
+Undermining). So WNTB marks the **first merit event within 10 minutes** of a `PowerplayDeliver`, and any merit event
+within 10 seconds of the last one it marked, as *Delivery*, and counts them in merits only, never Control Points.
+The same goes for *Unattributed*. The older signals (`SearchAndRescue` with a Power commodity,
+`DeliverPowerMicroResources`) are used only while no `PowerplayDeliver` has been seen: in current journals they
+arrive after the merits, so they would claim the wrong event. The windows are `DELIVERY_FIRST_MERIT_S` and
+`DELIVERY_FOLLOW_ON_S` in `powerplay.py`.
 
 ## 4. Control Points
 

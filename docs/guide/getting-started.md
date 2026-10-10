@@ -127,6 +127,30 @@ position alone.
 If you'd rather set the height yourself, untick *Resize the EDMC window's height to fit WNTB automatically* under
 **File → Settings → WNTB → General → Window**.
 
+### If EDMC wasn't running
+
+EDMC only hands WNTB the events that happen while it runs. For anything played with EDMC closed, WNTB reads the game's
+journal files when EDMC starts (and, for Trade, once a minute after that). Each feature does it its own way and only
+adds what is new, so nothing is counted twice:
+
+| Feature | What it catches up on | How far back |
+|---|---|---|
+| **Trade** | Session tally, stock, carrier figures, route start | New or grown journal files, every minute |
+| **Powerplay** | Merits and Control Points | The gap since EDMC last saw the journal (up to the scan depth in Settings) |
+| **BGS** | Your effect on factions this tick | From the start of the tick |
+| **Missions** | Active missions, kill progress, cargo progress, Community Goals | The last 2 weeks |
+| **Colonisation** | Deliveries and sites docked at | 14 days, or back to your oldest site (30 days at most) |
+| **Codex Completionist** | Codex finds | Everything since the last find it counted |
+| **Boxel Survey** | Systems you arrived at | The last 14 days |
+| **Mining** | The run in progress | The current journal file |
+| **Exploration Value** | Region, system scan progress, last data sales | The current journal file |
+| **Inventory** | Backpack and ship locker | Taken from EDMC's own rebuilt state |
+| **Credits line** | The session, if it is the same journal file | The saved session |
+
+Landing Assist, Interdiction Warning, Discovery Alerts, Notable Bodies, Auto-Honk, Screenshots and the Organic Scanning
+sample you are in the middle of only matter at the moment they happen, so there is nothing to catch up. See each
+mode's guide for the limits.
+
 ### Settings
 
 All settings live under **File → Settings → WNTB**, in tabs: General, Powerplay, Missions, Exploration, Mining,

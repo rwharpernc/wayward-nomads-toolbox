@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugin import mining_spansh_client as prices_client  # noqa: E402
 from plugin import trade_carrier as carrier  # noqa: E402
-from plugin.trade_blocks import Columns, Heading, Item, Note, Pair  # noqa: E402
+from plugin.trade_blocks import Columns, Heading, Item, Note, Pair, to_text  # noqa: E402
 from plugin import trade_commodities as commodities  # noqa: E402
 from plugin import trade_prices as prices  # noqa: E402
 from plugin import trade_ship as ship  # noqa: E402
@@ -481,6 +481,138 @@ class CarrierBackfillTests(unittest.TestCase):
             self._journal(folder, "Journal.2026-10-09T100000.01.log", [
                 '{"event":"CarrierStats" this is not json\n', _line(event="LoadGame", Commander="X")])
             self.assertEqual(carrier.backfill(folder), {})
+
+
+class CarrierRunningTests(unittest.TestCase):
+    """Tritium, location, planned jump, orders and balance from the carrier's own journal events."""
+
+    def tracker(self) -> "carrier.CarrierTracker":
+        tracker = carrier.CarrierTracker()
+        tracker.set_cmdr("Bocheaux")
+        tracker.feed(stats_event())
+        return tracker
+
+    def text(self, tracker: "carrier.CarrierTracker", now: str = "2026-10-10T11:00:00Z") -> str:
+        from plugin import trade_carrier_ops as ops
+        record = tracker.records["bocheaux"][FLEET]
+        return "\n".join(to_text(ops.ops_blocks(record, now)))
+
+    def test_stats_carry_tritium_and_balance(self) -> None:
+        event = stats_event()
+        event.update({"FuelLevel": 315, "Finance": {"CarrierBalance": 3_123_123}})
+        tracker = carrier.CarrierTracker()
+        tracker.set_cmdr("Bocheaux")
+        tracker.feed(event)
+        text = self.text(tracker)
+        self.assertIn("Carrier tritium", text)
+        self.assertIn("315 t", text)
+        self.assertIn("3,123,123 cr", text)
+
+    def test_fuel_deposit_location_and_a_planned_jump(self) -> None:
+        tracker = self.tracker()
+        base = {"CarrierID": 111, "CarrierType": FLEET}
+        tracker.feed({**base, "event": "CarrierDepositFuel", "Amount": 50, "Total": 400, "timestamp": "2026-10-10T10:00:00Z"})
+        tracker.feed({**base, "event": "CarrierLocation", "StarSystem": "Sol", "timestamp": "2026-10-10T10:01:00Z"})
+        tracker.feed({**base, "event": "CarrierJumpRequest", "SystemName": "Lave", "DepartureTime": "2026-10-10T12:00:00Z",
+                      "timestamp": "2026-10-10T10:02:00Z"})
+        text = self.text(tracker)
+        self.assertIn("400 t", text)
+        self.assertIn("Sol", text)
+        self.assertIn("Carrier jump planned", text)
+        self.assertIn("Lave", text)
+        # Long after the departure, with no new location, the plan is no longer shown.
+        self.assertNotIn("jump planned", self.text(tracker, "2026-10-10T13:00:00Z"))
+        # A location written after the request means it has jumped.
+        tracker.feed({**base, "event": "CarrierLocation", "StarSystem": "Lave", "timestamp": "2026-10-10T12:20:00Z"})
+        self.assertNotIn("jump planned", self.text(tracker))
+
+    def test_a_cancelled_jump_is_not_shown(self) -> None:
+        tracker = self.tracker()
+        base = {"CarrierID": 111, "CarrierType": FLEET}
+        tracker.feed({**base, "event": "CarrierJumpRequest", "SystemName": "Lave", "DepartureTime": "2026-10-10T12:00:00Z",
+                      "timestamp": "2026-10-10T10:02:00Z"})
+        tracker.feed({**base, "event": "CarrierJumpCancelled", "timestamp": "2026-10-10T10:03:00Z"})
+        self.assertNotIn("jump planned", self.text(tracker))
+
+    def test_orders_are_listed_and_cancelling_removes_them(self) -> None:
+        tracker = self.tracker()
+        base = {"CarrierID": 111, "CarrierType": FLEET}
+        tracker.feed({**base, "event": "CarrierTradeOrder", "Commodity": "gold", "Commodity_Localised": "Gold",
+                      "SaleOrder": 300, "Price": 12_000, "BlackMarket": False, "timestamp": "2026-10-10T10:00:00Z"})
+        tracker.feed({**base, "event": "CarrierTradeOrder", "Commodity": "tritium", "Commodity_Localised": "Tritium",
+                      "PurchaseOrder": 500, "Price": 50_000, "timestamp": "2026-10-10T10:01:00Z"})
+        text = self.text(tracker)
+        self.assertIn("Carrier selling Gold", text)
+        self.assertIn("300 t @ 12,000 cr", text)
+        self.assertIn("Carrier buying Tritium", text)
+        tracker.feed({**base, "event": "CarrierTradeOrder", "Commodity": "gold", "CancelTrade": True,
+                      "timestamp": "2026-10-10T10:05:00Z"})
+        self.assertNotIn("Gold", self.text(tracker))
+
+    def test_an_older_event_read_late_never_replaces_a_newer_one(self) -> None:
+        tracker = self.tracker()
+        base = {"CarrierID": 111, "CarrierType": FLEET}
+        tracker.feed({**base, "event": "CarrierDepositFuel", "Total": 900, "timestamp": "2026-10-10T10:00:00Z"})
+        tracker.feed({**base, "event": "CarrierDepositFuel", "Total": 100, "timestamp": "2026-10-09T10:00:00Z"})
+        self.assertIn("900 t", self.text(tracker))
+
+    def test_a_new_report_keeps_the_location_and_orders_learned_earlier(self) -> None:
+        tracker = self.tracker()
+        base = {"CarrierID": 111, "CarrierType": FLEET}
+        tracker.feed({**base, "event": "CarrierLocation", "StarSystem": "Sol", "timestamp": "2026-10-10T10:01:00Z"})
+        newer = stats_event()
+        newer["timestamp"] = "2026-10-10T10:30:00Z"
+        tracker.feed(newer)
+        self.assertIn("Sol", self.text(tracker))
+
+    def test_a_carrier_first_met_through_its_events_shows_without_space_figures(self) -> None:
+        tracker = carrier.CarrierTracker()
+        tracker.set_cmdr("Bocheaux")
+        tracker.feed({"event": "CarrierLocation", "CarrierID": 7, "CarrierType": FLEET, "StarSystem": "Sol",
+                      "timestamp": "2026-10-10T10:00:00Z"})
+        lines = carrier.cargo_lines(tracker.records["bocheaux"])
+        self.assertTrue(any("Sol" in line for line in lines))
+        self.assertTrue(any("Open Carrier Management" in line for line in lines))
+        # A deposit only updates a carrier already on record.
+        other = carrier.CarrierTracker()
+        other.set_cmdr("Bocheaux")
+        self.assertFalse(other.feed({"event": "CarrierDepositFuel", "CarrierID": 7, "Total": 5, "timestamp": "x"}))
+
+    def test_merging_keeps_the_newest_facts_from_both_sides(self) -> None:
+        held = {FLEET: {**carrier.parse_stats(stats_event()), "system": "Sol", "system_at": "2026-10-10T10:00:00Z"}}
+        found = {FLEET: {**carrier.parse_stats(stats_event()), "system": "Lave", "system_at": "2026-10-10T12:00:00Z",
+                         "updated": "2026-10-10T09:00:00Z"}}   # older report, newer location
+        target = {"bocheaux": held}
+        self.assertTrue(carrier.merge(target, {"bocheaux": found}))
+        self.assertEqual(target["bocheaux"][FLEET]["system"], "Lave")
+
+
+class HoldSplitTests(unittest.TestCase):
+    def test_mission_and_stolen_tonnes_are_split_from_the_inventory_and_limpets_ignored(self) -> None:
+        from plugin import trade_hold
+        inventory = [{"Name": "gold", "Count": 100, "Stolen": False},
+                     {"Name": "gold", "Count": 40, "Stolen": False, "MissionID": 9},
+                     {"Name": "painite", "Count": 12, "Stolen": True},
+                     {"Name": "drones", "Count": 16, "Stolen": False},
+                     {"Name": "bad", "Count": "x"}, "junk"]
+        self.assertEqual(trade_hold.split_inventory(inventory), (40, 12))
+        self.assertEqual(trade_hold.split_inventory(None), (0, 0))
+
+    def test_the_hold_line_names_the_extras_only_when_there_are_some(self) -> None:
+        from plugin import trade_hold
+        self.assertEqual(trade_hold.describe(312, 0, 0), "312 t cargo")
+        self.assertEqual(trade_hold.describe(312, 40, 12), "312 t cargo (40 t mission, 12 t stolen)")
+        self.assertEqual(trade_hold.describe(1200, 0, 5), "1,200 t cargo (5 t stolen)")
+
+    def test_cargo_json_is_read_and_a_missing_file_is_not_an_error(self) -> None:
+        import json
+        from plugin import trade_hold
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertIsNone(trade_hold.read_cargo_file(folder))
+            with open(os.path.join(folder, "Cargo.json"), "w", encoding="utf-8") as handle:
+                json.dump({"Vessel": "Ship", "Count": 3, "Inventory": [{"Name": "gold", "Count": 3, "Stolen": True}]}, handle)
+            self.assertEqual(trade_hold.split_inventory(trade_hold.read_cargo_file(folder)), (0, 3))
+        self.assertIsNone(trade_hold.read_cargo_file(""))
 
 
 if __name__ == "__main__":

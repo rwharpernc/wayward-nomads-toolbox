@@ -4,9 +4,16 @@ Reads recent journal files so Missions mode's state survives EDMC restarts.
 `read_backlog(since)` replays every journal modified after a given date and
 collects, per commander:
 - accepted missions (all of them; which are active is decided later)
-- bounty events (to estimate kill progress)
+- bounty and combat-bond kills (to estimate kill progress)
 - ids of missions the game redirected (the authoritative "objective done" signal)
 - Community Goal progress
+- cargo mission progress (CargoDepot: collected and delivered so far)
+- which missions are still active at the end of the journals (see below)
+
+The game lists the active missions only in its login "Missions" event, so that is the authoritative source. Restarting
+EDMC mid-game gives no such event, so the active set is also worked out from the journals: start from the newest
+"Missions" event, add each MissionAccepted after it and remove each MissionCompleted, MissionAbandoned and
+MissionFailed. A mission that expired without a journal entry stays in that set until the next login corrects it.
 
 A missing journal folder, an unreadable file or a malformed line never
 raises: you get whatever could be read.
@@ -39,6 +46,11 @@ class Backlog:
     when the redirect named one."""
     goals: dict[str, dict[int, dict]] = field(default_factory=dict)
     """cmdr -> {CGID -> newest CurrentGoals entry seen}"""
+    cargo: dict[str, dict[int, dict]] = field(default_factory=dict)
+    """cmdr -> {mission id -> newest CargoDepot event}: collect / delivery progress of cargo missions"""
+    active_ids: dict[str, set[int]] = field(default_factory=dict)
+    """cmdr -> ids of the missions the journals leave active. Only commanders with a Missions or MissionAccepted
+    event in the scanned files are present."""
 
 
 def _journal_folder() -> str:
@@ -88,6 +100,7 @@ def _lines_as_events(path: str) -> Iterator[dict[str, Any]]:
 
 def _take_accepted(log: Backlog, cmdr: str, event: dict) -> None:
     log.accepted.setdefault(cmdr, {})[event["MissionID"]] = event
+    log.active_ids.setdefault(cmdr, set()).add(event["MissionID"])
 
 
 def _take_bounty(log: Backlog, cmdr: str, event: dict) -> None:
@@ -112,9 +125,28 @@ def _take_goals(log: Backlog, cmdr: str, event: dict) -> None:
             known[goal_id] = goal
 
 
+def _take_cargo_depot(log: Backlog, cmdr: str, event: dict) -> None:
+    log.cargo.setdefault(cmdr, {})[event["MissionID"]] = event
+
+
+def _take_missions(log: Backlog, cmdr: str, event: dict) -> None:
+    """The login list is authoritative: it replaces whatever was worked out before it."""
+    log.active_ids[cmdr] = {int(m["MissionID"]) for m in event.get("Active", [])}
+
+
+def _take_finished(log: Backlog, cmdr: str, event: dict) -> None:
+    log.active_ids.setdefault(cmdr, set()).discard(event["MissionID"])
+
+
 _TAKERS: dict[str, Callable[[Backlog, str, dict], None]] = {
     "MissionAccepted": _take_accepted,
+    "Missions": _take_missions,
+    "CargoDepot": _take_cargo_depot,
+    "MissionCompleted": _take_finished,
+    "MissionAbandoned": _take_finished,
+    "MissionFailed": _take_finished,
     "Bounty": _take_bounty,
+    "FactionKillBond": _take_bounty,   # a combat-zone kill; counts toward massacre missions like a bounty
     "MissionRedirected": _take_redirect,
     "CommunityGoal": _take_goals,
 }

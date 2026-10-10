@@ -42,6 +42,7 @@ from . import panelkit
 from . import trade_ledger as ledger_mod
 from . import trade_market as market_mod
 from . import trade_carrier
+from . import trade_hold
 from . import trade_route_start
 from . import trade_history
 from . import trade_history_window
@@ -184,6 +185,7 @@ class TradePanelController:
         self._home: trade_route_start.Starts = {}
         self._carrier_names: set = set()              # fleet / squadron carriers docked at (not valid route starts)
         self._cargo: Dict[str, int] = {}
+        self._hold_split = (0, 0)   # (mission tonnes, stolen tonnes) in the hold, from the Cargo inventory
         self._capacity = 0
         self._ship: Optional[str] = None  # journal ship name from Loadout, e.g. 'cobramkiii'
         self._credits = 0
@@ -329,6 +331,8 @@ class TradePanelController:
             if isinstance(credits, (int, float)):
                 self._credits = int(credits)
 
+        if event == "Cargo" or event in ("LoadGame", "StartUp"):
+            self._read_hold_split(entry)
         new_session = False
         if cmdr and (event in ("LoadGame", "StartUp") or self._ledger is None):
             # The commander's working session carries on across game logins, journal files and EDMC runs until they
@@ -390,6 +394,15 @@ class TradePanelController:
         elif changed:
             self._save()
         self._after_event()
+
+    def _read_hold_split(self, entry: Dict[str, Any]) -> None:
+        """Mission and stolen tonnes in the hold: from the Cargo event's inventory when it carries one, else from
+        Cargo.json (which is also all there is at start-up, when EDMC replays nothing)."""
+        inventory = entry.get("Inventory") if entry.get("event") == "Cargo" else None
+        if not isinstance(inventory, list):
+            inventory = trade_hold.read_cargo_file(_journal_dir())
+        if isinstance(inventory, list):
+            self._hold_split = trade_hold.split_inventory(inventory)
 
     def _after_event(self) -> None:
         if self._parent is not None:
@@ -644,7 +657,7 @@ class TradePanelController:
         limpets = sum(count for name, count in self._cargo.items() if name.lower() == "drones")
         if self._capacity or used:
             # What is taking up the hold: limpets are cargo too, so they are split from the commodities.
-            parts = [f"{used - limpets:,} t cargo"]
+            parts = [trade_hold.describe(used - limpets, *self._hold_split)]
             if limpets:
                 parts.append(f"{limpets:,} t limpets")
             if self._capacity:

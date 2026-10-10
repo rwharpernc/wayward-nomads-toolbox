@@ -349,5 +349,46 @@ class ScanFilesTests(unittest.TestCase):
         self.assertEqual([op.merits for op in result.ops if op.kind == backfill.OP_MERITS], [100])
 
 
+class DeliveryClassificationTests(unittest.TestCase):
+    """PowerplayDeliver claims the merit events it earns; the legacy hand-in events only count without it."""
+
+    def setUp(self) -> None:
+        self.tracker = powerplay.PowerplayTracker()
+        self.tracker.my_power = ME
+        self.tracker.system_name, self.tracker.system_state = "Sol", "Fortified"
+        self.tracker.system_controller = ME   # without a delivery this would be Reinforcement
+
+    def merit(self, ts: str, gained: int = 100) -> str:
+        self.tracker.apply_merits({"event": "PowerplayMerits", "timestamp": ts, "MeritsGained": gained, "Power": ME})
+        return self.tracker.classify_current_activity("Sol")
+
+    def deliver(self, ts: str) -> None:
+        self.tracker.apply_delivery_signal("PowerplayDeliver", {"event": "PowerplayDeliver", "timestamp": ts})
+
+    def test_both_merit_events_of_a_hand_in_are_deliveries(self) -> None:
+        self.deliver("2026-10-10T20:00:56Z")
+        self.assertEqual(self.merit("2026-10-10T20:00:57Z", 3960), "delivery")
+        self.assertEqual(self.merit("2026-10-10T20:00:57Z", 238), "delivery")
+        self.assertEqual(self.merit("2026-10-10T20:05:00Z"), REINFORCEMENT)   # later, unrelated
+
+    def test_a_delayed_first_merit_is_still_claimed_but_a_very_late_one_is_not(self) -> None:
+        self.deliver("2026-10-10T09:57:22Z")
+        self.assertEqual(self.merit("2026-10-10T10:04:59Z", 3600), "delivery")   # 7.5 minutes on
+        self.deliver("2026-10-10T11:00:00Z")
+        self.assertEqual(self.merit("2026-10-10T11:20:00Z"), REINFORCEMENT)      # past the window: not claimed
+
+    def test_the_legacy_signals_are_ignored_once_powerplay_deliver_has_been_seen(self) -> None:
+        self.deliver("2026-10-10T20:04:37Z")
+        self.assertEqual(self.merit("2026-10-10T20:04:38Z"), "delivery")
+        # DeliverPowerMicroResources arrives after the merits in the real journal: it must not claim the next one.
+        self.tracker.apply_delivery_signal("DeliverPowerMicroResources", {"event": "DeliverPowerMicroResources"})
+        self.assertEqual(self.merit("2026-10-10T20:30:00Z"), REINFORCEMENT)
+
+    def test_the_legacy_signal_still_works_for_journals_without_powerplay_deliver(self) -> None:
+        self.tracker.apply_delivery_signal("DeliverPowerMicroResources", {"event": "DeliverPowerMicroResources"})
+        self.assertEqual(self.merit("2026-10-10T20:04:38Z"), "delivery")
+        self.assertEqual(self.merit("2026-10-10T20:04:50Z"), REINFORCEMENT)
+
+
 if __name__ == "__main__":
     unittest.main()
