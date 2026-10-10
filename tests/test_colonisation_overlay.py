@@ -58,6 +58,53 @@ class CardLinesTests(unittest.TestCase):
         self.assertEqual(card.card_lines(site(), {"steel": 400, "water": 50}, {}), [])
 
 
+class VisibilityTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.v = card.Visibility()
+
+    def test_hidden_until_a_market_is_open(self) -> None:
+        self.v.feed({"event": "Docked"})
+        self.v.set_focus(0)
+        self.assertFalse(self.v.visible)
+        self.v.set_focus(5)                      # station services menu, no service chosen yet
+        self.assertFalse(self.v.visible)
+        self.v.feed({"event": "Market"})
+        self.assertTrue(self.v.visible)
+
+    def test_leaving_the_screen_hides_it_and_reopening_needs_a_new_market_event(self) -> None:
+        self.v.feed({"event": "Market"})
+        self.v.set_focus(5)
+        self.v.set_focus(0)
+        self.assertFalse(self.v.visible)
+        self.v.set_focus(5)
+        self.assertFalse(self.v.visible)
+        self.v.feed({"event": "Market"})
+        self.assertTrue(self.v.visible)
+
+    def test_carrier_inventory_counts(self) -> None:
+        self.v.set_focus(5)
+        self.v.feed({"event": "CarrierStats"})
+        self.assertTrue(self.v.visible)
+
+    def test_other_services_and_undocking_hide_it(self) -> None:
+        self.v.set_focus(5)
+        self.v.feed({"event": "Market"})
+        self.v.feed({"event": "Outfitting"})
+        self.assertFalse(self.v.visible)
+        self.v.feed({"event": "Market"})
+        self.v.feed({"event": "Undocked"})
+        self.assertFalse(self.v.visible)
+
+    def test_a_market_event_alone_is_not_enough(self) -> None:
+        self.v.feed({"event": "Market"})         # e.g. the focus never reported as services
+        self.assertFalse(self.v.visible)
+
+    def test_a_bad_focus_value_is_treated_as_none(self) -> None:
+        self.v.feed({"event": "Market"})
+        self.v.set_focus(None)
+        self.assertFalse(self.v.visible)
+
+
 class RenderTests(unittest.TestCase):
     def test_draws_card_and_rows(self) -> None:
         client = FakeClient()

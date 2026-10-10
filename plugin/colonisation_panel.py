@@ -85,6 +85,7 @@ class ColonisationController:
         self._overlay_sent: List[card.Line] = []
         self._overlay_sent_at = 0.0
         self._overlay_pos = (card.DEFAULT_X, card.DEFAULT_Y)
+        self._visibility = card.Visibility()
         self._overlay_lock = threading.Lock()
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
         self._overlay_vars: Dict[str, tk.StringVar] = {}
@@ -124,6 +125,7 @@ class ColonisationController:
     # --- journal dispatch -----------------------------------------------
 
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
+        self._visibility.feed(entry)
         self._handle_event(entry, cmdr, system, station, state)
         self._update_overlay()
 
@@ -173,8 +175,13 @@ class ColonisationController:
 
     # --- overlay card ---------------------------------------------------------
 
+    def dashboard_status(self, entry: Dict[str, Any]) -> None:
+        """From `Status.json` (about once a second while it changes): which screen is open."""
+        self._visibility.set_focus(entry.get("GuiFocus"))
+        self._update_overlay()
+
     def _current_lines(self) -> List[card.Line]:
-        if not overlay_enabled() or not self._cmdr:
+        if not overlay_enabled() or not self._cmdr or not self._visibility.visible:
             return []
         sites = [s for s in self._repository.for_cmdr(self._cmdr) if s.active]
         site = sites[0] if sites else None
@@ -282,7 +289,7 @@ class ColonisationController:
         nb.Label(
             frame,
             text=(
-                "Lists what is still to source for your most recently updated active site (the To Source "
+                "Shown only while you are in a commodity market or the carrier inventory. Lists what is still to source for your most recently updated active site (the To Source "
                 "figures), biggest first, with any stock you have moved onto your fleet carrier shown as FC."
             ),
             wraplength=440, justify=tk.LEFT,
@@ -382,6 +389,10 @@ def save_settings() -> None:
 
 def set_overlay_client(client: overlay.OverlayClient) -> None:
     controller.set_overlay_client(client)
+
+
+def dashboard_status(entry: Dict[str, Any]) -> None:
+    controller.dashboard_status(entry)
 
 
 def stop() -> None:
