@@ -237,6 +237,27 @@ the journal folder and the order file modified times give.
 - [ ] A commander typed in another case (the journal can write `BOCHEAUX` for `Bocheaux`) is the same commander.
 - [ ] Nothing under the plugin folder is named after a commander except the `mining_sessions/` archive files.
 
+## 7d. Colonization FC column, shopping-list overlay, start-up commander (added 2026-10-10, Linux-tested only: check on Windows)
+
+Written and tried on Linux (Flatpak EDMC, Proton game, EDMCModernOverlay). The code is platform-neutral Python, but none
+of it has been run on Windows yet. Needs a commander with a fleet carrier and a registered construction site.
+
+- [ ] **FC column**: the Colonization Sites window shows an FC column for a commander with a fleet carrier (and not for one
+      without), and it follows a transfer made at the carrier. Restarting EDMC keeps the figures and never counts a
+      transfer twice. A commander set to None in the Trade settings gets no FC column.
+- [ ] **Window follows the commander**: with the window open, log in as another commander; its sites change.
+- [ ] **Start-up commander**: start EDMC with the game closed; the Field Ops panels (Colonization, Codex, Ship Builds, Trade)
+      show the last commander instead of "waiting for commander login", and the EDMC log has "No game running at
+      start-up; restored commander ..." (about four seconds after start). Then log in as someone else: everything switches.
+- [ ] **Overlay card** (Settings, Colonisation: tick the overlay option; **Test Overlay** draws a sample): the table shows
+      Commodity, Need, FC and Ship, with a tick when the hold covers a row, and a remaining/trips footer.
+- [ ] The card appears: in a commodity market at a station; at your own carrier in the station-services screens (the game
+      writes no `Market` event for a carrier's market); with the right-hand cockpit panel open when docked at the carrier
+      (the cargo transfer); in Carrier Management; docked at a construction site. It goes when you leave, and the SHOW /
+      HIDE button forces it on and off. The EDMC debug log lines "Colonization overlay ..." say what was decided and why.
+- [ ] Rows left at the default list every commodity; the card fits on screen from the default position (20, 300).
+- [ ] Windows paths: `Status.json` reports the same `GuiFocus` values (5 in the services screens, 1 for the right-hand panel).
+
 ## Reporting
 
 Open an issue with your setup line, the failing step number, and the log excerpt.
