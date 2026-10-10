@@ -60,6 +60,7 @@ CARRIER_EVENTS = ("CarrierStats", "CargoTransfer")            # opening Carrier 
 OTHER_SERVICE_EVENTS = ("Outfitting", "Shipyard", "StoreCargo")   # another station service screen opened
 RESET_EVENTS = ("Docked", "Undocked", "LoadGame", "StartUp", "Shutdown")
 GUI_FOCUS_NONE = 0
+GUI_FOCUS_RIGHT_PANEL = 1   # "InternalPanel": the right-hand cockpit panel (cargo, modules, transfer to a carrier)
 # Station types of a construction depot (the colonisation ship is one too); a depot's own market-free screens count.
 DEPOT_STATION_TYPES = ("SpaceConstructionDepot", "PlanetaryConstructionDepot", "ColonisationShip")
 CARRIER_STATION_TYPES = ("FleetCarrier", "SquadronCarrier")
@@ -70,10 +71,10 @@ class Visibility:
 
     - in a commodity market: a station-services screen is open (`GuiFocus`) and the service opened last was the market.
       Backing out of the market to the station-services menu cannot be seen, so the card stays until that menu is left;
-    - docked at a carrier with a station-services screen open. The game writes nothing when the carrier's cargo transfer
-      screen is opened (`CargoTransfer` comes only after a transfer is made, `CarrierStats` only for Carrier Management),
-      so the carrier inventory cannot be told apart from the other services; it shows throughout, including Outfitting
-      and the Shipyard, as there is no event for closing those either;
+    - docked at a carrier with the right-hand cockpit panel open (`GuiFocus` 1), where the ship's cargo and the transfer to
+      the carrier live. The game writes nothing when that is opened (`CargoTransfer` comes only after a transfer is made),
+      so the open panel is the signal. SRVSurvey does the same with its "Show when looking at right-hand panel" setting,
+      though it shows it anywhere, not only docked at a carrier;
     - docked at a construction depot (where the shopping list is what the commander is there for), whether looking at
       the ship's view or the station services, but not in a map or another panel."""
 
@@ -110,7 +111,9 @@ class Visibility:
 
     @property
     def visible(self) -> bool:
-        if self._focus == GUI_FOCUS_STATION_SERVICES and (self._at_carrier or self._service in ("market", "carrier")):
+        if self._focus == GUI_FOCUS_STATION_SERVICES and self._service in ("market", "carrier"):
+            return True
+        if self._focus == GUI_FOCUS_RIGHT_PANEL and self._at_carrier:
             return True
         return self._at_depot and self._focus in (GUI_FOCUS_NONE, GUI_FOCUS_STATION_SERVICES)
 

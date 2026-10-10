@@ -841,11 +841,15 @@ footer with tonnes remaining and trips), and `render` / `clear` send it through 
 `wntb_colonisation_s<line>_<column>`, registered as a Plugin Group in `load.py`). Columns are right-aligned from
 character counts, since the overlay has no text metrics. The controller redraws only when the card or position changes
 or half the 3600 s time to live has passed, sends on a short-lived daemon thread, and clears synchronously in
-`plugin_stop`. The card is drawn only while `Visibility` says so: `Status.json` `GuiFocus` is Station Services (5, from
-`dashboard_entry`) and either the service opened last was the market (`Market`) or the commander is docked at a
-`FleetCarrier` / `SquadronCarrier` (the game writes no event when the carrier's transfer screen opens, so it cannot be
-told from the carrier's other services; `CarrierStats` / `CargoTransfer` also count); `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear it, and so
-does `GuiFocus` leaving 5. Settings keys:
+`plugin_stop`. The card is drawn only while `Visibility` says so, in one of three cases. (1) `Status.json` `GuiFocus` is Station
+Services (5, from `dashboard_entry`) and the service opened last was the market (`Market`, or `CarrierStats` /
+`CargoTransfer`); `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear that, and
+so does `GuiFocus` leaving 5. (2) The commander is docked at a `FleetCarrier` / `SquadronCarrier` and `GuiFocus` is 1,
+the right-hand cockpit panel where the cargo transfer to the carrier is done (the game writes no event for opening it,
+and `CargoTransfer` comes only after a transfer is made). (3) The commander is docked at a construction depot (station
+type `SpaceConstructionDepot`, `PlanetaryConstructionDepot` or `ColonisationShip`, a "Construction Site" station name,
+or a `ColonisationConstructionDepot` event) and `GuiFocus` is 0 or 5. SRVSurvey uses the same signals; it shows its list
+on the right-hand panel anywhere (default on) rather than only docked at a carrier. Settings keys:
 `wntb_colonisation_overlay_enabled` / `_x` / `_y` / `_rows`.
 
 ### Auto-Honk (`autohonk.py`)
