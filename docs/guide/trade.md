@@ -127,7 +127,10 @@ to a file you choose, and **Delete session** removes a saved session (it asks fi
 
 **What it uses:**
 
-- *Start:* the station you're docked at, or the last one you docked at.
+- *Start:* the station you're docked at, or the last one **this commander** docked at. Each commander has their own and it is
+  saved, so it survives switching commander and restarting EDMC, and it is brought up to date from journals written
+  while EDMC was closed. A commander who has never docked has none, and the
+  page says so.
 - *Cargo size and credits:* from the game.
 - *Jump range:* your ship's **unladen** range. Lower it in Settings if a full hold jumps shorter.
 - *Pad size:* if your ship needs a large pad, only stations with one are considered.
@@ -349,6 +352,7 @@ journals are the only thing that has to travel between them, and WNTB reads them
 | `trade_ledger.json` | the session tally |
 | `trade_stock.json` | the stock list |
 | `trade_carrier.json` | the carrier figures |
+| `trade_route_start.json` | each commander's route start |
 | `trade_history.json` | saved sessions |
 | `trade_journal_scan.json` | the list of journals already read |
 

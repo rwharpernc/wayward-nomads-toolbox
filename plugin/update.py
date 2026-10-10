@@ -67,6 +67,7 @@ _OWN_DATA_FILES: set = {
     "colonisation_sites.json",  # Colonisation construction sites (colonisation_data.py)
     "trade_ledger.json",  # Trade mode's session ledger (trade_ledger.py)
     "trade_carrier.json",  # Trade mode's fleet/squadron carrier cargo space (trade_carrier.py)
+    "trade_route_start.json",  # Trade mode's per-commander route start (trade_route_start.py)
     "trade_stock.json",  # Trade mode's bought-not-yet-sold stock book (trade_stock.py)
     "trade_journal_scan.json",  # which journal files Trade has read (trade_journal_scan.py)
     "trade_history.json",  # Trade mode's saved sessions (trade_history.py)

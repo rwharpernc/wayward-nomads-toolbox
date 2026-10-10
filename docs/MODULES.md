@@ -162,6 +162,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_pages.py` | Trade's page order |
 | `trade_panel.py` | Trade mode's entry point: chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
 | `trade_prices.py` | Ranks station offers for your load (sell and buy), carrier split and verdict lines |
+| `trade_route_start.py` | Each commander's route start (last real station docked at) and `trade_route_start.json`; the journal scan feeds it docks, newest wins |
 | `trade_roundtrip.py` | Finds the best back-and-forth station pair, loaded both ways |
 | `trade_ship.py` | Ship to landing-pad size and the fit rule |
 | `trade_spansh_client.py` | Spansh trade-route planner client and the profit-per-hour estimate |

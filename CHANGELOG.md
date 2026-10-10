@@ -3,6 +3,15 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed
+- **Trade: the route start is remembered per commander.** Switching commander could start a route from the previous
+  commander's last station. Each commander now has their own, saved in `trade_route_start.json`, so it also survives
+  restarting EDMC. The journal scan feeds it too, so docks made with EDMC closed
+  (or on another computer) count; an older journal never overwrites a newer dock. A commander who has never docked
+  has none until they do.
+
 ## 1.5.0 - 2026-10-10
 
 ### Added

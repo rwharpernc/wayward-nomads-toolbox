@@ -53,6 +53,7 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_pages.py` | pure | Page names and order |
 | `trade_ledger.py` | pure + file | The session ledger and `trade_ledger.json` |
 | `trade_journal_scan.py` | pure + file | Which journal files have been read, finding new or grown ones, and applying them to the ledger, stock and carrier; `trade_journal_scan.json` |
+| `trade_route_start.py` | pure + file | Each commander's route start and `trade_route_start.json` |
 | `trade_stock.py` | pure + file | The stock book (bought, not yet sold) and `trade_stock.json` |
 | `trade_history.py` | pure + file | Saved-session records, the `HistoryBook`, and `trade_history.json` |
 | `trade_stats.py` | pure | Every number and table row shown from a saved session |
@@ -476,8 +477,8 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_history_window_geometry` | Size and position of the Trade History window | "" |
 
 Files in the plugin folder (all are commander data and must survive updates; see `_OWN_DATA_FILES`, which
-`tests/test_own_data_files.py` enforces): `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json` and
-`trade_history.json`, `trade_journal_scan.json`. `trade_ledger.json` is `{"ledgers": {commander: ledger}}` (one session per commander; the
+`tests/test_own_data_files.py` enforces): `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`,
+`trade_history.json`, `trade_journal_scan.json` and `trade_route_start.json` (`{commander: {system, station, at}}`, where `at` is the dock's time: a dock replaces a start only if it is not older, so scanned files in any order give the right answer). `trade_ledger.json` is `{"ledgers": {commander: ledger}}` (one session per commander; the
 single-ledger file of an earlier build is read as the current commander's). `trade_carrier.json` was a flat
 `{commander: record}` map in an earlier build; `load_all` reads that as a fleet carrier.
 
