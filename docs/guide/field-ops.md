@@ -181,6 +181,24 @@ enough):
 - **Remove Finished** needs no selection. It deletes every complete or failed site, because those have no
   commodity rows to select.
 
+### The shopping list on the overlay
+
+Optional, and **off by default**. It needs an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md). Turn
+it on in Settings under Field Ops, in the Colonisation settings: **Show the shopping list on the in-game overlay**.
+
+It draws a small card with the title `To source: <site name>`, then one line per commodity, biggest first, such as
+`12,900 t  Steel`. These are the same **To Source** figures as the window and **Copy Shopping List**: what the site
+still needs, less what is in your hold. It follows your cargo as it changes, so it shrinks as you load up.
+
+- **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
+  failed sites are never shown. The card disappears when nothing is left to source.
+- **FC:** if you have moved some of a commodity onto your fleet carrier (see the FC column above), the line ends with
+  `(FC 1,265)` and is tinted blue, since that is stock you can pick up there.
+- **Settings:** the card's X and Y position on the overlay's 1280 x 960 virtual screen (default 20, 300), and **Rows**,
+  how many commodities to list (1 to 25, default 10); any more are summarized as `+N more`. **Test Overlay** shows a
+  sample card for a few seconds, even while the option is off.
+- It is cleared when EDMC closes. If the overlay program isn't running, nothing is drawn and nothing breaks.
+
 ## What the game does and doesn't tell us, and how to work around it
 
 WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (Frontier's servers for the Carrier Locker) publish. Where it can't be sure, WNTB says so rather than guess quietly.

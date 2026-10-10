@@ -202,6 +202,7 @@ Spec: [SCREENSHOTS_AND_INPUT_TECH_SPEC.md](SCREENSHOTS_AND_INPUT_TECH_SPEC.md), 
 | `colonisation_carrier.py` | Tonnes of each commodity transferred to the commander's fleet carrier, for the window's FC column (per commander, caught up from the journals without double counting) |
 | `colonisation_catchup.py` | Folds the recent journals into the saved construction sites at start-up, never counting a delivery twice |
 | `colonisation_data.py` | JSON persistence for construction sites (each carries `journal_at`, the newest journal event folded in) |
+| `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to source for the active site (pure formatting plus drawing) |
 | `colonisation_panel.py` | The Colonisation section of Field Ops |
 | `colonisation_window.py` | The Colonisation Sites window |
 | `inventory.py` | Backpack, ship locker and carrier locker tracking |

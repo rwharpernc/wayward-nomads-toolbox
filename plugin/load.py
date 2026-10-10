@@ -24,7 +24,7 @@ from typing import Any, Dict, Optional
 from config import appname, config
 
 from . import (
-    __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
+    __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
     exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
     missions, notable, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, screenshots, session_credits, ship_builds_panel, trade_panel, ui,
 )
@@ -113,6 +113,7 @@ def plugin_start3(plugin_dir: str) -> str:
     notable.set_overlay_client(_overlay)
     screenshots.set_overlay_client(_overlay)
     inventory_panel.set_overlay_client(_overlay)
+    colonisation_panel.set_overlay_client(_overlay)
     mining_panel.set_overlay_client(_overlay)
 
     # Every feature with its own background-rect-behind-text overlay card
@@ -127,6 +128,7 @@ def plugin_start3(plugin_dir: str) -> str:
         (interdiction.GROUP_NAME, interdiction.GROUP_PREFIX),
         (mining_overlay.GROUP_NAME, mining_overlay.GROUP_PREFIX),
         (screenshots.GROUP_NAME, screenshots.GROUP_PREFIX),
+        (colonisation_overlay.GROUP_NAME, colonisation_overlay.GROUP_PREFIX),
     ])
 
     if platform_support.IS_LINUX:
@@ -163,6 +165,7 @@ def plugin_stop() -> None:
     bgs_panel.stop()
     session_credits.stop()
     inventory_panel.stop()
+    colonisation_panel.stop()
     mining_panel.stop()
     trade_panel.stop()
     powerplay_window.close()
