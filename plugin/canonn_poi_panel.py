@@ -33,7 +33,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import canonn_poi_data, codex_completionist_panel, panelkit
+from . import canonn_poi_data, codex_completionist_panel, gec_poi_panel, panelkit
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -102,7 +102,11 @@ class CanonnPoiController:
 
     def handle_event(self, entry: Mapping[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
         event = entry.get("event")
-        if event not in ("FSDJump", "Location"):
+        if event == "StartUp":
+            # EDMC started with the game running: it replays nothing, so take the position from the current journal.
+            self._star_pos = self._star_pos or gec_poi_panel.GecPoiController._position_from_journal()
+            return
+        if event not in ("FSDJump", "Location", "CarrierJump"):
             return
         star_pos = entry.get("StarPos")
         if (isinstance(star_pos, list) and len(star_pos) == 3
