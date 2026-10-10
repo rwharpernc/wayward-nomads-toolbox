@@ -848,7 +848,9 @@ so does `GuiFocus` leaving 5. (2) The commander is docked at a `FleetCarrier` / 
 the right-hand cockpit panel where the cargo transfer to the carrier is done (the game writes no event for opening it,
 and `CargoTransfer` comes only after a transfer is made). (3) The commander is docked at a construction depot (station
 type `SpaceConstructionDepot`, `PlanetaryConstructionDepot` or `ColonisationShip`, a "Construction Site" station name,
-or a `ColonisationConstructionDepot` event) and `GuiFocus` is 0 or 5. SRVSurvey uses the same signals; it shows its list
+or a `ColonisationConstructionDepot` event) and `GuiFocus` is 0 or 5. (4) The `Music` event's track is `FleetCarrier_Managment` (Carrier Management; both opening and closing are
+announced). (5) Optionally (`wntb_colonisation_overlay_right_panel`) `GuiFocus` 1 anywhere. A manual `forced` flag (the
+Field Ops SHOW / HIDE button) overrides all of it and the enabled setting. SRVSurvey uses the same signals; it shows its list
 on the right-hand panel anywhere (default on) rather than only docked at a carrier. Settings keys:
 `wntb_colonisation_overlay_enabled` / `_x` / `_y` / `_rows`.
 

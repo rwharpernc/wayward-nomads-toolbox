@@ -63,6 +63,7 @@ GUI_FOCUS_NONE = 0
 GUI_FOCUS_RIGHT_PANEL = 1   # "InternalPanel": the right-hand cockpit panel (cargo, modules, transfer to a carrier)
 # Station types of a construction depot (the colonisation ship is one too); a depot's own market-free screens count.
 DEPOT_STATION_TYPES = ("SpaceConstructionDepot", "PlanetaryConstructionDepot", "ColonisationShip")
+CARRIER_MANAGEMENT_TRACK = "FleetCarrier_Managment"   # sic: the game's spelling
 CARRIER_STATION_TYPES = ("FleetCarrier", "SquadronCarrier")
 
 
@@ -76,13 +77,22 @@ class Visibility:
       so the open panel is the signal. SRVSurvey does the same with its "Show when looking at right-hand panel" setting,
       though it shows it anywhere, not only docked at a carrier;
     - docked at a construction depot (where the shopping list is what the commander is there for), whether looking at
-      the ship's view or the station services, but not in a map or another panel."""
+      the ship's view or the station services, but not in a map or another panel;
+    - in the carrier's management screen: the game writes a `Music` event with the track `FleetCarrier_Managment` when it
+      opens and another track when it closes, so (unlike the other screens) both ends are known;
+    - with the right-hand panel open anywhere, if `right_panel_anywhere` is set (SRVSurvey's default behavior).
+
+    `forced` is the commander's manual "show now", which `visible` does not include (the caller decides how it combines
+    with the enabled setting)."""
 
     def __init__(self) -> None:
         self._service = ""
         self._focus = 0
         self._at_depot = False
         self._at_carrier = False
+        self._managing = False
+        self.right_panel_anywhere = False
+        self.forced = False
 
     def feed(self, entry: Mapping[str, object]) -> None:
         event = entry.get("event")
@@ -90,6 +100,9 @@ class Visibility:
             self._service = ""
             self._at_depot = False
             self._at_carrier = False
+            self._managing = False
+        if event == "Music":
+            self._managing = entry.get("MusicTrack") == CARRIER_MANAGEMENT_TRACK
         if event in ("Docked", "Location"):
             docked = event == "Docked" or bool(entry.get("Docked"))
             self._at_carrier = docked and entry.get("StationType") in CARRIER_STATION_TYPES
@@ -113,7 +126,9 @@ class Visibility:
     def visible(self) -> bool:
         if self._focus == GUI_FOCUS_STATION_SERVICES and self._service in ("market", "carrier"):
             return True
-        if self._focus == GUI_FOCUS_RIGHT_PANEL and self._at_carrier:
+        if self._managing:
+            return True
+        if self._focus == GUI_FOCUS_RIGHT_PANEL and (self._at_carrier or self.right_panel_anywhere):
             return True
         return self._at_depot and self._focus in (GUI_FOCUS_NONE, GUI_FOCUS_STATION_SERVICES)
 

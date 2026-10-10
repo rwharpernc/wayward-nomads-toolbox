@@ -217,8 +217,16 @@ cargo capacity, which EDMC supplies).
     rather than only when docked at a carrier.
   - Whenever you are **docked at a construction site** (looking out of the cockpit or at the station services, but not
     in a map or another panel).
+  - In the carrier's **Carrier Management** screen. The game announces both opening and closing it, so the card
+    appears and goes exactly with the screen.
+  - Optionally, **whenever the right-hand cockpit panel is open, anywhere** (even in flight), as SRVSurvey does. Off by
+    default; tick it in the Colonisation settings.
 
-  It relies on the game's `Status.json` reporting which screen is open.
+  And you can always force it: the **SHOW** button beside REPORT in the Field Ops panel puts the card on the overlay
+  now, whatever screen you are on, even if the overlay option is off; the button then reads **HIDE**. It lasts until you
+  press it again or restart EDMC.
+
+  Most of these rely on the game's `Status.json` reporting which screen is open.
 - **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
   failed sites are never shown. The card disappears when nothing is left to source.
 - **Settings:** the card's X and Y position on the overlay's 1280 x 960 virtual screen (default 20, 300), and **Rows**,

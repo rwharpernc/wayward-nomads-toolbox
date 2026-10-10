@@ -161,6 +161,26 @@ class VisibilityTests(unittest.TestCase):
         self.v.set_focus(0)
         self.assertFalse(self.v.visible)
 
+    def test_carrier_management_is_known_from_the_music_track(self) -> None:
+        self.v.feed({"event": "Docked", "StationType": "FleetCarrier"})
+        self.v.set_focus(5)
+        self.v.feed({"event": "Music", "MusicTrack": "FleetCarrier_Managment"})
+        self.assertTrue(self.v.visible)
+        self.v.feed({"event": "Music", "MusicTrack": "Starport"})
+        self.assertFalse(self.v.visible)
+
+    def test_right_hand_panel_anywhere_is_an_option(self) -> None:
+        self.v.set_focus(1)
+        self.assertFalse(self.v.visible)
+        self.v.right_panel_anywhere = True
+        self.assertTrue(self.v.visible)
+        self.v.set_focus(0)
+        self.assertFalse(self.v.visible)
+
+    def test_forced_is_separate_from_visible(self) -> None:
+        self.v.forced = True
+        self.assertFalse(self.v.visible)
+
     def test_a_bad_focus_value_is_treated_as_none(self) -> None:
         self.v.feed({"event": "Market"})
         self.v.set_focus(None)
