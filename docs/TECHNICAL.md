@@ -842,8 +842,9 @@ footer with tonnes remaining and trips), and `render` / `clear` send it through 
 character counts, since the overlay has no text metrics. The controller redraws only when the card or position changes
 or half the 3600 s time to live has passed, sends on a short-lived daemon thread, and clears synchronously in
 `plugin_stop`. The card is drawn only while `Visibility` says so: `Status.json` `GuiFocus` is Station Services (5, from
-`dashboard_entry`) and the service opened last was the market (`Market`) or the carrier's inventory (`CarrierStats`,
-`CargoTransfer`); `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear it, and so
+`dashboard_entry`) and either the service opened last was the market (`Market`) or the commander is docked at a
+`FleetCarrier` / `SquadronCarrier` (the game writes no event when the carrier's transfer screen opens, so it cannot be
+told from the carrier's other services; `CarrierStats` / `CargoTransfer` also count); `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear it, and so
 does `GuiFocus` leaving 5. Settings keys:
 `wntb_colonisation_overlay_enabled` / `_x` / `_y` / `_rows`.
 

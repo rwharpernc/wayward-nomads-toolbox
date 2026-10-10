@@ -207,12 +207,18 @@ Commodities are alphabetical so rows stay put while numbers change. A last line 
 trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the trips need your ship's
 cargo capacity, which EDMC supplies).
 
-- **When it shows:** while you are in a commodity market, or in the carrier's inventory (Carrier Management and cargo
-  transfer), at a station or carrier; and also whenever you are **docked at a construction site** (looking out of the
-  cockpit or at the station services, but not in a map or another panel). It hides when you leave the market or
-  inventory screen, open another station service such as outfitting or the shipyard (except at a construction site),
-  or undock. Backing out of the market to the station-services menu can't be detected, so the card stays until you
-  leave that menu. It relies on the game's `Status.json` reporting which screen is open.
+- **When it shows:**
+  - In a **commodity market** at a station or carrier. It hides when you leave the screen, open another service such
+    as outfitting or the shipyard, or undock. Backing out of the market to the station-services menu can't be detected,
+    so the card stays until you leave that menu.
+  - Whenever you are **docked at a carrier** with a station-services screen open, which includes the carrier's cargo
+    transfer screen. The game writes nothing when that screen opens (the transfer is only logged after you make it), so
+    WNTB can't tell it from the carrier's other services; the card therefore also shows in the carrier's outfitting and
+    shipyard screens, and goes when you leave the services screens or undock.
+  - Whenever you are **docked at a construction site** (looking out of the cockpit or at the station services, but not
+    in a map or another panel).
+
+  It relies on the game's `Status.json` reporting which screen is open.
 - **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
   failed sites are never shown. The card disappears when nothing is left to source.
 - **Settings:** the card's X and Y position on the overlay's 1280 x 960 virtual screen (default 20, 300), and **Rows**,
