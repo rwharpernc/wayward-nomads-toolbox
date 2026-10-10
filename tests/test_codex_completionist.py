@@ -155,5 +155,62 @@ class PersistenceTests(unittest.TestCase):
         self.assertEqual(tally.total_distinct, 1)
 
 
+class MergeHistoryTests(unittest.TestCase):
+    @staticmethod
+    def _event(stamp: str, system: str = "Outotz LS-K d8", new: bool = False) -> dict:
+        return {**_BACTERIUM_ENTRY, "timestamp": stamp, "System": system, "IsNewEntry": new}
+
+    def test_backfill_into_an_empty_tally_counts_each_event_once(self) -> None:
+        tally = CodexTally()
+        tally.merge_history([self._event("2026-01-01T00:00:00Z", new=True), self._event("2026-01-02T00:00:00Z")])
+        self.assertEqual(tally.total_distinct, 1)
+        self.assertEqual(tally.total_finds, 2)
+        self.assertTrue(tally.records[0].was_first_discovery)
+
+    def test_backfill_twice_changes_nothing(self) -> None:
+        events = [self._event("2026-01-01T00:00:00Z"), self._event("2026-01-02T00:00:00Z")]
+        tally = CodexTally()
+        tally.merge_history(events)
+        tally.merge_history(events)
+        self.assertEqual(tally.total_finds, 2)
+
+    def test_events_already_counted_live_are_not_added_again(self) -> None:
+        events = [self._event("2026-01-01T00:00:00Z"), self._event("2026-01-02T00:00:00Z")]
+        tally = CodexTally()
+        for event in events:
+            tally.record(event, event["System"])
+        tally.merge_history(events)
+        self.assertEqual(tally.total_finds, 2)
+
+    def test_finds_from_deleted_journals_are_kept(self) -> None:
+        tally = CodexTally()
+        for stamp in ("2026-01-01T00:00:00Z", "2026-01-02T00:00:00Z", "2026-01-03T00:00:00Z"):
+            tally.record(self._event(stamp), "Outotz LS-K d8")
+        tally.merge_history([self._event("2026-01-03T00:00:00Z")])
+        self.assertEqual(tally.total_finds, 3)
+
+    def test_live_events_missing_from_history_are_still_counted_by_history_max(self) -> None:
+        tally = CodexTally()
+        tally.record(self._event("2026-01-03T00:00:00Z"), "Outotz LS-K d8")
+        tally.merge_history([self._event("2026-01-01T00:00:00Z"), self._event("2026-01-02T00:00:00Z"),
+                             self._event("2026-01-03T00:00:00Z")])
+        self.assertEqual(tally.total_finds, 3)
+
+    def test_earlier_first_sighting_and_first_discovery_flag_come_from_history(self) -> None:
+        tally = CodexTally()
+        tally.record(self._event("2026-02-01T00:00:00Z", system="Later System"), "Later System")
+        tally.merge_history([self._event("2026-01-01T00:00:00Z", system="Earlier System", new=True),
+                             self._event("2026-02-01T00:00:00Z", system="Later System")])
+        record = tally.records[0]
+        self.assertEqual(record.first_system, "Earlier System")
+        self.assertEqual(record.first_seen, "2026-01-01T00:00:00Z")
+        self.assertTrue(record.was_first_discovery)
+
+    def test_events_without_a_name_are_ignored(self) -> None:
+        tally = CodexTally()
+        tally.merge_history([{"event": "CodexEntry"}])
+        self.assertEqual(tally.total_distinct, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

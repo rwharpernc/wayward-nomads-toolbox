@@ -155,6 +155,40 @@ class CodexTally:
         self._records[name] = record
         return record
 
+    def merge_history(self, entries: List[Dict[str, Any]]) -> None:
+        """Fold a full journal-history scan (every `CodexEntry` event the journals hold, including ones already
+        counted live) into the tally without counting anything twice. Safe to run any number of times.
+
+        `record()` adds one find per event, which is right for live events but wrong here, because the journals
+        also contain what was already counted. So per entry the history's own event count is compared with the
+        tally's: `times_found` becomes the larger of the two (the tally can hold finds from journals that have
+        since been deleted, so it never goes down), a first discovery anywhere in the history is kept, and an
+        earlier first sighting replaces a later one."""
+        by_name: Dict[str, List[Dict[str, Any]]] = {}
+        for entry in entries:
+            name = entry.get("Name")
+            if name:
+                by_name.setdefault(name, []).append(entry)
+        for name, events in by_name.items():
+            events.sort(key=lambda e: e.get("timestamp") or "")
+            earliest = events[0]
+            existing = self._records.get(name)
+            if existing is None:
+                created = self.record(earliest, earliest.get("System"))
+                if created is not None:
+                    created.times_found = len(events)
+                    created.was_first_discovery = any(e.get("IsNewEntry") for e in events)
+                continue
+            existing.times_found = max(existing.times_found, len(events))
+            if any(e.get("IsNewEntry") for e in events):
+                existing.was_first_discovery = True
+            if not existing.entry_id:
+                existing.entry_id = _as_int(earliest.get("EntryID"))
+            stamp = earliest.get("timestamp") or ""
+            if stamp and (not existing.first_seen or stamp < existing.first_seen):
+                existing.first_seen = stamp
+                existing.first_system = earliest.get("System") or existing.first_system
+
     # --- persistence -----------------------------------------------------
 
     def snapshot(self) -> List[Dict[str, Any]]:

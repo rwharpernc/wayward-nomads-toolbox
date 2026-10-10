@@ -267,17 +267,16 @@ example `120 distinct entries, 340 total finds` followed by your three biggest c
 **DET** and **BKF**. It is on by default; switch it off with *Track codex entries* in **Settings → Exploration →
 Points of Interest**, where there is also a *View Canonn Codex* link.
 
-**Two things to know:**
-
-- **One tally per install, not per commander.** Every commander's entries on this install go into the same list.
-- **BKF counts again what it has already counted.** Backfill reads every journal file you have and adds every
-  `CodexEntry` event it finds, with no check for events already in the tally. So pressing **BKF** when you have
-  been playing with WNTB running raises **Times found** for entries it had already counted, and pressing it twice
-  doubles them. Distinct-entry counts are not affected. If you want an accurate "times found", press **BKF** only
-  once, and ideally before you've played much with Codex Completionist switched on.
+**One thing to know:** the tally is **one per install, not per commander**. Every commander's entries on this
+install go into the same list.
 
 **BKF** (backfill from journal history) is a button you press yourself, because reading years of journals takes a
 while. It reads **all** the journal files in EDMC's journal folder, with no date limit.
+
+BKF is safe to press more than once. For each entry it compares how many times your journals record it with the
+count already in the tally and keeps the larger, so nothing is counted twice, and finds from journals you've since
+deleted are kept. It can also fill in an earlier first sighting and a first-discovery star. If your counts were
+inflated by pressing BKF in an earlier version, they are not corrected automatically.
 
 ### The details window (DET)
 

@@ -176,8 +176,7 @@ class CodexCompletionistController:
             pass
         else:
             before = self._tally.total_distinct
-            for entry in entries:
-                self._tally.record(entry, entry.get("System"))
+            self._tally.merge_history(entries)
             self._persist()
             self._refresh_summary()
             added = self._tally.total_distinct - before

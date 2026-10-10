@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed
+- **Codex Completionist: BKF (backfill) no longer double-counts.** Backfill read every `CodexEntry` in your journals
+  and added each one to "Times found", including ones already counted while you played, so pressing it again doubled
+  the counts. It now compares the journals' count for each entry with the tally's and keeps the larger, so it can be
+  pressed any number of times. Counts already inflated by earlier backfills are not corrected automatically.
+
 ## 1.4.2 - 2026-10-10
 
 ### Fixed
