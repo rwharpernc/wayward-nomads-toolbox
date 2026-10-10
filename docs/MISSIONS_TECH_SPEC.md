@@ -1,7 +1,7 @@
 # Technical Specification — Missions
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
+**Last updated:** 2026-10-10 (see `CHANGELOG.md`)
 
 The standing reference for Missions mode: what it reads, the rules it applies, and what its numbers can
 and can't tell you. For how to use it, see the [README](guide/missions.md). For how the code is
@@ -30,12 +30,14 @@ All modules live in `plugin/`; `PANEL_PLACEMENT = "missions"`.
 ```
 missions.py            Entry point (feature-module contract). Reads settings, starts the backlog scan,
                        and routes each journal event to the modules below.
-journal_scan.py        Reads the last two weeks of journals at start-up (Backlog).
+journal_scan.py        Reads the last two weeks of journals at start-up (Backlog): accepted missions, kills,
+                       redirects, Community Goals, cargo progress and the active set the journals leave.
 active_missions.py     Per-commander roster of accepted and active missions (ActiveMissions).
 kill_tracker.py        Per-commander kill evidence: Bounty events, completed mission ids, new turn-in
                        places, and the on-foot/ship kill test.
 kill_missions.py       The kill-count missions among the active ones, plus the progress estimate.
 all_missions.py        A generic summary of every active mission (the "All Missions" view).
+mission_cargo.py       Collect / delivery progress of cargo missions (CargoDepot events).
 community_goal_state.py Community Goal snapshots and the commander's contribution.
 mission_types.py       The rules that decide a mission's category. Pure, no dependencies.
 missions_ui.py         The panel (category pages) and the "All Missions" and detail pop-ups.
@@ -52,9 +54,11 @@ subscribe and rebuild; the UI subscribes to those. The data layer never imports 
 | `Commander`, and the commander name EDMC supplies | Decides whose roster an event belongs to |
 | `MissionAccepted` | Adds the mission to the commander's roster and marks it active |
 | `Missions` (sent at login) | Lists the ids that are active, and the ids already complete |
+| `CargoDepot` | Cargo mission progress: collected, delivered and total (also when a wing-mate hands cargo in) |
 | `MissionRedirected` | The mission's objective is done; may carry a new turn-in station/system |
 | `MissionCompleted`, `MissionAbandoned`, `MissionFailed` | Removes the mission |
 | `Bounty` | One kill; the `VictimFaction` says whose |
+| `FactionKillBond` | A combat-zone kill; counted like a `Bounty` (it names `VictimFaction` but no ship type) |
 | `CommunityGoal` | Community Goal snapshots (may list several goals at once) |
 
 ## 4. Classification
@@ -90,7 +94,7 @@ knowledge and may need extending when Frontier adds mission types.
 ## 5. The kill-progress estimate
 
 **Why an estimate.** Elite doesn't tell plugins how many kills a mission has. What the journal gives is
-a stream of `Bounty` events, each naming the faction of the ship or person killed. WNTB replays those
+a stream of `Bounty` and `FactionKillBond` events, each naming the faction of the ship or person killed. WNTB replays those
 against your active kill missions using the game's known stacking rules.
 
 **Rules** (`kill_missions.estimate_progress`), per commander:
@@ -98,7 +102,7 @@ against your active kill missions using the game's known stacking rules.
 1. A mission whose id is in the *completed* set (from `MissionRedirected` or the login `Missions`
    event) counts as **fully done**.
 2. For the rest, missions are queued **per mission-giving faction**, oldest first.
-3. Each `Bounty` counts as one kill, but only if the victim's faction matches the mission's target
+3. Each `Bounty` or `FactionKillBond` counts as one kill, but only if the victim's faction matches the mission's target
    faction, the kill is in the same arena (on foot or in a ship, from the victim's type), and it
    happened after the mission was accepted.
 4. A qualifying kill is credited to the **oldest unfinished mission of every giver** that fits. That is
@@ -123,6 +127,9 @@ against your active kill missions using the game's known stacking rules.
   found in the scanned journals", and it isn't shown).
 - **Kills made while EDMC wasn't running** are caught by the backlog scan only if they're in the last
   two weeks of files.
+- **Combat-bond kills count** (checked against real journals: 4 of 53 redirected massacre missions only reached
+  their kill count with the bonds included), but 17 of the 53 fell short even with both, which fits the wing and
+  on-foot limit above.
 - It is an **estimate by design**. When the game reports a mission redirected or complete, that is
   authoritative and replaces the estimate.
 
@@ -145,7 +152,9 @@ reached, your contribution and rank, and the bonus. The tier shown is the *commu
 
 Every roster, kill list and goal set is keyed by commander, so switching commander in EDMC immediately
 shows that commander's data and never leaks another's. Nothing is written to disk: the picture is rebuilt
-each start from the two-week backlog plus the login `Missions` event. The only saved setting that isn't a
+each start from the two-week backlog. The active set comes from the login `Missions` event when one arrives, and
+otherwise (EDMC restarted mid-game) from the journals: the newest `Missions` list plus every `MissionAccepted`
+after it, less every `MissionCompleted`, `MissionAbandoned` and `MissionFailed`. The only saved setting that isn't a
 checkbox is the last category page you were on.
 
 ## 9. Settings
@@ -158,8 +167,8 @@ commodities-needed summary on the Trade & Mining page. All default to on.
 
 `tests/test_missions_data.py` covers the active-missions roster (commander separation, login sync,
 accept and finish), the kill-progress rules (stacking, oldest-first, arena and timing, redirected
-missions) and the journal backlog reader (per-commander collection, malformed lines, age cut-off,
-missing folder). The category rules and the panel are exercised by hand in EDMC.
+missions), the journal backlog reader (per-commander collection, malformed lines, age cut-off,
+missing folder, the derived active set, combat bonds, cargo progress) and `mission_cargo.py`. The category rules and the panel are exercised by hand in EDMC.
 
 ## 11. Known gaps
 

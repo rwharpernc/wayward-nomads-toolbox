@@ -1,7 +1,7 @@
 # Technical Specification — Boxel Survey
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
+**Last updated:** 2026-10-10 (see `CHANGELOG.md`)
 **Status:** work in progress. Feedback, bug reports and suggestions are welcome: [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward Nomads squadron.
 
 The standing reference for Boxel Survey across all three sub-modes (Sequence, Region Sweep, Waypoint
@@ -37,6 +37,8 @@ boxel_walker.py           BoxelWalker: advance/retreat/on_jump state machine for
                           reuses one instance per queued cube (§3.2) rather than reimplementing it.
 boxel_state.py            JSON persistence for the Sequence walker's position/visited set, per
                           commander (see §8).
+visited_systems.py        The per-commander log of every system arrived at, plus the start-up journal
+                          catch-up for jumps made while EDMC was closed (§4.4.1, §8).
 survey_log.py             Notable-finds log (Earthlike/water/ammonia/terraformable/bio), keyed by
                           system and rolled up by boxel. Pure, unit-tested (tests/test_survey_log.py).
 edsm_client.py            Shared EDSM API client (also used by Mining mode) — nearby_systems
@@ -45,7 +47,7 @@ edsm_client.py            Shared EDSM API client (also used by Mining mode) — 
                           empty/None result (§7).
 region_sweep_queue.py     Pure logic for Region Sweep: CubeEntry/RegionSweepQueue, one BoxelWalker
                           per queued cube, completion tracking, "mark empty" (§3.2). Unit-tested
-                          (tests/test_region_sweep_queue.py, 34 tests) via a fake config module
+                          (tests/test_region_sweep_queue.py) via a fake config module
                           installed into sys.modules, working around the same config-import blocker
                           boxel_walker.py still has (§9).
 region_sweep_state.py     JSON persistence for the Region Sweep queue.
@@ -55,7 +57,7 @@ region_sweep_panel.py     RegionSweepController — widgets, worker-thread/queue
                           Spansh lookups, its own Settings tab.
 waypoint_route.py         Pure logic for Waypoint Route: Waypoint/WaypointRoute, add/remove/manual
                           move, greedy nearest-neighbor reordering, CSV import. Unit-tested
-                          (tests/test_waypoint_route.py, 15 tests) via the same try/except ImportError
+                          (tests/test_waypoint_route.py) via the same try/except ImportError
                           fallback survey_log.py uses, so it doesn't need a live EDMC to import.
 waypoint_route_state.py   JSON persistence for the Waypoint Route list.
 waypoint_route_panel.py   WaypointRouteController — widgets, worker-thread bulk EDSM coordinate
@@ -222,6 +224,14 @@ Survey shows a live count and a "Clear Visited Systems Log" button (confirmed vi
 `messagebox.askyesno`, same confirmation convention `mining_hotspot_import_export.py` already uses)
 for wiping it per-commander without affecting any sub-mode's own survey progress.
 
+**Catching up after EDMC was closed.** EDMC does not replay jumps made while it was not running, so the first time a
+commander is seen in a run, a worker thread reads the last `visited_systems.CATCH_UP_DAYS` (14) days of journals
+(`visited_systems.arrivals_since`, via the shared `journal_files.py`) for that commander's `FSDJump`/`Location`
+arrivals and the Tk thread merges them into the set (`_poll_visited_catchup`). It is a set union, so it needs no
+watermark and running it every start is harmless. Jumps older than the window, made with EDMC closed, are not found.
+The survey log (§5a) is **not** caught up: its `bodies_scanned` counter is not idempotent, so a late replay would
+double-count.
+
 ### 4.5 Sequence mode running dry, and the fix already shipped
 
 A small mass-code boxel has few real systems in it (§4.1), so Sequence mode can run out of reachable
@@ -369,7 +379,7 @@ so.
 |---|---|---|
 | EDSM `cube-systems` | spatial nearby-system query by x/y/z (§4.4, §4.5) | `edsm_client.nearby_systems()`; 200 ly server-side cap, WNTB queries 100 ly |
 | EDSM `system` | Tier 2 visited-by-anyone check | `edsm_client.system_known()`; tri-state `True`/`False`/`None` |
-| EDSM `api-system-v1/bodies` | Tier 3 fully-scanned check, shared with Mining's ring-reserve lookup | `edsm_client.system_fully_scanned()`/`system_bodies()` |
+| EDSM `api-system-v1/bodies` | Sequence's Tier 3 fully-scanned check, shared with Mining's ring-reserve lookup | `edsm_client.system_fully_scanned()`/`system_bodies()`. Region Sweep's "require a full FSS scan" no longer uses it: that comes from the journal's `FSSAllBodiesFound` |
 | EDSM `systems` (bulk) | Waypoint Route's nearest-neighbor reordering coordinates | `edsm_client.systems_coords()`; one request for the whole list |
 | Spansh systems typeahead | Region Sweep's cube-completion discovery | `region_sweep_spansh.py`; undocumented endpoint, confirmed empirically, raises on failure (unlike edsm_client's convention) |
 
@@ -385,11 +395,13 @@ small scalars):
 - `boxel_state.py` — Sequence walker's seed/current/visited set.
 - `region_sweep_state.py` — the Region Sweep queue (all `CubeEntry` rows).
 - `waypoint_route_state.py` — the Waypoint Route list.
+- `visited_systems.py` — every system the commander has arrived at (`visited_systems.json`), caught up from the
+  journals at start-up (§4.4.1).
 - `survey_log.py`'s `save_log`/`load_log` — the notable-finds log, saved after every recorded finding
   (not just at `plugin_stop`), since scan findings are worth more than walker position and shouldn't
   be lost to an ungraceful shutdown.
 
-All four follow the same atomic-write pattern (temp file + `os.replace`) so a crash mid-write can't
+All of them follow the same atomic-write pattern (temp file + `os.replace`) so a crash mid-write can't
 corrupt them. Small scalar preferences (autocopy, skip-visited toggles, submode selection, collapsed
 state) use EDMC's `config` store instead, via `wntb_boxel_*` keys.
 
@@ -401,13 +413,15 @@ state) use EDMC's `config` store instead, via `wntb_boxel_*` keys.
   (`tests/test_survey_log.py`).
 - `waypoint_route.py` — nearest-neighbor ordering against a known-correct answer, CSV parsing edge
   cases, jump/target sequencing, mixed resolved/unresolved/visited reordering
-  (`tests/test_waypoint_route.py`, 15 tests).
+  (`tests/test_waypoint_route.py`).
 - `region_sweep_queue.py` — cube management, completion tracking, `advance_cube()`/`on_jump()`
   behavior including multi-cube continuity, stats, and persistence round-trips
-  (`tests/test_region_sweep_queue.py`, 34 tests) — works around the `config` import blocker via a
+  (`tests/test_region_sweep_queue.py`) — works around the `config` import blocker via a
   fake `config` module installed into `sys.modules` before import, rather than changing production
   code (§6). `boxel_walker.py` itself still has no standalone unit test, only indirect coverage
   through this file and `test_boxel.py`.
+- `visited_systems.py` catch-up — arrivals for the right commander only (case-insensitive, `Commander`/`LoadGame`),
+  old files skipped, missing folder (`tests/test_visited_catchup.py`).
 - API clients (`edsm_client.py`, `region_sweep_spansh.py`) — no automated tests; every EDSM call
   degrades gracefully on failure by design, so a mock-based test would mostly be re-asserting that
   contract rather than catching regressions. No test should hit live EDSM/Spansh.

@@ -407,8 +407,25 @@ Two situations mean a feature can start with an incomplete picture:
   parsing only the few event names it needs, to find the last baseline and the transfers after it (about 0.03 s
   on a real journal folder). See the [Trade spec](TRADE_TECH_SPEC.md#7-fleet-and-squadron-carrier-cargo-space).
 
-Some things are deliberately *not* automatic. Codex Completionist's "Backfill from Journal History" (BKF)
-is a button because reading years of journal files is real I/O; it does no work until asked.
+- **Features whose picture is rebuilt from recent journals at start-up**, each with its own rule for never counting an
+  event twice (`journal_files.py` is the shared file finding and reading):
+  - Missions (`journal_scan.py`, two weeks): accepted missions, kills (`Bounty` and `FactionKillBond`), redirects,
+    Community Goals and `CargoDepot` progress. The *active* set is normally the login `Missions` event, which EDMC
+    never replays, so it is also derived from the journals: the newest `Missions` list, plus each `MissionAccepted`
+    after it, less each `MissionCompleted`, `MissionAbandoned` and `MissionFailed`. The next real login list replaces it.
+  - Colonisation (`colonisation_catchup.py`, 14 to 30 days): depot snapshots (idempotent) and contributions (additions,
+    so each site carries `journal_at` and only a newer event is applied; a site saved before that existed uses its
+    `updated` time). The live path uses the same guard.
+  - Codex Completionist (`scan_since`): only the files written since the tally's `last_event_at` watermark, counting
+    each newer `CodexEntry` once. The first run only sets the watermark.
+  - Boxel Survey's visited systems (`visited_systems.arrivals_since`, 14 days): a set union, so no watermark.
+  - Trade's route start (`trade_route_start.py`), with the time of each dock so a late-read older file cannot win.
+  - Inventory has no journal pass: on `StartUp` it syncs from EDMC's own state, which EDMC rebuilds from the journal.
+  - Exploration Value replays the current journal file for the system's scan progress and the last data sales.
+
+Some things are deliberately *not* automatic. Codex Completionist's full "Backfill from Journal History" (BKF)
+is a button because reading years of journal files is real I/O; it does no work until asked. Boxel Survey's survey
+log is not caught up either: its `bodies_scanned` counter is not idempotent, so a replay would double-count.
 
 ### Reading journals defensively
 
@@ -539,7 +556,8 @@ for as little as it can. These are the measures that are in the code today.
 - Earth-like-world rarity is remembered per system for the session, and EDSM upload status per
   system for 10 minutes, so re-selecting the same target costs no extra calls.
 - The Boxel Survey keeps a local log of systems you've visited, so the RND (Random) button never spends an
-  EDSM call on a system it already knows you've been to.
+  EDSM call on a system it already knows you've been to. Region Sweep's "require a full FSS scan" uses the journal's
+  `FSSAllBodiesFound` and makes no call.
 
 **Hard limits on how much one click can do.**
 - A skip-check run (Sequence mode) makes at most 20 EDSM lookups. RND makes at most 20, and at
@@ -752,7 +770,9 @@ Full detail is in the [Trade spec](TRADE_TECH_SPEC.md); the decisions worth know
 Data-layer modules keep per-commander state and announce changes through `Notifier` objects
 (`notifier.py`); derived views and the UI subscribe to them. That avoids the data layer importing UI code. A bounded lookback
 journal scan (`journal_scan.py`, two weeks) restores missions on startup: long enough to catch
-anything still active, short because missions expire.
+anything still active, short because missions expire. It also works out which missions the journals leave active, so a
+restart mid-game does not wait for the next login (see "Catching up on state EDMC missed"). `mission_cargo.py` keeps
+the newest `CargoDepot` progress per mission; `FactionKillBond` kills count like bounties.
 
 ### BGS (`bgs_*.py`)
 
@@ -782,7 +802,8 @@ snapshots (clamped to `required`). Neither event names the station, only a `Mark
 remembered from the latest `Docked` for that market and never overwrites one already known. Names in these
 events are decorated (`$steel_name;`) while `state["Cargo"]` is plain (`steel`), so both go through
 `commodity_key` before being compared. The repository only saves when a site really changed, because
-re-docking re-sends an identical snapshot.
+re-docking re-sends an identical snapshot. At start-up `colonisation_catchup.py` replays the recent journals into the
+repository (see "Catching up on state EDMC missed").
 
 ### Auto-Honk (`autohonk.py`)
 
@@ -916,7 +937,12 @@ unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every 
    `load.py` if it has them.
 9. If it uses another project's code, assets or data, check the licence and update
    `THIRD-PARTY-NOTICES.md` (and `ATTRIBUTIONS.md` for ideas) *in the same change*, before it ships.
-10. Update the README and this guide.
+10. If it must not miss play with EDMC closed, give it a start-up catch-up built on `journal_files.py` with a rule
+    that never counts an event twice (a timestamp watermark, per-fact timestamps or an idempotent merge; see "Catching
+    up on state EDMC missed"), and add its row to the table in the user guide's "If EDMC wasn't running".
+11. Update the README and the user guide, including the guide's "What the game does and doesn't tell us, and how to
+    work around it" section: say plainly what the journal never records or records late, what the screen shows when it
+    is unsure, and what the player can do.
 
 ## 17. Known gaps
 
@@ -930,6 +956,13 @@ unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every 
 - **Trade mode's gaps** are listed in its [spec](TRADE_TECH_SPEC.md#13-verified-assumed-and-known-gaps): a
   squadron carrier's `CarrierStats` is assumed to match a fleet carrier's, the commodity list and ship pad
   classes are snapshots, and carrier reserved space is only as fresh as the last Carrier Management visit.
+- **Inventory's start-up sync relies on EDMC rebuilding its state** (backpack, ship locker) from the journal before it
+  sends `StartUp`. That was not checked against every EDMC version.
+- **Powerplay hand-in windows are a heuristic.** `PowerplayDeliver` precedes the merits it earns but does not link to
+  them, so the first merit event within 10 minutes and any within 10 seconds of the last are labelled Delivery; a merit
+  from another activity inside that window can be mislabelled.
+- **`FactionKillBond` has no ship type**, so an on-foot combat-zone kill counts as a ship kill for mission progress.
+- **Boxel Survey's survey log is not caught up** after a restart (its counter is not idempotent).
 - **Exobiology and region data are a snapshot.** New species from a game update require a
   regeneration.
 

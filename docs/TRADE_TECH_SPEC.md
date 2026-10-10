@@ -77,8 +77,10 @@ with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** 
 ## 3. The three pages
 
 **Session.** `trade_ledger.summary_blocks` (profit, running costs, tonnes, best sales; `summary_lines` is the
-plain-text twin), then the ship hold block (ship and pad size, `used/capacity (free)`, what the docked
-market would pay, up to four cargo lines), then the carrier block (`trade_carrier.cargo_blocks`, rows "Carrier cargo used", "Carrier cargo free" and "Carrier reserved for orders"; `cargo_lines` is the
+plain-text twin), then the ship hold block (ship and pad size, then "Hold space": cargo with its mission and stolen tonnes, limpets and
+free tonnes, then `used/capacity (free)`, what the docked market would pay, up to four cargo lines), then the carrier
+block (`trade_carrier.cargo_blocks`: "Carrier cargo used" and "Carrier cargo free", the crew and pack space, "Carrier
+reserved for orders", then the running-the-carrier rows from `trade_carrier_ops.ops_blocks`; `cargo_lines` is the
 plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first),
 **Save session** (greyed out until there is something to save) and **History**, with **Rebuild** on a second row (see 5.2). Save does not end or restart the
 session: tracking is always on, the label never changes, and only **Reset** begins a new session.
@@ -132,10 +134,12 @@ Journal events and EDMC state read by `trade_panel.handle_event` (every handler 
 | `MarketBuy`, `MarketSell` | Ledger; the stock book; learning commodity display names (`Type_Localised`) |
 | `RefuelAll`, `RefuelPartial`, `Repair`, `RepairAll`, `BuyAmmo`, `RestockVehicle`, `BuyDrones`, `SellDrones` | Running costs in the ledger |
 | `Market` (then the `Market.json` file in the journal folder) | The docked market: cargo valuation, "what this station buys" suggestions |
-| `Docked`, `Undocked`, `Location` | Route start station; which carrier you are docked at |
+| `Docked`, `Undocked`, `Location` | Route start station (kept per commander, `trade_route_start.py`); which carrier you are docked at |
 | `Loadout` (`Ship`, `MaxJumpRange`) | Your ship and its pad size; jump range for routes |
 | `LoadGame`, `StartUp`, `Commander` | Session boundaries; which commander the events belong to |
 | `CarrierStats`, `CarrierBuy`, `CargoTransfer` | Carrier cargo space |
+| `CarrierDepositFuel`, `CarrierLocation`, `CarrierJumpRequest`, `CarrierJumpCancelled`, `CarrierTradeOrder`, `CarrierFinance` (and `FuelLevel`, `Finance` and `PendingDecommission` on `CarrierStats`) | Running the carrier: tritium, location, planned jump, orders, balance (`trade_carrier_ops.py`) |
+| `Cargo` (its `Inventory`, else `Cargo.json` in the journal folder) | Mission and stolen tonnes in the hold (`trade_hold.py`) |
 | `state["Cargo"]`, `["CargoCapacity"]`, `["Credits"]`, `["ShipType"]` | Hold, capacity, route budget, ship fallback |
 
 The journal folder is `config.get_str("journaldir")` or EDMC's default (same lookup as `journal_scan.py`).
@@ -271,8 +275,10 @@ copied between machines. `trade_journal_scan.py` makes new journals take effect 
 - **First pass.** With nothing recorded, only the newest 80 files are taken and `floor` is set to the oldest of them's
   modified time; older files are never looked at later, so history is not crawled 80 files a minute.
 - **`apply`** feeds one file's events to `trade_ledger.replay_entries` for every commander's session that has a starting
-  point (`watermark` parses; otherwise it is left alone, like `catch_up`), `trade_stock.replay_entries`, and a
-  `CarrierTracker` that shares the live `records` but has its own dock state. Each already refuses to count an event twice
+  point (`watermark` parses; otherwise it is left alone, like `catch_up`), `trade_stock.replay_entries`, a
+  `CarrierTracker` that shares the live `records` but has its own dock state, and, when given the start book,
+  `trade_route_start.replay` (the file's non-carrier `Docked` events, each commander named by the file's `Commander` /
+  `LoadGame`; a dock replaces a start only if it is not older). Each already refuses to count an event twice
   (watermark and fingerprints; stock `as_of`; carrier timestamps), so applying a file twice, or an older file after a newer
   one, changes nothing. `CarrierTracker.feed` skips a `CargoTransfer` stamped at or before the record's `updated`, and
   never lets an older `CarrierStats` replace a newer record.
@@ -286,7 +292,7 @@ copied between machines. `trade_journal_scan.py` makes new journals take effect 
 
 ## 6. Hold, ship and landing pads
 
-**Ship hold.** (labelled "Ship hold" on the panel, to keep it apart from the carrier's "Carrier cargo ..." lines) `used/capacity (free)` from EDMC's `state["Cargo"]` and `["CargoCapacity"]`. Display names come
+**Ship hold.** (labelled "Ship hold" on the panel, to keep it apart from the carrier's "Carrier cargo ..." lines) `used/capacity (free)` from EDMC's `state["Cargo"]` and `["CargoCapacity"]`. Above it, **Hold space** splits the used tonnes: cargo, limpets (`drones`, which the game counts as cargo) and free. The cargo figure also names the mission tonnes (inventory entries with a `MissionID`) and stolen tonnes (`Stolen`), which EDMC's merged `state["Cargo"]` cannot give, so they come from the `Cargo` event's `Inventory` or, at start-up, `Cargo.json` (`trade_hold.py`; field names checked against a real journal). Display names come
 from names learned off market events, then `trade_commodities.resolve`, then `inventory_names.display_name`.
 
 **Ship to pad size** (`trade_ship.py`). Pad class per ship (1 small, 2 medium, 3 large) is a table from the
@@ -312,7 +318,10 @@ the Settings checkbox does). There is no medium-pad option in that API.
 `trade_carrier.py`. A commander may have no carrier, a fleet carrier, a squadron carrier or both.
 
 **Records** are `{commander (casefolded): {"FleetCarrier" | "SquadronCarrier": record}}`. A record holds
-`id` (CarrierID), `name`, `callsign`, `total`, `capacity`, `cargo`, `reserved`, `free`, `updated`.
+`id` (CarrierID), `name`, `callsign`, `total`, `capacity`, `cargo`, `reserved`, `free`, `crew`, `packs`, `updated`, plus the
+running-the-carrier facts (`fuel`, `system`, `jump`, `orders`, `balance`, `decommission`), each with its own `<name>_at`
+time (section 7a). A record first met through one of those events has no space figures and `updated` empty, so any real
+`CarrierStats` or saved record wins over it.
 
 **Journal facts used** (the field layout was confirmed on a real `CarrierStats` from 2026-10-09):
 
@@ -349,8 +358,24 @@ the flag. `CarrierTracker.feed` also ignores a `CargoTransfer` stamped at or bef
 seen), None, Fleet, Squadron or Both. A chosen carrier with no data yet shows "Open Carrier Management once
 to read its cargo space." Tracking continues regardless of the choice, so changing it never loses data.
 
-**Staleness.** Reserved space and anything the carrier does itself (trade orders, market sales) only show
-on the next `CarrierStats`. The page shows what the journal last said, not a live reading.
+**Staleness.** Reserved space, and the tonnes a carrier trade order later moves, only show on the next `CarrierStats`:
+the journal records an order when it is placed or cancelled (`CarrierTradeOrder`), not as it fills. The page shows what
+the journal last said, not a live reading.
+
+### 7a. Running the carrier
+
+`trade_carrier_ops.py`. Facts from events that name a carrier by `CarrierID` (and mostly `CarrierType`): tritium
+(`CarrierStats.FuelLevel`, then `CarrierDepositFuel.Total`), location (`CarrierLocation.StarSystem`), a planned jump
+(`CarrierJumpRequest` with `SystemName` and `DepartureTime`; `CarrierJumpCancelled` withdraws it; shown until a newer
+location arrives or 20 minutes after departure), balance (`CarrierStats.Finance.CarrierBalance`, `CarrierFinance`) and
+trade orders (`CarrierTradeOrder`: `Commodity`, `PurchaseOrder`/`SaleOrder` tonnes, `Price`, `BlackMarket`,
+`CancelTrade`; a cancelled order is kept as a tombstone so an older replay cannot bring it back). Fuel burnt by jumping is
+not written, so tritium is exact only as of the last report or deposit.
+
+**Newest wins.** Every fact carries the time of its event and a later event replaces it; `merge_facts` applies the same
+rule between records, in `CarrierTracker.feed` when a new `CarrierStats` replaces a record, and in `merge` when the
+backfill is merged. So journals read late, twice or out of order give the right answer. The events are in the
+backfill's and the journal scan's line filters.
 
 ## 8. Routes (Spansh trade planner)
 
@@ -522,7 +547,10 @@ carrier, ground, pad and distance filters) and
 `tests/test_trade_history.py` (the ledger's log, jumps and start, rebuilding a session from a journal file or from a start
 time, skipping the events it already counted, the record and book, and every number and row in `trade_stats`) and
 `tests/test_trade_journal_scan.py` (finding new, grown and copied journal files, oldest-first ordering, the first-pass floor,
-and applying a file twice or an older one late). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
+and applying a file twice or an older one late) and
+`tests/test_trade_route_start.py` (the per-commander route start, its file, and docks fed from the scan) and
+`CarrierRunningTests` and `HoldSplitTests` in `tests/test_trade_search.py` (the carrier operations facts, newest-wins merging,
+and the mission / stolen split). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
 checked by `tests/trade_view_smoke.py` (run by `test_trade_view_smoke.py` in a subprocess, skipped without a display):
 no label asks for more than the width available, unchanged blocks aren't redrawn, and a table's number columns end
 at the same place. They run without
@@ -554,7 +582,8 @@ a real Tk window with EDMC and Spansh stubbed; that is not part of the suite.
 
 **Known gaps:**
 
-- `CarrierStats` only on opening Carrier Management; reserved space and carrier-side sales are stale until then.
+- `CarrierStats` only on opening Carrier Management; reserved space and the tonnes carrier trade orders move are stale
+  until then. Tritium burnt by jumps is not written. Cargo moved by someone else is not seen.
 - The commodity list and pad classes are snapshots; a new commodity or ship needs a regeneration or edit.
 - Spansh's route planner has no medium-pad option; routes use the unladen jump range.
 - Spansh data is player-reported and can be stale; the page can't say a price is current, only that the market

@@ -82,7 +82,9 @@ when there is some.
 **Carrier cargo.** Your carrier's cargo storage, shown as **Carrier cargo used**, **Carrier cargo free** and
 **Carrier reserved for orders**, so it is never mistaken for your ship hold. Under the free line, **Carrier crew
 services** and **Carrier ship / module packs** show what the rest of the carrier's space is spent on (a line is left
-out when it is 0). Only shown if you have a carrier; see [below](#your-fleet-carrier-and-squadron-carrier).
+out when it is 0). Below those, when the journal has told WNTB, come the carrier's tritium, where it is, a planned jump,
+its balance and the trade orders you have set. Only shown if you have a carrier; see
+[below](#your-fleet-carrier-and-squadron-carrier).
 
 ### Buttons
 
@@ -131,8 +133,7 @@ to a file you choose, and **Delete session** removes a saved session (it asks fi
 
 - *Start:* the station you're docked at, or the last one **this commander** docked at. Each commander has their own and it is
   saved, so it survives switching commander and restarting EDMC, and it is brought up to date from journals written
-  while EDMC was closed. A commander who has never docked has none, and the
-  page says so.
+  while EDMC was closed. A commander who has never docked has none, and the page says so.
 - *Cargo size and credits:* from the game.
 - *Jump range:* your ship's **unladen** range. Lower it in Settings if a full hold jumps shorter.
 - *Pad size:* if your ship needs a large pad, only stations with one are considered.
@@ -254,12 +255,14 @@ After that:
 
 - It follows your cargo transfers. A transfer is counted for the carrier you're **docked at**, so docking at
   someone else's carrier never changes your figure.
-- Reserved space, and anything your carrier does itself (trade orders, sales), only update the next time you open
-  Carrier Management.
+- Reserved space, and the tonnes your carrier's trade orders move, only update the next time you open Carrier
+  Management. The orders themselves, tritium deposits, the carrier's location and jump plans are recorded as they
+  happen, so those lines stay current.
 
 **To get the real, exact cargo figure, open Carrier Management** (the carrier's management screen, where you see its
 services and cargo). The game writes a fresh report of the whole inventory and WNTB shows it within a couple of
-seconds. Nothing else in the game's files lists what is in the carrier's hold, so there is no other way to read it.
+seconds. Nothing in the game's files lists everything in the carrier's hold (the report gives only the total, and the
+orders name only the commodities on order), so there is no other way to read it.
 
 ### Quirks worth knowing
 
@@ -267,8 +270,9 @@ seconds. Nothing else in the game's files lists what is in the carrier's hold, s
   add up to more than the carrier can hold (or take out more than it holds), so cargo left the carrier without the
   game writing anything down, usually a trade order or a sale made from the carrier. A note under the figure says
   so. Open Carrier Management and the `~` goes away.
-- **Playing on another computer, or with EDMC closed, leaves the figure stale** until the journals are copied over
-  and read, and even then it is only as good as the last time you opened Carrier Management.
+- **Playing on another computer leaves the figure stale** until the journals are copied over and read, and even then
+  it is only as good as the last time you opened Carrier Management. Play with EDMC closed on this computer is read
+  back when EDMC next starts.
 - **The figure can look wrong right after you unload.** The unload is in the journal but the total is not. Open
   Carrier Management after a big load to put an exact number back.
 
@@ -375,7 +379,7 @@ Copying these between computers is not needed and not recommended.
    later.
 2. **That's it.** WNTB looks for journal files it hasn't read **a few seconds after EDMC starts and then once a
    minute**. It reads each new file (and any file that has grown since) once, and adds its trades, costs, stock and
-   carrier transfers to this computer's records.
+   carrier figures and docks (for the route start) to this computer's records.
 
    The foot of the Session page tells you how it's going, for example: *"Journals reviewed 10 Oct 2026 08:12. 1 new
    journal since the last review."* or *"... No new journals since the last review."* The time is your computer's
