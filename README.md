@@ -48,7 +48,13 @@ WNTB has one panel with seven **modes**. You click a button to switch between th
 Two more tools are always on and don't belong to a mode: **Landing Assist** and **Interdiction Warning**
 ([guide](docs/guide/always-on.md)).
 
-Every feature can be turned on or off, so you only see what you want.
+Most individual features have their own on/off switch in Settings, and the alerts and overlays are off until you turn them on. The seven mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC and Canonn POI finders) can only be folded away, not switched off.
+
+**Full disclosure.** WNTB can only show what the game writes to its journal files and what services such as Spansh
+and EDSM publish. Some things the game never records, or records late or in part (for example, a fleet carrier's
+cargo is only exact after you open Carrier Management). Each mode guide ends with a section, "What the game does and
+doesn't tell us, and how to work around it", listing every gap we know of and what to do about it. Estimates are
+marked as estimates on screen.
 
 ## Quick start
 

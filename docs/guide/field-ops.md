@@ -4,7 +4,8 @@ Field Ops holds the on-foot and housekeeping tools: screenshots, your inventory,
 colonisation sites.
 
 **On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Ship Builds](#ship-builds) ·
-[Colonisation](#colonisation)
+[Colonisation](#colonisation) ·
+[What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 ## Screenshots
 
@@ -161,3 +162,21 @@ enough):
 - **Remove Site** stops tracking that site.
 - **Remove Finished** needs no selection. It deletes every complete or failed site, because those have no
   commodity rows to select.
+
+## What the game does and doesn't tell us, and how to work around it
+
+WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (Frontier's servers for the Carrier Locker) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| Screenshots cropped perfectly | The crop rectangles are **fixed measurements** and may need adjusting if Frontier changes the HUD. | Turn the crop off, or report it, if a crop is wrong after a game update. |
+| The screenshot timer to press any button | It can only press **keyboard** keys. macOS isn't supported for key simulation, and Linux on Wayland without XWayland isn't either (conversion and cropping still work). | Bind a keyboard key to the screenshot control. |
+| Screenshots to always save | Windows Controlled Folder Access or antivirus can block file access. The error message says so. | Allow EDMC through, or choose another save folder. |
+| Your backpack capacity to be reported | The game doesn't report it. WNTB uses a **built-in table** by suit and the Extra Backpack Capacity mod. It can't see engineering grade and has no figure for the Flight Suit. | Type the real number for each suit loadout in the Inventory settings. |
+| The Backpack to be known at login | If you log in already on foot, the game hasn't yet reported it (the tab says `Not yet synced this session`). | Loot, resupply or disembark to refresh it. |
+| The Carrier Locker to be live | It comes from **Frontier's servers**, not the journal. EDMC must be signed in to Frontier, and the data can **lag the game by 15 to 30 minutes**. | Sign EDMC in, and allow time after changes. The locker is hidden until real data arrives. |
+| The Rhino's cargo capacity | Not confirmed against a real journal entry, so the bar shows the count with no limit. | Read the tonnes, not a percentage. |
+| Colonisation sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB hasn't registered is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. |
+| A site to have its real name | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. | Dock at the market once to pick up the name. |
+| Ship Builds to be checked | WNTB only stores the link and name you give it. It doesn't read or check the build. | Keep your link current if the site changes. |
+

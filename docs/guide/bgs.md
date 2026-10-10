@@ -71,6 +71,20 @@ connection BGS makes, and you can turn it off in Settings.
 Without it, the totals never reset on their own and the journals can't be replayed, because WNTB doesn't know when
 the tick was.
 
+## What the game does and doesn't tell us, and how to work around it
+
+WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (a community tick-time service) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| Exact influence caused by your trade | Trade is counted as net credits traded at the station's controlling faction. It is an **approximation**, not the game's real supply-and-demand rules. | Use it to compare your own effort, not as a precise influence figure. |
+| Missions shown as an exact percentage | Frontier gives influence **pips** and a mission count, never a percentage. | Read the pips as strength, not a number. |
+| Every crime and kill attributed to a victim faction | Only what `CommitCrime` reports is counted. Kills have no victim-faction attribution. | Don't rely on BGS for the effects of murder. |
+| Combat zones as their own signal | Only the resulting bounty or combat-bond **redemption** is counted, not zone presence or wins. | Redeem your vouchers and bonds in the system you fought in. |
+| Thargoid war states | Not tracked. | Use the game's galaxy map for those. |
+| Ticks from before you installed WNTB | The tick service only reports the **latest** tick, so earlier periods cannot be rebuilt from old journals. | The archive starts at the first tick WNTB sees roll over. Keep tick detection on. |
+| Tick detection to always work | It uses a third-party service over plain HTTP, with no guarantee it is up. When it is down the tally just doesn't roll over. | Turn tick detection off in Settings if you prefer. Without it, totals never reset on their own. |
+
 ## Settings
 
 **Settings → BGS**:

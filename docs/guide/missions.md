@@ -19,6 +19,18 @@ The "All" window is titled *WNTB - All Active Missions*.
 **Example.** You've taken five massacre missions against the same faction from different stations. Page to
 **Massacre (Space)** and the bars show your total progress, rather than five separate counters to remember.
 
+## What the game does and doesn't tell us, and how to work around it
+
+WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (none are needed for missions) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| Every kill to be counted | **Wing and on-foot kills** are often missing from the journal until the mission completes, so those counts run low. WNTB marks them with a `~`. | Read a `~` as "at least this many". The game's own mission screen is the final word. |
+| Missions accepted a while ago to appear | WNTB reads only the **last two weeks** of journals at start-up. A mission still active but accepted earlier is not found and not shown. | Keep EDMC running while you hold long missions, and check the game's own mission board for older ones. |
+| Kills made while EDMC was closed | Counted only if they are in the last two weeks of journal files. | Run EDMC whenever you play. |
+| Every mission to land in the right category | Names WNTB does not recognise go to **Other**. | Click the card for details. If a type is always in Other, open an issue so it can be added. |
+| A Community Goal to disappear when it ends | The game gives no "gone" signal, so the panel relies on each goal's expiry date. | Ignore a goal past its expiry; it clears itself. |
+
 ## Settings
 
 **Settings → Missions**: choose what shows on each card (kill progress, mission counts, a commodities-needed

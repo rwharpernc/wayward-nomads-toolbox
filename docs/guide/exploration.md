@@ -6,7 +6,8 @@ click a section's title (▸ / ▾) to open it. WNTB remembers which ones you le
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
 [Organic Scanning](#organic-scanning) · [Codex Completionist](#codex-completionist) ·
-[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi)
+[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) ·
+[What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 Anything that draws on your game screen needs an overlay. See [Getting started](getting-started.md#what-you-need)
 and [Setting up the overlay](../OVERLAY_SETUP.md).
@@ -320,3 +321,21 @@ The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **FIND
 - Choose which kinds of site to include in **Settings → Exploration → Points of Interest**.
 - By default it skips sites you've already logged in Codex Completionist, so it points you somewhere new. You can
   turn that off in the same place.
+
+## What the game does and doesn't tell us, and how to work around it
+
+WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (EDSM, Spansh, Canonn and edastro) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| Auto-Honk to press any control | It can only press **keyboard** keys, so your fire button must be bound to one. On Linux it needs `xdotool`; Wayland without XWayland is unsupported. | Bind a keyboard key to your fire button and use **Rescan** after changing bindings. |
+| Boxel Survey to know where a system is | It works with **names**, not coordinates. It counts through the trailing number to make the next name and does not know whether that system exists. | The galaxy map is the judge. Press **Next >** to skip a name that won't plot. |
+| The game to tell WNTB a candidate failed to plot | Nothing is written to the journal when the galaxy map can't find a name. | After 3 skips WNTB asks EDSM for a real nearby system. Press **Set** to move there. |
+| "Not in EDSM" to mean undiscovered or real | It means nobody has uploaded it. It is not a guarantee the system exists or is unvisited. | Treat RND results as leads and confirm in the galaxy map. |
+| A cube's real system count | WNTB only knows what EDSM, Spansh and your own visits revealed, so "complete" means every system **known** is done, or you marked it **Empty**. | Use **Mark Empty** when you have judged a cube done. |
+| The colour of a gas giant | The game never records it. The Green gas giant rule uses the Codex or matches the surface temperature of a confirmed green one. | Treat it as a lead and check the body in the system map. |
+| Notable Bodies to be certain | A match comes from scan data, using Elite Observatory's default limits. | Check the body before you plan around it. |
+| Organic Scanning to name the species | Until a sample names it, the result is a **list of candidates** worked out from the planet's conditions. The main star is assumed to be the illuminating one, which can be wrong near a secondary star. A species with no usable rules can't be predicted, and new species need a WNTB update. | Take a first sample, which replaces the list with the exact species. The in-game exobiology tools are the final word. |
+| Codex Completionist to cover everything | Canonn's catalogue has no geological or anomaly entries, so those never appear under **Not found**. The tally is per install, not per commander. | Use the game's Codex for those. Press **Refresh Catalog** if the saved copy is old. |
+| POI lists to be current | They are snapshots from Canonn and edastro, and are fetched only when you ask. | Press **FIND** or **REF** to refresh. |
+

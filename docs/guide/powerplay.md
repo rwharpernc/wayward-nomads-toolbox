@@ -12,7 +12,7 @@ own numbers.
 
 **On this page:** [Using it](#using-it) · [The Sessions window](#the-sessions-window) · [Cycles](#cycles) ·
 [The Systems tab](#the-systems-tab) · [Catching up from your journals](#catching-up-from-your-journals) ·
-[Good to know](#good-to-know) · [Rare Goods Finder](#rare-goods-finder) · [Settings](#settings)
+[What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it) · [Rare Goods Finder](#rare-goods-finder) · [Settings](#settings)
 
 ## Using it
 
@@ -81,12 +81,19 @@ and does nothing when there's nothing new. The **Cycles** tab shows what it did.
 
 It can't read journals you've deleted, and your own totals are never replaced by smaller ones.
 
-## Good to know
+## What the game does and doesn't tell us, and how to work around it
 
-- **Where merits came from is a guess.** The journal doesn't say which activity merits came from, so WNTB infers it
-  from the system you're in. The same applies to the per-system and daily numbers.
-- **Control Points are estimates.** They are worked out from merits using ratios you can edit.
-- **Delivery and unattributed merits count as merits only**, with no CP estimate.
+WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (Spansh for the Rare Goods Power column) publish. Where it can't be sure, WNTB says so rather than guess quietly. Your merit totals always come straight from the journal and are exact.
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| Each merit tagged with the activity that earned it | The journal does not say. WNTB **infers** the activity from the state of the system you are in; an unusual situation can be misattributed. This also applies to the per-system and daily numbers. | Trust the merit totals. Treat the activity split as a good guess. |
+| Control Points reported | The game reports merits only. CP is **estimated** with ratios you can edit in Settings. | Only change the ratios if Frontier changes them. |
+| Deliveries counted as CP | The journal does not link a hand-in to the merit event it triggers, nor say which kind (Acquisition, Reinforcement or Undermining) you chose. WNTB labels the next merit gain *Delivery* and counts **merits only**. Unattributed merits are the same. | Expect Delivery and Unattributed to add merits but no CP. |
+| Live standing for any system | Whole-system figures update only when you **jump into or log in** at that system, so they are as fresh as your last visit. | Visit the system again for a fresh reading. |
+| Old cycles from before WNTB | They are rebuilt from journals only as far back as the files still exist and the scan depth allows (1 to 12 cycles, 4 by default). | Raise the depth in Settings, and keep your journal files. |
+| The Rare Goods list to include new rares | The list is a snapshot (141 rare goods). A new rare needs a WNTB update. | Update WNTB. The Power column also needs Spansh and shows "—" when it can't be checked. |
+
 - The detail is in the [Powerplay specification](../POWERPLAY_TECH_SPEC.md).
 
 ## Rare Goods Finder
