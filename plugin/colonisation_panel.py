@@ -34,7 +34,7 @@ PANEL_PLACEMENT = "fieldops"
 _CFG_OVERLAY_ENABLED = "wntb_colonisation_overlay_enabled"
 _CFG_OVERLAY_X = "wntb_colonisation_overlay_x"
 _CFG_OVERLAY_Y = "wntb_colonisation_overlay_y"
-_CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_rows"
+_CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_row_limit"   # 0 = all; the older "..._rows" key held a default of 10
 _CFG_OVERLAY_RIGHT_PANEL = "wntb_colonisation_overlay_right_panel"
 
 
@@ -365,8 +365,8 @@ class ColonisationController:
         nb.Label(
             frame,
             text=(f"On the overlay's virtual screen (0-{card.MAX_ORIGIN_X} x 0-{card.MAX_ORIGIN_Y}). Default "
-                  f"{card.DEFAULT_X}, {card.DEFAULT_Y}. Rows is how many commodities to list "
-                  f"({card.MIN_ROWS}-{card.MAX_ROWS}); the rest are summarized."),
+                  f"{card.DEFAULT_X}, {card.DEFAULT_Y}. Rows limits how many commodities are listed "
+                  f"(1-{card.MAX_ROWS}, the rest are summarized); 0 lists them all."),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(0, 6))
 

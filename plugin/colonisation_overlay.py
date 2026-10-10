@@ -44,9 +44,9 @@ MAX_ORIGIN_X = 1280
 MAX_ORIGIN_Y = 960
 DEFAULT_X = 20
 DEFAULT_Y = 300
-DEFAULT_ROWS = 20
-MIN_ROWS = 1
-MAX_ROWS = 40
+DEFAULT_ROWS = 0   # 0 = every commodity
+MIN_ROWS = 0
+MAX_ROWS = 60
 
 LINE_HEIGHT = 20
 PAD_X = 10
@@ -197,10 +197,11 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     needed = sorted((r for r in site.resources if r.remaining > 0), key=lambda r: r.label.casefold())
     if not needed:
         return None
-    rows = tuple(Row(r.label, r.remaining, hold.get(r.key, 0), on_carrier.get(r.key, 0)) for r in needed[:max_rows])
+    limit = max_rows if max_rows > 0 else len(needed)
+    rows = tuple(Row(r.label, r.remaining, hold.get(r.key, 0), on_carrier.get(r.key, 0)) for r in needed[:limit])
     remaining = sum(r.remaining for r in needed)
     trips = math.ceil(remaining / capacity) if capacity and capacity > 0 else 0
-    return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - max_rows), remaining, trips, show_fc)
+    return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc)
 
 
 def _layout(card: Card) -> Tuple[int, List[int], int]:

@@ -233,7 +233,7 @@ cargo capacity, which EDMC supplies).
 - **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
   failed sites are never shown. The card disappears when nothing is left to source.
 - **Settings:** the card's X and Y position on the overlay's 1280 x 960 virtual screen (default 20, 300), and **Rows**,
-  how many commodities to list (1 to 40, default 20); any more are summarized as `+N more`. **Test Overlay** shows a
+  how many commodities to list (1 to 60; any more are summarized as `+N more`). The default, 0, lists them all. **Test Overlay** shows a
   sample card for a few seconds, even while the option is off.
 - It is cleared when EDMC closes. If the overlay program isn't running, nothing is drawn and nothing breaks.
 
