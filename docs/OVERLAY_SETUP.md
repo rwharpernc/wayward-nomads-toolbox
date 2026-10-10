@@ -71,6 +71,8 @@ see the message on your screen, you're set.
 
 - **Discovery** and **Inventory** let you set where they appear, in their Settings tabs.
 - Landing, Interdiction and the Screenshots message sit in fixed places.
+- If the overlay is still starting when Landing Assist has something to draw, WNTB retries for up to three minutes, so
+  the diagram shows up once the overlay is ready.
 - **EDMCModernOverlay has its own placement tool**, the Overlay Controller, where you can move each
   plugin's display, change anchors and backgrounds, and keep different profiles. See its wiki.
 

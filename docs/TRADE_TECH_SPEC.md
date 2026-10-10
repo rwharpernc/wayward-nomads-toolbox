@@ -74,8 +74,8 @@ with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** 
 ## 3. The three pages
 
 **Session.** `trade_ledger.summary_blocks` (profit, running costs, tonnes, best sales; `summary_lines` is the
-plain-text twin), then the stock block, then the hold block (ship and pad size, `used/capacity (free)`, what the docked
-market would pay, up to four cargo lines), then the carrier block (`trade_carrier.cargo_blocks`; `cargo_lines` is the
+plain-text twin), then the stock block, then the ship hold block (ship and pad size, `used/capacity (free)`, what the docked
+market would pay, up to four cargo lines), then the carrier block (`trade_carrier.cargo_blocks`, rows "Carrier cargo used", "Carrier cargo free" and "Carrier reserved for orders"; `cargo_lines` is the
 plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first), **Clear stock**,
 **Save session** (greyed out until there is something to save) and **History**, with **Rebuild** on a second row (see 5.2). Save does not end or restart the
 session: tracking is always on, the label never changes, and only **Reset** begins a new session.
@@ -282,7 +282,7 @@ copied between machines. `trade_journal_scan.py` makes new journals take effect 
 
 ## 6. Hold, ship and landing pads
 
-**Hold.** `used/capacity (free)` from EDMC's `state["Cargo"]` and `["CargoCapacity"]`. Display names come
+**Ship hold.** (labelled "Ship hold" on the panel, to keep it apart from the carrier's "Carrier cargo ..." lines) `used/capacity (free)` from EDMC's `state["Cargo"]` and `["CargoCapacity"]`. Display names come
 from names learned off market events, then `trade_commodities.resolve`, then `inventory_names.display_name`.
 
 **Ship to pad size** (`trade_ship.py`). Pad class per ship (1 small, 2 medium, 3 large) is a table from the

@@ -73,6 +73,10 @@ Where a step fails, copy the relevant lines from EDMC's log
       Notable Bodies (**Test Notable**, after ticking Enable) all draw over the game.
 - [ ] Notable Bodies: scan a terraformable or an Earth-like, water or ammonia world and a violet banner
       appears; the same body does not alert twice.
+- [ ] Landing Assist when the overlay starts late: request docking right after starting EDMC and the game, before the
+      overlay client has finished starting. The card and pad diagram appear once the overlay is up (within about a
+      minute), without needing another docking event. Switching between a starport and a fleet carrier removes the
+      old diagram straight away.
 - [ ] Card backgrounds are visible, not just the text.
 - [ ] It works in borderless mode; note what happens in fullscreen.
 
@@ -144,15 +148,15 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
       part. Also play a short stretch with EDMC closed, then start EDMC: that stretch is added the next time it sees you.
       With two commanders, switching to the other and back leaves each one's tally as it was.
 - [ ] Stock: buy some cargo and the Session page shows "Stock bought, not yet sold" with the cost and how much is
-      aboard. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "not in ship hold" grows.
+      in ship hold. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "not in ship hold" grows.
       Restart EDMC after buying while it was closed: the purchase is still counted. **Clear stock** empties it.
 - [ ] Two computers: copy the other computer's newer journal files into this one's journal folder while EDMC is running.
       Within a minute the foot of the Session page reads "Journals read: N file(s)" with the new count, and the trades,
       stock and carrier figure from those files appear (nothing doubles if you copy the same files again). Press
       **Rebuild** on the Session page, type the date and time the session began (UTC), and check the totals against the
       other computer. A carrier figure with a `~` in front means estimate: open Carrier Management and it goes away.
-- [ ] Carriers (only if you have one): open Carrier Management once. The carrier's used and free cargo tonnes
-      appear. Transfer cargo to it: the figure follows. Restart EDMC: it comes back without opening Carrier
+- [ ] Carriers (only if you have one): open Carrier Management once. "Carrier cargo used" and "Carrier cargo free" appear
+      (separate from the "Ship hold" line). Transfer cargo to it: the figure follows. Restart EDMC: it comes back without opening Carrier
       Management again (this reads the journal folder, so it also checks the Proton journal path).
 - [ ] Settings → Trade lists your commanders with a carrier choice each; choosing **None** hides the carrier.
 - [ ] **Market**: click the Commodity box; a suggestion list appears **under the box and does not steal the

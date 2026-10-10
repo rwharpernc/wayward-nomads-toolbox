@@ -463,6 +463,15 @@ invisible under ModernOverlay, and registering one fixes it, so every card-style
 wrong.) The general point: when overlay rendering seems wrong, check ModernOverlay's own payload and
 debug log before assuming a rule is right, and don't turn one observation into a permanent blanket rule.
 
+**Clearing a vector.** EDMCModernOverlay discards a `vect` payload with fewer than one point ("insufficient points"), so an
+empty list cannot clear one. Landing clears a diagram with a one-point, marker-less vector at the diagram centre and
+`ttl=1`.
+
+**Retrying a draw (Landing).** `LandingController._render_overlay_async` keeps only the newest request and one worker
+thread sends it, so an event and the heartbeat cannot interleave sends. If a draw fails with `OSError` (the overlay can take
+a minute or more to start on Linux), the worker calls `OverlayClient.retry_now()` and tries again every 5 s for up to
+180 s (`_RENDER_RETRY_EVERY_S`, `_RENDER_RETRY_FOR_S`), unless a newer request replaces it. A failed clear is not retried.
+
 Overlay message IDs use `wntb_<feature>_*` so a group's prefix matches exactly its own shapes.
 
 ## 11. External services
