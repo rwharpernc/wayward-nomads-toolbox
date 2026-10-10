@@ -1,7 +1,7 @@
 {
   "name": "wntb",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Wayward Nomads Toolbox \u2014 EDMC plugin",
   "license": "GPL-3.0-only",
   "scripts": {
