@@ -638,8 +638,8 @@ class TradePanelController:
         used = sum(self._cargo.values())
         blocks: List[Block] = [Heading("Ship and hold"), *self._ship_pairs()]
         if not self._capacity and not used:
-            return blocks + [Pair("Hold", "empty")]
-        blocks.append(Pair("Hold", f"{used:,} / {self._capacity:,} t ({max(0, self._capacity - used):,} free)"
+            return blocks + [Pair("Ship hold", "empty")]
+        blocks.append(Pair("Ship hold", f"{used:,} / {self._capacity:,} t ({max(0, self._capacity - used):,} free)"
                            if self._capacity else f"{used:,} t", bold=True))
         value = market_mod.cargo_value(self._cargo, self._market) if self._market else None
         if value is not None:

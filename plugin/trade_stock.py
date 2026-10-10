@@ -182,17 +182,17 @@ def stock_blocks(holdings: List[Holding], in_hold: Dict[str, int],
         elsewhere = holding.tonnes - aboard
         where = []
         if aboard:
-            where.append(f"{aboard:,} t in your hold")
+            where.append(f"{aboard:,} t in ship hold")
         if elsewhere:
-            where.append(f"{elsewhere:,} t not in your hold")
+            where.append(f"{elsewhere:,} t not in ship hold")
             away = True
         shown = name_of(holding) if name_of else holding.name
         blocks.append(Item(shown, (f"{holding.tonnes:,} t", f"{holding.average:,}"), detail=", ".join(where)))
     if len(holdings) > SHOWN:
         blocks.append(Note(f"+{len(holdings) - SHOWN} more"))
     if away:
-        blocks.append(Note("\"Not in your hold\" is cargo you bought that is no longer aboard, usually moved to your "
-                           "carrier. It stays here until it is sold; Clear stock forgets it."))
+        blocks.append(Note("\"Not in ship hold\" is cargo you bought that is no longer in your ship hold, usually moved to your "
+                           "carrier cargo storage. It stays here until it is sold; Clear stock forgets it."))
     return blocks
 
 

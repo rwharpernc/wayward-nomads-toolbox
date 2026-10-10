@@ -121,16 +121,16 @@ class StockLinesTests(unittest.TestCase):
         self.assertEqual(blocks[1], Pair("Total", "6,325 t, 35,767,875 cr", bold=True))
         self.assertEqual(blocks[2], Columns(("Held", "Avg cost")))
         self.assertEqual(blocks[3], Item("Superconductors", ("6,325 t", "5,655"),
-                                         detail="1,265 t in your hold, 5,060 t not in your hold"))
+                                         detail="1,265 t in ship hold, 5,060 t not in ship hold"))
         self.assertIn("usually moved to your carrier", blocks[-1].text)
 
     def test_all_aboard_or_all_elsewhere(self) -> None:
         holding = stock.Holding("gold", "Gold", 10, 100)
         aboard = stock.stock_blocks([holding], {"gold": 50})
-        self.assertEqual(aboard[-1].detail, "10 t in your hold")   # nothing is away, so no explanation note
+        self.assertEqual(aboard[-1].detail, "10 t in ship hold")   # nothing is away, so no explanation note
         away = stock.stock_blocks([holding], {})
-        self.assertEqual(away[-2].detail, "10 t not in your hold")
-        self.assertIn("Not in your hold", away[-1].text)
+        self.assertEqual(away[-2].detail, "10 t not in ship hold")
+        self.assertIn("Not in ship hold", away[-1].text)
 
     def test_the_list_is_capped_and_names_can_be_replaced(self) -> None:
         many = [stock.Holding(f"c{i}", f"C{i}", 1, 100 - i) for i in range(6)]
@@ -138,7 +138,7 @@ class StockLinesTests(unittest.TestCase):
         items = [b for b in blocks if isinstance(b, Item)]
         self.assertEqual(len(items), stock.SHOWN)
         self.assertEqual(items[0].title, "c0")
-        self.assertEqual(blocks[-2], Note("+2 more"))   # the last note explains "not in your hold"
+        self.assertEqual(blocks[-2], Note("+2 more"))   # the last note explains "not in ship hold"
 
 
 

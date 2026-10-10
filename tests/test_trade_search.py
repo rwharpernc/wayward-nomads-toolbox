@@ -273,9 +273,9 @@ class CarrierCargoTests(unittest.TestCase):
         self.assertEqual((record["type"], record["id"]), (FLEET, 111))
         blocks = carrier.cargo_blocks({FLEET: record})
         self.assertEqual(blocks[0], Heading("Fleet carrier: Wayward Hauler"))
-        self.assertIn(Pair("Cargo used", "4,000 / 18,000 t"), blocks)
-        self.assertIn(Pair("Free", "13,500 t", bold=True), blocks)
-        self.assertIn(Pair("Reserved for trade orders", "500 t"), blocks)
+        self.assertIn(Pair("Carrier cargo used", "4,000 / 18,000 t"), blocks)
+        self.assertIn(Pair("Carrier cargo free", "13,500 t", bold=True), blocks)
+        self.assertIn(Pair("Carrier reserved for orders", "500 t"), blocks)
 
     def test_free_space_is_worked_out_when_the_journal_omits_it(self) -> None:
         event = stats_event()
