@@ -132,6 +132,10 @@ construction depot or open its market, and a `ColonisationContribution` event ea
    `Colonisation: no active construction sites`.
 3. Press **REPORT** to open the **Colonisation Sites** window.
 
+**Who is playing.** At start-up WNTB takes the commander from the newest journal (the last login in it), so the
+summary line shows your sites straight away instead of `waiting for commander login`. After you log in as someone
+else it follows them.
+
 **The site name** is taken from the most recent time you docked at that depot's market. If WNTB hasn't seen you dock
 there, the site is called `Construction site <number>`.
 

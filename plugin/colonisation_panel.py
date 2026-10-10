@@ -22,7 +22,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import (colonisation, colonisation_carrier, colonisation_catchup, colonisation_overlay as card, colonisation_window,
-               overlay, panelkit)
+               journal_files, overlay, panelkit)
 from .colonisation import Site
 from .colonisation_data import SiteRepository, site_repository
 
@@ -43,6 +43,31 @@ def _get_int(key: str, default: int, low: int, high: int) -> int:
         return max(low, min(high, int(raw))) if raw else default
     except ValueError:
         return default
+
+
+_COMMANDER_EVENTS = journal_files.event_pattern("Commander", "LoadGame")
+
+
+def latest_commander(folder: Optional[str] = None) -> str:
+    """The commander named in the newest journal (its last `LoadGame` / `Commander`), else EDMC's own idea of it, else
+    "". Used at start-up, before any live event has said who is playing."""
+    try:
+        files = journal_files.files_modified_since(0.0, folder)
+        for path in reversed(files[-3:]):   # the newest file might be empty (the game just started)
+            found = ""
+            for entry in journal_files.read_events(path, _COMMANDER_EVENTS):
+                name = entry.get("Name") if entry.get("event") == "Commander" else entry.get("Commander")
+                if name:
+                    found = str(name)
+            if found:
+                return found
+    except Exception:
+        logger.debug("Could not read the commander from the journals", exc_info=True)
+    try:
+        from monitor import monitor  # EDMC's own module; absent in unit tests
+        return str(getattr(monitor, "cmdr", "") or "")
+    except ImportError:
+        return ""
 
 
 def overlay_enabled() -> bool:
@@ -97,6 +122,10 @@ class ColonisationController:
 
     def start(self, plugin_dir: str) -> None:
         self._repository.load(plugin_dir)
+        # EDMC does not replay old events at start-up, so the commander would stay unknown until the next one.
+        self._cmdr = latest_commander() or self._cmdr
+        if self._cmdr:
+            self._carrier_feed.cmdr = self._cmdr
         try:
             # Deliveries made while EDMC was closed are only in the journals.
             changed = colonisation_catchup.catch_up(
