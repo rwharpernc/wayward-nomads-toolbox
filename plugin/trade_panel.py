@@ -439,6 +439,20 @@ class TradePanelController:
         mode = (config.get_str(self._carrier_cfg_key(cmdr)) or trade_carrier.AUTO).lower()
         return mode if mode in trade_carrier.MODES else trade_carrier.AUTO
 
+    def fleet_carrier(self, cmdr: str) -> Optional[bool]:
+        """Whether Trade considers this commander to have a fleet carrier, for other features that ask the same question.
+        Their Settings choice decides when it names the carriers (None and Squadron mean no fleet carrier; Fleet and
+        Both mean they have one). On Auto it is True once a fleet carrier has been recorded for them, else None
+        (not known yet - it is not the same as "has none")."""
+        if not cmdr:
+            return None
+        mode = self._carrier_mode(cmdr)
+        if mode in (trade_carrier.NONE, trade_carrier.SQUADRON_ONLY):
+            return False
+        if mode in (trade_carrier.FLEET_ONLY, trade_carrier.BOTH):
+            return True
+        return True if trade_carrier.FLEET in (self._carrier.records.get(trade_carrier.key_for(cmdr)) or {}) else None
+
     @staticmethod
     def _known_commanders() -> List[str]:
         return [name for name in (config.get_str(_CFG_COMMANDERS) or "").split("|") if name]
@@ -1385,6 +1399,10 @@ class TradePanelController:
 
 
 controller = TradePanelController()
+
+
+def fleet_carrier(cmdr: str) -> Optional[bool]:
+    return controller.fleet_carrier(cmdr)
 
 
 def start(plugin_dir: str) -> None:

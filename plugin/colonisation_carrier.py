@@ -11,7 +11,8 @@ What it cannot see: stock that reached the carrier another way (bought through i
 (sold, a trade order, moved by a squadron mate) is not a `CargoTransfer`, so it is not counted. It is "what this tool
 saw you transfer", not the carrier's hold.
 
-A commander "has a fleet carrier" once we have seen one: a transfer at it, a `CarrierStats` / `CarrierBuy` for one, or a
+A commander "has a fleet carrier" as Trade sees it (`set_external_check`: their Settings choice there, else a fleet
+carrier Trade has recorded, which it reads from the recent journals at start-up), or once we have seen one: a transfer at it, a `CarrierStats` / `CarrierBuy` for one, or a
 dock at a fleet carrier. Only then does the window show the column.
 
 Like colonization deliveries, a transfer is an addition, so counting one twice would be wrong. Each commander's record
@@ -61,6 +62,13 @@ class CarrierCargo:
         self._store = commander_data.new_store()
         self._plugin_dir: Optional[str] = None
         self._listeners: List[Callable[[], None]] = []
+        self._external: Optional[Callable[[str], Optional[bool]]] = None
+
+    def set_external_check(self, check: Callable[[str], Optional[bool]]) -> None:
+        """Another feature that knows about the commander's carriers (Trade). It answers True / False when it knows,
+        None when it does not; its answer wins, so both features always agree and a commander's Settings choice in
+        Trade (None, Fleet, Squadron, Both, Auto) applies here too."""
+        self._external = check
 
     # --- persistence ---------------------------------------------------------
     def load(self, plugin_dir: str) -> None:
@@ -81,7 +89,17 @@ class CarrierCargo:
         return commander_data.payload_for(self._store, cmdr, _empty)
 
     def has_carrier(self, cmdr: str) -> bool:
-        return bool(cmdr) and commander_data.known(self._store, cmdr) and bool(self._record(cmdr).get("has_carrier"))
+        if not cmdr:
+            return False
+        if self._external is not None:
+            try:
+                answer = self._external(cmdr)
+            except Exception:
+                logger.debug("The external fleet carrier check failed", exc_info=True)
+                answer = None
+            if answer is not None:
+                return answer
+        return commander_data.known(self._store, cmdr) and bool(self._record(cmdr).get("has_carrier"))
 
     def tonnes(self, cmdr: str) -> Dict[str, int]:
         """Net tonnes moved to the carrier, by commodity key (only commodities with some there)."""

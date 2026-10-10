@@ -99,6 +99,30 @@ class CarrierCargoTests(unittest.TestCase):
             self.assertTrue(again.has_carrier("Alice"))
 
 
+class ExternalCheckTests(unittest.TestCase):
+    def test_trade_knowing_wins_both_ways(self) -> None:
+        cargo = cc.CarrierCargo()
+        cargo.set_external_check(lambda cmdr: True)
+        self.assertTrue(cargo.has_carrier("Alice"))            # Trade says yes before anything was seen here
+        cargo.set_external_check(lambda cmdr: False)
+        cc.Feeder(cargo, "Alice").feed({"event": "CarrierStats", "CarrierType": "FleetCarrier"})
+        self.assertFalse(cargo.has_carrier("Alice"))           # their choice of "no carrier" in Trade applies here too
+
+    def test_unknown_falls_back_to_what_was_seen_here(self) -> None:
+        cargo = cc.CarrierCargo()
+        cargo.set_external_check(lambda cmdr: None)
+        self.assertFalse(cargo.has_carrier("Alice"))
+        cc.Feeder(cargo, "Alice").feed({"event": "CarrierBuy", "CarrierType": "FleetCarrier"})
+        self.assertTrue(cargo.has_carrier("Alice"))
+
+    def test_a_failing_check_is_ignored(self) -> None:
+        def boom(_cmdr):
+            raise RuntimeError("x")
+        cargo = cc.CarrierCargo()
+        cargo.set_external_check(boom)
+        self.assertFalse(cargo.has_carrier("Alice"))
+
+
 class CatchUpTests(unittest.TestCase):
     def test_catch_up_then_live_event_does_not_double_count(self) -> None:
         lines = [
