@@ -1,10 +1,12 @@
 """Journal scan: files copied over from the other computer are found, read once, folded in, and remembered."""
 from __future__ import annotations
 
+import calendar
 import json
 import os
 import sys
 import tempfile
+import time
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -109,8 +111,18 @@ class PendingTests(unittest.TestCase):
             with open(os.path.join(folder, scan.STATE_FILENAME), "w", encoding="utf-8") as handle:
                 handle.write("[not json")
             self.assertEqual(scan.load(folder), scan.new_registry())
-        self.assertIn("not scanned", scan.summary(scan.new_registry()))
-        self.assertIn("1 file(s)", scan.summary(registry))
+        self.assertIn("not reviewed", scan.summary(scan.new_registry()))
+        self.assertIn("1 new journal since", scan.summary(registry))
+        scan.note_pass(registry, 0)
+        self.assertIn("No new journals", scan.summary(registry))
+        scan.note_pass(registry, 3)
+        self.assertIn("3 new journals", scan.summary(registry))
+
+    def test_the_review_time_is_shown_in_local_time(self) -> None:
+        registry = scan.new_registry()
+        registry["last_pass"] = "2026-10-10T12:30:00Z"
+        expected = time.strftime("%d %b %Y %H:%M", time.localtime(calendar.timegm((2026, 10, 10, 12, 30, 0))))
+        self.assertIn(f"Journals reviewed {expected}.", scan.summary(registry))
 
 
 class ApplyTests(unittest.TestCase):

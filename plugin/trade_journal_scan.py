@@ -16,6 +16,7 @@ refuses to count an event twice) and then calls `mark`. A pass may therefore run
 """
 from __future__ import annotations
 
+import calendar
 import json
 import logging
 import os
@@ -153,13 +154,20 @@ def note_pass(registry: Registry, found: int) -> None:
 
 
 def summary(registry: Registry) -> str:
-    """One line for the Session page: how many files are on record and what the last pass found."""
-    files = registry.get("files") or {}
-    if not files and not registry.get("last_pass"):
-        return "Journals: not scanned yet."
+    """One line for the Session page: when the journals were last reviewed (local time) and whether that review
+    found any new ones."""
     last = str(registry.get("last_pass") or "")
-    when = f" Last check {last[11:16]} UTC, {registry.get('last_found', 0)} new or grown." if last else ""
-    return f"Journals read: {len(files)} file(s).{when}"
+    if not last:
+        return "Journals: not reviewed yet."
+    try:
+        local = time.localtime(calendar.timegm(time.strptime(last, "%Y-%m-%dT%H:%M:%SZ")))
+        stamp = time.strftime("%d %b %Y %H:%M", local)
+    except ValueError:
+        stamp = last
+    found = int(registry.get("last_found") or 0)
+    news = "No new journals since the last review." if found <= 0 else (
+        "1 new journal since the last review." if found == 1 else f"{found} new journals since the last review.")
+    return f"Journals reviewed {stamp}. {news}"
 
 
 def load(plugin_dir: str) -> Registry:
