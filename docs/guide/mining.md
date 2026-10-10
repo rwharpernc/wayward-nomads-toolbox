@@ -10,19 +10,21 @@ for your current run.
 
 ## The buttons
 
-Buttons appear when they're useful, side by side in one row. Hover for the full name.
+The buttons sit side by side in one row, in this order. Which ones you see depends on the page and on your
+Settings. Hover for the full name.
 
-| Button | What it does |
-|---|---|
-| **+H.S.** (save hotspot here) | Records a deposit you've found. |
-| **BOOK** (Mining Book) | Opens your catalogue (see below). |
-| **H.S.** (find nearby hotspots) | Looks up known hotspots near you on Spansh and EDSM. |
-| **PRICE** (find best price) | Finds where a commodity sells best. |
-| **RES** (check ring reserve level) | Checks a ring's reserve level. |
-| **I/E** | Import or export your saved hotspots. |
+| Button | What it does | Shown when |
+|---|---|---|
+| **BOOK** (Mining Book) | Opens your catalogue (see below). | Always |
+| **+H.S.** (save hotspot here) | Saves the current ring as a hotspot. | On the pages that offer it |
+| **H.S.** (find nearby hotspots) | Finds rings with a confirmed hotspot for a commodity, using Spansh. | Space Mining page, once *Enable Spansh Nearby Hotspot Finder* is ticked |
+| **PRICE** (find best price) | Finds the best-paying station for a commodity, using Spansh. | Once *Enable Spansh Best Price Finder* is ticked |
+| **RES** (check ring reserve level) | Looks up a ring's reserve level, using EDSM. | Space Mining page, once *Enable EDSM Ring Reserve Lookup* is ticked |
+| **I/E** | Import or export your saved hotspots. | On the pages that offer it |
 
-**H.S.**, **PRICE** and **RES** look things up online, so they are **off until you turn them on in Settings**. See
-[what goes on the internet](internet-and-privacy.md).
+The three online lookups are **off until you turn them on in Settings**. Note that the EDSM ring reserve lookup,
+once on, also contacts edsm.net **automatically every time you drop into a ring**, as well as when you search by
+hand. See [what goes on the internet](internet-and-privacy.md).
 
 ## A typical run
 
@@ -51,10 +53,14 @@ you save hotspots. It describes your own finds, not what a body actually holds.
 
 **Settings → Mining**:
 
-- turn on the online lookups above,
-- show live stats on your game screen (needs an overlay),
-- show a surface arrow pointing to the nearest known hotspot,
-- show a small "where have I driven" minimap,
-- archive completed runs automatically.
+The checkboxes (the first three are on by default; the rest are off):
+
+- *Display Session Totals*, *Display Cargo Bar*, *Display Prospector Hints* (on by default),
+- the three online lookups above,
+- *Enable HUD Overlay*: sends live stats to the overlay,
+- *Enable Surface Waypoint Overlay*: an arrow and distance to the nearest known hotspot on the current body,
+- *Show Coverage Minimap* (Surface Mining page): a small map of ground the Rhino has driven over on the current
+  body,
+- *Archive Completed Mining Runs*: writes a JSON file per run.
 
 More detail: [Mining specification](../MINING_TECH_SPEC.md).

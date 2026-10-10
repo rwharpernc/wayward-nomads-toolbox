@@ -1,18 +1,22 @@
 # Landing Assist and Interdiction Warning
 
-These two tools are always available, whichever mode you're in. They don't belong to a mode. Both draw on your game
-screen, so both need an overlay running. See [Getting started](getting-started.md#what-you-need) and
+These two tools are always available, whichever mode you're in. They don't belong to a mode. Interdiction Warning draws only on
+your game screen, so it needs an overlay running. Landing Assist can show in the EDMC panel without one, but its
+diagram on the game screen needs an overlay. See [Getting started](getting-started.md#what-you-need) and
 [Setting up the overlay](../OVERLAY_SETUP.md).
 
 ## Landing Assist
 
-Shows which landing pad you've been assigned while docking, in the panel and as a diagram on your game screen.
+Shows which landing pad you've been assigned while docking, in the EDMC panel and/or as a diagram on your game
+screen (you choose which in Settings).
 
 **To set it up:**
 
 1. Open **Settings → Always On → Landing**.
-2. Turn it on and choose where it appears.
-3. Press **Test Overlay** to check the diagram shows.
+2. Tick **Enable Landing**. It is **off by default**.
+3. Choose where it shows: **Show in EDMC app** (the panel; on by default once Landing is enabled) and/or
+   **Show on Overlay** (the diagram on your game screen; off by default).
+4. Press **Test Overlay** to check the diagram shows.
 
 If the overlay is still starting when docking is approved, WNTB keeps retrying for up to three minutes, so the
 diagram appears as soon as the overlay is up.
@@ -23,9 +27,10 @@ Puts an alert on your game screen the moment an interdiction starts. It has no p
 
 **To set it up:**
 
-1. Open **Settings → Interdiction Warning**.
-2. Turn it on.
-3. Press **Test Warning** to see what it looks like.
+1. Open **Settings → Always On → Interdiction Warning**.
+2. Tick **Enable Interdiction Warning**. It is **off by default**.
+3. Press **Test Warning** to see what it looks like. The test works even while the feature is off, and reports
+   whether an overlay could be reached.
 
 ## Overlay connection
 

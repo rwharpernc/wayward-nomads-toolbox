@@ -21,7 +21,12 @@ Converts Elite's screenshots to PNG automatically, with an optional crop to just
 - whether to delete the originals,
 - the file-name format,
 - the auto-capture timing,
-- an optional "Screenshot saved" message on your game screen (needs an overlay).
+- an optional "Screenshot saved" message on your game screen (off by default; needs an overlay; has a **Test
+  Overlay** button),
+- *Group converted files into a per-system subfolder* (off by default),
+- *Show the auto-capture timer icon on the main window* (on by default),
+- *Automatically capture a screenshot when scanning a Thargoid signal* (on by default),
+- *Use high-resolution capture on the auto-timer (Solo play only)* (off by default).
 
 *On Linux, the auto-timer needs `xdotool`, and a Flatpak EDMC needs the screenshots permission. See
 [WNTB on Linux](linux.md). On Windows, OneDrive-redirected folders are handled automatically.*

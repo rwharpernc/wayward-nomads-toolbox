@@ -26,7 +26,7 @@ Your game mode and credits are on the two lines under the mode buttons.
 
 Two buttons on the bottom row:
 
-- **SES** opens the Sessions window.
+- **SES** opens the Sessions window. **RARES** opens the Rare Goods Finder (see below).
 - **RESCAN** re-reads your journal from scratch. Use it if a session's numbers ever look wrong.
 
 ## The Sessions window
@@ -100,11 +100,13 @@ Click **RARES** to see the rare commodities closest to where you are. Each row s
 **Tips:**
 
 - **Double-click a row** to open that commodity on Inara.
-- Use **Show nearest** to choose how many rows to see (up to all 141).
+- Use **Show nearest** (type a number and press Enter or **Apply**) to choose how many rows to see. The list holds
+  141 rare goods.
 - The list needs your position, so it says "Awaiting system data" until your first jump or login after EDMC starts.
 - A "—" in the Power column means unclaimed, or couldn't be checked.
 
-The first time you open it for each system it asks Spansh which Power controls it. See
+To fill in the Power column, WNTB asks Spansh which Power controls each rare's origin system. Answers are kept until
+you restart EDMC (a failed lookup is also kept, so it isn't retried until then). See
 [what goes on the internet](internet-and-privacy.md).
 
 ## Settings
@@ -112,6 +114,6 @@ The first time you open it for each system it asks Spansh which Power controls i
 **Settings → Powerplay**:
 
 - The merit-per-Control-Point ratios. Only change these if Frontier changes them.
-- The text used when you click **Copy Progress**, which puts a summary on your clipboard to paste into Discord or a
-  forum post.
+- The format of the lines **Copy Progress** copies. That button is in the Sessions window; it puts a summary on
+  your clipboard to paste into Discord or a forum post. A **Reset to default** button restores the standard format.
 - How many cycles the start-up journal scan covers.

@@ -17,9 +17,12 @@ Fires your Discovery Scanner automatically every time you jump into a system, so
 
 **How to use it:**
 
-1. Turn it on with its toggle button (**A.H.**).
-2. Open **Settings → Exploration → Alerts** to choose which fire button it uses and how long it holds it.
-3. Press **Test Honk Now** to check it works without waiting for a real jump.
+1. Turn it on with its toggle button (**A.H.**) or the **Enable Auto-Honk** box in Settings. It is **off by default**.
+2. Open **Settings → Exploration → Alerts** to choose which fire button it uses (**Primary** or **Secondary**; the
+   default is Secondary) and how many seconds it holds it (**Hold**, default 10).
+3. Two other options there: *Focus game window first* and *Skip systems already visited* (both on by default).
+4. Press **Test Honk Now** to check it works without waiting for a real jump. **Rescan** re-reads your key
+   bindings.
 
 If you also run EDCoPilot with its own auto-honk, turn one of the two off, or they'll fight each other.
 
@@ -32,7 +35,7 @@ first to scan or map a body.
 
 **How to use it:**
 
-1. Click its toggle button (**D.A.**).
+1. Click its toggle button (**D.A.**) or tick **Enable Discovery Alerts** in Settings. It is **off by default**.
 2. Make sure an overlay is running. The connection details are on the **Overlay Connection** Settings tab.
 3. Use **Settings → Exploration → Alerts** to move the banner (X and Y boxes) or send a test one.
 
@@ -152,9 +155,12 @@ A quiet readout of what you're finding. Nothing to turn on. It shows:
 
 All of that is worked out on your computer.
 
-Two extras are optional in **Settings → Exploration Value**: how rare the Earth-like world you just found is, and
-whether EDSM already knows about a system you've selected on the galaxy map. They contact Spansh and EDSM, so
-they're off until you tick them.
+The readout itself is on by default (*Show estimated scan value, system age, and current region*). Two extras are
+optional in **Settings → Exploration → Exploration Value**, and both are off until you tick them because they
+contact the internet:
+
+- *Show ELW rarity comparison when you scan an Earthlike World* (Spansh)
+- *Show EDSM upload status when you select a system on the galaxy map* (EDSM)
 
 ## Organic Scanning
 
