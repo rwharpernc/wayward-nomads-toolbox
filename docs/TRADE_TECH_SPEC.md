@@ -180,7 +180,7 @@ stays tied up until the cargo is sold, whenever that is. So the stock book follo
   but not what was paid, so it is not a stock event. Stock comes out only when sold.
 
 Because there is one list, nothing needs reconciling between "route" and "carrier" tracking, and no purchase
-is counted twice. Where the cargo is *now* is derived, not stored: the panel shows "in ship hold" = min(held, what
+is counted twice. Where the cargo is *now* is derived, not stored: the panel's **Unsold** column is the book's tonnes (buys less sells, never a hold count), and each row shows "in ship hold" = min(held, what
 the ship's hold contains) and "not in ship hold" = the rest (usually the carrier; a note under the stock rows says so).
 
 Rules: average cost per commodity; a sale never takes stock below zero; a sale of cargo the book never saw is

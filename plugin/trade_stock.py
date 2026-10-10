@@ -167,7 +167,7 @@ class StockBook:
 def stock_blocks(holdings: List[Holding], in_hold: Dict[str, int],
                  name_of: Optional[Callable[[Holding], str]] = None) -> List[Block]:
     """Session-page section. `in_hold` maps a commodity's canonical name to the tonnes in the ship's hold now,
-    so each row can say how much of it is still aboard and how much is elsewhere (a carrier, usually).
+    so each row can say how much of the unsold total is still in the ship hold and how much is not (a carrier, usually).
     `name_of` can supply a nicer display name than the one the journal gave."""
     if not holdings:
         return []
@@ -175,7 +175,7 @@ def stock_blocks(holdings: List[Holding], in_hold: Dict[str, int],
     cost = sum(h.cost for h in holdings)
     blocks: List[Block] = [Heading("Stock bought, not yet sold"),
                            Pair("Total", f"{tonnes:,} t, {cost:,} cr", bold=True),
-                           Columns(("Held", "Avg cost"))]
+                           Columns(("Unsold", "Avg cost"))]
     away = False
     for holding in holdings[:SHOWN]:
         aboard = min(holding.tonnes, max(0, in_hold.get(holding.key, 0)))
@@ -187,12 +187,15 @@ def stock_blocks(holdings: List[Holding], in_hold: Dict[str, int],
             where.append(f"{elsewhere:,} t not in ship hold")
             away = True
         shown = name_of(holding) if name_of else holding.name
-        blocks.append(Item(shown, (f"{holding.tonnes:,} t", f"{holding.average:,}"), detail=", ".join(where)))
+        blocks.append(Item(shown, (f"{holding.tonnes:,} t", f"{holding.average:,}"), detail=" + ".join(where)))
     if len(holdings) > SHOWN:
         blocks.append(Note(f"+{len(holdings) - SHOWN} more"))
+    source = ("Unsold = tonnes you bought (every purchase your journal shows) minus tonnes you sold, at the average price "
+              "you paid. It is a running total, not a count of any one hold.")
     if away:
-        blocks.append(Note("\"Not in ship hold\" is cargo you bought that is no longer in your ship hold, usually moved to your "
-                           "carrier cargo storage. It stays here until it is sold; Clear stock forgets it."))
+        source += (" \"Not in ship hold\" is the part no longer in your ship, usually moved to your carrier cargo storage. "
+                   "It stays here until it is sold; Clear stock forgets it.")
+    blocks.append(Note(source))
     return blocks
 
 
