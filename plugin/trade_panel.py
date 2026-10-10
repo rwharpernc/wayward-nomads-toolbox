@@ -42,6 +42,7 @@ from . import panelkit
 from . import trade_ledger as ledger_mod
 from . import trade_market as market_mod
 from . import trade_carrier
+from . import trade_route_start
 from . import trade_history
 from . import trade_history_window
 from . import trade_commodities
@@ -83,7 +84,6 @@ _DEFAULT_MAX_HOPS = 3
 _DEFAULT_PRICE_AGE_H = 72
 _DEFAULT_MIN_STOCK = 200
 _HOP_CHOICES = (2, 3, 4, 5)  # the Hops button on the Routes page cycles through these
-_CARRIER_STATION_TYPES = ("FleetCarrier", "SquadronCarrier")  # journal StationType values
 _DEFAULT_MAX_ARRIVAL_LS = 5000
 _FALLBACK_JUMP_RANGE_LY = 30.0
 _DEFAULT_NEAR_RADIUS_LY = 100
@@ -180,9 +180,9 @@ class TradePanelController:
         # What the journal has told us.
         self._system: Optional[str] = None
         self._station: Optional[str] = None          # where we are docked now
-        self._home_station: Optional[str] = None      # last station we docked at (route start); never a carrier
+        # Each commander's last station docked at (system, station): the route start. Never a carrier. Saved to disk.
+        self._home: trade_route_start.Starts = {}
         self._carrier_names: set = set()              # fleet / squadron carriers docked at (not valid route starts)
-        self._home_system: Optional[str] = None
         self._cargo: Dict[str, int] = {}
         self._capacity = 0
         self._ship: Optional[str] = None  # journal ship name from Loadout, e.g. 'cobramkiii'
@@ -244,6 +244,7 @@ class TradePanelController:
         self._plugin_dir = plugin_dir
         self._book = ledger_mod.load_book(plugin_dir)
         self._carrier.records = trade_carrier.load_all(plugin_dir)
+        self._home = trade_route_start.load_all(plugin_dir)
         self._stock.books = trade_stock.load_all(plugin_dir)
         self._history.sessions = trade_history.load_all(plugin_dir)
         self._scanlog = trade_journal_scan.load(plugin_dir)
@@ -355,13 +356,15 @@ class TradePanelController:
         self._track_carrier(event, entry)
 
         if event == "Docked":
-            if str(entry.get("StationType") or "") in _CARRIER_STATION_TYPES:
+            if str(entry.get("StationType") or "") in trade_route_start.CARRIER_STATION_TYPES:
                 # Spansh's route planner doesn't know fleet carriers ("Could not find station"), so they are
                 # never a route start; remember the name so we skip it while we are docked there.
                 self._carrier_names.add(str(entry.get("StationName") or ""))
             else:
-                self._home_station = entry.get("StationName") or self._home_station
-                self._home_system = entry.get("StarSystem") or self._home_system
+                if trade_route_start.remember(self._home, cmdr, entry.get("StarSystem") or "",
+                                              entry.get("StationName") or "",
+                                              str(entry.get("timestamp") or "")) and self._plugin_dir is not None:
+                    trade_route_start.save_all(self._plugin_dir, self._home)
         elif event == "Loadout":
             if entry.get("Ship"):
                 self._ship = str(entry["Ship"])
@@ -506,11 +509,12 @@ class TradePanelController:
         except queue.Empty:
             return
         self._scan_running = False
-        changed = {"ledger": False, "stock": False, "carrier": False}
+        changed = {"ledger": False, "stock": False, "carrier": False, "route": False}
         read = 0     # files actually applied and marked; one that failed is retried next pass and not counted
         for path, size, events in batch:
             try:
-                got = trade_journal_scan.apply(events, self._book.ledgers, self._stock, self._carrier.records)
+                got = trade_journal_scan.apply(events, self._book.ledgers, self._stock, self._carrier.records,
+                                           self._home)
             except Exception:
                 logger.exception("Could not apply journal %s", path)
                 continue
@@ -526,6 +530,8 @@ class TradePanelController:
                 self._save_stock(force=True)
             if changed["carrier"]:
                 trade_carrier.save_all(self._plugin_dir, self._carrier.records)
+            if changed["route"]:
+                trade_route_start.save_all(self._plugin_dir, self._home)
         if batch:
             logger.info("Trade read %d new or changed journal file(s): %s", len(batch),
                         ", ".join(k for k, v in changed.items() if v) or "nothing new to count")
@@ -671,9 +677,7 @@ class TradePanelController:
         Fleet carriers are skipped: Spansh can't plan from one."""
         if self._station and self._system and self._station not in self._carrier_names:
             return self._system, self._station
-        if self._home_station and self._home_system:
-            return self._home_system, self._home_station
-        return None
+        return trade_route_start.lookup(self._home, self._cmdr)
 
     def _jump_range_ly(self) -> float:
         override = config.get_str(_CFG_JUMP_RANGE) or ""

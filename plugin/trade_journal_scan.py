@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from . import trade_carrier
 from . import trade_ledger
+from . import trade_route_start
 from . import trade_stock
 
 try:
@@ -121,10 +122,12 @@ def read_events(path: str) -> List[Dict[str, Any]]:
 
 
 def apply(events: List[Dict[str, Any]], ledgers: Dict[str, Dict[str, Any]], stock: trade_stock.StockBook,
-          carrier_records: trade_carrier.Records) -> Dict[str, bool]:
+          carrier_records: trade_carrier.Records,
+          route_starts: Optional[trade_route_start.Starts] = None) -> Dict[str, bool]:
     """Fold one file's `events` into each commander's session, the stock book and the carrier records. Each of these
     already skips what it has counted, so a file may be applied more than once. A session with nothing counted and no
-    start time is left alone (it has no point to catch up from). Returns which of "ledger", "stock" and "carrier" changed."""
+    start time is left alone (it has no point to catch up from). When `route_starts` is given, the file's docks are
+    folded into it too. Returns which of "ledger", "stock" and "carrier" (and "route" when asked) changed."""
     changed = {"ledger": False, "stock": False, "carrier": False}
     for ledger in ledgers.values():
         if trade_ledger._parse_timestamp(trade_ledger.watermark(ledger)) is None:
@@ -136,6 +139,8 @@ def apply(events: List[Dict[str, Any]], ledgers: Dict[str, Dict[str, Any]], stoc
     for entry in events:
         if tracker.feed(entry):
             changed["carrier"] = True
+    if route_starts is not None:
+        changed["route"] = trade_route_start.replay(route_starts, events)
     return changed
 
 
