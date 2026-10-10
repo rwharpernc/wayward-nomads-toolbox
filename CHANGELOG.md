@@ -3,6 +3,28 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Colonization: FC column.** The Colonization Sites window gains an **FC** column for a commander with a fleet
+  carrier: the tonnes of each commodity transferred to it (net of any taken back), from the journal's `CargoTransfer`
+  events made at the carrier. It is per commander, caught up from the journals at start-up without counting a transfer
+  twice, and uses Trade's knowledge of whether you have a fleet carrier (including your Trade carrier setting). It is
+  what WNTB saw you transfer, not the carrier's real hold.
+- **Colonization: shopping list on the overlay.** Optional, off by default, laid out like SRVSurvey's: a table of
+  **Commodity, Need, FC and Ship** for your most recently updated active site, a tick where your hold covers a
+  commodity, and a footer with the tonnes remaining and trips in your current ship. It shows in a commodity market, at
+  your own carrier's services screens, with the right-hand cockpit panel open when docked at your carrier (the cargo
+  transfer), in Carrier Management, and when docked at a construction site; optionally whenever the right-hand panel is
+  open anywhere. A **SHOW / HIDE** button in the Field Ops panel forces it on or off. Settings: position, and how many
+  rows (default all). The EDMC debug log records why it showed or hid.
+- **Start-up commander.** If EDMC starts before the game, WNTB reads the last commander from the newest journal a few
+  seconds later and every feature loads their data, so nothing waits for a login. The colonization panel also knows
+  the commander straight away.
+
+### Fixed
+- The open Colonization Sites window now follows the active commander instead of staying on the previous one's sites.
+
 ## 1.5.2 - 2026-10-10
 
 ### Added
