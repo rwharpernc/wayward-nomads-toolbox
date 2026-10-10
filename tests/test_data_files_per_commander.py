@@ -33,6 +33,7 @@ PER_COMMANDER = {
     "mining_coverage.json": "one map per commander (commander_data.py, CoverageRepository.set_commander)",
     "ship_builds.json": "keyed by commander (ship_builds_data.py)",
     "colonisation_sites.json": "keyed by commander (colonisation_data.py)",
+    "colonisation_carrier.json": "one record per commander (commander_data.py, colonisation_carrier.py)",
     "trade_ledger.json": "one session per commander (trade_ledger.LedgerBook)",
     "trade_carrier.json": "keyed by commander (trade_carrier.py)",
     "trade_route_start.json": "keyed by commander (trade_route_start.py)",

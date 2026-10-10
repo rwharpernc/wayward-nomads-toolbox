@@ -31,7 +31,7 @@ back. Things to try if a figure is still off:
   [How a trading session works](trade.md#how-a-trading-session-works).
 - Missions shows what the journals say is active. If a mission expired without the game writing anything, log in
   again and the game's own list replaces it.
-- A feature can only look back a limited way (Missions two weeks, Colonisation 14 to 30 days, Boxel Survey 14 days).
+- A feature can only look back a limited way (Missions two weeks, Colonisation, including its FC column, 14 to 30 days, Boxel Survey 14 days).
   Older play with EDMC closed isn't found.
 
 ### My hotspots, survey finds or Codex tally are missing for a commander

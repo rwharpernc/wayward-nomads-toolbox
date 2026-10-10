@@ -156,6 +156,20 @@ open; finished ones are greyed. Under each site is one row per commodity **still
 | Remaining | Required minus delivered |
 | In Cargo | What is in your hold now (ship or SRV) |
 | To Source | Remaining minus what you're already carrying: what you still have to buy or mine |
+| FC | Tonnes of that commodity you have transferred onto your **fleet carrier** (only shown once WNTB has seen you have one) |
+
+**The FC column.** It adds up the journal's `CargoTransfer` events made while docked at your fleet carrier: tonnes
+moved to the carrier minus tonnes moved back to the ship. It appears when WNTB has seen a fleet carrier of yours (a
+transfer, opening Carrier Management, buying one, or docking at one) and is per commander. It does not change To Source.
+
+- **Transfers made with EDMC closed are found.** They are in the journal, and at start-up WNTB reads the recent
+  journals and adds any transfer it hasn't counted. A transfer is never counted twice, even if EDMC also saw it live.
+- **How far back it reads:** 14 days, or back to the last transfer it counted if that is older, never more than 30.
+  Transfers older than that are never counted, so stock you moved to the carrier before then won't show. Taking
+  stock back off the carrier that was moved before then just leaves the figure at zero.
+- **It is what WNTB saw you transfer, not the carrier's actual hold.** Changes that are not transfers are not in the
+  journal as transfers, so they are not counted: buying from or selling to the carrier's market, trade orders, and a
+  squadron mate moving cargo. The figure can therefore drift from the real contents.
 
 **Buttons.** For these you **select a commodity row** under the site you mean (selecting the site's heading is not
 enough):

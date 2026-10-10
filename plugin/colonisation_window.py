@@ -14,6 +14,7 @@ from typing import Dict, Mapping, Optional
 from config import appname, config
 
 from . import colonisation, panelkit
+from .colonisation_carrier import CarrierCargo
 from .colonisation import Site
 from .colonisation_data import SiteRepository
 from .uikit import palette as P
@@ -37,11 +38,14 @@ _COLUMNS = (
     Column("cargo", "In Cargo", 90, anchor="e", max_chars=10),
     Column("source", "To Source", 90, anchor="e", max_chars=10),
 )
+# Shown only for a commander with a fleet carrier: tonnes moved onto it (colonisation_carrier.py).
+_FC_COLUMN = Column("fc", "FC", 70, anchor="e", max_chars=10)
 
 _window: Optional["ColonisationWindow"] = None
 
 
-def show(parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int]) -> None:
+def show(parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int],
+         carrier: Optional[CarrierCargo] = None) -> None:
     """Open the window for `cmdr`, or raise/refresh it if already open."""
     global _window
     if _window is not None and _window.alive:
@@ -49,7 +53,7 @@ def show(parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[
         _window.set_cargo(cargo)
         _window.lift()
         return
-    _window = ColonisationWindow(parent, repository, cmdr, cargo)
+    _window = ColonisationWindow(parent, repository, cmdr, cargo, carrier)
 
 
 def refresh_cargo(cargo: Mapping[str, int]) -> None:
@@ -60,8 +64,11 @@ def refresh_cargo(cargo: Mapping[str, int]) -> None:
 
 
 class ColonisationWindow:
-    def __init__(self, parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int]) -> None:
+    def __init__(self, parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int],
+                 carrier: Optional[CarrierCargo] = None) -> None:
         self._repository = repository
+        self._carrier = carrier
+        self._with_fc = False
         self._cmdr = cmdr
         self._cargo: Dict[str, int] = dict(cargo)
         self._sites: Dict[int, Site] = {}
@@ -78,14 +85,21 @@ class ColonisationWindow:
         self._shell.add_action("Remove Site", self._on_remove)
         self._shell.add_action("Remove Finished", self._on_remove_finished)
 
-        self._table = DataTable(self._shell.body, _COLUMNS, sortable=False,
-                                empty_text="No construction sites yet - dock at a construction depot to register one.")
-        self._table.tag_configure("done", foreground=P.MUTED)
-        self._table.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
+        self._table = self._build_table()
         self._shell.set_status("Select a commodity row (or use the site's first one), then use the buttons above.")
 
         repository.add_listener(self._refresh)
+        if carrier is not None:
+            carrier.add_listener(self._refresh)
         self._refresh()
+
+    def _build_table(self) -> DataTable:
+        columns = _COLUMNS + ((_FC_COLUMN,) if self._with_fc else ())
+        table = DataTable(self._shell.body, columns, sortable=False,
+                          empty_text="No construction sites yet - dock at a construction depot to register one.")
+        table.tag_configure("done", foreground=P.MUTED)
+        table.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
+        return table
 
     @property
     def alive(self) -> bool:
@@ -112,6 +126,14 @@ class ColonisationWindow:
         cmdr_label = self._cmdr or "(no commander detected yet)"
         self._shell.set_subtitle(f"{cmdr_label} — {active} active of {len(sites)} site{'s' if len(sites) != 1 else ''}")
 
+        wants_fc = bool(self._carrier and self._cmdr and self._carrier.has_carrier(self._cmdr))
+        if wants_fc != self._with_fc:   # the column set changes with the commander: rebuild the table
+            self._with_fc = wants_fc
+            self._table.destroy()
+            self._table = self._build_table()
+        on_carrier = self._carrier.tonnes(self._cmdr) if wants_fc and self._carrier else {}
+        extra = (lambda value: (value,)) if wants_fc else (lambda value: ())
+
         selection = self._table.selection()
         self._table.clear()
         self._row_site.clear()
@@ -120,7 +142,7 @@ class ColonisationWindow:
             status = "complete" if site.complete else "failed" if site.failed else f"{site.progress:.0%}"
             heading = site.display_name() + (f" — {site.system}" if site.system else "")
             self._table.insert(
-                group_id, (heading, "", "", f"{site.remaining_total:,}", "", status),
+                group_id, (heading, "", "", f"{site.remaining_total:,}", "", status) + extra(""),
                 tag=None if site.active else "done", group=True, open=site.active)
             for resource in site.resources:
                 if resource.remaining <= 0:
@@ -131,7 +153,8 @@ class ColonisationWindow:
                     row_id,
                     (resource.label, f"{resource.required:,}", f"{resource.provided:,}",
                      f"{resource.remaining:,}", f"{in_cargo:,}" if in_cargo else "",
-                     f"{colonisation.still_to_source(resource, self._cargo):,}"),
+                     f"{colonisation.still_to_source(resource, self._cargo):,}")
+                    + extra(f"{on_carrier[resource.key]:,}" if on_carrier.get(resource.key) else ""),
                     parent=group_id)
                 self._row_site[row_id] = site.market_id
         if selection and self._table.exists(selection[0]):
