@@ -14,6 +14,7 @@ threading, persistence), see [TECHNICAL.md](TECHNICAL.md).
 5. [Session ledger](#5-session-ledger)
    - [Stock bought, not yet sold](#51-stock-bought-not-yet-sold)
    - [Trade History: saved sessions](#52-trade-history-saved-sessions)
+   - [Journals from another machine: the scan record](#53-journals-from-another-machine-the-scan-record)
 6. [Hold, ship and landing pads](#6-hold-ship-and-landing-pads)
 7. [Fleet and squadron carrier cargo space](#7-fleet-and-squadron-carrier-cargo-space)
 8. [Routes (Spansh trade planner)](#8-routes-spansh-trade-planner)
@@ -51,6 +52,7 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_panel.py` | UI + controller | The feature-module contract entry point: panel chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
 | `trade_pages.py` | pure | Page names and order |
 | `trade_ledger.py` | pure + file | The session ledger and `trade_ledger.json` |
+| `trade_journal_scan.py` | pure + file | Which journal files have been read, finding new or grown ones, and applying them to the ledger, stock and carrier; `trade_journal_scan.json` |
 | `trade_stock.py` | pure + file | The stock book (bought, not yet sold) and `trade_stock.json` |
 | `trade_history.py` | pure + file | Saved-session records, the `HistoryBook`, and `trade_history.json` |
 | `trade_stats.py` | pure | Every number and table row shown from a saved session |
@@ -75,7 +77,7 @@ with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** 
 plain-text twin), then the stock block, then the hold block (ship and pad size, `used/capacity (free)`, what the docked
 market would pay, up to four cargo lines), then the carrier block (`trade_carrier.cargo_blocks`; `cargo_lines` is the
 plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first), **Clear stock**,
-**Save session** (greyed out until there is something to save) and **History**. Save does not end or restart the
+**Save session** (greyed out until there is something to save) and **History**, with **Rebuild** on a second row (see 5.2). Save does not end or restart the
 session: tracking is always on, the label never changes, and only **Reset** begins a new session.
 
 **Routes.** Idle text shows the start station, ship, cargo size, jump range and budget the search will use.
@@ -241,13 +243,42 @@ commander's own events count (`Commander` and `LoadGame` say who is current, sin
 fingerprint was recorded), so replaying twice, or EDMC then delivering live an event the replay already read, never counts
 anything twice. Nothing is replaced or discarded, and it reads at most `CATCH_UP_FILES` (80) files, skipping any last
 written before the session's last event. A ledger saved before the markers existed falls back on its last logged event.
-`rebuild_from_journal` (a fresh session built from one file) remains for recovering a session whose tally was lost.
+**Rebuild** (`rebuild_since`, `parse_since`) is for a session that began on another computer: the ledger file is local to each machine and only the journals sync, so the commander gives a UTC start time and the session is rebuilt from every journal from then on (the same replay functions, events before the start ignored), replacing the working tally and keeping its Spansh routes and searches. `rebuild_from_journal` (a fresh session built from one file) remains for recovering a session whose tally was lost.
 Catch-up changes only the working session: nothing reaches History until Save session.
 
 **Identity.** `id` = a short SHA-1 of the commander and the moment the session began, so saving again *replaces* that
 record (`HistoryBook.save` returns True when it did) instead of adding a duplicate, however many logins the session has
 spanned, and **Reset** (a new start time) is a new session. Reset asks to save first when `_unsaved()`: the session has
 content and its `(log length, net)` differs from the mark taken at the last save.
+
+### 5.3 Journals from another machine: the scan record
+
+The ledger, stock book, carrier records and history are files in each machine's plugin folder; only the journals are
+copied between machines. `trade_journal_scan.py` makes new journals take effect on their own and records what it read.
+
+- **Record.** `trade_journal_scan.json`: `files` (journal name -> `size` when read and when), `floor` (epoch seconds), and
+  `last_pass` / `last_found` for the line at the foot of the Session page. A file counts as new or changed when its **size**
+  differs from the record (a copy gets a new modified time without changing). Listed in `update.py`'s `_OWN_DATA_FILES`.
+- **Passes.** `trade_panel` runs `_scan_tick` 4 s after the panel is built and then every 60 s. A worker thread
+  (`WNTB-trade-scan`) calls `pending` (at most 80 files, **oldest first by each file's own first timestamp**, because copying
+  scrambles modified times) and `read_events` (only the lines Trade can use, parsed). The Tk thread then calls `apply` for
+  each file and `mark`, saves what changed and refreshes. Nothing but the Tk thread mutates the ledger, stock or carrier state.
+- **The playing file is skipped** (`skip` = EDMC's current logfile); its events arrive live. It is read on a later pass.
+- **First pass.** With nothing recorded, only the newest 80 files are taken and `floor` is set to the oldest of them's
+  modified time; older files are never looked at later, so history is not crawled 80 files a minute.
+- **`apply`** feeds one file's events to `trade_ledger.replay_entries` for every commander's session that has a starting
+  point (`watermark` parses; otherwise it is left alone, like `catch_up`), `trade_stock.replay_entries`, and a
+  `CarrierTracker` that shares the live `records` but has its own dock state. Each already refuses to count an event twice
+  (watermark and fingerprints; stock `as_of`; carrier timestamps), so applying a file twice, or an older file after a newer
+  one, changes nothing. `CarrierTracker.feed` skips a `CargoTransfer` stamped at or before the record's `updated`, and
+  never lets an older `CarrierStats` replace a newer record.
+- **Carrier estimate.** `apply_transfer` caps cargo at `capacity` (and at 0) and sets `estimate` when the cap bit; the panel
+  prefixes the figures with `~` and adds a note. A `CarrierStats` replaces the record, which clears it.
+- **Rebuild** (`trade_ledger.rebuild_since`, `parse_since`; the **Rebuild** button) is the manual counterpart for a session
+  whose start predates the scan: it reads the journals from a typed UTC start time into a fresh ledger (events before it
+  ignored, routes and searches kept) and replaces the working session.
+- **Not covered.** Cargo that leaves the carrier on a trade order or sale has no event; only the next `CarrierStats` fixes
+  it. Reset, Save session and Clear stock are per machine.
 
 ## 6. Hold, ship and landing pads
 
@@ -301,6 +332,12 @@ event names, and replays them oldest first through a `CarrierTracker`. The resul
 through a `queue.Queue` and merged (`merge`: a record replaces the held one only if its `updated` timestamp is
 newer; ISO timestamps compare as text). The tracker's final dock state is adopted when the live one has none.
 Against a real journal folder this took 0.03 s.
+
+**Transfers can overflow.** The journal never says when cargo leaves the carrier on a trade order or sale, so transfers
+alone can add up to more than the bay holds. `apply_transfer` then caps `cargo` at `capacity` (or 0) and sets `estimate` on
+the record; `cargo_blocks` shows `~` before the figures and a warning note. A `CarrierStats` replaces the record and clears
+the flag. `CarrierTracker.feed` also ignores a `CargoTransfer` stamped at or before the record's `updated`, and an older
+`CarrierStats` than the held record, so the same journal read twice (or an older one read late, see 5.3) changes nothing.
 
 **Commander matching** is case-insensitive (`key_for`): the journal wrote `BOCHEAUX` where EDMC says `Bocheaux`.
 
@@ -439,7 +476,7 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 
 Files in the plugin folder (all are commander data and must survive updates; see `_OWN_DATA_FILES`, which
 `tests/test_own_data_files.py` enforces): `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json` and
-`trade_history.json`. `trade_ledger.json` is `{"ledgers": {commander: ledger}}` (one session per commander; the
+`trade_history.json`, `trade_journal_scan.json`. `trade_ledger.json` is `{"ledgers": {commander: ledger}}` (one session per commander; the
 single-ledger file of an earlier build is read as the current commander's). `trade_carrier.json` was a flat
 `{commander: record}` map in an earlier build; `load_all` reads that as a fleet carrier.
 
@@ -478,8 +515,10 @@ space, the tracker's attribution rules, the per-commander choice and the journal
 `tests/test_trade_roundtrip.py` (the hold fill, supply and demand limits, the no-empty-leg rule, ranking by profit per hour, the
 carrier, ground, pad and distance filters) and
 `tests/test_trade_blocks.py` (the page model's plain-text form, and the ground-facilities switch) and
-`tests/test_trade_history.py` (the ledger's log, jumps and start, rebuilding a session from a journal file and
-skipping the events it already counted, the record and book, and every number and row in `trade_stats`). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
+`tests/test_trade_history.py` (the ledger's log, jumps and start, rebuilding a session from a journal file or from a start
+time, skipping the events it already counted, the record and book, and every number and row in `trade_stats`) and
+`tests/test_trade_journal_scan.py` (finding new, grown and copied journal files, oldest-first ordering, the first-pass floor,
+and applying a file twice or an older one late). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
 checked by `tests/trade_view_smoke.py` (run by `test_trade_view_smoke.py` in a subprocess, skipped without a display):
 no label asks for more than the width available, unchanged blocks aren't redrawn, and a table's number columns end
 at the same place. They run without

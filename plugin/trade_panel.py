@@ -28,13 +28,14 @@ import re
 import threading
 import time
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 from typing import Any, Callable, Dict, List, Optional
 
 import myNotebook as nb
 from config import appname, config
 
 from . import inventory_names
+from . import trade_journal_scan
 from . import mining_price_finder_dialog as price_finder_dialog
 from . import mining_spansh_client as spansh_prices
 from . import panelkit
@@ -70,6 +71,8 @@ _CFG_MIN_SUPPLY = "wntb_trade_min_supply"          # round trip: least tonnes th
 _CFG_MIN_DEMAND = "wntb_trade_min_demand"          # round trip: least tonnes the selling station must want
 _CFG_CURRENT_PAGE = "wntb_trade_current_page"
 _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
+_SCAN_FIRST_MS = 4000      # first look for unread journals, a few seconds after the panel appears
+_SCAN_EVERY_MS = 60_000    # then once a minute
 _CFG_CARRIERS = "wntb_trade_include_carriers"
 _CFG_GROUND = "wntb_trade_include_ground"  # ground (planetary) facilities in price results
 _CFG_MARKET_SIDE = "wntb_trade_market_side"  # "sell" or "buy": which side of the market the search is for
@@ -169,6 +172,9 @@ class TradePanelController:
         self._carrier = trade_carrier.CarrierTracker()  # each commander's fleet / squadron carrier cargo space
         self._cmdr = ""
         self._backfill: "queue.Queue[trade_carrier.CarrierTracker]" = queue.Queue()
+        self._scanlog: trade_journal_scan.Registry = trade_journal_scan.new_registry()   # which journal files have been read
+        self._scanned: "queue.Queue[list]" = queue.Queue()                    # worker -> Tk: [(path, size, events)]
+        self._scan_running = False
         self._last_saved = 0.0
 
         # What the journal has told us.
@@ -209,6 +215,7 @@ class TradePanelController:
         self._button_b: Optional[tk.Button] = None
         self._button_c: Optional[tk.Button] = None
         self._button_d: Optional[tk.Button] = None
+        self._button_e: Optional[tk.Button] = None
         self._search_row: Optional[tk.Frame] = None
         self._side_row: Optional[tk.Frame] = None
         self._side_buttons: Dict[str, tk.Button] = {}
@@ -239,6 +246,7 @@ class TradePanelController:
         self._carrier.records = trade_carrier.load_all(plugin_dir)
         self._stock.books = trade_stock.load_all(plugin_dir)
         self._history.sessions = trade_history.load_all(plugin_dir)
+        self._scanlog = trade_journal_scan.load(plugin_dir)
         try:
             # Catch up on trades made while EDMC was closed, before any live event can arrive.
             trade_stock.backfill(self._stock, _journal_dir())
@@ -446,8 +454,12 @@ class TradePanelController:
         self._side_off_colors = panelkit.capture_toggle_off_colors(self._side_buttons[trade_prices.SELL])
         self._paint_side_buttons()
 
-        buttons = tk.Frame(parent)
-        buttons.grid(row=3, column=0, columnspan=3, sticky="w")
+        rows = tk.Frame(parent)
+        rows.grid(row=3, column=0, columnspan=3, sticky="w")
+        buttons = tk.Frame(rows)
+        buttons.pack(side=tk.TOP, anchor="w")
+        extra = tk.Frame(rows)    # a second row, so a fifth button never widens the panel
+        extra.pack(side=tk.TOP, anchor="w")
         self._button_a = tk.Button(buttons, text="")
         self._button_a.pack(side=tk.LEFT)
         self._button_b = tk.Button(buttons, text="")
@@ -456,9 +468,66 @@ class TradePanelController:
         self._button_c.pack(side=tk.LEFT, padx=(6, 0))
         self._button_d = tk.Button(buttons, text="")
         self._button_d.pack(side=tk.LEFT, padx=(6, 0))
+        self._button_e = tk.Button(extra, text="")
+        self._button_e.pack(side=tk.LEFT, pady=(3, 0))
 
         self._refresh()
         parent.after(2000, self._poll_carrier_history)
+        parent.after(_SCAN_FIRST_MS, self._scan_tick)
+
+    # --- reading journals that arrive from elsewhere ---------------------------------
+
+    def _scan_tick(self) -> None:
+        """Every minute: look for journal files this computer hasn't read (copied over from the other machine, or played
+        with EDMC closed) and read them on a worker thread. The Tk thread applies what came back."""
+        if not self._alive():
+            return
+        self._apply_scanned()
+        if not self._scan_running and self._plugin_dir is not None:
+            self._scan_running = True
+            threading.Thread(target=self._scan_worker, args=(_journal_dir(), _current_logfile()),
+                             name="WNTB-trade-scan", daemon=True).start()
+        self._parent.after(_SCAN_EVERY_MS, self._scan_tick)  # type: ignore[union-attr]
+        self._parent.after(1500, self._apply_scanned)        # type: ignore[union-attr]
+
+    def _scan_worker(self, journal_dir: str, playing: Optional[str]) -> None:
+        batch: list = []
+        try:
+            for path, size in trade_journal_scan.pending(journal_dir, self._scanlog, skip=playing):
+                batch.append((path, size, trade_journal_scan.read_events(path)))
+        except Exception:
+            logger.exception("Could not scan the journal folder for new files")
+        finally:
+            self._scanned.put(batch)
+
+    def _apply_scanned(self) -> None:
+        try:
+            batch = self._scanned.get_nowait()
+        except queue.Empty:
+            return
+        self._scan_running = False
+        changed = {"ledger": False, "stock": False, "carrier": False}
+        for path, size, events in batch:
+            try:
+                got = trade_journal_scan.apply(events, self._book.ledgers, self._stock, self._carrier.records)
+            except Exception:
+                logger.exception("Could not apply journal %s", path)
+                continue
+            changed = {key: changed[key] or got[key] for key in changed}
+            trade_journal_scan.mark(self._scanlog, path, size)
+        trade_journal_scan.note_pass(self._scanlog, len(batch))
+        if self._plugin_dir is not None:
+            trade_journal_scan.save(self._plugin_dir, self._scanlog)
+            if changed["ledger"]:
+                self._save(force=True)
+            if changed["stock"]:
+                self._save_stock(force=True)
+            if changed["carrier"]:
+                trade_carrier.save_all(self._plugin_dir, self._carrier.records)
+        if batch:
+            logger.info("Trade read %d new or changed journal file(s): %s", len(batch),
+                        ", ".join(k for k, v in changed.items() if v) or "nothing new to count")
+        self._refresh()
 
     def _poll_carrier_history(self) -> None:
         """The journal read takes a moment at startup; pick its result up once it is ready."""
@@ -494,7 +563,8 @@ class TradePanelController:
             self._set_buttons(("Reset", self._reset_ledger, True),
                               ("Clear stock", self._clear_stock, bool(self._stock.holdings(self._cmdr))),
                               ("Save session", self._save_session, trade_history.has_content(self._ledger)),
-                              ("History", self._open_history, True))
+                              ("History", self._open_history, True),
+                              ("Rebuild", self._rebuild_ledger, bool(self._cmdr)))
         elif self._page == trade_pages.ROUTES:
             blocks = self._routes_blocks(busy)
             self._set_buttons(
@@ -519,13 +589,14 @@ class TradePanelController:
                 else:
                     row.grid_remove()
 
-    def _set_buttons(self, first, second, third, fourth=None) -> None:
+    def _set_buttons(self, first, second, third, fourth=None, fifth=None) -> None:
         # Unpack all, then pack in order, so the left-to-right order can never swap.
-        for button in (self._button_a, self._button_b, self._button_c, self._button_d):
+        for button in (self._button_a, self._button_b, self._button_c, self._button_d, self._button_e):
             if button is not None:
                 button.pack_forget()
         for button, spec, padx in ((self._button_a, first, (0, 0)), (self._button_b, second, (6, 0)),
-                                   (self._button_c, third, (6, 0)), (self._button_d, fourth, (6, 0))):
+                                   (self._button_c, third, (6, 0)), (self._button_d, fourth, (6, 0)),
+                                   (self._button_e, fifth, (0, 0))):
             if button is None or spec is None:
                 continue
             text, command, enabled = spec
@@ -543,6 +614,7 @@ class TradePanelController:
         blocks += self._hold_blocks()
         blocks += trade_carrier.cargo_blocks(self._carrier.records.get(trade_carrier.key_for(self._cmdr)),
                                              self._carrier_mode(self._cmdr))
+        blocks.append(Note(trade_journal_scan.summary(self._scanlog)))
         return blocks
 
     def _display(self, name: str) -> str:
@@ -859,6 +931,37 @@ class TradePanelController:
                                                          credits=self._credits or None))
         self._save(force=True)
         self._refresh()
+
+    def _rebuild_ledger(self) -> None:
+        """Rebuild the session from the journals, from a start time the commander gives. For a session that began on another
+        machine: the ledger file is local to each machine and only the journals travel."""
+        if not self._cmdr or self._parent is None:
+            return
+        current = ledger_mod.meta(self._ledger).get("started") if self._ledger else None
+        text = simpledialog.askstring(
+            "Rebuild trade session",
+            "Count everything in the journals from this time (UTC), as YYYY-MM-DD or YYYY-MM-DD HH:MM.\n"
+            "Use when the session began on another computer. This replaces the tally shown here.",
+            initialvalue=(current or "").replace("T", " ").rstrip("Z"), parent=self._parent)
+        if text is None:
+            return
+        since = ledger_mod.parse_since(text)
+        if since is None:
+            messagebox.showwarning("Rebuild trade session", "That isn't a date and time WNTB can read.\n\n"
+                                   "Use YYYY-MM-DD or YYYY-MM-DD HH:MM (UTC).", parent=self._parent)
+            return
+        if self._unsaved() and not messagebox.askyesno(
+                "Rebuild trade session", "This session has trades that haven't been saved to Trade History, and rebuilding "
+                "replaces them.\n\nRebuild anyway?", parent=self._parent):
+            return
+        rebuilt = ledger_mod.rebuild_since(self._cmdr, _journal_dir(), since, keep=self._ledger)
+        if rebuilt is None:
+            messagebox.showinfo("Rebuild trade session", "No trades or costs for this commander were found in the journals "
+                                "from that time.", parent=self._parent)
+            return
+        self._book.put(self._cmdr, rebuilt)
+        self._save(force=True)
+        self._say(f"Rebuilt from the journals since {since.replace('T', ' ').rstrip('Z')} UTC. Check the totals, then Save session.")
 
     def _route_hops(self) -> int:
         return _cfg_int(_CFG_MAX_HOPS, _DEFAULT_MAX_HOPS, 1, 10)

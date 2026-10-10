@@ -331,7 +331,7 @@ several requests in flight, use the generation counter above instead.
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
   `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`,
-  `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`. `codex_catalog.json` is a cache of a downloaded list rather
+  `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
 **Why files instead of `config`?** `config` is for settings, not structured or growing data. JSON

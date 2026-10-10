@@ -224,6 +224,7 @@ Hover over any button for a moment to see its full name.
 | **Save session** | Keep this session in Trade History (the tally keeps running; press Reset to start a new one) | Trade (Session page) |
 | **History** | Open the Trade History window | Trade (Session page) |
 | **Clear stock** | Forget the unsold stock list | Trade (Session page) |
+| **Rebuild** | Recount the session from the journals from a start time you give (UTC); for a session that began on another computer | Trade (Session page) |
 | **Find routes** / **Cancel** | Ask Spansh for trade routes / stop waiting | Trade (Routes page) |
 | **Hops** | Cycle the route length through 2, 3, 4 and 5 hops | Trade (Routes page) |
 | **Round trip** | Find the best back-and-forth pair of stations, loaded both ways | Trade (Routes page) |
@@ -520,7 +521,9 @@ buttons are at the top, under the page arrows.
 - **Each commander has their own.** Switching to another commander never loses anyone's tally.
 - **Playing with EDMC closed is fine.** The next time EDMC sees that commander it catches the session up from the game's
   journal files and adds what it missed. It only adds what is new, so it can't count anything twice. (On Linux this
-  needs EDMC's **Journal directory** to be set; see [Using WNTB on Linux](#using-wntb-on-linux).)
+  needs EDMC's **Journal directory** to be set; see [Using WNTB on Linux](#using-wntb-on-linux).) Journal files copied
+  over from another computer are found and read the same way, while EDMC is running; see
+  [Using Trade on two computers](#using-trade-on-two-computers).
 - **Only what WNTB has seen is counted.** Trades made before WNTB first ran, or in a session you reset, aren't included.
 - **Nothing is kept for good unless you ask.** Press **Save session** to put it in Trade History (below).
 - **Finishing a session and starting the next: Save session, then Reset.** There is no Start or Track button, because
@@ -528,6 +531,43 @@ buttons are at the top, under the page arrows.
   button stays **Save session** (saving again updates the same entry). **Reset** is what begins a new session, and if
   the current one has unsaved trades it offers to save it first. If you skip Reset, your next trades are added to the
   old session.
+
+### Using Trade on two computers
+
+If you play on more than one computer (say Windows and Linux), each one keeps **its own** Trade records. The game's
+journals are the only thing that has to travel between them, and WNTB reads them for you.
+
+**What lives on each computer** (files in the WNTB plugin folder, never shared): the session tally
+(`trade_ledger.json`), the stock list (`trade_stock.json`), the carrier figures (`trade_carrier.json`), saved sessions
+(`trade_history.json`) and the list of journals already read (`trade_journal_scan.json`). Copying these between
+computers is not needed and not recommended.
+
+**What to do:**
+
+1. Copy the journal files from the computer you played on into the other computer's journal folder (the one EDMC's
+   **Journal directory** points at). Copy them all, not just the newest; copying a file that is already there is fine.
+   Doing it while the game is closed is best, because a file that is still being written is read again later.
+2. That's it. WNTB looks for journal files it hasn't read **a few seconds after EDMC starts and then once a minute**.
+   It reads each new file (and any file that has grown since) once, and adds its trades, costs, stock and carrier
+   transfers to this computer's records. The foot of the Session page says how many files it has read and when it last
+   looked, for example "Journals read: 85 file(s). Last check 08:12 UTC, 1 new or grown."
+3. It only ever **adds what is new**. Reading a file twice, or reading files out of order, never counts anything twice
+   and never overwrites a newer carrier figure with an older one.
+
+**Things that are not obvious:**
+
+- **The file you are playing right now is left alone** (EDMC already delivers its events live). It is read on a later
+  look, after the game has moved on to a new file or after EDMC restarts.
+- **The first time, only the 80 newest files are read**; older history is not crawled. If your session began before
+  that, use **Rebuild** (below).
+- **A session that began on the other computer is not copied, only the journals are.** If this computer first met the
+  commander partway through, its tally starts from there. Press **Rebuild** on the Session page and give the date and
+  time (UTC) the session began: WNTB recounts the journals from then on and replaces the tally. Check the totals against
+  the other computer, adjusting the start time until they match, then **Save session** if you want to keep it.
+- **Reset, Save session and Clear stock only affect the computer you press them on.** Press Reset on both if you start
+  a fresh session.
+- **Carrier cargo only becomes exact when you open Carrier Management** (see
+  [Your fleet carrier and squadron carrier](#your-fleet-carrier-and-squadron-carrier)). Copying journals does not change that.
 
 ### The Session page (works offline)
 
@@ -556,6 +596,9 @@ It reads your journal only; nothing is sent anywhere. Top to bottom:
 
 Buttons: **Reset** starts the tally again (if the session has trades you haven't saved, it asks whether to save it to
 Trade History first), **Clear stock** forgets the unsold stock list, **Save session** and **History** are described next.
+On a second row, **Rebuild** recounts the session from the journals starting at a time you give (UTC, as
+`YYYY-MM-DD` or `YYYY-MM-DD HH:MM`) and replaces the tally; use it when the session began on another computer (see
+[Using Trade on two computers](#using-trade-on-two-computers)). It asks first if the current tally is unsaved.
 
 ### Trade History (saving sessions)
 
@@ -652,6 +695,21 @@ How it stays up to date:
   someone else's carrier never changes your figure.
 - Reserved space, and anything your carrier does itself (trade orders, sales), only update the next time you open Carrier
   Management.
+
+**To get the real, up-to-date cargo figure, open Carrier Management** (the carrier's management screen, where you see its
+services and cargo). The game writes a fresh report of the carrier's whole inventory at that moment and WNTB shows it within
+a couple of seconds. Nothing else in the game's files lists what is in the carrier's hold; there is no other way to read it.
+
+**Quirks worth knowing:**
+
+- **A `~` before the figure (for example `~23,720 / 23,720 t`) means an estimate.** The transfers WNTB has seen add up to
+  more than the carrier can hold (or take out more than it holds), so cargo left the carrier without the game writing
+  anything down, usually a trade order or a sale made from the carrier. A note under the figure says so. Open Carrier
+  Management and the `~` goes away.
+- **Playing on another computer, or with EDMC closed, leaves the figure stale** until the journals are copied over and
+  read, and even then it is only as good as the last time you opened Carrier Management.
+- **The figure can look wrong right after you unload.** The unload is in the journal, but the total is not; open Carrier
+  Management after a big load to put an exact number back.
 
 ### Trade settings
 

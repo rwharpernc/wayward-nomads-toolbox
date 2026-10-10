@@ -156,6 +156,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_commodity_entry.py` | The type-ahead Commodity box widget |
 | `trade_history.py` | Saved sessions, the `HistoryBook` and `trade_history.json` |
 | `trade_history_window.py` | The Trade History window |
+| `trade_journal_scan.py` | Finds journal files not read yet (or grown) and applies them to the ledger, stock and carrier; `trade_journal_scan.json` |
 | `trade_ledger.py` | The per-commander session ledger, running costs, catch-up from journals and `trade_ledger.json` |
 | `trade_market.py` | Reads `Market.json` and values your cargo at the docked station |
 | `trade_pages.py` | Trade's page order |

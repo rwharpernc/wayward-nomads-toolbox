@@ -219,6 +219,40 @@ class RebuildFromJournalTests(unittest.TestCase):
         self.assertTrue(ledger_mod.already_counted(rebuilt, events[-2]))
 
 
+class RebuildSinceTests(RebuildFromJournalTests):
+    """A session that began on another computer: only the journals travelled, so the tally is rebuilt from a start time."""
+
+    def test_only_events_from_the_start_time_count(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self._write(folder, self._events())
+            rebuilt = ledger_mod.rebuild_since("bocheaux", folder, "2026-10-09T10:25:00Z")
+            self.assertEqual(rebuilt["rows"]["Gold"]["sold"], 100)
+            self.assertEqual(rebuilt["rows"]["Gold"]["bought"], 50)
+            self.assertEqual(rebuilt["expenses"], {"repairs": 1_000})
+            self.assertEqual(ledger_mod.meta(rebuilt)["started"], "2026-10-09T10:25:00Z")
+            self.assertEqual(ledger_mod.meta(rebuilt)["jumps"], 0)
+            self.assertEqual(ledger_mod.meta(rebuilt)["credits_start"], 5_300_000)
+
+    def test_an_early_start_equals_the_whole_file_and_resumes_without_double_counting(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            path = self._write(folder, self._events())
+            rebuilt = ledger_mod.rebuild_since("Bocheaux", folder, "2026-10-09T00:00:00Z")
+            whole = ledger_mod.rebuild_from_journal(path, "Bocheaux")
+            self.assertEqual(rebuilt["rows"], whole["rows"])
+            self.assertEqual(rebuilt["expenses"], whole["expenses"])
+            self.assertEqual(ledger_mod.catch_up(rebuilt, "Bocheaux", folder), 0)
+
+    def test_nothing_found_or_a_bad_start_gives_none_and_parse_since_reads_typed_times(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self._write(folder, self._events())
+            self.assertIsNone(ledger_mod.rebuild_since("Nobody", folder, "2026-10-09T00:00:00Z"))
+            self.assertIsNone(ledger_mod.rebuild_since("Bocheaux", folder, "soon"))
+        self.assertEqual(ledger_mod.parse_since("2026-10-09"), "2026-10-09T00:00:00Z")
+        self.assertEqual(ledger_mod.parse_since(" 2026-10-09 07:10 "), "2026-10-09T07:10:00Z")
+        self.assertEqual(ledger_mod.parse_since("2026-10-09T07:10:05Z"), "2026-10-09T07:10:05Z")
+        self.assertIsNone(ledger_mod.parse_since("tomorrow"))
+
+
 class SessionSpansPlaySessionsTests(unittest.TestCase):
     """One commander loading a carrier over several play sessions: three logins (three journal files), the middle one
     played with EDMC closed, another commander in the same file, and EDMC restarted in between. The session is the
