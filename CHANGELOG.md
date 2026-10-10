@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.5.2 - 2026-10-10
 
 ### Added
 - **Catching up after an EDMC restart, more widely.** Features that only saw live events now read the recent journals
