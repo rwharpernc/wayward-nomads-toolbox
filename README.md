@@ -582,17 +582,19 @@ It reads your journal only; nothing is sent anywhere. Top to bottom:
   profit** (trade profit less those costs; the credits per hour is the net), with the trade profit and each cost listed
   under it. Insurance rebuys and fines aren't counted, and a cost only counts once WNTB has seen it.
 - **Stock bought, not yet sold**: what you've spent on commodities still waiting to be sold, at the average price you
-  paid, and how much of each is still in your hold and how much is not (usually moved to your carrier). It follows the cargo, not
+  paid, and how much of each is **in ship hold** and how much is **not in ship hold** (usually moved to your carrier
+  cargo storage). It follows the cargo, not
   the session, so it carries on after a Reset. It is one list for both ways of trading: on a station-to-station run it
   goes up when you buy and down when you sell; when you're loading your carrier for a bulk sale, every purchase adds to
   it, and moving cargo to or from the carrier changes where it is, not what you paid. It only comes down when you
   **sell**. WNTB reads your recent journals when it starts, so purchases made while EDMC was closed are included (a first
   run looks back 14 days). Cargo that leaves some other way, such as your carrier selling it on a trade order, stays
   listed until you press **Clear stock**.
-- **Ship and hold**: your ship and the landing pad it needs (for example "Type-9 Heavy, large"), how many tonnes are used,
+- **Ship hold**: your ship and the landing pad it needs (for example "Type-9 Heavy, large"), how many tonnes are used,
   the capacity and how much is free, what the station you're docked at would pay for the whole hold, and what each
   commodity aboard would sell for there.
-- **Your carrier's cargo space**, if you have one (see [Your fleet carrier and squadron carrier](#your-fleet-carrier-and-squadron-carrier)).
+- **Carrier cargo** (your carrier's cargo storage, shown as **Carrier cargo used**, **Carrier cargo free** and **Carrier
+  reserved for orders**, so it is never mistaken for your ship hold), if you have one (see [Your fleet carrier and squadron carrier](#your-fleet-carrier-and-squadron-carrier)).
 
 Buttons: **Reset** starts the tally again (if the session has trades you haven't saved, it asks whether to save it to
 Trade History first), **Clear stock** forgets the unsold stock list, **Save session** and **History** are described next.
@@ -619,7 +621,7 @@ one commander there is also a commander filter. The tabs show everything about t
 - **Route**: the stations you traded at in the order you flew them, with what was bought and sold at each, the net on that
   visit and a running net. Going back to a station later is a new visit.
 - **Trades**: every purchase, sale and cost with its time, price, total, profit, station and system, 200 at a time.
-- **Stock & carrier**: the stock bought but not sold, the hold, and your carrier's cargo space when you saved.
+- **Stock & carrier**: the stock bought but not sold, the ship hold, and your carrier's cargo space when you saved.
 - **Lookups**: the Spansh routes and market searches you made during the session, and the best result of each.
 
 **Copy summary** puts a plain-text report on the clipboard, **Export log (CSV)** saves the full trade log to a file you
@@ -685,7 +687,7 @@ when you arrive.
 Not every commander has a carrier, and some have a fleet carrier, a squadron carrier or both. Under **Settings → WNTB →
 Trade**, each commander WNTB has seen gets a choice: **Auto** (show whatever your journal has revealed), **None**,
 **Fleet**, **Squadron** or **Both**. Nothing is shown for a carrier you haven't chosen. For each one the Session page shows
-the cargo space used, free, and reserved for trade orders, for example "5,060 / 23,720 t used, 18,660 t free".
+the carrier cargo used, free, and reserved for orders, for example "5,060 / 23,720 t used, 18,660 t free".
 
 How it stays up to date:
 
@@ -840,6 +842,8 @@ These are always available, whichever mode you're in.
 
 - **Landing Assist** shows which landing pad you've been assigned while docking, in the panel and as
   a diagram on your game screen. Turn it on and choose where it appears in **Settings → Always On → Landing**.
+  If the overlay is still starting when docking is approved, WNTB keeps retrying for up to three minutes, so the
+  diagram appears as soon as the overlay is up.
 - **Interdiction Warning** puts an alert on your game screen the moment an interdiction starts. It has
   no panel button, only Settings. Turn it on and try it with **Test Warning** in **Settings →
   Interdiction Warning**.

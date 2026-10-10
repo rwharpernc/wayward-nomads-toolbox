@@ -235,7 +235,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) section 12
 | Module | What it is |
 |---|---|
 | `interdiction.py` | Interdiction Warning overlay and detection |
-| `landing.py` | Landing Assist: assigned pad, diagram on the overlay and in the panel |
+| `landing.py` | Landing Assist: assigned pad, diagram on the overlay and in the panel; one render worker that retries until the overlay is up |
 
 ## Shared window kit (`plugin/uikit/`)
 
