@@ -61,6 +61,11 @@ class BuildCardTests(unittest.TestCase):
         built = card.build_card(site(), {}, {}, show_fc=False, max_rows=1)
         self.assertEqual((len(built.rows), built.hidden), (1, 1))
 
+    def test_no_limit_lists_every_commodity(self) -> None:
+        built = card.build_card(site(), {}, {}, show_fc=False, max_rows=0)
+        self.assertEqual((len(built.rows), built.hidden), (2, 0))
+        self.assertEqual(card.DEFAULT_ROWS, 0)
+
     def test_nothing_to_draw(self) -> None:
         self.assertIsNone(card.build_card(None, {}, {}, False))
         self.assertIsNone(card.build_card(site(complete=True), {}, {}, False))
