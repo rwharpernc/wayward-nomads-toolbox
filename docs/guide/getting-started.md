@@ -48,7 +48,9 @@ Set Elite to **borderless** or **windowed** mode and either overlay will work. T
 4. **Check the result.** You should now have `plugins/WNTB/load.py`. If you see `plugins/WNTB/WNTB/load.py`, you
    extracted one level too deep; move the inner folder up.
 
-5. **Restart EDMC.** A **Wayward Nomads Toolbox (WNTB)** panel appears in the main window.
+5. **Restart EDMC.** A **Wayward Nomads Toolbox (WNTB)** panel appears in the main window. **On a fresh install
+   it starts folded up**, showing only the title (`▸ Wayward Nomads Toolbox (WNTB)`). Click the title to open it.
+   WNTB remembers whether you left it open or closed.
 
 If it doesn't, see [Troubleshooting](troubleshooting.md#the-wntb-panel-doesnt-appear). On Linux, also read
 [WNTB on Linux](linux.md) before you go further, because EDMC needs a couple of settings there.
@@ -60,8 +62,9 @@ Download the new `WNTB.zip` and extract it over the existing `WNTB` folder, repl
 **Don't delete the old folder first.** Your saved data (mining hotspots, trade sessions, ship builds and so on)
 lives inside it.
 
-WNTB can also update itself. Turn on **Automatic updates** in its settings. It is **off by default**, and it only
-looks at official published releases.
+WNTB can also update itself. Turn on **Automatically download and install updates** under
+**File → Settings → WNTB → General → Updates**. It is **off by default**, and it only looks at official published
+releases.
 
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 
@@ -69,7 +72,7 @@ looks at official published releases.
 
 You don't have to configure anything to get value out of WNTB, but this short tour helps:
 
-1. Look at the row of buttons under the "WNTB" title. Those are the seven **modes**. Click one and the panel below
+1. Click the WNTB title if the panel is folded up. Then look at the row of buttons under the "WNTB" title. Those are the seven **modes**. Click one and the panel below
    changes. Hover over a button for a moment to see its full name.
 2. Open **File → Settings → WNTB**. Each mode has its own tab. Look through the ones you care about and turn
    things on or off.
@@ -109,7 +112,7 @@ the panel to move between them. For example, Trade has **Session**, **Routes** a
 
 ### Collapsing the panel
 
-Click the "WNTB" title to fold the whole panel away. Click it again to expand it. Sections inside Exploration also
+Click the WNTB title (it shows ▸ when folded and ▾ when open) to fold the whole panel away. Click it again to expand it. It starts folded on a fresh install. Sections inside Exploration also
 fold (look for the ▸ / ▾ marks), and WNTB remembers which ones you left open.
 
 ### Window height
@@ -118,12 +121,21 @@ The EDMC window is small and every plugin shares it. So WNTB **resizes the windo
 open it, switch modes, or expand or collapse a section. You never need to drag it taller. It leaves your width and
 position alone.
 
-If you'd rather set the height yourself, untick the option under **File → Settings → WNTB → Window**.
+If you'd rather set the height yourself, untick *Resize the EDMC window's height to fit WNTB automatically* under
+**File → Settings → WNTB → General → Window**.
 
 ### Settings
 
-All settings live under **File → Settings → WNTB**, in tabs grouped by mode: General, Powerplay, Missions,
-Exploration, Mining, Trade, BGS, Field Ops and Always On. Exploration and Field Ops have a row of tabs of their own.
+All settings live under **File → Settings → WNTB**, in tabs: General, Powerplay, Missions, Exploration, Mining,
+Trade, BGS, Field Ops and Always On. Some have a row of tabs of their own:
+
+| Tab | Inner tabs |
+|---|---|
+| **General** | Overlay Connection, Window, Updates |
+| **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Alerts (Auto-Honk, Discovery and Notable Bodies) |
+| **Field Ops** | Screenshots, Inventory, Ship Builds, Colonisation |
+| **Always On** | Interdiction Warning, Landing |
+
 This is where you switch things on and off and adjust how they behave.
 
 ### Pop-out windows
@@ -151,8 +163,8 @@ Switch to the mode first, then use the button listed here.
 Notes:
 
 - You don't need to be mining to open the Mining Book. It lists your saved hotspots either way.
-- The Missions windows only exist while you have active missions. Click **All** for a full table, or click a
-  mission card for that mission's details.
+- In Missions, click **All** for a table of every active mission, or click a mission card for that mission's
+  details.
 - If you can't find the BGS or Codex Completionist sections, each can be switched off under
   **File → Settings → WNTB**. Both are on by default.
 

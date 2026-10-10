@@ -84,7 +84,7 @@ commodity aboard would sell for there.
 - **Reset**: starts the tally again (asks whether to save first if there are unsaved trades).
 - **Save session**: keeps the session in Trade History. Greyed out until there is something to save.
 - **History**: opens the Trade History window.
-- **Rebuild** (second row): recounts the session from the journals starting at a time you give, in UTC, as
+- **Rebuild**: recounts the session from the journals starting at a time you give, in UTC, as
   `YYYY-MM-DD` or `YYYY-MM-DD HH:MM`, and replaces the tally. Use it when the session began on another computer.
   It asks first if the current tally is unsaved.
 
@@ -137,7 +137,8 @@ the page shows its reason.
 
 ### Hops
 
-The **Hops** button cycles the route length through 2, 3, 4 or 5 (the same setting as in Settings).
+The **Hops** button shows the current length (for example `Hops: 3`). Each press cycles it through 2, 3, 4 and 5. It
+is the same setting as *Route hops* in Settings, which accepts 1 to 10.
 
 **2 hops** is the choice for a back-and-forth pair. When the route ends at the station it started from and every leg
 carries cargo, the result is headed "repeatable loop" and says you can fly it again. Otherwise the page says why it

@@ -3,22 +3,23 @@
 Most of WNTB works entirely on your own computer, reading the game's journal files. This page lists **every**
 feature that contacts an outside site, so you can decide what you're comfortable with.
 
-**The short version:** nothing contacts the internet unless you click a lookup button or switch a lookup on. The
-two exceptions are BGS tick detection (on by default while BGS is on) and, on first open, the Rare Goods Finder and
-Codex "Not found" tab. All of them can be avoided; the table says how.
+**The short version:** most lookups only run when you click a button or after you switch them on in Settings. The
+exceptions are **BGS tick detection**, which is on by default (turn it off in Settings → BGS), and the **Rare Goods
+Finder** and **Codex "Not found" tab**, which have no on/off setting and contact their service when you open them.
+The table says exactly when.
 
 | Feature | Contacts | When |
 |---|---|---|
 | N.S. and W.D. buttons (nearest neutron star / white dwarf) | Spansh | Only when you click **N.S.** or **W.D.** |
-| Rare Goods Finder | Spansh | The first time you open the window for each system, to see which Power controls it. Remembered until you restart EDMC |
+| Rare Goods Finder | Spansh | When you open the window, to see which Power controls each listed rare's origin system. Remembered until you restart EDMC |
 | Codex Completionist "Not found" tab | Canonn | Downloads a list when you open the details window (if it has none, or it's over two weeks old), or when you click **Refresh Catalog** |
 | GEC Nearby POI | edastro.com | Only when you click **FIND** |
 | Canonn Nearby POI | Canonn | Downloads site lists when you click **FIND** |
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons. Some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
-| Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings |
+| Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings. Once on, the ring reserve lookup also runs by itself each time you drop into a ring |
 | Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. See below for how often |
-| BGS tick detection | A community tick-time service | Every 60 seconds while BGS is on. Can be turned off in Settings |
+| BGS tick detection | A community tick-time service (`tick.infomancer.uk`) | **On** by default. Every 60 seconds while BGS is on. Can be turned off in Settings → BGS |
 | Automatic updates | GitHub | **Off** by default |
 
 ### How often do Trade lookups ask?
