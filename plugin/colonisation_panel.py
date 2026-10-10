@@ -35,6 +35,7 @@ _CFG_OVERLAY_ENABLED = "wntb_colonisation_overlay_enabled"
 _CFG_OVERLAY_X = "wntb_colonisation_overlay_x"
 _CFG_OVERLAY_Y = "wntb_colonisation_overlay_y"
 _CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_rows"
+_CFG_OVERLAY_RIGHT_PANEL = "wntb_colonisation_overlay_right_panel"
 
 
 def _get_int(key: str, default: int, low: int, high: int) -> int:
@@ -47,6 +48,10 @@ def _get_int(key: str, default: int, low: int, high: int) -> int:
 
 def overlay_enabled() -> bool:
     return config.get_bool(_CFG_OVERLAY_ENABLED, default=False)
+
+
+def overlay_right_panel() -> bool:
+    return config.get_bool(_CFG_OVERLAY_RIGHT_PANEL, default=False)
 
 
 def overlay_position() -> tuple:
@@ -89,6 +94,8 @@ class ColonisationController:
         self._visibility = card.Visibility()
         self._overlay_lock = threading.Lock()
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
+        self._right_panel_var: Optional[tk.BooleanVar] = None
+        self._show_button: Optional[tk.Button] = None
         self._overlay_vars: Dict[str, tk.StringVar] = {}
         self._overlay_result: Optional[tk.Label] = None
 
@@ -185,7 +192,10 @@ class ColonisationController:
         self._update_overlay()
 
     def _current_card(self) -> Optional[card.Card]:
-        if not overlay_enabled() or not self._cmdr or not self._visibility.visible:
+        self._visibility.right_panel_anywhere = overlay_right_panel()
+        if not self._cmdr:
+            return None
+        if not self._visibility.forced and not (overlay_enabled() and self._visibility.visible):
             return None
         sites = [s for s in self._repository.for_cmdr(self._cmdr) if s.active]
         return card.build_card(sites[0] if sites else None, self._cargo, self._carrier_cargo.tonnes(self._cmdr),
@@ -266,6 +276,17 @@ class ColonisationController:
         manage_button = tk.Button(parent, text="REPORT", command=self._on_manage_clicked)
         manage_button.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
         panelkit.add_tooltip(manage_button, "Colonisation Sites - open your colonisation sites")
+        self._show_button = tk.Button(parent, text="SHOW", command=self._on_show_clicked)
+        self._show_button.grid(row=2, column=1, sticky=tk.W, padx=(6, 0), pady=(4, 0))
+        panelkit.add_tooltip(self._show_button, "Show the shopping list on the overlay now, whatever screen you are on "
+                                                "(press again to hide). Works even if the overlay option is off.")
+
+    def _on_show_clicked(self) -> None:
+        """Manual override of the automatic screens: force the shopping list on the overlay, or let go again."""
+        self._visibility.forced = not self._visibility.forced
+        if self._show_button is not None:
+            self._show_button["text"] = "HIDE" if self._visibility.forced else "SHOW"
+        self._update_overlay()
 
     def _on_manage_clicked(self) -> None:
         if self._parent is None:
@@ -308,11 +329,17 @@ class ColonisationController:
             wraplength=440, justify=tk.LEFT,
         ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(0, 6))
 
+        self._right_panel_var = tk.BooleanVar(value=overlay_right_panel())
+        nb.Checkbutton(
+            frame, text="Also show whenever the right-hand cockpit panel is open, anywhere (as SRVSurvey does)",
+            variable=self._right_panel_var,
+        ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 6))
+
         x, y = overlay_position()
         self._overlay_vars = {"x": tk.StringVar(value=str(x)), "y": tk.StringVar(value=str(y)),
                               "rows": tk.StringVar(value=str(overlay_rows()))}
         position = tk.Frame(frame)
-        position.grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 2))
+        position.grid(row=5, column=0, sticky=tk.W, padx=10, pady=(0, 2))
         nb.Label(position, text="Overlay position — X:").pack(side=tk.LEFT)
         nb.EntryMenu(position, textvariable=self._overlay_vars["x"], width=6).pack(side=tk.LEFT, padx=(4, 10))
         nb.Label(position, text="Y:").pack(side=tk.LEFT)
@@ -325,10 +352,10 @@ class ColonisationController:
                   f"{card.DEFAULT_X}, {card.DEFAULT_Y}. Rows is how many commodities to list "
                   f"({card.MIN_ROWS}-{card.MAX_ROWS}); the rest are summarized."),
             wraplength=440, justify=tk.LEFT,
-        ).grid(row=5, column=0, sticky=tk.W, padx=10, pady=(0, 6))
+        ).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(0, 6))
 
         action_row = tk.Frame(frame)
-        action_row.grid(row=6, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        action_row.grid(row=7, column=0, sticky=tk.W, padx=10, pady=(0, 10))
         tk.Button(action_row, text="Test Overlay", command=self._test_overlay).pack(side=tk.LEFT)
         self._overlay_result = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
         self._overlay_result.pack(side=tk.LEFT, padx=(10, 0))
@@ -366,6 +393,8 @@ class ColonisationController:
         if self._overlay_enabled_var is None:
             return
         config.set(_CFG_OVERLAY_ENABLED, self._overlay_enabled_var.get())
+        if self._right_panel_var is not None:
+            config.set(_CFG_OVERLAY_RIGHT_PANEL, self._right_panel_var.get())
         for key, cfg_key, low, high in (("x", _CFG_OVERLAY_X, 0, card.MAX_ORIGIN_X),
                                         ("y", _CFG_OVERLAY_Y, 0, card.MAX_ORIGIN_Y),
                                         ("rows", _CFG_OVERLAY_ROWS, card.MIN_ROWS, card.MAX_ROWS)):
