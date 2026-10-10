@@ -63,6 +63,13 @@ def refresh_cargo(cargo: Mapping[str, int]) -> None:
         _window.set_cargo(cargo)
 
 
+def refresh_cmdr(cmdr: str) -> None:
+    """Called by the controller when the active commander changes, so an open window follows them instead of
+    staying on the previous commander's sites."""
+    if _window is not None and _window.alive:
+        _window.set_cmdr(cmdr)
+
+
 class ColonisationWindow:
     def __init__(self, parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int],
                  carrier: Optional[CarrierCargo] = None) -> None:

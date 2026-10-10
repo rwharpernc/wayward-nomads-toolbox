@@ -77,6 +77,7 @@ class ColonisationController:
         if cmdr and cmdr != self._cmdr:
             self._cmdr = cmdr
             self._refresh_summary()
+            colonisation_window.refresh_cmdr(cmdr)
         if cmdr:
             self._carrier_feed.cmdr = cmdr
         try:
