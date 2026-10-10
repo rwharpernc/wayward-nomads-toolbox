@@ -92,58 +92,137 @@ eccentricity, fast orbit, fast rotation and wide ring.
 > **Work in progress.** Boxel Survey is still being built, and I'd really appreciate your feedback. Please
 > [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the squadron.
 
-A tool for exploring the galaxy systematically, system by system. A "boxel" is a small cube of space that Elite's
-procedurally generated systems are named after, such as `Outotz LS-K d8-0`.
+A helper for exploring the galaxy system by system, using Elite's procedurally generated system names. A name like
+`Outotz LS-K d8-0` has four parts: a sector name (`Outotz`), a three-character cube ID (`LS-K`), a mass-code letter
+a to h (`d`), and a number or number pair at the end (`8-0`). The "boxel" is the cube of space that shares the
+first three parts; the trailing number picks one system inside it.
 
-The section is collapsed by default. It has three modes, which you switch between with the buttons at its top.
+The section is **folded by default**: click `▸ Boxel Survey` to open it. Inside, three buttons choose a sub-mode:
+**Sequence**, **Region Sweep** and **Waypoints**. WNTB remembers which one you used last.
 
-### Which mode should I use?
+**What WNTB does and doesn't know.** It works with *names*, not coordinates. It counts through the trailing number
+to make the next candidate name, and it does not know whether a candidate actually exists. The in-game galaxy map
+is what tells you. Real positions only come from EDSM or Spansh lookups.
+
+### Which sub-mode should I use?
 
 | If you want to... | Use |
 |---|---|
 | Work through one boxel from start to finish, in order | **Sequence** |
 | Clear a whole region (several boxels), tracking what's left across all of them | **Region Sweep** |
-| Visit a fixed list of specific systems in a sensible order (a rendezvous, a squadron staging route) | **Waypoint Route** |
+| Visit a fixed list of specific systems in a sensible order (a rendezvous, a squadron staging route) | **Waypoints** |
 
-If you're not sure, start with **Sequence**. It's the simplest. Waypoint Route is the odd one out: it accepts any
-system name, not just procedurally named ones.
+If you're not sure, start with **Sequence**. Waypoints is the odd one out: it accepts any system name, not just
+procedurally named ones.
+
+All three are remembered **per commander**.
 
 ### Sequence
 
-1. Set a starting system.
-2. Use **Next** and **Prev** to step through the candidates, or **Find Nearby (EDSM)** to jump to the nearest
-   unexplored boxel.
-3. If several **Next** clicks go by with no real jump, WNTB can check EDSM for the nearest real system for you.
+The panel shows a **Target**, **< Prev**, **Next >** and **Copy** buttons, a **Seed system** box with **Use
+Current** and **Set**, a **Find Nearby (EDSM)** button, a line of survey counts and a status line.
 
-Notable finds (Earth-likes, water worlds, biological signals and so on) are tallied automatically.
-**Export Survey Log** (in Settings → Exploration → Boxel Survey) saves them to a spreadsheet file.
+**To start a survey:**
+
+1. Type a procedural system name into **Seed system** (or press **Use Current** to fill in the system you are in).
+   A grey hint under it says whether the name looks like a boxel name.
+2. Press **Set**. The seed becomes the first target.
+3. Paste the target into the galaxy map (**Copy** puts it on your clipboard) and jump.
+4. When you arrive at the target, WNTB marks it visited and moves to the next candidate. With *Auto-copy next
+   target to clipboard on jump* on (the default), it also copies that next name for you.
+
+**If a candidate doesn't exist:** the galaxy map won't find it. Press **Next >** to skip it. (**< Prev** steps
+back; at the very start it says "Already at the start of the sequence".) After **3** manual **Next >** presses in a
+row without a confirmed jump, WNTB asks EDSM for the nearest real procedurally named system outside the current
+cube, and fills the Seed box with it. It does not switch automatically: press **Set** to move the survey there.
+
+**Find Nearby (EDSM)** does the same lookup on demand. It needs to know your position, so jump or reload first.
+
+**What it keeps.** The line under the buttons counts what you've found in surveyed systems:
+`Surveyed: N systems | ELW | WW | AW | terraformable | bio`. These come from your scans: Earth-like, water and
+ammonia worlds, terraformable planets, and bodies with biological signals. Open **Settings → Exploration → Boxel
+Survey** and press **Export Survey Log** to write them to a CSV file. The file is always called
+`boxel_survey_export.csv` and is saved **in the WNTB plugin folder**; you do not choose where.
+
+**Settings → Exploration → Boxel Survey:**
+
+| Setting | Default |
+|---|---|
+| Auto-copy next target to clipboard on jump | On |
+| Skip systems already visited this session | On |
+| Skip systems already visited by anyone (EDSM) | Off (adds a network call per advance) |
+| Skip systems already fully scanned in EDSM | Off (another network call per candidate) |
+| Confirm off-sequence arrivals against EDSM (catches a target that resolved under a different display name) | Off |
 
 ### Region Sweep
 
-For clearing a whole region.
+For clearing several cubes and seeing what's left. It keeps a **queue of cubes**. Each entry in the list looks
+like `> Outotz LS-K d [3/12]`: the `>` marks the current cube and `[3/12]` is systems done out of systems known.
 
-1. Add cubes to a queue.
-2. Use **Discover Nearby Cubes** or **Discover Known Systems** to fill in what's already known.
-3. Mark a cube **Empty** once you've confirmed there's nothing worth surveying. It moves on to the next unfinished
-   cube by itself.
-4. Optionally turn on **Auto-discover more nearby cubes** (Settings → Exploration → Region Sweep) to keep the queue
-   topped up.
+**Setting up the queue:**
 
-### Waypoint Route
+1. Type a seed system under *Add cube — seed system* and press **Add** (or **Use Current**, then **Add**).
+2. Press **Discover Nearby Cubes (EDSM)** to add cubes near your current position, and fill in the systems EDSM
+   knows. It needs your position.
+3. Select a cube and press **Discover Known Systems (Spansh)** to fill in the systems Spansh knows for that cube.
 
-1. Add systems one at a time, or with **Import CSV**.
-2. Click **Reorder (Nearest-Neighbor)** to sort them by distance from where you are.
+**Working through it:** the **Target**, **< Prev**, **Next >** and **Copy** buttons work as in Sequence, on the
+current cube. **Set Current** makes the selected cube the current one, and **Remove** deletes it from the queue.
+
+**What "complete" means.** A cube is complete once *every system WNTB knows about in it* is done, or once you mark
+it **Empty**. WNTB can't know a cube's true total, only what EDSM, Spansh and your own visits have revealed. A
+system counts as done when you arrive there, or, if you turn on *Require a full FSS scan*, when it is fully scanned.
+
+**Mark Empty / Unmark Empty** flags the selected cube as having nothing worth surveying (the list shows `[empty]`).
+Empty cubes count as complete and are skipped. When you arrive at a cube's target and that cube is complete, the
+sweep moves on to the next unfinished cube in the queue (wrapping round to the start).
+
+**Settings → Exploration → Region Sweep:**
+
+| Setting | Default |
+|---|---|
+| Auto-copy next target to clipboard on jump | On |
+| Skip systems already visited this session | On |
+| Skip systems already visited by anyone (EDSM) | Off |
+| Require a full FSS scan (not just arrival) to mark a system complete | Off |
+| Auto-discover more nearby cubes (EDSM) when the queue is running low | Off. When on, runs the Discover Nearby lookup after a jump once one or fewer cubes still have work left |
+
+### Waypoints
+
+A plain route tool. It takes any system names, not only procedural ones: a rendezvous, a point of interest, a
+squadron staging system.
+
+1. Type a name under *Add waypoint* and press **Add**, or press **Use Current**, or load a list with **Import
+   CSV…**. The CSV import reads **one system name per row, from the first column**. Blank rows and a header row
+   (a first cell like `system`, `name` or `waypoint`) are skipped, and names already in the list aren't added twice.
+2. **Move Up** and **Move Down** change the order by hand. **Remove** deletes the selected waypoint.
+3. **Reorder (Nearest-Neighbor, EDSM)** asks EDSM for each system's coordinates, then builds a route that starts at
+   your current position and always goes to the nearest unvisited waypoint next. Waypoints you've already visited
+   keep their place at the front, and ones EDSM can't locate keep their order at the end. It needs your position.
+4. **Copy** copies the current target. With *Auto-copy next waypoint to clipboard on jump* on, WNTB copies the next
+   one when you arrive.
 
 ### RND: find something nobody has discovered
 
-**RND** (random) sits on the Exploration button row next to A.H., D.A., N.S. and W.D., so it stays visible even
-while this section is collapsed, and works in any mode.
+**RND** sits on the Exploration button row, next to A.H., D.A., N.S. and W.D., so it is visible even while the
+Boxel Survey section is folded, and works whichever sub-mode is selected. It does not touch your Sequence target.
 
-It finds a real, known boxel near you, then looks for a name EDSM has no record of, and **copies it to your
-clipboard**. Paste it into the galaxy map to go find something new.
+When you press it, WNTB:
 
-It keeps its own log of every system you've actually visited, so a place you've already been to isn't suggested as
-"new". Clear that log any time from **Settings → Exploration → Boxel Survey → Clear Visited Systems Log**.
+1. asks EDSM for known systems near your position, and takes the nearest procedurally named ones as starting
+   points;
+2. makes random candidate names in the same boxel (the trailing number nudged by up to 500 either way);
+3. discards any name in your own visited-systems log, and checks the others against EDSM, up to **20 attempts**;
+4. copies the first name EDSM has **no record of** to your clipboard.
+
+Paste it into the galaxy map. A status line says what happened, for example `Copied: <name> (not listed in EDSM)`
+or `No undiscovered candidate found after 20 tries - try again`. "Not in EDSM" means nobody has uploaded it, not
+that it is guaranteed to exist.
+
+The visited-systems log records every system you arrive at, whichever sub-mode is selected. Clear it under
+**Settings → Exploration → Boxel Survey → Clear Visited Systems Log**.
+
+More detail: [Boxel Survey specification](../BOXEL_SURVEY_TECH_SPEC.md).
 
 ## Exploration Value
 
@@ -180,25 +259,49 @@ It uses only your own journal and makes no internet connection. It is designed t
 
 ## Codex Completionist
 
-*(Starts minimized: click the title to open it.)*
+*(Starts folded: click the title to open it.)*
 
-A personal tally of everything you've ever scanned: biological, geological, Guardian, human, Thargoid and more.
+A running tally of the Codex entries your game has reported, such as biological, geological, Guardian, human and
+Thargoid finds. It is built from the `CodexEntry` events in your journal. The panel shows one summary line, for
+example `120 distinct entries, 340 total finds` followed by your three biggest categories, and two buttons:
+**DET** and **BKF**. It is on by default; switch it off with *Track codex entries* in **Settings → Exploration →
+Points of Interest**, where there is also a *View Canonn Codex* link.
 
-**How to use it:** it builds itself as you play.
+**Two things to know:**
 
-- Click **DET** for the full breakdown. A ⭐ marks a genuine first discovery.
-- Click **BKF** (backfill from journal history) **once** to pull in your past journals. It isn't automatic because
-  it can take a while for a long career.
+- **One tally per install, not per commander.** Every commander's entries on this install go into the same list.
+- **BKF counts again what it has already counted.** Backfill reads every journal file you have and adds every
+  `CodexEntry` event it finds, with no check for events already in the tally. So pressing **BKF** when you have
+  been playing with WNTB running raises **Times found** for entries it had already counted, and pressing it twice
+  doubles them. Distinct-entry counts are not affected. If you want an accurate "times found", press **BKF** only
+  once, and ideally before you've played much with Codex Completionist switched on.
 
-The details window has two tabs:
+**BKF** (backfill from journal history) is a button you press yourself, because reading years of journals takes a
+while. It reads **all** the journal files in EDMC's journal folder, with no date limit.
 
-- **Found** is your tally by category. Click the **Entry** heading to sort A–Z or Z–A, or **Times found** for most
-  or least found first. Click again to reverse.
-- **Not found** lists the biological, civilisation and stellar-body entries you haven't found yet, using Canonn's
-  catalogue. It sorts the same way, and the subtitle shows how many you've found. Geological and anomaly entries
-  aren't in that catalogue, so they never appear here.
+### The details window (DET)
 
-**Double-click any entry** (or select it and click **Open Reference**) to look it up on Canonn's website.
+It has a subtitle such as `120 distinct entries — 340 total finds — 95 of 1,070 catalogued entries found (9%)`
+and two tabs:
+
+- **Found**: your entries grouped by category, with the columns **Entry**, **Times found** and **First found in**.
+  A ⭐ means that at least one of your sightings was reported by the game as a new entry (a first discovery). Click
+  a column heading to sort; click again to reverse. (**Times found** sorts highest first on the first click.)
+- **Not found**: Canonn's catalogue of **biological, civilisation and stellar-body** entries, minus the ones you
+  have found. Columns: **Entry**, **Type**, **Platform** (Odyssey or Legacy). It sorts the same way. Canonn's
+  catalogue has no geological or anomaly entries, so those never appear here.
+
+**Buttons:** **Open Reference** and **Refresh Catalog**. Double-click a row, or select it and press **Open
+Reference**. This opens a **search** on canonn.science for that entry's name in your browser, not a fixed page for
+the entry.
+
+**The catalogue** is downloaded from Canonn the first time you open the window and whenever the saved copy is
+more than 14 days old, and **Refresh Catalog** fetches it again on demand. It is saved in the plugin folder, so
+after the first download it opens instantly and works offline. If the download fails, the tab says so, and shows
+the saved copy if there is one.
+
+Codex Completionist has no specification page of its own. The code is `codex_completionist.py`,
+`codex_completionist_window.py`, `codex_catalog.py` and `codex_backfill.py` in the plugin folder.
 
 ## GEC Nearby POI
 

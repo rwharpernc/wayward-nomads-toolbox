@@ -33,19 +33,66 @@ Converts Elite's screenshots to PNG automatically, with an optional crop to just
 
 ## Inventory
 
-Tracks your Odyssey backpack, ship locker, fleet carrier locker and cargo hold as capacity bars.
+Tracks your Odyssey **microresources** and your cargo hold as capacity bars. For microresources it follows the
+game's three categories: **Assets**, **Goods** and **Data** (the journal calls these Component, Item and Data).
 
-**How to use it:** just play. Each bar fills and empties as you pick things up, use them or transfer them.
+**On the panel:** a status line (`Awaiting Odyssey loot…` until something happens), then up to four bars. Each shows
+`count/capacity`, or just the count where WNTB doesn't know the capacity.
 
-**Click any bar** to open the full inventory window. It has tabs for:
+| Bar | Capacity | When it appears |
+|---|---|---|
+| **Backpack** | From your suit, if known (see below) | Always |
+| **Ship Locker** | 1,000 each of Assets, Goods and Data (3,000 in all) | Always |
+| **Carrier Locker** | Not shown | Only once WNTB has real fleet carrier locker data for this commander |
+| **Cargo** | Your ship's cargo capacity; Scarab 4 t, Scorpion 2 t; Rhino capacity unknown | While you are in a ship or SRV. Hidden while on foot. The label reads Ship Cargo, Scarab Cargo and so on |
 
-- **Backpack**
-- **Ship Locker**
-- **Carrier Locker** (once WNTB knows you own a carrier)
-- **Cargo**: the hold of whatever you're in, ship or SRV. It has a **Filter** box to find a particular item.
+**Click any bar** to open the Inventory window.
 
-**Settings:** pickup notifications (sound, on-screen message, what it says), and capacity numbers if your loadout
-doesn't match the defaults.
+### The Inventory window
+
+Tabs: **Backpack**, **Ship Locker**, **Carrier Locker** (only once a carrier is confirmed) and **Cargo**. Each of the
+first three lists **Resource**, **Category** and **Held**; the Cargo tab lists **Commodity** and **Tonnes** for the
+hold you are using (ship or SRV).
+
+- The **Filter** box at the top filters every tab at once. **Clear** empties it.
+- **Refresh** redraws the window.
+- The subtitle shows your current suit.
+- A note on the Backpack tab says `Not yet synced this session` if the game hasn't yet reported your backpack
+  (for example if you logged in already on foot). Loot, resupply or disembark to refresh it.
+- Capacity colours change as a category fills: amber near the limit, red when full. The ship locker warning level
+  is **90%** of 1,000 for a category.
+
+### Things worth knowing
+
+- **Carrier Locker comes from Frontier's servers, not the journal.** EDMC must be signed in to Frontier, and the
+  data can **lag the game by 15 to 30 minutes**.
+- **Backpack capacity is a built-in table, not something the game reports.** WNTB looks up your suit and whether it
+  has the *Extra Backpack Capacity* mod. The table cannot see engineering grade, and has no figure for the Flight
+  Suit (so its bar shows a count with no limit). The Settings tab lets you type in the real number for each of your
+  suit loadouts.
+
+| Suit | Assets | Goods | Data |
+|---|---|---|---|
+| Maverick (unmodded / extra capacity) | 60 / 120 | 40 / 80 | 20 / 40 |
+| Artemis | 40 / 80 | 20 / 40 | 10 / 20 |
+| Dominator | 20 / 40 | 10 / 20 | 10 / 20 |
+
+### Settings (Settings → Field Ops → Inventory)
+
+| Setting | Default |
+|---|---|
+| Show pillage notifications on the in-game overlay | Off |
+| Pillage message (placeholders `{item}`, `{total}`) | `[{item}] pillaged! New Inventory Total: {total}` |
+| Play a sound on pickup | Off |
+| Show these inventory bars on the overlay (one tick per bar) | All off |
+| Overlay position X / Y | 900 / 120 |
+| Announce pickups for (Assets, Goods, Data) | All three |
+| Suit Backpack Capacity (per suit loadout) | The built-in table |
+
+Unticking a category in *Announce pickups for* only mutes its notifications. It is still counted.
+The overlay settings need an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md).
+
+On Linux, the pickup sound needs `canberra-gtk-play` or `paplay`; see [Windows and Linux](platforms.md).
 
 ## Ship Builds
 
@@ -69,27 +116,48 @@ the address. **Edit** and **Delete** work the same way.
 
 ## Colonisation
 
-Keeps track of what each colonisation construction site still needs, so you can see it without being docked, and
-what you still have to find after counting the cargo already in your hold.
+Keeps track of what each colonisation construction site still needs delivered. You can read it from anywhere, not
+just while docked, and it shows what's left to find after counting the cargo already in your hold. There is no
+on/off setting for it.
+
+**Where the data comes from.** The journal writes a `ColonisationConstructionDepot` event when you dock at a
+construction depot or open its market, and a `ColonisationContribution` event each time you hand cargo over.
 
 **To start tracking a site:**
 
-1. Dock at a construction depot (or open its market) **once**. WNTB registers the site from the game's journal.
-   There's nothing to type in.
-2. The Field Ops panel shows your most recently updated site: its progress and the tonnes still to go.
-3. Click **REPORT** for the full list. Each site is a group with its outstanding commodities underneath:
-   - required,
-   - delivered,
-   - remaining,
-   - how much is in your cargo now,
-   - how much is left **To Source**.
+1. Dock at the construction depot, or open its market, **once**. There is nothing to type in.
+2. The Field Ops panel shows a line such as `Colonisation: <site name> - 45%, 1,234 t to go (+2 more)`. That is
+   your most recently updated active site, with `(+N more)` if you have others. With none it says
+   `Colonisation: no active construction sites`.
+3. Press **REPORT** to open the **Colonisation Sites** window.
 
-Deliveries are counted from your journal as you hand cargo over, and corrected to the game's own figures each time
-you dock at the depot again.
+**The site name** is taken from the most recent time you docked at that depot's market. If WNTB hasn't seen you dock
+there, the site is called `Construction site <number>`.
 
-**Buttons in the report:**
+**Keeping it right.** Each time you dock or open the depot market again, WNTB replaces its figures with the game's
+own. Between visits it adds what you deliver, as reported in the journal. A delivery to a site WNTB hasn't
+registered yet is ignored. Everything is kept **per commander**.
 
-- **Copy Shopping List**: select a commodity row, then use it to copy that site's list. Handy for a squadron
-  channel.
-- **Remove Site**: stop tracking it.
-- **Remove Finished**: clear completed and failed sites.
+### The Colonisation Sites window
+
+The subtitle reads `<commander> — N active of M sites`. Each site is a group with its system name and, on the same
+row, the tonnes remaining and a status: its progress as a percentage, or `complete` or `failed`. Active sites start
+open; finished ones are greyed. Under each site is one row per commodity **still outstanding**:
+
+| Column | Meaning |
+|---|---|
+| Required | What the site needs in total |
+| Delivered | What's been handed over |
+| Remaining | Required minus delivered |
+| In Cargo | What is in your hold now (ship or SRV) |
+| To Source | Remaining minus what you're already carrying: what you still have to buy or mine |
+
+**Buttons.** For these you **select a commodity row** under the site you mean (selecting the site's heading is not
+enough):
+
+- **Copy Shopping List** copies that site's list to the clipboard, as lines like `1,200 t  Steel`, biggest first.
+  The amounts are the **To Source** figures, so what you already carry is taken off. If nothing is needed it says
+  so.
+- **Remove Site** stops tracking that site.
+- **Remove Finished** needs no selection. It deletes every complete or failed site, because those have no
+  commodity rows to select.
