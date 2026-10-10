@@ -103,7 +103,7 @@ class VisibilityTests(unittest.TestCase):
         self.assertTrue(self.v.visible)
         self.v.set_focus(2)                      # the left-hand panel
         self.assertFalse(self.v.visible)
-        self.v.set_focus(5)                      # station services without the market
+        self.v.set_focus(6)                      # the galaxy map
         self.assertFalse(self.v.visible)
         self.v.set_focus(1)
         self.v.feed({"event": "Undocked"})
@@ -179,7 +179,7 @@ class VisibilityTests(unittest.TestCase):
 
     def test_carrier_management_is_known_from_the_music_track(self) -> None:
         self.v.feed({"event": "Docked", "StationType": "FleetCarrier"})
-        self.v.set_focus(5)
+        self.v.set_focus(0)
         self.v.feed({"event": "Music", "MusicTrack": "FleetCarrier_Managment"})
         self.assertTrue(self.v.visible)
         self.v.feed({"event": "Music", "MusicTrack": "Starport"})
