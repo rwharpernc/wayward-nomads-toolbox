@@ -211,10 +211,10 @@ cargo capacity, which EDMC supplies).
   - In a **commodity market** at a station or carrier. It hides when you leave the screen, open another service such
     as outfitting or the shipyard, or undock. Backing out of the market to the station-services menu can't be detected,
     so the card stays until you leave that menu.
-  - Whenever you are **docked at a carrier** with a station-services screen open, which includes the carrier's cargo
-    transfer screen. The game writes nothing when that screen opens (the transfer is only logged after you make it), so
-    WNTB can't tell it from the carrier's other services; the card therefore also shows in the carrier's outfitting and
-    shipyard screens, and goes when you leave the services screens or undock.
+  - Whenever you are **docked at a carrier** and have the **right-hand cockpit panel** open (where your cargo is and
+    where you transfer to the carrier). The game writes nothing when you open that, so the open panel is what WNTB
+    goes by; it hides when you close the panel or undock. SRVSurvey shows its list on that panel too, but anywhere
+    rather than only when docked at a carrier.
   - Whenever you are **docked at a construction site** (looking out of the cockpit or at the station services, but not
     in a map or another panel).
 
