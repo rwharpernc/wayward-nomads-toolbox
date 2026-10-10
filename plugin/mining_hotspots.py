@@ -13,9 +13,12 @@ single JSON file next to mining_sessions/ (see mining_session_archive.py
 for the same "next to the plugin" pattern), loaded once via `load()` and
 rewritten in full on every change.
 
-Not per-commander (mining_session_archive.py and the run repositories
-are) - a hotspot's location doesn't depend on who's flying, so every
-commander on this install sees the same list.
+Per commander, like mining_session_archive.py and the run repositories:
+each commander has their own list (their notes, mined tons and depleted
+marks are theirs), kept in one file by `commander_data`. A file written
+before that was a single shared list; the first commander seen claims it.
+Until a commander is known the list is empty, and anything added in that
+moment is kept for the first commander seen.
 """
 import base64
 import json
@@ -27,6 +30,7 @@ from typing import Callable, Optional
 
 from config import appname
 
+from . import commander_data
 from . import mining_bearing as bearing
 from . import mining_spansh_client as spansh_client
 
@@ -257,24 +261,47 @@ class HotspotRepository:
     known) - `load(plugin_dir)` is called once from mining_panel.start()."""
 
     def __init__(self) -> None:
-        self._hotspots: list[Hotspot] = []
+        self._hotspots: list[Hotspot] = []   # the current commander's (or, before one is known, what was added since)
         self._listeners: list[Callable[[], None]] = []
         self._plugin_dir: Optional[str] = None
         self._mined_dirty = False
         self._last_mined_save = 0.0
+        self._store = commander_data.new_store()
+        self._cmdr = ""
 
     def load(self, plugin_dir: str) -> None:
+        """Read the file. Nothing is shown until `set_commander` says whose list to use."""
         self._plugin_dir = plugin_dir
         path = os.path.join(plugin_dir, HOTSPOTS_FILENAME)
-        if not os.path.exists(path):
-            return
         try:
-            with open(path, "r", encoding="utf8") as fh:
-                raw = json.load(fh)
-            self._hotspots = [Hotspot(**entry) for entry in raw]
+            self._store = commander_data.read(path, is_legacy=lambda raw: isinstance(raw, list))
         except Exception:
             logger.exception("Failed to load %s - starting with an empty list", HOTSPOTS_FILENAME)
+            self._store = commander_data.new_store()
+
+    def set_commander(self, cmdr: str) -> None:
+        """Switch to this commander's list (saving the previous commander's first). The first commander seen claims a
+        list saved before hotspots were per commander."""
+        key = commander_data.key_for(cmdr)
+        if not key or key == commander_data.key_for(self._cmdr):
+            return
+        pending = [] if self._cmdr else self._hotspots
+        if self._cmdr:
+            self.flush()
+            self._write_current()
+        self._cmdr = str(cmdr).strip()
+        claimed = commander_data.known(self._store, cmdr) is False and self._store.get("legacy") is not None
+        try:
+            raw = commander_data.payload_for(self._store, cmdr, list)
+            self._hotspots = [Hotspot(**entry) for entry in raw]
+        except Exception:
+            logger.exception("Failed to read %s's hotspots - starting with an empty list", cmdr)
             self._hotspots = []
+        self._hotspots = self._hotspots + pending
+        if claimed or pending:
+            self._write_current()
+        for listener in self._listeners:
+            listener()
 
     def all(self) -> list[Hotspot]:
         return list(self._hotspots)
@@ -445,7 +472,14 @@ class HotspotRepository:
             self._listeners.remove(listener)
 
     def _serialize(self) -> str:
+        """The current commander's list as a plain JSON list (what Export writes, and Import reads back)."""
         return json.dumps([asdict(h) for h in self._hotspots], indent=2)
+
+    def _write_current(self) -> None:
+        if self._plugin_dir is None or not self._cmdr:
+            return
+        commander_data.put(self._store, self._cmdr, [asdict(h) for h in self._hotspots])
+        commander_data.write(os.path.join(self._plugin_dir, HOTSPOTS_FILENAME), self._store)
 
     def _save_and_notify(self) -> None:
         self._save()
@@ -453,12 +487,10 @@ class HotspotRepository:
             listener()
 
     def _save(self) -> None:
-        if self._plugin_dir is None:
-            return
+        # With no commander known yet there is nowhere to save to: the list stays in memory and goes to the first
+        # commander seen (set_commander).
         try:
-            path = os.path.join(self._plugin_dir, HOTSPOTS_FILENAME)
-            with open(path, "w", encoding="utf8") as fh:
-                fh.write(self._serialize())
+            self._write_current()
         except Exception:
             logger.exception("Failed to save %s", HOTSPOTS_FILENAME)
 

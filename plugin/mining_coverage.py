@@ -32,6 +32,7 @@ try:
 except ImportError:  # pragma: no cover - real EDMC runtime always provides this
     appname = "EDMarketConnector"
 
+from . import commander_data
 from . import mining_bearing as bearing
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -40,7 +41,8 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 COVERAGE_FILENAME = "mining_coverage.json"
 """Not committed to git and not part of any release build - the
 commander's own drive history, same reasoning as mining_hotspots.py's
-HOTSPOTS_FILENAME."""
+HOTSPOTS_FILENAME. One file, a separate map per commander
+(commander_data.py)."""
 
 SCAN_RADIUS_M = 2000.0
 """What the Rhino's scanner sees from wherever it's standing, in
@@ -99,27 +101,43 @@ class CoverageRepository:
     mining_hotspots.HotspotRepository."""
 
     def __init__(self) -> None:
-        self._by_body: dict[str, BodyCoverage] = {}
+        self._by_body: dict[str, BodyCoverage] = {}   # the current commander's; empty until one is known
         self._plugin_dir: Optional[str] = None
+        self._store = commander_data.new_store()
+        self._cmdr = ""
 
     def load(self, plugin_dir: str) -> None:
+        """Read the file. Nothing is shown until `set_commander` says whose map to use. A file written before coverage
+        was per commander is claimed by the first commander seen."""
         self._plugin_dir = plugin_dir
         path = os.path.join(plugin_dir, COVERAGE_FILENAME)
-        if not os.path.exists(path):
-            return
         try:
-            with open(path, "r", encoding="utf8") as fh:
-                raw = json.load(fh)
+            self._store = commander_data.read(path, is_legacy=lambda raw: isinstance(raw, dict))
+        except Exception:
+            logger.exception("Failed to load %s - starting with no recorded coverage", COVERAGE_FILENAME)
+            self._store = commander_data.new_store()
+
+    def set_commander(self, cmdr: str) -> None:
+        """Switch to this commander's recorded ground (the previous commander's is already saved)."""
+        key = commander_data.key_for(cmdr)
+        if not key or key == commander_data.key_for(self._cmdr):
+            return
+        self._cmdr = str(cmdr).strip()
+        claimed = not commander_data.known(self._store, cmdr) and self._store.get("legacy") is not None
+        try:
+            raw = commander_data.payload_for(self._store, cmdr, dict)
             self._by_body = {
-                key: BodyCoverage(
+                body_key: BodyCoverage(
                     center=CoveragePoint(**entry["center"]) if entry.get("center") else None,
                     points=[CoveragePoint(**p) for p in entry.get("points", [])],
                 )
-                for key, entry in raw.items()
+                for body_key, entry in raw.items()
             }
         except Exception:
-            logger.exception("Failed to load %s - starting with no recorded coverage", COVERAGE_FILENAME)
+            logger.exception("Failed to read %s's coverage - starting with none", cmdr)
             self._by_body = {}
+        if claimed:
+            self._save()
 
     @staticmethod
     def _key(system: str, body: str) -> str:
@@ -148,7 +166,7 @@ class CoverageRepository:
             self._save()
 
     def _save(self) -> None:
-        if self._plugin_dir is None:
+        if self._plugin_dir is None or not self._cmdr:
             return
         try:
             path = os.path.join(self._plugin_dir, COVERAGE_FILENAME)
@@ -159,8 +177,8 @@ class CoverageRepository:
                 }
                 for key, coverage in self._by_body.items()
             }
-            with open(path, "w", encoding="utf8") as fh:
-                json.dump(payload, fh)
+            commander_data.put(self._store, self._cmdr, payload)
+            commander_data.write(path, self._store)
         except Exception:
             logger.exception("Failed to save %s", COVERAGE_FILENAME)
 

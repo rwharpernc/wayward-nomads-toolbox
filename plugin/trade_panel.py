@@ -310,6 +310,8 @@ class TradePanelController:
         self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any],
     ) -> None:
         event = entry.get("event")
+        if cmdr and trade_carrier.key_for(cmdr) != trade_carrier.key_for(self._cmdr):
+            self._reset_for_commander()
         if cmdr:
             self._cmdr = cmdr
             self._carrier.set_cmdr(cmdr)
@@ -394,6 +396,19 @@ class TradePanelController:
         elif changed:
             self._save()
         self._after_event()
+
+    def _reset_for_commander(self) -> None:
+        """A different commander is now active: forget what was learned about the previous one's ship, hold, balance and
+        lookups so none of it shows on (or is recorded against) the new commander's page. Their own figures arrive with
+        their next events (Loadout, Cargo and the EDMC state). Saved data is already per commander and is untouched."""
+        if self._job is not None:
+            self._job.cancel.set()   # a search for the previous commander must not finish into this one's session
+            self._job = None
+        self._cargo, self._hold_split, self._capacity = {}, (0, 0), 0
+        self._ship, self._credits, self._jump_range = None, 0, 0.0
+        self._market, self._market_station = {}, None
+        self._route_blocks, self._next_system = [], None
+        self._sell, self._sell_for, self._sell_error, self._pad_dropped = {}, None, None, {}
 
     def _read_hold_split(self, entry: Dict[str, Any]) -> None:
         """Mission and stolen tonnes in the hold: from the Cargo event's inventory when it carries one, else from
@@ -930,7 +945,7 @@ class TradePanelController:
 
     def _open_history(self) -> None:
         if self._parent is not None:
-            trade_history_window.show(self._parent, self._history, self._persist_history)
+            trade_history_window.show(self._parent, self._history, self._persist_history, cmdr=self._cmdr)
 
     def _reset_ledger(self) -> None:
         """Start the tally again. If this session has trades that were never saved, offer to save it first."""

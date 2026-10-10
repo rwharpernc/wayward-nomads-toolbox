@@ -241,6 +241,7 @@ class ExplorationValueController:
         self._system_name: Optional[str] = None
         self._star_evaluated = False
 
+        self._cmdr = ""   # whose data sales _sales holds
         self._progress = exploration_progress.SystemProgress()
         self._sales = exploration_progress.LastSales()
         self._bodies_var: Optional[tk.StringVar] = None
@@ -280,6 +281,13 @@ class ExplorationValueController:
             self._star_evaluated = False
 
         event = entry.get("event")
+
+        if cmdr and cmdr.strip().casefold() != self._cmdr.strip().casefold():
+            # Another commander is active: the previous one's last data sales are not theirs.
+            self._cmdr = cmdr
+            self._sales = exploration_progress.LastSales()
+            if self._sale_var is not None:
+                self._sale_var.set(self._sales.text() if enabled() else "")
 
         if enabled():
             self._track_progress(entry)

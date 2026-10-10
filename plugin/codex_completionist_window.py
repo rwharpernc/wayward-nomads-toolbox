@@ -62,6 +62,12 @@ _FIRST_DIRECTION_DESC = {"found"}
 _window: Optional["CodexCompletionistWindow"] = None
 
 
+def refresh_if_open(tally: CodexTally) -> None:
+    """The active commander changed (or a rebuild finished): show this tally if the window is open."""
+    if _window is not None and _window.alive:
+        _window.refresh(tally)
+
+
 def show(parent: tk.Misc, tally: CodexTally, plugin_dir: str) -> None:
     """Open the details window, or raise/refresh it if already open."""
     global _window
@@ -157,7 +163,8 @@ class CodexCompletionistWindow:
             self._catalog, (r.name for r in records), (r.entry_id for r in records))
 
     def _update_subtitle(self) -> None:
-        text = f"{self._tally.total_distinct:,} distinct entries — {self._tally.total_finds:,} total finds"
+        owner = f"CMDR {self._tally.owner} — " if self._tally.owner else ""
+        text = f"{owner}{self._tally.total_distinct:,} distinct entries — {self._tally.total_finds:,} total finds"
         missing = self._missing()
         if missing is not None and self._catalog:
             found = len(self._catalog) - len(missing)

@@ -1,7 +1,7 @@
 # Technical Specification — Mining
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
+**Last updated:** 2026-10-10 (see `CHANGELOG.md`)
 
 The standing reference for Mining mode: what it tracks, the rules and numbers behind its estimates, the
 files it keeps, and the outside lookups it can make. For how to use it, see the
@@ -115,7 +115,13 @@ seconds. These figures are measurements and may need refitting as more deposits 
 ## 6. Hotspots, the Mining Book and "your own rates"
 
 ### 6.1 The hotspot file
-`mining_hotspots.json` (in the plugin folder, never part of a release) is a flat list of hotspots. Each
+`mining_hotspots.json` (in the plugin folder, never part of a release) holds **one list of hotspots per commander**
+(`commander_data.py`: `{"version": 2, "commanders": {key: {"name", "data": [...]}}, "legacy": ...}`), so a hotspot,
+its notes, tons mined and depleted mark belong to the commander who saved it. `HotspotRepository.set_commander`
+switches the list when the active commander changes (the mining panel calls it on every event that names one); until
+one is known the list is empty and anything added waits for the first commander. A file from before this was a single
+flat list; the first commander seen claims it and the rest start empty. Import and Export work on the active
+commander's list, which is how to copy hotspots to another commander. Each
 has a system, body and material, plus optional notes, latitude and longitude, a folder label, rigs, a
 signal number, the Amount and Density readings, the tons mined so far, and the kind of ground (§6.3).
 Material, rigs, signal number, Amount and Density are entered by the commander on trust; only the mined
@@ -203,8 +209,8 @@ page you viewed is remembered.
 
 | File | What | Notes |
 |---|---|---|
-| `mining_hotspots.json` | Saved hotspots | The commander's data; never in a release |
-| `mining_coverage.json` | Driven-ground record per body | The commander's data |
+| `mining_hotspots.json` | Saved hotspots | One list per commander; never in a release |
+| `mining_coverage.json` | Driven-ground record per body | One map per commander (same layout and legacy rule as the hotspot file) |
 | `mining_sessions/` | Archived runs | Only if archiving is on |
 
 All are listed in the updater's protected set so an update never overwrites them (see TECHNICAL.md §13).

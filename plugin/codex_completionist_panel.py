@@ -24,7 +24,7 @@ import os
 import queue
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import tkinter as tk
 
@@ -32,7 +32,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import codex_backfill, codex_completionist_state, codex_completionist_window, panelkit
+from . import codex_backfill, codex_completionist_state, codex_completionist_window, commander_data, panelkit
 from .codex_completionist import CodexTally
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -45,7 +45,8 @@ _CFG_ENABLED = "wntb_codex_completionist_enabled"
 CANONN_CODEX_URL = "https://canonn.science/codex/"
 
 _DISABLED_TEXT = "Codex Completionist is disabled — see Settings."
-_EMPTY_TEXT = "No codex entries recorded yet this install — fly, scan, and discover things."
+_EMPTY_TEXT = "No codex entries recorded yet for this commander — fly, scan, and discover things."
+_NO_CMDR_TEXT = "Codex Completionist: (waiting for commander login)"
 
 
 def enabled() -> bool:
@@ -53,7 +54,11 @@ def enabled() -> bool:
     return config.get_bool(_CFG_ENABLED, default=True)
 
 
-def _summary_text(tally: CodexTally) -> str:
+def _summary_text(tally: CodexTally, rebuilding: bool = False) -> str:
+    if not tally.owner:
+        return _NO_CMDR_TEXT
+    if rebuilding:
+        return f"Rebuilding {tally.owner}'s tally from your journals (one time, this can take a minute)..."
     if tally.total_distinct == 0:
         return _EMPTY_TEXT
     counts = tally.category_counts()
@@ -65,9 +70,13 @@ def _summary_text(tally: CodexTally) -> str:
 class CodexCompletionistController:
     def __init__(self) -> None:
         self._plugin_dir: Optional[str] = None
-        self._tally = CodexTally()
+        self._tally = CodexTally()   # the active commander's; swapped in place when the commander changes
+        self._rebuild_pending = False
+        self._rebuilding = False   # a full-history read is running right now
+        self._set_title_note = None   # set by build_panel: shows a note next to the section title, even when folded
 
-        self._backfill_result_queue: "queue.Queue[List[Dict[str, Any]]]" = queue.Queue()
+        # (commander key, that commander's events, manual?) from a full-history scan.
+        self._backfill_result_queue: "queue.Queue[Tuple[str, List[Dict[str, Any]], bool]]" = queue.Queue()
 
         self._parent: Optional[tk.Frame] = None
         self._summary_var: Optional[tk.StringVar] = None
@@ -85,29 +94,53 @@ class CodexCompletionistController:
     # --- lifecycle -----------------------------------------------------
 
     def start(self, plugin_dir: str) -> None:
+        # The tally is per commander and EDMC doesn't say who is active until the first journal event - the load
+        # happens in _switch_cmdr().
         self._plugin_dir = plugin_dir
-        saved = codex_completionist_state.load_state(plugin_dir)
-        if saved:
+        try:
+            if codex_completionist_state.tidy_old_tally(plugin_dir):
+                logger.info("Removed the old shared Codex tally (every commander has their own now)")
+        except Exception:
+            logger.exception("Codex Completionist: could not tidy the old shared tally")
+
+    def _switch_cmdr(self, cmdr: str) -> None:
+        """Save the previous commander's tally and load this one's. A commander seen for the first time since codex
+        tallies became per commander gets a one-time rebuild from their own journals (the old shared tally mixed
+        everyone's finds, so it is not handed to anyone); a brand-new install just starts counting from now."""
+        self._persist()
+        self._tally.clear()
+        self._tally.owner = str(cmdr).strip()
+        self._rebuild_pending = False
+        saved = codex_completionist_state.load_commander(self._plugin_dir, cmdr) if self._plugin_dir else None
+        if saved is not None:
             try:
-                # Earlier versions saved a bare list of entries; now it is {"entries": [...], "last_event_at": ...}.
-                entries = saved.get("entries", []) if isinstance(saved, dict) else saved
-                self._tally.restore(entries)
-                if isinstance(saved, dict):
-                    self._tally.advance_watermark(saved.get("last_event_at"))
-                logger.info("Restored Codex Completionist tally: %d distinct entries", self._tally.total_distinct)
+                self._tally.restore(saved.get("entries", []))
+                self._tally.advance_watermark(saved.get("last_event_at"))
+                self._rebuild_pending = bool(saved.get("rebuild_pending"))
+                logger.info("Restored the Codex Completionist tally for %s: %d distinct entries", cmdr, self._tally.total_distinct)
             except Exception:
-                logger.exception("Failed to restore saved Codex Completionist state; starting fresh")
-        self._catch_up()
+                logger.exception("Failed to restore the saved Codex Completionist tally for %s; starting fresh", cmdr)
+        elif self._plugin_dir and codex_completionist_state.has_old_shared_tally(self._plugin_dir):
+            self._rebuild_pending = True
+            self._persist()
+        if self._rebuild_pending:
+            self._set_status(f"Rebuilding {cmdr}'s Codex tally from your journals (one time: Codex is now per commander)...")
+            self._start_backfill(manual=False)
+        else:
+            self._catch_up()
+        self._refresh_summary()
+        codex_completionist_window.refresh_if_open(self._tally)
 
     def _catch_up(self) -> None:
-        """Count finds made while EDMC was closed. The first run only sets the starting point (the full history is
-        the BKF button's job); after that, only the journals written since the last counted find are read."""
+        """Count finds made while EDMC was closed. A tally with no starting point (a new install) only sets one now (the
+        full history is the BKF button's job); after that, only the journals written since the last counted find are
+        read."""
         try:
             if not self._tally.last_event_at:
                 self._tally.advance_watermark(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
                 self._persist()
                 return
-            counted = self._tally.apply_new(codex_backfill.scan_since(self._tally.last_event_at))
+            counted = self._tally.apply_new(codex_backfill.scan_since(self._tally.last_event_at, self._tally.owner))
             if counted:
                 logger.info("Codex Completionist counted %d find(s) made while EDMC was closed", counted)
                 self._persist()
@@ -118,14 +151,19 @@ class CodexCompletionistController:
         self._persist()
 
     def _persist(self) -> None:
-        if self._plugin_dir is not None:
-            codex_completionist_state.save_state(
-                self._plugin_dir, {"entries": self._tally.snapshot(), "last_event_at": self._tally.last_event_at})
+        if self._plugin_dir is None or not self._tally.owner:
+            return
+        codex_completionist_state.save_commander(self._plugin_dir, self._tally.owner, {
+            "entries": self._tally.snapshot(), "last_event_at": self._tally.last_event_at,
+            "rebuild_pending": self._rebuild_pending,
+        })
 
     # --- journal dispatch -----------------------------------------------
 
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
-        if entry.get("event") != "CodexEntry":
+        if cmdr and commander_data.key_for(cmdr) != commander_data.key_for(self._tally.owner):
+            self._switch_cmdr(cmdr)
+        if entry.get("event") != "CodexEntry" or not self._tally.owner:
             return
         self._tally.record(entry, system)
         self._tally.advance_watermark(entry.get("timestamp"))
@@ -138,8 +176,9 @@ class CodexCompletionistController:
         self._parent = parent
 
         body = panelkit.collapsible_section(parent, "Codex Completionist", "wntb_codex_completionist_collapsed")
+        self._set_title_note = getattr(body, "set_title_suffix", None)
 
-        self._summary_var = tk.StringVar(value=_summary_text(self._tally) if enabled() else _DISABLED_TEXT)
+        self._summary_var = tk.StringVar(value=_summary_text(self._tally, self._rebuilding) if enabled() else _DISABLED_TEXT)
         panelkit.wrap_label(body, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
         )
@@ -159,11 +198,14 @@ class CodexCompletionistController:
             row=3, column=0, columnspan=3, sticky=tk.W,
         )
 
+        self._refresh_summary()   # shows the "rebuilding" note if the first commander's rebuild began before this panel was built
         parent.after(200, self._poll_backfill_queue)
 
     def _refresh_summary(self) -> None:
         if self._summary_var is not None and enabled():
-            self._summary_var.set(_summary_text(self._tally))
+            self._summary_var.set(_summary_text(self._tally, self._rebuilding))
+        if self._set_title_note is not None:
+            self._set_title_note(" — rebuilding..." if self._rebuilding and enabled() else "")
 
     def _set_status(self, message: str) -> None:
         if self._status_var is not None:
@@ -177,41 +219,59 @@ class CodexCompletionistController:
         codex_completionist_window.show(self._parent, self._tally, self._plugin_dir or "")
 
     def _on_backfill(self) -> None:
-        self._set_status("Scanning journal history for codex entries...")
-        threading.Thread(target=self._backfill_worker, daemon=True).start()
+        if not self._tally.owner:
+            self._set_status("Waiting for your commander: play or log in first.")
+            return
+        self._set_status(f"Scanning journal history for {self._tally.owner}'s codex entries...")
+        self._start_backfill(manual=True)
 
-    def _backfill_worker(self) -> None:
+    def _start_backfill(self, manual: bool) -> None:
+        self._rebuilding = True
+        self._refresh_summary()
+        threading.Thread(target=self._backfill_worker, args=(self._tally.owner, manual), daemon=True).start()
+
+    def _backfill_worker(self, cmdr: str, manual: bool) -> None:
         """Runs off the main thread — must not touch any Tk widget directly."""
         try:
-            entries = codex_backfill.scan_all_codex_entries()
+            entries = codex_backfill.scan_all_codex_entries(cmdr)
         except Exception:
             logger.exception("_backfill_worker failed")
             entries = []
-        self._backfill_result_queue.put(entries)
+        self._backfill_result_queue.put((commander_data.key_for(cmdr), entries, manual))
 
     def _poll_backfill_queue(self) -> None:
         """Runs on the main thread via after() — safe to touch widgets here."""
         try:
-            entries = self._backfill_result_queue.get_nowait()
+            key, entries, manual = self._backfill_result_queue.get_nowait()
         except queue.Empty:
             pass
         else:
-            before = self._tally.total_distinct
-            self._tally.merge_history(entries)
-            self._tally.advance_watermark(max((e.get("timestamp") or "" for e in entries), default=""))
-            self._persist()
+            self._rebuilding = False
             self._refresh_summary()
-            added = self._tally.total_distinct - before
-            self._set_status(
-                f"Backfill scanned {len(entries)} historical codex event(s) — {added} new distinct entr{'y' if added == 1 else 'ies'}"
-            )
+            if key != commander_data.key_for(self._tally.owner):
+                # The active commander changed while it was reading: these are another commander's finds. Leave the
+                # tally alone; a pending rebuild runs again when that commander is next seen, or press BKF again.
+                self._set_status("Commander changed during the scan: nothing was added. Press BKF again.")
+            else:
+                before = self._tally.total_distinct
+                self._tally.merge_history(entries)
+                self._tally.advance_watermark(max((e.get("timestamp") or "" for e in entries), default=""))
+                self._rebuild_pending = False
+                self._persist()
+                self._refresh_summary()
+                codex_completionist_window.refresh_if_open(self._tally)
+                added = self._tally.total_distinct - before
+                self._set_status(
+                    f"Backfill scanned {len(entries)} historical codex event(s) for {self._tally.owner} — "
+                    f"{added} new distinct entr{'y' if added == 1 else 'ies'}"
+                )
         if self._parent is not None:
             self._parent.after(200, self._poll_backfill_queue)
 
     def _refresh_enabled_display(self) -> None:
         if self._summary_var is None:
             return
-        self._summary_var.set(_summary_text(self._tally) if enabled() else _DISABLED_TEXT)
+        self._summary_var.set(_summary_text(self._tally, self._rebuilding) if enabled() else _DISABLED_TEXT)
 
     # --- Settings tab --------------------------------------------------
 

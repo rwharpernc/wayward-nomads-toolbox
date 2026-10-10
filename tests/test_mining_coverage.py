@@ -85,11 +85,13 @@ class CoverageRepositoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as plugin_dir:
             repo = coverage.CoverageRepository()
             repo.load(plugin_dir)
+            repo.set_commander("Alice")
             repo.record("Sol", "Earth", 10.0, 20.0, _EARTH_RADIUS_M)
             repo.record("Sol", "Earth", 10.01, 20.0, _EARTH_RADIUS_M)
 
             reloaded = coverage.CoverageRepository()
             reloaded.load(plugin_dir)
+            reloaded.set_commander("ALICE")   # the journal may write the name in another case
             found = reloaded.for_body("Sol", "Earth")
             self.assertIsNotNone(found)
             self.assertEqual(len(found.points), 2)

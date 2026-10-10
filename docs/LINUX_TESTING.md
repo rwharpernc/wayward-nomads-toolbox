@@ -219,6 +219,24 @@ To test, play a short session with EDMC **closed** (or close it mid-session), th
 - [ ] Startup is not noticeably slower, and the EDMC log has no Python errors from `colonisation_catchup`,
       `journal_files`, `visited_systems`, `codex_backfill` or `journal_scan`.
 
+## 7c. Per-commander data (added 2026-10-10, Windows-tested only)
+
+Nothing should be shared between commanders. Needs two commanders (or one commander and a second journal), on Linux with
+the Journal directory set (section 0). The code only uses JSON keys, UTF-8 files and `os.replace`, so the Linux risks are
+the journal folder and the order file modified times give.
+
+- [ ] **Mining**: save a hotspot as commander A; log in as B: the Mining Book shows none of A's. Save one as B, log back
+      in as A: only A's. The coverage map follows the same way.
+- [ ] **Codex**: log in as each commander in turn: the details window subtitle names whose tally it is, and the counts
+      differ. After updating from an older version, each commander's tally is rebuilt once from their own journals (the
+      panel says so while it reads).
+- [ ] **Powerplay**: the Sessions window's History tab and its total show only the commander you are playing.
+- [ ] **Boxel Survey**: the "Surveyed: N systems" line and the exported CSV change with the commander.
+- [ ] **Trade**: switching commander clears the previous one's ship, hold and route results from the Session page; the
+      History window opens on the active commander.
+- [ ] A commander typed in another case (the journal can write `BOCHEAUX` for `Bocheaux`) is the same commander.
+- [ ] Nothing under the plugin folder is named after a commander except the `mining_sessions/` archive files.
+
 ## Reporting
 
 Open an issue with your setup line, the failing step number, and the log excerpt.

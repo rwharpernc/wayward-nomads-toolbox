@@ -347,11 +347,24 @@ the code, so deleting the plugin folder deletes it. Section 13 covers how update
 
 ### Per-commander keys
 
-Data that belongs to a commander is stored as `{ "<commander>": {...} }` in one file. The commander
-name keeps its original casing on disk but is matched case-insensitively (`casefold`). **Why:**
-players can have several commanders, and their surveys, tallies and hotspots must not mix. Matching
-case-insensitively avoids a duplicate entry if the journal reports the same name with different
-casing.
+**Nothing about a commander's play is shared between commanders.** Data that belongs to a commander is stored as
+`{ "<commander>": {...} }` in one file. The commander name is matched case-insensitively (`casefold`). **Why:** players
+have several commanders, and their surveys, tallies, hotspots and sessions must not mix. Matching case-insensitively
+avoids a duplicate entry if the journal reports the same name with different casing.
+
+`commander_data.py` is the shared helper for new files (`{"version": 2, "commanders": {key: {"name", "data"}},
+"legacy": ..., "meta": ...}`; the key is the trimmed, case-folded name and is **only ever a JSON key, never part of a file
+name**, so nothing depends on the Windows/Linux differences in case rules and forbidden characters). Data saved before a
+file was per commander lands in `legacy`; the first commander seen claims it (hotspots, coverage, survey log) or, where
+it mixed several commanders and can't be split (the Codex tally), it is kept untouched and each commander is rebuilt from
+their own journals, then it is removed after 60 days. Older per-commander files (`boxel_state.py`,
+`region_sweep_state.py`, `waypoint_route_state.py`, `bgs_state.py`, …) predate the helper and use their own equivalent
+layout. When the active commander changes, a feature must also reset anything it kept in memory about the previous one
+(Trade does this in `_reset_for_commander`; Exploration Value forgets the last data sales).
+
+`tests/test_data_files_per_commander.py` lists every protected data file and how it keeps commanders apart (or why it
+holds none), and fails for a new, unclassified one; `tests/test_per_commander_data.py` saves for one commander and loads
+for another for each of the converted stores.
 
 Trade's carrier records and per-commander carrier choice take this a step further: they are keyed by the
 *casefolded* name (`trade_carrier.key_for`), because a real journal was seen writing `BOCHEAUX` where EDMC
@@ -368,7 +381,7 @@ startup.
 
 ### Bounded growth
 
-Data that would otherwise grow forever is capped (for example `sessions.json` keeps the most recent
+Data that would otherwise grow forever is capped (for example `sessions.json` keeps each commander's most recent
 200 sessions). Derived numbers aren't stored when they can be recomputed: Powerplay stores raw
 merits per activity and computes Control Points at display time from the current ratio settings, so
 correcting a ratio retroactively fixes old sessions' estimates.
@@ -416,8 +429,9 @@ Two situations mean a feature can start with an incomplete picture:
   - Colonisation (`colonisation_catchup.py`, 14 to 30 days): depot snapshots (idempotent) and contributions (additions,
     so each site carries `journal_at` and only a newer event is applied; a site saved before that existed uses its
     `updated` time). The live path uses the same guard.
-  - Codex Completionist (`scan_since`): only the files written since the tally's `last_event_at` watermark, counting
-    each newer `CodexEntry` once. The first run only sets the watermark.
+  - Codex Completionist (`scan_since`): the active commander's tally only; the files written since its `last_event_at`
+    watermark, counting each newer `CodexEntry` once (a file says whose events follow). A brand-new install only sets the
+    watermark; a commander first seen after the tally became per commander is rebuilt once from all their journals.
   - Boxel Survey's visited systems (`visited_systems.arrivals_since`, 14 days): a set union, so no watermark.
   - Trade's route start (`trade_route_start.py`), with the time of each dock so a late-read older file cannot win.
   - Inventory has no journal pass: on `StartUp` it syncs from EDMC's own state, which EDMC rebuilds from the journal.
@@ -504,7 +518,7 @@ Overlay message IDs use `wntb_<feature>_*` so a group's prefix matches exactly i
 |---|---|---|
 | EDSM | Nearby systems, "does EDSM know this system", bodies, ring reserves | Buttons; some opt-in automatic checks |
 | Spansh | Mining price finder, hotspot and boxel lookups, ELW rarity, rare-goods origin Power, nearest neutron star / white dwarf (N.S./W.D.), Trade routes and best-price searches | Buttons; opt-in; the Rares window looks up on open |
-| edastro.com (GEC) | Nearest exploration POI | Button only |
+| edastro.com (GEC) | Nearest exploration POI: the whole list (`/gec/json/all`, ~2 MB, 652 entries) is downloaded and the nearest worked out locally | Button only; kept in memory for 6 hours |
 | Canonn sheets | Thargoid and Guardian site lists | Button; downloaded once per session |
 | tick.infomancer.uk | BGS tick time | 60-second poll; can be turned off |
 | GitHub Releases | Update check | Opt-in, once per EDMC run |
@@ -924,8 +938,11 @@ unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every 
 ## 16. Adding a feature
 
 1. Put pure logic in its own module with no Tk and no EDMC-only imports; add a `unittest` file.
-2. Add `xxx_state.py` if it persists data: per-commander, atomic write, tolerant load. Give any new
-   file a unique name and consider `_OWN_DATA_FILES` (section 13).
+2. Add `xxx_state.py` if it persists data: **per commander** (use `commander_data.py`), atomic write, tolerant load. Give
+   any new file a unique name, add it to `_OWN_DATA_FILES` (section 13) and say in
+   `tests/test_data_files_per_commander.py` how it keeps commanders apart. Never put a commander name in a file name.
+   Reset any in-memory state about the previous commander when the active one changes. Think about Windows and Linux
+   (UTF-8, `os.replace`, no case-sensitive file-name assumptions) and note in `LINUX_TESTING.md` what is untested there.
 3. Add the panel module implementing the contract (section 4). Choose `PANEL_PLACEMENT`.
 4. Use `panelkit.wrap_label` for any text from the game, and a hard box for any image (section 5).
 5. Put network calls behind the worker, queue and generation-counter pattern (section 7; Trade's

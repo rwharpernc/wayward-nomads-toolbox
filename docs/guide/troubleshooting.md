@@ -26,13 +26,28 @@ when EDMC starts and catches up by itself; the table in
 back. Things to try if a figure is still off:
 
 - Powerplay has a **RESCAN** button.
-- Codex Completionist has **BKF** (backfill from journal history), for finds older than the automatic catch-up.
+- Codex Completionist has **BKF** (backfill from journal history) for the commander you are playing, for finds older than the automatic catch-up.
 - Trade's **Rebuild** button recounts a session from a start time you give; see
   [How a trading session works](trade.md#how-a-trading-session-works).
 - Missions shows what the journals say is active. If a mission expired without the game writing anything, log in
   again and the game's own list replaces it.
 - A feature can only look back a limited way (Missions two weeks, Colonisation 14 to 30 days, Boxel Survey 14 days).
   Older play with EDMC closed isn't found.
+
+### My hotspots, survey finds or Codex tally are missing for a commander
+
+They belong to one commander each, so a commander you have not used before starts empty (see
+[Commanders and your data](getting-started.md#commanders-and-your-data)). If you **just updated** from a version where
+they were shared:
+
+- **Mining hotspots, driven ground and Boxel Survey finds** went to whichever commander logged in first. Log in as the
+  one who owns them. To give hotspots to another commander, use **I/E** in Mining: export as the first commander, then
+  import as the second.
+- **The Codex tally** is rebuilt from each commander's own journals the first time they log in; the panel says so
+  while it reads (the section title shows "rebuilding..." even when folded) and the summary fills in when it finishes (a
+  minute or two for years of journals). If it was
+  interrupted, log in again or press **BKF**.
+- **Powerplay History** now shows only the commander you are playing. The other commanders' sessions are still saved.
 
 ## Overlay
 

@@ -221,7 +221,8 @@ whitespace-tolerant regex rather than an exact `"event":"X"` substring.
 ### 5.2 Trade History: saved sessions
 
 Sessions are kept **only when the commander presses Save session** (nothing is saved automatically). The live ledger is
-a working tally; History is the record the commander chose to keep.
+a working tally; History is the record the commander chose to keep. Every record names its commander; the window opens on
+the active commander's sessions (`show(..., cmdr=)`), and the other commanders' are one drop-down choice away.
 
 **What the ledger remembers for it.** Beyond the totals, `trade_ledger` keeps:
 - `log`: one entry per trade or cost: `{t, e: buy|sell|cost, c, n, u (unit price), tot, paid (average price paid, on

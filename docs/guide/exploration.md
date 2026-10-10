@@ -143,7 +143,8 @@ cube, and fills the Seed box with it. It does not switch automatically: press **
 `Surveyed: N systems | ELW | WW | AW | terraformable | bio`. These come from your scans: Earth-like, water and
 ammonia worlds, terraformable planets, and bodies with biological signals. Open **Settings → Exploration → Boxel
 Survey** and press **Export Survey Log** to write them to a CSV file. The file is always called
-`boxel_survey_export.csv` and is saved **in the WNTB plugin folder**; you do not choose where.
+`boxel_survey_export.csv` and is saved **in the WNTB plugin folder**; you do not choose where. The survey log is kept
+**per commander** and the export holds the active commander's finds, so exporting as another commander replaces the file.
 
 **Settings → Exploration → Boxel Survey:**
 
@@ -272,15 +273,21 @@ example `120 distinct entries, 340 total finds` followed by your three biggest c
 **DET** and **BKF**. It is on by default; switch it off with *Track codex entries* in **Settings → Exploration →
 Points of Interest**, where there is also a *View Canonn Codex* link.
 
-**One thing to know:** the tally is **one per install, not per commander**. Every commander's entries on this
-install go into the same list.
+**Each commander has their own tally.** Switching commander switches the tally (the window's subtitle names whose it is),
+and one commander's finds never appear in another's. **After updating from a version before this**, the old tally mixed
+every commander's finds and can't be split, so each commander's is rebuilt automatically from their own journals the
+first time they log in (one time). Years of journals can take a minute. While it reads, the Codex Completionist title
+reads **"- rebuilding..."** (even when the section is folded) and the summary line says it is rebuilding that
+commander's tally; the summary fills in when it finishes. The old tally is kept unused for 60 days and then removed.
 
 **Finds made while EDMC was closed** are counted automatically: each time EDMC starts, WNTB reads only the journal files
 written since the last find it counted and adds the newer ones, once each. The first start after updating only sets
-that starting point, so press **BKF** once to bring in older history.
+that starting point for a brand-new install, so press **BKF** once to bring in older history. (The rebuild after updating
+does this for you.)
 
 **BKF** (backfill from journal history) is a button you press yourself, because reading years of journals takes a
-while. It reads **all** the journal files in EDMC's journal folder, with no date limit.
+while. It reads **all** the journal files in EDMC's journal folder, with no date limit, and counts only the
+**current commander's** entries (a journal file says whose events follow, and one file can hold several commanders).
 
 BKF is safe to press more than once. For each entry it compares how many times your journals record it with the
 count already in the tally and keeps the larger, so nothing is counted twice, and finds from journals you've since
@@ -315,8 +322,15 @@ Codex Completionist has no specification page of its own. The code is `codex_com
 
 *(Starts minimized.)*
 
-Finds the nearest point of interest from edastro.com's exploration catalogue. Click **FIND**. It only looks
-something up when you ask.
+Finds the nearest point of interest from edastro.com's exploration catalogue (the GEC). Click **FIND**. It only looks
+something up when you ask, and it shows the point of interest, its category, **the system to look for in the galaxy
+map**, how far away it is, its region and rating, with a link to its page. The system name is also copied to your
+clipboard so you can paste it into the galaxy map.
+
+It needs to know where you are, so jump (or log in) first. If EDMC started after you were already in the game, it reads
+your position from the current journal. **The first FIND of a session downloads edastro's whole list** (about 2 MB, 650
+points of interest) and works out the nearest one itself; later presses use that list for six hours without another
+download.
 
 ## Canonn Nearby POI
 
@@ -347,6 +361,7 @@ WNTB can only show what Elite Dangerous writes to its journal files and what the
 | Systems visited with EDMC closed to be known | The journals record every jump, so each start reads the last 14 days of journals for your arrivals and adds them to the visited list that **Skip systems already visited** and **RND** use. | Nothing needed for the last 14 days. Older jumps made with EDMC closed are not found. |
 | Bodies-scanned count to be right after a restart | The honk (`FSSDiscoveryScan`) gives the body count and each scan counts one. If EDMC started after the honk, WNTB replays the current journal file for them. | If it still says to honk, honk again. A system's scans made in another journal file are not included. |
 | The sale line to include sales before the current journal file | It is read from the current journal file when EDMC starts, then kept up to date live. | It resets to "none yet" when you restart EDMC after a new game session. |
-| Codex Completionist to cover everything | Canonn's catalogue has no geological or anomaly entries, so those never appear under **Not found**. The tally is per install, not per commander. | Use the game's Codex for those. Press **Refresh Catalog** if the saved copy is old. |
+| Codex Completionist to cover everything | Canonn's catalogue has no geological or anomaly entries, so those never appear under **Not found**. The tally is per commander; after updating from a version where it was shared, each commander's is rebuilt from their own journals once (the old mixed tally can't be split). | Use the game's Codex for those. Press **Refresh Catalog** if the saved copy is old. |
 | POI lists to be current | They are snapshots from Canonn and edastro, and are fetched only when you ask. | Press **FIND** or **REF** to refresh. |
+| edastro's own "nearest" lookup to work | It stopped answering for position: a check on 2026-10-10 got "The Solar System" for every coordinate. WNTB downloads the full list and finds the nearest itself. | None needed. If FIND says the lookup failed, edastro's list could not be downloaded; try again later. |
 

@@ -138,5 +138,30 @@ class RouteStartScanTests(unittest.TestCase):
         self.assertNotIn("route", scan.apply(events, {}, trade_stock.StockBook(), {}))   # old call shape unchanged
 
 
+class CommanderSwitchTests(unittest.TestCase):
+    """Nothing learned about one commander's ship, hold or lookups shows for the next."""
+
+    def setUp(self) -> None:
+        RouteStartPerCommanderTests.setUp(self)
+
+    def test_a_new_commander_does_not_inherit_the_previous_ones_ship_hold_or_route_results(self) -> None:
+        panel = self.panel
+        panel.handle_event({"event": "Loadout", "Ship": "anaconda", "MaxJumpRange": 30.0}, "Alice", "Sol", None,
+                           {"Cargo": {"gold": 5}, "CargoCapacity": 100, "Credits": 1000})
+        panel._route_blocks = ["a route found for Alice"]
+        panel._sell = {"near": ["offer"]}
+        self.assertEqual(panel._ship, "anaconda")
+        panel.handle_event({"event": "LoadGame", "Commander": "Bob"}, "Bob", "Lave", None, {})
+        self.assertIsNone(panel._ship)
+        self.assertEqual((panel._cargo, panel._capacity, panel._credits, panel._jump_range), ({}, 0, 0, 0.0))
+        self.assertEqual((panel._route_blocks, panel._sell), ([], {}))
+
+    def test_the_same_commander_in_another_case_is_not_a_switch(self) -> None:
+        panel = self.panel
+        panel.handle_event({"event": "Loadout", "Ship": "anaconda"}, "Alice", "Sol", None, {})
+        panel.handle_event({"event": "Location"}, "ALICE", "Sol", None, {})
+        self.assertEqual(panel._ship, "anaconda")
+
+
 if __name__ == "__main__":
     unittest.main()
