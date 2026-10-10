@@ -79,7 +79,7 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `elw_rarity_spansh.py` | Spansh count of known Earth-like worlds around a system |
 | `exploration_progress.py` | Bodies scanned against the honk's body count, and what the last exploration and organic data sales paid |
 | `exploration_value.py` | Estimated scan payout for the last body scanned, the system's age and region, system scan progress and the last data sales |
-| `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog: downloads the full list once and finds the nearest point of interest locally (their own nearest endpoint stopped using the position) |
+| `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog: downloads the full list once and finds the nearest point of interest locally (their own nearest endpoint does not use the position) |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
 | `neutron_finder.py` | Spansh search for the nearest neutron-star or white-dwarf primary |
 | `notable.py` | Notable Bodies: the overlay banners, queueing and Settings page |

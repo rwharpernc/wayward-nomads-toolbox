@@ -3,9 +3,11 @@ On-demand lookup against edastro.com's (Elite Dangerous Astrometrics) GEC
 (Galactic Exploration Catalog) to find the nearest catalogued point of
 interest to a given galactic coordinate - see docs/ATTRIBUTIONS.md.
 
-How it works, and why: edastro's `GET /gec/json/nearest/<x>/<y>/<z>` endpoint used to answer for the coordinate, but a live
-check on 2026-10-10 showed it returning the same entry ("The Solar System") for every coordinate and for a system name, so
-the Find button always gave the same answer. `GET /gec/json/all` still works (652 entries, about 2 MB, each with its
+How it works, and why: edastro's `GET /gec/json/nearest/<x>/<y>/<z>` endpoint does not use the position. A live check on
+2026-10-10 got the same entry ("The Solar System", the same 42,312 bytes) for every coordinate tried (decimal and integer,
+as a path or as query parameters) and for system names. The earlier note that it "worked" had only been checked at Sol's
+own coordinates, where Sol is the right answer anyway, so it may never have honoured the position. The Find button
+therefore always gave the same answer. `GET /gec/json/all` still works (652 entries, about 2 MB, each with its
 `coordinates`), so this downloads that list once and works out the nearest entry itself: straight-line distance in
 light years from the query point, matching organic_region_data.py's convention. The list is kept in memory for
 CACHE_SECONDS, so pressing Find repeatedly costs one request, and only when the button is pressed.
