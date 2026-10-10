@@ -152,6 +152,10 @@ So log in first as the commander who owns your hotspots and survey finds.
 
 ### If EDMC wasn't running
 
+If you start EDMC **before the game**, nothing tells WNTB who is playing until you log in. So a few seconds after start-up
+it reads the last commander from your newest journal and every feature starts with their saved data; logging in as
+someone else then switches everything to them. (The Game Mode and Credits lines still wait for a running game.)
+
 EDMC only hands WNTB the events that happen while it runs. For anything played with EDMC closed, WNTB reads the game's
 journal files when EDMC starts (and, for Trade, once a minute after that). Each feature does it its own way and only
 adds what is new, so nothing is counted twice:
@@ -162,7 +166,7 @@ adds what is new, so nothing is counted twice:
 | **Powerplay** | Merits and Control Points | The gap since EDMC last saw the journal (up to the scan depth in Settings) |
 | **BGS** | Your effect on factions this tick | From the start of the tick |
 | **Missions** | Active missions, kill progress, cargo progress, Community Goals | The last 2 weeks |
-| **Colonisation** | Deliveries and sites docked at | 14 days, or back to your oldest site (30 days at most) |
+| **Colonisation** | Deliveries and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most) |
 | **Codex Completionist** | Codex finds, for the active commander | Everything since the last find it counted (a one-time rebuild from all their journals after updating) |
 | **Boxel Survey** | Systems you arrived at | The last 14 days |
 | **Mining** | The run in progress | The current journal file |
@@ -278,6 +282,7 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **SHIPS** | Manage ship builds | Field Ops |
 | **REPORT** | Colonisation sites | Field Ops |
+| **SHOW** / **HIDE** | Force the colonization shopping list onto the overlay, or take it off again | Field Ops |
 
 ---
 
