@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.5.0 - 2026-10-10
 
 ### Added
 - **Trade: where your space goes.** The Session page shows **Hold space** under the landing pad (cargo, limpets and
@@ -11,12 +11,16 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   A carrier last read by an older version shows one combined "crew and packs" line until its next space report.
 
 ### Changed
+- **Trade: the Session page's journal line** shows when the journals were last reviewed (in your local time) and
+  whether that review found new journals.
 - **Guides: full disclosure of the game's data gaps.** Every mode guide (Trade, Powerplay, Exploration, Mining,
   Missions, Field Ops, BGS, Landing and Interdiction) now ends with "What the game does and doesn't tell us, and how
   to work around it": what the journal never records or records late, how it shows on screen and what to do. The
   README, guide index, Getting started and Troubleshooting point to it.
 
 ### Fixed
+- **Trade: the journal scan's "new or grown" count** now counts only files that were actually applied, not ones that
+  failed and will be retried.
 - **Codex Completionist: BKF (backfill) no longer double-counts.** Backfill read every `CodexEntry` in your journals
   and added each one to "Times found", including ones already counted while you played, so pressing it again doubled
   the counts. It now compares the journals' count for each entry with the tally's and keeps the larger, so it can be
