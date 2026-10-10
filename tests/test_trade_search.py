@@ -277,6 +277,15 @@ class CarrierCargoTests(unittest.TestCase):
         self.assertIn(Pair("Carrier cargo free", "13,500 t", bold=True), blocks)
         self.assertIn(Pair("Carrier reserved for orders", "500 t"), blocks)
 
+    def test_space_breakdown_follows_the_free_line(self) -> None:
+        record = carrier.parse_stats(stats_event())
+        blocks = carrier.cargo_blocks({FLEET: record})
+        free = blocks.index(Pair("Carrier cargo free", "13,500 t", bold=True))
+        self.assertEqual(blocks[free + 1:free + 3],
+                         [Pair("Carrier crew services", "6,000 t"), Pair("Carrier ship / module packs", "1,000 t")])
+        old = {k: v for k, v in record.items() if k not in ("crew", "packs")}   # saved before these were kept
+        self.assertIn(Pair("Carrier crew and packs", "7,000 t"), carrier.cargo_blocks({FLEET: old}))
+
     def test_free_space_is_worked_out_when_the_journal_omits_it(self) -> None:
         event = stats_event()
         del event["SpaceUsage"]["FreeSpace"]

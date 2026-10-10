@@ -2,7 +2,7 @@
 
 Find your symptom below. Most problems are a missing setting or a missing permission.
 
-**Jump to:** [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Trade](#trade) · [Still stuck?](#still-stuck)
+**Jump to:** [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Trade](#trade) · [Still stuck?](#still-stuck)
 
 ## General
 
@@ -124,8 +124,22 @@ estimate; it shows only your ship hold and the carrier's cargo figures.
 - Check your carrier choice for that commander under **Settings → WNTB → Trade** (Auto, Fleet, Squadron or Both,
   not None).
 - Open **Carrier Management** in the game once so the game reports its space.
+- Read [what the game does and doesn't tell us](trade.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it):
+  it lists every gap in the game's data and the workaround for each.
 - If the numbers still look wrong, open an issue with the `CarrierStats` line from your journal (it is in the latest
   `Journal.*.log`).
+
+## A number looks wrong or missing
+
+Often it is a limit of what the game records, not a fault. Each mode guide ends with "What the game does and doesn't
+tell us, and how to work around it": [Powerplay](powerplay.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
+[Exploration](exploration.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
+[Mining](mining.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
+[Trade](trade.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
+[Missions](missions.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
+[Field Ops](field-ops.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
+[BGS](bgs.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it) and
+[Landing and Interdiction](always-on.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it).
 
 ## Still stuck?
 

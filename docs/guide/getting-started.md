@@ -80,6 +80,9 @@ You don't have to configure anything to get value out of WNTB, but this short to
    check it works.
 4. **Linux only:** make sure EDMC's *Journal directory* is set. See [WNTB on Linux](linux.md).
 5. Play. Most things fill themselves in as you go.
+6. Skim the "What the game does and doesn't tell us" section at the end of each mode's guide. It lists what the
+   game never records (for example, a fleet carrier's cargo is only exact after you open Carrier Management) and
+   how to work around it.
 
 ## Finding your way around
 
@@ -137,6 +140,19 @@ Trade, BGS, Field Ops and Always On. Some have a row of tabs of their own:
 | **Always On** | Interdiction Warning, Landing |
 
 This is where you switch things on and off and adjust how they behave.
+
+### What you can and can't switch off
+
+The seven mode buttons are always there: **a mode can't be hidden**, so if you never explore, Exploration simply sits
+unused. Switches exist for individual features:
+
+| | |
+|---|---|
+| **Have a switch** | Auto-Honk, Discovery Alerts, Notable Bodies, Organic Scanning, Codex Completionist, Exploration Value (and its two online extras), BGS (and its tick detection), Landing Assist, Interdiction Warning, the Trade and Mining online lookups, and every overlay |
+| **Have no switch** | The core of Powerplay, Missions, Mining and Trade tracking, screenshot conversion, Inventory tracking, Colonisation, Ship Builds, Boxel Survey, and the GEC and Canonn POI finders. Some of these (Boxel Survey, the POI finders) only fold away and do nothing until you press a button |
+
+Most online lookups are off until you switch them on, or only run when you press a button. The exceptions are listed
+in [what goes on the internet](internet-and-privacy.md).
 
 ### Pop-out windows
 

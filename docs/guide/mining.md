@@ -49,6 +49,19 @@ It lists the bodies you've scanned in this system and every hotspot you've saved
 For a scanned body it also shows what *you've* found so far on that kind of body. That starts empty and fills in as
 you save hotspots. It describes your own finds, not what a body actually holds.
 
+## What the game does and doesn't tell us, and how to work around it
+
+WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (Spansh and EDSM) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| Ring and deposit amounts read for you | Amount and Density are not given to WNTB. They are **typed in by hand**. | Check the figure you type. A wrong reading gives a wrong range. |
+| Exact tonnes left in a deposit | The deposit figures are measurements from a handful of deposits, so the ranges are wide. | Treat "tons left" as a guide, not a count. |
+| A map of everywhere you have mined | Coverage means ground the Rhino has **driven over**, not ground it has scanned. | Use the minimap to see where you have been, not what is left. |
+| An exact count of limpets aboard | "On board" is approximate (bought less launched). | Check your cargo for the real number. |
+| Every commodity's best mining method | The method hints are community-sourced and need occasional updating. | If a hint looks wrong, trust the game and open an issue. |
+| Ring reserve and hotspot lookups to always answer | They only know what players have uploaded to EDSM or Spansh. | No answer can mean nobody has recorded it. Scan the ring yourself, then save the hotspot with **+H.S.** |
+
 ## Settings
 
 **Settings → Mining**:

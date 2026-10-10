@@ -20,6 +20,7 @@ under the page arrows.
 **On this page:** [How a trading session works](#how-a-trading-session-works) ·
 [The Session page](#the-session-page) · [Trade History](#trade-history-saving-sessions) · [Routes](#routes) ·
 [Market](#market) · [Fleet and squadron carriers](#your-fleet-carrier-and-squadron-carrier) ·
+[What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it) ·
 [Using Trade on two computers](#using-trade-on-two-computers) · [Settings](#trade-settings)
 
 ## How a trading session works
@@ -73,11 +74,13 @@ cost only counts once WNTB has seen it.
 
 **Ship hold.** Your ship and the landing pad it needs (for example "Type-9 Heavy, large"), how many tonnes are used,
 the capacity and how much is free, what the station you're docked at would pay for the whole hold, and what each
-commodity aboard would sell for there.
+commodity aboard would sell for there. **Hold space**, just under the landing pad, splits the hold into cargo,
+limpets (they take hold space like any cargo) and free space, for example "312 t cargo, 16 t limpets, 40 t free".
 
 **Carrier cargo.** Your carrier's cargo storage, shown as **Carrier cargo used**, **Carrier cargo free** and
-**Carrier reserved for orders**, so it is never mistaken for your ship hold. Only shown if you have a carrier; see
-[below](#your-fleet-carrier-and-squadron-carrier).
+**Carrier reserved for orders**, so it is never mistaken for your ship hold. Under the free line, **Carrier crew
+services** and **Carrier ship / module packs** show what the rest of the carrier's space is spent on (a line is left
+out when it is 0). Only shown if you have a carrier; see [below](#your-fleet-carrier-and-squadron-carrier).
 
 ### Buttons
 
@@ -260,6 +263,79 @@ seconds. Nothing else in the game's files lists what is in the carrier's hold, s
   and read, and even then it is only as good as the last time you opened Carrier Management.
 - **The figure can look wrong right after you unload.** The unload is in the journal but the total is not. Open
   Carrier Management after a big load to put an exact number back.
+
+## What the game does and doesn't tell us, and how to work around it
+
+WNTB can only show what Elite Dangerous writes into its journal files (and what Spansh, a community database,
+publishes). Some things the game never records, or records late or only in part. Rather than guess quietly, WNTB shows
+the figure it has and says how sure it is. Here is every gap we know about, what it looks like on screen, and what to do.
+
+### Your fleet carrier
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| The carrier's space to be known as soon as you log in | The space report (`CarrierStats`) is written **only when you open Carrier Management**. It is not written at login. | Open Carrier Management once per session. WNTB reads recent journals at start-up, so the last time you did still counts after an EDMC restart. |
+| A list of what commodities are in the carrier's bay | Only the **total tonnes** in the bay. Commodity names are not in the report. | None inside the game's files. Carrier Management in the game itself lists the contents. WNTB deliberately does not invent a per-commodity list. |
+| Trade orders and sales made by the carrier to show up | They are **not written** when they happen. They only show in the next space report. | Open Carrier Management after a carrier order completes. Until then the cargo figure may be too high and shows a `~`. |
+| Space reserved for orders to follow along | Only updates in the space report. | Same: open Carrier Management. |
+| Cargo moved by someone else to be seen | WNTB follows the transfers **your** journal records while you are docked at the carrier. We have not seen the game report anyone else's. | Open Carrier Management when someone else may have used the bay (a squadron carrier especially). |
+| The figure to be right right after unloading | The transfer is in the journal but the total is not updated. | WNTB counts the transfer itself; open Carrier Management after a big load to put the exact number back. |
+| Crew and pack space to be listed by type | Crew services, ship packs and module packs are reported, but only in the same report as above. | Same. A carrier last read by an older WNTB shows one combined "Carrier crew and packs" line until the next report. |
+
+**A `~` before a figure is WNTB telling you it is an estimate.** The transfers it has seen add up to more than the bay
+can hold, so something left the bay without a journal entry. It is a prompt, not an error: open Carrier Management and
+it goes away.
+
+### Your ship's hold
+
+- **Limpets are counted as cargo by the game**, which is why they are shown as their own part of **Hold space**:
+  they use tonnes you might think are free.
+- **Some SRV and vehicle capacities are unknown**; the Inventory window shows the count with "capacity unknown" rather
+  than a guessed figure.
+- **"Bought, not yet sold" is an estimate.** It only comes down when WNTB sees you sell. Cargo lost, jettisoned, sold by
+  a carrier order, or moved to a carrier without WNTB running is not subtracted. Use **Rebuild** to recount from a
+  chosen start time, or **Reset** to start clean.
+
+### Profit and costs
+
+- **Only what WNTB has seen is counted.** Trades before it first ran are not in the session. Keep EDMC running, or
+  copy the journals over later (see [two computers](#using-trade-on-two-computers)); the catch-up adds only what is
+  new.
+- **Insurance rebuys and fines are not counted**, and a cost only counts once WNTB has seen it.
+- **Advanced maintenance is logged by the game as a repair**, so it gets its own line to keep it visible.
+- **The session balance change is your real credits difference**, so it also includes anything else you earned.
+
+### Routes and Market (Spansh)
+
+- **Prices are only as fresh as the last player who docked there.** Spansh gets them from other players' game data.
+  Markets older than 30 days are ignored; check the market when you arrive.
+- **Spansh doesn't know fleet carriers as route starts**, so a route never starts from your carrier. Dock at a real
+  station first, or accept the last station you docked at.
+- **Fleet carriers in results can jump away**, so they are listed apart and marked. Switch them off in Settings if you
+  only want fixed stations.
+- **Jump range is your ship's unladen range.** A full hold jumps shorter, so lower it in Settings if routes are too
+  long.
+- **Commodity names must match the game exactly** ("Void Opal", not "Void Opals"). Pick from the suggestion list.
+- **The landing pad size is worked out from your ship** and can be wrong for unusual ships. Override it in Settings.
+- **Spansh can be slow or refuse a search.** Cancel and try again later; the page shows its reason.
+
+### Gaps we have not been able to confirm
+
+- **Squadron carriers.** We assume a squadron carrier's space report matches a fleet carrier's. No real one was
+  available to check, so treat its figures with care and report anything odd.
+- **Ship pad sizes** come from Coriolis data and a partly hand-written name map. A ship that doesn't match shows
+  "pad size unknown" and is not filtered. Set the size yourself in Settings.
+- **Spansh's route planner can filter for large pads but not medium ones.** If your ship needs a medium pad, check
+  the pad at each stop.
+- **A price can't be shown as current**, only that the market was updated in the last 30 days.
+- **The commodity list and ship classes are snapshots.** A new commodity or ship needs a WNTB update.
+- **On a first run, Stock looks back only 14 days**, so older purchases that are still unsold aren't known.
+
+### Playing on more than one computer, or with EDMC closed
+
+The journal files are the only link, so everything above applies to each machine separately. Copy the journals across
+(all of them, with the game closed if you can), let WNTB read them, and use **Rebuild** for a session that began
+elsewhere. See [Using Trade on two computers](#using-trade-on-two-computers).
 
 ## Using Trade on two computers
 

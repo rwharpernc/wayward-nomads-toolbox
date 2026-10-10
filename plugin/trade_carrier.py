@@ -114,6 +114,7 @@ def parse_stats(entry: Dict[str, Any]) -> Optional[CarrierRecord]:
         "type": _type_of(entry), "id": _int(entry.get("CarrierID")),
         "name": str(entry.get("Name") or ""), "callsign": str(entry.get("Callsign") or ""),
         "total": total, "capacity": capacity, "cargo": cargo, "reserved": reserved, "free": free,
+        "crew": crew, "packs": ship_packs + module_packs,
         "updated": str(entry.get("timestamp") or _now()),
     }
 
@@ -269,6 +270,17 @@ def visible_types(mode: str, present: Iterable[str]) -> List[str]:
     return [t for t in TYPE_ORDER if t in seen]
 
 
+def _space_breakdown(record: CarrierRecord) -> List[Block]:
+    """What the rest of the carrier's space is spent on (everything that is not the cargo bay). A record saved
+    before crew and packs were kept only knows the sum, so that is shown as one line."""
+    total, capacity = record.get("total", 0), record.get("capacity", 0)
+    if "crew" in record:
+        lines = [("Carrier crew services", record.get("crew", 0)), ("Carrier ship / module packs", record.get("packs", 0))]
+    else:
+        lines = [("Carrier crew and packs", max(0, total - capacity))]
+    return [Pair(label, f"{tonnes:,} t") for label, tonnes in lines if tonnes > 0]
+
+
 def cargo_blocks(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) -> List[Block]:
     """Session-page sections, one per visible carrier. Empty when there is nothing to show."""
     records = records or {}
@@ -286,6 +298,7 @@ def cargo_blocks(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) 
         guess = "~" if record.get("estimate") else ""
         blocks.append(Pair("Carrier cargo used", f"{guess}{used:,} / {capacity:,} t"))
         blocks.append(Pair("Carrier cargo free", f"{guess}{free:,} t", bold=True))
+        blocks += _space_breakdown(record)
         if reserved:
             blocks.append(Pair("Carrier reserved for orders", f"{reserved:,} t"))
         if guess:

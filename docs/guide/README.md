@@ -3,6 +3,13 @@
 Plain-language guides for using the Wayward Nomads Toolbox. New here? Start with
 [Getting started](getting-started.md).
 
+## Full disclosure
+
+WNTB can only show what Elite Dangerous writes to its journal files and what services such as Spansh, EDSM and
+Canonn publish. Some things the game never records, records late or records in part. **Every mode guide ends with a
+section called "What the game does and doesn't tell us, and how to work around it"** listing each gap we know of, how
+it looks on screen, and what to do. Where a figure is an estimate, WNTB marks it as one.
+
 ## Setting up
 
 | Guide | What's in it |

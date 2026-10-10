@@ -635,6 +635,15 @@ class TradePanelController:
     def _hold_blocks(self) -> List[Block]:
         used = sum(self._cargo.values())
         blocks: List[Block] = [Heading("In your ship"), *self._ship_pairs()]
+        limpets = sum(count for name, count in self._cargo.items() if name.lower() == "drones")
+        if self._capacity or used:
+            # What is taking up the hold: limpets are cargo too, so they are split from the commodities.
+            parts = [f"{used - limpets:,} t cargo"]
+            if limpets:
+                parts.append(f"{limpets:,} t limpets")
+            if self._capacity:
+                parts.append(f"{max(0, self._capacity - used):,} t free")
+            blocks.append(Pair("Hold space", ", ".join(parts)))
         if not self._capacity and not used:
             return blocks + [Pair("Ship hold", "empty")]
         blocks.append(Pair("Ship hold", f"{used:,} / {self._capacity:,} t ({max(0, self._capacity - used):,} free)"
