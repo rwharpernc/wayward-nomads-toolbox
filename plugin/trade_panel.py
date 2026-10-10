@@ -507,6 +507,7 @@ class TradePanelController:
             return
         self._scan_running = False
         changed = {"ledger": False, "stock": False, "carrier": False}
+        read = 0     # files actually applied and marked; one that failed is retried next pass and not counted
         for path, size, events in batch:
             try:
                 got = trade_journal_scan.apply(events, self._book.ledgers, self._stock, self._carrier.records)
@@ -515,7 +516,8 @@ class TradePanelController:
                 continue
             changed = {key: changed[key] or got[key] for key in changed}
             trade_journal_scan.mark(self._scanlog, path, size)
-        trade_journal_scan.note_pass(self._scanlog, len(batch))
+            read += 1
+        trade_journal_scan.note_pass(self._scanlog, read)
         if self._plugin_dir is not None:
             trade_journal_scan.save(self._plugin_dir, self._scanlog)
             if changed["ledger"]:
