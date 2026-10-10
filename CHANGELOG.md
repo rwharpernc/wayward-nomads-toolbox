@@ -36,8 +36,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   checklist has a new section for the catch-up features, which have only been tried on Windows.
 
 ### Fixed
-- **GEC Nearby POI always gave the same answer.** edastro's own "nearest" lookup stopped using the position (a live check
-  returned "The Solar System" for every coordinate, and for a system name). FIND now downloads edastro's full list once
+- **GEC Nearby POI always gave the same answer.** edastro's own "nearest" lookup does not use the position (a live check
+  returned "The Solar System" for every coordinate and name tried; it had only ever been checked at Sol itself). FIND now downloads edastro's full list once
   (about 2 MB, kept for six hours) and works out the nearest point of interest itself. The result also names the system
   to look for in the galaxy map and copies it to the clipboard, and the position is read from the current journal if EDMC
   started after you were already in the game.
