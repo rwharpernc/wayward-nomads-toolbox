@@ -29,6 +29,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `overlay.py` | The one shared overlay client (EDMCModernOverlay / EDMCOverlay over a local TCP port) and its Plugin Group registration |
 | `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming |
 | `platform_support.py` | Windows/Linux differences in one place: Elite's folders, key presses (`xdotool`), host programs under Flatpak, "Works on" notes |
+| `restore.py` | Names the last commander from the newest journal and tells every feature when EDMC starts without the game running, so nothing waits for a login |
 | `settings_scroll.py` | Wraps each Settings page in a height-capped scrolling frame so a long page never pushes the OK button off the screen |
 | `ui.py` | The main panel, mode buttons, panel height fitting and the Settings tabs; orchestration only |
 | `update.py` | The self-updater: checks GitHub Releases, downloads, stages over the install, and protects per-commander data files (`_OWN_DATA_FILES`) |
