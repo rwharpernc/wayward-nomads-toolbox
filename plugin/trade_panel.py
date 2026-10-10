@@ -561,7 +561,6 @@ class TradePanelController:
         if self._page == trade_pages.SESSION:
             blocks = self._session_blocks()
             self._set_buttons(("Reset", self._reset_ledger, True),
-                              ("Clear stock", self._clear_stock, bool(self._stock.holdings(self._cmdr))),
                               ("Save session", self._save_session, trade_history.has_content(self._ledger)),
                               ("History", self._open_history, True),
                               ("Rebuild", self._rebuild_ledger, bool(self._cmdr)))
@@ -604,13 +603,10 @@ class TradePanelController:
             button.pack(side=tk.LEFT, padx=padx)
 
     def _session_blocks(self) -> List[Block]:
-        in_hold = {market_mod.canonical_name(name): tonnes for name, tonnes in self._cargo.items()}
         blocks: List[Block] = [Heading("This session")]
         if self._save_message:
             blocks.append(Note(self._save_message, strong=True))
         blocks += ledger_mod.summary_blocks(self._ledger)
-        blocks += trade_stock.stock_blocks(self._stock.holdings(self._cmdr), in_hold,
-                                           name_of=lambda holding: _clip(self._display(holding.key)))
         blocks += self._hold_blocks()
         blocks += trade_carrier.cargo_blocks(self._carrier.records.get(trade_carrier.key_for(self._cmdr)),
                                              self._carrier_mode(self._cmdr))
@@ -636,7 +632,7 @@ class TradePanelController:
 
     def _hold_blocks(self) -> List[Block]:
         used = sum(self._cargo.values())
-        blocks: List[Block] = [Heading("Ship and hold"), *self._ship_pairs()]
+        blocks: List[Block] = [Heading("In your ship"), *self._ship_pairs()]
         if not self._capacity and not used:
             return blocks + [Pair("Ship hold", "empty")]
         blocks.append(Pair("Ship hold", f"{used:,} / {self._capacity:,} t ({max(0, self._capacity - used):,} free)"
@@ -834,12 +830,6 @@ class TradePanelController:
                     detail=f"{_clip(offer.system)} · {trade_prices.describe_place(offer)}", warn=short)
 
     # --- actions ------------------------------------------------------------------------
-
-    def _clear_stock(self) -> None:
-        """Forget the unsold stock (for cargo sold some other way, such as by the carrier's own orders)."""
-        self._stock.clear(self._cmdr)
-        self._save_stock(force=True)
-        self._refresh()
 
     def _now(self) -> str:
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())

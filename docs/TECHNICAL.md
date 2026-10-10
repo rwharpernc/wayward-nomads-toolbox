@@ -725,7 +725,7 @@ Full detail is in the [Trade spec](TRADE_TECH_SPEC.md); the decisions worth know
   `trade_history.json`, re-saving the same session (however many logins it spans) updates the same record, and `trade_stats.py` works out every figure and
   table row so the Trade History window (`trade_history_window.py`) only lays them out. Totals are exact; the log can be
   shorter on a very long session.
-- **Unsold stock is one book, not two trackers.** `trade_stock.py` follows cargo bought and not yet sold per
+- **Unsold stock is one book, not two trackers, and an estimate** (kept for Trade History, not shown on the Session page). `trade_stock.py` follows cargo bought and not yet sold per
   commander across logins, with average cost; a carrier-loading run and a station-to-station run are the same
   thing to it (buys add, sells remove, carrier transfers change nothing). It applies each event once using the
   last-event time plus fingerprints of same-second events, and catches up at start by replaying recent journals

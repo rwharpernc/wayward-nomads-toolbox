@@ -53,7 +53,7 @@ WNTB has one panel with seven **modes**. You click a button to switch between th
 | **Powerplay** | Tracks the merits and Control Points you earn for your Power, and finds rare goods. |
 | **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values, exobiology help, and a lifetime tally of everything you've scanned. |
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalogue of mining hotspots. |
-| **Trade** | Your trading profit after fuel and repairs, the stock you've bought but not yet sold, your hold and fleet carrier cargo space, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. |
+| **Trade** | Your trading profit after fuel and repairs, your ship hold and fleet carrier cargo space, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions. |
 | **Field Ops** | Screenshots, your backpack/locker/cargo, saved ship builds, and colonisation sites. |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. |
@@ -223,7 +223,6 @@ Hover over any button for a moment to see its full name.
 | **Reset** | End this session and start a new tally (offers to save first) | Trade (Session page) |
 | **Save session** | Keep this session in Trade History (the tally keeps running; press Reset to start a new one) | Trade (Session page) |
 | **History** | Open the Trade History window | Trade (Session page) |
-| **Clear stock** | Forget the unsold stock list | Trade (Session page) |
 | **Rebuild** | Recount the session from the journals from a start time you give (UTC); for a session that began on another computer | Trade (Session page) |
 | **Find routes** / **Cancel** | Ask Spansh for trade routes / stop waiting | Trade (Routes page) |
 | **Hops** | Cycle the route length through 2, 3, 4 and 5 hops | Trade (Routes page) |
@@ -564,7 +563,7 @@ computers is not needed and not recommended.
   commander partway through, its tally starts from there. Press **Rebuild** on the Session page and give the date and
   time (UTC) the session began: WNTB recounts the journals from then on and replaces the tally. Check the totals against
   the other computer, adjusting the start time until they match, then **Save session** if you want to keep it.
-- **Reset, Save session and Clear stock only affect the computer you press them on.** Press Reset on both if you start
+- **Reset and Save session only affect the computer you press them on.** Press Reset on both if you start
   a fresh session.
 - **Carrier cargo only becomes exact when you open Carrier Management** (see
   [Your fleet carrier and squadron carrier](#your-fleet-carrier-and-squadron-carrier)). Copying journals does not change that.
@@ -581,17 +580,6 @@ It reads your journal only; nothing is sent anywhere. Top to bottom:
   an SRV or fighter) and **limpets** (bought, less any sold back). Once you've spent anything the headline becomes **Net
   profit** (trade profit less those costs; the credits per hour is the net), with the trade profit and each cost listed
   under it. Insurance rebuys and fines aren't counted, and a cost only counts once WNTB has seen it.
-- **Stock bought, not yet sold**: the **Unsold** column is the tonnes you bought (every purchase in your journals) minus
-  the tonnes you sold, a running total rather than a count of any hold; each row then splits it into the part in your ship
-  hold and the part not. It shows what you've spent on commodities still waiting to be sold, at the average price you
-  paid, and how much of each is **in ship hold** and how much is **not in ship hold** (usually moved to your carrier
-  cargo storage). It follows the cargo, not
-  the session, so it carries on after a Reset. It is one list for both ways of trading: on a station-to-station run it
-  goes up when you buy and down when you sell; when you're loading your carrier for a bulk sale, every purchase adds to
-  it, and moving cargo to or from the carrier changes where it is, not what you paid. It only comes down when you
-  **sell**. WNTB reads your recent journals when it starts, so purchases made while EDMC was closed are included (a first
-  run looks back 14 days). Cargo that leaves some other way, such as your carrier selling it on a trade order, stays
-  listed until you press **Clear stock**.
 - **Ship hold**: your ship and the landing pad it needs (for example "Type-9 Heavy, large"), how many tonnes are used,
   the capacity and how much is free, what the station you're docked at would pay for the whole hold, and what each
   commodity aboard would sell for there.
@@ -599,7 +587,7 @@ It reads your journal only; nothing is sent anywhere. Top to bottom:
   reserved for orders**, so it is never mistaken for your ship hold), if you have one (see [Your fleet carrier and squadron carrier](#your-fleet-carrier-and-squadron-carrier)).
 
 Buttons: **Reset** starts the tally again (if the session has trades you haven't saved, it asks whether to save it to
-Trade History first), **Clear stock** forgets the unsold stock list, **Save session** and **History** are described next.
+Trade History first), **Save session** and **History** are described next.
 On a second row, **Rebuild** recounts the session from the journals starting at a time you give (UTC, as
 `YYYY-MM-DD` or `YYYY-MM-DD HH:MM`) and replaces the tally; use it when the session began on another computer (see
 [Using Trade on two computers](#using-trade-on-two-computers)). It asks first if the current tally is unsaved.
@@ -623,7 +611,7 @@ one commander there is also a commander filter. The tabs show everything about t
 - **Route**: the stations you traded at in the order you flew them, with what was bought and sold at each, the net on that
   visit and a running net. Going back to a station later is a new visit.
 - **Trades**: every purchase, sale and cost with its time, price, total, profit, station and system, 200 at a time.
-- **Stock & carrier**: the stock bought but not sold, the ship hold, and your carrier's cargo space when you saved.
+- **Stock & carrier**: what was bought but not sold (a journal estimate), the ship hold, and your carrier's cargo space when you saved.
 - **Lookups**: the Spansh routes and market searches you made during the session, and the best result of each.
 
 **Copy summary** puts a plain-text report on the clipboard, **Export log (CSV)** saves the full trade log to a file you
@@ -1000,9 +988,10 @@ counted.
 **Save session** needs at least one trade or running cost in the session. The History window only lists sessions you saved,
 so press **Save session** first.
 
-**Trade: the stock list shows cargo I've already sold.**
-The list only comes down when WNTB sees you sell. Cargo your carrier sold on a trade order, or that you lost or jettisoned,
-stays until you press **Clear stock**.
+**Trade History says I had cargo unsold that I'd already sold.**
+The "Bought, not yet sold" estimate on the Stock & carrier tab only comes down when WNTB sees you sell. Cargo your carrier
+sold on a trade order, or that you lost or jettisoned, stays in it. The Session page does not show this estimate; it shows
+only your ship hold and the carrier's cargo figures.
 
 **Trade: my carrier doesn't show, or its cargo looks wrong.**
 Check your carrier choice for that commander under **Settings → WNTB → Trade** (Auto, Fleet, Squadron or Both, not None),

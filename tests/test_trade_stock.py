@@ -17,7 +17,6 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugin import trade_stock as stock  # noqa: E402
-from plugin.trade_blocks import Columns, Heading, Item, Note, Pair  # noqa: E402
 
 
 def buy(name: str, count: int, total: int, stamp: str = "2026-10-09T10:00:00Z", raw: str = "") -> dict:
@@ -108,40 +107,6 @@ class ApplyOnceTests(unittest.TestCase):
         self.assertFalse(book.feed(dict(event), "B"))
         self.assertEqual(book.holdings("B"), [])
         self.assertTrue(book.feed(buy("Gold", 3, 30, "2026-10-09T13:00:00Z"), "B"))
-
-
-class StockLinesTests(unittest.TestCase):
-    def test_nothing_unsold_means_no_lines(self) -> None:
-        self.assertEqual(stock.stock_lines([], {}), [])
-
-    def test_rows_say_how_much_is_in_the_hold_and_how_much_is_not(self) -> None:
-        holding = stock.Holding("superconductors", "Superconductors", 6_325, 35_767_875)
-        blocks = stock.stock_blocks([holding], {"superconductors": 1_265})
-        self.assertEqual(blocks[0], Heading("Stock bought, not yet sold"))
-        self.assertEqual(blocks[1], Pair("Total", "6,325 t, 35,767,875 cr", bold=True))
-        self.assertEqual(blocks[2], Columns(("Unsold", "Avg cost")))
-        self.assertEqual(blocks[3], Item("Superconductors", ("6,325 t", "5,655"),
-                                         detail="1,265 t in ship hold + 5,060 t not in ship hold"))
-        self.assertIn("minus tonnes you sold", blocks[-1].text)
-        self.assertIn("usually moved to your carrier", blocks[-1].text)
-
-    def test_all_aboard_or_all_elsewhere(self) -> None:
-        holding = stock.Holding("gold", "Gold", 10, 100)
-        aboard = stock.stock_blocks([holding], {"gold": 50})
-        self.assertEqual(aboard[-2].detail, "10 t in ship hold")
-        self.assertNotIn("Not in ship hold", aboard[-1].text)   # nothing is away, so the note only explains Unsold
-        away = stock.stock_blocks([holding], {})
-        self.assertEqual(away[-2].detail, "10 t not in ship hold")
-        self.assertIn("Not in ship hold", away[-1].text)
-
-    def test_the_list_is_capped_and_names_can_be_replaced(self) -> None:
-        many = [stock.Holding(f"c{i}", f"C{i}", 1, 100 - i) for i in range(6)]
-        blocks = stock.stock_blocks(many, {}, name_of=lambda h: h.name.lower())
-        items = [b for b in blocks if isinstance(b, Item)]
-        self.assertEqual(len(items), stock.SHOWN)
-        self.assertEqual(items[0].title, "c0")
-        self.assertEqual(blocks[-2], Note("+2 more"))   # the last note explains Unsold and "not in ship hold"
-
 
 
 class BackfillAndSaveTests(unittest.TestCase):

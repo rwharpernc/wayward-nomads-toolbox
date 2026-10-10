@@ -74,9 +74,9 @@ with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** 
 ## 3. The three pages
 
 **Session.** `trade_ledger.summary_blocks` (profit, running costs, tonnes, best sales; `summary_lines` is the
-plain-text twin), then the stock block, then the ship hold block (ship and pad size, `used/capacity (free)`, what the docked
+plain-text twin), then the ship hold block (ship and pad size, `used/capacity (free)`, what the docked
 market would pay, up to four cargo lines), then the carrier block (`trade_carrier.cargo_blocks`, rows "Carrier cargo used", "Carrier cargo free" and "Carrier reserved for orders"; `cargo_lines` is the
-plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first), **Clear stock**,
+plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first),
 **Save session** (greyed out until there is something to save) and **History**, with **Rebuild** on a second row (see 5.2). Save does not end or restart the
 session: tracking is always on, the label never changes, and only **Reset** begins a new session.
 
@@ -94,7 +94,7 @@ needs a typed commodity.
 **How a page is drawn.** Each page builds a list of typed blocks (`trade_blocks.py`) rather than lines of text:
 `Heading` (a section title; accent-coloured, with a rule above), `Pair` (label left, value right), `Columns` and `Item`
 (a table row: a title, up to three right-aligned number cells, and a detail line beneath, with an optional warning in
-the accent colour) and `Note` (a wrapped paragraph). The builders (`ledger.summary_blocks`, `trade_stock.stock_blocks`,
+the accent colour) and `Note` (a wrapped paragraph). The builders (`ledger.summary_blocks`, 
 `trade_carrier.cargo_blocks`, and the panel's `_hold_blocks`, `_routes_blocks`, `_market_blocks`,
 `_price_result_blocks`) stay free of widgets and can be tested; `to_text` renders any list as plain lines, and the
 older `*_lines` functions are thin wrappers over it. `BlockView.show(blocks)` draws them and skips the redraw when
@@ -180,8 +180,9 @@ stays tied up until the cargo is sold, whenever that is. So the stock book follo
   but not what was paid, so it is not a stock event. Stock comes out only when sold.
 
 Because there is one list, nothing needs reconciling between "route" and "carrier" tracking, and no purchase
-is counted twice. Where the cargo is *now* is derived, not stored: the panel's **Unsold** column is the book's tonnes (buys less sells, never a hold count), and each row shows "in ship hold" = min(held, what
-the ship's hold contains) and "not in ship hold" = the rest (usually the carrier; a note under the stock rows says so).
+is counted twice. The book is an estimate (see Limits), so it is **not shown on the Session page**, which shows only
+exact figures: the ship hold from `state["Cargo"]` and the carrier's cargo from `CarrierStats`. The book is snapshotted into
+each saved session (`stock`) and shown on Trade History's Stock & carrier tab, labelled as a journal estimate.
 
 Rules: average cost per commodity; a sale never takes stock below zero; a sale of cargo the book never saw is
 ignored. The ledger's profit still uses the game's own `AvgPricePaid`, so the two can differ slightly when
@@ -198,11 +199,11 @@ journal folder): it replays the newest 60 journal files (chosen by modified time
 events newer than each commander's `as_of`, or, for a commander with no book yet, the last 14 days. Doing it
 synchronously removes any race with live events.
 
-**Clearing.** **Clear stock** empties the items but keeps `as_of`, so a later replay can't bring the stock
-back.
+**Clearing.** `StockBook.clear` empties the items but keeps `as_of`, so a later replay can't bring the stock
+back. There is no button for it now that the Session page no longer lists the stock.
 
 **Limits.** Cargo that leaves some other way (the carrier selling on a trade order, cargo jettisoned or lost,
-mission cargo) stays on the books until cleared. Stolen cargo bought nowhere has no book entry.
+mission cargo) stays on the books. Stolen cargo bought nowhere has no book entry.
 
 **Journal files are ordered by modified time, not name.** The game has used two naming styles
 (`Journal.2026-10-09T053605.01.log` and `Journal.260228162446.01.log`) that do not sort chronologically
@@ -278,7 +279,7 @@ copied between machines. `trade_journal_scan.py` makes new journals take effect 
   whose start predates the scan: it reads the journals from a typed UTC start time into a fresh ledger (events before it
   ignored, routes and searches kept) and replaces the working session.
 - **Not covered.** Cargo that leaves the carrier on a trade order or sale has no event; only the next `CarrierStats` fixes
-  it. Reset, Save session and Clear stock are per machine.
+  it. Reset and Save session are per machine.
 
 ## 6. Hold, ship and landing pads
 

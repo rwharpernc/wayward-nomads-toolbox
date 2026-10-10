@@ -17,8 +17,9 @@ is ignored). The session ledger's profit still uses the game's own `AvgPricePaid
 little when cargo came from outside what this book saw; the ledger is the profit figure, this is "what is
 tied up".
 
-Where the cargo is now (in the hold, or elsewhere such as a carrier) is not tracked here: the panel works
-it out as held tonnes minus what the ship's hold currently contains.
+Where the cargo is now (in the hold, or elsewhere such as a carrier) is not tracked here. The book is not
+shown on the Session page (it is an estimate from the journals and drifts); it is saved with each session
+for Trade History.
 
 Catching up: EDMC doesn't replay events, and trades made while EDMC was closed would be missed. So at start
 the recent journals are replayed (`backfill`): events newer than what the book last saw, or, for a commander
@@ -27,7 +28,7 @@ the last event and fingerprints of the events at that exact second, so two sales
 counted and a replay never doubles one.
 
 What it can't know: cargo sold by the carrier's own trade orders, or lost, stays on the books until you
-clear it (Trade > Session > Clear stock).
+clear it.
 """
 from __future__ import annotations
 
@@ -39,14 +40,13 @@ import os
 import re
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     from config import appname
 except ImportError:  # unit tests outside EDMC
     appname = "EDMarketConnector"
 
-from .trade_blocks import Block, Columns, Heading, Item, Note, Pair, to_text
 from .trade_carrier import journal_files, key_for
 from .trade_market import canonical_name
 
@@ -58,7 +58,6 @@ FIRST_RUN_DAYS = 14
 BACKFILL_FILES = 60
 # Cheap test for "could this journal line matter?" before paying to parse it; tolerant of spacing.
 _WANTED = re.compile(r'"event"\s*:\s*"(?:MarketBuy|MarketSell|LoadGame|Commander)"')
-SHOWN = 4
 
 CommanderBook = Dict[str, Any]   # {"as_of": str | None, "seen": [fingerprint...], "items": {key: item}}
 
@@ -162,47 +161,6 @@ class StockBook:
         book = self.books.get(key_for(cmdr))
         if book is not None:
             book["items"] = {}
-
-
-def stock_blocks(holdings: List[Holding], in_hold: Dict[str, int],
-                 name_of: Optional[Callable[[Holding], str]] = None) -> List[Block]:
-    """Session-page section. `in_hold` maps a commodity's canonical name to the tonnes in the ship's hold now,
-    so each row can say how much of the unsold total is still in the ship hold and how much is not (a carrier, usually).
-    `name_of` can supply a nicer display name than the one the journal gave."""
-    if not holdings:
-        return []
-    tonnes = sum(h.tonnes for h in holdings)
-    cost = sum(h.cost for h in holdings)
-    blocks: List[Block] = [Heading("Stock bought, not yet sold"),
-                           Pair("Total", f"{tonnes:,} t, {cost:,} cr", bold=True),
-                           Columns(("Unsold", "Avg cost"))]
-    away = False
-    for holding in holdings[:SHOWN]:
-        aboard = min(holding.tonnes, max(0, in_hold.get(holding.key, 0)))
-        elsewhere = holding.tonnes - aboard
-        where = []
-        if aboard:
-            where.append(f"{aboard:,} t in ship hold")
-        if elsewhere:
-            where.append(f"{elsewhere:,} t not in ship hold")
-            away = True
-        shown = name_of(holding) if name_of else holding.name
-        blocks.append(Item(shown, (f"{holding.tonnes:,} t", f"{holding.average:,}"), detail=" + ".join(where)))
-    if len(holdings) > SHOWN:
-        blocks.append(Note(f"+{len(holdings) - SHOWN} more"))
-    source = ("Unsold = tonnes you bought (every purchase your journal shows) minus tonnes you sold, at the average price "
-              "you paid. It is a running total, not a count of any one hold.")
-    if away:
-        source += (" \"Not in ship hold\" is the part no longer in your ship, usually moved to your carrier cargo storage. "
-                   "It stays here until it is sold; Clear stock forgets it.")
-    blocks.append(Note(source))
-    return blocks
-
-
-def stock_lines(holdings: List[Holding], in_hold: Dict[str, int],
-                name_of: Optional[Callable[[Holding], str]] = None) -> List[str]:
-    """`stock_blocks` as plain lines (for tests and logs)."""
-    return to_text(stock_blocks(holdings, in_hold, name_of))
 
 
 # --- catching up from the journals ------------------------------------------------------------------
