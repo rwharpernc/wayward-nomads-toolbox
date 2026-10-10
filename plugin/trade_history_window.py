@@ -88,10 +88,10 @@ _COST_COLUMNS = (
     Column("share", "Share of sales", 120, anchor="e"),
 )
 _STOCK_COLUMNS = (
-    Column("name", "Unsold stock", 220, stretch=True, max_chars=40), Column("tonnes", "Tonnes", 90, anchor="e"),
+    Column("name", "Bought, not sold (estimate)", 220, stretch=True, max_chars=40), Column("tonnes", "Tonnes", 90, anchor="e"),
     Column("cost", "Cost (cr)", 130, anchor="e"), Column("avg", "Avg cost / t", 110, anchor="e"),
 )
-_HOLD_COLUMNS = (Column("name", "In the ship hold", 220, stretch=True, max_chars=40), Column("tonnes", "Tonnes", 90, anchor="e"))
+_HOLD_COLUMNS = (Column("name", "In the ship hold when saved", 220, stretch=True, max_chars=40), Column("tonnes", "Tonnes", 90, anchor="e"))
 _CARRIER_COLUMNS = (
     Column("type", "Carrier", 140), Column("name", "Name", 200, stretch=True, max_chars=40),
     Column("used", "Carrier cargo used / capacity (t)", 190, anchor="e"), Column("free", "Free (t)", 90, anchor="e"),
@@ -263,10 +263,10 @@ class _StockTab:
         body = scroll.body
         self._note = NoteLabel(body, text="")
         self._note.pack(fill="x", pady=(P.PAD_SM, 0))
-        section_header(body, "Stock bought, not yet sold").pack(fill="x")
+        section_header(body, "Bought, not yet sold (journal estimate, may include cargo since sold)").pack(fill="x")
         self._stock = _table(body, _STOCK_COLUMNS, "Nothing was waiting to be sold.", rows=6, sortable=False)
         self._stock.pack(fill="x", padx=P.PAD, pady=(0, P.PAD))
-        section_header(body, "In the ship hold").pack(fill="x")
+        section_header(body, "In the ship hold when saved").pack(fill="x")
         self._hold = _table(body, _HOLD_COLUMNS, "The ship hold was empty.", rows=6, sortable=False)
         self._hold.pack(fill="x", padx=P.PAD, pady=(0, P.PAD))
         section_header(body, "Carriers").pack(fill="x")

@@ -10,9 +10,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   approved (EDMCModernOverlay can take a minute to start), the draw was lost until the next event. It is now retried
   until the overlay is up, and only the newest draw is kept. Switching between station types also now clears the old
   diagram straight away instead of leaving it up for 20 seconds.
-- **Trade: the stock list says where its numbers come from.** The "Held" column is now **Unsold**, rows read "X t in ship
-  hold + Y t not in ship hold", and a note under the list says Unsold is tonnes bought minus tonnes sold, not a count of any
-  hold. The ship's cargo list column "Held" is now "In hold".
+- **Trade: the unsold-stock list is gone from the Session page.** Its total was a journal estimate (tonnes bought minus
+  sold) and drifted high whenever cargo left without a sale WNTB could see, so it did not match what you actually have.
+  The Session page now shows only exact figures: "In your ship" (the hold, with an "In hold" column) and the carrier's
+  cargo. The estimate is still kept and saved with each session, and Trade History's Stock & carrier tab shows it
+  labelled as a journal estimate. The **Clear stock** button went with the list.
 - **Trade: ship and carrier wording is distinct.** "Ship hold" and "in / not in ship hold" for the ship; "Carrier cargo
   used / free / reserved for orders" for the fleet carrier.
 - **Carrier cargo could read more than the bay holds.** Cargo can leave a carrier without a journal entry (a trade

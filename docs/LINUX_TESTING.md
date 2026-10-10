@@ -147,9 +147,10 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
       **Reset**), the numbers don't double, and after **Save session** the **Route** tab lists the stations from every
       part. Also play a short stretch with EDMC closed, then start EDMC: that stretch is added the next time it sees you.
       With two commanders, switching to the other and back leaves each one's tally as it was.
-- [ ] Stock: buy some cargo and the Session page shows "Stock bought, not yet sold" with the cost and how much is
-      in ship hold. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "not in ship hold" grows.
-      Restart EDMC after buying while it was closed: the purchase is still counted. **Clear stock** empties it.
+- [ ] Session page: the sections read "This session", "In your ship" (Ship hold, and the cargo with an "In hold"
+      column) and, if you have a carrier, "Carrier cargo used / free". There is no unsold-stock list and no Clear stock
+      button. Buy cargo, then save the session: Trade History's **Stock & carrier** tab shows it under "Bought, not yet
+      sold (journal estimate...)".
 - [ ] Two computers: copy the other computer's newer journal files into this one's journal folder while EDMC is running.
       Within a minute the foot of the Session page reads "Journals read: N file(s)" with the new count, and the trades,
       stock and carrier figure from those files appear (nothing doubles if you copy the same files again). Press
