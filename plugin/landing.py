@@ -25,6 +25,7 @@ import os
 import re
 import textwrap
 import threading
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
@@ -59,6 +60,9 @@ HIDE_AFTER_LANDING_S = 10.0
 # even when nothing journal-driven happens between DockingGranted and
 # actually touching down (which can easily outlast a single ttl).
 _HEARTBEAT_INTERVAL_S = 12.0
+# An overlay that is not up yet: keep retrying a draw this long, this often (overlay.py cools off for 30 s).
+_RENDER_RETRY_FOR_S = 180.0
+_RENDER_RETRY_EVERY_S = 5.0
 
 # Fixed on both axes regardless of diagram family/pad count/game window size
 # - see docs/TECHNICAL.md section 5 on bounding anything that can size the
@@ -803,9 +807,12 @@ def _render_fleetcarrier_diagram(client: OverlayClient, pad: Optional[int], carr
 
 
 def _clear_starport_diagram(client: OverlayClient) -> None:
-    for shape_id in _STARPORT_SHELL_IDS + _STARPORT_SPOKE_IDS:
-        client.send_vector(shape_id, [], "", ttl=1)
-    client.send_vector(_STARPORT_PADMARK_ID, [], "", ttl=1)
+    # A one-point, marker-less vector at the diagram's centre, not an empty list:
+    # EDMCModernOverlay drops an empty "vect" ("insufficient points"), so the old
+    # diagram would have stayed up until its ttl ran out.
+    blank = [{"x": _DIAGRAM_CX, "y": _DIAGRAM_CY}]
+    for shape_id in _STARPORT_SHELL_IDS + _STARPORT_SPOKE_IDS + (_STARPORT_PADMARK_ID,):
+        client.send_vector(shape_id, blank, "", ttl=1)
 
 
 def _clear_fleetcarrier_diagram(client: OverlayClient) -> None:
@@ -834,6 +841,10 @@ class LandingController:
     def __init__(self) -> None:
         self.tracker = LandingTracker(on_change=self._on_change)
         self._ui_frame: Optional[tk.Widget] = None
+        self._render_lock = threading.Lock()
+        self._render_wake = threading.Event()
+        self._render_pending: Optional[Tuple[Optional[LandingDisplayInfo], CarrierType]] = None
+        self._render_running = False
 
         self._info_label: Optional[tk.Label] = None
         self._diagram_canvas: Optional[tk.Canvas] = None
@@ -879,16 +890,50 @@ class LandingController:
             self._ui_frame.after(0, lambda t=text, i=info, c=carrier_type: self._update_widgets(t, i, c))
 
     def _render_overlay_async(self, info: Optional[LandingDisplayInfo], carrier_type: CarrierType = None) -> None:
-        def worker() -> None:
+        """Queue a draw (or, for None, a clear). One worker sends at a time and only the latest request is kept, so
+        overlapping events can't interleave their sends. If the overlay isn't reachable yet (it can take a while to
+        start), the draw is retried until it is, unless something newer replaces it."""
+        with self._render_lock:
+            self._render_pending = (info, carrier_type)
+            self._render_wake.set()
+            if self._render_running:
+                return
+            self._render_running = True
+        threading.Thread(target=self._render_worker, name="WNTB-landing-render", daemon=True).start()
+
+    def _render_worker(self) -> None:
+        deadline = 0.0
+        while True:
+            with self._render_lock:
+                request = self._render_pending
+                self._render_pending = None
+                if request is None:
+                    self._render_running = False
+                    return
+                self._render_wake.clear()
+            info, carrier_type = request
             try:
                 if info is None:
                     clear(_overlay_client)
                 else:
                     render(info, carrier_type, _overlay_client)
+                deadline = 0.0
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for landing pad overlay", exc_info=True)
-
-        threading.Thread(target=worker, name="WNTB-landing-render", daemon=True).start()
+                if info is None:
+                    continue  # nothing to show, so nothing to retry
+                now = time.monotonic()
+                deadline = deadline or now + _RENDER_RETRY_FOR_S
+                if now >= deadline:
+                    deadline = 0.0
+                    continue
+                with self._render_lock:
+                    if self._render_pending is None:
+                        self._render_pending = request  # retry this draw unless a newer one arrives
+                if self._render_wake.wait(_RENDER_RETRY_EVERY_S):
+                    deadline = 0.0  # a newer request woke us; it gets a fresh retry window
+                else:
+                    _overlay_client.retry_now()  # skip the client's 30 s cool-off; the overlay may be up by now
 
     def _clear_display(self) -> None:
         """Clears whichever of the overlay/in-app widgets is currently

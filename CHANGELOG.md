@@ -6,6 +6,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Fixed
+- **The landing pad diagram on the overlay could stay blank.** If the overlay was not running yet when docking was
+  approved (EDMCModernOverlay can take a minute to start), the draw was lost until the next event. It is now retried
+  until the overlay is up, and only the newest draw is kept. Switching between station types also now clears the old
+  diagram straight away instead of leaving it up for 20 seconds.
+- **Trade: ship and carrier wording is distinct.** "Ship hold" and "in / not in ship hold" for the ship; "Carrier cargo
+  used / free / reserved for orders" for the fleet carrier.
 - **Carrier cargo could read more than the bay holds.** Cargo can leave a carrier without a journal entry (a trade
   order or sale), so transfers alone could add up past capacity. The figure is now capped at the bay size, shown with
   a `~`, and a note asks you to open Carrier Management; the next `CarrierStats` clears it.

@@ -284,10 +284,10 @@ def cargo_blocks(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) 
             continue
         used, reserved, free = record.get("cargo", 0), record.get("reserved", 0), record.get("free", 0)
         guess = "~" if record.get("estimate") else ""
-        blocks.append(Pair("Cargo used", f"{guess}{used:,} / {capacity:,} t"))
-        blocks.append(Pair("Free", f"{guess}{free:,} t", bold=True))
+        blocks.append(Pair("Carrier cargo used", f"{guess}{used:,} / {capacity:,} t"))
+        blocks.append(Pair("Carrier cargo free", f"{guess}{free:,} t", bold=True))
         if reserved:
-            blocks.append(Pair("Reserved for trade orders", f"{reserved:,} t"))
+            blocks.append(Pair("Carrier reserved for orders", f"{reserved:,} t"))
         if guess:
             blocks.append(Note("Estimate: the transfers seen add up to more than the bay holds, so cargo left the carrier "
                                "without a journal entry (a trade order or sale). Open Carrier Management for the real figure.",

@@ -91,10 +91,10 @@ _STOCK_COLUMNS = (
     Column("name", "Unsold stock", 220, stretch=True, max_chars=40), Column("tonnes", "Tonnes", 90, anchor="e"),
     Column("cost", "Cost (cr)", 130, anchor="e"), Column("avg", "Avg cost / t", 110, anchor="e"),
 )
-_HOLD_COLUMNS = (Column("name", "In the hold", 220, stretch=True, max_chars=40), Column("tonnes", "Tonnes", 90, anchor="e"))
+_HOLD_COLUMNS = (Column("name", "In the ship hold", 220, stretch=True, max_chars=40), Column("tonnes", "Tonnes", 90, anchor="e"))
 _CARRIER_COLUMNS = (
     Column("type", "Carrier", 140), Column("name", "Name", 200, stretch=True, max_chars=40),
-    Column("used", "Cargo used / capacity (t)", 190, anchor="e"), Column("free", "Free (t)", 90, anchor="e"),
+    Column("used", "Carrier cargo used / capacity (t)", 190, anchor="e"), Column("free", "Free (t)", 90, anchor="e"),
     Column("reserved", "Reserved (t)", 100, anchor="e"),
 )
 _ROUTE_SEARCH_COLUMNS = (
@@ -266,8 +266,8 @@ class _StockTab:
         section_header(body, "Stock bought, not yet sold").pack(fill="x")
         self._stock = _table(body, _STOCK_COLUMNS, "Nothing was waiting to be sold.", rows=6, sortable=False)
         self._stock.pack(fill="x", padx=P.PAD, pady=(0, P.PAD))
-        section_header(body, "In the hold").pack(fill="x")
-        self._hold = _table(body, _HOLD_COLUMNS, "The hold was empty.", rows=6, sortable=False)
+        section_header(body, "In the ship hold").pack(fill="x")
+        self._hold = _table(body, _HOLD_COLUMNS, "The ship hold was empty.", rows=6, sortable=False)
         self._hold.pack(fill="x", padx=P.PAD, pady=(0, P.PAD))
         section_header(body, "Carriers").pack(fill="x")
         self._carriers = _table(body, _CARRIER_COLUMNS, "No carrier was recorded for this commander.", rows=4, sortable=False)
