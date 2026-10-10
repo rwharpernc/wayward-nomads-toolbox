@@ -20,13 +20,19 @@ only appear on one page).
 
 ### Numbers look wrong or out of date
 
-Many features read the game's journal, so they only know what has happened since EDMC started, plus a bit of recent
-history. Each has a way to catch up:
+EDMC only passes WNTB what happens while it is running. For play with EDMC closed, WNTB reads the recent journal files
+when EDMC starts and catches up by itself; the table in
+[If EDMC wasn't running](getting-started.md#if-edmc-wasnt-running) shows what each feature catches up on and how far
+back. Things to try if a figure is still off:
 
 - Powerplay has a **RESCAN** button.
-- Codex Completionist has **BKF** (backfill from journal history).
-- Trade catches its session up from the journals by itself; see
+- Codex Completionist has **BKF** (backfill from journal history), for finds older than the automatic catch-up.
+- Trade's **Rebuild** button recounts a session from a start time you give; see
   [How a trading session works](trade.md#how-a-trading-session-works).
+- Missions shows what the journals say is active. If a mission expired without the game writing anything, log in
+  again and the game's own list replaces it.
+- A feature can only look back a limited way (Missions two weeks, Colonisation 14 to 30 days, Boxel Survey 14 days).
+  Older play with EDMC closed isn't found.
 
 ## Overlay
 

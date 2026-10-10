@@ -68,16 +68,16 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `autohonk.py` | Auto-Honk: holds the Discovery Scanner key on arrival in a system |
 | `canonn_poi_data.py` | Canonn's published Thargoid and Guardian site lists, fetched on demand |
 | `canonn_poi_panel.py` | The Canonn Nearby POI section: nearest Thargoid or Guardian site |
-| `codex_backfill.py` | Scans the full journal history for the Codex Completionist backfill button |
+| `codex_backfill.py` | Journal readers for Codex Completionist: the full-history scan behind the BKF button, and `scan_since` for the start-up catch-up |
 | `codex_catalog.py` | The catalogue of every codex entry, for the "Not found" tab |
-| `codex_completionist.py` | Pure logic for the lifetime tally of everything scanned |
+| `codex_completionist.py` | Pure logic for the lifetime tally of everything scanned, with the `last_event_at` watermark |
 | `codex_completionist_panel.py` | The Codex Completionist section of Exploration |
 | `codex_completionist_state.py` | JSON persistence for the tally |
 | `codex_completionist_window.py` | The Codex Completionist detail window (found and not found) |
 | `discovery.py` | Discovery Alerts: overlay alerts for never-before-discovered systems and bodies, plus the N.S./W.D. buttons |
 | `elw_rarity_spansh.py` | Spansh count of known Earth-like worlds around a system |
 | `exploration_progress.py` | Bodies scanned against the honk's body count, and what the last exploration and organic data sales paid |
-| `exploration_value.py` | Estimated scan payout for the last body scanned, and the system's age |
+| `exploration_value.py` | Estimated scan payout for the last body scanned, the system's age and region, system scan progress and the last data sales |
 | `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog lookup |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
 | `neutron_finder.py` | Spansh search for the nearest neutron-star or white-dwarf primary |
@@ -105,7 +105,7 @@ Spec: [BOXEL_SURVEY_TECH_SPEC.md](BOXEL_SURVEY_TECH_SPEC.md)
 | `region_sweep_spansh.py` | Spansh systems typeahead used by Region Sweep |
 | `region_sweep_state.py` | JSON persistence for the Region Sweep queue |
 | `survey_log.py` | Per-system and per-boxel findings and rollups |
-| `visited_systems.py` | JSON persistence for the per-commander visited-systems log |
+| `visited_systems.py` | JSON persistence for the per-commander visited-systems log, and the start-up catch-up of jumps made while EDMC was closed |
 | `waypoint_route.py` | Pure logic for Waypoint Route, Boxel Survey's third sub-mode |
 | `waypoint_route_panel.py` | The Waypoint Route section |
 | `waypoint_route_state.py` | JSON persistence for Waypoint Route |
@@ -152,7 +152,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | Module | What it is |
 |---|---|
 | `trade_blocks.py` | The typed page model Trade draws (headings, label/value rows, tables, notes) and its plain-text form |
-| `trade_carrier.py` | Fleet and squadron carrier cargo space, journal backfill and `trade_carrier.json` |
+| `trade_carrier.py` | Fleet and squadron carrier cargo space and records, journal backfill and `trade_carrier.json` |
 | `trade_carrier_ops.py` | Running the carrier: tritium, location, planned jump, trade orders and balance from the carrier journal events |
 | `trade_commodities.py` | Commodity name matching and the type-ahead list |
 | `trade_commodities_data.py` | The generated commodity table (from FDevIDs) |
@@ -184,7 +184,7 @@ Spec: [MISSIONS_TECH_SPEC.md](MISSIONS_TECH_SPEC.md)
 | `active_missions.py` | Which missions each commander has accepted and which are active |
 | `all_missions.py` | The All Missions view across every mission type |
 | `community_goal_state.py` | Community Goal progress and your contribution |
-| `journal_scan.py` | Reads recent journals so Missions survives EDMC restarts |
+| `journal_scan.py` | Reads two weeks of journals so Missions survives EDMC restarts: accepted missions, kills, cargo progress and the active set |
 | `kill_missions.py` | The massacre and settlement-raid missions and their kill progress |
 | `kill_tracker.py` | Per-mission completion evidence, kept per commander |
 | `mission_cargo.py` | Collect / delivery progress of cargo missions from the journal's `CargoDepot` events |
@@ -200,7 +200,7 @@ Spec: [SCREENSHOTS_AND_INPUT_TECH_SPEC.md](SCREENSHOTS_AND_INPUT_TECH_SPEC.md), 
 |---|---|
 | `colonisation.py` | Pure logic for construction-site tracking |
 | `colonisation_catchup.py` | Folds the recent journals into the saved construction sites at start-up, never counting a delivery twice |
-| `colonisation_data.py` | JSON persistence for construction sites |
+| `colonisation_data.py` | JSON persistence for construction sites (each carries `journal_at`, the newest journal event folded in) |
 | `colonisation_panel.py` | The Colonisation section of Field Ops |
 | `colonisation_window.py` | The Colonisation Sites window |
 | `inventory.py` | Backpack, ship locker and carrier locker tracking |

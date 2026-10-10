@@ -27,6 +27,14 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   `CarrierStats`). The game records an order when it is placed or cancelled, not as it fills, so the cargo figure
   still needs Carrier Management for an exact value.
 
+### Changed
+- **Documentation pass.** Stale statements corrected against the code: the README's broken "Installing" link, the
+  Troubleshooting claim that features only know what happened since EDMC started, the Powerplay and Missions specs
+  (deliveries, active set, combat bonds, cargo progress, test coverage), the Boxel Survey spec (visited-systems
+  catch-up, Region Sweep's FSS check, test counts), the Trade spec (hold split, carrier operations, route start in the
+  scan, tests), TECHNICAL.md (catch-up rules, known gaps, "adding a feature" steps) and the module index. The Linux
+  checklist has a new section for the catch-up features, which have only been tried on Windows.
+
 ### Fixed
 - **Missions: combat-bond kills count toward massacre missions.** Combat-zone kills are written as
   `FactionKillBond`, not `Bounty`, and were ignored. In a check against real journals, some massacre missions reached
@@ -36,7 +44,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Powerplay: commodity and data hand-ins are now recognised as deliveries.** Current journals write
   `PowerplayDeliver` before the merits a hand-in earns, and WNTB ignored it, so those merits were guessed from the
   system you were in (and given Control Points). The merit events that follow a `PowerplayDeliver` are now labelled
-  Delivery (merits only, no CP estimate). Merits already recorded keep the label they were given; only new ones (and journals read for the first time) use the fix.
+  Delivery (merits only, no CP estimate). Merits already recorded keep the label they were given; only new ones (and
+  journals read for the first time) use the fix.
 - **Missions: your active missions show after restarting EDMC, without logging in again.** The game lists active
   missions only in its login event, so after an EDMC restart mid-game the panel waited for the next login. WNTB now
   also works the active set out from the last two weeks of journals (the newest login list, plus every mission

@@ -1,7 +1,7 @@
 # Technical Specification — Powerplay
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-08 (see `CHANGELOG.md`)
+**Last updated:** 2026-10-10 (see `CHANGELOG.md`)
 **Status:** work in progress. Feedback, bug reports and suggestions are welcome: [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward Nomads squadron.
 
 The standing reference for Powerplay mode: how merits are attributed to an activity, how Control Points
@@ -126,10 +126,12 @@ default 4, 1-12). Sessions, cycles and history need no setting.
 
 ## 9. Testing
 
-The Rare Goods lookup has unit tests (`tests/test_rare_goods.py`). The merit-to-CP conversion, activity
-classification, session handling and clipboard formatting are mostly pure logic but **have no automated
-tests yet**; they are exercised by hand in EDMC, along with the panel and windows. Adding tests for them is
-the most useful next step for this feature.
+The Rare Goods lookup has unit tests (`tests/test_rare_goods.py`). The per-system ledger and the journal scan are
+covered by `tests/test_powerplay_ledger.py` and `tests/test_powerplay_backfill.py` (section 11.5), which also holds the
+delivery-classification tests (`DeliveryClassificationTests`: the `PowerplayDeliver` windows and the legacy signals).
+The merit-to-CP conversion, session handling and clipboard formatting are mostly pure logic but **have no automated
+tests yet**; they are exercised by hand in EDMC, along with the panel and windows. Adding tests for them is the most
+useful next step for this feature.
 
 ## 10. Known gaps
 
@@ -258,4 +260,5 @@ updates (`update.py`). The controller switches ledger and pins whenever the comm
 tallies, rollover and carried baselines, the archive cap, tab ordering, the pin cap, serialisation and the
 per-commander state file. `tests/test_powerplay_backfill.py` covers the replay (attribution, commanders kept apart, files
 and the window), applying ops twice, same-second merits, a gap across a cycle boundary, rebuild and adoption, the
-scan plan in every mode, empty-cycle rows, the per-day tally (boundaries, archiving, saving, the one-time rebuild) and reading real files. The widgets are exercised by hand in EDMC.
+scan plan in every mode, empty-cycle rows, the per-day tally (boundaries, archiving, saving, the one-time rebuild), reading real files and
+the delivery classification (a hand-in claiming the merit events that follow, a late first merit, the legacy signals ignored once `PowerplayDeliver` is seen). The widgets are exercised by hand in EDMC.

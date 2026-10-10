@@ -14,7 +14,7 @@ cargo tracking, and more. It was built for the
 It runs inside [EDMC](https://github.com/EDCD/EDMarketConnector) (Elite Dangerous Market Connector), a
 free companion program many commanders already use. You don't need to know any programming to use WNTB.
 
-> **Download the latest release, not the repository.** See [Installing](#installing). If you hit a
+> **Download the latest release, not the repository.** See [Quick start](#quick-start). If you hit a
 > problem, see [Getting help](#getting-help).
 
 Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CMDR Mactavious (Easy Day, EZPZ).
@@ -38,17 +38,23 @@ WNTB has one panel with seven **modes**. You click a button to switch between th
 | Mode | What it's for | Guide |
 |---|---|---|
 | **Powerplay** | Tracks the merits and Control Points you earn for your Power, and finds rare goods. | [Powerplay](docs/guide/powerplay.md) |
-| **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values, exobiology help, and a lifetime tally of everything you've scanned. | [Exploration](docs/guide/exploration.md) |
+| **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values and how far through a system you are, what your data sales actually paid, exobiology help, and a lifetime tally of everything you've scanned. | [Exploration](docs/guide/exploration.md) |
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalogue of mining hotspots. | [Mining](docs/guide/mining.md) |
-| **Trade** | Your trading profit after fuel and repairs, your ship hold and fleet carrier cargo space, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. | [Trade](docs/guide/trade.md) |
-| **Missions** | One view of every mission you have, with kill-progress bars for massacre missions. | [Missions](docs/guide/missions.md) |
+| **Trade** | Your trading profit after fuel and repairs, what fills your ship hold (cargo, mission, stolen, limpets), your fleet carrier's cargo space, tritium, location and orders, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. | [Trade](docs/guide/trade.md) |
+| **Missions** | One view of every mission you have, with kill-progress bars for massacre missions and collect / delivery progress for cargo missions. | [Missions](docs/guide/missions.md) |
 | **Field Ops** | Screenshots, your backpack/locker/cargo, saved ship builds, and colonisation sites. | [Field Ops](docs/guide/field-ops.md) |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. | [BGS](docs/guide/bgs.md) |
 
 Two more tools are always on and don't belong to a mode: **Landing Assist** and **Interdiction Warning**
 ([guide](docs/guide/always-on.md)).
 
-Most individual features have their own on/off switch in Settings, and the alerts and overlays are off until you turn them on. The seven mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC and Canonn POI finders) can only be folded away, not switched off.
+Most individual features have their own on/off switch in Settings, and the alerts and overlays are off until you turn
+them on. The seven mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC
+and Canonn POI finders) can only be folded away, not switched off.
+
+**Playing with EDMC closed is fine.** When EDMC starts, WNTB reads the recent journal files and catches up on what it
+missed (trades, missions, colonisation deliveries, Codex finds, merits and more), counting nothing twice. Getting
+started has a table of what each feature catches up on and how far back.
 
 **Full disclosure.** WNTB can only show what the game writes to its journal files and what services such as Spansh
 and EDSM publish. Some things the game never records, or records late or in part (for example, a fleet carrier's

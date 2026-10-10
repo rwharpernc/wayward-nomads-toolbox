@@ -148,7 +148,7 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
       part. Also play a short stretch with EDMC closed, then start EDMC: that stretch is added the next time it sees you.
       With two commanders, switching to the other and back leaves each one's tally as it was.
 - [ ] Session page: the sections read "This session", "In your ship" (Ship hold, and the cargo with an "In hold"
-      column) and, if you have a carrier, "Carrier cargo used / free". There is no unsold-stock list and no Clear stock
+      column; "Hold space" above it) and, if you have a carrier, "Carrier cargo used / free". There is no unsold-stock list and no Clear stock
       button. Buy cargo, then save the session: Trade History's **Stock & carrier** tab shows it under "Bought, not yet
       sold (journal estimate...)".
 - [ ] Two computers: copy the other computer's newer journal files into this one's journal folder while EDMC is running.
@@ -195,6 +195,29 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
 - [ ] **Show a system**: typing narrows the list while you keep typing (the list must not steal the
       keyboard), the arrow shows every system, Up/Down/Enter/Esc work, clicking a name adds its tab.
 - [ ] Pins and closed tabs survive restarting EDMC.
+
+## 7b. Catching up after EDMC was closed (added 2026-10-10, Windows-tested only)
+
+All of this is platform-neutral Python reading the journal folder, but it has only been tried on Windows. The Linux
+risks are the Journal directory (section 0), file modified times on the Proton prefix, and large journal folders.
+To test, play a short session with EDMC **closed** (or close it mid-session), then start EDMC and look at each:
+
+- [ ] **Missions**: accept a mission, close EDMC, start it mid-game: the mission shows without logging in again. Hand a
+      mission in with EDMC closed: it disappears after the restart. (An expired mission with no journal entry can stay
+      until the next login; that is expected.)
+- [ ] **Colonisation**: deliver cargo to a depot with EDMC closed, then start EDMC: the site's figures include the
+      delivery once. Restart EDMC again: nothing changes (no double count).
+- [ ] **Codex**: find a Codex entry with EDMC closed, start EDMC: the summary line goes up by one. The first start
+      after updating only sets the starting point.
+- [ ] **Boxel Survey**: jump to a few systems with EDMC closed; after a restart the visited count (Settings → Boxel
+      Survey) includes them.
+- [ ] **Trade**: the route start (Routes page) is the last real station you docked at, also after a restart and after
+      switching commander; carrier tritium, location and orders appear under the carrier lines if you have one.
+- [ ] **Inventory**: restart EDMC while on foot or with items in the ship locker: the bars fill without a login.
+- [ ] **Exploration Value**: after a restart mid-system, "System bodies" shows scanned of total, and "Last data sale"
+      shows the last sale of the session.
+- [ ] Startup is not noticeably slower, and the EDMC log has no Python errors from `colonisation_catchup`,
+      `journal_files`, `visited_systems`, `codex_backfill` or `journal_scan`.
 
 ## Reporting
 
