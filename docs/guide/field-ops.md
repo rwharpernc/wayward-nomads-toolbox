@@ -163,8 +163,11 @@ open; finished ones are greyed. Under each site is one row per commodity **still
 | FC | Tonnes of that commodity you have transferred onto your **fleet carrier** (only shown once WNTB has seen you have one) |
 
 **The FC column.** It adds up the journal's `CargoTransfer` events made while docked at your fleet carrier: tonnes
-moved to the carrier minus tonnes moved back to the ship. It appears when WNTB has seen a fleet carrier of yours (a
-transfer, opening Carrier Management, buying one, or docking at one) and is per commander. It does not change To Source.
+moved to the carrier minus tonnes moved back to the ship. It appears for a commander WNTB knows has a fleet carrier, using the **same knowledge as Trade**: your
+choice for that commander in the Trade settings (None, Fleet, Squadron, Both or Auto) decides when it names the
+carriers, and on Auto a fleet carrier Trade has recorded counts (it reads your recent journals at start-up and
+remembers them). Failing that, it appears once WNTB has seen one of yours itself (a transfer, opening Carrier
+Management, buying one, or docking at one). It is per commander. It does not change To Source.
 
 - **Transfers made with EDMC closed are found.** They are in the journal, and at start-up WNTB reads the recent
   journals and adds any transfer it hasn't counted. A transfer is never counted twice, even if EDMC also saw it live.

@@ -22,7 +22,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import (colonisation, colonisation_carrier, colonisation_catchup, colonisation_overlay as card, colonisation_window,
-               overlay, panelkit, restore)
+               overlay, panelkit, restore, trade_panel)
 from .colonisation import Site
 from .colonisation_data import SiteRepository, site_repository
 
@@ -97,6 +97,7 @@ class ColonisationController:
 
     def start(self, plugin_dir: str) -> None:
         self._repository.load(plugin_dir)
+        self._carrier_cargo.set_external_check(trade_panel.fleet_carrier)   # the same answer Trade gives
         # EDMC does not replay old events at start-up, so the commander would stay unknown until the next one.
         self._cmdr = restore.latest_commander() or self._cmdr
         if self._cmdr:

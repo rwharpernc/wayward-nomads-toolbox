@@ -831,7 +831,9 @@ events are decorated (`$steel_name;`) while `state["Cargo"]` is plain (`steel`),
 `commodity_key` before being compared. The repository only saves when a site really changed, because
 re-docking re-sends an identical snapshot. At start-up `colonisation_catchup.py` replays the recent journals into the
 repository (see "Catching up on state EDMC missed"). `colonisation_carrier.py` keeps the window's FC column: tonnes
-transferred to the commander's fleet carrier, per commander through `commander_data.py`, fed live and caught up from
+transferred to the commander's fleet carrier, per commander through `commander_data.py`. Whether a commander has a fleet carrier is asked of Trade first
+(`trade_panel.fleet_carrier`: the Settings choice, else a recorded fleet carrier; `None` means unknown) so the two
+features always agree, falling back to what this module has seen itself. It is fed live and caught up from
 `CargoTransfer` events the same way. `colonisation_overlay.py` draws the optional shopping-list card on the overlay:
 `card_lines` (pure) turns the most recently updated active site, the hold and the carrier tonnes into lines, and
 `render` / `clear` send them through the shared `OverlayClient` (ids prefixed `wntb_colonisation_`, registered as a
