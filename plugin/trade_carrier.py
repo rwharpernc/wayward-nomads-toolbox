@@ -19,7 +19,9 @@ Where the numbers come from (journal events):
   goes to that one.
 - `CarrierBuy` says a carrier exists before any usage is known.
 Trade orders and sales made by the carrier itself show only on the next `CarrierStats`, so the figure
-is "as of" the last visit to Carrier Management.
+is "as of" the last visit to Carrier Management. When transfers alone add up to more than the bay can
+hold (or take out more than it holds), something unlogged changed it: the record is flagged `estimate`
+and the panel asks for a visit to Carrier Management. A `CarrierStats` replaces the record and clears it.
 
 `CarrierStats` is not written at login and EDMC does not replay old events when it starts, so a baseline
 seen before WNTB started would be missed. `backfill` replays the recent journal files for the last
@@ -134,11 +136,15 @@ def apply_transfer(record: CarrierRecord, entry: Dict[str, Any]) -> bool:
         if count <= 0 or direction not in ("tocarrier", "toship"):
             continue
         delta = count if direction == "tocarrier" else -count
-        new_cargo = max(0, record.get("cargo", 0) + delta)
+        wanted = record.get("cargo", 0) + delta
+        capacity = record.get("capacity", 0)
+        new_cargo = max(0, min(wanted, capacity) if capacity else wanted)
+        if new_cargo != wanted:
+            record["estimate"] = True  # more went in (or out) than the bay allows, so the journal is missing something
         applied = new_cargo - record.get("cargo", 0)
         record["cargo"] = new_cargo
         record["free"] = max(0, record.get("free", 0) - applied)
-        changed = changed or applied != 0
+        changed = changed or applied != 0 or new_cargo != wanted
     if changed:
         record["updated"] = str(entry.get("timestamp") or _now())
     return changed
@@ -191,6 +197,9 @@ class CarrierTracker:
             parsed = parse_stats(entry)
             if parsed is None:
                 return False
+            held = self._mine().get(parsed["type"])
+            if held is not None and held.get("updated") and str(parsed["updated"]) < str(held["updated"]):
+                return False   # an older baseline (a journal scanned late) never replaces a newer figure
             self.records.setdefault(self.cmdr, {})[parsed["type"]] = parsed
             return True
         if event == "CarrierBuy":
@@ -198,6 +207,9 @@ class CarrierTracker:
             return self.records.setdefault(self.cmdr, {}).setdefault(note["type"], note) is note
         if event == "CargoTransfer":
             target = self._transfer_target()
+            stamp = str(entry.get("timestamp") or "")
+            if target is not None and stamp and stamp <= str(target.get("updated") or ""):
+                return False   # already inside this figure (a journal read twice, or scanned after a newer one)
             return target is not None and apply_transfer(target, entry)
         return False
 
@@ -271,10 +283,15 @@ def cargo_blocks(records: Optional[Dict[str, CarrierRecord]], mode: str = AUTO) 
             blocks.append(Note("Open Carrier Management once to read its cargo space.", warn=True))
             continue
         used, reserved, free = record.get("cargo", 0), record.get("reserved", 0), record.get("free", 0)
-        blocks.append(Pair("Cargo used", f"{used:,} / {capacity:,} t"))
-        blocks.append(Pair("Free", f"{free:,} t", bold=True))
+        guess = "~" if record.get("estimate") else ""
+        blocks.append(Pair("Cargo used", f"{guess}{used:,} / {capacity:,} t"))
+        blocks.append(Pair("Free", f"{guess}{free:,} t", bold=True))
         if reserved:
             blocks.append(Pair("Reserved for trade orders", f"{reserved:,} t"))
+        if guess:
+            blocks.append(Note("Estimate: the transfers seen add up to more than the bay holds, so cargo left the carrier "
+                               "without a journal entry (a trade order or sale). Open Carrier Management for the real figure.",
+                               warn=True))
     return blocks
 
 

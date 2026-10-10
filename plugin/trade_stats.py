@@ -17,7 +17,7 @@ from __future__ import annotations
 import calendar
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 MIN_HOURS_FOR_RATE = 0.05   # about three minutes, as in the live ledger
 

@@ -294,6 +294,18 @@ class CarrierCargoTests(unittest.TestCase):
         self.assertEqual(record["cargo"], 0)
         self.assertFalse(carrier.apply_transfer(record, transfer_event(5, direction="tosrv")))
 
+    def test_transfers_past_the_bay_mark_the_figure_as_an_estimate_until_the_next_stats(self) -> None:
+        record = carrier.parse_stats(stats_event(cargo=17_000))      # capacity 18,000: 1,000 t free
+        carrier.apply_transfer(record, transfer_event(1_265))
+        self.assertEqual((record["cargo"], record["free"], record["estimate"]), (18_000, 0, True))
+        lines = carrier.cargo_lines({FLEET: record})
+        self.assertTrue(any("~18,000 / 18,000 t" in line for line in lines))
+        self.assertTrue(any("Estimate" in line for line in lines))
+        fresh = carrier.parse_stats(stats_event())
+        carrier.apply_transfer(fresh, transfer_event(100))
+        self.assertNotIn("estimate", fresh)
+        self.assertFalse(any("Estimate" in line for line in carrier.cargo_lines({FLEET: fresh})))
+
     def test_no_carrier_means_no_lines(self) -> None:
         self.assertEqual(carrier.cargo_lines(None), [])
         self.assertEqual(carrier.cargo_lines({}), [])

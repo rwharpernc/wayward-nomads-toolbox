@@ -49,7 +49,7 @@ from .powerplay_ledger import (
     parse_snapshot,
 )
 from .session import (
-    SessionManager, system_merit_total, system_totals, total_merits, visited_systems,
+    SessionManager, system_merit_total, system_totals, total_merits,
 )
 from .store import SessionStore
 

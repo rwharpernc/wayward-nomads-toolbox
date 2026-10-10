@@ -3,6 +3,26 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed
+- **Carrier cargo could read more than the bay holds.** Cargo can leave a carrier without a journal entry (a trade
+  order or sale), so transfers alone could add up past capacity. The figure is now capped at the bay size, shown with
+  a `~`, and a note asks you to open Carrier Management; the next `CarrierStats` clears it.
+
+### Added
+- **New journals are found and read automatically.** Trade now looks for journal files it hasn't read a few seconds
+  after EDMC starts and then once a minute (copied over from your other computer, or played with EDMC closed), reads each
+  once and adds its trades, costs, stock and carrier transfers. It remembers what it read in
+  `trade_journal_scan.json`, and the foot of the Session page says how many files it has read and when it last looked.
+  Nothing is counted twice and an older file never overwrites a newer carrier figure. See "Using Trade on two computers"
+  in the README.
+- **Documentation:** a "Using Trade on two computers" section, and the carrier quirks (open Carrier Management for the
+  real figure, what `~` means) written out in the README and Trade spec.
+- **Rebuild** button on the Trade Session page. The trade ledger file is local to each computer and only the journals
+  sync, so a session begun on another machine was missing everything before this one first saw it. Rebuild counts
+  the journals from a start time you give (UTC) and replaces the tally. (Checked on Linux only.)
+
 ## 1.4.1 - 2026-10-09
 
 ### Fixed

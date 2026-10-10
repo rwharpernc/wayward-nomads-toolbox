@@ -73,10 +73,6 @@ def _number(value: Any) -> Optional[float]:
     return float(value)
 
 
-def _is_star(scan: Scan) -> bool:
-    return "StarType" in scan
-
-
 def _is_planet(scan: Scan) -> bool:
     return "PlanetClass" in scan
 
@@ -108,15 +104,6 @@ def first_parent(scan: Scan) -> tuple:
             return kind, value
     return None, None
 
-
-def _parent_scan(scan: Scan, bodies: Bodies, kind: str) -> Optional[Scan]:
-    parent_kind, parent_id = first_parent(scan)
-    if parent_kind != kind or parent_id is None:
-        return None
-    return bodies.get(parent_id)
-
-
-# --- the rules: each returns a one-line detail when it matches, else None ----------------
 
 def _terraformable_landable(scan: Scan, bodies: Bodies) -> Optional[str]:
     state = scan.get("TerraformState")  # "Terraformable", "Terraforming" or "Terraformed"

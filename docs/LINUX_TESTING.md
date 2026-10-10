@@ -146,6 +146,11 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
 - [ ] Stock: buy some cargo and the Session page shows "Stock bought, not yet sold" with the cost and how much is
       aboard. Sell some: it comes down. Transfer cargo to a carrier: the total stays the same and "not in your hold" grows.
       Restart EDMC after buying while it was closed: the purchase is still counted. **Clear stock** empties it.
+- [ ] Two computers: copy the other computer's newer journal files into this one's journal folder while EDMC is running.
+      Within a minute the foot of the Session page reads "Journals read: N file(s)" with the new count, and the trades,
+      stock and carrier figure from those files appear (nothing doubles if you copy the same files again). Press
+      **Rebuild** on the Session page, type the date and time the session began (UTC), and check the totals against the
+      other computer. A carrier figure with a `~` in front means estimate: open Carrier Management and it goes away.
 - [ ] Carriers (only if you have one): open Carrier Management once. The carrier's used and free cargo tonnes
       appear. Transfer cargo to it: the figure follows. Restart EDMC: it comes back without opening Carrier
       Management again (this reads the journal folder, so it also checks the Proton journal path).

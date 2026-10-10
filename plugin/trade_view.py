@@ -15,7 +15,7 @@ takes its parent's background.
 from __future__ import annotations
 
 import tkinter as tk
-from typing import Dict, List, Optional, Sequence
+from typing import List, Optional, Sequence
 
 from . import panelkit
 from .trade_blocks import Block, Columns, Heading, Item, Note, Pair

@@ -204,18 +204,10 @@ _WANTED = re.compile(
 CATCH_UP_FILES = 80   # at most this many journal files are read in one catch-up
 
 
-def replay_journal(ledger: Dict[str, Any], path: str, cmdr: str) -> int:
+def replay_journal(ledger: Dict[str, Any], path: str, cmdr: str, since: str = "") -> int:
     """Count into `ledger` the events of one journal file that it hasn't counted yet (`already_counted`), oldest first,
-    through the same functions the live events use. Tracks the system and the station the commander was docked at as EDMC
-    would have reported them; only `cmdr`'s own events count (a journal can hold more than one). Returns how many events
-    were added."""
-    wanted = _key(cmdr)
-    if not wanted:
-        return 0
-    system: Optional[str] = None
-    station: Optional[str] = None
-    current = ""
-    added = 0
+    through the same functions the live events use. See `replay_entries`. Returns how many events were added."""
+    entries: List[Dict[str, Any]] = []
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as handle:
             for line in handle:
@@ -225,36 +217,70 @@ def replay_journal(ledger: Dict[str, Any], path: str, cmdr: str) -> int:
                     entry = json.loads(line)
                 except ValueError:
                     continue
-                if not isinstance(entry, dict):
-                    continue
-                event = entry.get("event")
-                if event == "Commander" and entry.get("Name"):
-                    current = _key(entry["Name"])
-                    continue
-                if event == "LoadGame":
-                    current = _key(entry.get("Commander") or current)
-                    station = None
-                    if current == wanted:
-                        credits = entry.get("Credits")
-                        note_start(ledger, str(entry.get("timestamp") or "") or None,
-                                   credits if isinstance(credits, int) and not isinstance(credits, bool) else None)
-                    continue
-                if current != wanted:
-                    continue
-                if event in ("Location", "FSDJump", "CarrierJump", "Docked") and entry.get("StarSystem"):
-                    system = str(entry["StarSystem"])
-                if event == "Docked" or (event == "Location" and entry.get("Docked")):
-                    station = str(entry.get("StationName") or "") or None
-                elif event == "Undocked" or (event == "Location" and not entry.get("Docked")):
-                    station = None
-                if already_counted(ledger, entry):
-                    continue
-                changed = apply_trade_event(ledger, entry, (system, station))
-                changed = note_jump(ledger, entry) or changed
-                added += 1 if changed else 0
+                if isinstance(entry, dict):
+                    entries.append(entry)
     except OSError:
         return 0
+    return replay_entries(ledger, entries, cmdr, since)
+
+
+def replay_entries(ledger: Dict[str, Any], entries: List[Dict[str, Any]], cmdr: str, since: str = "") -> int:
+    """Count into `ledger` those of one journal file's `entries` (parsed, in file order) that it hasn't counted yet. Tracks
+    the system and the station the commander was docked at as EDMC would have reported them; only `cmdr`'s own events
+    count (a journal can hold more than one). With `since` (an ISO timestamp), events before it are ignored. Returns how
+    many events were added."""
+    wanted = _key(cmdr)
+    if not wanted:
+        return 0
+    system: Optional[str] = None
+    station: Optional[str] = None
+    current = ""
+    added = 0
+    for entry in entries:
+        event = entry.get("event")
+        if event == "Commander" and entry.get("Name"):
+            current = _key(entry["Name"])
+            continue
+        if event == "LoadGame":
+            current = _key(entry.get("Commander") or current)
+            station = None
+            if current == wanted and not (since and str(entry.get("timestamp") or "") < since):
+                credits = entry.get("Credits")
+                note_start(ledger, str(entry.get("timestamp") or "") or None,
+                           credits if isinstance(credits, int) and not isinstance(credits, bool) else None)
+            continue
+        if current != wanted:
+            continue
+        before = bool(since) and str(entry.get("timestamp") or "") < since
+        if event in ("Location", "FSDJump", "CarrierJump", "Docked") and entry.get("StarSystem"):
+            system = str(entry["StarSystem"])
+        if event == "Docked" or (event == "Location" and entry.get("Docked")):
+            station = str(entry.get("StationName") or "") or None
+        elif event == "Undocked" or (event == "Location" and not entry.get("Docked")):
+            station = None
+        if before or already_counted(ledger, entry):
+            continue
+        changed = apply_trade_event(ledger, entry, (system, station))
+        changed = note_jump(ledger, entry) or changed
+        added += 1 if changed else 0
     return added
+
+
+def _files_since(journal_dir: str, since: float, max_files: int) -> List[str]:
+    """Journal files last written at or after `since` (epoch seconds, less two minutes' slack; a file last written before a
+    point holds nothing newer than it), oldest first, at most the newest `max_files`."""
+    try:
+        found = []
+        for name in os.listdir(journal_dir):
+            if name.startswith("Journal.") and name.endswith(".log"):
+                full = os.path.join(journal_dir, name)
+                modified = os.path.getmtime(full)
+                if modified >= since - 120:
+                    found.append((modified, name, full))
+    except OSError:
+        return []
+    found.sort()
+    return [full for _modified, _name, full in found[-max_files:]]
 
 
 def catch_up(ledger: Dict[str, Any], cmdr: str, journal_dir: str, max_files: int = CATCH_UP_FILES) -> int:
@@ -264,21 +290,41 @@ def catch_up(ledger: Dict[str, Any], cmdr: str, journal_dir: str, max_files: int
     since = _parse_timestamp(watermark(ledger))
     if since is None:
         return 0     # a session with nothing counted and no start time has nothing to catch up from
-    try:
-        found = []
-        for name in os.listdir(journal_dir):
-            if name.startswith("Journal.") and name.endswith(".log"):
-                full = os.path.join(journal_dir, name)
-                modified = os.path.getmtime(full)
-                if modified >= since - 120:       # a file last written before the session's last event holds nothing newer
-                    found.append((modified, name, full))
-    except OSError:
-        return 0
-    found.sort()
+    return sum(replay_journal(ledger, full, cmdr) for full in _files_since(journal_dir, since, max_files))
+
+
+def parse_since(text: str) -> Optional[str]:
+    """What a commander typed as a start time (UTC: `2026-10-09`, `2026-10-09 07:10`, with `T` or a trailing `Z`
+    allowed) -> an ISO timestamp, or None if it isn't one."""
+    cleaned = str(text or "").strip().replace("T", " ").rstrip("Zz").strip()
+    for pattern in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.strptime(cleaned, pattern))
+        except ValueError:
+            continue
+    return None
+
+
+def rebuild_since(cmdr: str, journal_dir: str, since: str, keep: Optional[Dict[str, Any]] = None,
+                  max_files: int = CATCH_UP_FILES) -> Optional[Dict[str, Any]]:
+    """A fresh session for `cmdr` counting everything the journals hold from `since` (an ISO timestamp) on. For a session
+    that began on another machine: the ledger file is local to each machine and only the journals travel, so this
+    rebuilds the tally from them. `keep` is an existing ledger whose Spansh routes and market searches are carried over.
+    Returns None if the start time is unusable or nothing for this commander was counted."""
+    start = _parse_timestamp(since)
+    if start is None or not _key(cmdr):
+        return None
+    ledger = new_ledger(cmdr, None, started=since)
     added = 0
-    for _modified, _name, full in found[-max_files:]:
-        added += replay_journal(ledger, full, cmdr)
-    return added
+    for full in _files_since(journal_dir, start, max_files):
+        ledger["journal_file"] = full
+        added += replay_journal(ledger, full, cmdr, since=since)
+    if not added:
+        return None
+    if keep:
+        ledger["routes"] = list(keep.get("routes") or [])
+        ledger["searches"] = list(keep.get("searches") or [])
+    return ledger
 
 
 def rebuild_from_journal(path: str, cmdr: str, keep: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:

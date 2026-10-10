@@ -237,6 +237,24 @@ def backfill(book: StockBook, journal_dir: str, now: Optional[float] = None,
     return changed
 
 
+def replay_entries(book: StockBook, entries: List[Dict[str, Any]], now: Optional[float] = None) -> bool:
+    """Apply one journal file's parsed `entries` (in file order) to `book`, the way `backfill` does for a whole folder.
+    Returns True if anything changed."""
+    now = time.time() if now is None else now
+    cutoff = now - FIRST_RUN_DAYS * 86400
+    changed = False
+    cmdr = ""
+    for entry in entries:
+        event = entry.get("event")
+        if event == "Commander" and entry.get("Name"):
+            cmdr = str(entry["Name"])
+        elif event == "LoadGame" and entry.get("Commander"):
+            cmdr = str(entry["Commander"])
+        elif cmdr and book.feed(entry, cmdr, not_before=cutoff):
+            changed = True
+    return changed
+
+
 # --- persistence ---------------------------------------------------------------------------------------
 
 def load_all(plugin_dir: str) -> Dict[str, CommanderBook]:
