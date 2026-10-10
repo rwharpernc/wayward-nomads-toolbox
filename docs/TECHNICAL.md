@@ -337,7 +337,7 @@ several requests in flight, use the generation counter above instead.
   tallies, visited systems, ship builds. Examples: `sessions.json`, `boxel_state.json`,
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
-  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`,
+  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`,
   `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
@@ -429,6 +429,11 @@ Two situations mean a feature can start with an incomplete picture:
   - Colonisation (`colonisation_catchup.py`, 14 to 30 days): depot snapshots (idempotent) and contributions (additions,
     so each site carries `journal_at` and only a newer event is applied; a site saved before that existed uses its
     `updated` time). The live path uses the same guard.
+  - Colonization fleet carrier transfers (`colonisation_carrier.py`, same 14 to 30 day window, oldest watermark): a
+    `CargoTransfer` made while docked at a `FleetCarrier` station adds or removes tonnes for that commodity (floor
+    zero). Transfers are additions, so each commander's record keeps `journal_at` and only a newer transfer is applied;
+    the live path uses the same guard. Market purchases, sales, trade orders and other players' moves are not
+    transfers, so the figure is what was seen transferred, not the carrier's hold.
   - Codex Completionist (`scan_since`): the active commander's tally only; the files written since its `last_event_at`
     watermark, counting each newer `CodexEntry` once (a file says whose events follow). A brand-new install only sets the
     watermark; a commander first seen after the tally became per commander is rebuilt once from all their journals.
@@ -817,7 +822,9 @@ remembered from the latest `Docked` for that market and never overwrites one alr
 events are decorated (`$steel_name;`) while `state["Cargo"]` is plain (`steel`), so both go through
 `commodity_key` before being compared. The repository only saves when a site really changed, because
 re-docking re-sends an identical snapshot. At start-up `colonisation_catchup.py` replays the recent journals into the
-repository (see "Catching up on state EDMC missed").
+repository (see "Catching up on state EDMC missed"). `colonisation_carrier.py` keeps the window's FC column: tonnes
+transferred to the commander's fleet carrier, per commander through `commander_data.py`, fed live and caught up from
+`CargoTransfer` events the same way.
 
 ### Auto-Honk (`autohonk.py`)
 

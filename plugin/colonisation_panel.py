@@ -19,7 +19,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname
 
-from . import colonisation, colonisation_catchup, colonisation_window, panelkit
+from . import colonisation, colonisation_carrier, colonisation_catchup, colonisation_window, panelkit
 from .colonisation import Site
 from .colonisation_data import SiteRepository, site_repository
 
@@ -44,6 +44,8 @@ class ColonisationController:
         # remembered from the latest Docked (MarketID -> (station, system)).
         self._docked: Dict[int, tuple] = {}
         self._cargo: Dict[str, int] = {}
+        self._carrier_cargo = colonisation_carrier.carrier_cargo
+        self._carrier_feed = colonisation_carrier.Feeder(self._carrier_cargo)
 
         self._summary_var: Optional[tk.StringVar] = None
         self._parent: Optional[tk.Frame] = None
@@ -61,6 +63,13 @@ class ColonisationController:
         except Exception:
             logger.exception("Colonisation journal catch-up failed")
         self._repository.add_listener(self._refresh_summary)
+        self._carrier_cargo.load(plugin_dir)
+        try:
+            known = colonisation_catchup.known_commanders(self._repository)
+            if colonisation_carrier.catch_up(self._carrier_cargo, known):
+                logger.info("Fleet carrier transfers caught up from the journals")
+        except Exception:
+            logger.exception("Fleet carrier transfer catch-up failed")
 
     # --- journal dispatch -----------------------------------------------
 
@@ -68,6 +77,13 @@ class ColonisationController:
         if cmdr and cmdr != self._cmdr:
             self._cmdr = cmdr
             self._refresh_summary()
+        if cmdr:
+            self._carrier_feed.cmdr = cmdr
+        try:
+            if self._carrier_feed.feed(entry):
+                self._carrier_cargo.commit()
+        except Exception:
+            logger.exception("Fleet carrier transfer tracking failed")
 
         cargo = colonisation.cargo_by_key(state.get("Cargo"))
         if cargo != self._cargo:
@@ -137,7 +153,7 @@ class ColonisationController:
     def _on_manage_clicked(self) -> None:
         if self._parent is None:
             return
-        colonisation_window.show(self._parent, self._repository, self._cmdr or "", self._cargo)
+        colonisation_window.show(self._parent, self._repository, self._cmdr or "", self._cargo, self._carrier_cargo)
 
     # --- Settings tab --------------------------------------------------
 
