@@ -19,7 +19,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname
 
-from . import colonisation, colonisation_window, panelkit
+from . import colonisation, colonisation_catchup, colonisation_window, panelkit
 from .colonisation import Site
 from .colonisation_data import SiteRepository, site_repository
 
@@ -52,6 +52,14 @@ class ColonisationController:
 
     def start(self, plugin_dir: str) -> None:
         self._repository.load(plugin_dir)
+        try:
+            # Deliveries made while EDMC was closed are only in the journals.
+            changed = colonisation_catchup.catch_up(
+                self._repository, colonisation_catchup.known_commanders(self._repository))
+            if changed:
+                logger.info("Colonisation caught up from the journals: %d update(s) applied", changed)
+        except Exception:
+            logger.exception("Colonisation journal catch-up failed")
         self._repository.add_listener(self._refresh_summary)
 
     # --- journal dispatch -----------------------------------------------
@@ -77,6 +85,8 @@ class ColonisationController:
             market_id = entry.get("MarketID")
             existing = self._repository.get(self._cmdr, market_id) if isinstance(market_id, int) else None
             # Work on a copy so the repository can tell whether anything changed.
+            if existing is not None and not colonisation.is_newer(existing, entry, inclusive=True):
+                return   # the start-up catch-up already folded this in
             working = Site.from_dict(existing.to_dict()) if existing else None
             name, docked_system = self._docked.get(market_id, ("", system or "")) if isinstance(market_id, int) else ("", "")
             site = colonisation.apply_depot_event(entry, working, name=name, system=docked_system)
@@ -85,7 +95,7 @@ class ColonisationController:
         elif event == colonisation.EVENT_CONTRIBUTION:
             market_id = entry.get("MarketID")
             existing = self._repository.get(self._cmdr, market_id) if isinstance(market_id, int) else None
-            if existing is not None:
+            if existing is not None and colonisation.is_newer(existing, entry, inclusive=False):
                 working = Site.from_dict(existing.to_dict())
                 if colonisation.apply_contribution(working, entry):
                     self._repository.upsert(self._cmdr, working)

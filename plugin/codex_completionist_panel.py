@@ -23,6 +23,7 @@ import logging
 import os
 import queue
 import threading
+import time
 from typing import Any, Dict, List, Optional
 
 import tkinter as tk
@@ -88,19 +89,38 @@ class CodexCompletionistController:
         saved = codex_completionist_state.load_state(plugin_dir)
         if saved:
             try:
-                self._tally.restore(saved)
+                # Earlier versions saved a bare list of entries; now it is {"entries": [...], "last_event_at": ...}.
+                entries = saved.get("entries", []) if isinstance(saved, dict) else saved
+                self._tally.restore(entries)
+                if isinstance(saved, dict):
+                    self._tally.advance_watermark(saved.get("last_event_at"))
                 logger.info("Restored Codex Completionist tally: %d distinct entries", self._tally.total_distinct)
             except Exception:
                 logger.exception("Failed to restore saved Codex Completionist state; starting fresh")
+        self._catch_up()
+
+    def _catch_up(self) -> None:
+        """Count finds made while EDMC was closed. The first run only sets the starting point (the full history is
+        the BKF button's job); after that, only the journals written since the last counted find are read."""
+        try:
+            if not self._tally.last_event_at:
+                self._tally.advance_watermark(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+                self._persist()
+                return
+            counted = self._tally.apply_new(codex_backfill.scan_since(self._tally.last_event_at))
+            if counted:
+                logger.info("Codex Completionist counted %d find(s) made while EDMC was closed", counted)
+                self._persist()
+        except Exception:
+            logger.exception("Codex Completionist journal catch-up failed")
 
     def stop(self) -> None:
-        if self._plugin_dir is None:
-            return
-        codex_completionist_state.save_state(self._plugin_dir, self._tally.snapshot())
+        self._persist()
 
     def _persist(self) -> None:
         if self._plugin_dir is not None:
-            codex_completionist_state.save_state(self._plugin_dir, self._tally.snapshot())
+            codex_completionist_state.save_state(
+                self._plugin_dir, {"entries": self._tally.snapshot(), "last_event_at": self._tally.last_event_at})
 
     # --- journal dispatch -----------------------------------------------
 
@@ -108,6 +128,7 @@ class CodexCompletionistController:
         if entry.get("event") != "CodexEntry":
             return
         self._tally.record(entry, system)
+        self._tally.advance_watermark(entry.get("timestamp"))
         self._persist()
         self._refresh_summary()
 
@@ -177,6 +198,7 @@ class CodexCompletionistController:
         else:
             before = self._tally.total_distinct
             self._tally.merge_history(entries)
+            self._tally.advance_watermark(max((e.get("timestamp") or "" for e in entries), default=""))
             self._persist()
             self._refresh_summary()
             added = self._tally.total_distinct - before

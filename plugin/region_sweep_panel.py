@@ -118,7 +118,6 @@ class RegionSweepController:
         self._edsm_result_queue: "queue.Queue[Dict[str, List[str]]]" = queue.Queue()
         self._spansh_result_queue: "queue.Queue[Tuple[str, List[str], Optional[str]]]" = queue.Queue()
         self._fss_result_queue: "queue.Queue[Tuple[str, bool]]" = queue.Queue()
-        self._fss_check_generation = 0
 
         # Guards against firing a second auto-discover lookup while one is
         # already in flight (e.g. two jumps landing before the first
@@ -205,14 +204,18 @@ class RegionSweepController:
 
         event = entry.get("event", "")
 
+        if event == "FSSAllBodiesFound":
+            # The game writes this when the FSS has found every body in the system, so "require a full FSS scan"
+            # is decided from the journal itself: no network call, and it works while offline.
+            name = entry.get("SystemName") or system
+            if complete_on_fss_enabled() and name:
+                self._fss_result_queue.put((str(name), True))
+            return
+
         if event in ("FSSBodySignals", "SAASignalsFound", "Scan"):
             # Notable-finds recording already happens unconditionally in
             # boxel_survey.py's own handler (survey_log.py is keyed by
-            # sector/cube_id, not by which sub-mode is active) - nothing to
-            # do here except, when "require full FSS scan" is on, check
-            # whether this arrival's system is now fully scanned.
-            if complete_on_fss_enabled() and system:
-                self._maybe_confirm_fss(system)
+            # sector/cube_id, not by which sub-mode is active) - nothing to do here.
             return
 
         if event not in ("FSDJump", "Location"):
@@ -244,25 +247,6 @@ class RegionSweepController:
             self._set_status(f"Arrived {star_system} — copied next target")
         else:
             self._set_status(f"Arrived {star_system} — next target ready")
-
-    def _maybe_confirm_fss(self, system: str) -> None:
-        """Kicks a background EDSM system_fully_scanned() check for `system`
-        - only relevant when "require full FSS scan" is enabled, since
-        that's the one completion criterion this controller can't decide
-        from the journal stream alone."""
-        self._fss_check_generation += 1
-        generation = self._fss_check_generation
-        threading.Thread(target=self._fss_check_worker, args=(system, generation), daemon=True).start()
-
-    def _fss_check_worker(self, system: str, generation: int) -> None:
-        """Runs off the main thread — must not touch any Tk widget directly."""
-        try:
-            fully_scanned = edsm_client.system_fully_scanned(system)
-        except Exception:
-            logger.exception("_fss_check_worker failed for %r", system)
-            fully_scanned = None
-        if fully_scanned:
-            self._fss_result_queue.put((system, generation == self._fss_check_generation))
 
     # --- main-panel widgets -----------------------------------------------
 

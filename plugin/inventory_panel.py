@@ -272,7 +272,10 @@ class InventoryPanelController:
     def _dispatch(self, cmdr: str, entry: Dict[str, Any], state: Dict[str, Any]) -> None:
         event = entry.get("event", "")
 
-        if event in ("LoadGame", "Start"):
+        # StartUp: EDMC (re)started with the game already running. EDMC does not replay the session's events to plugins,
+        # but it rebuilds its own state (backpack, ship locker, cargo) from the journal first, so syncing from that
+        # state now shows the inventory straight away instead of after the next login.
+        if event in ("LoadGame", "Start") or (event == "StartUp" and cmdr):
             self._on_commander_session(cmdr, state, reason=event)
             return
 

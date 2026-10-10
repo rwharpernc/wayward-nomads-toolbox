@@ -42,6 +42,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import active_missions, community_goal_state, kill_tracker, missions_ui
+from . import mission_cargo
 from .journal_scan import read_backlog
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -116,16 +117,18 @@ class MissionsController:
             logger.info(
                 "Journal scan found mission data for %d CMDR(s)", len(backlog.accepted),
             )
-            active_missions.tracker.load_history(backlog.accepted)
+            active_missions.tracker.load_history(backlog.accepted, backlog.active_ids)
             kill_tracker.initialize(
                 backlog.bounties, backlog.redirected, backlog.redirect_targets,
             )
             community_goal_state.initialize(backlog.goals)
+            mission_cargo.tracker.initialize(backlog.cargo)
         except Exception:
             logger.exception("Journal scan failed - starting with empty state")
             active_missions.tracker.load_history({})
             kill_tracker.initialize({}, {}, {})
             community_goal_state.initialize({})
+            mission_cargo.tracker.initialize({})
 
         missions_ui.ui.apply_display_settings(_to_display_settings(load_config()))
 
@@ -160,6 +163,11 @@ class MissionsController:
         elif event in ("MissionAbandoned", "MissionCompleted", "MissionFailed"):
             active_missions.tracker.finish(cmdr, entry["MissionID"])
             kill_tracker.forget_mission(cmdr, entry["MissionID"])
+            mission_cargo.tracker.forget(cmdr, entry["MissionID"])
+
+        elif event == "CargoDepot":
+            # Collect / delivery progress of a cargo mission (also when a wing-mate hands cargo in).
+            mission_cargo.tracker.update(cmdr, entry)
 
         elif event == "MissionRedirected":
             # Fired when a mission objective is complete and the game
@@ -167,8 +175,10 @@ class MissionsController:
             # station/system.
             kill_tracker.add_redirect(cmdr, entry)
 
-        elif event == "Bounty":
-            # Fired for both ship kills and on-foot kills of wanted targets.
+        elif event in ("Bounty", "FactionKillBond"):
+            # Bounty: ship and on-foot kills of wanted targets. FactionKillBond: a combat-zone kill, which also
+            # counts toward a massacre mission (checked against real journals: some missions only reach their kill
+            # count with the bonds included). It carries no ship type, so it is treated as a ship kill.
             kill_tracker.add_bounty(cmdr, entry)
 
         elif event == "CommunityGoal":

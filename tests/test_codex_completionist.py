@@ -212,5 +212,60 @@ class MergeHistoryTests(unittest.TestCase):
         self.assertEqual(tally.total_distinct, 0)
 
 
+class CatchUpTests(unittest.TestCase):
+    """Finds made while EDMC was closed are counted once, using the watermark."""
+
+    @staticmethod
+    def find(stamp: str, name: str = "$Codex_Ent_Bacterial_01_Name;") -> dict:
+        return {**_BACTERIUM_ENTRY, "timestamp": stamp, "Name": name, "IsNewEntry": False}
+
+    def test_only_events_after_the_watermark_are_counted_and_it_moves_up(self) -> None:
+        tally = CodexTally()
+        tally.advance_watermark("2026-01-02T00:00:00Z")
+        counted = tally.apply_new([self.find("2026-01-01T00:00:00Z"), self.find("2026-01-03T00:00:00Z"),
+                                   self.find("2026-01-04T00:00:00Z")])
+        self.assertEqual(counted, 2)
+        self.assertEqual(tally.total_finds, 2)
+        self.assertEqual(tally.last_event_at, "2026-01-04T00:00:00Z")
+
+    def test_running_it_again_never_counts_anything_twice(self) -> None:
+        tally = CodexTally()
+        tally.advance_watermark("2026-01-02T00:00:00Z")
+        events = [self.find("2026-01-03T00:00:00Z"), self.find("2026-01-04T00:00:00Z", "$Codex_Ent_Other;")]
+        tally.apply_new(events)
+        self.assertEqual(tally.apply_new(events), 0)
+        self.assertEqual(tally.total_finds, 2)
+
+    def test_the_watermark_never_goes_backwards(self) -> None:
+        tally = CodexTally()
+        tally.advance_watermark("2026-01-04T00:00:00Z")
+        tally.advance_watermark("2026-01-01T00:00:00Z")
+        tally.advance_watermark(None)
+        self.assertEqual(tally.last_event_at, "2026-01-04T00:00:00Z")
+
+    def test_scan_since_reads_only_newer_events_from_recent_files(self) -> None:
+        import json
+        import tempfile
+        import time
+        import types
+        from unittest import mock
+        stub = types.ModuleType("config")
+        stub.appname = "EDMarketConnector"
+        stub.config = types.SimpleNamespace(get_str=lambda key: "", default_journal_dir="")
+        with mock.patch.dict(sys.modules, {"config": stub}):
+            import importlib
+            sys.modules.pop("plugin.codex_backfill", None)
+            backfill = importlib.import_module("plugin.codex_backfill")
+            with tempfile.TemporaryDirectory() as folder:
+                path = os.path.join(folder, "Journal.1.log")
+                with open(path, "w", encoding="utf-8") as handle:
+                    for event in (self.find("2026-01-01T00:00:00Z"), self.find("2026-01-05T00:00:00Z"),
+                                  {"event": "Scan", "timestamp": "2026-01-06T00:00:00Z"}):
+                        handle.write(json.dumps(event) + chr(10))
+                found = backfill.scan_since("2026-01-02T00:00:00Z", folder)
+            sys.modules.pop("plugin.codex_backfill", None)
+        self.assertEqual([e["timestamp"] for e in found], ["2026-01-05T00:00:00Z"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -108,6 +108,13 @@ for feature in _FEATURES:
 
 Every feature receives every event and decides itself whether it cares and whether it is enabled.
 
+**Catching up after an EDMC restart.** EDMC replays nothing to plugins, so a feature that must not miss play with EDMC
+closed reads the journals itself. `journal_files.py` is the shared part (folder, files changed since a moment, a
+filtered event reader); the rules for not counting an event twice are each feature's own and are always a watermark or
+an idempotent merge: Trade (`trade_journal_scan.py`, timestamps per fact), Powerplay (`powerplay_backfill.py`), BGS
+(`bgs_journal.py`), Missions (`journal_scan.py`), Colonisation (`colonisation_catchup.py`, per-site `journal_at`),
+Codex (`CodexTally.last_event_at`) and Boxel Survey's visited systems (a set union).
+
 **Why not route events by type in `load.py`?** Because then `load.py` would need to know which events
 each feature reads, and adding or changing a feature would mean editing a central file. Calling every
 handler is cheap: each returns after a dictionary lookup or two. The cost is a few microseconds per

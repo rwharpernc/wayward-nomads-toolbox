@@ -29,6 +29,8 @@ from typing import Any, Dict, Optional, Set
 
 from config import appname
 
+from . import journal_files
+
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
@@ -89,3 +91,30 @@ def save_visited(plugin_dir: str, cmdr: str, visited: Set[str]) -> None:
         os.replace(tmp_path, path)
     except OSError as exc:
         logger.warning("Could not write %s: %s", path, exc)
+
+
+# --- catching up from the journals -------------------------------------------------------------------------------
+
+CATCH_UP_DAYS = 14   # how far back the start-up pass reads
+_ARRIVALS = journal_files.event_pattern("Commander", "LoadGame", "FSDJump", "Location")
+
+
+def arrivals_since(cmdr: str, since_epoch: float, folder: Optional[str] = None) -> Set[str]:
+    """The systems `cmdr` arrived at (FSDJump / Location) in journals modified since `since_epoch`. EDMC only passes a
+    plugin the jumps made while it runs; this finds the ones made with it closed. Adding a system to a set twice is
+    harmless, so no watermark is needed."""
+    wanted = cmdr.strip().casefold()
+    found: Set[str] = set()
+    if not wanted:
+        return found
+    for path in journal_files.files_modified_since(since_epoch, folder):
+        current = ""
+        for entry in journal_files.read_events(path, _ARRIVALS):
+            kind = entry.get("event")
+            if kind == "Commander" and entry.get("Name"):
+                current = str(entry["Name"]).strip().casefold()
+            elif kind == "LoadGame" and entry.get("Commander"):
+                current = str(entry["Commander"]).strip().casefold()
+            elif kind in ("FSDJump", "Location") and current == wanted and entry.get("StarSystem"):
+                found.add(str(entry["StarSystem"]))
+    return found

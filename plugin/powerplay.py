@@ -25,7 +25,7 @@ import logging
 import os
 import queue
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import tkinter as tk
@@ -44,6 +44,7 @@ from .powerplay_clipboard import DEFAULT_TEMPLATE as DEFAULT_CLIPBOARD_TEMPLATE
 from .powerplay_clipboard import PLACEHOLDERS as CLIPBOARD_PLACEHOLDERS
 from . import powerplay_backfill, powerplay_state
 from .powerplay_backfill import OP_MERITS, OP_SNAPSHOT, Op, ScanResult
+from .powerplay_ledger import parse_ts as _parse_ts
 from .powerplay_ledger import (
     DEFAULT_BACKFILL_CYCLES, MAX_BACKFILL_CYCLES, SCAN_NONE, SCAN_REBUILD, PowerplayLedger, ScanPlan, TabPrefs,
     parse_snapshot,
@@ -81,6 +82,15 @@ _CONTROLLED_STATES = {"exploited", "fortified", "stronghold", "controlled", "hom
 # the others.
 _POWER_COMMODITY_PREFIX = "power"
 
+# "PowerplayDeliver" (Type, Count, Power) is the event Powerplay 2.0 writes for every commodity or data hand-in, just
+# before the "PowerplayMerits" it earns: usually one or two merit events within a second or two, but sometimes a few
+# minutes later. So a hand-in claims the first merit event that follows within DELIVERY_FIRST_MERIT_S, and any merit
+# event within DELIVERY_FOLLOW_ON_S of the last one it claimed. The older "SearchAndRescue" / "DeliverPowerMicroResources"
+# signals are kept for journals that predate it, and ignored once a PowerplayDeliver has been seen (they arrive
+# after the merits there, so they would claim the wrong one).
+DELIVERY_FIRST_MERIT_S = 600
+DELIVERY_FOLLOW_ON_S = 10
+
 # Pledge status, resolved once per game session (see apply_login_reset /
 # confirm_not_pledged_if_unresolved).
 PLEDGE_UNKNOWN = "unknown"
@@ -101,6 +111,10 @@ class PowerplayTracker:
         self.system_controller: Optional[str] = None
         self.pledge_status: str = PLEDGE_UNKNOWN
         self._delivery_pending: bool = False
+        self._delivery_deadline: Optional[datetime] = None   # the pending hand-in's first merit must come by then
+        self._delivery_chain_until: Optional[datetime] = None  # further merits up to here belong to the same hand-in
+        self._saw_powerplay_deliver: bool = False
+        self._merit_when: Optional[datetime] = None          # timestamp of the PowerplayMerits being classified
 
     def apply_login_reset(self) -> None:
         """
@@ -118,6 +132,8 @@ class PowerplayTracker:
         self.total_merits = None
         self.pledge_status = PLEDGE_UNKNOWN
         self._delivery_pending = False
+        self._delivery_deadline = None
+        self._delivery_chain_until = None
 
     def apply_delivery_signal(self, event: str, entry: Mapping[str, Any]) -> None:
         """
@@ -130,6 +146,14 @@ class PowerplayTracker:
         in-game and isn't reported either, so DELIVERY is tracked by merit
         count only, same as UNKNOWN (see formulas.NO_CP_ACTIVITIES).
         """
+        if event == "PowerplayDeliver":
+            self._saw_powerplay_deliver = True
+            self._delivery_pending = True
+            when = _parse_ts(entry.get("timestamp"))
+            self._delivery_deadline = when + timedelta(seconds=DELIVERY_FIRST_MERIT_S) if when else None
+            return
+        if self._saw_powerplay_deliver:
+            return   # the legacy signals arrive after the merits once PowerplayDeliver exists
         if event == "DeliverPowerMicroResources":
             self._delivery_pending = True
             return
@@ -264,6 +288,7 @@ class PowerplayTracker:
 
         total = entry.get("TotalMerits")
         gained = entry.get("MeritsGained")
+        self._merit_when = _parse_ts(entry.get("timestamp"))
 
         if not isinstance(gained, int):
             if isinstance(total, int) and self.total_merits is not None:
@@ -294,8 +319,14 @@ class PowerplayTracker:
         collected. This also consumes the pending flag, so it only ever
         applies to the merit gain it actually triggered.
         """
+        when = self._merit_when
         if self._delivery_pending:
             self._delivery_pending = False
+            if when is None or self._delivery_deadline is None or when <= self._delivery_deadline:
+                self._delivery_chain_until = when + timedelta(seconds=DELIVERY_FOLLOW_ON_S) if when else None
+                return DELIVERY
+        elif when is not None and self._delivery_chain_until is not None and when <= self._delivery_chain_until:
+            self._delivery_chain_until = when + timedelta(seconds=DELIVERY_FOLLOW_ON_S)
             return DELIVERY
 
         if not self.my_power:
@@ -403,7 +434,7 @@ _SYSTEM_CONTEXT_EVENTS = ("FSDJump", "Docked")
 _LEDGER_SNAPSHOT_EVENTS = ("FSDJump", "Location", "CarrierJump")
 
 # Commodity/data hand-ins at a power contact — see apply_delivery_signal.
-_DELIVERY_EVENTS = ("SearchAndRescue", "DeliverPowerMicroResources")
+_DELIVERY_EVENTS = ("PowerplayDeliver", "SearchAndRescue", "DeliverPowerMicroResources")
 
 # --- CP-ratio / clipboard-template settings (this mode's own Settings-tab
 # state, kept here rather than in ui.py so the feature owns its own config) -

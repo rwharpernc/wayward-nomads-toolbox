@@ -20,6 +20,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 
 | Module | What it is |
 |---|---|
+| `journal_files.py` | Shared start-up catch-up helpers: the journal folder, files changed since a moment, and a filtered event reader |
 | `__init__.py` | The package marker; holds `__version__`, the one place the version number lives (mirrored in `package.json`) |
 | `http_identity.py` | The User-Agent every web request sends, so services can tell which WNTB feature is calling |
 | `load.py` | The EDMC entry point: `plugin_start3`, `plugin_app`, `journal_entry`, `dashboard_entry`, `plugin_stop`, the one-time overlay reset, and forwarding to every feature |
@@ -75,6 +76,7 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `codex_completionist_window.py` | The Codex Completionist detail window (found and not found) |
 | `discovery.py` | Discovery Alerts: overlay alerts for never-before-discovered systems and bodies, plus the N.S./W.D. buttons |
 | `elw_rarity_spansh.py` | Spansh count of known Earth-like worlds around a system |
+| `exploration_progress.py` | Bodies scanned against the honk's body count, and what the last exploration and organic data sales paid |
 | `exploration_value.py` | Estimated scan payout for the last body scanned, and the system's age |
 | `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog lookup |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
@@ -151,9 +153,11 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 |---|---|
 | `trade_blocks.py` | The typed page model Trade draws (headings, label/value rows, tables, notes) and its plain-text form |
 | `trade_carrier.py` | Fleet and squadron carrier cargo space, journal backfill and `trade_carrier.json` |
+| `trade_carrier_ops.py` | Running the carrier: tritium, location, planned jump, trade orders and balance from the carrier journal events |
 | `trade_commodities.py` | Commodity name matching and the type-ahead list |
 | `trade_commodities_data.py` | The generated commodity table (from FDevIDs) |
 | `trade_commodity_entry.py` | The type-ahead Commodity box widget |
+| `trade_hold.py` | Mission and stolen tonnes in the ship's hold, from the `Cargo` inventory |
 | `trade_history.py` | Saved sessions, the `HistoryBook` and `trade_history.json` |
 | `trade_history_window.py` | The Trade History window |
 | `trade_journal_scan.py` | Finds journal files not read yet (or grown) and applies them to the ledger, stock and carrier; `trade_journal_scan.json` |
@@ -162,6 +166,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_pages.py` | Trade's page order |
 | `trade_panel.py` | Trade mode's entry point: chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
 | `trade_prices.py` | Ranks station offers for your load (sell and buy), carrier split and verdict lines |
+| `trade_route_start.py` | Each commander's route start (last real station docked at) and `trade_route_start.json`; the journal scan feeds it docks, newest wins |
 | `trade_route_start.py` | Each commander's route start (last real station docked at) and `trade_route_start.json`; the journal scan feeds it docks, newest wins |
 | `trade_roundtrip.py` | Finds the best back-and-forth station pair, loaded both ways |
 | `trade_ship.py` | Ship to landing-pad size and the fit rule |
@@ -182,6 +187,7 @@ Spec: [MISSIONS_TECH_SPEC.md](MISSIONS_TECH_SPEC.md)
 | `journal_scan.py` | Reads recent journals so Missions survives EDMC restarts |
 | `kill_missions.py` | The massacre and settlement-raid missions and their kill progress |
 | `kill_tracker.py` | Per-mission completion evidence, kept per commander |
+| `mission_cargo.py` | Collect / delivery progress of cargo missions from the journal's `CargoDepot` events |
 | `mission_types.py` | Classifies missions into the panel's categories |
 | `missions.py` | Missions mode's entry point and event handling |
 | `missions_ui.py` | Draws Missions' pages and pop-ups |
@@ -193,6 +199,7 @@ Spec: [SCREENSHOTS_AND_INPUT_TECH_SPEC.md](SCREENSHOTS_AND_INPUT_TECH_SPEC.md), 
 | Module | What it is |
 |---|---|
 | `colonisation.py` | Pure logic for construction-site tracking |
+| `colonisation_catchup.py` | Folds the recent journals into the saved construction sites at start-up, never counting a delivery twice |
 | `colonisation_data.py` | JSON persistence for construction sites |
 | `colonisation_panel.py` | The Colonisation section of Field Ops |
 | `colonisation_window.py` | The Colonisation Sites window |

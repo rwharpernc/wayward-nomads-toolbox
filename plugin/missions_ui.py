@@ -591,6 +591,14 @@ def _display_massacre_data(frame: tk.Frame, data: MassacreData, settings: Displa
     return row
 
 
+def _cargo_text(mission: all_missions.MissionSummary) -> str:
+    """Cargo mission progress from the journal's CargoDepot events, e.g. "Cargo: 120/200 collected, 80 delivered"."""
+    cargo = mission.cargo
+    if cargo is None:
+        return ""
+    return f"Cargo: {cargo.collected:,}/{cargo.total:,} collected, {cargo.delivered:,} delivered"
+
+
 def _display_all_missions_row(frame: tk.Frame, mission: all_missions.MissionSummary,
                                row: int, on_click: Callable[[int], None]) -> int:
     """A mission as a stacked card, one field per line: name, faction,
@@ -639,6 +647,12 @@ def _display_all_missions_row(frame: tk.Frame, mission: all_missions.MissionSumm
     tk.Label(status_line, text=status_text, font=fonts["small"]).pack(side=tk.LEFT)
     tk.Label(status_line, text=reward_text).pack(side=tk.RIGHT, anchor="ne")
     card_row += 1
+
+    if mission.cargo is not None:
+        cargo_line = _line(card, card_row, pady=(0, _LINE_PAD))
+        tk.Label(cargo_line, text=_cargo_text(mission), wraplength=_WRAP,
+                 justify=tk.LEFT, font=fonts["small"]).pack(side=tk.LEFT)
+        card_row += 1
 
     location = _mission_location(mission, cmdr, is_complete)
     dest_line = _line(card, card_row, pady=(0, _LINE_PAD))
@@ -800,6 +814,8 @@ def _display_mission_detail(frame: tk.Frame, mission: all_missions.MissionSummar
         methods_text = mining_methods.format_methods(mining_methods.methods_for(mission.commodity))
         detail_row("Commodity:", mission.commodity)
         detail_row("Mine via:", methods_text)
+    if mission.cargo is not None:
+        detail_row("Cargo:", _cargo_text(mission).replace("Cargo: ", ""))
     detail_row("Reward:", f"{mission.reward:,} CR" if mission.reward else "-")
     detail_row("Wing mission:", "Yes" if mission.is_wing else "No")
     detail_row("Destination:", location)

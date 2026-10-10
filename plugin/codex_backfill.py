@@ -10,8 +10,8 @@ is deliberately a separate, small glob function rather than reaching into
 journal_scan.py's own name-mangled private helpers across modules: no
 date cutoff at all, and filtered to `CodexEntry` events only.
 
-Explicitly user-triggered (a button, never automatic on EDMC start) -
-scanning years of journal files is real I/O cost.
+The full scan is explicitly user-triggered (a button) - scanning years of journal files is real I/O
+cost. `scan_since` is the small automatic one: only the files written since the tally last saw an event.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from config import appname, config
 
@@ -37,6 +37,25 @@ def _journal_dir() -> str:
     else:
         location = config.get("journaldir")  # type: ignore[attr-defined]
     return location or config.default_journal_dir
+
+
+def scan_since(stamp: str, folder: Optional[str] = None) -> List[Dict[str, Any]]:
+    """The `CodexEntry` events written after `stamp` (an ISO timestamp), oldest first. Reads only the journal files
+    modified since then, so it is cheap enough to run at every start-up (unlike the full history scan)."""
+    import calendar
+    import time
+
+    from . import journal_files
+
+    try:
+        since = calendar.timegm(time.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ")) - 86400   # a day's slack for clock drift
+    except ValueError:
+        return []
+    wanted = journal_files.event_pattern("CodexEntry")
+    events: List[Dict[str, Any]] = []
+    for path in journal_files.files_modified_since(since, folder):
+        events.extend(e for e in journal_files.read_events(path, wanted) if (e.get("timestamp") or "") > stamp)
+    return events
 
 
 def scan_all_codex_entries() -> List[Dict[str, Any]]:

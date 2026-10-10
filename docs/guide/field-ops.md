@@ -136,8 +136,12 @@ construction depot or open its market, and a `ColonisationContribution` event ea
 there, the site is called `Construction site <number>`.
 
 **Keeping it right.** Each time you dock or open the depot market again, WNTB replaces its figures with the game's
-own. Between visits it adds what you deliver, as reported in the journal. A delivery to a site WNTB hasn't
-registered yet is ignored. Everything is kept **per commander**.
+own. Between visits it adds what you deliver, as reported in the journal. Everything is kept **per commander**.
+
+**Deliveries made with EDMC closed** are found again when EDMC starts: WNTB reads the recent journals (14 days, or
+back to the oldest site it is tracking, never more than 30) and applies each depot snapshot and delivery once. It also
+registers a site you docked at in that time. A delivery to a site that no journal in that window has a depot snapshot
+for is ignored, since there is nothing to add it to.
 
 ### The Colonisation Sites window
 
@@ -173,10 +177,11 @@ WNTB can only show what Elite Dangerous writes to its journal files and what the
 | The screenshot timer to press any button | It can only press **keyboard** keys. macOS isn't supported for key simulation, and Linux on Wayland without XWayland isn't either (conversion and cropping still work). | Bind a keyboard key to the screenshot control. |
 | Screenshots to always save | Windows Controlled Folder Access or antivirus can block file access. The error message says so. | Allow EDMC through, or choose another save folder. |
 | Your backpack capacity to be reported | The game doesn't report it. WNTB uses a **built-in table** by suit and the Extra Backpack Capacity mod. It can't see engineering grade and has no figure for the Flight Suit. | Type the real number for each suit loadout in the Inventory settings. |
+| The inventory to show after restarting EDMC mid-game | EDMC does not replay the session to plugins, but it rebuilds its own state from the journal. WNTB now syncs the backpack and ship locker from that state when EDMC starts. | If a bar still shows nothing, loot, resupply or disembark to refresh it. This relies on EDMC's state and has not been checked against every EDMC version. |
 | The Backpack to be known at login | If you log in already on foot, the game hasn't yet reported it (the tab says `Not yet synced this session`). | Loot, resupply or disembark to refresh it. |
 | The Carrier Locker to be live | It comes from **Frontier's servers**, not the journal. EDMC must be signed in to Frontier, and the data can **lag the game by 15 to 30 minutes**. | Sign EDMC in, and allow time after changes. The locker is hidden until real data arrives. |
 | The Rhino's cargo capacity | Not confirmed against a real journal entry, so the bar shows the count with no limit. | Read the tonnes, not a percentage. |
-| Colonisation sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB hasn't registered is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. |
+| Colonisation sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB has never seen a depot snapshot for is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. Deliveries made with EDMC closed are caught up from the last 14 to 30 days of journals at start-up. |
 | A site to have its real name | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. | Dock at the market once to pick up the name. |
 | Ship Builds to be checked | WNTB only stores the link and name you give it. It doesn't read or check the build. | Keep your link current if the site changes. |
 

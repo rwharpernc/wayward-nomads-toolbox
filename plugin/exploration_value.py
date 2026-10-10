@@ -59,7 +59,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import edsm_client, elw_rarity_spansh, organic_region_data, panelkit
+from . import edsm_client, elw_rarity_spansh, exploration_progress, journal_files, organic_region_data, panelkit
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -241,6 +241,11 @@ class ExplorationValueController:
         self._system_name: Optional[str] = None
         self._star_evaluated = False
 
+        self._progress = exploration_progress.SystemProgress()
+        self._sales = exploration_progress.LastSales()
+        self._bodies_var: Optional[tk.StringVar] = None
+        self._sale_var: Optional[tk.StringVar] = None
+
         self._scan_var: Optional[tk.StringVar] = None
         self._age_var: Optional[tk.StringVar] = None
         self._region_var: Optional[tk.StringVar] = None
@@ -276,6 +281,9 @@ class ExplorationValueController:
 
         event = entry.get("event")
 
+        if enabled():
+            self._track_progress(entry)
+
         if event == "StartUp":
             # EDMC sends this synthetic event once, only when it's started
             # while the game is already running - same mid-session-start
@@ -286,6 +294,7 @@ class ExplorationValueController:
             # as before this addition - a full scan/age replay would need
             # walking every Scan in the file, a materially bigger change.
             self._backfill_region_from_journal()
+            self._backfill_progress_from_journal()
             return
 
         if event == "FSDTarget":
@@ -330,6 +339,30 @@ class ExplorationValueController:
             self._set_scan(body_name, value)
             if planet_class == "Earthlike body" and elw_rarity_enabled() and system:
                 self._check_elw_rarity(body_name, system)
+
+    def _track_progress(self, entry: Mapping[str, Any]) -> None:
+        """Bodies scanned in this system and what the last data sales paid (exploration_progress.py)."""
+        changed = self._progress.feed(entry)
+        if changed and self._bodies_var is not None:
+            self._bodies_var.set(self._progress.text())
+        if self._sales.feed(entry) and self._sale_var is not None:
+            self._sale_var.set(self._sales.text())
+
+    def _backfill_progress_from_journal(self) -> None:
+        """EDMC started mid-session and saw none of this system's scans or the session's sales: replay the current
+        journal file for them."""
+        path = _find_current_journal_file()
+        if path is None:
+            return
+        wanted = journal_files.event_pattern(
+            "FSDJump", "Location", "CarrierJump", "FSSDiscoveryScan", "FSSAllBodiesFound", "Scan",
+            "MultiSellExplorationData", "SellExplorationData", "SellOrganicData")
+        progress, sales = exploration_progress.replay(journal_files.read_events(str(path), wanted))
+        self._progress, self._sales = progress, sales
+        if self._bodies_var is not None:
+            self._bodies_var.set(self._progress.text())
+        if self._sale_var is not None:
+            self._sale_var.set(self._sales.text())
 
     def _set_scan(self, body_name: str, value: int) -> None:
         if self._scan_var is not None:
@@ -474,6 +507,8 @@ class ExplorationValueController:
         self._scan_var = tk.StringVar(value=_NO_SCAN_TEXT if enabled() else _DISABLED_TEXT)
         self._age_var = tk.StringVar(value=_NO_AGE_TEXT if enabled() else "")
         self._region_var = tk.StringVar(value=_NO_REGION_TEXT if enabled() else "")
+        self._bodies_var = tk.StringVar(value=self._progress.text() if enabled() else "")
+        self._sale_var = tk.StringVar(value=self._sales.text() if enabled() else "")
         self._elw_rarity_var = tk.StringVar(
             value=_ELW_RARITY_IDLE_TEXT if elw_rarity_enabled() else _ELW_RARITY_DISABLED_TEXT,
         )
@@ -497,11 +532,17 @@ class ExplorationValueController:
         panelkit.wrap_label(parent, textvariable=self._region_var, anchor="w").grid(
             row=3, column=0, columnspan=3, sticky=tk.W,
         )
-        panelkit.wrap_label(parent, textvariable=self._elw_rarity_var, anchor="w").grid(
+        panelkit.wrap_label(parent, textvariable=self._bodies_var, anchor="w").grid(
             row=4, column=0, columnspan=3, sticky=tk.W,
         )
-        panelkit.wrap_label(parent, textvariable=self._upload_status_var, anchor="w").grid(
+        panelkit.wrap_label(parent, textvariable=self._sale_var, anchor="w").grid(
             row=5, column=0, columnspan=3, sticky=tk.W,
+        )
+        panelkit.wrap_label(parent, textvariable=self._elw_rarity_var, anchor="w").grid(
+            row=6, column=0, columnspan=3, sticky=tk.W,
+        )
+        panelkit.wrap_label(parent, textvariable=self._upload_status_var, anchor="w").grid(
+            row=7, column=0, columnspan=3, sticky=tk.W,
         )
 
         parent.after(200, self._poll_elw_queue)
@@ -514,11 +555,19 @@ class ExplorationValueController:
                 self._age_var.set(_NO_AGE_TEXT)
                 if self._region_var is not None:
                     self._region_var.set(_NO_REGION_TEXT)
+                if self._bodies_var is not None:
+                    self._bodies_var.set(self._progress.text())
+                if self._sale_var is not None:
+                    self._sale_var.set(self._sales.text())
             else:
                 self._scan_var.set(_DISABLED_TEXT)
                 self._age_var.set("")
                 if self._region_var is not None:
                     self._region_var.set("")
+                if self._bodies_var is not None:
+                    self._bodies_var.set("")
+                if self._sale_var is not None:
+                    self._sale_var.set("")
         if self._elw_rarity_var is not None:
             self._elw_rarity_var.set(_ELW_RARITY_IDLE_TEXT if elw_rarity_enabled() else _ELW_RARITY_DISABLED_TEXT)
         if self._upload_status_var is not None:

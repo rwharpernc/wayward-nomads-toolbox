@@ -172,7 +172,7 @@ current cube. **Set Current** makes the selected cube the current one, and **Rem
 
 **What "complete" means.** A cube is complete once *every system WNTB knows about in it* is done, or once you mark
 it **Empty**. WNTB can't know a cube's true total, only what EDSM, Spansh and your own visits have revealed. A
-system counts as done when you arrive there, or, if you turn on *Require a full FSS scan*, when it is fully scanned.
+system counts as done when you arrive there, or, if you turn on *Require a full FSS scan*, when the game reports that your FSS has found every body in it (the `FSSAllBodiesFound` journal event). That check uses only your journal, with no internet lookup.
 
 **Mark Empty / Unmark Empty** flags the selected cube as having nothing worth surveying (the list shows `[empty]`).
 Empty cubes count as complete and are skipped. When you arrive at a cube's target and that cube is complete, the
@@ -231,7 +231,11 @@ A quiet readout of what you're finding. Nothing to turn on. It shows:
 
 - the estimated payout for your last scan,
 - the age of the current system,
-- which of the galaxy's 42 named regions you're in (for example "Inner Orion Spur").
+- which of the galaxy's 42 named regions you're in (for example "Inner Orion Spur"),
+- how many of the system's bodies you have scanned out of the number the honk found (for example "System bodies: 6
+  scanned of 14 — all found"),
+- what your last data sales actually paid, to set against the estimate ("Last data sale: exploration 1,234,567 cr,
+  organic 350,000 cr").
 
 All of that is worked out on your computer.
 
@@ -270,6 +274,10 @@ Points of Interest**, where there is also a *View Canonn Codex* link.
 
 **One thing to know:** the tally is **one per install, not per commander**. Every commander's entries on this
 install go into the same list.
+
+**Finds made while EDMC was closed** are counted automatically: each time EDMC starts, WNTB reads only the journal files
+written since the last find it counted and adds the newer ones, once each. The first start after updating only sets
+that starting point, so press **BKF** once to bring in older history.
 
 **BKF** (backfill from journal history) is a button you press yourself, because reading years of journals takes a
 while. It reads **all** the journal files in EDMC's journal folder, with no date limit.
@@ -336,6 +344,9 @@ WNTB can only show what Elite Dangerous writes to its journal files and what the
 | The colour of a gas giant | The game never records it. The Green gas giant rule uses the Codex or matches the surface temperature of a confirmed green one. | Treat it as a lead and check the body in the system map. |
 | Notable Bodies to be certain | A match comes from scan data, using Elite Observatory's default limits. | Check the body before you plan around it. |
 | Organic Scanning to name the species | Until a sample names it, the result is a **list of candidates** worked out from the planet's conditions. The main star is assumed to be the illuminating one, which can be wrong near a secondary star. A species with no usable rules can't be predicted, and new species need a WNTB update. | Take a first sample, which replaces the list with the exact species. The in-game exobiology tools are the final word. |
+| Systems visited with EDMC closed to be known | The journals record every jump, so each start reads the last 14 days of journals for your arrivals and adds them to the visited list that **Skip systems already visited** and **RND** use. | Nothing needed for the last 14 days. Older jumps made with EDMC closed are not found. |
+| Bodies-scanned count to be right after a restart | The honk (`FSSDiscoveryScan`) gives the body count and each scan counts one. If EDMC started after the honk, WNTB replays the current journal file for them. | If it still says to honk, honk again. A system's scans made in another journal file are not included. |
+| The sale line to include sales before the current journal file | It is read from the current journal file when EDMC starts, then kept up to date live. | It resets to "none yet" when you restart EDMC after a new game session. |
 | Codex Completionist to cover everything | Canonn's catalogue has no geological or anomaly entries, so those never appear under **Not found**. The tally is per install, not per commander. | Use the game's Codex for those. Press **Refresh Catalog** if the saved copy is old. |
 | POI lists to be current | They are snapshots from Canonn and edastro, and are fetched only when you ask. | Press **FIND** or **REF** to refresh. |
 

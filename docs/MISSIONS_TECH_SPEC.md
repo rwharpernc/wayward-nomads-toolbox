@@ -166,4 +166,9 @@ missing folder). The category rules and the panel are exercised by hand in EDMC.
 - Mission names the rules don't recognise land in **Other**; the hint lists need upkeep.
 - Kill counts for wing and on-foot missions are estimates and can lag.
 - Nothing older than two weeks is read at start-up.
+- Without a login `Missions` event (EDMC restarted mid-game), the active set is derived from the journals: newest
+  `Missions` list, then `MissionAccepted` adds and `MissionCompleted`/`Abandoned`/`Failed` removes. An expiry with no
+  journal entry is missed until the next login list replaces the derived set.
+- Cargo mission progress comes only from `CargoDepot`; nothing before the two-week window, or between events, is known.
+- `FactionKillBond` carries no ship type, so an on-foot combat-zone kill is counted as a ship kill.
 - Community Goals have no "gone" signal, so the panel relies on each goal's expiry date.

@@ -42,10 +42,10 @@ OP_POWER = "power"
 _PLEDGE_EVENTS = ("Powerplay", "PowerplayJoin", "PowerplayLeave", "PowerplayDefect")
 _CONTEXT_EVENTS = ("Location", "FSDJump", "Docked")
 _SNAPSHOT_EVENTS = ("Location", "FSDJump", "CarrierJump")
-_DELIVERY_EVENTS = ("SearchAndRescue", "DeliverPowerMicroResources")
+_DELIVERY_EVENTS = ("PowerplayDeliver", "SearchAndRescue", "DeliverPowerMicroResources")
 _RELEVANT = (
     "Fileheader", "Commander", "LoadGame", "Location", "FSDJump", "CarrierJump", "Docked", "PowerplayMerits",
-    "PowerplayRank", "SearchAndRescue", "DeliverPowerMicroResources", *_PLEDGE_EVENTS,
+    "PowerplayRank", "PowerplayDeliver", "SearchAndRescue", "DeliverPowerMicroResources", *_PLEDGE_EVENTS,
 )
 _NEEDLES = tuple(f'"{name}"' for name in _RELEVANT)
 

@@ -3,6 +3,46 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Catching up after an EDMC restart, more widely.** Features that only saw live events now read the recent journals
+  when EDMC starts, each with a rule that never counts anything twice (see Getting started, "If EDMC wasn't
+  running"): **Colonisation** deliveries and depot visits (14 to 30 days), **Codex Completionist** finds (everything
+  since the last one counted; press BKF once after updating for older history), **Boxel Survey** visited systems (14
+  days), and the **Inventory** now syncs from EDMC's rebuilt state at start-up instead of waiting for the next login.
+  A shared `journal_files.py` does the file finding and reading.
+- **Exploration Value: system progress and real sale totals.** "System bodies: 6 scanned of 14 — all found" (from the
+  honk and your scans) and "Last data sale: exploration 1,234,567 cr, organic 350,000 cr" (what the game actually paid),
+  both rebuilt from the current journal file if EDMC started mid-session.
+- **Trade: mission and stolen cargo in Hold space**, for example "312 t cargo (40 t mission, 12 t stolen)", from the
+  game's cargo list.
+- **Missions: cargo mission progress.** Collect and delivery missions show how much is collected and delivered (from the
+  game's `CargoDepot` events, also read from the last two weeks of journals at start-up), and the "commodities needed"
+  total no longer counts what you have already collected.
+- **Trade: running the carrier.** Under the carrier's cargo lines the Session page now shows its tritium, where it is,
+  a planned jump (destination and departure time), its balance and the trade orders you have set (what it is selling
+  or buying, tonnes and price). They come from journal events WNTB did not read before (`CarrierDepositFuel`,
+  `CarrierLocation`, `CarrierJumpRequest`/`CarrierJumpCancelled`, `CarrierTradeOrder`, `CarrierFinance` and more of
+  `CarrierStats`). The game records an order when it is placed or cancelled, not as it fills, so the cargo figure
+  still needs Carrier Management for an exact value.
+
+### Fixed
+- **Missions: combat-bond kills count toward massacre missions.** Combat-zone kills are written as
+  `FactionKillBond`, not `Bounty`, and were ignored. In a check against real journals, some massacre missions reached
+  their kill count only with the bonds included.
+- **Region Sweep: "Require a full FSS scan" uses your journal.** It now waits for the game's `FSSAllBodiesFound`
+  event instead of asking EDSM after every scan, so it needs no internet and no longer makes a request per scan.
+- **Powerplay: commodity and data hand-ins are now recognised as deliveries.** Current journals write
+  `PowerplayDeliver` before the merits a hand-in earns, and WNTB ignored it, so those merits were guessed from the
+  system you were in (and given Control Points). The merit events that follow a `PowerplayDeliver` are now labelled
+  Delivery (merits only, no CP estimate). Merits already recorded keep the label they were given; only new ones (and journals read for the first time) use the fix.
+- **Missions: your active missions show after restarting EDMC, without logging in again.** The game lists active
+  missions only in its login event, so after an EDMC restart mid-game the panel waited for the next login. WNTB now
+  also works the active set out from the last two weeks of journals (the newest login list, plus every mission
+  accepted, completed, abandoned or failed since) and the next real login list replaces it. A mission that expired
+  without a journal entry can show until then.
+
 ## 1.5.1 - 2026-10-10
 
 ### Fixed
