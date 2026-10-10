@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.4.2 - 2026-10-10
 
 ### Fixed
 - **The landing pad diagram on the overlay could stay blank.** If the overlay was not running yet when docking was
