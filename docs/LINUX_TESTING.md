@@ -22,7 +22,7 @@ Where a step fails, copy the relevant lines from EDMC's log
       prefix is usually `~/.local/share/Steam/steamapps/compatdata/359320/pfx`.
 - [ ] For overlay features: EDMCModernOverlay is installed and its overlay is running.
 - [ ] If EDMC is a Flatpak: `flatpak override --user --show io.edcd.EDMarketConnector` lists all four
-      permissions from the README (Linux, Step 3): the journals folder, the Bindings folder (`:ro`), the
+      permissions from the [Linux guide](guide/linux.md) (Step 3): the journals folder, the Bindings folder (`:ro`), the
       Pictures folder, and `org.freedesktop.Flatpak=talk`. Without the last one the overlay's sockets open (so
       **Check connection** passes) but its window never starts, and `xdotool` is invisible to WNTB.
 - [ ] If EDMC is a Flatpak: the EDMC log has no "Host lookup of ... failed" lines from WNTB.

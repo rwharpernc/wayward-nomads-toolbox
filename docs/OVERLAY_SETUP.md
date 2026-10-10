@@ -94,9 +94,9 @@ overlay was found, and the on-screen extras simply don't appear.
 6. **Check the logs.** EDMC's Help menu can open its log folder, and EDMCModernOverlay keeps its own
    logs. Including them helps if you report a problem.
 7. **Linux:** you need EDMCModernOverlay (the original is Windows-only). See the
-   [Linux section of the README](../README.md#using-wntb-on-linux). If EDMC is a **Flatpak** and
+   [Linux guide](guide/linux.md). If EDMC is a **Flatpak** and
    **Check connection** succeeds but nothing is drawn, the Flatpak needs permission to start the overlay
-   window; the README gives the one-line `flatpak override` command.
+   window; the Linux guide gives the one-line `flatpak override` command.
 
 ## A note for the curious
 

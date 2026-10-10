@@ -4,7 +4,7 @@
 **Last updated:** 2026-10-02 (see `CHANGELOG.md`)
 
 The standing reference for Missions mode: what it reads, the rules it applies, and what its numbers can
-and can't tell you. For how to use it, see the [README](../README.md#missions). For how the code is
+and can't tell you. For how to use it, see the [README](guide/missions.md). For how the code is
 organised in general, see [TECHNICAL.md](TECHNICAL.md).
 
 ## 1. Goals

@@ -5,7 +5,7 @@
 
 The standing reference for Organic Scanning (exobiology): what it predicts, the rules behind the
 prediction, how scan progress is tracked, and where its answers can be wrong. For how to use it, see the
-[README](../README.md#organic-scanning). For how the code is organised in general, see
+[README](guide/exploration.md#organic-scanning). For how the code is organised in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 ## 1. Goals
