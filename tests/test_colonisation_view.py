@@ -53,6 +53,39 @@ class CommodityRowsTests(unittest.TestCase):
         self.assertEqual(rows["Water"].on_carrier, 0)
 
 
+class CoverageStateTests(unittest.TestCase):
+    """The row color: green when the hold plus the carrier covers the need, orange when it is more, else unchanged."""
+
+    def state_of(self, label, cargo, carrier=None):
+        rows = {r.label: r for r in view.commodity_rows(site(), cargo, carrier)}
+        return rows[label].state
+
+    def test_short_enough_and_over_by_the_hold_alone(self):
+        self.assertEqual(self.state_of("Steel", {"steel": 399}), view.STATE_SHORT)
+        self.assertEqual(self.state_of("Steel", {"steel": 400}), view.STATE_ENOUGH)   # exactly equal is green
+        self.assertEqual(self.state_of("Steel", {"steel": 401}), view.STATE_OVER)
+
+    def test_the_carrier_counts_toward_the_need(self):
+        self.assertEqual(self.state_of("Steel", {"steel": 100}, {"steel": 299}), view.STATE_SHORT)
+        self.assertEqual(self.state_of("Steel", {"steel": 100}, {"steel": 300}), view.STATE_ENOUGH)
+        self.assertEqual(self.state_of("Steel", {"steel": 100}, {"steel": 301}), view.STATE_OVER)
+
+    def test_the_carrier_alone_can_cover_it(self):
+        self.assertEqual(self.state_of("Water", {}, {"water": 50}), view.STATE_ENOUGH)
+        self.assertEqual(self.state_of("Water", {}, {"water": 60}), view.STATE_OVER)
+
+    def test_nothing_held_is_short(self):
+        self.assertEqual(self.state_of("Steel", {}), view.STATE_SHORT)
+
+    def test_covered_follows_the_state_and_hide_covered_uses_it(self):
+        rows = view.commodity_rows(site(), {"water": 10}, {"water": 40}, hide_covered=True)
+        self.assertEqual([r.label for r in rows], ["Aluminium", "Steel"])   # Water: 10 + 40 = 50 needed
+
+    def test_totals_count_carrier_coverage_when_given_it(self):
+        self.assertEqual(view.totals(site(), {}).covered, 0)
+        self.assertEqual(view.totals(site(), {}, carrier={"water": 50, "aluminium": 90}).covered, 2)
+
+
 class TotalsTests(unittest.TestCase):
     def test_totals_ignore_the_filters_and_count_trips(self):
         totals = view.totals(site(), {"steel": 100}, capacity=200)

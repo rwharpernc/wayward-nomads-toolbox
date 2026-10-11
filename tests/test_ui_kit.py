@@ -12,7 +12,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugin.uikit.shell import WindowShell  # noqa: E402
-from plugin.uikit.table import _sort_value  # noqa: E402
+from plugin.uikit.table import _lighten, _sort_value  # noqa: E402
 from plugin.uikit.widgets import clip, suggestions  # noqa: E402
 
 
@@ -107,6 +107,17 @@ class NoGlobalTtkTests(unittest.TestCase):
             code = re.sub(r"#.*", "", code)
             for needle in ("theme_use(", "ttk.Style", "style.configure(", "style.map(", "from tkinter import ttk"):
                 self.assertNotIn(needle, code, f"{os.path.basename(path)} uses {needle!r}")
+
+
+class LightenTests(unittest.TestCase):
+    def test_zero_leaves_the_color_alone(self) -> None:
+        self.assertEqual(_lighten("#1f4a37", 0), "#1f4a37")
+
+    def test_lightening_moves_toward_white(self) -> None:
+        self.assertEqual(_lighten("#000000", 0.5), "#808080")
+        self.assertEqual(_lighten("#ffffff", 0.5), "#ffffff")
+        light = _lighten("#1f4a37", 0.3)
+        self.assertTrue(all(int(light[i:i + 2], 16) > int("1f4a37"[i - 1:i + 1], 16) for i in (1, 3, 5)))
 
 
 if __name__ == "__main__":

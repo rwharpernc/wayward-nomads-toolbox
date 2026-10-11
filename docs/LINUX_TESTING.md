@@ -265,8 +265,11 @@ Windows. Needs a commander with at least one registered construction site and an
 
 - [ ] The window opens at about 1280 x 780 with the sites on the left and the detail on the right; nothing is clipped at
       its minimum size (1100 x 640), and the divider between the commodity table and Where to buy drags.
-- [ ] Picking a site shows its progress bar, the four totals, and its commodities; the Filter box, **Hide those the hold
-      already covers** and the column headings (click, click again to reverse) all work.
+- [ ] Picking a site shows its progress bar, the four totals, and its commodities; the Filter box, **Hide rows
+      already covered** and the column headings (click, click again to reverse) all work.
+- [ ] **Row colors**: a commodity row turns green when the hold plus the FC column covers the site's remaining need
+      (exactly equal is green), orange when together they are more than needed, and keeps the normal look while short.
+      The tint stays visible, only lightened, when the row is hovered or selected.
 - [ ] **Where to buy**: pick a commodity row, press **Find nearest**: results appear, closest first, the button is
       disabled while it searches, and the window stays responsive.
 - [ ] **Landing pad**: Any size lists stations whose largest pad is Medium or Small; Large only lists none of those.

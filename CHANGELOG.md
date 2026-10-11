@@ -6,6 +6,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Colonization Sites window: row colors by coverage.** A commodity row now turns green when your hold plus the tonnes
+  you moved onto your fleet carrier cover what the site still needs, and orange when together they are more than it
+  needs; while you are still short it keeps the normal look. The whole row is tinted, not just the text. **Hide rows
+  already covered** follows the same rule.
 - **Colonization: where to buy.** The Colonisation Sites window gains a **Where to buy** panel: pick a commodity row
   and press **Find nearest** to list the closest stations with it in stock, from Spansh. Choose the system to measure
   from (the site's, or **Here**), how far to look, closest or cheapest first, and the **landing pad** size: **Any

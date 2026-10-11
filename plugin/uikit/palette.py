@@ -28,6 +28,10 @@ OK = "#5fbf8f"
 WARN = "#e0b341"
 DANGER = "#e06c6c"
 
+# Row tints for a table row that is "done" (green) or "over" (orange); dark enough for TEXT to stay readable.
+ROW_OK = "#1f4a37"
+ROW_OVER = "#5e3b13"
+
 # Map.
 MAP_BG = "#101318"
 MAP_GRID = "#2b2a1c"          # dim yellow: visible over driven ground

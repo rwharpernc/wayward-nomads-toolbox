@@ -132,6 +132,21 @@ check(window._sort_key == "source" and not window._sort_desc, "first header clic
 window._on_sort("source")
 check(window._sort_desc, "second header click sorts descending")
 
+# Row tints: green when the hold covers the need exactly, orange when it is more, none while short.
+def tag_of(key):
+    return window._commodity_table._rows[f"1:{key}"].tag
+
+
+window.set_cargo({"steel": 400, "water": 60})
+check(tag_of("steel") == "enough", f"steel exactly covered should be green, got {tag_of('steel')}")
+check(tag_of("water") == "over", f"water over should be orange, got {tag_of('water')}")
+check(tag_of("aluminium") is None, "aluminium is still short and must keep the normal colors")
+for _ in range(4):
+    root.update()
+steel_cell = window._commodity_table._rows["1:steel"].cells[0]
+check(steel_cell.cget("bg").lower() == W.P.ROW_OK, f"the whole row should be tinted, got {steel_cell.cget('bg')}")
+window.set_cargo({"water": 50})
+
 # Where to buy: the search runs on a thread; Spansh is replaced by a stand-in that records what was asked.
 import time
 from plugin import colonisation_sources as S

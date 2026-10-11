@@ -56,6 +56,14 @@ def _sort_value(text: str):
     return (1, 0.0, text.casefold())
 
 
+def _lighten(color: str, amount: float) -> str:
+    """`color` ("#rrggbb") moved `amount` (0 to 1) of the way toward white."""
+    if amount <= 0:
+        return color
+    channels = [int(color[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(c + (255 - c) * amount):02x}" for c in channels)
+
+
 class _TableRow:
     def __init__(self, iid: str, values: list[str], tag: Optional[str],
                  parent: Optional[str], group: bool, opened: bool) -> None:
@@ -88,6 +96,7 @@ class DataTable(tk.Frame):
         self._sort_key: Optional[str] = None
         self._sort_desc = False
         self._tags: dict[str, str] = {}
+        self._tag_backgrounds: dict[str, str] = {}
         self._empty_text = empty_text
         self._max_rows = visible_rows
         self._on_header = on_header
@@ -114,9 +123,13 @@ class DataTable(tk.Frame):
             self._header_labels.append(label)
 
     # --- Treeview-like API ---------------------------------------------------
-    def tag_configure(self, tag: str, foreground: str) -> None:
-        """Foreground colour for rows inserted with this tag."""
-        self._tags[tag] = foreground
+    def tag_configure(self, tag: str, foreground: Optional[str] = None, background: Optional[str] = None) -> None:
+        """Text color and/or whole-row background color for rows inserted with this tag. A tinted row keeps its tint
+        instead of the stripe, and is lightened (not replaced) while hovered or selected so the tint stays visible."""
+        if foreground is not None:
+            self._tags[tag] = foreground
+        if background is not None:
+            self._tag_backgrounds[tag] = background
 
     def set_rows(self, rows: Sequence[Sequence[object]]) -> None:
         """Replace the table's rows with `rows`, doing nothing at all when they are the
@@ -292,6 +305,9 @@ class DataTable(tk.Frame):
             self._scroll._canvas.configure(height=max(1, min(natural, self._max_rows * ROW_PX)))
 
     def _row_background(self, row: _TableRow, selected: bool, hover: bool = False) -> str:
+        tint = self._tag_backgrounds.get(row.tag or "")
+        if tint and not row.group:
+            return _lighten(tint, 0.30 if selected else 0.12 if hover else 0.0)
         if selected:
             return P.SELECT
         if hover:

@@ -195,7 +195,7 @@ class ColonisationWindow:
         entry = tk.Entry(filters, textvariable=self._filter_text, width=20)
         entry.pack(side="left", padx=(P.PAD_SM, P.PAD))
         self._filter_text.trace_add("write", lambda *_: self._refresh_detail())
-        tk.Checkbutton(filters, text="Hide those the hold already covers", variable=self._hide_covered,
+        tk.Checkbutton(filters, text="Hide rows already covered", variable=self._hide_covered,
                        command=self._refresh_detail).pack(side="left")
 
         # The commodity table above, the where-to-buy panel below; the divider between them can be dragged.
@@ -211,8 +211,9 @@ class ColonisationWindow:
         columns = _COMMODITY_COLUMNS + ((_FC_COLUMN,) if self._with_fc else ())
         table = DataTable(self._table_host, columns, sortable=False, on_header=self._on_sort,
                           on_activate=self._on_pick_commodity, empty_text="Nothing left to deliver here.")
-        table.tag_configure("covered", foreground=P.OK)
-        table.tag_configure("surplus", foreground=P.WARN)
+        # Whole-row tints: green when the hold plus the fleet carrier covers the need, orange when it is more than needed.
+        table.tag_configure(view.STATE_ENOUGH, foreground=P.TEXT, background=P.ROW_OK)
+        table.tag_configure(view.STATE_OVER, foreground=P.TEXT, background=P.ROW_OVER)
         table.pack(fill="both", expand=True)
         table.mark_sorted(self._sort_key, self._sort_desc)
         return table
@@ -352,13 +353,13 @@ class ColonisationWindow:
         self._progress.set(100 if site.complete else site.progress * 100, P.OK if site.complete else P.INFO)
         if site.system and not self._system_edited:   # search around the site unless the commander chose elsewhere
             self._system_var.set(site.system)
-        totals = view.totals(site, self._cargo, self._capacity())
+        on_carrier = self._carrier.tonnes(self._cmdr) if wants_fc and self._carrier else {}
+        totals = view.totals(site, self._cargo, self._capacity(), on_carrier)
         self._tile_source.set(f"{totals.to_source:,}")
         self._tile_remaining.set(f"{totals.remaining:,}")
         self._tile_hold.set(f"{totals.in_hold:,}")
         self._tile_trips.set(f"{totals.trips:,}" if totals.trips else "–")
 
-        on_carrier = self._carrier.tonnes(self._cmdr) if wants_fc and self._carrier else {}
         rows: List[view.CommodityRow] = view.commodity_rows(
             site, self._cargo, on_carrier, self._hide_covered.get(), self._filter_text.get())
         rows.sort(key=self._commodity_value, reverse=self._sort_desc)
@@ -368,7 +369,7 @@ class ColonisationWindow:
                       f"{row.in_cargo:,}" if row.in_cargo else "", f"{row.to_source:,}")
             if wants_fc:
                 values += (f"{row.on_carrier:,}" if row.on_carrier else "",)
-            tag = "surplus" if row.in_cargo > row.remaining else "covered" if row.covered else None
+            tag = None if row.state == view.STATE_SHORT else row.state
             iid = f"{site.market_id}:{row.key}"
             self._row_label[iid] = row.label
             self._commodity_table.insert(iid, values, tag=tag)
@@ -379,7 +380,7 @@ class ColonisationWindow:
             self._shell.set_status("The filters hide every commodity this site still needs.")
         else:
             self._shell.set_status(f"{totals.lines} commodit{'y' if totals.lines == 1 else 'ies'} still needed, "
-                                   f"{totals.covered} covered by the hold.")
+                                   f"{totals.covered} covered by the hold and carrier.")
 
     # --- where to buy ----------------------------------------------------------
 

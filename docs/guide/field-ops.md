@@ -150,7 +150,7 @@ for is ignored, since there is nothing to add it to.
 ### The Colonisation Sites window
 
 Sites are listed on the left (name, tonnes left, and its progress as a percentage, or `complete` or `failed`);
-finished ones are greyed. The subtitle reads `<commander> — N active of M sites`. Click a site to see it on the right:
+finished ones are grayed out. The subtitle reads `<commander> — N active of M sites`. Click a site to see it on the right:
 its name, system, a progress bar, four totals, two filters and a table with one row per commodity **still
 outstanding**. The first active site is picked when the window opens.
 
@@ -163,8 +163,8 @@ The totals are always for the whole site, whatever the filters hide:
 | t already in the hold | Of that, what you are carrying now (never more than the site needs) |
 | trips in this ship | The still-to-source tonnes divided by your ship's cargo capacity, rounded up (a dash when EDMC hasn't given the capacity) |
 
-The **Filter** box keeps the commodities whose names contain what you type, and **Hide those the hold already
-covers** drops the rows you needn't buy any more. Click a column heading to sort by it, and again to reverse; the
+The **Filter** box keeps the commodities whose names contain what you type, and **Hide rows already covered**
+drops the rows you needn't buy any more (see the colors below for what counts as covered). Click a column heading to sort by it, and again to reverse; the
 default is alphabetical, so rows stay put while numbers change.
 
 | Column | Meaning |
@@ -176,7 +176,15 @@ default is alphabetical, so rows stay put while numbers change.
 | To Source | Remaining minus what you're already carrying: what you still have to buy or mine |
 | FC | Tonnes of that commodity you have transferred onto your **fleet carrier** (only shown once WNTB has seen you have one) |
 
-A row turns green when your hold already covers it and amber when you carry **more** than the site needs.
+**Row colors.** The whole row is tinted by what you already have for that commodity, counting your hold **plus** what
+you have moved onto your fleet carrier (the FC column):
+
+- **Green:** the two together cover what the site still needs, exactly or with room to spare. Nothing more to buy.
+- **Orange:** together they are **more** than the site still needs.
+- **No tint:** you are still short. This is the normal look while you work on it.
+
+The carrier figure is what WNTB saw you transfer (see the FC column notes), so it can drift from the carrier's real
+cargo. The To Source column still counts only your hold, so it does not drop when you move cargo onto the carrier.
 
 **The FC column.** It adds up the journal's `CargoTransfer` events made while docked at your fleet carrier: tonnes
 moved to the carrier minus tonnes moved back to the ship. It appears for a commander WNTB knows has a fleet carrier, using the **same knowledge as Trade**: your
