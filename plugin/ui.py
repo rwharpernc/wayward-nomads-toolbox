@@ -37,7 +37,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
-    notable, organic_scan_panel, overlay, panelkit, powerplay, screenshots, ship_builds_panel,
+    notable, organic_scan_panel, overlay, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
     game_mode, session_credits, settings_scroll, trade_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
@@ -549,9 +549,7 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         placed.update(features)
         return [feature.build_settings for feature in features]
 
-    # General: Overlay Connection is the one shared host/port pair that Interdiction/
-    # Landing/Discovery's own settings all point to.
-    _settings_group(tabs, "General", [overlay.build_settings, _create_window_tab, _create_updates_tab], page_bg)
+    _settings_group(tabs, "General", [_create_window_tab, _create_updates_tab], page_bg)
     for feature in (powerplay, missions):
         for build in settings_of(feature):
             settings_scroll.scrolled_page(tabs, build, page_bg)
@@ -559,14 +557,27 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         *settings_of(exploration_value, organic_scan_panel),
         _stacked_page("Points of Interest", settings_of(gec_poi_panel, canonn_poi_panel, codex_completionist_panel)),
         *settings_of(boxel_survey),
-        _stacked_page("Alerts", settings_of(autohonk, discovery, notable)),
+        *settings_of(autohonk),
     ], page_bg)
     for feature in (mining_panel, trade_panel, bgs_panel):
         for build in settings_of(feature):
             settings_scroll.scrolled_page(tabs, build, page_bg)
     _settings_group(tabs, "Field Ops", settings_of(screenshots, inventory_panel, ship_builds_panel, colonisation_panel),
                     page_bg)
-    _settings_group(tabs, "Always On", settings_of(interdiction, landing), page_bg)
+    # Every overlay setting and toggle lives together: the shared connection and placement first, then one tab per
+    # feature that draws on the overlay. (Interdiction, Landing, Discovery and Notable Bodies are overlay features
+    # through and through, so their whole tab is here; the others keep their non-overlay settings in their own tab.)
+    _settings_group(tabs, "Overlays", [
+        overlay.build_settings,
+        overlay_placement.build_settings,
+        colonisation_panel.build_overlay_settings,
+        *settings_of(discovery),
+        inventory_panel.build_overlay_settings,
+        *settings_of(interdiction, landing),
+        mining_panel.build_overlay_settings,
+        *settings_of(notable),
+        screenshots.build_overlay_settings,
+    ], page_bg)
 
     leftovers = [f for f in FEATURES if hasattr(f, "build_settings") and f not in placed]
     if leftovers:
@@ -624,6 +635,7 @@ def save_prefs() -> None:
         config.set(CONFIG_AUTO_UPDATE, bool(_auto_update_var.get()))
 
     overlay.save_settings()
+    overlay_placement.save_settings()
     for feature in FEATURES:
         if hasattr(feature, "save_settings"):
             feature.save_settings()

@@ -612,8 +612,6 @@ class MiningPanelController:
         self._spansh_hotspot_finder_var = tk.BooleanVar(value=_cfg_bool(_CFG_SPANSH_HOTSPOT_FINDER_ENABLED, False))
         self._spansh_price_finder_var = tk.BooleanVar(value=_cfg_bool(_CFG_SPANSH_PRICE_FINDER_ENABLED, False))
         self._edsm_reserve_lookup_var = tk.BooleanVar(value=_cfg_bool(_CFG_EDSM_RESERVE_LOOKUP_ENABLED, False))
-        self._overlay_enabled_var = tk.BooleanVar(value=_cfg_bool(_CFG_OVERLAY_ENABLED, False))
-        self._waypoint_overlay_enabled_var = tk.BooleanVar(value=_cfg_bool(_CFG_WAYPOINT_OVERLAY_ENABLED, False))
         self._display_coverage_minimap_var = tk.BooleanVar(value=_cfg_bool(_CFG_DISPLAY_COVERAGE_MINIMAP, False))
         self._archive_sessions_var = tk.BooleanVar(value=_cfg_bool(_CFG_ARCHIVE_SESSIONS, False))
 
@@ -638,15 +636,8 @@ class MiningPanelController:
                         "edsm.net every time you drop into a ring, plus manual search)"),
             variable=self._edsm_reserve_lookup_var,
         ).grid(row=6, column=0, sticky=tk.W, padx=10)
-        nb.Checkbutton(
-            frame, text="Enable HUD Overlay (sends live stats to the overlay - see the Overlay Connection tab)",
-            variable=self._overlay_enabled_var,
-        ).grid(row=7, column=0, sticky=tk.W, padx=10)
-        nb.Checkbutton(
-            frame, text=("Enable Surface Waypoint Overlay (arrow + distance to the nearest known "
-                        "hotspot on the current body)"),
-            variable=self._waypoint_overlay_enabled_var,
-        ).grid(row=8, column=0, sticky=tk.W, padx=10)
+        nb.Label(frame, text="The in-game HUD overlay and surface waypoint arrow are set up on the Overlays tab.").grid(
+            row=7, column=0, sticky=tk.W, padx=10, pady=(6, 0))
         nb.Checkbutton(
             frame, text=("Show Coverage Minimap (Surface Mining page - a small map of ground the "
                         "Rhino has driven over on the current body; redrawn once a second while "
@@ -660,6 +651,29 @@ class MiningPanelController:
 
         mining_hotspot_settings.build(frame, start_row=11)
 
+    def build_overlay_settings(self, notebook: nb.Notebook) -> None:
+        """The mining stats HUD and the surface waypoint arrow, on the Overlays tab."""
+        frame = nb.Frame(notebook)
+        frame.columnconfigure(0, weight=1)
+        notebook.add(frame, text="Mining")
+
+        self._overlay_enabled_var = tk.BooleanVar(value=_cfg_bool(_CFG_OVERLAY_ENABLED, False))
+        self._waypoint_overlay_enabled_var = tk.BooleanVar(value=_cfg_bool(_CFG_WAYPOINT_OVERLAY_ENABLED, False))
+        nb.Checkbutton(
+            frame, text="Enable HUD Overlay (sends live stats to the overlay - see the Overlay Connection tab)",
+            variable=self._overlay_enabled_var,
+        ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 0))
+        nb.Checkbutton(
+            frame, text=("Enable Surface Waypoint Overlay (arrow + distance to the nearest known "
+                        "hotspot on the current body)"),
+            variable=self._waypoint_overlay_enabled_var,
+        ).grid(row=1, column=0, sticky=tk.W, padx=10)
+        nb.Label(
+            frame,
+            text="Where each one sits on the screen is set on the Overlay Placement tab (Mining stats, Mining waypoint).",
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(8, 10))
+
     def save_settings(self) -> None:
         if self._display_session_totals_var is None:
             return
@@ -669,8 +683,10 @@ class MiningPanelController:
         config.set(_CFG_SPANSH_HOTSPOT_FINDER_ENABLED, bool(self._spansh_hotspot_finder_var.get()))
         config.set(_CFG_SPANSH_PRICE_FINDER_ENABLED, bool(self._spansh_price_finder_var.get()))
         config.set(_CFG_EDSM_RESERVE_LOOKUP_ENABLED, bool(self._edsm_reserve_lookup_var.get()))
-        config.set(_CFG_OVERLAY_ENABLED, bool(self._overlay_enabled_var.get()))
-        config.set(_CFG_WAYPOINT_OVERLAY_ENABLED, bool(self._waypoint_overlay_enabled_var.get()))
+        if self._overlay_enabled_var is not None:
+            config.set(_CFG_OVERLAY_ENABLED, bool(self._overlay_enabled_var.get()))
+        if self._waypoint_overlay_enabled_var is not None:
+            config.set(_CFG_WAYPOINT_OVERLAY_ENABLED, bool(self._waypoint_overlay_enabled_var.get()))
         config.set(_CFG_DISPLAY_COVERAGE_MINIMAP, bool(self._display_coverage_minimap_var.get()))
         config.set(_CFG_ARCHIVE_SESSIONS, bool(self._archive_sessions_var.get()))
         self._redraw_if_alive()
@@ -697,6 +713,10 @@ def build_panel(parent: tk.Frame) -> None:
 
 def build_settings(notebook: nb.Notebook) -> None:
     controller.build_settings(notebook)
+
+
+def build_overlay_settings(notebook: nb.Notebook) -> None:
+    controller.build_overlay_settings(notebook)
 
 
 def save_settings() -> None:

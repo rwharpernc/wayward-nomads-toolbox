@@ -172,6 +172,18 @@ def elite_bindings_dir(override: Optional[str] = None) -> Optional[str]:
     return os.path.join(user_dir, "AppData", "Local", _WIN_SUBDIR, "Options", "Bindings")
 
 
+def elite_graphics_dir(override: Optional[str] = None) -> Optional[str]:
+    """Folder holding Elite's graphics options (`DisplaySettings.xml` has the screen size), or None if it can't be found
+    (Linux with no detectable prefix)."""
+    if IS_WINDOWS:
+        local_appdata = os.environ.get("LOCALAPPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Local")
+        return os.path.join(local_appdata, _WIN_SUBDIR, "Options", "Graphics")
+    user_dir = _linux_user_dir(override)
+    if user_dir is None:
+        return None
+    return os.path.join(user_dir, "AppData", "Local", _WIN_SUBDIR, "Options", "Graphics")
+
+
 def elite_pictures_dir(override: Optional[str] = None) -> Optional[str]:
     """Folder Elite writes screenshots to on Linux (inside the prefix's
     Pictures folder), or None. Windows resolves this via the shell instead

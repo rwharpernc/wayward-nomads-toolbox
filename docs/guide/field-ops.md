@@ -86,12 +86,13 @@ hold you are using (ship or SRV).
 | Pillage message (placeholders `{item}`, `{total}`) | `[{item}] pillaged! New Inventory Total: {total}` |
 | Play a sound on pickup | Off |
 | Show these inventory bars on the overlay (one tick per bar) | All off |
-| Overlay position X / Y | 900 / 120 |
+| Where it sits on screen | Top right area (set on Settings → Overlays → Overlay Placement) |
 | Announce pickups for (Assets, Goods, Data) | All three |
 | Suit Backpack Capacity (per suit loadout) | The built-in table |
 
 Unticking a category in *Announce pickups for* only mutes its notifications. It is still counted.
-The overlay settings need an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md).
+The overlay settings are on **Settings → Overlays → Inventory** and need an overlay running; see
+[Setting up the overlay](../OVERLAY_SETUP.md).
 
 On Linux, the pickup sound needs `canberra-gtk-play` or `paplay`; see [Windows and Linux](platforms.md).
 
@@ -245,7 +246,7 @@ Things worth knowing:
 ### The shopping list on the overlay
 
 Optional, and **off by default**. It needs an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md). Turn
-it on in Settings under Field Ops, in the Colonisation settings: **Show the shopping list on the in-game overlay**.
+it on in **Settings → Overlays → Colonization**: **Show the shopping list on the in-game overlay**.
 
 It draws a table laid out like SRVSurvey's, with the site name as its title and the columns **Commodity**, **Need**,
 **FC** and **Ship**:
@@ -287,7 +288,8 @@ cargo capacity, which EDMC supplies).
   Most of these rely on the game's `Status.json` reporting which screen is open.
 - **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
   failed sites are never shown. The card disappears when nothing is left to source.
-- **Settings:** the card's X and Y position on the overlay's 1280 x 960 virtual screen (default 20, 300), and **Rows**,
+- **Settings:** where the card sits (Settings → Overlays → Overlay Placement; the default is the left edge, vertically
+  centered, on any screen shape), and **Rows**,
   how many commodities to list (1 to 60; any more are summarized as `+N more`). The default, 0, lists them all. **Test Overlay** shows a
   sample card for a few seconds, even while the option is off.
 - It is cleared when EDMC closes. If the overlay program isn't running, nothing is drawn and nothing breaks.

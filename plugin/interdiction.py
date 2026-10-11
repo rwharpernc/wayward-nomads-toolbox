@@ -39,7 +39,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay
+from . import overlay, overlay_placement
 from .overlay import OverlayClient
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -307,9 +307,9 @@ _TITLE_ID = "wntb_interdiction_title"
 _WHO_ID = "wntb_interdiction_who"
 _RESOLUTION_ID = "wntb_interdiction_resolution"
 
-# Fixed placement (not user-configurable - EDMCOverlay has no "centered"
-# primitive). Chosen to sit in the upper-center of a 1920x1080-ish HUD
-# without covering the ship's own instruments.
+# The warning is drawn at this fixed origin; where it sits on the screen is the global Overlay Placement setting
+# (overlay_placement.py), which moves everything drawn through `placed_client`. The default is the upper center,
+# clear of the ship's own instruments.
 _X = 650
 _Y_TITLE = 100
 _Y_WHO = 130
@@ -340,6 +340,16 @@ _RESOLUTION_TEXT = {
 # EDMCModernOverlay instead of collapsing to just its border stroke.
 GROUP_NAME = "wntb_interdiction"
 GROUP_PREFIX = "wntb_interdiction_"
+
+
+def block_rect() -> tuple:
+    """(left, top, width, height) of the warning card as `render` draws it."""
+    return _CARD_X, _CARD_Y, _CARD_W, _CARD_H
+
+
+def placed_client(client: OverlayClient) -> OverlayClient:
+    """`client` moved to where the Overlay Placement settings put the interdiction warning."""
+    return overlay_placement.client_for("interdiction", client, block_rect())
 
 
 def render(snapshot: InterdictionSnapshot, client: OverlayClient) -> None:
@@ -417,7 +427,7 @@ def _on_change(snapshot: InterdictionSnapshot) -> None:
 
     def worker() -> None:
         try:
-            render(snapshot, _overlay_client)
+            render(snapshot, placed_client(_overlay_client))
         except OSError:
             logger.debug("Could not reach EDMCOverlay for interdiction warning", exc_info=True)
 
@@ -490,7 +500,7 @@ def _test_interdiction() -> None:
                 InterdictionSnapshot(
                     active=True, interdictor_name="CMDR Test Hostile", is_player=True, is_thargoid=False,
                 ),
-                client,
+                placed_client(client),
             )
             outcome, color = "Sent — check your overlay.", "#2e7d32"
         except OSError as err:

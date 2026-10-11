@@ -63,7 +63,7 @@ The full checklist is in [Setting up the overlay](../OVERLAY_SETUP.md#if-nothing
 
 ### Notable Bodies never shows anything
 
-It is switched off until you tick **Enable** under **Settings → Exploration → Alerts → Notable Bodies**. Only some
+It is switched off until you tick **Enable** under **Settings → Overlays → Notable Bodies**. Only some
 rules are on to start with, so tick the ones you want. A banner needs the overlay to be running.
 
 ## Linux
@@ -92,7 +92,7 @@ Either your fire button has no keyboard key (Step 4), or WNTB can't read the bin
 
 - Bind a keyboard key to the second slot of Secondary Fire (Step 4).
 - For a Flatpak EDMC, grant Step 3, command 2.
-- Make sure **Elite Wine/Proton prefix** in **Settings → Exploration → Alerts** is empty unless you really use a
+- Make sure **Elite Wine/Proton prefix** in **Settings → Exploration → Auto-Honk** is empty unless you really use a
   custom setup. A wrong value there hides your keybindings.
 
 ### Auto-Honk presses the key but the scan stops after about a second

@@ -27,7 +27,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import discovery, notable_rules, overlay
+from . import discovery, notable_rules, overlay, overlay_placement
 from .overlay import OverlayClient
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -65,8 +65,6 @@ def cap(text: str, limit: int) -> str:
 @dataclass
 class NotableConfig:
     enabled: bool = DEFAULT_ENABLED
-    x: int = DEFAULT_X
-    y: int = DEFAULT_Y
     rules: Optional[Dict[str, bool]] = None  # explicit per-rule choices; a missing rule uses its default
 
     def enabled_rules(self) -> Set[str]:
@@ -98,16 +96,12 @@ def parse_rules(raw: Optional[str]) -> Dict[str, bool]:
 def load_config() -> NotableConfig:
     return NotableConfig(
         enabled=config.get_bool(_CFG_ENABLED, default=DEFAULT_ENABLED),
-        x=_get_int(_CFG_X, DEFAULT_X),
-        y=_get_int(_CFG_Y, DEFAULT_Y),
         rules=parse_rules(config.get_str(_CFG_RULES)),
     )
 
 
 def save_config(cfg: NotableConfig) -> None:
-    config.set(_CFG_ENABLED, cfg.enabled)
-    config.set(_CFG_X, str(cfg.x))
-    config.set(_CFG_Y, str(cfg.y))
+    config.set(_CFG_ENABLED, cfg.enabled)   # _CFG_X / _CFG_Y are only read, once, by overlay_placement's migration
     config.set(_CFG_RULES, json.dumps(cfg.rules or {}))
 
 
@@ -274,6 +268,17 @@ GROUP_NAME = "wntb_notable"
 GROUP_PREFIX = "wntb_notable_"
 
 
+def block_rect() -> Tuple[int, int, int, int]:
+    """(left, top, width, height) of the card as `render` draws it at the default origin."""
+    left, top = discovery._card_geometry(DEFAULT_X, DEFAULT_Y)
+    return left, top, discovery._CARD_W, discovery._CARD_H
+
+
+def placed_client(client: Any) -> Any:
+    """`client` moved to where the Overlay Placement settings put the notable-body card."""
+    return overlay_placement.client_for("notable", client, block_rect())
+
+
 def render(snapshot: NotableSnapshot, client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y) -> None:
     """Draws (or clears) the card, anchored at (x, y), with discovery.py's card layout."""
     if not snapshot.visible:
@@ -319,8 +324,6 @@ class NotableController:
     def __init__(self) -> None:
         self.tracker = NotableTracker(on_change=self._on_change, get_enabled=self._enabled_rules)
         self._enabled_var: Optional[tk.BooleanVar] = None
-        self._x_var: Optional[tk.StringVar] = None
-        self._y_var: Optional[tk.StringVar] = None
         self._rule_vars: Dict[str, tk.BooleanVar] = {}
         self._dependent_widgets: List[Any] = []
         self._result_label: Optional[nb.Label] = None
@@ -341,9 +344,9 @@ class NotableController:
         if not cfg.enabled:
             return
 
-        def worker(x=cfg.x, y=cfg.y) -> None:
+        def worker() -> None:
             try:
-                render(snapshot, _overlay_client, x, y)
+                render(snapshot, placed_client(_overlay_client))
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for notable body alert", exc_info=True)
 
@@ -390,23 +393,11 @@ class NotableController:
                 row=row, column=1, sticky=tk.W, padx=(8, 0), pady=1)
             self._dependent_widgets.append(box)
 
-        position_row = tk.Frame(frame)
-        position_row.grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(8, 2))
-        nb.Label(position_row, text="Position — X:").pack(side=tk.LEFT)
-        self._x_var = tk.StringVar(value=str(cfg.x))
-        x_entry = nb.EntryMenu(position_row, textvariable=self._x_var, width=6)
-        x_entry.pack(side=tk.LEFT, padx=(4, 0))
-        nb.Label(position_row, text="   Y:").pack(side=tk.LEFT)
-        self._y_var = tk.StringVar(value=str(cfg.y))
-        y_entry = nb.EntryMenu(position_row, textvariable=self._y_var, width=6)
-        y_entry.pack(side=tk.LEFT, padx=(4, 0))
-        self._dependent_widgets += [x_entry, y_entry]
-
         nb.Label(
             frame,
             text=(
-                "Position is the card's top-left corner. The default sits in the lower middle, "
-                "clear of the Discovery Alerts and Canonn overlay text. If several bodies match at once the cards take turns."
+                "Where the card appears is set on the Overlay Placement tab. The default sits under the "
+                "Discovery Alerts. If several bodies match at once the cards take turns."
             ),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=4, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(4, 4))
@@ -435,26 +426,17 @@ class NotableController:
             except tk.TclError:
                 pass
 
-    def _parse_coord(self, var: Optional[tk.StringVar], default: int) -> int:
-        if var is None:
-            return default
-        try:
-            return int(var.get().strip())
-        except (ValueError, tk.TclError):
-            return default
-
     def _test(self) -> None:
         if self._result_label is None:
             return
         cfg = overlay.load_config()
         client = OverlayClient(cfg)
         label = self._result_label
-        pos_x = self._parse_coord(self._x_var, DEFAULT_X)
-        pos_y = self._parse_coord(self._y_var, DEFAULT_Y)
+        placed = placed_client(client)
 
         def render_once(snapshot: NotableSnapshot) -> None:
             try:
-                render(snapshot, client, pos_x, pos_y)
+                render(snapshot, placed)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
@@ -471,16 +453,12 @@ class NotableController:
             return
         save_config(NotableConfig(
             enabled=bool(self._enabled_var.get()),
-            x=self._parse_coord(self._x_var, DEFAULT_X),
-            y=self._parse_coord(self._y_var, DEFAULT_Y),
             rules={rule_id: bool(var.get()) for rule_id, var in self._rule_vars.items()},
         ))
         if not self._enabled_var.get():
-            cfg = load_config()
-
-            def worker(x=cfg.x, y=cfg.y) -> None:
+            def worker() -> None:
                 try:
-                    clear(_overlay_client, x, y)
+                    clear(placed_client(_overlay_client))
                 except OSError:
                     logger.debug("Could not reach EDMCOverlay to clear notable body alert", exc_info=True)
 

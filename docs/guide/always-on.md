@@ -12,7 +12,7 @@ screen (you choose which in Settings).
 
 **To set it up:**
 
-1. Open **Settings → Always On → Landing**.
+1. Open **Settings → Overlays → Landing**.
 2. Tick **Enable Landing**. It is **off by default**.
 3. Choose where it shows: **Show in EDMC app** (the panel; on by default once Landing is enabled) and/or
    **Show on Overlay** (the diagram on your game screen; off by default).
@@ -27,14 +27,15 @@ Puts an alert on your game screen the moment an interdiction starts. It has no p
 
 **To set it up:**
 
-1. Open **Settings → Always On → Interdiction Warning**.
+1. Open **Settings → Overlays → Interdiction Warning**.
 2. Tick **Enable Interdiction Warning**. It is **off by default**.
 3. Press **Test Warning** to see what it looks like. The test works even while the feature is off, and reports
    whether an overlay could be reached.
 
 ## Overlay connection
 
-Both use the connection settings on the **Overlay Connection** Settings tab (Settings → General). The defaults
+Both use the connection settings on the **Overlay Connection** Settings tab (Settings → Overlays), and where they appear
+on screen is set on **Overlay Placement** (same place). The defaults
 (`127.0.0.1`, port `5010`) match EDMCModernOverlay and EDMCOverlay as they come. **Check connection** tells you
 whether an overlay is listening.
 

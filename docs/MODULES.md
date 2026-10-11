@@ -27,6 +27,8 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `load.py` | The EDMC entry point: `plugin_start3`, `plugin_app`, `journal_entry`, `dashboard_entry`, `plugin_stop`, the one-time overlay reset, and forwarding to every feature |
 | `notifier.py` | A tiny subscribe/notify helper for where one module's data changes and others must redraw |
 | `overlay.py` | The one shared overlay client (EDMCModernOverlay / EDMCOverlay over a local TCP port) and its Plugin Group registration |
+| `overlay_layout.py` | Where overlay displays go, the same on any screen: the visible part of the overlay's canvas for a screen shape and fit/fill mode, nine anchor spots plus offsets, and a client wrapper that moves a display; pure, no Tk |
+| `overlay_placement.py` | Global overlay placement: reads the screen shape from Elite's `DisplaySettings.xml` and the overlay's scale mode, keeps every display's saved spot, and the Overlay Placement Settings tab with its preview |
 | `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming |
 | `platform_support.py` | Windows/Linux differences in one place: Elite's folders, key presses (`xdotool`), host programs under Flatpak, "Works on" notes |
 | `restore.py` | Names the last commander from the newest journal and tells every feature when EDMC starts without the game running, so nothing waits for a login |

@@ -31,7 +31,7 @@ from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
 from .uikit import style as ui_style
-from . import overlay, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
+from . import overlay, overlay_placement, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -564,13 +564,15 @@ class ScreenshotsController:
         threading.Thread(target=worker, name="WNTB-screenshot-overlay", daemon=True).start()
 
     def _render_overlay(self, lines: List[Tuple[str, str, float, str]], previous_rows: int, now: float) -> None:
-        client = self._overlay_client
         # Background panel sized to the widest current line and row count,
         # outlined in the newest line's colour so a differently-coloured
         # notification reads as a distinct panel.
         widest = max(len(text) for _, text, _, _ in lines)
         width = widest * _CHAR_WIDTH_PX + _BG_PADDING_X * 2
         height = len(lines) * _LINE_HEIGHT + _BG_PADDING_Y * 2
+        # Drawn at the fixed origin above; the Overlay Placement setting moves it to where the commander put it.
+        client = overlay_placement.client_for(
+            "screenshots", self._overlay_client, (_ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y, width, height))
         bg_ttl = max(1, int(round(max(expiry for _, _, expiry, _ in lines) - now)))
         outline = lines[0][3]
         client.send_shape(
@@ -911,15 +913,25 @@ class ScreenshotsController:
             ).grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10)
             row += 1
 
-        self._overlay_var = tk.BooleanVar(value=cfg.overlay_enabled)
+        nb.Label(
+            frame, text="The in-game notification when a screenshot is saved is set up on the Overlays tab.",
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10, pady=(12, 10))
+
+    def build_overlay_settings(self, notebook: nb.Notebook) -> None:
+        """The screenshot-saved notification on the in-game overlay, on the Overlays tab."""
+        frame = nb.Frame(notebook)
+        frame.columnconfigure(0, weight=1)
+        notebook.add(frame, text="Screenshots")
+
+        self._overlay_var = tk.BooleanVar(value=load_config().overlay_enabled)
         nb.Checkbutton(
             frame, text="Show a notification on the in-game overlay when a screenshot is saved",
             variable=self._overlay_var,
-        ).grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10, pady=(12, 2))
-        row += 1
+        ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 2))
 
         action_row = tk.Frame(frame)
-        action_row.grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10, pady=(0, 10))
+        action_row.grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 10))
         tk.Button(action_row, text="Test Overlay", command=self._test_overlay).pack(side=tk.LEFT)
         self._overlay_result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
         self._overlay_result_label.pack(side=tk.LEFT, padx=(10, 0))
@@ -947,11 +959,14 @@ class ScreenshotsController:
 
         def worker() -> None:
             try:
-                client.send_shape(
+                placed = overlay_placement.client_for(
+                    "screenshots", client,
+                    (_ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y, 260, _LINE_HEIGHT + _BG_PADDING_Y * 2))
+                placed.send_shape(
                     _BG_ID, "rect", _COLOUR, _BG_FILL, _ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y,
                     260, _LINE_HEIGHT + _BG_PADDING_Y * 2, ttl=_TEST_TTL_SECONDS,
                 )
-                client.send_message(
+                placed.send_message(
                     f"{_ID_PREFIX}0", "Screenshot saved: Test.png", _COLOUR, _ORIGIN_X, _ORIGIN_Y, ttl=_TEST_TTL_SECONDS,
                     size=_TEXT_SIZE,
                 )
@@ -985,7 +1000,8 @@ class ScreenshotsController:
             config.set(_CFG_HIRES_ON_TIMER, self._hires_var.get())
         if self._thargoid_var is not None:
             config.set(_CFG_THARGOID_CAPTURE, self._thargoid_var.get())
-        config.set(_CFG_OVERLAY_ENABLED, self._overlay_var.get())
+        if self._overlay_var is not None:
+            config.set(_CFG_OVERLAY_ENABLED, self._overlay_var.get())
 
         self._apply_show_timer_icon()
         if not load_config().overlay_enabled:
@@ -1001,6 +1017,10 @@ def set_overlay_client(client: overlay.OverlayClient) -> None:
 
 def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
     controller.handle_event(entry, cmdr, system, station, state)
+
+
+def build_overlay_settings(notebook: nb.Notebook) -> None:
+    controller.build_overlay_settings(notebook)
 
 
 def build_panel(parent: tk.Frame) -> None:

@@ -38,7 +38,7 @@ from theme import theme
 
 from . import inventory_names as names
 from . import inventory_suit as suit
-from . import overlay, panelkit
+from . import overlay, overlay_placement, panelkit
 from .inventory import CATEGORY_SHORT, InventoryTracker, SHIP_LOCKER_CAPACITY, TRACKED_CATEGORIES
 from .inventory_cargo import VehicleState
 from . import platform_support
@@ -61,9 +61,8 @@ GROUP_PREFIX = ID_PREFIX
 
 MAX_LINES = 5
 TTL_SECONDS = 8
-# Legacy overlay coordinates are on a 1280x960 virtual screen.
-MAX_ORIGIN_X = 1280
-MAX_ORIGIN_Y = 960
+# Where the display sits is the global Overlay Placement setting. These are only the old default origin, kept for
+# overlay_placement's migration of a hand-set position, and the size the display is anchored by.
 DEFAULT_ORIGIN_X = 900
 DEFAULT_ORIGIN_Y = 120
 LINE_HEIGHT = 18
@@ -174,11 +173,17 @@ def _get_int(key: str, default: int) -> int:
         return default
 
 
+OVERLAY_WIDTH = 420   # the widest line of the pillage stack, estimated (the wire protocol has no text metrics)
+
+
+def overlay_size() -> Tuple[int, int]:
+    """The block the display occupies: the pillage stack, the gap, and a row for every bar it can show."""
+    return OVERLAY_WIDTH, MAX_LINES * LINE_HEIGHT + CAPACITY_BAR_GAP + len(BAR_ORDER) * CAPACITY_ROW_HEIGHT
+
+
 def overlay_position() -> Tuple[int, int]:
-    """The in-game overlay's on-screen origin, clamped to its virtual screen."""
-    x = _get_int(_CFG_OVERLAY_X, DEFAULT_ORIGIN_X)
-    y = _get_int(_CFG_OVERLAY_Y, DEFAULT_ORIGIN_Y)
-    return max(0, min(MAX_ORIGIN_X, x)), max(0, min(MAX_ORIGIN_Y, y))
+    """The top left corner of the in-game display, from the Overlay Placement settings."""
+    return overlay_placement.origin_for("inventory", overlay_size())
 
 
 def overlay_enabled_bars() -> FrozenSet[str]:
@@ -217,7 +222,6 @@ class InventoryPanelController:
         self._parent: Optional[tk.Frame] = None
 
         # Overlay render state.
-        self._overlay_x, self._overlay_y = DEFAULT_ORIGIN_X, DEFAULT_ORIGIN_Y
         self._overlay_lines: List[Tuple[str, str, float, str]] = []  # (key, text, expiry, colour)
         self._overlay_rendered_rows = 0
         self._rendered_bar_keys: FrozenSet[str] = frozenset()
@@ -232,8 +236,6 @@ class InventoryPanelController:
 
         # Settings-tab vars.
         self._overlay_var: Optional[tk.BooleanVar] = None
-        self._overlay_x_var: Optional[tk.StringVar] = None
-        self._overlay_y_var: Optional[tk.StringVar] = None
         self._overlay_bar_vars: Dict[str, tk.BooleanVar] = {}
         self._sound_var: Optional[tk.BooleanVar] = None
         self._message_format_var: Optional[tk.StringVar] = None
@@ -251,7 +253,14 @@ class InventoryPanelController:
         names.load_learned_names()
         suit.load_overrides()
         self._sound.set_enabled(sound_enabled())
-        self._overlay_x, self._overlay_y = overlay_position()
+
+    @property
+    def _overlay_x(self) -> int:
+        return overlay_position()[0]
+
+    @property
+    def _overlay_y(self) -> int:
+        return overlay_position()[1]
 
     def stop(self) -> None:
         names.save_learned_names()
@@ -854,6 +863,23 @@ class InventoryPanelController:
 
         row = self._build_output_format(frame, start_row=row)
         row = self._build_sound_pref(frame, start_row=row)
+        nb.Label(
+            frame, text="The in-game overlay for pickups and bars is set up on the Overlays tab.",
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=row, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        row += 1
+        row = self._build_announce_categories(frame, start_row=row)
+
+        self._override_vars = {}
+        self._override_defaults = {}
+        self._build_capacity_overrides(frame, start_row=row)
+
+    def build_overlay_settings(self, notebook: nb.Notebook) -> None:
+        """The pickup notifications and bars on the in-game overlay, on the Overlays tab."""
+        frame = nb.Frame(notebook)
+        frame.columnconfigure(0, weight=1)
+        notebook.add(frame, text="Inventory")
+        row = 0
 
         self._overlay_var = tk.BooleanVar(value=overlay_enabled())
         nb.Checkbutton(
@@ -867,12 +893,7 @@ class InventoryPanelController:
         row += 1
 
         row = self._build_overlay_bars(frame, start_row=row)
-        row = self._build_overlay_position(frame, start_row=row)
-        row = self._build_announce_categories(frame, start_row=row)
-
-        self._override_vars = {}
-        self._override_defaults = {}
-        self._build_capacity_overrides(frame, start_row=row)
+        self._build_overlay_position(frame, start_row=row)
 
     def _build_output_format(self, frame: nb.Frame, *, start_row: int) -> int:
         row = start_row
@@ -941,25 +962,12 @@ class InventoryPanelController:
         return row + 1
 
     def _build_overlay_position(self, frame: nb.Frame, *, start_row: int) -> int:
-        row = start_row
-        x, y = overlay_position()
-        self._overlay_x_var = tk.StringVar(value=str(x))
-        self._overlay_y_var = tk.StringVar(value=str(y))
-
-        position = tk.Frame(frame)
-        position.grid(row=row, column=0, sticky=tk.W, padx=10, pady=(0, 2))
-        nb.Label(position, text="Overlay position — X:").pack(side=tk.LEFT)
-        nb.EntryMenu(position, textvariable=self._overlay_x_var, width=6).pack(side=tk.LEFT, padx=(4, 10))
-        nb.Label(position, text="Y:").pack(side=tk.LEFT)
-        nb.EntryMenu(position, textvariable=self._overlay_y_var, width=6).pack(side=tk.LEFT, padx=(4, 0))
-        row += 1
-
         nb.Label(
             frame,
-            text=f"On the legacy overlay's virtual screen (0-{MAX_ORIGIN_X} x 0-{MAX_ORIGIN_Y}). "
-            f"Default {DEFAULT_ORIGIN_X}, {DEFAULT_ORIGIN_Y}.",
-        ).grid(row=row, column=0, sticky=tk.W, padx=10, pady=(0, 10))
-        return row + 1
+            text="Where the pickups and bars appear on screen is set on the Overlay Placement tab.",
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=start_row, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        return start_row + 1
 
     def _build_announce_categories(self, frame: nb.Frame, *, start_row: int) -> int:
         row = start_row
@@ -1075,7 +1083,6 @@ class InventoryPanelController:
         for key, var in self._overlay_bar_vars.items():
             config.set(f"{_CFG_OVERLAY_BAR_PREFIX}{key}", var.get())
 
-        self._save_overlay_position()
         self._save_announce_categories()
 
         for (loadout_id, category), var in self._override_vars.items():
@@ -1098,19 +1105,7 @@ class InventoryPanelController:
         suit.save_overrides()
 
         self._sound.set_enabled(sound_enabled())
-        self._overlay_x, self._overlay_y = overlay_position()
         self._refresh_bars(self._last_state)
-
-    def _save_overlay_position(self) -> None:
-        if self._overlay_x_var is None or self._overlay_y_var is None:
-            return
-        try:
-            x = int(self._overlay_x_var.get().strip())
-            y = int(self._overlay_y_var.get().strip())
-        except ValueError:
-            return
-        config.set(_CFG_OVERLAY_X, max(0, min(MAX_ORIGIN_X, x)))
-        config.set(_CFG_OVERLAY_Y, max(0, min(MAX_ORIGIN_Y, y)))
 
     def _save_announce_categories(self) -> None:
         if not self._announce_vars:
@@ -1148,6 +1143,10 @@ def build_panel(parent: tk.Frame) -> None:
 
 def build_settings(notebook: nb.Notebook) -> None:
     controller.build_settings(notebook)
+
+
+def build_overlay_settings(notebook: nb.Notebook) -> None:
+    controller.build_overlay_settings(notebook)
 
 
 def save_settings() -> None:

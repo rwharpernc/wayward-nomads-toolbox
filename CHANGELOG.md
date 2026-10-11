@@ -6,6 +6,16 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Changed
+- **One Overlays tab in Settings.** Every overlay setting and toggle is now under **Settings -> Overlays**, with a tab for
+  the shared **Overlay Connection**, one for **Overlay Placement**, and one for each feature that draws on your screen:
+  Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies and Screenshots. The overlay
+  parts moved out of the Colonisation, Inventory, Mining and Screenshots tabs (their other settings stay there), and the
+  old **Always On** tab and the Exploration **Alerts** page are gone: Interdiction Warning, Landing, Discovery and Notable
+  Bodies are now under Overlays, and **Auto-Honk** has its own Exploration tab.
+- **Overlay positions are no longer raw x/y boxes.** Discovery, Notable Bodies, Colonization and Inventory lost their X/Y
+  boxes (see Overlay Placement below). A position you had set by hand carries over as an **Exact position**. Landing,
+  Interdiction, Mining and Screenshots, which sat in fixed places, can now be moved too, and their defaults follow your
+  screen shape, so they may sit slightly differently than before.
 - **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
   loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
   decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
@@ -17,6 +27,16 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the hold counted).
 
 ### Added
+- **Overlay Placement: one place to say where every on-screen display goes, correct on any monitor.** Overlay programs draw
+  on a fixed 1280 x 960 canvas, and in EDMCModernOverlay's default fill mode part of it is cut off on a wide screen (a 16:9
+  monitor shows the top 1280 x 720, a 32:9 monitor only 1280 x 360), so raw x/y numbers that suit one monitor land off the
+  bottom of another. Each display is now placed by one of nine spots (top left, top center, ... bottom right) plus an
+  offset, measured on the part of the canvas you can actually see, like SRVSurvey's overlays. WNTB reads your screen size
+  from Elite's `DisplaySettings.xml` (Windows, and inside the Proton prefix on Linux) and the fit or fill mode from
+  EDMCModernOverlay's settings; both can be overridden. **Show placement preview** draws a labeled box for every display and
+  the visible area's outline on your screen so you can judge a position, **Reset all to defaults** and **Detect screen
+  again** are there too. Applies to the Colonization card, Discovery alerts, Notable Bodies card, Interdiction warning,
+  Landing assist, Inventory pickups and bars, the two Mining displays and the Screenshot message.
 - **Where to buy: a Planetary column.** Each result says Yes or No for whether you have to land on a planet's
   surface to reach it. The window's minimum width grew a little to fit it.
 - **Colonization Sites window: your ship's hold and the trips to finish.** The totals row gains **t ship hold** (your

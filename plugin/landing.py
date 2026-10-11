@@ -35,7 +35,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay, panelkit
+from . import overlay, overlay_placement, panelkit
 from .overlay import OverlayClient
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -639,6 +639,16 @@ GROUP_NAME = "wntb_landing"
 GROUP_PREFIX = "wntb_landing_"
 
 
+def block_rect() -> tuple:
+    """(left, top, width, height) of the widest the landing card gets (the one with the "no actual diagram" note)."""
+    return _CARD_X, _CARD_Y, max(_CARD_W, _FALLBACK_CARD_W), _CARD_H
+
+
+def placed_client(client: OverlayClient) -> OverlayClient:
+    """`client` moved to where the Overlay Placement settings put the landing widget."""
+    return overlay_placement.client_for("landing", client, block_rect())
+
+
 def render(info: LandingDisplayInfo, carrier_type: CarrierType, client: OverlayClient) -> None:
     """Draws (or clears) the Landing widget. Raises on an OverlayClient
     failure - load.py's live listener wraps this call and decides that's an
@@ -914,9 +924,9 @@ class LandingController:
             info, carrier_type = request
             try:
                 if info is None:
-                    clear(_overlay_client)
+                    clear(placed_client(_overlay_client))
                 else:
-                    render(info, carrier_type, _overlay_client)
+                    render(info, carrier_type, placed_client(_overlay_client))
                 deadline = 0.0
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for landing pad overlay", exc_info=True)
@@ -1115,7 +1125,7 @@ class LandingController:
 
         def worker() -> None:
             try:
-                render(preview_info, None, client)
+                render(preview_info, None, placed_client(client))
                 outcome, color = "Sent — check your overlay (and the main panel diagram).", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"

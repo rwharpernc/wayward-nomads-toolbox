@@ -40,7 +40,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import neutron_finder, overlay, panelkit
+from . import neutron_finder, overlay, overlay_placement, panelkit
 from .overlay import OverlayClient
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -53,11 +53,9 @@ _CFG_X = "wntb_discovery_x"
 _CFG_Y = "wntb_discovery_y"
 DEFAULT_ENABLED = False
 
-# Position IS user-configurable (unlike Interdiction/Landing's fixed
-# placement) - Settings exposes these as the anchor (the system title's own
-# position); every other line in render() is a fixed offset from that one
-# point, so the whole two-alert block moves together. Default lands
-# top-center-ish on a 1920-wide HUD.
+# The alerts are drawn at this fixed origin (the system title's own position); every other line in render() is a
+# fixed offset from that one point. WHERE the block sits on screen is the global Overlay Placement setting
+# (overlay_placement.py), which moves everything drawn through `placed_client`.
 DEFAULT_X = 700
 DEFAULT_Y = 60
 
@@ -70,22 +68,16 @@ DISCOVERY_EVENTS = ("Scan", "SAAScanComplete")
 @dataclass
 class DiscoveryConfig:
     enabled: bool = DEFAULT_ENABLED
-    x: int = DEFAULT_X
-    y: int = DEFAULT_Y
 
 
 def load_config() -> DiscoveryConfig:
     return DiscoveryConfig(
         enabled=config.get_bool(_CFG_ENABLED, default=DEFAULT_ENABLED),
-        x=_get_int(_CFG_X, DEFAULT_X),
-        y=_get_int(_CFG_Y, DEFAULT_Y),
     )
 
 
 def save_config(cfg: DiscoveryConfig) -> None:
-    config.set(_CFG_ENABLED, cfg.enabled)
-    config.set(_CFG_X, str(cfg.x))
-    config.set(_CFG_Y, str(cfg.y))
+    config.set(_CFG_ENABLED, cfg.enabled)   # _CFG_X / _CFG_Y are only read, once, by overlay_placement's migration
 
 
 def _get_int(key: str, default: int) -> int:
@@ -295,6 +287,17 @@ GROUP_NAME = "wntb_discovery"
 GROUP_PREFIX = "wntb_discovery_"
 
 
+def block_rect() -> Tuple[int, int, int, int]:
+    """(left, top, width, height) of the two stacked alert cards as `render` draws them at the default origin."""
+    left, top = _card_geometry(DEFAULT_X, DEFAULT_Y)
+    return left, top, _CARD_W, _Y_BODY_OFFSET + _CARD_H
+
+
+def placed_client(client: Any) -> Any:
+    """`client` moved to where the Overlay Placement settings put the discovery alerts."""
+    return overlay_placement.client_for("discovery", client, block_rect())
+
+
 def _card_geometry(x: int, y: int) -> Tuple[int, int]:
     """Top-left corner of the card behind a title/name pair anchored at
     (x, y) - shared by system and body slots since both use the same
@@ -422,8 +425,6 @@ class DiscoveryController:
         self._toggle_off_colors = ("", "")
 
         self._enabled_var: Optional[tk.BooleanVar] = None
-        self._x_var: Optional[tk.StringVar] = None
-        self._y_var: Optional[tk.StringVar] = None
         self._dependent_widgets = []
         self._result_label: Optional[nb.Label] = None
 
@@ -460,9 +461,9 @@ class DiscoveryController:
 
         self._sync_status_label()
 
-        def worker(x=cfg.x, y=cfg.y) -> None:
+        def worker() -> None:
             try:
-                render(snapshot, _overlay_client, x, y)
+                render(snapshot, placed_client(_overlay_client))
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for discovery alert", exc_info=True)
 
@@ -568,9 +569,9 @@ class DiscoveryController:
         panelkit.apply_toggle_button_state(self._toggle_btn, cfg.enabled, self._toggle_off_colors)
         self._sync_status_label()
         if not cfg.enabled:
-            def worker(x=cfg.x, y=cfg.y) -> None:
+            def worker() -> None:
                 try:
-                    clear(_overlay_client, x, y)
+                    clear(placed_client(_overlay_client))
                 except OSError:
                     logger.debug("Could not reach EDMCOverlay to clear discovery alerts", exc_info=True)
 
@@ -603,24 +604,13 @@ class DiscoveryController:
         sub = nb.Frame(frame)
         sub.grid(row=2, column=0, columnspan=2, sticky=tk.W, padx=(28, 10))
 
-        position_row = tk.Frame(sub)
-        position_row.grid(row=0, column=0, sticky=tk.W, pady=2)
-        nb.Label(position_row, text="Position — X:").pack(side=tk.LEFT)
-        self._x_var = tk.StringVar(value=str(cfg.x))
-        x_entry = nb.EntryMenu(position_row, textvariable=self._x_var, width=6)
-        x_entry.pack(side=tk.LEFT, padx=(4, 0))
-        nb.Label(position_row, text="   Y:").pack(side=tk.LEFT)
-        self._y_var = tk.StringVar(value=str(cfg.y))
-        y_entry = nb.EntryMenu(position_row, textvariable=self._y_var, width=6)
-        y_entry.pack(side=tk.LEFT, padx=(4, 0))
-
-        self._dependent_widgets = [x_entry, y_entry]
+        self._dependent_widgets = []
 
         nb.Label(
             frame,
             text=(
-                "Position is the system-discovery title's own top-left corner — every other line is "
-                "drawn at a fixed offset below it. Default is roughly top-center on a 1920-wide HUD."
+                "Where the alerts appear is set on the Overlay Placement tab, the same for every "
+                "on-screen display. The default is the top center."
             ),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(4, 4))
@@ -649,14 +639,6 @@ class DiscoveryController:
             except tk.TclError:
                 pass
 
-    def _parse_coord(self, var: Optional[tk.StringVar], default: int) -> int:
-        if var is None:
-            return default
-        try:
-            return int(var.get().strip())
-        except (ValueError, tk.TclError):
-            return default
-
     def _test_discovery(self) -> None:
         if self._result_label is None:
             return
@@ -664,12 +646,11 @@ class DiscoveryController:
         cfg = overlay.load_config()
         client = overlay.OverlayClient(cfg)
         frame = self._result_label
-        pos_x = self._parse_coord(self._x_var, DEFAULT_X)
-        pos_y = self._parse_coord(self._y_var, DEFAULT_Y)
+        placed = placed_client(client)
 
         def render_once(snapshot: DiscoverySnapshot) -> None:
             try:
-                render(snapshot, client, pos_x, pos_y)
+                render(snapshot, placed)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
@@ -688,20 +669,14 @@ class DiscoveryController:
     def save_settings(self) -> None:
         if self._enabled_var is None:
             return
-        save_config(DiscoveryConfig(
-            enabled=bool(self._enabled_var.get()),
-            x=self._parse_coord(self._x_var, DEFAULT_X),
-            y=self._parse_coord(self._y_var, DEFAULT_Y),
-        ))
+        save_config(DiscoveryConfig(enabled=bool(self._enabled_var.get())))
         if self._toggle_btn is not None:
             panelkit.apply_toggle_button_state(self._toggle_btn, self._enabled_var.get(), self._toggle_off_colors)
         self._sync_status_label()
         if not self._enabled_var.get():
-            cfg = load_config()
-
-            def worker(x=cfg.x, y=cfg.y) -> None:
+            def worker() -> None:
                 try:
-                    clear(_overlay_client, x, y)
+                    clear(placed_client(_overlay_client))
                 except OSError:
                     logger.debug("Could not reach EDMCOverlay to clear discovery alerts", exc_info=True)
 

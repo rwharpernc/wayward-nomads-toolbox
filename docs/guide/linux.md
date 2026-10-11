@@ -48,12 +48,12 @@ includes BGS rebuilding the tick's totals).
 
 3. Restart EDMC.
 
-WNTB shows a hint under **Settings → Exploration → Alerts** and **Settings → BGS** if it looks wrong, and logs one
+WNTB shows a hint under **Settings → Exploration → Auto-Honk** and **Settings → BGS** if it looks wrong, and logs one
 at startup.
 
 **The Elite Wine/Proton prefix box.** WNTB finds the Proton folder itself, including extra Steam library folders
 and Flatpak Steam. Only if you use Lutris, Heroic or a custom setup should you enter the folder under
-**Settings → Exploration → Alerts → Elite Wine/Proton prefix**. Otherwise **leave that field empty**.
+**Settings → Exploration → Auto-Honk → Elite Wine/Proton prefix**. Otherwise **leave that field empty**.
 
 > A wrong value in that box stops WNTB from finding your keybindings, because it deliberately does not fall back
 > to auto-detection.
@@ -111,7 +111,7 @@ button, it reports "only bound to a joystick/HOTAS button".
 1. In Elite, open **Options → Controls → Ship → Cockpit Modes**.
 2. Add a keyboard key to the **second** slot of **Secondary Fire**. Keep your mouse or stick binding in the first
    slot.
-3. In EDMC, open **Settings → Exploration → Alerts** and press **Rescan**. It should say "Will press &lt;your
+3. In EDMC, open **Settings → Exploration → Auto-Honk** and press **Rescan**. It should say "Will press &lt;your
    key&gt;".
 4. Press **Test Honk Now** with the ship able to use its scanner.
 5. Set the **hold time** to the seconds the scan needs (8 to 10 is typical). The key is held down for the full
@@ -120,8 +120,8 @@ button, it reports "only bound to a joystick/HOTAS button".
 ## Step 5: Check the overlay
 
 1. Start EDMC and Elite (borderless or windowed).
-2. Open **Settings → WNTB → General → Overlay Connection** and press **Check connection**.
-3. Press a **Test** button, such as **Test Discovery** or **Test Notable** under **Exploration → Alerts**.
+2. Open **Settings → WNTB → Overlays → Overlay Connection** and press **Check connection**.
+3. Press a **Test** button, such as **Test Discovery** or **Test Notable** under **Settings → Overlays**.
 
 Cards should appear over the game. If they don't, see the Linux items in [Troubleshooting](troubleshooting.md).
 The general overlay guide is [Setting up the on-screen overlay](../OVERLAY_SETUP.md).

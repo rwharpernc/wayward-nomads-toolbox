@@ -35,7 +35,7 @@ from . import mining_pages
 from . import mining_render as render
 from . import mining_space as space_mining
 from . import mining_surface as surface_mining
-from . import overlay
+from . import overlay, overlay_placement
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -116,7 +116,15 @@ def set_overlay_client(client: overlay.OverlayClient) -> None:
     _client = client
 
 
-def _send_overlay_panel(msg_id: str, x: int, y: int, lines: List[str], *,
+def _panel_rect(x: int, y: int, lines: List[str], *, line_height: int = _OVERLAY_LINE_HEIGHT,
+                char_width: int = _OVERLAY_CHAR_WIDTH_PX, extra_h: int = 0) -> tuple:
+    """(left, top, width, height) of the backing panel for `lines` drawn with their text origin at (x, y)."""
+    width = max(len(line) for line in lines) * char_width + 2 * _OVERLAY_PANEL_PAD_X
+    height = len(lines) * line_height + 2 * _OVERLAY_PANEL_PAD_Y + extra_h
+    return x - _OVERLAY_PANEL_PAD_X, y - _OVERLAY_PANEL_PAD_Y, width, height
+
+
+def _send_overlay_panel(client, msg_id: str, x: int, y: int, lines: List[str], *,
                         line_height: int = _OVERLAY_LINE_HEIGHT,
                         char_width: int = _OVERLAY_CHAR_WIDTH_PX,
                         extra_h: int = 0) -> None:
@@ -129,11 +137,9 @@ def _send_overlay_panel(msg_id: str, x: int, y: int, lines: List[str], *,
     panel would just be a stray box with nothing in it."""
     if not lines:
         return
-    width = max(len(line) for line in lines) * char_width + 2 * _OVERLAY_PANEL_PAD_X
-    height = len(lines) * line_height + 2 * _OVERLAY_PANEL_PAD_Y + extra_h
-    _client.send_shape(msg_id, "rect", _OVERLAY_PANEL_BORDER, _OVERLAY_PANEL_FILL,
-                       x - _OVERLAY_PANEL_PAD_X, y - _OVERLAY_PANEL_PAD_Y, width, height,
-                       ttl=_OVERLAY_TTL_S)
+    left, top, width, height = _panel_rect(x, y, lines, line_height=line_height, char_width=char_width, extra_h=extra_h)
+    client.send_shape(msg_id, "rect", _OVERLAY_PANEL_BORDER, _OVERLAY_PANEL_FILL, left, top, width, height,
+                      ttl=_OVERLAY_TTL_S)
 
 
 def _in_supercruise() -> bool:
@@ -184,11 +190,14 @@ def push_stats_overlay(page: str, *, display_cargo_bar: bool, display_session_to
 
     def worker() -> None:
         try:
-            _send_overlay_panel(_BG_ID, _OVERLAY_X, _OVERLAY_Y_START, lines)
+            # Drawn at the fixed origin above; the Overlay Placement setting moves it to where the commander put it.
+            placed = (overlay_placement.client_for("mining_stats", _client, _panel_rect(_OVERLAY_X, _OVERLAY_Y_START, lines))
+                      if lines else _client)
+            _send_overlay_panel(placed, _BG_ID, _OVERLAY_X, _OVERLAY_Y_START, lines)
             for index, text in enumerate(lines):
-                _client.send_message(f"wntb_mining_stat_{index}", text, _OVERLAY_TEXT_COLOR,
-                                     _OVERLAY_X, _OVERLAY_Y_START + index * _OVERLAY_LINE_HEIGHT,
-                                     ttl=_OVERLAY_TTL_S)
+                placed.send_message(f"wntb_mining_stat_{index}", text, _OVERLAY_TEXT_COLOR,
+                                    _OVERLAY_X, _OVERLAY_Y_START + index * _OVERLAY_LINE_HEIGHT,
+                                    ttl=_OVERLAY_TTL_S)
         except OSError:
             logger.debug("Could not reach EDMCOverlay for Mining stats", exc_info=True)
 
@@ -246,14 +255,15 @@ def push_waypoint_overlay() -> None:
 
     def worker() -> None:
         try:
-            _send_overlay_panel(_WAYPOINT_BG_ID, _OVERLAY_X, _WAYPOINT_OVERLAY_Y, [text],
-                                line_height=_OVERLAY_LARGE_LINE_HEIGHT,
-                                char_width=_OVERLAY_CHAR_WIDTH_PX_LARGE,
-                                extra_h=_WAYPOINT_PANEL_EXTRA_H)
-            _client.send_message(_WAYPOINT_TEXT_ID, text, _OVERLAY_TEXT_COLOR, _OVERLAY_X,
-                                 _WAYPOINT_OVERLAY_Y, ttl=_OVERLAY_TTL_S, size="large")
+            panel = dict(line_height=_OVERLAY_LARGE_LINE_HEIGHT, char_width=_OVERLAY_CHAR_WIDTH_PX_LARGE,
+                         extra_h=_WAYPOINT_PANEL_EXTRA_H)
+            placed = overlay_placement.client_for(
+                "mining_waypoint", _client, _panel_rect(_OVERLAY_X, _WAYPOINT_OVERLAY_Y, [text], **panel))
+            _send_overlay_panel(placed, _WAYPOINT_BG_ID, _OVERLAY_X, _WAYPOINT_OVERLAY_Y, [text], **panel)
+            placed.send_message(_WAYPOINT_TEXT_ID, text, _OVERLAY_TEXT_COLOR, _OVERLAY_X,
+                                _WAYPOINT_OVERLAY_Y, ttl=_OVERLAY_TTL_S, size="large")
             if points is not None:
-                _client.send_vector(_WAYPOINT_ARROW_ID, points, _OVERLAY_PANEL_BORDER, ttl=_OVERLAY_TTL_S)
+                placed.send_vector(_WAYPOINT_ARROW_ID, points, _OVERLAY_PANEL_BORDER, ttl=_OVERLAY_TTL_S)
         except OSError:
             logger.debug("Could not reach EDMCOverlay for Mining waypoint", exc_info=True)
 

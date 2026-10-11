@@ -19,7 +19,7 @@ Fires your Discovery Scanner automatically every time you jump into a system, so
 **How to use it:**
 
 1. Turn it on with its toggle button (**A.H.**) or the **Enable Auto-Honk** box in Settings. It is **off by default**.
-2. Open **Settings → Exploration → Alerts** to choose which fire button it uses (**Primary** or **Secondary**; the
+2. Open **Settings → Exploration → Auto-Honk** to choose which fire button it uses (**Primary** or **Secondary**; the
    default is Secondary) and how many seconds it holds it (**Hold**, default 10).
 3. Two other options there: *Focus game window first* and *Skip systems already visited* (both on by default).
 4. Press **Test Honk Now** to check it works without waiting for a real jump. **Rescan** re-reads your key
@@ -37,8 +37,8 @@ first to scan or map a body.
 **How to use it:**
 
 1. Click its toggle button (**D.A.**) or tick **Enable Discovery Alerts** in Settings. It is **off by default**.
-2. Make sure an overlay is running. The connection details are on the **Overlay Connection** Settings tab.
-3. Use **Settings → Exploration → Alerts** to move the banner (X and Y boxes) or send a test one.
+2. Make sure an overlay is running. The connection details are on the **Overlay Connection** tab under Settings → Overlays.
+3. Use **Settings → Overlays → Discovery** to send a test one, and **Settings → Overlays → Overlay Placement** to move the banner.
 
 ### N.S. and W.D. buttons
 
@@ -56,7 +56,7 @@ data, so check the body in the system map before you plan around it. It needs th
 
 **How to use it:**
 
-1. Open **Settings → Exploration → Alerts → Notable Bodies**.
+1. Open **Settings → Overlays → Notable Bodies**.
 2. Tick **Enable**. It is off until you do.
 3. Choose which rules you want.
 4. Press **Test Notable** to see a sample banner. The X and Y boxes move it.

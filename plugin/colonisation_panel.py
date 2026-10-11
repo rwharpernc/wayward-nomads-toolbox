@@ -21,7 +21,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import (colonisation, colonisation_carrier, colonisation_catchup, colonisation_overlay as card, colonisation_window,
+from . import (overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_overlay as card, colonisation_window,
                overlay, panelkit, restore, trade_panel)
 from .colonisation import Site
 from .colonisation_data import SiteRepository, site_repository
@@ -32,8 +32,6 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 PANEL_PLACEMENT = "fieldops"
 
 _CFG_OVERLAY_ENABLED = "wntb_colonisation_overlay_enabled"
-_CFG_OVERLAY_X = "wntb_colonisation_overlay_x"
-_CFG_OVERLAY_Y = "wntb_colonisation_overlay_y"
 _CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_row_limit"   # 0 = all; the older "..._rows" key held a default of 10
 _CFG_OVERLAY_RIGHT_PANEL = "wntb_colonisation_overlay_right_panel"
 
@@ -54,9 +52,12 @@ def overlay_right_panel() -> bool:
     return config.get_bool(_CFG_OVERLAY_RIGHT_PANEL, default=False)
 
 
-def overlay_position() -> tuple:
-    return (_get_int(_CFG_OVERLAY_X, card.DEFAULT_X, 0, card.MAX_ORIGIN_X),
-            _get_int(_CFG_OVERLAY_Y, card.DEFAULT_Y, 0, card.MAX_ORIGIN_Y))
+def overlay_shift(shown: Optional[card.Card]) -> tuple:
+    """How far the card, drawn at its own fixed origin, is moved to reach the place chosen on the Overlay Placement tab
+    (it depends on the card's size, so on what it is showing). (0, 0) when there is no card."""
+    if shown is None:
+        return (0, 0)
+    return overlay_placement.shift_for("colonisation", card.block_rect(shown, card.DEFAULT_X, card.DEFAULT_Y))
 
 
 def overlay_rows() -> int:
@@ -91,7 +92,7 @@ class ColonisationController:
         self._overlay_client = overlay.OverlayClient()
         self._overlay_sent: Optional[card.Card] = None
         self._overlay_sent_at = 0.0
-        self._overlay_pos = (card.DEFAULT_X, card.DEFAULT_Y)
+        self._overlay_pos = (0, 0)   # how far the card is shifted from where it is drawn
         self._visibility = card.Visibility()
         self._last_focus: Any = None
         self._last_reason = ""
@@ -228,7 +229,7 @@ class ColonisationController:
         if reason != self._last_reason:
             self._last_reason = reason
             logger.debug("Colonization overlay %s", reason)
-        position = overlay_position()
+        position = overlay_shift(shown) if shown is not None else self._overlay_pos
         now = time.monotonic()
         if (shown == self._overlay_sent and position == self._overlay_pos
                 and (shown is None or now - self._overlay_sent_at < card.RESEND_AFTER_S)):
@@ -243,14 +244,16 @@ class ColonisationController:
             with self._overlay_lock:
                 try:
                     if old_pos != position and previous is not None:
-                        card.clear(self._overlay_client, old_pos[0], old_pos[1], previous_slots)
+                        card.clear(overlay_layout.ShiftedClient(self._overlay_client, *old_pos),
+                                   card.DEFAULT_X, card.DEFAULT_Y, previous_slots)
                         previous_slots_now = 0
                     else:
                         previous_slots_now = previous_slots
+                    placed = overlay_layout.ShiftedClient(self._overlay_client, *position)
                     if shown is None:
-                        card.clear(self._overlay_client, position[0], position[1], previous_slots)
+                        card.clear(placed, card.DEFAULT_X, card.DEFAULT_Y, previous_slots)
                     else:
-                        card.render(self._overlay_client, shown, position[0], position[1], previous_slots_now)
+                        card.render(placed, shown, card.DEFAULT_X, card.DEFAULT_Y, previous_slots_now)
                     logger.debug("Colonization overlay sent (%s)", "card" if shown else "clear")
                 except OSError:
                     logger.debug("Could not reach EDMCOverlay for the colonization shopping list", exc_info=True)
@@ -261,7 +264,8 @@ class ColonisationController:
         """Synchronous clear at shutdown (EDMC does not wait for background threads)."""
         try:
             if self._overlay_sent is not None:
-                card.clear(self._overlay_client, self._overlay_pos[0], self._overlay_pos[1], self._overlay_sent.slot_count)
+                card.clear(overlay_layout.ShiftedClient(self._overlay_client, *self._overlay_pos),
+                           card.DEFAULT_X, card.DEFAULT_Y, self._overlay_sent.slot_count)
         except OSError:
             logger.debug("Could not reach EDMCOverlay to clear on shutdown", exc_info=True)
         self._overlay_sent = None
@@ -338,11 +342,21 @@ class ColonisationController:
             ),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        nb.Label(
+            frame, text="The in-game overlay card for this list is set up on the Overlays tab.",
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+
+    def build_overlay_settings(self, notebook: nb.Notebook) -> None:
+        """The shopping-list card's options, on the Overlays tab."""
+        frame = nb.Frame(notebook)
+        frame.columnconfigure(0, weight=1)
+        notebook.add(frame, text="Colonization")
 
         self._overlay_enabled_var = tk.BooleanVar(value=overlay_enabled())
         nb.Checkbutton(
             frame, text="Show the shopping list on the in-game overlay", variable=self._overlay_enabled_var,
-        ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(0, 2))
+        ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(10, 2))
         nb.Label(
             frame,
             text=(
@@ -359,22 +373,15 @@ class ColonisationController:
             variable=self._right_panel_var,
         ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 6))
 
-        x, y = overlay_position()
-        self._overlay_vars = {"x": tk.StringVar(value=str(x)), "y": tk.StringVar(value=str(y)),
-                              "rows": tk.StringVar(value=str(overlay_rows()))}
+        self._overlay_vars = {"rows": tk.StringVar(value=str(overlay_rows()))}
         position = tk.Frame(frame)
         position.grid(row=5, column=0, sticky=tk.W, padx=10, pady=(0, 2))
-        nb.Label(position, text="Overlay position — X:").pack(side=tk.LEFT)
-        nb.EntryMenu(position, textvariable=self._overlay_vars["x"], width=6).pack(side=tk.LEFT, padx=(4, 10))
-        nb.Label(position, text="Y:").pack(side=tk.LEFT)
-        nb.EntryMenu(position, textvariable=self._overlay_vars["y"], width=6).pack(side=tk.LEFT, padx=(4, 10))
         nb.Label(position, text="Rows:").pack(side=tk.LEFT)
         nb.EntryMenu(position, textvariable=self._overlay_vars["rows"], width=4).pack(side=tk.LEFT, padx=(4, 0))
         nb.Label(
             frame,
-            text=(f"On the overlay's virtual screen (0-{card.MAX_ORIGIN_X} x 0-{card.MAX_ORIGIN_Y}). Default "
-                  f"{card.DEFAULT_X}, {card.DEFAULT_Y}. Rows limits how many commodities are listed "
-                  f"(1-{card.MAX_ROWS}, the rest are summarized); 0 lists them all."),
+            text=(f"Rows limits how many commodities are listed (1-{card.MAX_ROWS}, the rest are summarized); 0 lists "
+                  "them all. Where the card sits on the screen is set on the Overlay Placement tab."),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(0, 6))
 
@@ -391,18 +398,15 @@ class ColonisationController:
         cfg = overlay.load_config()
         client = overlay.OverlayClient(cfg)
         label = self._overlay_result
-        try:
-            x = int(self._overlay_vars["x"].get().strip())
-            y = int(self._overlay_vars["y"].get().strip())
-        except (ValueError, KeyError):
-            x, y = overlay_position()
-        x, y = max(0, min(card.MAX_ORIGIN_X, x)), max(0, min(card.MAX_ORIGIN_Y, y))
+        sample = card.preview_card()
+        placed = overlay_layout.ShiftedClient(client, *overlay_shift(sample))
+        x, y = card.DEFAULT_X, card.DEFAULT_Y
 
         def worker() -> None:
             try:
-                slots = card.render(client, card.preview_card(), x, y)
+                slots = card.render(placed, sample, x, y)
                 time.sleep(8)
-                card.clear(client, x, y, slots)
+                card.clear(placed, x, y, slots)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
@@ -419,9 +423,7 @@ class ColonisationController:
         config.set(_CFG_OVERLAY_ENABLED, self._overlay_enabled_var.get())
         if self._right_panel_var is not None:
             config.set(_CFG_OVERLAY_RIGHT_PANEL, self._right_panel_var.get())
-        for key, cfg_key, low, high in (("x", _CFG_OVERLAY_X, 0, card.MAX_ORIGIN_X),
-                                        ("y", _CFG_OVERLAY_Y, 0, card.MAX_ORIGIN_Y),
-                                        ("rows", _CFG_OVERLAY_ROWS, card.MIN_ROWS, card.MAX_ROWS)):
+        for key, cfg_key, low, high in (("rows", _CFG_OVERLAY_ROWS, card.MIN_ROWS, card.MAX_ROWS),):
             try:
                 config.set(cfg_key, max(low, min(high, int(self._overlay_vars[key].get().strip()))))
             except (ValueError, KeyError):
@@ -446,6 +448,10 @@ def build_panel(parent: tk.Frame) -> None:
 
 def build_settings(notebook: nb.Notebook) -> None:
     controller.build_settings(notebook)
+
+
+def build_overlay_settings(notebook: nb.Notebook) -> None:
+    controller.build_overlay_settings(notebook)
 
 
 def save_settings() -> None:

@@ -29,7 +29,7 @@ Look for the **Works on:** line.
 
 ## Linux only
 
-- The **Elite Wine/Proton prefix** box in Settings → Exploration → Alerts. Leave it blank to auto-detect Steam.
+- The **Elite Wine/Proton prefix** box in Settings → Exploration → Auto-Honk. Leave it blank to auto-detect Steam.
 - The hint about EDMC's **Journal directory**.
 
 Full Linux setup is in [WNTB on Linux](linux.md).

@@ -500,6 +500,32 @@ Connect timeout is 1 second. It's a loopback connection to an app that is either
 or not (fails fast); a long timeout would stall journal processing waiting for an app that isn't
 there.
 
+### Placement (`overlay_layout.py`, `overlay_placement.py`)
+
+Overlay programs map a fixed 1280 x 960 canvas onto the game window. In fill mode (EDMCModernOverlay's default) the canvas is
+scaled until it covers the window and the rest is cut off, so a 16:9 window shows only the top 1280 x 720, a 21:9 one
+1280 x 536 and a 32:9 one 1280 x 360. A bare y of 600 is therefore on screen for one commander and off the bottom for
+another. Placement is relative to the *visible* part instead:
+
+- **Model** (`overlay_layout.py`, pure): `visible_area(width, height, mode)`, a `Placement` (a horizontal anchor, a vertical
+  anchor and an inward offset, or an exact canvas x/y), `block_origin` (where a block of a given size goes; kept inside the
+  visible area, and a block bigger than the area is pinned to its top left so the start of it shows) and `ShiftedClient`.
+- **Features keep their own layout.** Each draws at its fixed origin exactly as before and reports the rectangle it occupies
+  (`block_rect()`); `overlay_placement.client_for(slot, client, block)` returns the client wrapped so every `send_message`,
+  `send_shape` and `send_vector` is shifted to the chosen place. A feature that positions itself from an origin (Inventory)
+  uses `origin_for(slot, size)` instead. Clearing is by id, so a clear needs no matching shift. Placement is applied at the
+  call sites (never inside a `render()`), so the render functions stay pure and testable.
+- **The screen** (`overlay_placement.py`): `ScreenWidth`/`ScreenHeight`/`FullScreen` from Elite's
+  `Options/Graphics/DisplaySettings.xml` (`platform_support.elite_graphics_dir`, which also finds it inside a Proton prefix),
+  and `scale_mode` from `EDMCModernOverlay/overlay_settings.json` beside WNTB in the plugins folder. Both are cached for 30
+  seconds and can be overridden in Settings. When neither can be read the assumption is 16:9 in fill mode, the smallest
+  common area, because a position that is visible there is visible everywhere.
+- **Settings:** `wntb_overlay_place_<slot>` holds `h,v,dx,dy` or `custom,x,y`; `wntb_overlay_aspect` and
+  `wntb_overlay_scale_mode` hold the overrides. A slot with no saved value reads the old per-feature x/y once and keeps a
+  hand-set position as an exact one (`layout.migrated_placement`).
+- **Adding an overlay:** add a `Slot` to `SLOTS` (key, label, default spot, size, legacy keys), wrap its client with
+  `client_for`, and give its settings a tab in the Overlays group in `ui.py`.
+
 ### Plugin Groups (EDMCModernOverlay)
 
 EDMCModernOverlay groups a feature's shapes and text so they scale and anchor as one unit.
@@ -698,7 +724,7 @@ rest are only counted ("(N more)"). Title and name are capped (28 and 24 charact
 centring maths estimates text width from character count. Rule choices are saved as a JSON dict in
 `wntb_notable_rules`; a rule missing from it uses its default, so a later release can add rules without a
 migration. There are 15 rules, 7 on by default. A body matching several rules gets one card (first label
-plus `+N`). The feature has no panel widget, only a Settings page (Exploration → Alerts).
+plus `+N`). The feature has no panel widget, only a Settings page (Overlays → Notable Bodies).
 
 ### Nearest neutron star / white dwarf (`neutron_finder.py`, buttons in `discovery.py`)
 

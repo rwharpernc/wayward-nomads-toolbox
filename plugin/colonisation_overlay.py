@@ -224,6 +224,13 @@ def _layout(card: Card) -> Tuple[int, List[int], int]:
     return 0, edges, chars * CHAR_WIDTH_PX
 
 
+def block_rect(card: Card, x: int = 0, y: int = 0) -> Tuple[int, int, int, int]:
+    """(left, top, width, height) of the card as `render` draws it with its text origin at (x, y): the panel rectangle.
+    The global overlay placement uses this to move the card to wherever the commander put it."""
+    _x0, _edges, text_width = _layout(card)
+    return x - PAD_X, y - PAD_Y, text_width + 2 * PAD_X, card.slot_count * LINE_HEIGHT + 2 * PAD_Y
+
+
 def _id(slot: int, column: int) -> str:
     return f"{ID_PREFIX}s{slot}_{column}"
 

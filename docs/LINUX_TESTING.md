@@ -40,7 +40,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 2. Paths and journal
 
-- [ ] Settings → Exploration → Alerts shows **no** orange journal hint when the Journal directory is right.
+- [ ] Settings → Exploration → Auto-Honk shows **no** orange journal hint when the Journal directory is right.
 - [ ] Clear the Journal directory: the hint appears, and the log has a "Linux journal folder" warning.
 - [ ] Set **Elite Wine/Proton prefix** to a wrong path: Auto-Honk reports the binds file can't be found.
 - [ ] Clear it again: the Proton prefix is auto-detected.
@@ -48,7 +48,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 3. Auto-Honk
 
-- [ ] Settings → Exploration → Alerts → **Rescan** shows "Will press <key>" for your fire button.
+- [ ] Settings → Exploration → Auto-Honk → **Rescan** shows "Will press <key>" for your fire button.
 - [ ] Elite running and focused: **Test Honk Now** reports "sent" and the scanner fires.
 - [ ] The honk key stays down for the whole **hold time** (set 8 to 10 seconds): the scan completes instead
       of stopping after about a second.
@@ -102,7 +102,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 6b. Fixed in the platform audit - please confirm
 
-- [ ] Settings → Exploration → Alerts, Field Ops → Screenshots and Field Ops → Inventory each show a **Works on:** line, green when
+- [ ] Settings → Exploration → Auto-Honk, Field Ops → Screenshots and Field Ops → Inventory each show a **Works on:** line, green when
       it can work here and orange (with the reason) when it can't. Try it with and without `xdotool`.
 - [ ] Take a normal screenshot and an Alt+F10 hi-res one: both are found, converted and named, and the
       hi-res one is treated as hi-res (the journal path is Windows-style, `\ED_Pictures\...`).
@@ -278,6 +278,23 @@ Windows. Needs a commander with at least one registered construction site and an
       carriers; the whole results table fits at the window's minimum width.
 - [ ] **Here** puts the system you are in (the last system EDMC saw) into Around. **Copy System** copies the selected row.
 - [ ] With no network, the panel says the search failed and the button comes back.
+
+## 7f. Overlay Placement and the Overlays settings tab (added 2026-10-11, Windows-tested only: check on Linux)
+
+Written on Windows against a 3840 x 2160 screen in EDMCModernOverlay's fill mode. The logic is platform-neutral, but
+reading the screen shape from inside the Proton prefix, and how the overlay maps its canvas under XWayland, have not been
+seen on Linux.
+
+- [ ] **Settings -> Overlays** has the tabs Overlay Connection, Overlay Placement, Colonization, Discovery, Inventory,
+      Interdiction Warning, Landing, Mining, Notable Bodies and Screenshots; General no longer has an overlay tab.
+- [ ] The Overlay Placement tab's info line shows your real screen size, with `DisplaySettings.xml` as the source (if it says
+      "game files not found", note the Wine/Proton prefix path and report it).
+- [ ] It shows the overlay mode EDMCModernOverlay uses (fit or fill) and how much of the canvas that leaves visible.
+- [ ] **Show placement preview** draws a labeled box for every display, all inside the outline of the visible area.
+- [ ] Change a display to **Bottom right** with offsets 20 / 20, press OK, then **Test Overlay** (or the feature's test
+      button): it appears in the bottom right corner of the game screen.
+- [ ] Picking a different **Screen shape** (say 32:9) in the tab moves the previewed boxes up into the shorter area.
+- [ ] A position set in an older version's X/Y boxes shows as **Exact position** with the same numbers.
 
 ## Reporting
 

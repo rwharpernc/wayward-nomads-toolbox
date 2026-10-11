@@ -181,14 +181,14 @@ mode's guide for the limits.
 ### Settings
 
 All settings live under **File → Settings → WNTB**, in tabs: General, Powerplay, Missions, Exploration, Mining,
-Trade, BGS, Field Ops and Always On. Some have a row of tabs of their own:
+Trade, BGS, Field Ops and Overlays. Some have a row of tabs of their own:
 
 | Tab | Inner tabs |
 |---|---|
-| **General** | Overlay Connection, Window, Updates |
-| **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Alerts (Auto-Honk, Discovery and Notable Bodies) |
+| **General** | Window, Updates |
+| **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Auto-Honk |
 | **Field Ops** | Screenshots, Inventory, Ship Builds, Colonisation |
-| **Always On** | Interdiction Warning, Landing |
+| **Overlays** | Overlay Connection, Overlay Placement, then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies, Screenshots |
 
 This is where you switch things on and off and adjust how they behave.
 

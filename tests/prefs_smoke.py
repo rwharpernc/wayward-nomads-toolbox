@@ -61,13 +61,16 @@ nbmod.Notebook = ttk.Notebook
 sys.modules["myNotebook"] = nbmod
 
 
+SAVED = {}
+
+
 class Cfg:
     default_journal_dir = ""
     def get_str(self, key, default=""): return default or ""
     def get_bool(self, key, default=False): return default
     def get_int(self, key, default=0): return default
     def get(self, key, default=None): return default
-    def set(self, key, value): pass
+    def set(self, key, value): SAVED[key] = value
 
 
 cfgmod = types.ModuleType("config")
@@ -112,6 +115,11 @@ try:
             yield from _pages(c)
     over = [p for p in _pages(outer) if p._canvas.winfo_reqheight() > p._cap]
     print("PAGES OVER HEIGHT CAP:", len(over), "of", len(list(_pages(outer))))
+    # Saving must work with the settings split across tabs, and every display's placement must be written.
+    ui.save_prefs()
+    from plugin import overlay_placement
+    missing = [k for k in overlay_placement.SLOTS if f"wntb_overlay_place_{k}" not in SAVED]
+    print("OVERLAY PLACEMENTS SAVED:", len(overlay_placement.SLOTS) - len(missing), "of", len(overlay_placement.SLOTS), missing)
     print("TALLEST PAGE (px):", max(tabs.nametowidget(t).winfo_reqheight() for t in tabs.tabs()) if tabs else 0)
     code = 0 if names else 1
 except Exception as exc:  # noqa: BLE001

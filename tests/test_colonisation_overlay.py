@@ -39,6 +39,28 @@ class FakeClient:
         self.sent.append(("msg", msg_id, text, ttl))
 
 
+class BlockRectTests(unittest.TestCase):
+    """The rectangle the card occupies, which the global overlay placement uses to move it."""
+
+    def test_block_rect_is_the_panel_rectangle_that_render_draws(self) -> None:
+        built = card.build_card(site(), {"steel": 100}, {}, show_fc=False)
+        client = FakeClient()
+        card.render(client, built, 40, 300)
+        left, top, width, height = card.block_rect(built, 40, 300)
+        shape = next(c for c in client.sent if c[0] == "shape")
+        self.assertEqual((width, height), (shape[2], shape[3]))
+        self.assertEqual((left, top), (40 - card.PAD_X, 300 - card.PAD_Y))
+
+    def test_block_rect_grows_with_the_content(self) -> None:
+        narrow = card.build_card(site(), {}, {}, show_fc=False)
+        wide = card.build_card(site(), {}, {}, show_fc=True)       # the FC column makes the card wider
+        self.assertGreater(card.block_rect(wide)[2], card.block_rect(narrow)[2])
+        one_row = card.build_card(site(), {}, {}, show_fc=False, max_rows=1)    # one row plus a "+1 more" line
+        self.assertEqual(card.block_rect(one_row)[3], card.block_rect(narrow)[3])
+        three_lines = card.Card("T", narrow.rows * 3, 0, 450, 0, False)
+        self.assertGreater(card.block_rect(three_lines)[3], card.block_rect(narrow)[3])
+
+
 class BuildCardTests(unittest.TestCase):
     def test_need_is_not_reduced_by_the_hold_and_rows_are_alphabetical(self) -> None:
         built = card.build_card(site(), {"steel": 100}, {}, show_fc=False)

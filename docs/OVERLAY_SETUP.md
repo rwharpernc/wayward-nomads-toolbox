@@ -38,7 +38,7 @@ its own notes if you want that.)
 
 ## Step 3: Check WNTB's connection settings
 
-In EDMC, open **File → Settings → WNTB**, choose **General**, then the **Overlay Connection** tab. The defaults are:
+In EDMC, open **File → Settings → WNTB**, choose **Overlays**, then the **Overlay Connection** tab. The defaults are:
 
 - **Host:** `127.0.0.1`
 - **Port:** `5010`
@@ -48,18 +48,24 @@ If you changed the port in your overlay, enter the same one here.
 
 ## Step 4: Turn the features on and test them
 
-Each feature has its own settings under **File → Settings → WNTB**, with a switch and a test button:
+Every overlay setting lives in one place, **File → Settings → WNTB → Overlays**, with a tab for the shared connection, a
+tab for placement, and a tab for each feature that draws on your screen. Each feature tab has its switch and, where it
+makes sense, a test button:
 
-| Where | Test button |
-|---|---|
-| **Exploration → Alerts** (Discovery) | **Test Discovery** |
-| **Exploration → Alerts** (Notable Bodies) | **Test Notable** |
-| **Always On → Interdiction Warning** | **Test Warning** |
-| **Always On → Landing** | **Test Overlay** |
-| **Field Ops → Screenshots** | **Test Overlay** |
+| Overlays tab | What it controls | Test button |
+|---|---|---|
+| **Colonization** | The shopping list card | **Test Overlay** |
+| **Discovery** | New system and body discovery alerts | **Test Discovery** |
+| **Inventory** | Pickup notifications and the inventory bars | |
+| **Interdiction Warning** | The warning when you are interdicted | **Test Warning** |
+| **Landing** | The assigned pad and diagram | **Test Overlay** |
+| **Mining** | The mining stats and the surface waypoint arrow | |
+| **Notable Bodies** | Alerts for bodies worth a look | **Test Notable** |
+| **Screenshots** | The "screenshot saved" message | **Test Overlay** |
 
 The test buttons work even while the feature is switched off, and they tell you whether the overlay
-could be reached. Inventory and Mining have their own overlay switches in their tabs.
+could be reached. A feature's other settings (what it tracks, how it behaves) stay in its own tab elsewhere in
+Settings; only the overlay parts moved here.
 
 On the **Overlay Connection** tab, **Check connection** tells you whether an overlay is listening at the
 host and port shown, without sending anything.
@@ -69,8 +75,36 @@ see the message on your screen, you're set.
 
 ## Moving things around
 
-- **Discovery** and **Inventory** let you set where they appear, in their Settings tabs.
-- Landing, Interdiction and the Screenshots message sit in fixed places.
+Where each display goes is set once, for every WNTB overlay, on **Settings → WNTB → Overlays → Overlay Placement**.
+
+**Why not just x and y numbers?** An overlay program draws on a fixed 1280 × 960 canvas and maps it onto your game
+window. In EDMCModernOverlay's default **fill** mode that means part of the canvas is cut off whenever your screen is
+wider than 4:3: on a 16:9 monitor you see the top 1280 × 720 of it, on a 21:9 ultrawide 1280 × 536, and on a 32:9
+monitor only 1280 × 360. A number that is fine on one monitor lands off the bottom of another. So WNTB places each
+display **relative to the part you can actually see**, the way SRVSurvey places its overlays relative to the game
+window.
+
+**How to place something.** Pick one of nine spots (Top left, Top center, Top right, Middle left, Center, Middle right,
+Bottom left, Bottom center, Bottom right) and two offsets. For the edge spots the offsets move the display inward from
+the edge you chose; for Center and Middle they nudge it. "Bottom right, 20 and 20" is the bottom right corner of your
+screen on any monitor. **Exact position** is there if you want an overlay-canvas x and y instead.
+
+**How WNTB knows your screen.** It reads the size from Elite's own `DisplaySettings.xml` (in `Options\Graphics`; on
+Linux inside the Proton prefix) and whether the overlay fits or fills the screen from EDMCModernOverlay's settings
+(`scale_mode`). The tab shows what it found, for example *3840 x 2160, full screen (DisplaySettings.xml); overlay mode
+fill shows 1280 x 720 of the 1280 x 960 canvas*. If either file can't be found, WNTB assumes a 16:9 screen in fill
+mode, the smallest common area, so nothing is placed out of sight. You can also choose the screen shape and the mode
+yourself on that tab. Elite's `FullScreen` value (windowed, borderless or full screen) is shown for information; the
+overlay follows the game window either way.
+
+**Check it on your real screen.** **Show placement preview** draws a labeled box for every display, and an outline of
+the visible area, for 12 seconds, using the values currently typed (even before you press OK). **Reset all to
+defaults** puts everything back, and **Detect screen again** re-reads the game's files.
+
+Positions you set in the older per-feature x/y boxes are carried over as **Exact position** the first time.
+Defaults for the displays that used to sit in fixed places (Landing, Interdiction, Mining, Screenshots) now follow
+your screen shape, so they may sit slightly differently than before.
+
 - If the overlay is still starting when Landing Assist has something to draw, WNTB retries for up to three minutes, so
   the diagram shows up once the overlay is ready.
 - **EDMCModernOverlay has its own placement tool**, the Overlay Controller, where you can move each
