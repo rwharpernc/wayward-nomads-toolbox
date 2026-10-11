@@ -35,7 +35,8 @@ from . import mining_pages
 from . import mining_render as render
 from . import mining_space as space_mining
 from . import mining_surface as surface_mining
-from . import overlay, overlay_placement
+from . import overlay, overlay_appearance, overlay_placement
+from .overlay_style import LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -52,11 +53,10 @@ resends it (see mining_render.py), so each line gets replaced before it
 would expire on its own - a stale value only lingers a couple of seconds
 past the last successful send (run ended, overlay app closed, etc.)."""
 
-_OVERLAY_PANEL_FILL = "#000000"
-_OVERLAY_PANEL_BORDER = "#f97316"
-_OVERLAY_TEXT_COLOR = "#fdba74"
-"""Elite-orange-on-black HUD styling: black panel, `orange-500` border
-(#f97316), `orange-300` text (#fdba74)."""
+"""Colors come from the overlay's look (overlay_style.py): the panel's border and fill, and the title color for the text, which
+at the default scheme is the Elite-orange-on-black HUD styling this display always had. Every measure below is the base one at
+the legacy look; the text size, padding and line spacing chosen on the Appearance tab are added to it (`_stat_pitch`,
+`_panel_rect`, `_waypoint_geometry`), so a larger size makes a larger panel and the text still fits inside the border."""
 
 _OVERLAY_PANEL_PAD_X = 10
 _OVERLAY_PANEL_PAD_Y = 8
@@ -76,7 +76,6 @@ directional line so the two overlay features don't overlap when both
 are enabled."""
 
 _WAYPOINT_ARROW_CENTER_X = _OVERLAY_X + 10
-_WAYPOINT_ARROW_CENTER_Y = _WAYPOINT_OVERLAY_Y + 40
 _WAYPOINT_ARROW_SIZE = 18
 """Below the text line with enough clearance for the arrow's own size -
 placement for bearing.arrow_vector_points()'s rotated polyline, drawn
@@ -89,13 +88,9 @@ _OVERLAY_LARGE_LINE_HEIGHT = 26
 line uses it) - like _OVERLAY_CHAR_WIDTH_PX_LARGE, an estimate tuned to
 look right rather than a measured value."""
 
-_WAYPOINT_PANEL_EXTRA_H = max(
-    (_WAYPOINT_ARROW_CENTER_Y + _WAYPOINT_ARROW_SIZE)
-    - (_WAYPOINT_OVERLAY_Y + _OVERLAY_LARGE_LINE_HEIGHT), 0)
-"""How much taller the waypoint panel needs to be than its one text line
-alone, to also cover the arrow drawn below it - the gap between the
-arrow's bottom edge and where the text-line-sized panel would otherwise
-end."""
+_WAYPOINT_ARROW_GAP = 14
+"""Between the waypoint text line and the arrow's center (the legacy layout has the arrow center 40 below the text's top, which is
+the 26-high line plus this 14)."""
 
 _BG_ID = "wntb_mining_stats_bg"
 _WAYPOINT_BG_ID = "wntb_mining_waypoint_bg"
@@ -116,30 +111,40 @@ def set_overlay_client(client: overlay.OverlayClient) -> None:
     _client = client
 
 
-def _panel_rect(x: int, y: int, lines: List[str], *, line_height: int = _OVERLAY_LINE_HEIGHT,
-                char_width: int = _OVERLAY_CHAR_WIDTH_PX, extra_h: int = 0) -> tuple:
-    """(left, top, width, height) of the backing panel for `lines` drawn with their text origin at (x, y)."""
-    width = max(len(line) for line in lines) * char_width + 2 * _OVERLAY_PANEL_PAD_X
-    height = len(lines) * line_height + 2 * _OVERLAY_PANEL_PAD_Y + extra_h
-    return x - _OVERLAY_PANEL_PAD_X, y - _OVERLAY_PANEL_PAD_Y, width, height
+def _stat_pitch(look: Look = LEGACY) -> int:
+    """Distance between the stats lines: the normal line height plus two (22 at the legacy look)."""
+    return look.line_px("normal") + 2
 
 
-def _send_overlay_panel(client, msg_id: str, x: int, y: int, lines: List[str], *,
-                        line_height: int = _OVERLAY_LINE_HEIGHT,
-                        char_width: int = _OVERLAY_CHAR_WIDTH_PX,
-                        extra_h: int = 0) -> None:
-    """Draws the Elite-orange-on-black backing rect for a stack of
-    `lines` about to be sent as text at `x`/`y` (the same origin the
-    caller passes to its first text send) - see _OVERLAY_PANEL_FILL's
-    docstring for why this exists. `extra_h` grows the panel past the
+def _panel_rect(x: int, y: int, lines: List[str], look: Look = LEGACY, base: str = "normal", extra_h: int = 0,
+                line_height: int = 0) -> tuple:
+    """(left, top, width, height) of the backing panel for `lines` drawn at size `base` with their text origin at (x, y)."""
+    pad_x, pad_y = look.pad_x(_OVERLAY_PANEL_PAD_X), look.pad_y(_OVERLAY_PANEL_PAD_Y)
+    width = look.text_width(max(lines, key=len), base) + 2 * pad_x
+    height = len(lines) * (line_height or _stat_pitch(look)) + 2 * pad_y + extra_h
+    return x - pad_x, y - pad_y, width, height
+
+
+def _waypoint_geometry(look: Look = LEGACY) -> tuple:
+    """(line height, arrow center y, extra panel height) for the waypoint line at the look's size: the arrow sits a fixed gap below
+    the (large) text line, and the panel is taller than the line by enough to hold it."""
+    line = look.line_px("large")
+    center_y = _WAYPOINT_OVERLAY_Y + line + _WAYPOINT_ARROW_GAP
+    extra_h = max((center_y + _WAYPOINT_ARROW_SIZE) - (_WAYPOINT_OVERLAY_Y + line), 0)
+    return line, center_y, extra_h
+
+
+def _send_overlay_panel(client, msg_id: str, x: int, y: int, lines: List[str], look: Look = LEGACY, base: str = "normal",
+                        extra_h: int = 0, line_height: int = 0) -> None:
+    """Draws the backing rect for a stack of `lines` about to be sent as text at `x`/`y` (the same origin the
+    caller passes to its first text send) - see this module's colors note for why this exists. `extra_h` grows the panel past the
     text lines' own height for a caller drawing something else below
     them (e.g. the waypoint arrow). No-op if `lines` is empty - an empty
     panel would just be a stray box with nothing in it."""
     if not lines:
         return
-    left, top, width, height = _panel_rect(x, y, lines, line_height=line_height, char_width=char_width, extra_h=extra_h)
-    client.send_shape(msg_id, "rect", _OVERLAY_PANEL_BORDER, _OVERLAY_PANEL_FILL, left, top, width, height,
-                      ttl=_OVERLAY_TTL_S)
+    left, top, width, height = _panel_rect(x, y, lines, look, base, extra_h, line_height)
+    client.send_shape(msg_id, "rect", look.color("border"), look.color("fill"), left, top, width, height, ttl=_OVERLAY_TTL_S)
 
 
 def _in_supercruise() -> bool:
@@ -191,13 +196,14 @@ def push_stats_overlay(page: str, *, display_cargo_bar: bool, display_session_to
     def worker() -> None:
         try:
             # Drawn at the fixed origin above; the Overlay Placement setting moves it to where the commander put it.
-            placed = (overlay_placement.client_for("mining_stats", _client, _panel_rect(_OVERLAY_X, _OVERLAY_Y_START, lines))
+            look = overlay_appearance.current_look()
+            placed = (overlay_placement.client_for("mining_stats", _client, _panel_rect(_OVERLAY_X, _OVERLAY_Y_START, lines, look))
                       if lines else _client)
-            _send_overlay_panel(placed, _BG_ID, _OVERLAY_X, _OVERLAY_Y_START, lines)
+            _send_overlay_panel(placed, _BG_ID, _OVERLAY_X, _OVERLAY_Y_START, lines, look)
             for index, text in enumerate(lines):
-                placed.send_message(f"wntb_mining_stat_{index}", text, _OVERLAY_TEXT_COLOR,
-                                    _OVERLAY_X, _OVERLAY_Y_START + index * _OVERLAY_LINE_HEIGHT,
-                                    ttl=_OVERLAY_TTL_S)
+                placed.send_message(f"wntb_mining_stat_{index}", text, look.color("title"),
+                                    _OVERLAY_X, _OVERLAY_Y_START + index * _stat_pitch(look),
+                                    ttl=_OVERLAY_TTL_S, size=look.size("normal"))
         except OSError:
             logger.debug("Could not reach EDMCOverlay for Mining stats", exc_info=True)
 
@@ -245,7 +251,7 @@ def push_waypoint_overlay() -> None:
         glyph = bearing.arrow_glyph(relative_bearing)
         text = f"{glyph} {nearest.material} - {distance_str} {compass}"
         points = bearing.arrow_vector_points(
-            _WAYPOINT_ARROW_CENTER_X, _WAYPOINT_ARROW_CENTER_Y,
+            _WAYPOINT_ARROW_CENTER_X, _waypoint_geometry(overlay_appearance.current_look())[1],
             _WAYPOINT_ARROW_SIZE, relative_bearing)
     else:
         # No heading yet (rare - a Status.json update can have valid
@@ -255,15 +261,16 @@ def push_waypoint_overlay() -> None:
 
     def worker() -> None:
         try:
-            panel = dict(line_height=_OVERLAY_LARGE_LINE_HEIGHT, char_width=_OVERLAY_CHAR_WIDTH_PX_LARGE,
-                         extra_h=_WAYPOINT_PANEL_EXTRA_H)
+            look = overlay_appearance.current_look()
+            line, _center_y, extra_h = _waypoint_geometry(look)
+            panel = dict(look=look, base="large", extra_h=extra_h, line_height=line)
             placed = overlay_placement.client_for(
                 "mining_waypoint", _client, _panel_rect(_OVERLAY_X, _WAYPOINT_OVERLAY_Y, [text], **panel))
             _send_overlay_panel(placed, _WAYPOINT_BG_ID, _OVERLAY_X, _WAYPOINT_OVERLAY_Y, [text], **panel)
-            placed.send_message(_WAYPOINT_TEXT_ID, text, _OVERLAY_TEXT_COLOR, _OVERLAY_X,
-                                _WAYPOINT_OVERLAY_Y, ttl=_OVERLAY_TTL_S, size="large")
+            placed.send_message(_WAYPOINT_TEXT_ID, text, look.color("title"), _OVERLAY_X,
+                                _WAYPOINT_OVERLAY_Y, ttl=_OVERLAY_TTL_S, size=look.size("large"))
             if points is not None:
-                placed.send_vector(_WAYPOINT_ARROW_ID, points, _OVERLAY_PANEL_BORDER, ttl=_OVERLAY_TTL_S)
+                placed.send_vector(_WAYPOINT_ARROW_ID, points, look.color("border"), ttl=_OVERLAY_TTL_S)
         except OSError:
             logger.debug("Could not reach EDMCOverlay for Mining waypoint", exc_info=True)
 

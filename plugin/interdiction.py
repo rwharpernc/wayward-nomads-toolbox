@@ -39,8 +39,9 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay, overlay_placement
+from . import overlay, overlay_appearance, overlay_placement
 from .overlay import OverlayClient
+from .overlay_style import LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -312,21 +313,22 @@ _RESOLUTION_ID = "wntb_interdiction_resolution"
 # clear of the ship's own instruments.
 _X = 650
 _Y_TITLE = 100
-_Y_WHO = 130
-_Y_RESOLUTION = 160
 
-# This card's styling deliberately does NOT follow a switchable
-# overlay-chrome palette - its red-alert styling is a safety signal, not
-# chrome, and stays fixed regardless of theme.
+# This card's colors deliberately do NOT follow the overlay color scheme - its red-alert styling is a safety signal, not
+# chrome, and stays fixed whatever scheme is chosen. It does follow the text size, padding and line spacing, and the card
+# is sized from its text so a larger size still fits inside the border. At the legacy look the measures are the ones this
+# card always had: a 600 x 116 card, with the lines 30 apart and 26 / 30 of padding above and below.
 _CARD_BORDER = "#ef4444"  # red-500
 _CARD_FILL = "#f2450a0a"  # red-950 at ~95% alpha
 _TITLE_COLOR = "#f87171"  # red-400
 _WHO_COLOR = "white"
 
-_CARD_X = _X - 20
-_CARD_Y = _Y_TITLE - 26
-_CARD_W = 600
-_CARD_H = (_Y_RESOLUTION + 30) - _CARD_Y
+_CARD_MIN_W = 600
+_CARD_BASE_PAD_X = 20
+_CARD_BASE_PAD_TOP = 26
+_CARD_BOTTOM_MARGIN = 10        # below the last line (the card's bottom padding is that line's height plus this)
+_TITLE = "INTERDICTION WARNING"
+_SAMPLE_WHO = "Interdictor: CMDR Test Hostile (Commander)"
 
 _RESOLUTION_TEXT = {
     "escaped": ("Escaped!", "#34d399"),  # emerald-400
@@ -342,17 +344,57 @@ GROUP_NAME = "wntb_interdiction"
 GROUP_PREFIX = "wntb_interdiction_"
 
 
-def block_rect() -> tuple:
+@dataclass(frozen=True)
+class _Geometry:
+    pad_x: int
+    pad_top: int
+    width: int
+    height: int
+    y_who: int           # absolute, with the title at _Y_TITLE
+    y_resolution: int
+
+    @property
+    def left(self) -> int:
+        return _X - self.pad_x
+
+    @property
+    def top(self) -> int:
+        return _Y_TITLE - self.pad_top
+
+
+def _geometry(look: Look, who: str) -> _Geometry:
+    """The card's measures from the text it holds at the look's text size, padding and line spacing."""
+    pad_x = look.pad_x(_CARD_BASE_PAD_X)
+    pad_top = look.pad_y(_CARD_BASE_PAD_TOP)
+    y_who = _Y_TITLE + look.line_px("large") + 4
+    y_resolution = y_who + look.line_px("normal") + 10
+    widest = max(look.text_width(_TITLE, "large"), look.text_width(who, "normal"), look.text_width("Submitted to interdiction", "normal"))
+    height = (y_resolution + look.line_px("normal") + look.pad_y(_CARD_BOTTOM_MARGIN)) - (_Y_TITLE - pad_top)
+    return _Geometry(pad_x, pad_top, max(_CARD_MIN_W, widest + 2 * pad_x), height, y_who, y_resolution)
+
+
+def _who(snapshot: InterdictionSnapshot) -> str:
+    origin_tag = "Thargoid" if snapshot.is_thargoid else "Commander" if snapshot.is_player else None
+    who = f"Interdictor: {snapshot.interdictor_name or 'Unknown'}"
+    if origin_tag:
+        who += f" ({origin_tag})"
+    if snapshot.power:
+        who += f" — Power: {snapshot.power}"
+    return who
+
+
+def block_rect(snapshot: Optional[InterdictionSnapshot] = None, look: Look = LEGACY) -> tuple:
     """(left, top, width, height) of the warning card as `render` draws it."""
-    return _CARD_X, _CARD_Y, _CARD_W, _CARD_H
+    geometry = _geometry(look, _who(snapshot) if snapshot is not None and snapshot.active else _SAMPLE_WHO)
+    return geometry.left, geometry.top, geometry.width, geometry.height
 
 
-def placed_client(client: OverlayClient) -> OverlayClient:
+def placed_client(client: OverlayClient, snapshot: Optional[InterdictionSnapshot] = None, look: Look = LEGACY) -> OverlayClient:
     """`client` moved to where the Overlay Placement settings put the interdiction warning."""
-    return overlay_placement.client_for("interdiction", client, block_rect())
+    return overlay_placement.client_for("interdiction", client, block_rect(snapshot, look))
 
 
-def render(snapshot: InterdictionSnapshot, client: OverlayClient) -> None:
+def render(snapshot: InterdictionSnapshot, client: OverlayClient, look: Look = LEGACY) -> None:
     """Draws (or clears) the interdiction warning. Raises on an
     OverlayClient failure (e.g. EDMCOverlay isn't running) rather than
     swallowing it here - load.py's live listener wraps this call and
@@ -362,33 +404,28 @@ def render(snapshot: InterdictionSnapshot, client: OverlayClient) -> None:
         _clear(client)
         return
 
-    origin_tag = "Thargoid" if snapshot.is_thargoid else "Commander" if snapshot.is_player else None
-    who = f"Interdictor: {snapshot.interdictor_name or 'Unknown'}"
-    if origin_tag:
-        who += f" ({origin_tag})"
-    if snapshot.power:
-        who += f" — Power: {snapshot.power}"
-
-    client.send_shape(_CARD_ID, "rect", _CARD_BORDER, _CARD_FILL, _CARD_X, _CARD_Y, _CARD_W, _CARD_H, ttl=30, thickness=2)
-    client.send_message(_TITLE_ID, "INTERDICTION WARNING", _TITLE_COLOR, _X, _Y_TITLE, ttl=30, size="large")
-    client.send_message(_WHO_ID, who, _WHO_COLOR, _X, _Y_WHO, ttl=30)
+    who = _who(snapshot)
+    geometry = _geometry(look, who)
+    client.send_shape(_CARD_ID, "rect", _CARD_BORDER, _CARD_FILL, geometry.left, geometry.top, geometry.width, geometry.height,
+                      ttl=30, thickness=2)
+    client.send_message(_TITLE_ID, _TITLE, _TITLE_COLOR, _X, _Y_TITLE, ttl=30, size=look.size("large"))
+    client.send_message(_WHO_ID, who, _WHO_COLOR, _X, geometry.y_who, ttl=30, size=look.size("normal"))
 
     if snapshot.resolution:
         text, resolution_color = _RESOLUTION_TEXT.get(snapshot.resolution, (snapshot.resolution, "white"))
-        client.send_message(_RESOLUTION_ID, text, resolution_color, _X, _Y_RESOLUTION, ttl=int(RESOLVED_CLEAR_S) + 1)
+        client.send_message(_RESOLUTION_ID, text, resolution_color, _X, geometry.y_resolution, ttl=int(RESOLVED_CLEAR_S) + 1,
+                            size=look.size("normal"))
     else:
-        client.send_message(_RESOLUTION_ID, "", "white", _X, _Y_RESOLUTION, ttl=1)
+        client.send_message(_RESOLUTION_ID, "", "white", _X, geometry.y_resolution, ttl=1)
 
 
 def _clear(client: OverlayClient) -> None:
-    # Parked at the card's own position, not (0, 0) - a zero-size rect at
-    # literal screen-origin still pollutes a registered EDMCModernOverlay
-    # Plugin Group's bounding box for as long as this payload stays live -
-    # this feature registers no group, so it's harmless here, but the
-    # convention is kept consistent with landing.py's own clear functions.
-    client.send_shape(_CARD_ID, "rect", "", "", _CARD_X, _CARD_Y, 0, 0, ttl=1)
-    for msg_id, y in ((_TITLE_ID, _Y_TITLE), (_WHO_ID, _Y_WHO), (_RESOLUTION_ID, _Y_RESOLUTION)):
-        client.send_message(msg_id, "", "white", _X, y, ttl=1)
+    # Clearing replaces a shape or message by id, so where the blank one is sent does not matter; it is parked at the card's own
+    # position, not (0, 0), because a zero-size rect at the screen origin would pollute the group's bounding box.
+    geometry = _geometry(LEGACY, _SAMPLE_WHO)
+    client.send_shape(_CARD_ID, "rect", "", "", geometry.left, geometry.top, 0, 0, ttl=1)
+    for msg_id in (_TITLE_ID, _WHO_ID, _RESOLUTION_ID):
+        client.send_message(msg_id, "", "white", _X, _Y_TITLE, ttl=1)
 
 
 # --- Controller: this mode's one entry point for load.py/ui.py -----------
@@ -425,9 +462,11 @@ def _on_change(snapshot: InterdictionSnapshot) -> None:
     if not load_config().enabled:
         return
 
+    look = overlay_appearance.current_look()
+
     def worker() -> None:
         try:
-            render(snapshot, placed_client(_overlay_client))
+            render(snapshot, placed_client(_overlay_client, snapshot, look), look)
         except OSError:
             logger.debug("Could not reach EDMCOverlay for interdiction warning", exc_info=True)
 
@@ -494,14 +533,12 @@ def _test_interdiction() -> None:
     client = overlay.OverlayClient(cfg)
     frame = _result_label
 
+    look = overlay_appearance.current_look()
+    sample = InterdictionSnapshot(active=True, interdictor_name="CMDR Test Hostile", is_player=True, is_thargoid=False)
+
     def worker() -> None:
         try:
-            render(
-                InterdictionSnapshot(
-                    active=True, interdictor_name="CMDR Test Hostile", is_player=True, is_thargoid=False,
-                ),
-                placed_client(client),
-            )
+            render(sample, placed_client(client, sample, look), look)
             outcome, color = "Sent — check your overlay.", "#2e7d32"
         except OSError as err:
             outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"

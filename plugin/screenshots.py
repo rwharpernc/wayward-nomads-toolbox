@@ -30,8 +30,9 @@ from config import appname, config
 from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
+from .overlay_style import LEGACY, Look
 from .uikit import style as ui_style
-from . import overlay, overlay_placement, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
+from . import overlay, overlay_appearance, overlay_placement, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -113,18 +114,30 @@ _TEST_TTL_SECONDS = 20  # long enough to alt-tab from EDMC's Settings to the gam
 # Legacy overlay coordinates are on a 1280x960 virtual screen.
 _ORIGIN_X = 30
 _ORIGIN_Y = 700
-_LINE_HEIGHT = 18
-_COLOUR = "#00d9ff"
 _TEXT_SIZE = "normal"
-# "#aarrggbb" (alpha first) per the EDMCOverlay wire protocol.
-_BG_FILL = "#a0101820"
 _BG_PADDING_X = 10
 _BG_PADDING_Y = 6
-# No font metrics are available over the protocol, so panel width is
-# estimated from character count rather than measured. Deliberately
-# generous: a slightly wide panel looks fine, but text spilling past a too-
-# narrow one doesn't.
-_CHAR_WIDTH_PX = 10
+# The panel is sized from its text at the overlay look's text size (overlay_style.py): the line is two pixels shorter than the
+# size's line height and a character is estimated 25% wider than its real width. No font metrics are available over the
+# protocol, so the width is estimated from character count rather than measured. Deliberately generous: a slightly wide panel
+# looks fine, but text spilling past a too-narrow one doesn't. At the legacy look these are the 18 and 10 this display always
+# had. The color is the look's "info" role by default, and the panel's fill its "fill" role.
+_COLOUR_ROLE = "info"
+
+
+def _line_px(look: Look) -> int:
+    return look.line_px(_TEXT_SIZE) - 2
+
+
+def _char_px(look: Look) -> float:
+    return look.char_px(_TEXT_SIZE) * 1.25
+
+
+def _panel(look: Look, lines: int, widest_chars: int) -> Tuple[int, int, int, int]:
+    """(left, top, width, height) of the backing panel for that many lines, the longest being `widest_chars` characters."""
+    pad_x, pad_y = look.pad_x(_BG_PADDING_X), look.pad_y(_BG_PADDING_Y)
+    return (_ORIGIN_X - pad_x, _ORIGIN_Y - pad_y, int(round(widest_chars * _char_px(look))) + 2 * pad_x,
+            lines * _line_px(look) + 2 * pad_y)
 
 
 @dataclass
@@ -542,7 +555,7 @@ class ScreenshotsController:
 
     # --- overlay notification -------------------------------------------------
 
-    def _overlay_notify(self, key: str, text: str, *, colour: str = _COLOUR, ttl: int = _TTL_SECONDS) -> None:
+    def _overlay_notify(self, key: str, text: str, *, colour: str = _COLOUR_ROLE, ttl: int = _TTL_SECONDS) -> None:
         if not load_config().overlay_enabled:
             return
 
@@ -564,27 +577,24 @@ class ScreenshotsController:
         threading.Thread(target=worker, name="WNTB-screenshot-overlay", daemon=True).start()
 
     def _render_overlay(self, lines: List[Tuple[str, str, float, str]], previous_rows: int, now: float) -> None:
-        # Background panel sized to the widest current line and row count,
-        # outlined in the newest line's colour so a differently-coloured
-        # notification reads as a distinct panel.
-        widest = max(len(text) for _, text, _, _ in lines)
-        width = widest * _CHAR_WIDTH_PX + _BG_PADDING_X * 2
-        height = len(lines) * _LINE_HEIGHT + _BG_PADDING_Y * 2
+        # Background panel sized to the widest current line and row count at the look's text size, outlined in the newest line's
+        # colour so a differently-coloured notification reads as a distinct panel.
+        look = overlay_appearance.current_look()
+        left, top, width, height = _panel(look, len(lines), max(len(text) for _, text, _, _ in lines))
         # Drawn at the fixed origin above; the Overlay Placement setting moves it to where the commander put it.
-        client = overlay_placement.client_for(
-            "screenshots", self._overlay_client, (_ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y, width, height))
+        client = overlay_placement.client_for("screenshots", self._overlay_client, (left, top, width, height))
         bg_ttl = max(1, int(round(max(expiry for _, _, expiry, _ in lines) - now)))
-        outline = lines[0][3]
-        client.send_shape(
-            _BG_ID, "rect", outline, _BG_FILL, _ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y,
-            width, height, ttl=bg_ttl,
-        )
+        outline = look.color(lines[0][3]) if lines[0][3] in ("info", "ok", "warn", "danger", "title", "text") else lines[0][3]
+        client.send_shape(_BG_ID, "rect", outline, look.color("fill"), left, top, width, height, ttl=bg_ttl)
 
+        pitch = _line_px(look)
         for row, (_key, text, expiry, colour) in enumerate(lines):
             ttl = max(1, int(round(expiry - now)))
-            client.send_message(f"{_ID_PREFIX}{row}", text, colour, _ORIGIN_X, _ORIGIN_Y + row * _LINE_HEIGHT, ttl=ttl, size=_TEXT_SIZE)
+            colour = look.color(colour) if colour in ("info", "ok", "warn", "danger", "title", "text") else colour
+            client.send_message(f"{_ID_PREFIX}{row}", text, colour, _ORIGIN_X, _ORIGIN_Y + row * pitch, ttl=ttl,
+                                size=look.size(_TEXT_SIZE))
         for row in range(len(lines), previous_rows):
-            client.send_message(f"{_ID_PREFIX}{row}", "", "white", _ORIGIN_X, _ORIGIN_Y + row * _LINE_HEIGHT, ttl=1)
+            client.send_message(f"{_ID_PREFIX}{row}", "", "white", _ORIGIN_X, _ORIGIN_Y + row * pitch, ttl=1)
 
     def _overlay_clear(self) -> None:
         rendered_rows = self._overlay_rendered_rows
@@ -597,8 +607,8 @@ class ScreenshotsController:
         def worker() -> None:
             try:
                 for row in range(rendered_rows):
-                    client.send_message(f"{_ID_PREFIX}{row}", "", "white", _ORIGIN_X, _ORIGIN_Y + row * _LINE_HEIGHT, ttl=1)
-                client.send_shape(_BG_ID, "rect", "", "", _ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y, 1, 1, ttl=1)
+                    client.send_message(f"{_ID_PREFIX}{row}", "", "white", _ORIGIN_X, _ORIGIN_Y, ttl=1)
+                client.send_shape(_BG_ID, "rect", "", "", _ORIGIN_X, _ORIGIN_Y, 1, 1, ttl=1)
             except OSError:
                 logger.debug("Could not reach EDMCOverlay to clear screenshot notification", exc_info=True)
 
@@ -959,16 +969,15 @@ class ScreenshotsController:
 
         def worker() -> None:
             try:
-                placed = overlay_placement.client_for(
-                    "screenshots", client,
-                    (_ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y, 260, _LINE_HEIGHT + _BG_PADDING_Y * 2))
-                placed.send_shape(
-                    _BG_ID, "rect", _COLOUR, _BG_FILL, _ORIGIN_X - _BG_PADDING_X, _ORIGIN_Y - _BG_PADDING_Y,
-                    260, _LINE_HEIGHT + _BG_PADDING_Y * 2, ttl=_TEST_TTL_SECONDS,
-                )
+                look = overlay_appearance.current_look()
+                sample = "Screenshot saved: Test.png"
+                left, top, width, height = _panel(look, 1, len(sample))
+                placed = overlay_placement.client_for("screenshots", client, (left, top, width, height))
+                placed.send_shape(_BG_ID, "rect", look.color(_COLOUR_ROLE), look.color("fill"), left, top, width, height,
+                                  ttl=_TEST_TTL_SECONDS)
                 placed.send_message(
-                    f"{_ID_PREFIX}0", "Screenshot saved: Test.png", _COLOUR, _ORIGIN_X, _ORIGIN_Y, ttl=_TEST_TTL_SECONDS,
-                    size=_TEXT_SIZE,
+                    f"{_ID_PREFIX}0", sample, look.color(_COLOUR_ROLE), _ORIGIN_X, _ORIGIN_Y, ttl=_TEST_TTL_SECONDS,
+                    size=look.size(_TEXT_SIZE),
                 )
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:

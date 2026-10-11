@@ -30,7 +30,7 @@ import socket
 import threading
 import time
 from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple
+from typing import Dict, Iterable, Mapping, Optional, Tuple
 
 import tkinter as tk
 
@@ -122,6 +122,43 @@ def register_modern_overlay_groups(groups: Iterable[Tuple[str, str]]) -> None:
             # that should ever be able to break plugin startup or overlay
             # sends.
             logger.debug("Could not register EDMCModernOverlay plugin group %r", group_name, exc_info=True)
+
+
+_applied_offsets: Dict[str, float] = {}   # the group offsets last sent to EDMCModernOverlay, so unchanged ones are not rewritten
+
+
+def group_offsets_available() -> bool:
+    """Whether EDMCModernOverlay's plugin API is there to offset a group (it is only importable when that plugin is installed)."""
+    try:
+        from overlay_plugin.overlay_api import define_plugin_group  # type: ignore[import-not-found]  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def set_group_offsets(offsets: Mapping[str, float], plugin: str = "WNTB") -> bool:
+    """Has EDMCModernOverlay move each registered group `offsets[group_name]` canvas units to the right. The overlay applies a
+    group's offset after it clamps a shape to the canvas, which is what lets a display sit against the right-hand edge (see
+    overlay_layout.py). This is the overlay's own plugin API, the same setting its Overlay Controller edits; it is written to
+    the overlay's groupings file by the overlay itself. Returns True when every group was set (or was already set), False
+    when the API is missing or a call failed; callers fall back to drawing where the clamp allows. Safe to call often:
+    only offsets that changed are sent."""
+    try:
+        from overlay_plugin.overlay_api import define_plugin_group  # type: ignore[import-not-found]
+    except ImportError:
+        return False
+    ok = True
+    for group_name, value in offsets.items():
+        value = round(float(value), 3)
+        if _applied_offsets.get(group_name) == value:
+            continue
+        try:
+            define_plugin_group(plugin_name=plugin, plugin_group_name=group_name, plugin_group_offset_x=value)
+            _applied_offsets[group_name] = value
+        except Exception:
+            ok = False
+            logger.debug("Could not set the EDMCModernOverlay offset of group %r", group_name, exc_info=True)
+    return ok
 
 
 class OverlayClient:

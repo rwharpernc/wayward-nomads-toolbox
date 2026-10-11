@@ -86,7 +86,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Codex **BKF** (backfill from journal history) finds your journals.
 - [ ] Codex details window: the Entry and Times found headings sort both ways, the **Not found** tab fills in
       (needs network the first time), and double-clicking an entry opens its Canonn search in your browser.
-- [ ] Field Ops → **REPORT** (colonisation sites): after docking at a construction depot, the site appears with its
+- [ ] COL mode → **REPORT** (colonization sites): after docking at a construction depot, the site appears with its
       outstanding commodities, In Cargo matches your hold, and **Copy Shopping List** pastes elsewhere.
 - [ ] Mining: journal backfill works, and in an SRV the surface bearing arrow and coverage map work.
 - [ ] Copy buttons (Powerplay, BGS, Boxel **RND**): pasting into another app works.
@@ -297,8 +297,33 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 - [ ] Change a display to **Bottom left** with offsets 20 / 20, press OK, then **Test Overlay** (or the feature's test
       button): it appears in the bottom left corner of the game screen.
 - [ ] A display set to **Bottom left** with offsets 40 / 40 sits 40 pixels in from the bottom left corner of the screen.
-- [ ] A display set to a **Right** spot keeps its full width and stops where the overlay allows (a little short of the edge).
+- [ ] A display set to a **Right** spot (Inventory pickups, Screenshot messages) sits against the right edge of the screen at its
+      full width, not short of it; Settings -> Overlays -> Overlay Placement -> **Show placement preview** shows the same.
+      (WNTB sets an offset on that display's EDMCModernOverlay group; if it sits short of the edge, the EDMC log has
+      "Could not set the EDMCModernOverlay offset".) Unticking **Carry displays on the right to the screen edge** puts them back at
+      the limit.
 - [ ] A position set in an older version's X/Y boxes shows as **Exact position** with the same numbers.
+
+## 7g. Overlay Appearance (added 2026-10-11, Windows-tested only: check on Linux)
+
+- [ ] **Settings -> Overlays -> Appearance** exists, with Color scheme, Text size, Padding and Line spacing menus.
+- [ ] **Show sample** draws the Colonization card in the game in the picked scheme and size; a larger size gives a larger card.
+- [ ] At **Largest** with **Roomy** padding, each display (Colonization, Discovery, Notable, Landing, Inventory, Mining,
+      Screenshots) keeps its text inside its border without wrapping. Note any that do not, with the font and Proton/Wine setup.
+- [ ] Changing the scheme recolors every display; Interdiction stays red.
+- [ ] After OK, the choices are still set when Settings is reopened. **Reset to defaults** restores Elite orange / Default /
+      Comfortable / Normal.
+
+## 7h. Colonization mode (added 2026-10-11, Windows-tested only: check on Linux)
+
+- [ ] The button row has a **COL** button (eight buttons); the panel is not noticeably wider than before.
+- [ ] COL shows **Current project** for your newest active site and a **History** block; REPORT opens the sites window, and
+      SHOW/HIDE toggles the overlay card.
+- [ ] Without a fleet carrier there is no Carrier row, Trips left reads like "3 loads of 400 t", and the sites window has a single
+      Trips column. With one, Carrier is shown and Trips left reads "N to buy · N to haul".
+- [ ] After delivering cargo to a depot, "You delivered" and "Recently" go up by the same tonnes, and again after restarting EDMC
+      (no double counting).
+- [ ] After a build completes, History's "done" count goes up.
 
 ## Reporting
 

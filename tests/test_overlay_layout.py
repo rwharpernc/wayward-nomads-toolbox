@@ -204,6 +204,57 @@ class BlockOriginTests(unittest.TestCase):
         self.assertEqual(self.origin("right", "top", 0, 0, scr=classic)[0], 1280 - 360)
 
 
+class PlanTests(unittest.TestCase):
+    """A display on the far side of the overlay's clamp is drawn where the clamp allows and its group is offset the rest."""
+    SIZE = (420, 226)
+
+    def plan(self, placement, scr=MEASURED, can_offset=True, block=None):
+        return L.plan_origin(placement, block or self.SIZE, self.SIZE, scr, can_offset)
+
+    def test_a_right_aligned_display_is_drawn_at_the_clamp_and_offset_to_the_edge(self):
+        plan = self.plan(L.Placement("right", "top", 0, 0))
+        self.assertEqual(plan.x, 1280 - 420)                             # the furthest the clamp allows for 420 px
+        self.assertAlmostEqual(plan.offset_x, (1280 - 420 * 1280 / 3072) - (1280 - 420), places=2)
+        # Drawn at 860 and moved 245 right, the display's left edge is at 1105 and its right edge (420 px = 175 units) at 1280.
+        self.assertAlmostEqual(plan.x + plan.offset_x + 420 * 1280 / 3072, 1280, delta=0.5)
+
+    def test_the_pixel_offset_from_the_edge_is_kept(self):
+        plan = self.plan(L.Placement("right", "top", 40, 0))
+        self.assertAlmostEqual(plan.x + plan.offset_x + (420 + 40) * 1280 / 3072, 1280, delta=0.5)
+
+    def test_a_display_that_fits_before_the_clamp_needs_no_offset(self):
+        for placement in (L.Placement("left", "top", 40, 40), L.Placement("center", "middle", 0, 0), L.Placement("center", "top", 100, 0)):
+            plan = self.plan(placement)
+            self.assertEqual(plan.offset_x, 0.0, placement)
+            self.assertEqual((plan.x, plan.y), L.block_origin(placement, self.SIZE, MEASURED), placement)
+
+    def test_the_offset_is_the_same_whatever_the_displays_current_width(self):
+        # A display's content changes width, but its group's offset is one fixed number, so the drawn position must not follow it.
+        narrow = self.plan(L.Placement("right", "top", 0, 0), block=(300, 226))
+        wide = self.plan(L.Placement("right", "top", 0, 0), block=(420, 226))
+        self.assertEqual((narrow.x, narrow.offset_x), (wide.x, wide.offset_x))
+
+    def test_without_an_offset_the_display_just_stops_at_the_clamp(self):
+        plan = self.plan(L.Placement("right", "top", 0, 0), can_offset=False)
+        self.assertEqual((plan.x, plan.offset_x), (1280 - 420, 0.0))
+
+    def test_no_offset_where_the_overlay_does_not_clamp_across(self):
+        classic = screen(1920, 1080, pixel_sizes=False)
+        self.assertEqual(self.plan(L.Placement("right", "top", 0, 0), scr=classic).offset_x, 0.0)
+        tall = screen(1280, 1024)                       # across is free, down is clamped
+        self.assertEqual(self.plan(L.Placement("right", "top", 0, 0), scr=tall).offset_x, 0.0)
+
+    def test_down_the_screen_nothing_is_offset(self):
+        plan = self.plan(L.Placement("left", "bottom", 0, 0))
+        self.assertEqual(plan.y, round(960 - 226 * 960 / 1728))          # free axis: flush with the bottom, no offset needed
+
+    def test_shift_uses_the_plan(self):
+        shift = L.shift_for(L.Placement("right", "top", 0, 0), (20, 100, 420, 226), MEASURED, self.SIZE, True)
+        self.assertEqual(shift, (1280 - 420 - 20, 0 - 100))
+        plain = L.shift_for(L.Placement("right", "top", 0, 0), (20, 100, 420, 226), MEASURED)
+        self.assertEqual(plain, (1280 - 420 - 20, 0 - 100))                # the same raw spot; only the offset differs
+
+
 class ShiftTests(unittest.TestCase):
     def test_shift_is_target_minus_where_it_is_drawn(self):
         self.assertEqual(L.shift_for(L.Placement("left", "top", 0, 0), (20, 292, 300, 100), MEASURED), (-20, -292))

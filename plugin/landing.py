@@ -35,8 +35,9 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay, overlay_placement, panelkit
+from . import overlay, overlay_appearance, overlay_layout, overlay_placement, panelkit
 from .overlay import OverlayClient
+from .overlay_style import LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -579,19 +580,20 @@ def _diagram_colors() -> Tuple[str, str]:
         return _DIAGRAM_STROKE_DARK, _DIAGRAM_MARKER_DARK
     return _DIAGRAM_STROKE_LIGHT, _DIAGRAM_MARKER_LIGHT
 
-_CHROME_BORDER = "#80f97316"  # orange-500 at 50% alpha
-_CHROME_FILL = "#d9000000"  # black at 85% alpha
-_TEXT_PRIMARY = "#fdba74"  # orange-300
-_TEXT_MUTED = "#c2410c"  # orange-700
-_STATUS_OK = "#34d399"  # emerald-400
-_STATUS_DENIED = "#f87171"  # red-400
-
+# The card is laid out from the look: its text lines, the diagram under them and the card around both all take their size from the
+# text size, padding and line spacing, so everything still fits at a larger size. These are the base measures; at the legacy look
+# they give the layout this display always had (title at 650, card 320 x 324, diagram centered at y = 860). Colors come from the
+# look's roles: border and fill (the card), title, ok / danger (the docking status), header (station and pad lines).
 _TEXT_X = 40
 _Y_TITLE = 650
 _Y_STATUS = 675
 _Y_STATION = 698
 _Y_PAD = 721
 _Y_DENIED = 744
+_BASE_PAD_X = 20            # card edge to text
+_BASE_PAD_TOP = 14
+_BASE_PAD_BOTTOM = 20       # diagram to card edge
+_DIAGRAM_GAP = 16           # last text line to the diagram
 
 _CARD_ID = "wntb_landing_card"
 _CARD_X = 20
@@ -639,51 +641,121 @@ GROUP_NAME = "wntb_landing"
 GROUP_PREFIX = "wntb_landing_"
 
 
-def block_rect() -> tuple:
-    """(left, top, width, height) of the widest the landing card gets (the one with the "no actual diagram" note)."""
-    return _CARD_X, _CARD_Y, max(_CARD_W, _FALLBACK_CARD_W), _CARD_H
+@dataclass(frozen=True)
+class _Geometry:
+    """Where everything goes for one landing display at one look."""
+    pad_x: int
+    text_x: int
+    y_title: int
+    y_status: int
+    y_station: int
+    y_pad: int
+    y_denied: int
+    card_w: int
+    card_h: int
+    shift_x: int          # how far the diagram is moved from its legacy position
+    shift_y: int
 
 
-def placed_client(client: OverlayClient) -> OverlayClient:
+def _geometry(look: Look, info: Optional[LandingDisplayInfo], placeholder: bool) -> _Geometry:
+    """Measures from the text the card shows at the look's text size, padding and line spacing."""
+    pad_x = look.pad_x(_BASE_PAD_X)
+    normal = look.line_px("normal")
+    y_title = _CARD_Y + look.pad_y(_BASE_PAD_TOP)
+    y_status = y_title + look.line_px("large") - 1
+    pitch = normal + 3
+    y_station = y_status + pitch
+    y_pad = y_station + pitch
+    y_denied = y_pad + pitch
+    # The diagram (or, with no diagram, the placeholder's caption) goes under the text, centered on its own middle; the caption can
+    # be taller than the diagram at a larger text size, and then the card grows to hold it.
+    half = _DIAGRAM_SIZE // 2
+    if placeholder:
+        _lines, caption_line = _caption_lines(look)
+        half = max(half, (len(_lines) * caption_line + 1) // 2)
+    diagram_cy = y_denied + normal + _DIAGRAM_GAP + half
+    card_h = diagram_cy + half + look.pad_y(_BASE_PAD_BOTTOM) - _CARD_Y
+    lines = [("Landing", "large")]
+    if info is not None:
+        denied = (info.denied_reason or "Unknown") if info.status_label == "Docking Denied" else ""
+        lines += [(info.status_label or "", "normal"), (info.station or "", "normal"),
+                  (f"Pad {info.pad}" if info.pad is not None else "", "normal"), (denied, "normal")]
+    widest = max(look.text_width(text, base) for text, base in lines)
+    card_w = max(_CARD_W, widest + 2 * pad_x)
+    if placeholder:
+        card_w = max(card_w, _FALLBACK_CARD_W)     # the placeholder's caption sits to the right of its box
+    shift_x = 0 if placeholder else (card_w - _CARD_W) // 2
+    return _Geometry(pad_x, _CARD_X + pad_x, y_title, y_status, y_station, y_pad, y_denied, card_w, card_h,
+                     shift_x, diagram_cy - _DIAGRAM_CY)
+
+
+def _caption_lines(look: Look) -> Tuple[List[str], int]:
+    """The placeholder's caption wrapped for the look's text size, and its line height. It wraps into the fixed width beside the box, so a
+    larger text size means fewer characters per line and taller lines."""
+    line_height = _FALLBACK_LINE_HEIGHT + (look.line_px("normal") - LEGACY.line_px("normal"))
+    per_line = max(8, int(_FALLBACK_LABEL_W // (look.char_px("normal") + 1)))
+    return textwrap.wrap(_FALLBACK_LABEL_TEXT, width=per_line)[:_FALLBACK_MAX_LINES], line_height
+
+
+def _wants_placeholder(info: LandingDisplayInfo) -> bool:
+    has_diagram = info.show_diagram and info.diagram_type in ("starport", "fleetcarrier")
+    return not has_diagram and info.pad is not None and info.status_label == "Docking Approved"
+
+
+def block_rect(info: Optional[LandingDisplayInfo] = None, look: Look = LEGACY) -> tuple:
+    """(left, top, width, height) of the card as `render` draws it (the widest it gets when no display is given)."""
+    geometry = _geometry(look, info, info is None or _wants_placeholder(info))
+    return _CARD_X, _CARD_Y, geometry.card_w, geometry.card_h
+
+
+def placed_client(client: OverlayClient, info: Optional[LandingDisplayInfo] = None, look: Look = LEGACY) -> OverlayClient:
     """`client` moved to where the Overlay Placement settings put the landing widget."""
-    return overlay_placement.client_for("landing", client, block_rect())
+    return overlay_placement.client_for("landing", client, block_rect(info, look))
 
 
-def render(info: LandingDisplayInfo, carrier_type: CarrierType, client: OverlayClient) -> None:
+def render(info: LandingDisplayInfo, carrier_type: CarrierType, client: OverlayClient, look: Look = LEGACY) -> None:
     """Draws (or clears) the Landing widget. Raises on an OverlayClient
-    failure - load.py's live listener wraps this call and decides that's an
+    failure (e.g. EDMCOverlay isn't running) rather than swallowing it
+    here - load.py's live listener wraps this call and decides that's an
     expected, silent-fail state; the Settings "Test Overlay" button wraps
     its own call and surfaces it instead."""
     if not info.status_label:
         clear(client)
         return
 
-    status_color = _STATUS_DENIED if info.status_label == "Docking Denied" else _STATUS_OK
-    has_diagram = info.show_diagram and info.diagram_type in ("starport", "fleetcarrier")
-    show_placeholder = not has_diagram and info.pad is not None and info.status_label == "Docking Approved"
-    card_w = _FALLBACK_CARD_W if show_placeholder else _CARD_W
-    client.send_shape(_CARD_ID, "rect", _CHROME_BORDER, _CHROME_FILL, _CARD_X, _CARD_Y, card_w, _CARD_H, ttl=_TTL, thickness=2)
-    client.send_message("wntb_landing_title", "Landing", _TEXT_PRIMARY, _TEXT_X, _Y_TITLE, ttl=_TTL, size="large")
-    client.send_message("wntb_landing_status", info.status_label, status_color, _TEXT_X, _Y_STATUS, ttl=_TTL)
-    _send_or_clear(client, "wntb_landing_station", info.station, _TEXT_MUTED, _TEXT_X, _Y_STATION)
-    _send_or_clear(client, "wntb_landing_pad", f"Pad {info.pad}" if info.pad is not None else "", _TEXT_MUTED, _TEXT_X, _Y_PAD)
+    show_placeholder = _wants_placeholder(info)
+    geometry = _geometry(look, info, show_placeholder)
+    text_size, title_size = look.size("normal"), look.size("large")
+    status_color = look.color("danger") if info.status_label == "Docking Denied" else look.color("ok")
+    client.send_shape(_CARD_ID, "rect", look.soft(look.color("border")), look.color("fill"), _CARD_X, _CARD_Y,
+                      geometry.card_w, geometry.card_h, ttl=_TTL, thickness=2)
+    client.send_message("wntb_landing_title", "Landing", look.color("title"), geometry.text_x, geometry.y_title, ttl=_TTL,
+                        size=title_size)
+    client.send_message("wntb_landing_status", info.status_label, status_color, geometry.text_x, geometry.y_status, ttl=_TTL,
+                        size=text_size)
+    _send_or_clear(client, "wntb_landing_station", info.station, look.color("header"), geometry.text_x, geometry.y_station, text_size)
+    _send_or_clear(client, "wntb_landing_pad", f"Pad {info.pad}" if info.pad is not None else "", look.color("header"),
+                   geometry.text_x, geometry.y_pad, text_size)
 
     denied_label = (info.denied_reason or "Unknown") if info.status_label == "Docking Denied" else ""
-    _send_or_clear(client, "wntb_landing_denied", denied_label, _STATUS_DENIED, _TEXT_X, _Y_DENIED)
+    _send_or_clear(client, "wntb_landing_denied", denied_label, look.color("danger"), geometry.text_x, geometry.y_denied, text_size)
 
+    # The diagram and the placeholder are laid out for the legacy card; move them to where this card's text leaves room for them.
+    drawing = (overlay_layout.ShiftedClient(client, geometry.shift_x, geometry.shift_y)
+               if (geometry.shift_x or geometry.shift_y) else client)
     if info.show_diagram and info.diagram_type == "starport":
-        _render_starport_diagram(client, info.pad)
+        _render_starport_diagram(drawing, info.pad, look)
         _clear_fleetcarrier_diagram(client)
         _clear_placeholder(client)
     elif info.show_diagram and info.diagram_type == "fleetcarrier":
-        _render_fleetcarrier_diagram(client, info.pad, carrier_type)
+        _render_fleetcarrier_diagram(drawing, info.pad, carrier_type, look)
         _clear_starport_diagram(client)
         _clear_placeholder(client)
     else:
         _clear_starport_diagram(client)
         _clear_fleetcarrier_diagram(client)
         if show_placeholder:
-            _render_placeholder(client, info.pad)
+            _render_placeholder(drawing, info.pad, look)
         else:
             _clear_placeholder(client)
 
@@ -697,14 +769,14 @@ def clear(client: OverlayClient) -> None:
     _clear_placeholder(client)
 
 
-def _send_or_clear(client: OverlayClient, msg_id: str, text: str, color: str, x: int, y: int) -> None:
+def _send_or_clear(client: OverlayClient, msg_id: str, text: str, color: str, x: int, y: int, size: str = "normal") -> None:
     if text:
-        client.send_message(msg_id, text, color, x, y, ttl=_TTL)
+        client.send_message(msg_id, text, color, x, y, ttl=_TTL, size=size)
     else:
         client.send_message(msg_id, "", "white", x, y, ttl=1)
 
 
-def _render_placeholder(client: OverlayClient, pad: int) -> None:
+def _render_placeholder(client: OverlayClient, pad: int, look: Look = LEGACY) -> None:
     """No pad-diagram family exists for this station type (e.g. an
     outpost). Stands in for the missing diagram with a plain landscape
     rectangle roughly at the position a real diagram would occupy, the pad
@@ -712,22 +784,22 @@ def _render_placeholder(client: OverlayClient, pad: int) -> None:
     box_x = _DIAGRAM_CX - _PLACEHOLDER_W // 2
     box_y = _DIAGRAM_CY - _PLACEHOLDER_H // 2
     client.send_shape(
-        _PLACEHOLDER_RECT_ID, "rect", STROKE_COLOR, "", box_x, box_y, _PLACEHOLDER_W, _PLACEHOLDER_H,
+        _PLACEHOLDER_RECT_ID, "rect", look.color("border"), "", box_x, box_y, _PLACEHOLDER_W, _PLACEHOLDER_H,
         ttl=_TTL, thickness=2,
     )
 
     pad_text = str(pad)
     pad_x = _DIAGRAM_CX - (14 if len(pad_text) > 1 else 8)
-    client.send_message(_PLACEHOLDER_PAD_ID, pad_text, ACTIVE_COLOR, pad_x, _DIAGRAM_CY - 14, ttl=_TTL, size="large")
+    client.send_message(_PLACEHOLDER_PAD_ID, pad_text, look.color("warn"), pad_x, _DIAGRAM_CY - 14, ttl=_TTL, size=look.size("large"))
 
-    lines = textwrap.wrap(_FALLBACK_LABEL_TEXT, width=_FALLBACK_MAX_CHARS_PER_LINE)[:_FALLBACK_MAX_LINES]
-    block_height = len(lines) * _FALLBACK_LINE_HEIGHT
+    lines, line_height = _caption_lines(look)
+    block_height = len(lines) * line_height
     start_y = int(_DIAGRAM_CY - block_height / 2)
     for i, msg_id in enumerate(_FALLBACK_LINE_IDS):
         if i < len(lines):
             client.send_message(
-                msg_id, lines[i], _TEXT_MUTED, _FALLBACK_LABEL_X, start_y + i * _FALLBACK_LINE_HEIGHT,
-                ttl=_TTL, size=_FALLBACK_TEXT_SIZE,
+                msg_id, lines[i], look.color("header"), _FALLBACK_LABEL_X, start_y + i * line_height,
+                ttl=_TTL, size=look.size(_FALLBACK_TEXT_SIZE),
             )
         else:
             client.send_message(msg_id, "", "white", _DIAGRAM_CX, _DIAGRAM_CY, ttl=1)
@@ -775,31 +847,31 @@ def fleetcarrier_diagram_geometry(
     return rects
 
 
-def _render_starport_diagram(client: OverlayClient, pad: Optional[int]) -> None:
+def _render_starport_diagram(client: OverlayClient, pad: Optional[int], look: Look = LEGACY) -> None:
     geometry = starport_diagram_geometry(_DIAGRAM_CX, _DIAGRAM_CY, _DIAGRAM_SIZE, pad)
 
     for shape_id, points in zip(_STARPORT_SHELL_IDS, geometry["shells"]):
         closed = list(points) + [points[0]]
-        client.send_vector(shape_id, [{"x": x, "y": y} for x, y in closed], STROKE_COLOR, ttl=_TTL)
+        client.send_vector(shape_id, [{"x": x, "y": y} for x, y in closed], look.color("border"), ttl=_TTL)
 
     for i, shape_id in enumerate(_STARPORT_SPOKE_IDS):
         outer, inner = geometry["spokes"][i]
         client.send_vector(
-            shape_id, [{"x": outer[0], "y": outer[1]}, {"x": inner[0], "y": inner[1]}], STROKE_COLOR, ttl=_TTL,
+            shape_id, [{"x": outer[0], "y": outer[1]}, {"x": inner[0], "y": inner[1]}], look.color("border"), ttl=_TTL,
         )
 
     if geometry["marker"] is not None:
         px, py = geometry["marker"]
         client.send_vector(
             _STARPORT_PADMARK_ID,
-            [{"x": px, "y": py, "color": ACTIVE_COLOR, "marker": "circle"}],
-            ACTIVE_COLOR, ttl=_TTL,
+            [{"x": px, "y": py, "color": look.color("warn"), "marker": "circle"}],
+            look.color("warn"), ttl=_TTL,
         )
     else:
         client.send_vector(_STARPORT_PADMARK_ID, [], "", ttl=1)
 
 
-def _render_fleetcarrier_diagram(client: OverlayClient, pad: Optional[int], carrier_type: CarrierType) -> None:
+def _render_fleetcarrier_diagram(client: OverlayClient, pad: Optional[int], carrier_type: CarrierType, look: Look = LEGACY) -> None:
     rects = fleetcarrier_diagram_geometry(_DIAGRAM_CX, _DIAGRAM_CY, _DIAGRAM_SIZE, carrier_type, pad)
     pad_count = len(rects)
 
@@ -809,7 +881,7 @@ def _render_fleetcarrier_diagram(client: OverlayClient, pad: Optional[int], carr
             continue
         (x1, y1, x2, y2), is_active = rects[i]
         client.send_shape(
-            shape_id, "rect", STROKE_COLOR, ACTIVE_COLOR if is_active else "",
+            shape_id, "rect", look.color("border"), look.color("warn") if is_active else "",
             int(round(x1)), int(round(y1)), max(int(round(x2 - x1)), 1), max(int(round(y2 - y1)), 1), ttl=_TTL,
         )
 
@@ -923,10 +995,11 @@ class LandingController:
                 self._render_wake.clear()
             info, carrier_type = request
             try:
+                look = overlay_appearance.current_look()
                 if info is None:
-                    clear(placed_client(_overlay_client))
+                    clear(placed_client(_overlay_client, None, look))
                 else:
-                    render(info, carrier_type, placed_client(_overlay_client))
+                    render(info, carrier_type, placed_client(_overlay_client, info, look), look)
                 deadline = 0.0
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for landing pad overlay", exc_info=True)
@@ -1125,7 +1198,8 @@ class LandingController:
 
         def worker() -> None:
             try:
-                render(preview_info, None, placed_client(client))
+                look = overlay_appearance.current_look()
+                render(preview_info, None, placed_client(client, preview_info, look), look)
                 outcome, color = "Sent — check your overlay (and the main panel diagram).", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"

@@ -2,10 +2,11 @@
 delivered (see colonisation.py), and compares it to the cargo currently
 aboard so a hauler can see what's left to get.
 
-Field Ops only (PANEL_PLACEMENT = "fieldops") - hauling is ship/SRV cargo
-work, alongside Inventory and Ship Builds. Same "one summary line + one
-button in the panel, full list in a popup window" split as Ship Builds, so
-the main panel stays narrow however many sites or commodities there are.
+Its own mode (PANEL_PLACEMENT = "colonisation", the COL button). The page shows the current project (progress, what is
+delivered, what the ship and the fleet carrier cover, the trips left) and the commander's colonization history (sites
+finished, tonnes delivered, recent activity); the full list is in a popup window (REPORT). What is shown and how it is
+worded is in colonisation_stats.py, which adapts to a commander with or without a fleet carrier. A short fixed set of
+rows, each clipped, so the main panel stays narrow however many sites or commodities there are.
 """
 
 from __future__ import annotations
@@ -21,15 +22,15 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import (overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_overlay as card, colonisation_window,
-               overlay, panelkit, restore, trade_panel)
+from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card,
+               colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_panel)
 from .colonisation import Site
 from .colonisation_data import SiteRepository, site_repository
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
-PANEL_PLACEMENT = "fieldops"
+PANEL_PLACEMENT = "colonisation"
 
 _CFG_OVERLAY_ENABLED = "wntb_colonisation_overlay_enabled"
 _CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_row_limit"   # 0 = all; the older "..._rows" key held a default of 10
@@ -52,20 +53,24 @@ def overlay_right_panel() -> bool:
     return config.get_bool(_CFG_OVERLAY_RIGHT_PANEL, default=False)
 
 
-def overlay_shift(shown: Optional[card.Card]) -> tuple:
+def overlay_shift(shown: Optional[card.Card], look=None) -> tuple:
     """How far the card, drawn at its own fixed origin, is moved to reach the place chosen on the Overlay Placement tab
     (it depends on the card's size, so on what it is showing). (0, 0) when there is no card."""
     if shown is None:
         return (0, 0)
-    return overlay_placement.shift_for("colonisation", card.block_rect(shown, card.DEFAULT_X, card.DEFAULT_Y))
+    look = look or overlay_appearance.current_look()
+    return overlay_placement.shift_for("colonisation", card.block_rect(shown, card.DEFAULT_X, card.DEFAULT_Y, look))
 
 
 def overlay_rows() -> int:
     return _get_int(_CFG_OVERLAY_ROWS, card.DEFAULT_ROWS, card.MIN_ROWS, card.MAX_ROWS)
 
 
-_NO_CMDR_TEXT = "Colonisation: (waiting for commander login)"
+_NO_CMDR_TEXT = "Waiting for commander login"
 _NAME_MAX = 40
+_BAR_WIDTH, _BAR_HEIGHT = 220, 10   # fixed, so the progress bar can never widen EDMC's main window
+_BAR_FILL, _BAR_DONE = "#ff8c0d", "#2e7d32"
+_BAR_TRACK_DARK, _BAR_TRACK_LIGHT = "#3a3a3a", "#c8c8c8"
 
 
 def _clip(text: str, limit: int) -> str:
@@ -83,9 +88,12 @@ class ColonisationController:
         self._cargo: Dict[str, int] = {}
         self._capacity = 0   # the ship's cargo capacity, for the trips figure on the overlay
         self._carrier_cargo = colonisation_carrier.carrier_cargo
+        self._ledger = colonisation_history.DeliveryLedger()
         self._carrier_feed = colonisation_carrier.Feeder(self._carrier_cargo)
 
-        self._summary_var: Optional[tk.StringVar] = None
+        self._vars: Dict[str, tk.StringVar] = {}      # the page's value cells, by name
+        self._rows: Dict[str, tuple] = {}             # name -> (caption label, value label), to hide a row that does not apply
+        self._bar: Optional[tk.Canvas] = None
         self._parent: Optional[tk.Frame] = None
 
         # Overlay card state: what was last sent, when, and where (so it can be cleared or moved).
@@ -93,6 +101,7 @@ class ColonisationController:
         self._overlay_sent: Optional[card.Card] = None
         self._overlay_sent_at = 0.0
         self._overlay_pos = (0, 0)   # how far the card is shifted from where it is drawn
+        self._overlay_look = None    # the look it was last drawn with, so a change of appearance redraws it
         self._visibility = card.Visibility()
         self._last_focus: Any = None
         self._last_reason = ""
@@ -117,8 +126,9 @@ class ColonisationController:
             self._carrier_feed.cmdr = self._cmdr
         try:
             # Deliveries made while EDMC was closed are only in the journals.
+            self._ledger.load(plugin_dir)
             changed = colonisation_catchup.catch_up(
-                self._repository, colonisation_catchup.known_commanders(self._repository))
+                self._repository, colonisation_catchup.known_commanders(self._repository), ledger=self._ledger)
             if changed:
                 logger.info("Colonisation caught up from the journals: %d update(s) applied", changed)
         except Exception:
@@ -126,6 +136,8 @@ class ColonisationController:
         self._repository.add_listener(self._refresh_summary)
         self._repository.add_listener(self._update_overlay)
         self._carrier_cargo.add_listener(self._update_overlay)
+        self._carrier_cargo.add_listener(self._refresh_summary)
+        self._ledger.add_listener(self._refresh_summary)
         self._carrier_cargo.load(plugin_dir)
         try:
             known = colonisation_catchup.known_commanders(self._repository)
@@ -169,8 +181,10 @@ class ColonisationController:
         if cargo != self._cargo:
             self._cargo = cargo
             colonisation_window.refresh_cargo(cargo)
+            self._refresh_summary()
         elif capacity_changed:   # a different ship with the same cargo (say both empty): the trips figure changes
             colonisation_window.refresh_cargo(cargo)
+            self._refresh_summary()
 
         event = entry.get("event")
         if not self._cmdr:
@@ -191,6 +205,8 @@ class ColonisationController:
             if site is not None:
                 self._repository.upsert(self._cmdr, site)
         elif event == colonisation.EVENT_CONTRIBUTION:
+            if self._ledger.apply_contribution(self._cmdr, entry):
+                self._ledger.commit()
             market_id = entry.get("MarketID")
             existing = self._repository.get(self._cmdr, market_id) if isinstance(market_id, int) else None
             if existing is not None and colonisation.is_newer(existing, entry, inclusive=False):
@@ -229,13 +245,14 @@ class ColonisationController:
         if reason != self._last_reason:
             self._last_reason = reason
             logger.debug("Colonization overlay %s", reason)
-        position = overlay_shift(shown) if shown is not None else self._overlay_pos
+        look = overlay_appearance.current_look()
+        position = overlay_shift(shown, look) if shown is not None else self._overlay_pos
         now = time.monotonic()
-        if (shown == self._overlay_sent and position == self._overlay_pos
+        if (shown == self._overlay_sent and position == self._overlay_pos and look == self._overlay_look
                 and (shown is None or now - self._overlay_sent_at < card.RESEND_AFTER_S)):
             return
         previous, old_pos = self._overlay_sent, self._overlay_pos
-        self._overlay_sent, self._overlay_pos, self._overlay_sent_at = shown, position, now
+        self._overlay_sent, self._overlay_pos, self._overlay_sent_at, self._overlay_look = shown, position, now, look
         if shown is None and previous is None:
             return
         previous_slots = previous.slot_count if previous is not None else 0
@@ -253,7 +270,7 @@ class ColonisationController:
                     if shown is None:
                         card.clear(placed, card.DEFAULT_X, card.DEFAULT_Y, previous_slots)
                     else:
-                        card.render(placed, shown, card.DEFAULT_X, card.DEFAULT_Y, previous_slots_now)
+                        card.render(placed, shown, card.DEFAULT_X, card.DEFAULT_Y, previous_slots_now, look)
                     logger.debug("Colonization overlay sent (%s)", "card" if shown else "clear")
                 except OSError:
                     logger.debug("Could not reach EDMCOverlay for the colonization shopping list", exc_info=True)
@@ -270,43 +287,150 @@ class ColonisationController:
             logger.debug("Could not reach EDMCOverlay to clear on shutdown", exc_info=True)
         self._overlay_sent = None
 
+    # --- the page ---------------------------------------------------------------
+
+    def _set(self, name: str, text: str, show: bool = True) -> None:
+        """Set a value cell, and show or hide its whole row (a row that does not apply to this commander is not drawn)."""
+        var = self._vars.get(name)
+        if var is None:
+            return
+        var.set(text)
+        caption, value = self._rows[name]
+        (caption.grid if show else caption.grid_remove)()
+        (value.grid if show else value.grid_remove)()
+
+    def _draw_bar(self, fraction: float, done: bool) -> None:
+        if self._bar is None:
+            return
+        bar = self._bar
+        bar.delete("all")
+        track = _BAR_TRACK_DARK if panelkit.is_dark_theme() else _BAR_TRACK_LIGHT
+        bar.create_rectangle(0, 0, _BAR_WIDTH, _BAR_HEIGHT, fill=track, outline="")
+        width = int(round(_BAR_WIDTH * max(0.0, min(1.0, fraction))))
+        if width:
+            bar.create_rectangle(0, 0, width, _BAR_HEIGHT, fill=_BAR_DONE if done else _BAR_FILL, outline="")
+
     def _refresh_summary(self) -> None:
-        if self._summary_var is None:
+        """Fill the page from the saved sites, the ship's hold and capacity, the carrier and the delivery history."""
+        if not self._vars:
             return
         if not self._cmdr:
-            self._summary_var.set(_NO_CMDR_TEXT)
+            self._set("project", _NO_CMDR_TEXT)
+            self._draw_bar(0, False)
+            for name in ("progress", "delivered", "needed", "coverage", "hold", "carrier", "to_get", "trips", "gaps", "next", "more"):
+                self._set(name, "", show=False)
+            self._refresh_history(stats.history_for([], {}))
             return
-        active = [s for s in self._repository.for_cmdr(self._cmdr) if s.active]
+        sites = self._repository.for_cmdr(self._cmdr)
+        active = [s for s in sites if s.active]
+        has_carrier = self._carrier_cargo.has_carrier(self._cmdr)
         if not active:
-            self._summary_var.set("Colonisation: no active construction sites")
-            return
-        latest = active[0]
-        extra = f" (+{len(active) - 1} more)" if len(active) > 1 else ""
-        self._summary_var.set(
-            f"Colonisation: {_clip(latest.display_name(), _NAME_MAX)} — "
-            f"{latest.progress:.0%}, {latest.remaining_total:,} t to go{extra}"
-        )
+            self._set("project", "No active construction site. Dock at one to register it.")
+            self._draw_bar(0, False)
+            for name in ("progress", "delivered", "needed", "coverage", "hold", "carrier", "to_get", "trips", "gaps", "next", "more"):
+                self._set(name, "", show=False)
+        else:
+            current = active[0]
+            p = stats.project_for(current, self._cargo, self._carrier_cargo.tonnes(self._cmdr), has_carrier, self._capacity,
+                                  more_active=len(active) - 1)
+            where = f"{_clip(p.name, _NAME_MAX)}" + (f"\n{_clip(p.system, _NAME_MAX)}" if p.system else "")
+            self._set("project", where)
+            self._draw_bar(p.progress, p.complete)
+            self._set("progress", f"{p.progress:.0%} complete")
+            self._set("delivered", f"{p.delivered:,} of {p.required:,} t")
+            self._set("needed", f"{p.remaining:,} t")
+            self._set("coverage", stats.coverage_text(p))
+            self._set("hold", f"{p.in_hold:,} t in your ship")
+            self._set("carrier", f"{p.on_carrier:,} t moved onto your carrier", show=p.has_carrier)
+            self._set("to_get", f"{p.to_get:,} t")
+            self._set("trips", stats.trips_text(p))
+            self._set("gaps", ", ".join(f"{_clip(label, 22)} {tons:,}" for label, tons in p.gaps) or "None", show=bool(p.gaps))
+            self._set("next", stats.next_step(p))
+            self._set("more", f"+{p.more_active} more active {'site' if p.more_active == 1 else 'sites'}", show=p.more_active > 0)
+        self._refresh_history(stats.history_for(sites, self._ledger.record(self._cmdr)))
+
+    def _refresh_history(self, h: "stats.History") -> None:
+        self._set("h_sites", stats.sites_text(h))
+        has = h.deliveries > 0
+        self._set("h_tonnes", f"{h.tonnes:,} t in {h.deliveries:,} {'delivery' if h.deliveries == 1 else 'deliveries'}"
+                  if has else "None counted yet")
+        self._set("h_recent", f"{h.last_7_days:,} t this week · {h.last_30_days:,} t this month", show=has)
+        self._set("h_busiest", f"{h.busiest_day[1]:,} t on {h.busiest_day[0]}" if h.busiest_day else "", show=bool(h.busiest_day))
+        self._set("h_top", ", ".join(f"{_clip(label, 22)} {tons:,}" for label, tons in h.top_commodities),
+                  show=bool(h.top_commodities))
+        self._set("h_average", stats.average_text(h.average_days), show=h.average_days is not None)
+        self._set("h_since", f"Counted since {h.since}", show=bool(h.since))
 
     # --- main-panel widgets -----------------------------------------------
 
     def build_panel(self, parent: tk.Frame) -> None:
         self._parent = parent
-        self._summary_var = tk.StringVar(value=_NO_CMDR_TEXT)
-        self._refresh_summary()
+        parent.columnconfigure(1, weight=1)
+        fonts = panelkit.view_fonts()
+        row = 0
 
-        tk.Label(parent, text="Colonisation", font=panelkit.bold_font(parent)).grid(
-            row=0, column=0, columnspan=3, sticky=tk.W,
-        )
-        panelkit.wrap_label(parent, textvariable=self._summary_var, anchor="w").grid(
-            row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
-        )
-        manage_button = tk.Button(parent, text="REPORT", command=self._on_manage_clicked)
-        manage_button.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
-        panelkit.add_tooltip(manage_button, "Colonisation Sites - open your colonisation sites")
-        self._show_button = tk.Button(parent, text="SHOW", command=self._on_show_clicked)
-        self._show_button.grid(row=2, column=1, sticky=tk.W, padx=(6, 0), pady=(4, 0))
+        def heading(text: str, top: int = 0) -> None:
+            nonlocal row
+            tk.Label(parent, text=text, font=fonts["bold"]).grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(top, 0))
+            row += 1
+
+        def line(name: str, caption: str, wide: bool = False) -> None:
+            """A caption and its value; a `wide` one puts the value on its own line under the caption (long text)."""
+            nonlocal row
+            self._vars[name] = tk.StringVar()
+            cap = tk.Label(parent, text=caption, font=fonts["small"], anchor="w")
+            val = panelkit.wrap_label(parent, textvariable=self._vars[name], anchor="w")
+            self._rows[name] = (cap, val)
+            if wide:
+                cap.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
+                val.grid(row=row + 1, column=0, columnspan=3, sticky=tk.W)
+                row += 2
+            else:
+                cap.grid(row=row, column=0, sticky=tk.NW, padx=(0, 8))
+                val.grid(row=row, column=1, columnspan=2, sticky=tk.W)
+                row += 1
+
+        heading("Current project")
+        self._vars["project"] = tk.StringVar()
+        project = panelkit.wrap_label(parent, textvariable=self._vars["project"], anchor="w", font=fonts["bold"])
+        project.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
+        self._rows["project"] = (project, project)
+        row += 1
+        self._bar = tk.Canvas(parent, width=_BAR_WIDTH, height=_BAR_HEIGHT, highlightthickness=0, bd=0)
+        self._bar.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(4, 2))
+        row += 1
+        line("progress", "Progress")
+        line("delivered", "Delivered")
+        line("needed", "Still needed")
+        line("coverage", "Covered")
+        line("hold", "In hand")
+        line("carrier", "Carrier")
+        line("to_get", "Still to get")
+        line("trips", "Trips left")
+        line("gaps", "Biggest gaps (t)", wide=True)
+        line("next", "Next", wide=True)
+        line("more", "Others")
+
+        row = panelkit.add_separator(parent, row)
+        heading("History")
+        line("h_sites", "Sites")
+        line("h_tonnes", "You delivered")
+        line("h_recent", "Recently")
+        line("h_busiest", "Best day")
+        line("h_top", "Most delivered (t)", wide=True)
+        line("h_average", "Average build")
+        line("h_since", "Note")
+
+        buttons = tk.Frame(parent)
+        buttons.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
+        manage_button = tk.Button(buttons, text="REPORT", command=self._on_manage_clicked)
+        manage_button.pack(side=tk.LEFT)
+        panelkit.add_tooltip(manage_button, "Colonization Sites - open your colonization sites")
+        self._show_button = tk.Button(buttons, text="SHOW", command=self._on_show_clicked)
+        self._show_button.pack(side=tk.LEFT, padx=(6, 0))
         panelkit.add_tooltip(self._show_button, "Show the shopping list on the overlay now, whatever screen you are on "
                                                 "(press again to hide). Works even if the overlay option is off.")
+        self._refresh_summary()
 
     def _on_show_clicked(self) -> None:
         """Manual override of the automatic screens: force the shopping list on the overlay, or let go again."""
@@ -326,7 +450,7 @@ class ColonisationController:
     def build_settings(self, notebook: nb.Notebook) -> None:
         frame = nb.Frame(notebook)
         frame.columnconfigure(0, weight=1)
-        notebook.add(frame, text="Colonisation")
+        notebook.add(frame, text="Colonization")
 
         nb.Label(frame, text="Colonization", font=("TkDefaultFont", 9, "bold")).grid(
             row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4),
@@ -336,7 +460,7 @@ class ColonisationController:
             text=(
                 "Tracks what each colonization construction site still needs delivered. Dock at a "
                 "construction depot (or open its market) once to register it; deliveries are then "
-                "tallied from your journal. Press REPORT in Field Ops to "
+                "tallied from your journal. Press REPORT in the COL mode to "
                 "open the sites window and see each site's outstanding commodities against the cargo you're carrying, and to "
                 "copy a shopping list."
             ),
@@ -399,12 +523,13 @@ class ColonisationController:
         client = overlay.OverlayClient(cfg)
         label = self._overlay_result
         sample = card.preview_card()
-        placed = overlay_layout.ShiftedClient(client, *overlay_shift(sample))
+        look = overlay_appearance.current_look()
+        placed = overlay_layout.ShiftedClient(client, *overlay_shift(sample, look))
         x, y = card.DEFAULT_X, card.DEFAULT_Y
 
         def worker() -> None:
             try:
-                slots = card.render(placed, sample, x, y)
+                slots = card.render(placed, sample, x, y, look=look)
                 time.sleep(8)
                 card.clear(placed, x, y, slots)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"

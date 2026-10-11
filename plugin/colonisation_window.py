@@ -53,6 +53,8 @@ _TRIP_COLUMNS = (
     Column("buy", "Buy Trips", 90, anchor="e", max_chars=10),
     Column("haul", "Haul Trips", 90, anchor="e", max_chars=10),
 )
+# Without a carrier there is nothing to stage: one load is bought and delivered in one go, so there is one trips column.
+_TRIP_COLUMN_ONLY = (Column("haul", "Trips", 80, anchor="e", max_chars=10),)
 _SOURCE_COLUMNS = (
     Column("station", "Station", 120, stretch=True, max_chars=32),
     Column("system", "System", 110, stretch=True, max_chars=30),
@@ -193,8 +195,7 @@ class ColonisationWindow:
         self._tile_ship = StatTile(tiles, "–", "t ship capacity")
         self._tile_buy = StatTile(tiles, "–", "trips to buy", P.ACCENT)
         self._tile_haul = StatTile(tiles, "–", "trips to haul", P.INFO)
-        for tile in (self._tile_get, self._tile_carrier, self._tile_hold, self._tile_ship, self._tile_buy, self._tile_haul):
-            tile.pack(side="left", padx=(0, P.PAD_SM))
+        self._arrange_tiles()
 
         filters = tk.Frame(right, bg=P.PANE, padx=P.PAD, pady=P.PAD_SM)
         filters.pack(fill="x")
@@ -214,8 +215,21 @@ class ColonisationWindow:
         self._sources_host = tk.Frame(rows, bg=P.PANE)
         rows.add(self._sources_host, stretch="always", minsize=230)
 
+    def _arrange_tiles(self) -> None:
+        """The figures above the table. A commander without a fleet carrier has no carrier figure and a single trips figure
+        (one load is bought and delivered in one go); one with a carrier has trips to buy and trips to haul."""
+        for tile in (self._tile_get, self._tile_carrier, self._tile_hold, self._tile_ship, self._tile_buy, self._tile_haul):
+            tile.pack_forget()
+        shown = [self._tile_get, self._tile_hold, self._tile_ship, self._tile_haul]
+        if self._with_fc:
+            shown = [self._tile_get, self._tile_carrier, self._tile_hold, self._tile_ship, self._tile_buy, self._tile_haul]
+        self._tile_haul.set_caption("trips to haul" if self._with_fc else "trips to finish")
+        for tile in shown:
+            tile.pack(side="left", padx=(0, P.PAD_SM))
+
     def _build_commodity_table(self) -> DataTable:
-        columns = _COMMODITY_COLUMNS + ((_FC_COLUMN,) if self._with_fc else ()) + _TRIP_COLUMNS
+        columns = _COMMODITY_COLUMNS + ((_FC_COLUMN,) if self._with_fc else ()) + (
+            _TRIP_COLUMNS if self._with_fc else _TRIP_COLUMN_ONLY)
         table = DataTable(self._table_host, columns, sortable=False, on_header=self._on_sort,
                           on_select=self._on_pick_commodity, empty_text="Nothing left to deliver here.")
         # Whole-row tints: green when the ship plus the fleet carrier covers the need, orange when it is more than needed.
@@ -343,6 +357,7 @@ class ColonisationWindow:
             self._with_fc = wants_fc
             self._commodity_table.destroy()
             self._commodity_table = self._build_commodity_table()
+            self._arrange_tiles()
 
         self._commodity_table.clear()
         self._row_label.clear()
@@ -380,7 +395,9 @@ class ColonisationWindow:
                       f"{row.in_cargo:,}" if row.in_cargo else "")
             if wants_fc:
                 values += (f"{row.on_carrier:,}" if row.on_carrier else "",)
-            values += (view.format_trips(row.buy_trips), view.format_trips(row.haul_trips))
+            if wants_fc:
+                values += (view.format_trips(row.buy_trips),)
+            values += (view.format_trips(row.haul_trips),)
             tag = None if row.state == view.STATE_SHORT else row.state
             iid = f"{site.market_id}:{row.key}"
             self._row_label[iid] = row.label
@@ -391,11 +408,17 @@ class ColonisationWindow:
         if totals.lines and not rows:
             self._shell.set_status("The filters hide every commodity this site still needs.")
         else:
-            ship = (f"Your {capacity:,} t ship needs {totals.buy_trips:,} trip{'s' if totals.buy_trips != 1 else ''} to buy "
-                    f"what is missing and {totals.haul_trips:,} to haul it all to the site."
-                    if capacity > 0 else "Your ship's cargo capacity isn't known yet.")
+            plural = lambda n: "" if n == 1 else "s"   # noqa: E731
+            if capacity <= 0:
+                ship = "Your ship's cargo capacity isn't known yet."
+            elif wants_fc:
+                ship = (f"Your {capacity:,} t ship needs {totals.buy_trips:,} trip{plural(totals.buy_trips)} to buy "
+                        f"what is missing and {totals.haul_trips:,} to haul it all to the site.")
+            else:   # nothing to stage anywhere: a load is bought and delivered in one go
+                ship = f"Your {capacity:,} t ship needs {totals.haul_trips:,} trip{plural(totals.haul_trips)} to finish the build."
+            covered_by = "your ship and carrier" if wants_fc else "your ship"
             self._shell.set_status(f"{totals.lines} commodit{'y' if totals.lines == 1 else 'ies'} still needed, "
-                                   f"{totals.covered} covered by your ship and carrier. {ship}")
+                                   f"{totals.covered} covered by {covered_by}. {ship}")
 
     # --- where to buy ----------------------------------------------------------
 

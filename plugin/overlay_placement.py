@@ -30,13 +30,14 @@ from typing import Any, Dict, List, Optional, Tuple
 import myNotebook as nb
 from config import appname, config
 
-from . import overlay, overlay_layout as layout, platform_support
+from . import overlay, overlay_appearance, overlay_layout as layout, overlay_style, platform_support
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_SCALING = "wntb_overlay_display_scaling"   # "auto" or one of layout.SCALING_CHOICES such as "125%"
 CFG_MODE = "wntb_overlay_scale_mode"           # "auto", "fit" or "fill"
+CFG_OFFSETS = "wntb_overlay_group_offsets"     # whether right-hand displays are carried past the overlay's clamp (default on)
 AUTO = "auto"
 
 DISPLAY_SETTINGS_FILE = "DisplaySettings.xml"
@@ -53,27 +54,43 @@ PREVIEW_SECONDS = 12
 # --- the displays that can be placed -------------------------------------------------------------------------------
 
 def _slot(key: str, label: str, h: str, v: str, dx: int, dy: int, size: Tuple[int, int],
-          legacy_x: str = "", legacy_y: str = "", legacy_default: Tuple[int, int] = (0, 0)) -> layout.Slot:
-    return layout.Slot(key, label, layout.Placement(h, v, dx, dy), size, legacy_x, legacy_y, legacy_default)
+          legacy_x: str = "", legacy_y: str = "", legacy_default: Tuple[int, int] = (0, 0),
+          group: str = "", group_prefix: str = "") -> layout.Slot:
+    return layout.Slot(key, label, layout.Placement(h, v, dx, dy), size, legacy_x, legacy_y, legacy_default, group, group_prefix)
 
 
 # Sizes are the block each display occupies, in the pixels the display is drawn in (used to preview it and to anchor it to
 # a right or bottom edge). Offsets are screen pixels in from the edge.
 SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
     _slot("colonisation", "Colonization shopping list", "left", "middle", 40, 0, (360, 300),
-          "wntb_colonisation_overlay_x", "wntb_colonisation_overlay_y", (20, 300)),
+          "wntb_colonisation_overlay_x", "wntb_colonisation_overlay_y", (20, 300), "wntb_colonisation", "wntb_colonisation_"),
     _slot("discovery", "Discovery alerts", "center", "top", 0, 100, (460, 234),
-          "wntb_discovery_x", "wntb_discovery_y", (700, 60)),
+          "wntb_discovery_x", "wntb_discovery_y", (700, 60), "wntb_discovery", "wntb_discovery_"),
     _slot("notable", "Notable find card", "center", "top", 0, 360, (460, 84),
-          "wntb_notable_x", "wntb_notable_y", (700, 560)),
-    _slot("interdiction", "Interdiction warning", "center", "top", 0, 120, (600, 116)),
-    _slot("landing", "Landing assist", "left", "bottom", 40, 40, (320, 324)),
+          "wntb_notable_x", "wntb_notable_y", (700, 560), "wntb_notable", "wntb_notable_"),
+    _slot("interdiction", "Interdiction warning", "center", "top", 0, 120, (600, 116),
+          group="wntb_interdiction", group_prefix="wntb_interdiction_"),
+    _slot("landing", "Landing assist", "left", "bottom", 40, 40, (466, 324),
+          group="wntb_landing", group_prefix="wntb_landing_"),
     _slot("inventory", "Inventory pickups and bars", "right", "top", 40, 200, (420, 226),
-          "wntb_inventory_overlay_x", "wntb_inventory_overlay_y", (900, 120)),
+          "wntb_inventory_overlay_x", "wntb_inventory_overlay_y", (900, 120), "wntb_inventory", "wntb_inventory_"),
     _slot("mining_stats", "Mining stats", "left", "top", 40, 160, (400, 100)),
     _slot("mining_waypoint", "Mining waypoint", "left", "top", 40, 340, (400, 70)),
-    _slot("screenshots", "Screenshot messages", "right", "bottom", 40, 40, (420, 78)),
+    _slot("screenshots", "Screenshot messages", "right", "bottom", 40, 40, (420, 78),
+          group="wntb_screenshot", group_prefix="wntb_screenshot_"),
 )}
+
+
+def slot_size(slot_key: str, look: Optional[overlay_style.Look] = None) -> Tuple[int, int]:
+    """A display's nominal size at the current look: the slot's size at the default text size, scaled to the chosen text size (its
+    width by the estimated character width, its height by the line height) and grown by the padding on every side. It is what
+    right- and bottom-anchoring, centering and the overlay group offsets are worked out from, so they stay right when the text
+    size or padding changes."""
+    look = look or overlay_appearance.current_look()
+    width, height = SLOTS[slot_key].size
+    char_ratio = look.char_px("normal") / overlay_style.LEGACY.char_px("normal")
+    line_ratio = look.line_px("normal") / overlay_style.LEGACY.line_px("normal")
+    return int(round(width * char_ratio + 2 * look.pad_extra)), int(round(height * line_ratio + 2 * look.pad_extra))
 
 
 # --- the screen ----------------------------------------------------------------------------------------------------
@@ -189,12 +206,17 @@ def screen_for(scaling_choice: str, mode_choice: str) -> layout.Screen:
 
 
 def current_screen() -> layout.Screen:
-    """The screen as configured now, re-read from the files at most every SCREEN_CACHE_S seconds."""
+    """The screen as configured now, re-read from the files at most every SCREEN_CACHE_S seconds. If it changed (a new
+    resolution, say) the group offsets are worked out again, since they depend on it."""
     now = time.monotonic()
     cached = _screen_cache["screen"]
     if cached is None or now - _screen_cache["at"] > SCREEN_CACHE_S:
-        cached = screen_for(config.get_str(CFG_SCALING) or AUTO, config.get_str(CFG_MODE) or AUTO)
+        fresh = screen_for(config.get_str(CFG_SCALING) or AUTO, config.get_str(CFG_MODE) or AUTO)
+        changed = cached is not None and fresh != cached
+        cached = fresh
         _screen_cache.update(at=now, screen=cached)
+        if changed:
+            threading.Thread(target=apply_group_offsets, name="WNTB-overlay-offsets", daemon=True).start()
     return cached
 
 
@@ -227,9 +249,20 @@ def save_placement(slot_key: str, placement: layout.Placement) -> None:
     config.set(layout.setting_key(slot_key), layout.format_placement(placement))
 
 
+def offsets_enabled() -> bool:
+    """The Settings switch for carrying displays past the overlay's right-hand clamp (on unless turned off)."""
+    return config.get_str(CFG_OFFSETS) != "0"
+
+
+def can_offset(slot_key: str) -> bool:
+    """Whether a display can be carried past the overlay's right-hand clamp by an offset of its overlay group."""
+    return bool(SLOTS[slot_key].group) and offsets_enabled() and overlay.group_offsets_available()
+
+
 def shift_for(slot_key: str, block: Tuple[int, int, int, int]) -> Tuple[int, int]:
-    """How far to move a display drawn in the rectangle `block` = (left, top, width, height) to reach its place."""
-    return layout.shift_for(placement_for(slot_key), block, current_screen())
+    """How far to move a display drawn in the rectangle `block` = (left, top, width, height) to reach its place. For a display
+    with an overlay group this is only as far as the clamp allows; the group's offset (apply_group_offsets) does the rest."""
+    return layout.shift_for(placement_for(slot_key), block, current_screen(), slot_size(slot_key), can_offset(slot_key))
 
 
 def client_for(slot_key: str, client: Any, block: Tuple[int, int, int, int]) -> Any:
@@ -244,8 +277,33 @@ def client_for(slot_key: str, client: Any, block: Tuple[int, int, int, int]) -> 
 
 
 def origin_for(slot_key: str, size: Tuple[int, int]) -> Tuple[int, int]:
-    """Top left corner for a display of `size` that positions itself from an origin rather than being shifted."""
-    return layout.block_origin(placement_for(slot_key), size, current_screen())
+    """Top left corner for a display of `size` that positions itself from an origin rather than being shifted (as far as the
+    clamp allows, when its group's offset carries it the rest of the way)."""
+    plan = layout.plan_origin(placement_for(slot_key), size, slot_size(slot_key) if SLOTS[slot_key].group else size,
+                              current_screen(), can_offset(slot_key))
+    return plan.x, plan.y
+
+
+def group_offsets(placements: Optional[Dict[str, layout.Placement]] = None,
+                  screen: Optional[layout.Screen] = None) -> Dict[str, float]:
+    """The overlay group offset (canvas units to the right) each display needs for its placement, by group name. Only displays
+    with a group are listed; most are 0."""
+    screen = screen or current_screen()
+    wanted = placements if placements is not None else {key: placement_for(key) for key in SLOTS}
+    use = offsets_enabled() if placements is None else _offsets_typed()
+    return {slot.group: (layout.plan_origin(wanted[key], slot_size(key), slot_size(key), screen, True).offset_x if use else 0.0)
+            for key, slot in SLOTS.items() if slot.group and key in wanted}
+
+
+def apply_group_offsets(placements: Optional[Dict[str, layout.Placement]] = None,
+                        screen: Optional[layout.Screen] = None) -> bool:
+    """Sends the group offsets for the saved placements (or the given ones) to EDMCModernOverlay. False when it can't be done,
+    in which case displays simply stop where the overlay's clamp allows."""
+    try:
+        return overlay.set_group_offsets(group_offsets(placements, screen))
+    except Exception:
+        logger.exception("Could not apply the overlay group offsets")
+        return False
 
 
 # --- Settings tab --------------------------------------------------------------------------------------------------
@@ -261,6 +319,12 @@ _mode_var: Optional[tk.StringVar] = None
 _info_var: Optional[tk.StringVar] = None
 _result_var: Optional[tk.StringVar] = None
 _frame: Optional[tk.Misc] = None
+_offsets_var: Optional[tk.BooleanVar] = None
+
+
+def _offsets_typed() -> bool:
+    """The offsets switch as currently ticked on the tab (not yet saved), or the saved one when the tab isn't built."""
+    return bool(_offsets_var.get()) if _offsets_var is not None else offsets_enabled()
 
 
 def _scaling_value(label: str) -> str:
@@ -299,7 +363,7 @@ def _show_info() -> None:
 
 
 def build_settings(notebook: tk.Misc) -> None:
-    global _scaling_var, _mode_var, _info_var, _result_var, _frame
+    global _scaling_var, _mode_var, _info_var, _result_var, _frame, _offsets_var
 
     frame = nb.Frame(notebook)
     _frame = frame
@@ -333,6 +397,13 @@ def build_settings(notebook: tk.Misc) -> None:
     tk.OptionMenu(screen_box, _mode_var, _MODE_AUTO_LABEL, *_MODE_LABELS.values(),
                   command=lambda _v: _show_info()).grid(row=1, column=1, sticky=tk.W, padx=(6, 0))
 
+    _offsets_var = tk.BooleanVar(value=offsets_enabled())
+    nb.Checkbutton(
+        screen_box, text=("Carry displays on the right to the screen edge (sets an offset on their EDMCModernOverlay group; "
+                          "untick if they end up in the wrong place)"),
+        variable=_offsets_var, command=_show_info,
+    ).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(6, 0))
+
     grid = tk.Frame(frame)
     grid.grid(row=3, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     for column, heading in enumerate(("Display", "Spot", "Offset X", "Offset Y")):
@@ -365,14 +436,18 @@ def save_settings() -> None:
         return
     config.set(CFG_SCALING, _scaling_value(_scaling_var.get()))
     config.set(CFG_MODE, _mode_value(_mode_var.get()))
+    if _offsets_var is not None:
+        config.set(CFG_OFFSETS, "1" if _offsets_var.get() else "0")
     for key in SLOTS:
         if key in _rows:
             save_placement(key, _typed_placement(key))
     refresh()
+    apply_group_offsets()
 
 
 def _redetect() -> None:
     refresh()
+    apply_group_offsets()
     _show_info()
     if _result_var is not None:
         _result_var.set("Read the overlay's log and the game's files again.")
@@ -392,12 +467,15 @@ def _reset_all() -> None:
         _scaling_var.set(_SCALING_AUTO_LABEL)
     if _mode_var is not None:
         _mode_var.set(_MODE_AUTO_LABEL)
+    if _offsets_var is not None:
+        _offsets_var.set(True)
     _show_info()
     if _result_var is not None:
         _result_var.set("Defaults are shown. Press OK in Settings to keep them.")
 
 
-def preview_shapes(placements: Dict[str, layout.Placement], screen: layout.Screen) -> List[Dict[str, Any]]:
+def preview_shapes(placements: Dict[str, layout.Placement], screen: layout.Screen,
+                   use_groups: bool = False) -> List[Dict[str, Any]]:
     """What the preview draws: a small marker at the screen's top left corner, then a labeled box for each display at its
     placed position and at its real size. Positions are canvas units and sizes are pixels, as the overlay takes them. (There
     is no full-screen outline: the overlay squashes a box wider than the canvas, so it could not be drawn truthfully.) Plain
@@ -406,8 +484,11 @@ def preview_shapes(placements: Dict[str, layout.Placement], screen: layout.Scree
                                     "label": "Screen top left", "color": "#ffffff"}]
     for index, (key, placement) in enumerate(placements.items()):
         slot = SLOTS[key]
-        x, y = layout.block_origin(placement, slot.size, screen)
-        items.append({"id": f"wntb_placeprev_{key}", "x": x, "y": y, "w": slot.size[0], "h": slot.size[1],
+        grouped = use_groups and bool(slot.group)     # drawn inside its group, so its offset applies, as for the real display
+        size = slot_size(key)
+        plan = layout.plan_origin(placement, size, size, screen, grouped)
+        items.append({"id": f"{slot.group_prefix}placeprev" if grouped else f"wntb_placeprev_{key}",
+                      "x": plan.x, "y": plan.y, "w": size[0], "h": size[1], "offset_x": plan.offset_x,
                       "label": slot.label, "color": _PREVIEW_COLORS[index % len(_PREVIEW_COLORS)]})
     return items
 
@@ -417,7 +498,12 @@ def _preview() -> None:
     if _result_var is None:
         return
     try:
-        items = preview_shapes({key: _typed_placement(key) for key in SLOTS if key in _rows}, _typed_screen())
+        typed = {key: _typed_placement(key) for key in SLOTS if key in _rows}
+        screen = _typed_screen()
+        grouped = overlay.group_offsets_available() and screen.pixel_sizes and _offsets_typed()
+        items = preview_shapes(typed, screen, use_groups=grouped)
+        if grouped:
+            apply_group_offsets(typed, screen)    # the typed values, until the preview ends and the saved ones return
     except ValueError:
         _result_var.set("One of the offsets is not a number.")
         return
@@ -432,6 +518,10 @@ def _preview() -> None:
                 client.send_message(f"{item['id']}_label", item["label"], item["color"], item["x"] + 8, item["y"] + 6,
                                     ttl=PREVIEW_SECONDS)
             message = f"Preview drawn for {PREVIEW_SECONDS} seconds."
+            if grouped:
+                timer = threading.Timer(PREVIEW_SECONDS + 1, apply_group_offsets)   # the saved placements again
+                timer.daemon = True
+                timer.start()
         except OSError as exc:
             message = f"Could not reach the overlay: {exc}"
         try:

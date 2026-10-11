@@ -555,7 +555,7 @@ and the mission / stolen split). The History window is opened by `tests/trade_hi
 checked by `tests/trade_view_smoke.py` (run by `test_trade_view_smoke.py` in a subprocess, skipped without a display):
 no label asks for more than the width available, unchanged blocks aren't redrawn, and a table's number columns end
 at the same place. They run without
-EDMC or a display. The Settings tab is built by `tests/test_prefs_smoke.py` (nine top-level tabs now).
+EDMC or a display. The Settings tab is built by `tests/test_prefs_smoke.py` (ten top-level tabs now).
 
 The History window is also drawn in a real Tk window by `tests/trade_history_window_smoke.py` (run by
 `test_trade_history_window_smoke.py`, skipped without a display): every tab is visited at the minimum window size and

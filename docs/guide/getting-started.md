@@ -73,7 +73,7 @@ releases.
 
 You don't have to configure anything to get value out of WNTB, but this short tour helps:
 
-1. Click the WNTB title if the panel is folded up. Then look at the row of buttons under the "WNTB" title. Those are the seven **modes**. Click one and the panel below
+1. Click the WNTB title if the panel is folded up. Then look at the row of buttons under the "WNTB" title. Those are the eight **modes**. Click one and the panel below
    changes. Hover over a button for a moment to see its full name.
 2. Open **File → Settings → WNTB**. Each mode has its own tab. Look through the ones you care about and turn
    things on or off.
@@ -89,9 +89,9 @@ You don't have to configure anything to get value out of WNTB, but this short to
 
 ### The mode buttons
 
-WNTB has one panel with seven modes. You switch between them with the button row under the title:
-**P.P.** (Powerplay), **BGS**, **EXP** (Exploration), **MIN** (Mining), **TRD** (Trade), **MSN** (Missions) and
-**OPS** (Field Ops).
+WNTB has one panel with eight modes. You switch between them with the button row under the title:
+**P.P.** (Powerplay), **BGS**, **EXP** (Exploration), **MIN** (Mining), **TRD** (Trade), **MSN** (Missions),
+**OPS** (Field Ops) and **COL** (Colonization).
 
 **Every mode keeps working in the background** while you look at a different one. Nothing pauses. If you're
 mining and flip to Trade to check a price, your mining stats keep counting.
@@ -105,7 +105,7 @@ Just under the mode buttons, above the page itself, WNTB shows two lines:
   `+1,234,567 cr earned (+411,522 cr/hr)` or `-5,000 cr lost`. It is your balance now minus your balance at login.
   The hourly rate appears once the session is a few minutes old.
 
-The credits line is shown on **Powerplay, BGS, Mining, Missions and Field Ops**. It is hidden on **Exploration**
+The credits line is shown on **Powerplay, BGS, Mining, Missions, Field Ops and Colonization**. It is hidden on **Exploration**
 (not useful there) and **Trade** (which has its own net profit that already counts your running costs). It keeps
 counting while hidden.
 
@@ -166,7 +166,7 @@ adds what is new, so nothing is counted twice:
 | **Powerplay** | Merits and Control Points | The gap since EDMC last saw the journal (up to the scan depth in Settings) |
 | **BGS** | Your effect on factions this tick | From the start of the tick |
 | **Missions** | Active missions, kill progress, cargo progress, Community Goals | The last 2 weeks |
-| **Colonisation** | Deliveries and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most) |
+| **Colonisation** | Deliveries (also counted into your history) and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most) |
 | **Codex Completionist** | Codex finds, for the active commander | Everything since the last find it counted (a one-time rebuild from all their journals after updating) |
 | **Boxel Survey** | Systems you arrived at | The last 14 days |
 | **Mining** | The run in progress | The current journal file |
@@ -181,20 +181,20 @@ mode's guide for the limits.
 ### Settings
 
 All settings live under **File → Settings → WNTB**, in tabs: General, Powerplay, Missions, Exploration, Mining,
-Trade, BGS, Field Ops and Overlays. Some have a row of tabs of their own:
+Trade, BGS, Colonization, Field Ops and Overlays. Some have a row of tabs of their own:
 
 | Tab | Inner tabs |
 |---|---|
 | **General** | Window, Updates |
 | **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Auto-Honk |
-| **Field Ops** | Screenshots, Inventory, Ship Builds, Colonisation |
-| **Overlays** | Overlay Connection, Overlay Placement, then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies, Screenshots |
+| **Field Ops** | Screenshots, Inventory, Ship Builds |
+| **Overlays** | Overlay Connection, Overlay Placement, Appearance (text size, padding, color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies, Screenshots |
 
 This is where you switch things on and off and adjust how they behave.
 
 ### What you can and can't switch off
 
-The seven mode buttons are always there: **a mode can't be hidden**, so if you never explore, Exploration simply sits
+The eight mode buttons are always there: **a mode can't be hidden**, so if you never explore, Exploration simply sits
 unused. Switches exist for individual features:
 
 | | |
@@ -223,7 +223,7 @@ Switch to the mode first, then use the button listed here.
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there is no button) |
 | Ship Builds | Field Ops | **SHIPS** button |
-| Colonisation | Field Ops | **REPORT** button |
+| Colonization Sites | Colonization | **REPORT** button |
 | Mining Book | Mining | **BOOK** button, on both the Space Mining and Surface Mining pages |
 | Trade History (tabs: Overview, Commodities, Stations, Route, Trades, Stock & carrier, Lookups) | Trade | **History** button on the Session page |
 
@@ -249,6 +249,7 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **TRD** | Trade | Mode buttons |
 | **MSN** | Missions | Mode buttons |
 | **OPS** | Field Ops | Mode buttons |
+| **COL** | Colonization | Mode buttons |
 | **SES** | Sessions | Powerplay |
 | **RARES** | Rares (rare goods finder) | Powerplay |
 | **RESCAN** | Rescan | Powerplay |
@@ -281,8 +282,8 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **Price finder** | The Mining PRICE finder, for any commodity | Trade (Market page) |
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **SHIPS** | Manage ship builds | Field Ops |
-| **REPORT** | Colonisation sites | Field Ops |
-| **SHOW** / **HIDE** | Force the colonization shopping list onto the overlay, or take it off again | Field Ops |
+| **REPORT** | Colonization sites | Colonization |
+| **SHOW** / **HIDE** | Force the colonization shopping list onto the overlay, or take it off again | Colonization |
 
 ---
 

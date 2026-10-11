@@ -235,6 +235,111 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(y, round(120 * 960 / 1728))
 
 
+def fake_overlay_api(record, fail_for=()):
+    """A stand-in for EDMCModernOverlay's overlay_plugin.overlay_api module, recording what is asked of it."""
+    def define_plugin_group(**kwargs):
+        if kwargs.get("plugin_group_name") in fail_for:
+            raise RuntimeError("boom")
+        record.append(kwargs)
+        return True
+
+    package = types.ModuleType("overlay_plugin")
+    api = types.ModuleType("overlay_plugin.overlay_api")
+    api.define_plugin_group = define_plugin_group
+    package.overlay_api = api
+    return {"overlay_plugin": package, "overlay_plugin.overlay_api": api}
+
+
+class GroupOffsetTests(unittest.TestCase):
+    def setUp(self):
+        STORE.clear()
+        P.refresh()
+        P.overlay._applied_offsets.clear()
+
+    def test_only_displays_with_a_group_are_listed_and_most_need_no_offset(self):
+        offsets = P.group_offsets({k: s.default for k, s in P.SLOTS.items()}, MEASURED)
+        self.assertEqual(set(offsets), {s.group for s in P.SLOTS.values() if s.group})
+        self.assertNotIn("", offsets)
+        self.assertGreater(offsets["wntb_inventory"], 0)         # right, top: past the clamp
+        self.assertGreater(offsets["wntb_screenshot"], 0)
+        self.assertEqual(offsets["wntb_landing"], 0.0)           # left, bottom
+        self.assertEqual(offsets["wntb_discovery"], 0.0)         # center, top
+
+    def test_offsets_are_sent_through_the_overlays_api_and_only_when_they_change(self):
+        calls = []
+        with mock.patch.dict(sys.modules, fake_overlay_api(calls)):
+            self.assertTrue(P.overlay.set_group_offsets({"wntb_inventory": 245.0, "wntb_landing": 0.0}))
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(calls[0]["plugin_name"], "WNTB")
+            self.assertEqual((calls[0]["plugin_group_name"], calls[0]["plugin_group_offset_x"]), ("wntb_inventory", 245.0))
+            self.assertTrue(P.overlay.set_group_offsets({"wntb_inventory": 245.0, "wntb_landing": 0.0}))
+            self.assertEqual(len(calls), 2)                                  # nothing changed: nothing sent
+            self.assertTrue(P.overlay.set_group_offsets({"wntb_inventory": 100.0}))
+            self.assertEqual(len(calls), 3)
+
+    def test_a_missing_overlay_api_is_a_quiet_false(self):
+        with mock.patch.dict(sys.modules, {"overlay_plugin": None, "overlay_plugin.overlay_api": None}):
+            self.assertFalse(P.overlay.group_offsets_available())
+            self.assertFalse(P.overlay.set_group_offsets({"wntb_inventory": 245.0}))
+
+    def test_one_failing_group_does_not_stop_the_others(self):
+        calls = []
+        with mock.patch.dict(sys.modules, fake_overlay_api(calls, fail_for=("wntb_inventory",))):
+            self.assertFalse(P.overlay.set_group_offsets({"wntb_inventory": 245.0, "wntb_screenshot": 10.0}))
+        self.assertEqual([c["plugin_group_name"] for c in calls], ["wntb_screenshot"])
+
+    def test_applying_uses_the_saved_placements(self):
+        P.save_placement("inventory", L.Placement("left", "top", 0, 0))
+        calls = []
+        with mock.patch.dict(sys.modules, fake_overlay_api(calls)), mock.patch.object(P, "current_screen", return_value=MEASURED):
+            self.assertTrue(P.apply_group_offsets())
+        sent = {c["plugin_group_name"]: c["plugin_group_offset_x"] for c in calls}
+        self.assertEqual(sent["wntb_inventory"], 0.0)                      # moved to the left: no offset
+        self.assertGreater(sent["wntb_screenshot"], 0)                     # its default is still bottom right
+
+    def test_a_display_with_a_group_is_drawn_at_the_clamp_when_the_api_is_there(self):
+        P.save_placement("inventory", L.Placement("right", "top", 0, 0))
+        rec = types.SimpleNamespace(calls=[], send_message=lambda *a, **k: None)
+        with mock.patch.dict(sys.modules, fake_overlay_api([])), mock.patch.object(P, "current_screen", return_value=MEASURED):
+            dx, dy = P.shift_for("inventory", (900, 120, 420, 226))
+            origin = P.origin_for("inventory", (420, 226))
+        width = P.slot_size("inventory")[0]       # the display's nominal width at the current look
+        self.assertEqual(dx, 1280 - width - 900)
+        self.assertEqual(origin[0], 1280 - width)
+
+    def test_the_switch_turns_offsets_off_and_clears_them(self):
+        STORE[P.CFG_OFFSETS] = "0"
+        with mock.patch.dict(sys.modules, fake_overlay_api([])):
+            self.assertFalse(P.can_offset("inventory"))
+        offsets = P.group_offsets(None, MEASURED)
+        self.assertTrue(offsets)
+        self.assertEqual(set(offsets.values()), {0.0})                      # nothing offset, so earlier ones are cleared
+        STORE[P.CFG_OFFSETS] = "1"
+        self.assertTrue(P.offsets_enabled())
+        STORE.clear()
+        self.assertTrue(P.offsets_enabled())                                # on unless turned off
+
+    def test_without_the_api_a_display_just_stops_at_the_clamp_and_mining_never_uses_it(self):
+        with mock.patch.dict(sys.modules, {"overlay_plugin": None, "overlay_plugin.overlay_api": None}):
+            self.assertFalse(P.can_offset("inventory"))
+        with mock.patch.dict(sys.modules, fake_overlay_api([])):
+            self.assertTrue(P.can_offset("inventory"))
+            self.assertFalse(P.can_offset("mining_stats"))                  # two displays share one overlay group: not offset
+
+    def test_the_group_names_match_the_ones_the_modules_register(self):
+        import re
+        plugin_dir = os.path.join(os.path.dirname(__file__), "..", "plugin")
+        modules = {"colonisation": "colonisation_overlay.py", "discovery": "discovery.py", "notable": "notable.py",
+                   "interdiction": "interdiction.py", "landing": "landing.py", "inventory": "inventory_panel.py",
+                   "screenshots": "screenshots.py"}
+        for key, filename in modules.items():
+            with open(os.path.join(plugin_dir, filename), encoding="utf-8") as handle:
+                source = handle.read()
+            name = re.search(r'^GROUP_NAME = "(\w+)"', source, re.M).group(1)
+            self.assertEqual(P.SLOTS[key].group, name, key)
+            self.assertTrue(P.SLOTS[key].group_prefix.startswith(name), key)
+
+
 class PreviewTests(unittest.TestCase):
     def test_there_is_a_marker_at_the_screens_top_left_corner_and_no_full_screen_outline(self):
         items = P.preview_shapes({}, MEASURED)
@@ -260,6 +365,17 @@ class PreviewTests(unittest.TestCase):
             ux, uy = screen.units_per_px
             self.assertLessEqual(item["x"] + item["w"], 1280, str(screen))            # never squashed by the overlay
             self.assertAlmostEqual(item["y"] + item["h"] * uy, 960, delta=1.0, msg=str(screen))   # flush with the bottom
+
+    def test_a_grouped_preview_is_drawn_inside_the_displays_overlay_group_at_the_clamp(self):
+        placements = {"inventory": L.Placement("right", "top", 0, 0), "mining_stats": L.Placement("right", "top", 0, 0)}
+        items = {i["label"]: i for i in P.preview_shapes(placements, MEASURED, use_groups=True)}
+        inventory = items["Inventory pickups and bars"]
+        self.assertTrue(inventory["id"].startswith("wntb_inventory_"))      # so the group's offset moves it like the real display
+        self.assertEqual(inventory["x"], 1280 - P.slot_size("inventory")[0])
+        self.assertGreater(inventory["offset_x"], 0)
+        mining = items["Mining stats"]
+        self.assertTrue(mining["id"].startswith("wntb_placeprev_"))          # no group: it just stops at the clamp
+        self.assertEqual(mining["offset_x"], 0.0)
 
     def test_a_fit_overlay_clamps_both_ways_so_the_box_stays_whole(self):
         screen = L.Screen(1920, 1200, mode=L.MODE_FIT)

@@ -25,17 +25,18 @@ class PrefsSmokeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("SETTINGS BUILT OK", result.stdout)
         self.assertIn("Window", result.stdout)  # the window-behaviour tab (auto height fit)
-        # Grouped layout: nine top-level tabs, and the merged Exploration pages are all there.
-        self.assertIn("SETTINGS BUILT OK: 9 top-level tabs", result.stdout)
+        # Grouped layout: ten top-level tabs, and the merged Exploration pages are all there.
+        self.assertIn("SETTINGS BUILT OK: 10 top-level tabs", result.stdout)
         # Every page is wrapped in a scroller capped in height, so a long page can't push OK off the screen.
-        self.assertIn("PAGES OVER HEIGHT CAP: 0 of 26", result.stdout)
+        self.assertIn("PAGES OVER HEIGHT CAP: 0 of 27", result.stdout)
         for leaf in ("Exploration > Points of Interest", "Exploration > Auto-Honk", "Field Ops > Inventory"):
             self.assertIn(leaf, result.stdout)
         # Every overlay setting and toggle is under one Overlays tab, a subtab per feature that draws on the overlay.
-        for leaf in ("Overlays > Overlay Connection", "Overlays > Overlay Placement", "Overlays > Colonization",
+        for leaf in ("Overlays > Overlay Connection", "Overlays > Overlay Placement", "Overlays > Appearance", "Overlays > Colonization",
                      "Overlays > Discovery", "Overlays > Inventory", "Overlays > Interdiction Warning",
                      "Overlays > Landing", "Overlays > Mining", "Overlays > Notable Bodies", "Overlays > Screenshots"):
             self.assertIn(leaf, result.stdout)
+        self.assertIn("OVERLAY APPEARANCE SAVED: 4 of 4", result.stdout)
         self.assertIn("OVERLAY PLACEMENTS SAVED: 9 of 9", result.stdout)     # saving works across the split tabs
         for gone in ("General > Overlay", "Always On"):
             self.assertNotIn(gone, result.stdout)

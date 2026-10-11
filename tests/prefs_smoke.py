@@ -119,6 +119,10 @@ try:
     ui.save_prefs()
     from plugin import overlay_placement
     missing = [k for k in overlay_placement.SLOTS if f"wntb_overlay_place_{k}" not in SAVED]
+    from plugin import overlay_appearance
+    appearance = [k for k in (overlay_appearance.CFG_SCHEME, overlay_appearance.CFG_TEXT, overlay_appearance.CFG_PADDING,
+                              overlay_appearance.CFG_SPACING) if k in SAVED]
+    print("OVERLAY APPEARANCE SAVED:", len(appearance), "of 4")
     print("OVERLAY PLACEMENTS SAVED:", len(overlay_placement.SLOTS) - len(missing), "of", len(overlay_placement.SLOTS), missing)
     print("TALLEST PAGE (px):", max(tabs.nametowidget(t).winfo_reqheight() for t in tabs.tabs()) if tabs else 0)
     code = 0 if names else 1

@@ -38,7 +38,8 @@ from theme import theme
 
 from . import inventory_names as names
 from . import inventory_suit as suit
-from . import overlay, overlay_placement, panelkit
+from . import overlay, overlay_appearance, overlay_placement, panelkit
+from .overlay_style import LEGACY, ROLES, Look
 from .inventory import CATEGORY_SHORT, InventoryTracker, SHIP_LOCKER_CAPACITY, TRACKED_CATEGORIES
 from .inventory_cargo import VehicleState
 from . import platform_support
@@ -176,14 +177,39 @@ def _get_int(key: str, default: int) -> int:
 OVERLAY_WIDTH = 420   # the widest line of the pillage stack, estimated (the wire protocol has no text metrics)
 
 
-def overlay_size() -> Tuple[int, int]:
+# Measures at the look's text size: a pillage line is two pixels shorter than the size's line height, a bar row four shorter, the
+# bar label column and the bars grow with the characters, so a larger size still fits. At the legacy look these are the
+# LINE_HEIGHT (18), CAPACITY_ROW_HEIGHT (16), CAPACITY_LABEL_WIDTH (100) and 140 x 10 bar this display always had.
+def line_height(look: Look = LEGACY) -> int:
+    return look.line_px(TEXT_SIZE) - 2
+
+
+def row_height(look: Look = LEGACY) -> int:
+    return look.line_px(TEXT_SIZE) - 4
+
+
+def _ratio(look: Look) -> float:
+    return look.char_px(TEXT_SIZE) / LEGACY.char_px(TEXT_SIZE)
+
+
+def label_width(look: Look = LEGACY) -> int:
+    return int(round(CAPACITY_LABEL_WIDTH * _ratio(look)))
+
+
+def bar_size(look: Look = LEGACY) -> Tuple[int, int]:
+    ratio = max(1.0, _ratio(look))
+    return int(round(CAPACITY_BAR_WIDTH * ratio)), int(round(CAPACITY_BAR_HEIGHT * ratio))
+
+
+def overlay_size(look: Look = LEGACY) -> Tuple[int, int]:
     """The block the display occupies: the pillage stack, the gap, and a row for every bar it can show."""
-    return OVERLAY_WIDTH, MAX_LINES * LINE_HEIGHT + CAPACITY_BAR_GAP + len(BAR_ORDER) * CAPACITY_ROW_HEIGHT
+    width = max(int(round(OVERLAY_WIDTH * _ratio(look))), label_width(look) + bar_size(look)[0] + 100)
+    return width, MAX_LINES * line_height(look) + CAPACITY_BAR_GAP + len(BAR_ORDER) * row_height(look)
 
 
 def overlay_position() -> Tuple[int, int]:
     """The top left corner of the in-game display, from the Overlay Placement settings."""
-    return overlay_placement.origin_for("inventory", overlay_size())
+    return overlay_placement.origin_for("inventory", overlay_size(overlay_appearance.current_look()))
 
 
 def overlay_enabled_bars() -> FrozenSet[str]:
@@ -191,6 +217,23 @@ def overlay_enabled_bars() -> FrozenSet[str]:
     independently toggled in Settings. Defaults to off for every bar (no
     legacy-key migration needed — WNTB starts clean)."""
     return frozenset(key for key in BAR_ORDER if config.get_bool(f"{_CFG_OVERLAY_BAR_PREFIX}{key}", default=False))
+
+
+def _resolve(look: Look, spec: str) -> str:
+    """A line's color from what was stored with it: a color role ('warn', 'danger'), a bar series ('series:0' to 'series:3'), or a
+    literal color. Resolved when drawn, so changing the color scheme recolors lines already on screen on their next update."""
+    if spec in ROLES:
+        return look.color(spec)
+    if spec.startswith("series:"):
+        try:
+            return look.series(int(spec.split(":", 1)[1]))
+        except ValueError:
+            pass
+    return spec
+
+
+# The pillage line color per journal category, as a bar series so the three stay distinct in every scheme.
+CATEGORY_SPECS: Dict[str, str] = {"Component": "series:0", "Item": "series:1", "Data": "series:2"}
 
 
 def announced_categories() -> FrozenSet[str]:
@@ -411,7 +454,7 @@ class InventoryPanelController:
             message = f"⚠ Ship Locker {label}: {total}/{capacity} — nearing capacity"
             logger.warning(message)
             self._overlay_notify(
-                f"__locker_full_{category}", message, colour=LOCKER_WARNING_COLOUR, ttl=LOCKER_WARNING_TTL,
+                f"__locker_full_{category}", message, colour="danger", ttl=LOCKER_WARNING_TTL,
             )
 
     def _handle_backpack_change(self, entry: Dict[str, Any], state: Dict[str, Any]) -> None:
@@ -430,7 +473,7 @@ class InventoryPanelController:
             logger.info(message)
             pillage_messages.append(message)
             self._overlay_notify(
-                internal_name, f"+{delta}  {label}: {combined_total}", colour=CATEGORY_COLOURS.get(category, COLOUR),
+                internal_name, f"+{delta}  {label}: {combined_total}", colour=CATEGORY_SPECS.get(category, "warn"),
             )
 
         # Reconcile with EDMC state after processing journal deltas.
@@ -498,7 +541,7 @@ class InventoryPanelController:
 
     # --- overlay notification (rewired onto the shared OverlayClient) -------
 
-    def _overlay_notify(self, key: str, text: str, *, colour: str = COLOUR, ttl: int = TTL_SECONDS) -> None:
+    def _overlay_notify(self, key: str, text: str, *, colour: str = "warn", ttl: int = TTL_SECONDS) -> None:
         """Push a line, replacing any live line keyed by the same key.
         Pillage notifications key on the resource's internal name; other
         callers (e.g. ship locker capacity warnings) use their own distinct
@@ -514,19 +557,21 @@ class InventoryPanelController:
         lines = list(self._overlay_lines)
         previous_rows = self._overlay_rendered_rows
         self._overlay_rendered_rows = len(lines)
+        look = overlay_appearance.current_look()
         origin_x, origin_y = self._overlay_x, self._overlay_y
+        pitch = line_height(look)
 
         def worker() -> None:
             try:
                 for row, (_key, row_text, expiry, row_colour) in enumerate(lines):
                     row_ttl = max(1, int(round(expiry - now)))
                     self._overlay_client.send_message(
-                        f"{ID_PREFIX}pillage_{row}", row_text, row_colour, origin_x, origin_y + row * LINE_HEIGHT,
-                        ttl=row_ttl, size=TEXT_SIZE,
+                        f"{ID_PREFIX}pillage_{row}", row_text, _resolve(look, row_colour), origin_x, origin_y + row * pitch,
+                        ttl=row_ttl, size=look.size(TEXT_SIZE),
                     )
                 for row in range(len(lines), previous_rows):
                     self._overlay_client.send_message(
-                        f"{ID_PREFIX}pillage_{row}", "", "white", origin_x, origin_y + row * LINE_HEIGHT, ttl=1,
+                        f"{ID_PREFIX}pillage_{row}", "", "white", origin_x, origin_y + row * pitch, ttl=1,
                     )
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for pillage notification", exc_info=True)
@@ -550,8 +595,12 @@ class InventoryPanelController:
         if self._bars_broken or not overlay_enabled():
             return
 
-        base_y = self._overlay_y + MAX_LINES * LINE_HEIGHT + CAPACITY_BAR_GAP
-        bar_x = self._overlay_x + CAPACITY_LABEL_WIDTH
+        look = overlay_appearance.current_look()
+        base_y = self._overlay_y + MAX_LINES * line_height(look) + CAPACITY_BAR_GAP
+        bar_x = self._overlay_x + label_width(look)
+        bar_w, bar_h = bar_size(look)
+        row_pitch = row_height(look)
+        text_size = look.size(TEXT_SIZE)
 
         visible = [row for row in rows if row[0] in BAR_ORDER]
         drawn_keys = {row[0] for row in visible}
@@ -561,24 +610,24 @@ class InventoryPanelController:
         def worker() -> None:
             try:
                 for display_row, (key, label, total, capacity) in enumerate(visible):
-                    colour = BAR_COLOURS.get(key, COLOUR)
-                    row_y = base_y + display_row * CAPACITY_ROW_HEIGHT
+                    colour = look.series(BAR_ORDER.index(key))
+                    row_y = base_y + display_row * row_pitch
 
                     self._overlay_client.send_message(
                         f"{ID_PREFIX}bar_label_{key}", label, colour, self._overlay_x, row_y,
-                        ttl=CAPACITY_TTL, size=TEXT_SIZE,
+                        ttl=CAPACITY_TTL, size=text_size,
                     )
                     self._overlay_client.send_shape(
                         f"{ID_PREFIX}bar_track_{key}", "rect", CAPACITY_TRACK_COLOUR, "", bar_x, row_y,
-                        CAPACITY_BAR_WIDTH, CAPACITY_BAR_HEIGHT, ttl=CAPACITY_TTL, thickness=1,
+                        bar_w, bar_h, ttl=CAPACITY_TTL, thickness=1,
                     )
 
                     fraction = max(0.0, min(1.0, total / capacity)) if capacity else 0.0
-                    fill_width = max(1, round(CAPACITY_BAR_WIDTH * fraction)) if total > 0 else 0
+                    fill_width = max(1, round(bar_w * fraction)) if total > 0 else 0
                     if fill_width > 0:
                         self._overlay_client.send_shape(
                             f"{ID_PREFIX}bar_fill_{key}", "rect", colour, colour, bar_x, row_y,
-                            fill_width, CAPACITY_BAR_HEIGHT, ttl=CAPACITY_TTL,
+                            fill_width, bar_h, ttl=CAPACITY_TTL,
                         )
                     else:
                         self._overlay_client.send_shape(
@@ -588,7 +637,7 @@ class InventoryPanelController:
                     value_text = f"{total}/{capacity}" if capacity else str(total)
                     self._overlay_client.send_message(
                         f"{ID_PREFIX}bar_value_{key}", value_text, colour,
-                        bar_x + CAPACITY_BAR_WIDTH + CAPACITY_VALUE_GAP, row_y - 3, ttl=CAPACITY_TTL, size=TEXT_SIZE,
+                        bar_x + bar_w + CAPACITY_VALUE_GAP, row_y - 3, ttl=CAPACITY_TTL, size=text_size,
                     )
 
                 for key in stale_keys:

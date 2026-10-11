@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
     exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
-    missions, notable, organic_scan_panel, overlay, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, ship_builds_panel, trade_panel, ui,
+    missions, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, ship_builds_panel, trade_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -132,6 +132,7 @@ def plugin_start3(plugin_dir: str) -> str:
         (screenshots.GROUP_NAME, screenshots.GROUP_PREFIX),
         (colonisation_overlay.GROUP_NAME, colonisation_overlay.GROUP_PREFIX),
     ])
+    overlay_placement.apply_group_offsets()   # carries right-hand displays past the overlay's clamp (see overlay_layout.py)
 
     if platform_support.IS_LINUX:
         advice = platform_support.journal_dir_advice(config.get_str("journaldir") or "")

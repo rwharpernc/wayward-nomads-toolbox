@@ -33,7 +33,7 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CM
 
 ## What's in the toolbox
 
-WNTB has one panel with seven **modes**. You click a button to switch between them.
+WNTB has one panel with eight **modes**. You click a button to switch between them.
 
 | Mode | What it's for | Guide |
 |---|---|---|
@@ -42,14 +42,15 @@ WNTB has one panel with seven **modes**. You click a button to switch between th
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalogue of mining hotspots. | [Mining](docs/guide/mining.md) |
 | **Trade** | Your trading profit after fuel and repairs, what fills your ship hold (cargo, mission, stolen, limpets), your fleet carrier's cargo space, tritium, location and orders, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. | [Trade](docs/guide/trade.md) |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions and collect / delivery progress for cargo missions. | [Missions](docs/guide/missions.md) |
-| **Field Ops** | Screenshots, your backpack/locker/cargo, saved ship builds, and colonisation sites. | [Field Ops](docs/guide/field-ops.md) |
+| **Field Ops** | Screenshots, your backpack/locker/cargo and saved ship builds. | [Field Ops](docs/guide/field-ops.md) |
+| **Colonization** | The project you are building now, your colonization history, and a window with every site's shopping list and where to buy. | [Colonization](docs/guide/colonization.md) |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. | [BGS](docs/guide/bgs.md) |
 
 Two more tools are always on and don't belong to a mode: **Landing Assist** and **Interdiction Warning**
 ([guide](docs/guide/always-on.md)).
 
 Most individual features have their own on/off switch in Settings, and the alerts and overlays are off until you turn
-them on. The seven mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC
+them on. The eight mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC
 and Canonn POI finders) can only be folded away, not switched off.
 
 **Each commander's data is separate.** Hotspots, surveys, sessions, Codex tallies and everything else WNTB saves belong

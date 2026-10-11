@@ -41,11 +41,14 @@ class StatTile(tk.Frame):
         super().__init__(parent, bg=P.CARD, padx=P.PAD, pady=P.PAD_SM)
         self._value = tk.Label(self, text=value, fg=color, bg=P.CARD, font=style.font(P.FONT_STAT))
         self._value.pack(anchor="w")
-        tk.Label(self, text=caption, fg=P.MUTED, bg=P.CARD,
-                 font=style.font(P.FONT_SMALL)).pack(anchor="w")
+        self._caption = tk.Label(self, text=caption, fg=P.MUTED, bg=P.CARD, font=style.font(P.FONT_SMALL))
+        self._caption.pack(anchor="w")
 
     def set(self, value: str) -> None:
         self._value.configure(text=value)
+
+    def set_caption(self, caption: str) -> None:
+        self._caption.configure(text=caption)
 
 
 def section_header(parent: tk.Misc, text: str, bg: str = P.PANE) -> tk.Label:

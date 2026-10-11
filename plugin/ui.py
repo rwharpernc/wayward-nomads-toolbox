@@ -37,7 +37,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
-    notable, organic_scan_panel, overlay, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
+    notable, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
     game_mode, session_credits, settings_scroll, trade_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
@@ -88,12 +88,13 @@ PANEL_MODES: Tuple[Tuple[str, str], ...] = (
     ("trade", "Trade"),
     ("missions", "Missions"),
     ("fieldops", "Field Ops"),
+    ("colonisation", "Colony"),
 )
 # Short text for the mode-select buttons - EDMC's main window is small and shared
 # with every other plugin - with the full label plus a one-line description (_MODE_TOOLTIPS) as the tooltip.
 _MODE_BUTTON_TEXT = {
     "powerplay": "P.P.", "bgs": "BGS", "exploration": "EXP", "mining": "MIN", "trade": "TRD", "missions": "MSN",
-    "fieldops": "OPS",
+    "fieldops": "OPS", "colonisation": "COL",
 }
 _MODE_TOOLTIPS = {
     "powerplay": "Powerplay - merits and Control Points you earn for your Power, and the rare goods finder",
@@ -102,7 +103,8 @@ _MODE_TOOLTIPS = {
     "mining": "Mining - space and surface (SRV) mining, and your own catalogue of mining hotspots",
     "trade": "Trade - what you bought and sold this session, the value of your hold, and Spansh route and price lookups",
     "missions": "Missions - every mission you have in one view, with kill-progress bars for massacres",
-    "fieldops": "Field Ops - screenshots, backpack/locker/cargo, saved ship builds and colonisation sites",
+    "fieldops": "Field Ops - screenshots, backpack/locker/cargo and saved ship builds",
+    "colonisation": "Colonization - the project you are building now (progress, what is left, trips) and your colonization history",
 }
 _DEFAULT_PANEL_MODE = PANEL_MODES[0][0]
 # The "Credits this session" line sits under the mode buttons and is shown on the modes where it is useful.
@@ -559,17 +561,17 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         *settings_of(boxel_survey),
         *settings_of(autohonk),
     ], page_bg)
-    for feature in (mining_panel, trade_panel, bgs_panel):
+    for feature in (mining_panel, trade_panel, bgs_panel, colonisation_panel):
         for build in settings_of(feature):
             settings_scroll.scrolled_page(tabs, build, page_bg)
-    _settings_group(tabs, "Field Ops", settings_of(screenshots, inventory_panel, ship_builds_panel, colonisation_panel),
-                    page_bg)
+    _settings_group(tabs, "Field Ops", settings_of(screenshots, inventory_panel, ship_builds_panel), page_bg)
     # Every overlay setting and toggle lives together: the shared connection and placement first, then one tab per
     # feature that draws on the overlay. (Interdiction, Landing, Discovery and Notable Bodies are overlay features
     # through and through, so their whole tab is here; the others keep their non-overlay settings in their own tab.)
     _settings_group(tabs, "Overlays", [
         overlay.build_settings,
         overlay_placement.build_settings,
+        overlay_appearance.build_settings,
         colonisation_panel.build_overlay_settings,
         *settings_of(discovery),
         inventory_panel.build_overlay_settings,
@@ -636,6 +638,7 @@ def save_prefs() -> None:
 
     overlay.save_settings()
     overlay_placement.save_settings()
+    overlay_appearance.save_settings()
     for feature in FEATURES:
         if hasattr(feature, "save_settings"):
             feature.save_settings()

@@ -96,11 +96,16 @@ and EDMCModernOverlay's settings for the mode. The tab shows what it found, for 
 scaling 125% (EDMCModernOverlay log); overlay mode fill*. You can set the display scaling and the mode yourself on that tab if
 they are wrong.
 
-**A limit of EDMCModernOverlay.** Across a wide screen it limits a shape's left position plus its pixel width to the
-canvas width, and squashes the shape if it would pass that. So a display cannot be pushed all the way to the right edge
-without losing width: WNTB keeps it whole and stops it as far right as the overlay allows, so a "Right" spot sits a little
-short of the edge for wide displays. The bottom is not affected on a wide screen. If you want something flush against the
-right edge, EDMCModernOverlay's own Overlay Controller can anchor each plugin's display to an edge.
+**The right-hand edge.** Across a wide screen EDMCModernOverlay limits a shape's left position plus its pixel width to the
+canvas width, and squashes the shape if it would pass that, so a display cannot simply be drawn against the right edge. The
+overlay does apply a *group offset* after that limit (it is how its own Overlay Controller moves things), and offers it to
+plugins. So for a display on the right, WNTB draws it as far right as the limit allows and sets that display's group offset
+through EDMCModernOverlay's own plugin API to carry it the rest of the way. You will see these as offsets on WNTB's groups in
+the Overlay Controller. If you move one of WNTB's groups in the Overlay Controller yourself, that wins over WNTB's setting.
+This needs EDMCModernOverlay; without it (or if the call fails) a display on the right stops where the limit allows, a little
+short of the edge. The Overlay Placement tab has a switch, **Carry displays on the right to the screen edge**, that turns this off
+(and clears the offsets) if displays end up in the wrong place. The bottom edge needs none of this. The two Mining displays share one overlay group, so they stop at the limit
+rather than being offset.
 
 **Check it on your real screen.** **Show placement preview** draws a labeled box for every display, at its real size, for
 12 seconds, using the values currently typed (even before you press OK). **Reset all to defaults** puts everything back, and
@@ -109,6 +114,24 @@ right edge, EDMCModernOverlay's own Overlay Controller can anchor each plugin's 
 Positions you set in the older per-feature x/y boxes are carried over as **Exact position** the first time. Defaults for
 the displays that used to sit in fixed places (Landing, Interdiction, Mining, Screenshots) now follow your screen, so they
 may sit slightly differently than before.
+
+### Appearance: text size, padding, line spacing, colors
+
+**Settings → WNTB → Overlays → Appearance** sets how every WNTB overlay looks, all at once:
+
+- **Color scheme**: Elite orange (the default), Ice blue, Phosphor green, Amber mono, High contrast, or Color-blind safe
+  (Okabe-Ito colors, so good, short and warning never rest on red against green). The chips show each color's role.
+- **Text size**: Smaller, Default, Larger or Largest. EDMCModernOverlay has four text sizes (small, normal, large, huge); each
+  display moves up or down the same number of steps, and stops at the ends.
+- **Padding**: Compact, Comfortable (default) or Roomy: the space between a border and its text.
+- **Line spacing**: Tight, Normal (default) or Loose: extra height per line.
+- **Show sample** draws the Colonization card with the choices currently picked (before you press OK); **Reset to defaults**
+  puts them back.
+
+Bigger text makes bigger cards. EDMCModernOverlay cannot measure text for a plugin, so each card's width and height are worked
+out from the character count at the chosen size, generously, so text sits inside the border instead of wrapping or spilling.
+Placement accounts for the new size too (a display anchored to the bottom or right keeps its edge). The Interdiction warning
+keeps its fixed red alert colors whatever scheme is chosen. The default look is slightly roomier than older versions.
 
 - If the overlay is still starting when Landing Assist has something to draw, WNTB retries for up to three minutes, so
   the diagram shows up once the overlay is ready.

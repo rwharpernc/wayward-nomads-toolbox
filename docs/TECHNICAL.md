@@ -161,13 +161,13 @@ abbreviations (the table is in the user guide's "Button names"), and `panelkit.a
 hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
 `ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder. EDMC sizes its window to the widest row across all plugins, and the mode row used to be WNTB's widest, so the mode row is held at the size measured from a throwaway row of full-label buttons (`ui._mode_row_full_label_size`), with the short buttons centered inside it; without that the shortened labels made EDMC open far narrower. Don't implement this with a thin spacer widget in the same grid cell: it draws a line across the buttons.
 
-**Settings layout.** `ui._build_settings_tabs` builds nine top-level Settings tabs: General (Window, Updates), Powerplay,
-Missions, Exploration, Mining, Trade, BGS, Field Ops and Overlays. A group is a plain tab holding its own `nb.Notebook`
+**Settings layout.** `ui._build_settings_tabs` builds ten top-level Settings tabs: General (Window, Updates), Powerplay,
+Missions, Exploration, Mining, Trade, BGS, Colonization, Field Ops and Overlays. A group is a plain tab holding its own `nb.Notebook`
 (`_settings_group`). The **Overlays** group holds every overlay setting and toggle: Overlay Connection, Overlay Placement,
 then one tab per feature that draws on the overlay (Colonization, Discovery, Inventory, Interdiction Warning, Landing,
 Mining, Notable Bodies, Screenshots). Interdiction, Landing, Discovery and Notable Bodies are overlay features through and
 through, so their whole `build_settings` is listed there; Colonization, Inventory, Mining and Screenshots keep their other
-settings in their own tabs (Field Ops, Mining) and expose a second builder, `build_overlay_settings`, for the Overlays group,
+settings in their own tabs (Colonization, Field Ops, Mining) and expose a second builder, `build_overlay_settings`, for the Overlays group,
 sharing the controller's variables so `save_settings` is unchanged (it skips a variable whose tab was not built). In
 Exploration, GEC, Canonn and Codex share one "Points of Interest" page: `_SectionStack` is an `nb.Frame` whose `add()` grids
 each feature's frame one under the other, so features still call `notebook.add(frame, text=...)` unchanged. Everything is
@@ -341,7 +341,7 @@ several requests in flight, use the generation counter above instead.
   tallies, visited systems, ship builds. Examples: `sessions.json`, `boxel_state.json`,
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
-  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`,
+  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`,
   `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
@@ -518,17 +518,27 @@ fill mode, by drawing probe shapes and photographing the screen) it treats posit
 - On the axis the overlay does not stretch (across, on a wide screen; both in fit mode) it clamps a shape's x + w to 1280,
   mixing a canvas position with a pixel width, and squashes whatever passes it. So a display must start at or before
   `1280 - its pixel width` there. (`Screen.clamped`)
+- A **group offset** (`offsetX` of an overlay group) is added *after* that clamp, in canvas units, and is the overlay's own way to
+  move a group (the Overlay Controller edits it). It is settable by a plugin through
+  `overlay_plugin.overlay_api.define_plugin_group(plugin_group_offset_x=...)`, which merges per field into the overlay's
+  groupings file. The anchor, by contrast, does not help on the clamped axis (the overlay pivots on cached bounds there).
 
 Placement is therefore relative to the screen and aware of display size:
 
 - **Model** (`overlay_layout.py`, pure): `Screen` (window size, mode, display scaling), `units_per_px`, `block_units`, a
   `Placement` (a horizontal anchor, a vertical anchor and offsets in screen pixels, or an exact canvas x/y), `block_origin`
-  (where a display of a given pixel size goes; kept on the canvas and before the overlay's clamp) and `ShiftedClient`.
+  (where a display of a given pixel size goes; kept on the canvas and before the overlay's clamp), `plan_origin` (the same, for a
+  display whose group can be offset: where to draw it, which is as far right as the clamp allows for its largest size, and the
+  group offset that carries it the rest of the way) and `ShiftedClient`.
 - **Features keep their own layout.** Each draws at its fixed origin exactly as before and reports the rectangle it occupies
   (`block_rect()`: left and top on the canvas, width and height in pixels); `overlay_placement.client_for(slot, client,
   block)` returns the client wrapped so every `send_message`, `send_shape` and `send_vector` is moved by the same canvas
   offset, which moves the whole display as a unit. A feature that positions itself from an origin (Inventory) uses
-  `origin_for(slot, size)` instead. Clearing is by id, so a clear needs no matching shift. Placement is applied at the call
+  `origin_for(slot, size)` instead. A slot with an overlay `group` (all but the two Mining ones, which share a group) also gets
+  a group offset: `overlay_placement.apply_group_offsets()` works the offsets out for every slot (from the slot's largest size, so
+  an offset is one fixed number however wide the display's content is) and `overlay.set_group_offsets` sends the changed ones
+  through the overlay's API, at start-up, when Settings is saved, when the screen is re-detected or changes, and (typed values,
+  then the saved ones again) around the preview. Clearing is by id, so a clear needs no matching shift. Placement is applied at the call
   sites (never inside a `render()`), so the render functions stay pure and testable.
 - **The screen** (`overlay_placement.py`): the overlay's own log first (`parse_scaling_line`: the newest "Overlay scaling
   updated" line gives the real window, mode and display scaling = scale_x / base_scale; ignored if the game's
@@ -542,6 +552,19 @@ Placement is therefore relative to the screen and aware of display size:
 - **Adding an overlay:** add a `Slot` to `SLOTS` (key, label, default spot, pixel size, legacy keys), wrap its client with
   `client_for`, and give its settings a tab in the Overlays group in `ui.py`. Register its ids as an EDMCModernOverlay Plugin
   Group so its pieces scale together.
+
+### Appearance (`overlay_style.py`, `overlay_appearance.py`)
+
+Every overlay draws with one `Look` (`overlay_appearance.current_look()`, read from `wntb_overlay_scheme`, `_text_level`,
+`_padding`, `_line_spacing`): a `Palette` of color roles (border, fill, title, header, text, muted, ok, warn, info, danger, three
+accents, four chart series), a text level (-1..2, which steps each display's text token along small / normal / large / huge and
+stops at the ends), and extra padding and line height. Because the overlay cannot measure text for a plugin, the look carries
+estimates, `CHAR_PX` (character width per size) and `LINE_PX` (line height per size), and each display builds its card from them
+(`look.text_width`, `pad_x`, `pad_y`, `line_px`), so text at any size sits inside its border. `LEGACY` reproduces the old
+geometry and colors and is the default argument of every pure layout function, which kept the earlier tests valid. Each display
+exposes `block_rect(..., look)` so placement sees the size the card really has, and `Placement`/`slot_size` scale a slot's nominal
+size by the look. `tests/overlay_look_smoke.py` draws every display at 144 looks (scheme x text size x padding x spacing) and checks
+every text lies inside its card and that `block_rect` equals what was drawn. Interdiction keeps fixed red alert colors.
 
 ### Plugin Groups (EDMCModernOverlay)
 
@@ -858,7 +881,7 @@ seconds; a new tick archives the closed period (kept for the "archive days" sett
 one, and the current period is rebuilt from the journals once per session. See the
 [BGS spec](BGS_TECH_SPEC.md).
 
-### Field Ops (`screenshots*.py`, `screenshot_*.py`, `inventory*.py`, `ship_builds*.py`, `colonisation*.py`)
+### Field Ops (`screenshots*.py`, `screenshot_*.py`, `inventory*.py`, `ship_builds*.py`) and Colonization (`colonisation*.py`)
 
 Screenshots convert the game's raw file into a renamed PNG on the `Screenshot` event, with a
 crop chosen by which HUD panel had focus. Inventory works out which vehicle you are in
@@ -867,7 +890,7 @@ only tracks on-foot versus not, and micro-resource names resolve through a
 bundled table, then names learned from the journal, then a title-cased fallback. Ship Builds is a
 per-commander list of URLs to builds designed elsewhere; WNTB doesn't design loadouts.
 
-Colonisation (`colonisation.py` is pure logic, `colonisation_data.py` the repository, `colonisation_panel.py`
+The Colonization mode (`PANEL_PLACEMENT = "colonisation"`, the COL button; mode key `colonisation`) shows a page built by `colonisation_panel.build_panel`: the current project and the commander's history, filled by `_refresh_summary` from the saved sites, the ship's hold and capacity, the carrier record and the delivery ledger. The figures and wording live in `colonisation_stats.py` (pure; `project_for`, `history_for`, `coverage_text`, `trips_text`, `next_step`), which branches on whether the commander has a fleet carrier (no carrier: no carrier row, one trips figure of whole-ship loads; carrier: trips to buy and to haul), and the sites window follows the same rule (`_arrange_tiles`, one Trips column). `colonisation_history.py` is the per-commander delivery ledger (`colonisation_history.json`: totals by commodity, site and day, a `journal_at` watermark so the start-up catch-up and live events never count a delivery twice; `apply_events` feeds it from every `ColonisationContribution`, with or without a known site). A `Site` also records `first_seen` and `completed_at` for the average build time. The progress bar is a fixed-size canvas, so it cannot widen EDMC's main window. Colonisation (`colonisation.py` is pure logic, `colonisation_data.py` the repository, `colonisation_panel.py`
 and `colonisation_window.py` the UI) is built on two journal events. `ColonisationConstructionDepot` is an
 authoritative snapshot of a depot's `ResourcesRequired`, so it replaces the stored list wholesale;
 `ColonisationContribution` only carries the amounts just handed over, so it advances `provided` between

@@ -29,7 +29,8 @@ it looks on screen, and what to do. Where a figure is an estimate, WNTB marks it
 | **Mining** | [Mining](mining.md): space and surface mining, the Mining Book |
 | **Trade** | [Trade](trade.md): profit, routes, prices, carrier cargo, History |
 | **Missions** | [Missions](missions.md): every mission in one view |
-| **Field Ops** | [Field Ops](field-ops.md): screenshots, inventory, ship builds, colonisation |
+| **Field Ops** | [Field Ops](field-ops.md): screenshots, inventory, ship builds |
+| **Colonization** | [Colonization](colonization.md): your current project, your history, the sites window, where to buy |
 | **BGS** | [BGS](bgs.md): factions, states and your effect on them |
 | *Always on* | [Landing Assist and Interdiction Warning](always-on.md) |
 

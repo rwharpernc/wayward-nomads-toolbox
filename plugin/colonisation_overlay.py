@@ -11,7 +11,7 @@ construction site still needs, with the columns Commodity, Need, FC and Ship.
 A footer gives the tons remaining and the trips that is in the current ship (from its cargo capacity). Commodities are
 alphabetical, so rows stay put as the numbers change.
 
-Which site: the commander's most recently updated active site (the one the Field Ops summary line names).
+Which site: the commander's most recently updated active site (the one the Colonization page names as the current project).
 
 The card is shown while the commander is in a commodity market, or in the carrier's inventory (Carrier Management /
 cargo transfer), at a station or carrier, or docked at a construction site: that is `Visibility`. The journal says which
@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from typing import List, Mapping, Optional, Tuple
 
 from . import colonisation, overlay
+from .overlay_style import LEGACY, Look
 from .colonisation import Site
 from .screenshot_gui_focus import GUI_FOCUS_STATION_SERVICES
 
@@ -48,6 +49,8 @@ DEFAULT_ROWS = 0   # 0 = every commodity
 MIN_ROWS = 0
 MAX_ROWS = 60
 
+# The card's own geometry at the default look. A `Look` (overlay_style.py) changes the text size, padding, line spacing and colors,
+# and the card is sized from the text it will show, so a bigger size makes a bigger card and nothing runs past the border.
 LINE_HEIGHT = 20
 PAD_X = 10
 PAD_Y = 8
@@ -145,15 +148,9 @@ def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit - 1] + "…"
 
 
-FILL = "#000000"
-BORDER = "#f97316"
-TITLE_COLOUR = "#fdba74"
-HEADER_COLOUR = "#c2790e"
-TEXT_COLOUR = "#e5e7eb"
-ENOUGH_COLOUR = "#86efac"    # the hold plus the fleet carrier already cover what is needed
-SURPLUS_COLOUR = "#fbbf24"   # the hold plus the fleet carrier are more than is needed
-FC_COLOUR = "#7dd3fc"
-DIM_COLOUR = "#9ca3af"
+# Colors come from the look's roles: border and fill (the card), title, header (column headings), text, ok (the ship plus the fleet
+# carrier already cover what is needed), warn (they are more than is needed), info (the carrier column once it covers the need) and
+# muted (the carrier column while it does not).
 CHECK = "✓"
 NAME_CHARS = 30
 
@@ -206,9 +203,10 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc)
 
 
-def _layout(card: Card) -> Tuple[int, List[int], int]:
+def _layout(card: Card, look: Look = LEGACY) -> Tuple[int, List[int], int]:
     """(x of the name column relative to the card, right edges of the Need / FC / Ship columns, total text width) in px,
-    from character counts - the wire protocol has no text metrics, so this errs a little wide."""
+    from character counts at the look's text size - the wire protocol has no text metrics, so this errs a little wide."""
+    char = look.char_px("normal")
     name_chars = max([len("Commodity")] + [len(_clip(r.name, NAME_CHARS)) + 2 for r in card.rows])
     columns = [("Need", [r.need for r in card.rows])]
     if card.show_fc:
@@ -218,70 +216,74 @@ def _layout(card: Card) -> Tuple[int, List[int], int]:
     edges, edge = [], name_chars
     for width in widths:
         edge += width
-        edges.append(edge * CHAR_WIDTH_PX)
+        edges.append(edge * char)
     footer = len(f"► {card.remaining:,} remaining") + (len(f"  ► {card.trips:,} trips in this ship") if card.trips else 0)
     chars = max(name_chars + sum(widths), footer, len(card.title), 12)
-    return 0, edges, chars * CHAR_WIDTH_PX
+    return 0, edges, int(round(chars * char))
 
 
-def block_rect(card: Card, x: int = 0, y: int = 0) -> Tuple[int, int, int, int]:
+def block_rect(card: Card, x: int = 0, y: int = 0, look: Look = LEGACY) -> Tuple[int, int, int, int]:
     """(left, top, width, height) of the card as `render` draws it with its text origin at (x, y): the panel rectangle.
     The global overlay placement uses this to move the card to wherever the commander put it."""
-    _x0, _edges, text_width = _layout(card)
-    return x - PAD_X, y - PAD_Y, text_width + 2 * PAD_X, card.slot_count * LINE_HEIGHT + 2 * PAD_Y
+    _x0, _edges, text_width = _layout(card, look)
+    pad_x, pad_y = look.pad_x(PAD_X), look.pad_y(PAD_Y)
+    return x - pad_x, y - pad_y, text_width + 2 * pad_x, card.slot_count * look.line_px("normal") + 2 * pad_y
 
 
 def _id(slot: int, column: int) -> str:
     return f"{ID_PREFIX}s{slot}_{column}"
 
 
-def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_slots: int = 0) -> int:
+def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_slots: int = 0, look: Look = LEGACY) -> int:
     """Draw the card; returns how many text lines it used. Raises OSError if the overlay cannot be reached (the caller
     decides whether that is silent). Lines left over from a longer previous card are cleared."""
-    _x0, edges, text_width = _layout(card)
-    width = text_width + 2 * PAD_X
-    height = card.slot_count * LINE_HEIGHT + 2 * PAD_Y
-    client.send_shape(CARD_ID, "rect", BORDER, FILL, x - PAD_X, y - PAD_Y, width, height, ttl=TTL, thickness=2)
+    _x0, edges, text_width = _layout(card, look)
+    left, top, width, height = block_rect(card, x, y, look)
+    line = look.line_px("normal")
+    size = look.size("normal")
+    char = look.char_px("normal")
+    client.send_shape(CARD_ID, "rect", look.color("border"), look.color("fill"), left, top, width, height, ttl=TTL, thickness=2)
 
     slots: List[List[Tuple[int, str, str, int]]] = []   # per line: (column, text, colour, x)
 
     def right(text: str, edge: int) -> int:
-        return x + edge - len(text) * CHAR_WIDTH_PX
+        return int(round(x + edge - len(text) * char))
 
-    slots.append([(0, card.title, TITLE_COLOUR, x)])
+    slots.append([(0, card.title, look.color("title"), x)])
     heads = [("Need", edges[0])] + ([("FC", edges[1])] if card.show_fc else []) + [("Ship", edges[-1])]
-    slots.append([(0, "Commodity", HEADER_COLOUR, x)] + [(i + 1, h, HEADER_COLOUR, right(h, e)) for i, (h, e) in enumerate(heads)])
+    header = look.color("header")
+    slots.append([(0, "Commodity", header, x)] + [(i + 1, h, header, right(h, e)) for i, (h, e) in enumerate(heads)])
     for row in card.rows:
-        colour = SURPLUS_COLOUR if row.surplus else ENOUGH_COLOUR if row.covered else TEXT_COLOUR
+        colour = look.color("warn") if row.surplus else look.color("ok") if row.covered else look.color("text")
         name = _clip(row.name, NAME_CHARS) + (f" {CHECK}" if row.covered else "")
         cells = [(0, name, colour, x), (1, f"{row.need:,}", colour, right(f"{row.need:,}", edges[0]))]
         column = 2
         if card.show_fc:
             fc = f"{row.fc:,}" if row.fc else ""
             if fc:
-                cells.append((column, fc, FC_COLOUR if row.fc >= row.need else DIM_COLOUR, right(fc, edges[1])))
+                cells.append((column, fc, look.color("info") if row.fc >= row.need else look.color("muted"), right(fc, edges[1])))
             column += 1
         if row.ship:
             ship = f"{row.ship:,}"
             cells.append((column, ship, colour, right(ship, edges[-1])))
         slots.append(cells)
     if card.hidden:
-        slots.append([(0, f"+{card.hidden} more", TITLE_COLOUR, x)])
+        slots.append([(0, f"+{card.hidden} more", look.color("title"), x)])
     footer = f"► {card.remaining:,} remaining"
     if card.trips:
         footer += f"  ► {card.trips:,} trip{'s' if card.trips != 1 else ''} in this ship"
-    slots.append([(0, footer, TEXT_COLOUR, x)])
+    slots.append([(0, footer, look.color("text"), x)])
 
     for index, cells in enumerate(slots):
         used = {column for column, _t, _c, _x in cells}
         for column, text, colour, cell_x in cells:
-            client.send_message(_id(index, column), text, colour, cell_x, y + index * LINE_HEIGHT, ttl=TTL)
+            client.send_message(_id(index, column), text, colour, cell_x, y + index * line, ttl=TTL, size=size)
         for column in range(4):
             if column not in used and (index < previous_slots):
-                client.send_message(_id(index, column), "", "white", x, y + index * LINE_HEIGHT, ttl=1)
+                client.send_message(_id(index, column), "", "white", x, y + index * line, ttl=1)
     for index in range(len(slots), previous_slots):
         for column in range(4):
-            client.send_message(_id(index, column), "", "white", x, y + index * LINE_HEIGHT, ttl=1)
+            client.send_message(_id(index, column), "", "white", x, y + index * line, ttl=1)
     return len(slots)
 
 

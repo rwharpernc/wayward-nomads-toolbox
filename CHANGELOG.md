@@ -6,6 +6,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Changed
+- **Colonization moved out of Field Ops** into its own mode (the **COL** button). The REPORT and SHOW buttons moved with it.
+  The mode row is now eight buttons wide, so the WNTB panel is a little wider than before. Colonization's guide is its own page.
 - **One Overlays tab in Settings.** Every overlay setting and toggle is now under **Settings -> Overlays**, with a tab for
   the shared **Overlay Connection**, one for **Overlay Placement**, and one for each feature that draws on your screen:
   Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies and Screenshots. The overlay
@@ -29,6 +31,22 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the ship counted).
 
 ### Added
+- **Colonization has its own mode, with a COL button.** The page shows the project you are building now (name and system, a
+  progress bar, what is delivered and still needed, how many commodities your ship and carrier cover, what is still to get,
+  the trips left, the biggest gaps and a one-line next step) and your colonization history (sites done, in progress and
+  failed; tonnes and deliveries; the last 7 and 30 days; your best day; your top commodities; the average build time).
+  The history is kept per commander in a new file, `colonisation_history.json`, counted from the journals as you deliver
+  and caught up at start-up (14 to 30 days back; the page says which date it counts since). Sites now remember when they
+  were first seen and when they completed. **The wording follows your ship:** without a fleet carrier there is no carrier
+  line and trips are simply loads of your ship to finish; with one you get trips to buy and trips to haul. The
+  Colonization Sites window does the same (one Trips column and no carrier figure without a carrier).
+- **Overlay Appearance: text size, padding, line spacing and color schemes for every overlay.** A new **Settings -> Overlays
+  -> Appearance** tab picks a color scheme (Elite orange, Ice blue, Phosphor green, Amber mono, High contrast, Color-blind
+  safe), a text size (Smaller to Largest), padding and line spacing, with a sample and **Reset to defaults**. All eight
+  displays adopt it: Colonization, Discovery, Notable Bodies, Interdiction (which keeps its red alert colors), Landing,
+  Inventory, Mining and Screenshots. Cards are sized from their text at the chosen size, so larger text does not wrap or spill
+  past the border, and placement uses the new size. The default look is a little roomier than before (more space between
+  border and text, and between lines).
 - **Overlay Placement: one place to say where every on-screen display goes, correct on any monitor.** Overlay programs
   place things on a fixed 1280 x 960 canvas, and EDMCModernOverlay treats positions and sizes differently: a position is a
   fraction of the screen, but a size is in screen pixels (after Windows' display scaling), so a raw x/y number means a
@@ -39,8 +57,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   labeled box for every display, at its real size, on your screen so you can judge a position; **Reset all to defaults**
   and **Detect screen again** are there too. Applies to the Colonization card, Discovery alerts, Notable Bodies card,
   Interdiction warning, Landing assist, Inventory pickups and bars, the two Mining displays and the Screenshot message.
-  Known limit: across a wide screen EDMCModernOverlay squashes a shape that is pushed past `1280 - its width`, so a display
-  stops short of the right edge rather than being cut; its own Overlay Controller can anchor a display to an edge.
+  Displays on the right-hand side are carried past EDMCModernOverlay's right-edge limit (it squashes a shape pushed past
+  `1280 - its width`) by an offset set on the display's overlay group through the overlay's own plugin API, so they can sit
+  against the right edge (a switch on the Overlay Placement tab turns this off). Without EDMCModernOverlay they stop where the
+  limit allows.
 - **Where to buy: a Planetary column.** Each result says Yes or No for whether you have to land on a planet's
   surface to reach it. The window's minimum width grew a little to fit it.
 - **Colonization Sites window: your ship's capacity, what is on your carrier, and the trips to buy and to haul.** The totals

@@ -21,6 +21,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from . import colonisation, journal_files
 from .colonisation_data import SiteRepository
+from .colonisation_history import DeliveryLedger
 
 DEFAULT_DAYS = 14   # how far back to read when no site says otherwise
 MAX_DAYS = 30       # never read further back than this
@@ -47,9 +48,9 @@ def read_since(since_epoch: float, folder: Optional[str] = None) -> List[Event]:
     return events
 
 
-def apply_events(repository: SiteRepository, events: Iterable[Event]) -> int:
-    """Fold events into the repository. Returns how many updates were applied (a site refreshed by several events
-    counts each)."""
+def apply_events(repository: SiteRepository, events: Iterable[Event], ledger: Optional[DeliveryLedger] = None) -> int:
+    """Fold events into the repository (and every delivery into the commander's history `ledger`, if given). Returns how many
+    updates were applied (a site refreshed by several events counts each)."""
     docked: Dict[int, Tuple[str, str]] = {}
     changed = 0
     for cmdr, entry in events:
@@ -62,6 +63,8 @@ def apply_events(repository: SiteRepository, events: Iterable[Event]) -> int:
         if not isinstance(market_id, int):
             continue
         when = colonisation.event_time(entry)
+        if kind == colonisation.EVENT_CONTRIBUTION and ledger is not None:
+            ledger.apply_contribution(cmdr, entry)   # the ledger keeps its own watermark; it needs no site
         existing = repository.get(cmdr, market_id)
         if kind == colonisation.EVENT_DEPOT:
             if existing is not None and not colonisation.is_newer(existing, entry, inclusive=True):
@@ -83,6 +86,8 @@ def apply_events(repository: SiteRepository, events: Iterable[Event]) -> int:
                     working.updated = when.isoformat(timespec="seconds")
                 repository.upsert(cmdr, working)
                 changed += 1
+    if ledger is not None:
+        ledger.commit()
     return changed
 
 
@@ -100,11 +105,12 @@ def start_epoch(repository: SiteRepository, cmdrs: Iterable[str], now: Optional[
     return max(since, floor).timestamp()
 
 
-def catch_up(repository: SiteRepository, cmdrs: Iterable[str], folder: Optional[str] = None) -> int:
+def catch_up(repository: SiteRepository, cmdrs: Iterable[str], folder: Optional[str] = None,
+             ledger: Optional[DeliveryLedger] = None) -> int:
     """Read the recent journals and bring `repository` up to date. `cmdrs` are the commanders already known (their
     sites set how far back to read). Returns how many updates were applied."""
     since = start_epoch(repository, cmdrs)
-    return apply_events(repository, read_since(since, folder))
+    return apply_events(repository, read_since(since, folder), ledger)
 
 
 def known_commanders(repository: SiteRepository) -> List[str]:

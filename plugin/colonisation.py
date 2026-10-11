@@ -1,4 +1,4 @@
-"""Colonisation construction-site tracking for Field Ops - pure logic, no
+"""Colonisation construction-site tracking for the Colonization mode - pure logic, no
 EDMC imports (so it's unit-testable; see tests/test_colonisation.py).
 
 Elite's colonisation (system claims, orbital/surface construction) is
@@ -85,6 +85,10 @@ class Site:
     journal_at: str = ""
     """Time of the newest journal event folded into this site; "" for a site saved before this was kept (its `updated`
     time stands in). An event is applied only if it is newer, so catching up never counts a delivery twice."""
+    first_seen: str = ""
+    """When this tool first saw the site ("" for one saved before this was kept); for the history's build times."""
+    completed_at: str = ""
+    """When the depot first reported the build complete ("" while it is not, or for one finished before this was kept)."""
 
     @property
     def remaining_total(self) -> int:
@@ -102,6 +106,7 @@ class Site:
             "market_id": self.market_id, "name": self.name, "system": self.system,
             "progress": self.progress, "complete": self.complete, "failed": self.failed,
             "updated": self.updated, "journal_at": self.journal_at,
+            "first_seen": self.first_seen, "completed_at": self.completed_at,
             "resources": [
                 {"key": r.key, "label": r.label, "required": r.required,
                  "provided": r.provided, "payment": r.payment}
@@ -120,6 +125,7 @@ class Site:
             failed=bool(raw.get("failed")),
             updated=str(raw.get("updated") or _now_iso()),
             journal_at=str(raw.get("journal_at") or ""),
+            first_seen=str(raw.get("first_seen") or ""), completed_at=str(raw.get("completed_at") or ""),
             resources=[
                 Resource(
                     key=str(r.get("key") or ""), label=str(r.get("label") or ""),
@@ -171,6 +177,9 @@ def apply_depot_event(entry: Mapping[str, Any], existing: Optional[Site],
     if not market_id:
         return None
     site = existing or Site(market_id=market_id)
+    stamp = str(entry.get("timestamp") or "") or _now_iso()
+    if not site.first_seen:
+        site.first_seen = stamp
     if name and not site.name:
         site.name = name
     if system and not site.system:
@@ -180,6 +189,8 @@ def apply_depot_event(entry: Mapping[str, Any], existing: Optional[Site],
     except (TypeError, ValueError):
         site.progress = 0.0
     site.complete = bool(entry.get("ConstructionComplete"))
+    if site.complete and not site.completed_at:
+        site.completed_at = stamp
     site.failed = bool(entry.get("ConstructionFailed"))
     resources = []
     for raw in entry.get("ResourcesRequired") or []:

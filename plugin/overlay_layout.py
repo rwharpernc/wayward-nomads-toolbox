@@ -16,6 +16,13 @@ x/y number also means a different place on each monitor shape, which is why raw 
 instead **relative to the screen**, like SRVSurvey's overlays: a horizontal anchor (left, center, right), a vertical anchor
 (top, middle, bottom) and an offset in screen pixels.
 
+**The right-hand clamp, and how it is passed.** On the axis the overlay does not stretch (across, on a wide screen) it clamps a
+shape's left position plus its pixel width to the canvas width, so a display cannot be drawn past `1280 - its width` without
+being squashed. The overlay applies a *group offset* after that clamp (it is how its own Overlay Controller moves things), and
+offers it to plugins through `define_plugin_group`. So a display that belongs to a group is drawn at the furthest-right spot
+the clamp allows and the group's offset carries it the rest of the way (`plan_origin`); a display with no group stops at the
+clamp.
+
 **How features use it.** Each feature keeps drawing at its own fixed coordinates, exactly as before, and reports the
 rectangle it occupies (its "block", whose left and top are canvas coordinates and whose width and height are pixels).
 `shift_for` says how far to move that block, and `ShiftedClient` applies the move to everything drawn through it, so no
@@ -248,13 +255,11 @@ def placement_from_choice(label: str, first: int, second: int) -> Placement:
     raise ValueError(f"unknown placement choice: {label!r}")
 
 
-def block_origin(placement: Placement, block_size: Tuple[int, int], screen: Screen) -> Tuple[int, int]:
-    """Canvas position of the top left corner of a display whose size is `block_size` (pixels) placed as `placement` on
-    `screen`. The size is converted to canvas units first, so "right" and "bottom" land on the real edge. The result is
-    kept on the canvas when the display fits; a display bigger than the canvas is pinned to its top left so that the start
-    of it shows. A custom placement is returned as given (it is the person's exact choice)."""
+def _ideal_origin(placement: Placement, block_size: Tuple[int, int], screen: Screen) -> Tuple[float, float]:
+    """Where the top left corner of a display of `block_size` pixels belongs on the canvas, kept on the canvas but not yet
+    limited by the overlay's clamp. A custom placement is returned as given."""
     if placement.custom:
-        return placement.x, placement.y
+        return float(placement.x), float(placement.y)
     width, height = block_units(block_size, screen)
     ux, uy = screen.units_per_px
     offset_x, offset_y = placement.dx * ux, placement.dy * uy
@@ -272,6 +277,18 @@ def block_origin(placement: Placement, block_size: Tuple[int, int], screen: Scre
         y = (BASE_HEIGHT - height) / 2 + offset_y
     x = max(0.0, min(x, BASE_WIDTH - width)) if width <= BASE_WIDTH else 0.0
     y = max(0.0, min(y, BASE_HEIGHT - height)) if height <= BASE_HEIGHT else 0.0
+    return x, y
+
+
+def block_origin(placement: Placement, block_size: Tuple[int, int], screen: Screen) -> Tuple[int, int]:
+    """Canvas position of the top left corner of a display whose size is `block_size` (pixels) placed as `placement` on
+    `screen`, for a display that cannot be offset: it is stopped where the overlay would squash it. The size is converted to
+    canvas units first, so "right" and "bottom" land on the real edge where the overlay allows. The result is kept on the
+    canvas when the display fits; a display bigger than the canvas is pinned to its top left so that the start of it shows. A
+    custom placement is returned as given (it is the person's exact choice)."""
+    if placement.custom:
+        return placement.x, placement.y
+    x, y = _ideal_origin(placement, block_size, screen)
     clamp_x, clamp_y = screen.clamped
     if clamp_x and block_size[0] <= BASE_WIDTH:
         x = min(x, BASE_WIDTH - block_size[0])       # past this the overlay squashes the display's width
@@ -280,12 +297,45 @@ def block_origin(placement: Placement, block_size: Tuple[int, int], screen: Scre
     return round(x), round(y)
 
 
-def shift_for(placement: Placement, block: Tuple[int, int, int, int], screen: Screen) -> Tuple[int, int]:
+@dataclass(frozen=True)
+class Plan:
+    """How to reach a place: draw the display with its top left at (`x`, `y`) on the canvas, and have the overlay move its group
+    `offset_x` canvas units to the right afterwards (0 when none is needed)."""
+    x: int
+    y: int
+    offset_x: float = 0.0
+
+
+def plan_origin(placement: Placement, block_size: Tuple[int, int], slot_size: Tuple[int, int], screen: Screen,
+                can_offset: bool) -> Plan:
+    """Where to draw a display and how far to have its overlay group moved after. With `can_offset` False this is just
+    `block_origin`. With it True, a display that belongs on the far side of the overlay's clamp is drawn at the furthest
+    spot the clamp allows for its largest size (`slot_size`, so the position does not move as its content changes) and the
+    offset carries it from there to the place wanted. The wanted place is worked out from `slot_size` too, so the offset is a
+    fixed number for a given placement and screen, as a group offset has to be."""
+    if not can_offset:
+        x, y = block_origin(placement, block_size, screen)
+        return Plan(x, y)
+    clamp_x, _clamp_y = screen.clamped
+    ideal_x, _ideal_y = _ideal_origin(placement, slot_size, screen)
+    x, y = block_origin(placement, block_size, screen)
+    if not clamp_x or slot_size[0] > BASE_WIDTH:
+        return Plan(x, y)
+    limit = BASE_WIDTH - slot_size[0]
+    if ideal_x > limit:
+        return Plan(round(limit), y, round(ideal_x - limit, 3))
+    return Plan(round(ideal_x), y)
+
+
+def shift_for(placement: Placement, block: Tuple[int, int, int, int], screen: Screen,
+              slot_size: Optional[Tuple[int, int]] = None, can_offset: bool = False) -> Tuple[int, int]:
     """How far to move a display, given the rectangle `block` = (left, top, width, height) it occupies in its own
-    drawing coordinates (left and top on the canvas, width and height in pixels), to put it where `placement` says."""
+    drawing coordinates (left and top on the canvas, width and height in pixels), to put it where `placement` says. When the
+    display's group can be offset (`can_offset`, with its largest size `slot_size`) the move only goes as far as the overlay's
+    clamp allows and the group offset (see `plan_origin`) does the rest."""
     left, top, width, height = block
-    x, y = block_origin(placement, (width, height), screen)
-    return x - left, y - top
+    plan = plan_origin(placement, (width, height), slot_size or (width, height), screen, can_offset)
+    return plan.x - left, plan.y - top
 
 
 class ShiftedClient:
@@ -324,6 +374,8 @@ class Slot:
     legacy_x: str = ""
     legacy_y: str = ""
     legacy_default: Tuple[int, int] = (0, 0)
+    group: str = ""          # the overlay group this display's ids belong to, whose offset can carry it past the clamp ("" = none)
+    group_prefix: str = ""   # that group's id prefix, so the preview can be drawn inside the group
 
 
 def migrated_placement(slot: Slot, legacy_x: Optional[int], legacy_y: Optional[int]) -> Placement:

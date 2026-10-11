@@ -33,15 +33,16 @@ import os
 import queue
 import threading
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import tkinter as tk
 
 import myNotebook as nb
 from config import appname, config
 
-from . import neutron_finder, overlay, overlay_placement, panelkit
+from . import neutron_finder, overlay, overlay_appearance, overlay_placement, panelkit
 from .overlay import OverlayClient
+from .overlay_style import LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -241,36 +242,21 @@ _SYSTEM_NAME_ID = "wntb_discovery_system_name"
 _BODY_TITLE_ID = "wntb_discovery_body_title"
 _BODY_NAME_ID = "wntb_discovery_body_name"
 
-# Each alert now sits inside its own semi-transparent card - exactly
-# landing.py's own _CHROME_BORDER/_CHROME_FILL recipe (same alpha values,
-# same thickness, same registered-Plugin-Group treatment), just re-tinted
-# per alert (amber for system, cyan for body) and without landing's own
-# diagram shapes.
-_Y_NAME_OFFSET = 38
-_Y_BODY_OFFSET = 150
-
-_SYSTEM_TITLE_COLOR = "#fbbf24"  # amber-400
-_SYSTEM_NAME_COLOR = "#fef3c7"  # amber-100 - softer than pure white, still high-contrast
-_BODY_TITLE_COLOR = "#67e8f9"  # cyan-300
-_BODY_NAME_COLOR = "#e0f7fa"  # cyan-50
-
-_SYSTEM_BORDER_COLOR = "#80fbbf24"  # amber-400 at 50% alpha - landing.py's own _CHROME_BORDER recipe
-_BODY_BORDER_COLOR = "#8067e8f9"  # cyan-300 at 50% alpha - same recipe
-_CHROME_FILL = "#d9000000"  # black at 85% alpha - identical to landing.py's own _CHROME_FILL
+# Each alert sits inside its own semi-transparent card in the display's color scheme (the first accent for the system alert, the
+# second for the body alert, the third for a notable body), the same card treatment as Landing and the other overlays.
+# Each alert is a card holding a large title over a smaller name. The card is sized from that text at the look's text size (so a bigger
+# size makes a bigger card and the text always fits inside the border), with these base measures that a look adds its padding and line
+# spacing to. At the legacy look they give the sizes this display always had: a 460 x 84 card with the name 38 below the title, and
+# the body card 66 below the system card.
+_NAME_GAP = 4               # between the title's line and the name's, on top of the title line's own height
+_BODY_GAP = 66              # between the system card and the body card
+_CARD_MIN_W = 460
+_CARD_BASE_PAD_X = 22
+_CARD_BASE_PAD_TOP = 16
+_CARD_BASE_PAD_BOTTOM = 4
 _CARD_BORDER_THICKNESS = 2
-
-_CARD_W = 460
-_CARD_PAD_X = 22
-_CARD_PAD_TOP = 16
-_CARD_H = _Y_NAME_OFFSET + 46  # room for huge title + large name + bottom padding
-
-# No text-metrics query exists over the wire protocol (same limitation
-# mining_overlay.py's own _OVERLAY_CHAR_WIDTH_PX notes), so each line's
-# width is estimated from character count to center it in the card -
-# tuned to look right rather than measured, erring slightly wide (a bit
-# more centering slop) rather than narrow (text creeping off-center).
-_CHAR_WIDTH_LARGE = 11
-_CHAR_WIDTH_HUGE = 14
+_TITLE_BASE = "huge"       # the sizes a display asks for at the default text size
+_NAME_BASE = "large"
 
 _SYSTEM_CARD_ID = "wntb_discovery_system_card"
 _BODY_CARD_ID = "wntb_discovery_body_card"
@@ -286,80 +272,93 @@ _BODY_ACTION_TEXT = {
 GROUP_NAME = "wntb_discovery"
 GROUP_PREFIX = "wntb_discovery_"
 
-
-def block_rect() -> Tuple[int, int, int, int]:
-    """(left, top, width, height) of the two stacked alert cards as `render` draws them at the default origin."""
-    left, top = _card_geometry(DEFAULT_X, DEFAULT_Y)
-    return left, top, _CARD_W, _Y_BODY_OFFSET + _CARD_H
+_SYSTEM_TITLE = "NEW SYSTEM DISCOVERY"
 
 
-def placed_client(client: Any) -> Any:
+@dataclass(frozen=True)
+class CardGeometry:
+    """The measures of one alert card (and of the card below it), from the text it will hold and the look."""
+    pad_x: int
+    pad_top: int
+    width: int
+    height: int
+    name_offset: int      # from the title's line down to the name's
+    body_offset: int      # from the top of the system card down to the top of the body card
+
+    def left(self, x: int) -> int:
+        return x - self.pad_x
+
+    def top(self, y: int) -> int:
+        return y - self.pad_top
+
+    def center_x(self, x: int) -> int:
+        return x - self.pad_x + self.width // 2
+
+
+def card_geometry(look: Look, texts: Sequence[Tuple[str, str]] = ()) -> CardGeometry:
+    """The card measures for the given (title, name) pairs: wide enough for the widest of them at the look's sizes, never narrower
+    than the standard card. Shared by the Notable Bodies card, which is drawn the same way."""
+    widest = max((max(look.text_width(title, _TITLE_BASE), look.text_width(name, _NAME_BASE)) for title, name in texts), default=0)
+    pad_x = look.pad_x(_CARD_BASE_PAD_X)
+    pad_top = look.pad_y(_CARD_BASE_PAD_TOP)
+    name_offset = look.line_px(_TITLE_BASE) + _NAME_GAP
+    height = pad_top + name_offset + look.line_px(_NAME_BASE) + look.pad_y(_CARD_BASE_PAD_BOTTOM)
+    return CardGeometry(pad_x, pad_top, max(_CARD_MIN_W, widest + 2 * pad_x), height, name_offset, height + _BODY_GAP)
+
+
+def centered_x(text: str, base: str, center_x: int, look: Look = LEGACY) -> int:
+    """Left-edge draw position that centers `text`, drawn where a display would normally use size `base`, on `center_x`."""
+    return center_x - look.text_width(text, base) // 2
+
+
+def _alerts(snapshot: Optional[DiscoverySnapshot]) -> List[Tuple[str, str]]:
+    """The (title, name) of each alert that is showing."""
+    pairs: List[Tuple[str, str]] = []
+    if snapshot is None or snapshot.system_visible:
+        pairs.append((_SYSTEM_TITLE, (snapshot.system_name if snapshot else "") or "Unknown system"))
+    if snapshot is None or snapshot.body_visible:
+        pairs.append((_BODY_ACTION_TEXT.get((snapshot.body_action if snapshot else "") or "", "New discovery!"),
+                      (snapshot.body_name if snapshot else "") or "Unknown body"))
+    return pairs
+
+
+def block_rect(snapshot: Optional[DiscoverySnapshot] = None, look: Look = LEGACY) -> Tuple[int, int, int, int]:
+    """(left, top, width, height) of the two stacked alert cards as `render` draws them at the default origin. With no snapshot, the
+    widest the cards usually are."""
+    geometry = card_geometry(look, _alerts(snapshot))
+    return geometry.left(DEFAULT_X), geometry.top(DEFAULT_Y), geometry.width, geometry.body_offset + geometry.height
+
+
+def placed_client(client: Any, snapshot: Optional[DiscoverySnapshot] = None, look: Look = LEGACY) -> Any:
     """`client` moved to where the Overlay Placement settings put the discovery alerts."""
-    return overlay_placement.client_for("discovery", client, block_rect())
+    return overlay_placement.client_for("discovery", client, block_rect(snapshot, look))
 
 
-def _card_geometry(x: int, y: int) -> Tuple[int, int]:
-    """Top-left corner of the card behind a title/name pair anchored at
-    (x, y) - shared by system and body slots since both use the same
-    title/name layout, just at a different y."""
-    return x - _CARD_PAD_X, y - _CARD_PAD_TOP
+def render(snapshot: DiscoverySnapshot, client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y,
+           look: Look = LEGACY) -> None:
+    """Draws (or clears) both alert slots, anchored at (x, y). Title and name are each horizontally centered in the card
+    independently, since they're usually different lengths. Both cards share one width, so they line up."""
+    geometry = card_geometry(look, _alerts(snapshot))
+    center_x = geometry.center_x(x)
+    title_size, name_size = look.size(_TITLE_BASE), look.size(_NAME_BASE)
 
-
-def _card_center_x(x: int) -> int:
-    """Horizontal center of the card anchored at `x` - shared by system
-    and body slots since both use the same card width."""
-    return x - _CARD_PAD_X + _CARD_W // 2
-
-
-def _centered_x(text: str, size: str, center_x: int) -> int:
-    """Left-edge draw position that centers `text` on `center_x`, using
-    this module's own estimated per-size character width."""
-    char_width = _CHAR_WIDTH_HUGE if size == "huge" else _CHAR_WIDTH_LARGE
-    return center_x - (len(text) * char_width) // 2
-
-
-def render(snapshot: DiscoverySnapshot, client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y) -> None:
-    """Draws (or clears) both alert slots, anchored at (x, y). Title and
-    name are each horizontally centered in the card independently, since
-    they're usually different lengths."""
-    center_x = _card_center_x(x)
+    def draw(card_id, title_id, name_id, top_y, title, name, accent_index):
+        accent = look.accent(accent_index)
+        client.send_shape(card_id, "rect", look.soft(accent), look.color("fill"), geometry.left(x), geometry.top(top_y),
+                          geometry.width, geometry.height, ttl=30, thickness=_CARD_BORDER_THICKNESS)
+        client.send_message(title_id, title, accent, centered_x(title, _TITLE_BASE, center_x, look), top_y, ttl=30, size=title_size)
+        client.send_message(name_id, name, look.color("text"), centered_x(name, _NAME_BASE, center_x, look),
+                            top_y + geometry.name_offset, ttl=30, size=name_size)
 
     if snapshot.system_visible:
-        card_x, card_y = _card_geometry(x, y)
-        client.send_shape(
-            _SYSTEM_CARD_ID, "rect", _SYSTEM_BORDER_COLOR, _CHROME_FILL, card_x, card_y, _CARD_W, _CARD_H,
-            ttl=30, thickness=_CARD_BORDER_THICKNESS,
-        )
-        title_text = "NEW SYSTEM DISCOVERY"
-        name_text = snapshot.system_name or "Unknown system"
-        client.send_message(
-            _SYSTEM_TITLE_ID, title_text, _SYSTEM_TITLE_COLOR, _centered_x(title_text, "huge", center_x), y,
-            ttl=30, size="huge",
-        )
-        client.send_message(
-            _SYSTEM_NAME_ID, name_text, _SYSTEM_NAME_COLOR, _centered_x(name_text, "large", center_x),
-            y + _Y_NAME_OFFSET, ttl=30, size="large",
-        )
+        draw(_SYSTEM_CARD_ID, _SYSTEM_TITLE_ID, _SYSTEM_NAME_ID, y, _SYSTEM_TITLE,
+             snapshot.system_name or "Unknown system", 0)
     else:
         _clear_system(client, x, y)
 
     if snapshot.body_visible:
-        body_y = y + _Y_BODY_OFFSET
-        card_x, card_y = _card_geometry(x, body_y)
-        title_text = _BODY_ACTION_TEXT.get(snapshot.body_action or "", "New discovery!")
-        name_text = snapshot.body_name or "Unknown body"
-        client.send_shape(
-            _BODY_CARD_ID, "rect", _BODY_BORDER_COLOR, _CHROME_FILL, card_x, card_y, _CARD_W, _CARD_H,
-            ttl=30, thickness=_CARD_BORDER_THICKNESS,
-        )
-        client.send_message(
-            _BODY_TITLE_ID, title_text, _BODY_TITLE_COLOR, _centered_x(title_text, "huge", center_x), body_y,
-            ttl=30, size="huge",
-        )
-        client.send_message(
-            _BODY_NAME_ID, name_text, _BODY_NAME_COLOR, _centered_x(name_text, "large", center_x),
-            body_y + _Y_NAME_OFFSET, ttl=30, size="large",
-        )
+        draw(_BODY_CARD_ID, _BODY_TITLE_ID, _BODY_NAME_ID, y + geometry.body_offset,
+             _BODY_ACTION_TEXT.get(snapshot.body_action or "", "New discovery!"), snapshot.body_name or "Unknown body", 1)
     else:
         _clear_body(client, x, y)
 
@@ -369,19 +368,17 @@ def clear(client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y) -> None
     _clear_body(client, x, y)
 
 
+# Clearing replaces a shape or message by id, so where the blank one is sent does not matter.
 def _clear_system(client: OverlayClient, x: int, y: int) -> None:
-    card_x, card_y = _card_geometry(x, y)
-    client.send_shape(_SYSTEM_CARD_ID, "rect", "", "", card_x, card_y, 0, 0, ttl=1)
+    client.send_shape(_SYSTEM_CARD_ID, "rect", "", "", x, y, 0, 0, ttl=1)
     client.send_message(_SYSTEM_TITLE_ID, "", "white", x, y, ttl=1)
-    client.send_message(_SYSTEM_NAME_ID, "", "white", x, y + _Y_NAME_OFFSET, ttl=1)
+    client.send_message(_SYSTEM_NAME_ID, "", "white", x, y, ttl=1)
 
 
 def _clear_body(client: OverlayClient, x: int, y: int) -> None:
-    body_y = y + _Y_BODY_OFFSET
-    card_x, card_y = _card_geometry(x, body_y)
-    client.send_shape(_BODY_CARD_ID, "rect", "", "", card_x, card_y, 0, 0, ttl=1)
-    client.send_message(_BODY_TITLE_ID, "", "white", x, body_y, ttl=1)
-    client.send_message(_BODY_NAME_ID, "", "white", x, body_y + _Y_NAME_OFFSET, ttl=1)
+    client.send_shape(_BODY_CARD_ID, "rect", "", "", x, y, 0, 0, ttl=1)
+    client.send_message(_BODY_TITLE_ID, "", "white", x, y, ttl=1)
+    client.send_message(_BODY_NAME_ID, "", "white", x, y, ttl=1)
 
 
 # --- Controller: this mode's one entry point for load.py/ui.py -----------
@@ -461,9 +458,11 @@ class DiscoveryController:
 
         self._sync_status_label()
 
+        look = overlay_appearance.current_look()
+
         def worker() -> None:
             try:
-                render(snapshot, placed_client(_overlay_client))
+                render(snapshot, placed_client(_overlay_client, snapshot, look), look=look)
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for discovery alert", exc_info=True)
 
@@ -646,11 +645,11 @@ class DiscoveryController:
         cfg = overlay.load_config()
         client = overlay.OverlayClient(cfg)
         frame = self._result_label
-        placed = placed_client(client)
+        look = overlay_appearance.current_look()
 
         def render_once(snapshot: DiscoverySnapshot) -> None:
             try:
-                render(snapshot, placed)
+                render(snapshot, placed_client(client, snapshot, look), look=look)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"

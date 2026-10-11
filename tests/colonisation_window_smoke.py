@@ -111,16 +111,20 @@ check(len(window._site_table) == 2, "both of the commander's sites should be lis
 check(len(window._commodity_table) == 3, "three commodities are outstanding")
 check(window._tile_get.winfo_exists(), "the totals tiles should exist")
 check(window._tile_haul._value.cget("text") == "6", f"haul trips: {window._tile_haul._value.cget('text')}")  # 530 t left / 100
-check(window._tile_buy._value.cget("text") == "5", f"buy trips: {window._tile_buy._value.cget('text')}")    # 430 t still to buy
+window._refresh()   # (the tiles' text is set whether or not they are shown)
+check(window._tile_buy.winfo_manager() == "" and window._tile_carrier.winfo_manager() == "",
+      "without a carrier there is no carrier figure and no separate buy figure")
+check(window._tile_haul._caption.cget("text") == "trips to finish", "one trips figure without a carrier")
 check(window._tile_ship._value.cget("text") == "100", f"ship hold: {window._tile_ship._value.cget('text')}")
 
 # Trips Left: each commodity's remaining tons over the ship's 100 t capacity, two decimals at most.
 window._on_sort("label")
 for _ in range(4):
     root.update()
-trips = {row.values[0]: (row.values[-2], row.values[-1]) for row in window._commodity_table._rows.values()}
-check(trips == {"Aluminium": ("0.8", "0.8"), "Steel": ("4", "4"), "Water": ("0", "0.5")},
-      f"Buy and Haul Trips columns: {trips}")   # 100 t ships; the ship carries 50 t of water, which is all the water needs
+trips = {row.values[0]: row.values[-1] for row in window._commodity_table._rows.values()}
+check(trips == {"Aluminium": "0.8", "Steel": "4", "Water": "0.5"},
+      f"the single Trips column without a carrier: {trips}")   # 100 t ships carrying the whole remaining need
+check(len(window._commodity_table._rows[next(iter(window._commodity_table._rows))].values) == 6, "no FC, no Buy Trips")
 
 # Picking the other site switches the detail.
 for _ in range(4):
@@ -234,6 +238,23 @@ for _ in range(4):
     root.update()
 for table in tables(window._detail):
     check(table.winfo_reqwidth() <= top.winfo_width(), "a table asks for more width than the window has")
+
+# With a fleet carrier the window has the carrier figure and both trip columns.
+carrier.note_carrier("Bocheaux")
+carrier.commit()
+for _ in range(4):
+    root.update()
+check(window._with_fc is True, "a carrier owner gets the FC column")
+check(window._tile_buy.winfo_manager() == "pack" and window._tile_carrier.winfo_manager() == "pack", "carrier and buy figures shown")
+check(window._tile_buy._value.cget("text") == "5", f"buy trips: {window._tile_buy._value.cget('text')}")    # 430 t still to buy
+check(window._tile_haul._caption.cget("text") == "trips to haul", "haul wording with a carrier")
+trips = {row.values[0]: (row.values[-2], row.values[-1]) for row in window._commodity_table._rows.values()}
+check(trips == {"Aluminium": ("0.8", "0.8"), "Steel": ("4", "4"), "Water": ("0", "0.5")}, f"Buy and Haul Trips columns: {trips}")
+carrier._store["commanders"].clear()   # and back to no carrier for the rest of the checks
+carrier.commit()
+for _ in range(4):
+    root.update()
+check(window._with_fc is False, "back to no carrier")
 
 # Following the commander and refreshing the hold.
 W.refresh_cmdr("Mactavious")

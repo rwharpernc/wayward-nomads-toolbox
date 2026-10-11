@@ -27,7 +27,8 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import discovery, notable_rules, overlay, overlay_placement
+from . import discovery, notable_rules, overlay, overlay_appearance, overlay_placement
+from .overlay_style import LEGACY, Look
 from .overlay import OverlayClient
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -259,55 +260,61 @@ _TITLE_ID = "wntb_notable_title"
 _NAME_ID = "wntb_notable_name"
 _CARD_ID = "wntb_notable_card"
 
-_TITLE_COLOR = "#c4b5fd"  # violet-300
-_NAME_COLOR = "#ede9fe"  # violet-100
-_BORDER_COLOR = "#80c4b5fd"  # violet-300 at 50% alpha - discovery.py's own border recipe
 
 # This feature's own EDMCModernOverlay Plugin Group (see load.py's registration call).
 GROUP_NAME = "wntb_notable"
 GROUP_PREFIX = "wntb_notable_"
 
 
-def block_rect() -> Tuple[int, int, int, int]:
-    """(left, top, width, height) of the card as `render` draws it at the default origin."""
-    left, top = discovery._card_geometry(DEFAULT_X, DEFAULT_Y)
-    return left, top, discovery._CARD_W, discovery._CARD_H
-
-
-def placed_client(client: Any) -> Any:
-    """`client` moved to where the Overlay Placement settings put the notable-body card."""
-    return overlay_placement.client_for("notable", client, block_rect())
-
-
-def render(snapshot: NotableSnapshot, client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y) -> None:
-    """Draws (or clears) the card, anchored at (x, y), with discovery.py's card layout."""
-    if not snapshot.visible:
-        clear(client, x, y)
-        return
-    center_x = discovery._card_center_x(x)
-    card_x, card_y = discovery._card_geometry(x, y)
+def _texts(snapshot: Optional[NotableSnapshot]) -> Tuple[str, str]:
+    """The (title, name) the card shows, trimmed to fit."""
+    if snapshot is None:
+        return "NOTABLE BODY", "Sample body name (2 more)"
     name = cap(snapshot.name, NAME_MAX_CHARS)
     if snapshot.more:
         name = cap(f"{name} ({snapshot.more} more)", NAME_WITH_MORE_MAX_CHARS)
-    title = cap(snapshot.title, TITLE_MAX_CHARS)
+    return cap(snapshot.title, TITLE_MAX_CHARS), name
+
+
+def block_rect(snapshot: Optional[NotableSnapshot] = None, look: Look = LEGACY) -> Tuple[int, int, int, int]:
+    """(left, top, width, height) of the card as `render` draws it at the default origin."""
+    geometry = discovery.card_geometry(look, [_texts(snapshot)])
+    return geometry.left(DEFAULT_X), geometry.top(DEFAULT_Y), geometry.width, geometry.height
+
+
+def placed_client(client: Any, snapshot: Optional[NotableSnapshot] = None, look: Look = LEGACY) -> Any:
+    """`client` moved to where the Overlay Placement settings put the notable-body card."""
+    return overlay_placement.client_for("notable", client, block_rect(snapshot, look))
+
+
+def render(snapshot: NotableSnapshot, client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y,
+           look: Look = LEGACY) -> None:
+    """Draws (or clears) the card, anchored at (x, y), with discovery.py's card layout (sized from its text at the look's size)."""
+    if not snapshot.visible:
+        clear(client, x, y)
+        return
+    title, name = _texts(snapshot)
+    geometry = discovery.card_geometry(look, [(title, name)])
+    center_x = geometry.center_x(x)
+    accent = look.accent(2)
     client.send_shape(
-        _CARD_ID, "rect", _BORDER_COLOR, discovery._CHROME_FILL, card_x, card_y,
-        discovery._CARD_W, discovery._CARD_H, ttl=30, thickness=discovery._CARD_BORDER_THICKNESS,
+        _CARD_ID, "rect", look.soft(accent), look.color("fill"), geometry.left(x), geometry.top(y),
+        geometry.width, geometry.height, ttl=30, thickness=discovery._CARD_BORDER_THICKNESS,
     )
     client.send_message(
-        _TITLE_ID, title, _TITLE_COLOR, discovery._centered_x(title, "huge", center_x), y, ttl=30, size="huge",
+        _TITLE_ID, title, accent, discovery.centered_x(title, "huge", center_x, look), y, ttl=30, size=look.size("huge"),
     )
     client.send_message(
-        _NAME_ID, name, _NAME_COLOR, discovery._centered_x(name, "large", center_x),
-        y + discovery._Y_NAME_OFFSET, ttl=30, size="large",
+        _NAME_ID, name, look.color("text"), discovery.centered_x(name, "large", center_x, look),
+        y + geometry.name_offset, ttl=30, size=look.size("large"),
     )
 
 
 def clear(client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y) -> None:
-    card_x, card_y = discovery._card_geometry(x, y)
-    client.send_shape(_CARD_ID, "rect", "", "", card_x, card_y, 0, 0, ttl=1)
+    # Clearing replaces a shape or message by id, so where the blank one is sent does not matter.
+    client.send_shape(_CARD_ID, "rect", "", "", x, y, 0, 0, ttl=1)
     client.send_message(_TITLE_ID, "", "white", x, y, ttl=1)
-    client.send_message(_NAME_ID, "", "white", x, y + discovery._Y_NAME_OFFSET, ttl=1)
+    client.send_message(_NAME_ID, "", "white", x, y, ttl=1)
 
 
 # --- Controller ------------------------------------------------------------------------------
@@ -344,9 +351,11 @@ class NotableController:
         if not cfg.enabled:
             return
 
+        look = overlay_appearance.current_look()
+
         def worker() -> None:
             try:
-                render(snapshot, placed_client(_overlay_client))
+                render(snapshot, placed_client(_overlay_client, snapshot, look), look=look)
             except OSError:
                 logger.debug("Could not reach EDMCOverlay for notable body alert", exc_info=True)
 
@@ -432,11 +441,11 @@ class NotableController:
         cfg = overlay.load_config()
         client = OverlayClient(cfg)
         label = self._result_label
-        placed = placed_client(client)
+        look = overlay_appearance.current_look()
 
         def render_once(snapshot: NotableSnapshot) -> None:
             try:
-                render(snapshot, placed)
+                render(snapshot, placed_client(client, snapshot, look), look=look)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
                 outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
