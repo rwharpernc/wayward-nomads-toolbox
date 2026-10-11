@@ -263,9 +263,9 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 Written and tried on Windows. The code is platform-neutral Python and Tk, but the window layout has only been seen on
 Windows. Needs a commander with at least one registered construction site and an internet connection.
 
-- [ ] The window opens at about 1280 x 780 with the sites on the left and the detail on the right; nothing is clipped at
-      its minimum size (1100 x 640), and the divider between the commodity table and Where to buy drags.
-- [ ] Picking a site shows its progress bar, the four totals, and its commodities; the Filter box, **Hide rows
+- [ ] The window opens at about 1300 x 780 with the sites on the left and the detail on the right; nothing is clipped at
+      its minimum size (1180 x 640), and the divider between the commodity table and Where to buy drags.
+- [ ] Picking a site shows its progress bar, the five totals, and its commodities; the Filter box, **Hide rows
       already covered** and the column headings (click, click again to reverse) all work.
 - [ ] **Row colors**: a commodity row turns green when the hold plus the FC column covers the site's remaining need
       (exactly equal is green), orange when together they are more than needed, and keeps the normal look while short.
@@ -274,8 +274,11 @@ Windows. Needs a commander with at least one registered construction site and an
       disabled while it searches, and the window stays responsive.
 - [ ] **Landing pad**: Any size lists stations whose largest pad is Medium or Small; Large only lists none of those.
 - [ ] **Include fleet carriers** off lists no carriers; on adds a **Fleet carriers** group under the stations.
+- [ ] The **Planetary** column says Yes for planetary ports, outposts and settlements and No for orbital stations and
+      carriers; the whole results table fits at the window's minimum width.
 - [ ] **Here** puts the system you are in (the last system EDMC saw) into Around. **Copy System** copies the selected row.
 - [ ] With no network, the panel says the search failed and the button comes back.
 
+## Reporting
 
 Open an issue with your setup line, the failing step number, and the log excerpt.

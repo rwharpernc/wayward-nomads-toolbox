@@ -8,7 +8,7 @@ construction site still needs, with the columns Commodity, Need, FC and Ship.
 - **Ship** is what is in the ship's hold now. A ✓ marks a commodity the hold plus the fleet carrier already cover (the
   same rule as the Colonization window's green rows); the row turns amber when together they are more than is needed.
 
-A footer gives the tonnes remaining and the trips that is in the current ship (from its cargo capacity). Commodities are
+A footer gives the tons remaining and the trips that is in the current ship (from its cargo capacity). Commodities are
 alphabetical, so rows stay put as the numbers change.
 
 Which site: the commander's most recently updated active site (the one the Field Ops summary line names).
@@ -181,7 +181,7 @@ class Card:
     title: str
     rows: Tuple[Row, ...]
     hidden: int          # commodities beyond the row limit
-    remaining: int       # tonnes still needed in total
+    remaining: int       # tons still needed in total
     trips: int           # trips that is in the current ship (0 when its capacity is unknown)
     show_fc: bool
 

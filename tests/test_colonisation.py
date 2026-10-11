@@ -113,6 +113,8 @@ class CargoTests(unittest.TestCase):
         assert site is not None
         self.assertEqual(shopping_list(site), [("Steel", 600), ("Titanium", 200)])
         self.assertEqual(shopping_list(site, {"steel": 600}), [("Titanium", 200)])
+        # What is on the fleet carrier is not left to get either.
+        self.assertEqual(shopping_list(site, {"steel": 100}, {"steel": 500, "titanium": 50}), [("Titanium", 150)])
 
 
 class RoundTripTests(unittest.TestCase):

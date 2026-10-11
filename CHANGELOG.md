@@ -6,16 +6,24 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tons figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Colonization overlay card follows the window's coverage rule.** The green text and the ✓ now mean your hold plus
   what you moved onto your fleet carrier cover the need, and amber means together they are more than needed (before, only
   the hold counted).
 
 ### Added
+- **Where to buy: a Planetary column.** Each result says Yes or No for whether you have to land on a planet's
+  surface to reach it. The window's minimum width grew a little to fit it.
 - **Colonization Sites window: your ship's hold and the trips to finish.** The totals row gains **t ship hold** (your
   current ship's cargo capacity, kept up to date when you swap ships) and **trips to finish**, which counts the whole
   remaining need in full loads of that hold. The old figure only counted what was still to buy, so it understated the
   trips.
-- **Colonization Sites window: row colors by coverage.** A commodity row now turns green when your hold plus the tonnes
+- **Colonization Sites window: row colors by coverage.** A commodity row now turns green when your hold plus the tons
   you moved onto your fleet carrier cover what the site still needs, and orange when together they are more than it
   needs; while you are still short it keeps the normal look. The whole row is tinted, not just the text. **Hide rows
   already covered** follows the same rule.
@@ -26,15 +34,15 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   **Medium or larger**, or **Large only**. **Include fleet carriers** is a switch, off by default, and carriers are
   listed under their own heading. **Copy System** copies a result's system name. Nothing is fetched until you press the
   button. The shared Spansh price search gained a distance sort and a pad-size filter for this.
-- **Colonization Sites window: sites on the left, the shopping list on the right.** Click a site to see its progress bar, four totals (tonnes still to source, remaining, already in the hold, trips in this ship), a filter box, a "hide those the hold already covers" switch and a commodity table you can sort by any column. Rows turn green when the hold covers them and amber when you carry more than needed. The buttons now act on the picked site, so you no longer have to select a commodity row first. The window is larger by default (1100 x 640).
+- **Colonization Sites window: sites on the left, the shopping list on the right.** Click a site to see its progress bar, five totals (tons still to source, remaining, already in the hold, your ship's hold, trips to finish), a filter box, a "hide those the hold already covers" switch and a commodity table you can sort by any column. Rows turn green when the hold covers them and amber when you carry more than needed. The buttons now act on the picked site, so you no longer have to select a commodity row first. The window is larger by default (1300 x 780).
 - **Colonization: FC column.** The Colonization Sites window gains an **FC** column for a commander with a fleet
-  carrier: the tonnes of each commodity transferred to it (net of any taken back), from the journal's `CargoTransfer`
+  carrier: the tons of each commodity transferred to it (net of any taken back), from the journal's `CargoTransfer`
   events made at the carrier. It is per commander, caught up from the journals at start-up without counting a transfer
   twice, and uses Trade's knowledge of whether you have a fleet carrier (including your Trade carrier setting). It is
   what WNTB saw you transfer, not the carrier's real hold.
 - **Colonization: shopping list on the overlay.** Optional, off by default, laid out like SRVSurvey's: a table of
   **Commodity, Need, FC and Ship** for your most recently updated active site, a tick where your hold covers a
-  commodity, and a footer with the tonnes remaining and trips in your current ship. It shows in a commodity market, at
+  commodity, and a footer with the tons remaining and trips in your current ship. It shows in a commodity market, at
   your own carrier's services screens, with the right-hand cockpit panel open when docked at your carrier (the cargo
   transfer), in Carrier Management, and when docked at a construction site; optionally whenever the right-hand panel is
   open anywhere. A **SHOW / HIDE** button in the Field Ops panel forces it on or off. Settings: position, and how many
@@ -74,6 +82,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   still needs Carrier Management for an exact value.
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Documentation pass.** Stale statements corrected against the code: the README's broken "Installing" link, the
   Troubleshooting claim that features only know what happened since EDMC started, the Powerplay and Missions specs
   (deliveries, active set, combat bonds, cargo progress, test coverage), the Boxel Survey spec (visited-systems
@@ -130,6 +144,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   A carrier last read by an older version shows one combined "crew and packs" line until its next space report.
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Trade: the Session page's journal line** shows when the journals were last reviewed (in your local time) and
   whether that review found new journals.
 - **Guides: full disclosure of the game's data gaps.** Every mode guide (Trade, Powerplay, Exploration, Mining,
@@ -186,6 +206,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   white pages; they now take the page colour.
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Trade stock rows are clearer.** "aboard" and "elsewhere" became "in your hold" and "not in your hold", with a
   note under the list saying that cargo not in your hold has usually been moved to your carrier and stays listed
   until it is sold.
@@ -287,6 +313,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   pre-update backup no longer sweeps them up; a new test fails whenever a data file is missing from that list.
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Every overlay is now off by default, and existing installs are reset once.** The Inventory, Landing
   Assist and Screenshots overlays used to start on; they now start off like the rest (Discovery, Notable,
   Interdiction, Mining and the mining waypoint). On the first start of this version every overlay switch is
@@ -336,6 +368,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   commands.
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - README: the Linux section is now a step-by-step setup guide (helper tools, journal folder, the four
   Flatpak permissions, binding a keyboard key for the honk, checking the overlay), and Troubleshooting has
   Linux entries for each symptom above. The "known issue" notices for Linux are removed; the Settings panel
@@ -380,6 +418,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   The panel keeps the width the full-label button row had, so EDMC still opens at its usual width.
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Mining buttons are in one row** instead of stacked one per row: BOOK, +H.S., H.S., PRICE, RES and I/E, showing
   only the ones that apply to the page (Space or Surface) and are switched on in Settings.
 - **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
@@ -429,6 +473,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   `powerplay_systems_tab.py` and `tests/test_powerplay_ledger.py`. See `docs/POWERPLAY_TECH_SPEC.md` section 11.
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
   Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
   than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of
@@ -477,6 +527,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   (`docs/LINUX_TESTING.md`).
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
   Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
   than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of
@@ -511,6 +567,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## 1.1.0 - 2026-10-03
 
 ### Changed
+- **Colonization Sites window: the "To Source" column is now "Trips Left".** Each commodity shows how many more
+  loads of your current ship it takes to deliver the rest (Remaining divided by your ship's capacity), with at most two
+  decimals such as `1.5` or `1.25`. The old column was Remaining less what your ship carried, so with the cargo stored
+  on a fleet carrier it just repeated Remaining. The tonnes figure lives on as the **t still to get** total and in the
+  copied shopping list, and both now take your carrier's cargo off as well. The window and its status line say "ship"
+  instead of "hold".
 - **Settings tab consolidated.** The 23 tabs across the top are now 8: General, Powerplay, Missions,
   Exploration, Mining, BGS, Field Ops and Always On, each with its own row of tabs inside where it has more
   than one. In Exploration, GEC Nearby POI, Canonn Nearby POI and Codex Completionist share one **Points of

@@ -31,11 +31,11 @@ class CommodityRowsTests(unittest.TestCase):
         labels = [r.label for r in view.commodity_rows(site(), {})]
         self.assertEqual(labels, ["Aluminium", "Steel", "Water"])   # Copper is fully delivered
 
-    def test_to_source_takes_the_hold_off(self):
+    def test_to_get_takes_the_ship_off(self):
         rows = {r.label: r for r in view.commodity_rows(site(), {"steel": 150, "water": 80})}
-        self.assertEqual(rows["Steel"].to_source, 250)
+        self.assertEqual(rows["Steel"].to_get, 250)
         self.assertEqual(rows["Steel"].in_cargo, 150)
-        self.assertEqual(rows["Water"].to_source, 0)
+        self.assertEqual(rows["Water"].to_get, 0)
         self.assertTrue(rows["Water"].covered)
         self.assertFalse(rows["Steel"].covered)
 
@@ -47,10 +47,59 @@ class CommodityRowsTests(unittest.TestCase):
         self.assertEqual([r.label for r in view.commodity_rows(site(), {}, text="  ALU ")], ["Aluminium"])
         self.assertEqual(view.commodity_rows(site(), {}, text="nothing like this"), [])
 
-    def test_carrier_tonnes_are_attached(self):
+    def test_carrier_tons_are_attached(self):
         rows = {r.label: r for r in view.commodity_rows(site(), {}, {"steel": 120})}
         self.assertEqual(rows["Steel"].on_carrier, 120)
         self.assertEqual(rows["Water"].on_carrier, 0)
+
+
+class TripsTests(unittest.TestCase):
+    def test_whole_and_fractional_trips(self):
+        self.assertEqual(view.format_trips(view.trips_for(400, 100)), "4")
+        self.assertEqual(view.format_trips(view.trips_for(150, 100)), "1.5")
+        self.assertEqual(view.format_trips(view.trips_for(125, 100)), "1.25")
+        self.assertEqual(view.format_trips(view.trips_for(50, 100)), "0.5")
+
+    def test_never_more_than_two_decimals_and_rounds_half_up(self):
+        self.assertEqual(view.format_trips(view.trips_for(100, 300)), "0.33")
+        self.assertEqual(view.format_trips(view.trips_for(200, 300)), "0.67")
+        self.assertEqual(view.format_trips(view.trips_for(1, 8)), "0.13")      # 0.125 rounds up
+        self.assertEqual(view.format_trips(view.trips_for(2675, 1000)), "2.68")  # exact, not a float surprise
+
+    def test_a_small_remainder_never_reads_as_zero(self):
+        self.assertEqual(view.format_trips(view.trips_for(1, 784)), "0.01")
+
+    def test_thousands_are_separated(self):
+        self.assertEqual(view.format_trips(view.trips_for(1_000_000, 784)), "1,275.51")
+
+    def test_unknown_capacity_is_a_dash_and_nothing_left_is_zero(self):
+        self.assertEqual(view.format_trips(view.trips_for(400, 0)), "–")
+        self.assertEqual(view.format_trips(None), "–")
+        self.assertEqual(view.format_trips(view.trips_for(0, 100)), "0")
+
+    def test_rows_carry_their_trips_from_what_remains(self):
+        rows = {r.label: r for r in view.commodity_rows(site(), {"steel": 100}, {"steel": 150}, capacity=100)}
+        self.assertEqual(view.format_trips(rows["Steel"].trips), "4")        # 400 t remaining, whatever is already held
+        self.assertEqual(view.format_trips(rows["Aluminium"].trips), "0.8")  # 80 t
+        self.assertIsNone({r.label: r for r in view.commodity_rows(site(), {})}["Steel"].trips)
+
+
+class StillToGetTests(unittest.TestCase):
+    def test_the_carrier_is_taken_off_as_well(self):
+        rows = {r.label: r for r in view.commodity_rows(site(), {"steel": 100}, {"steel": 150})}
+        self.assertEqual(rows["Steel"].to_get, 150)   # 400 needed, 100 on the ship, 150 on the carrier
+
+    def test_it_never_goes_below_zero(self):
+        rows = {r.label: r for r in view.commodity_rows(site(), {"steel": 300}, {"steel": 300})}
+        self.assertEqual(rows["Steel"].to_get, 0)
+
+    def test_it_is_zero_exactly_when_the_row_is_covered(self):
+        for cargo, carrier in (({}, {}), ({"steel": 400}, {}), ({"steel": 100}, {"steel": 300}), ({}, {"steel": 500})):
+            row = {r.label: r for r in view.commodity_rows(site(), cargo, carrier)}["Steel"]
+            self.assertEqual(row.to_get == 0, row.covered, (cargo, carrier))
+
+    def test_the_total_counts_the_carrier(self):
+        self.assertEqual(view.totals(site(), {}, carrier={"steel": 400}).to_get, 50 + 80)
 
 
 class CoverageStateTests(unittest.TestCase):
@@ -90,7 +139,7 @@ class TotalsTests(unittest.TestCase):
     def test_totals_ignore_the_filters_and_count_trips(self):
         totals = view.totals(site(), {"steel": 100}, capacity=100)
         self.assertEqual(totals.remaining, 400 + 50 + 80)
-        self.assertEqual(totals.to_source, 300 + 50 + 80)
+        self.assertEqual(totals.to_get, 300 + 50 + 80)
         self.assertEqual(totals.in_hold, 100)
         self.assertEqual(totals.lines, 3)
         self.assertEqual(totals.covered, 0)
@@ -107,7 +156,7 @@ class TotalsTests(unittest.TestCase):
     def test_a_full_hold_still_has_to_be_delivered(self):
         everything = {"steel": 400, "water": 50, "aluminium": 80}
         totals = view.totals(site(), everything, capacity=100)
-        self.assertEqual((totals.to_source, totals.trips), (0, 6))   # nothing to buy, 530 t to deliver
+        self.assertEqual((totals.to_get, totals.trips), (0, 6))   # nothing to buy, 530 t to deliver
 
     def test_a_finished_site_needs_no_trips(self):
         done = site()

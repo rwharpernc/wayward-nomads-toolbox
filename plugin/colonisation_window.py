@@ -1,6 +1,6 @@
 """Colonisation Sites window - the commander's construction sites on the left, and the selected site's shopping list on
-the right: progress, the totals (still to source, the ship's hold, trips to finish the build), filters, and a sortable commodity table with
-what the hold and the fleet carrier already cover. Beneath that, "Where to buy" finds the closest stations (and, if
+the right: progress, the totals (still to get, the ship's capacity, trips to finish the build), filters, and a sortable commodity table with
+what the ship and the fleet carrier already cover. Beneath that, "Where to buy" finds the closest stations (and, if
 asked, fleet carriers) with the picked commodity in stock. Same singleton window + geometry-persistence convention as
 the other WNTB windows, built on the shared window kit (plugin/uikit - see docs/WINDOW_FRAMEWORK_SPEC.md). What is
 shown and how it adds up lives in colonisation_view.py, and the search in colonisation_sources.py; this file only
@@ -30,9 +30,9 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CONFIG_GEOMETRY = "wntb_colonisation_window_geometry"
 
-MIN_WIDTH = 1100
+MIN_WIDTH = 1180
 MIN_HEIGHT = 640
-DEFAULT_SIZE = (1280, 780)
+DEFAULT_SIZE = (1300, 780)
 
 _SITE_COLUMNS = (
     Column("name", "Site", 190, stretch=True, max_chars=40),
@@ -45,14 +45,15 @@ _COMMODITY_COLUMNS = (
     Column("delivered", "Delivered", 80, anchor="e", max_chars=10),
     Column("remaining", "Remaining", 80, anchor="e", max_chars=10),
     Column("cargo", "In Cargo", 80, anchor="e", max_chars=10),
-    Column("source", "To Source", 80, anchor="e", max_chars=10),
+    Column("trips", "Trips Left", 90, anchor="e", max_chars=10),
 )
-# Shown only for a commander with a fleet carrier: tonnes moved onto it (colonisation_carrier.py).
+# Shown only for a commander with a fleet carrier: tons moved onto it (colonisation_carrier.py).
 _FC_COLUMN = Column("fc", "FC", 70, anchor="e", max_chars=10)
 _SOURCE_COLUMNS = (
-    Column("station", "Station", 150, stretch=True, max_chars=32),
-    Column("system", "System", 130, stretch=True, max_chars=30),
-    Column("kind", "Type", 110, max_chars=20),
+    Column("station", "Station", 120, stretch=True, max_chars=32),
+    Column("system", "System", 110, stretch=True, max_chars=30),
+    Column("kind", "Type", 100, max_chars=20),
+    Column("planetary", "Planetary", 80, anchor="center", max_chars=4),
     Column("pad", "Pad", 60, max_chars=8),
     Column("distance", "Distance", 70, anchor="e", max_chars=12),
     Column("arrival", "Arrival", 80, anchor="e", max_chars=12),
@@ -84,7 +85,7 @@ def show(parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[
 
 
 def refresh_cargo(cargo: Mapping[str, int]) -> None:
-    """Called by the controller whenever the hold changes; a no-op while the
+    """Called by the controller whenever the ship's cargo changes; a no-op while the
     window isn't open."""
     if _window is not None and _window.alive:
         _window.set_cargo(cargo)
@@ -182,12 +183,12 @@ class ColonisationWindow:
 
         tiles = tk.Frame(right, bg=P.PANE, padx=P.PAD, pady=P.PAD_SM)
         tiles.pack(fill="x")
-        self._tile_source = StatTile(tiles, "–", "t still to source", P.ACCENT)
+        self._tile_get = StatTile(tiles, "–", "t still to get", P.ACCENT)
         self._tile_remaining = StatTile(tiles, "–", "t remaining")
-        self._tile_hold = StatTile(tiles, "–", "t already in the hold", P.OK)
-        self._tile_ship = StatTile(tiles, "–", "t ship hold")
+        self._tile_hold = StatTile(tiles, "–", "t already in your ship", P.OK)
+        self._tile_ship = StatTile(tiles, "–", "t ship capacity")
         self._tile_trips = StatTile(tiles, "–", "trips to finish", P.INFO)
-        for tile in (self._tile_source, self._tile_remaining, self._tile_hold, self._tile_ship, self._tile_trips):
+        for tile in (self._tile_get, self._tile_remaining, self._tile_hold, self._tile_ship, self._tile_trips):
             tile.pack(side="left", padx=(0, P.PAD_SM))
 
         filters = tk.Frame(right, bg=P.PANE, padx=P.PAD, pady=P.PAD_SM)
@@ -212,7 +213,7 @@ class ColonisationWindow:
         columns = _COMMODITY_COLUMNS + ((_FC_COLUMN,) if self._with_fc else ())
         table = DataTable(self._table_host, columns, sortable=False, on_header=self._on_sort,
                           on_select=self._on_pick_commodity, empty_text="Nothing left to deliver here.")
-        # Whole-row tints: green when the hold plus the fleet carrier covers the need, orange when it is more than needed.
+        # Whole-row tints: green when the ship plus the fleet carrier covers the need, orange when it is more than needed.
         table.tag_configure(view.STATE_ENOUGH, foreground=P.TEXT, background=P.ROW_OK)
         table.tag_configure(view.STATE_OVER, foreground=P.TEXT, background=P.ROW_OVER)
         table.pack(fill="both", expand=True)
@@ -324,7 +325,7 @@ class ColonisationWindow:
 
     def _commodity_value(self, row: view.CommodityRow):
         return {"label": row.label.casefold(), "required": row.required, "delivered": row.delivered,
-                "remaining": row.remaining, "cargo": row.in_cargo, "source": row.to_source,
+                "remaining": row.remaining, "cargo": row.in_cargo, "trips": row.remaining,
                 "fc": row.on_carrier}.get(self._sort_key, row.label.casefold())
 
     def _refresh_detail(self) -> None:
@@ -344,7 +345,7 @@ class ColonisationWindow:
             self._title.configure(text="No site selected")
             self._where.configure(text="")
             self._progress.set(0)
-            for tile in (self._tile_source, self._tile_remaining, self._tile_hold, self._tile_ship, self._tile_trips):
+            for tile in (self._tile_get, self._tile_remaining, self._tile_hold, self._tile_ship, self._tile_trips):
                 tile.set("–")
             return
 
@@ -357,19 +358,19 @@ class ColonisationWindow:
         on_carrier = self._carrier.tonnes(self._cmdr) if wants_fc and self._carrier else {}
         capacity = self._capacity()
         totals = view.totals(site, self._cargo, capacity, on_carrier)
-        self._tile_source.set(f"{totals.to_source:,}")
+        self._tile_get.set(f"{totals.to_get:,}")
         self._tile_remaining.set(f"{totals.remaining:,}")
         self._tile_hold.set(f"{totals.in_hold:,}")
         self._tile_ship.set(f"{capacity:,}" if capacity > 0 else "–")
         self._tile_trips.set(f"{totals.trips:,}" if totals.trips else "–")
 
         rows: List[view.CommodityRow] = view.commodity_rows(
-            site, self._cargo, on_carrier, self._hide_covered.get(), self._filter_text.get())
+            site, self._cargo, on_carrier, self._hide_covered.get(), self._filter_text.get(), capacity)
         rows.sort(key=self._commodity_value, reverse=self._sort_desc)
         self._commodity_table.mark_sorted(self._sort_key, self._sort_desc)
         for row in rows:
             values = (row.label, f"{row.required:,}", f"{row.delivered:,}", f"{row.remaining:,}",
-                      f"{row.in_cargo:,}" if row.in_cargo else "", f"{row.to_source:,}")
+                      f"{row.in_cargo:,}" if row.in_cargo else "", view.format_trips(row.trips))
             if wants_fc:
                 values += (f"{row.on_carrier:,}" if row.on_carrier else "",)
             tag = None if row.state == view.STATE_SHORT else row.state
@@ -382,10 +383,10 @@ class ColonisationWindow:
         if totals.lines and not rows:
             self._shell.set_status("The filters hide every commodity this site still needs.")
         else:
-            ship = (f"Your {capacity:,} t hold takes {totals.trips:,} trip{'s' if totals.trips != 1 else ''} to finish."
-                    if capacity > 0 and totals.trips else "Your ship's hold size isn't known yet.")
+            ship = (f"Your {capacity:,} t ship takes {totals.trips:,} trip{'s' if totals.trips != 1 else ''} to finish."
+                    if capacity > 0 and totals.trips else "Your ship's cargo capacity isn't known yet.")
             self._shell.set_status(f"{totals.lines} commodit{'y' if totals.lines == 1 else 'ies'} still needed, "
-                                   f"{totals.covered} covered by the hold and carrier. {ship}")
+                                   f"{totals.covered} covered by your ship and carrier. {ship}")
 
     # --- where to buy ----------------------------------------------------------
 
@@ -465,7 +466,7 @@ class ColonisationWindow:
     @staticmethod
     def _source_value(source: sources.Source, key: str):
         return {"station": source.station.casefold(), "system": source.system.casefold(), "kind": source.kind.casefold(),
-                "pad": _PAD_ORDER.get(source.pad, 3), "distance": source.distance_ly, "arrival": source.arrival_ls,
+                "planetary": source.is_planetary, "pad": _PAD_ORDER.get(source.pad, 3), "distance": source.distance_ly, "arrival": source.arrival_ls,
                 "price": source.price, "supply": source.supply}[key]
 
     def _render_sources(self, system: str = "") -> None:
@@ -481,15 +482,15 @@ class ColonisationWindow:
             for index, item in enumerate(sorted(group, key=lambda s: self._source_value(s, key), reverse=descending)):
                 iid = f"{prefix}{index}"
                 self._source_rows[iid] = item.system
-                kind = item.kind + (" (ground)" if item.is_planetary and "lanetary" not in item.kind else "")
                 self._source_table.insert(
-                    iid, (item.station, item.system, kind, item.pad, f"{item.distance_ly:,.1f} ly",
+                    iid, (item.station, item.system, item.kind, "Yes" if item.is_planetary else "No", item.pad,
+                          f"{item.distance_ly:,.1f} ly",
                           f"{item.arrival_ls:,.0f} ls" if item.arrival_ls else "", f"{item.price:,}",
                           f"{item.supply:,}"), tag=tag, parent=parent)
 
         add(result.stations, "s", None, None)
         if result.carriers:
-            self._source_table.insert("carriers", (f"Fleet carriers ({len(result.carriers)})", "", "", "", "", "", "", ""),
+            self._source_table.insert("carriers", (f"Fleet carriers ({len(result.carriers)})", "", "", "", "", "", "", "", ""),
                                       tag="carrier", group=True, open=True)
             add(result.carriers, "c", "carrier", "carriers")
         stations, carriers = len(result.stations), len(result.carriers)
@@ -502,7 +503,7 @@ class ColonisationWindow:
         around = f" around {_clip(system, _NAME_MAX)}" if system else ""
         self._sources_note.configure(
             text=f"{self._result_label}: {stations} station{'s' if stations != 1 else ''}{extra}{around}. Price is per "
-                 f"tonne; the data is from players' own market updates, so confirm on arrival.")
+                 f"ton; the data is from players' own market updates, so confirm on arrival.")
 
     def _on_copy_system(self) -> None:
         selection = self._source_table.selection()
@@ -518,15 +519,21 @@ class ColonisationWindow:
     def _selected_site(self) -> Optional[Site]:
         return self._sites.get(self._selected) if self._selected is not None else None
 
+    def _carrier_tons(self) -> Dict[str, int]:
+        """Tons moved onto the commander's fleet carrier, or nothing for a commander without one."""
+        if self._carrier and self._cmdr and self._carrier.has_carrier(self._cmdr):
+            return self._carrier.tonnes(self._cmdr)
+        return {}
+
     def _on_copy(self) -> None:
         site = self._selected_site()
         if site is None:
             self._shell.set_status("Select a site on the left first.")
             return
-        lines = [f"{site.display_name()}{f' ({site.system})' if site.system else ''} - still to source:"]
-        lines += [f"{amount:,} t  {label}" for label, amount in colonisation.shopping_list(site, self._cargo)]
+        lines = [f"{site.display_name()}{f' ({site.system})' if site.system else ''} - still to get:"]
+        lines += [f"{amount:,} t  {label}" for label, amount in colonisation.shopping_list(site, self._cargo, self._carrier_tons())]
         if len(lines) == 1:
-            lines.append("(nothing - everything needed is already in the hold or delivered)")
+            lines.append("(nothing - everything needed is already on your ship, on your carrier or delivered)")
         if panelkit.copy_to_clipboard(self._toplevel, "\n".join(lines)):
             self._shell.set_status(f"Copied the shopping list for {site.display_name()}.")
 

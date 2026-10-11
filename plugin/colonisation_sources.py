@@ -47,8 +47,8 @@ class Source:
     pad: str             # the largest pad the station has: "Large" / "Medium" / "Small" / "?" when unknown
     distance_ly: float
     arrival_ls: float
-    price: int           # cr per tonne
-    supply: int          # tonnes in stock
+    price: int           # cr per ton
+    supply: int          # tons in stock
 
 
 @dataclass(frozen=True)

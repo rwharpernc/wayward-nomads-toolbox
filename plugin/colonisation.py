@@ -246,13 +246,16 @@ def still_to_source(resource: Resource, cargo: Mapping[str, int]) -> int:
     return max(0, resource.remaining - cargo.get(resource.key, 0))
 
 
-def shopping_list(site: Site, cargo: Optional[Mapping[str, int]] = None) -> List[Tuple[str, int]]:
-    """(label, tonnes) for every commodity still needed, biggest first.
+def shopping_list(site: Site, cargo: Optional[Mapping[str, int]] = None,
+                  carrier: Optional[Mapping[str, int]] = None) -> List[Tuple[str, int]]:
+    """(label, tons) for every commodity still needed, biggest first.
     With `cargo`, subtracts what's already aboard (the "still to source"
     view); without, the full outstanding amount."""
     rows = []
     for resource in site.resources:
         amount = still_to_source(resource, cargo) if cargo is not None else resource.remaining
+        if carrier:   # what is already on the fleet carrier is not left to get either
+            amount = max(0, amount - carrier.get(resource.key, 0))
         if amount > 0:
             rows.append((resource.label, amount))
     return sorted(rows, key=lambda row: (-row[1], row[0].casefold()))

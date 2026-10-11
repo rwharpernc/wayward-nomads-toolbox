@@ -149,20 +149,20 @@ for is ignored, since there is nothing to add it to.
 
 ### The Colonisation Sites window
 
-Sites are listed on the left (name, tonnes left, and its progress as a percentage, or `complete` or `failed`);
+Sites are listed on the left (name, tons left, and its progress as a percentage, or `complete` or `failed`);
 finished ones are grayed out. The subtitle reads `<commander> — N active of M sites`. Click a site to see it on the right:
-its name, system, a progress bar, four totals, two filters and a table with one row per commodity **still
+its name, system, a progress bar, five totals, two filters and a table with one row per commodity **still
 outstanding**. The first active site is picked when the window opens.
 
 The totals are always for the whole site, whatever the filters hide:
 
 | Total | Meaning |
 |---|---|
-| t still to source | What you still have to buy or mine, after what your hold already carries |
+| t still to get | What you still have to buy or mine: Remaining, less what is in your ship and what you have moved onto your fleet carrier |
 | t remaining | What the site still needs in total |
-| t already in the hold | Of that, what you are carrying now (never more than the site needs) |
-| t ship hold | Your current ship's cargo capacity, as EDMC reports it. It follows you when you swap ships; a dash until EDMC has given it |
-| trips to finish | **All** the tonnes the site still needs, divided by that capacity and rounded up: how many full loads it takes to complete the build with this ship. What you already carry is the start of the first load, so it is not taken off. A dash when the capacity is unknown |
+| t already in your ship | Of the remaining need, what your ship is carrying now (never more than the site needs) |
+| t ship capacity | Your current ship's cargo capacity, as EDMC reports it. It follows you when you swap ships; a dash until EDMC has given it |
+| trips to finish | **All** the tons the site still needs, divided by that capacity and rounded up: how many full loads it takes to complete the build with this ship. What you already carry is the start of the first load, so it is not taken off. A dash when the capacity is unknown |
 
 The **Filter** box keeps the commodities whose names contain what you type, and **Hide rows already covered**
 drops the rows you needn't buy any more (see the colors below for what counts as covered). Click a column heading to sort by it, and again to reverse; the
@@ -174,8 +174,8 @@ default is alphabetical, so rows stay put while numbers change.
 | Delivered | What's been handed over |
 | Remaining | Required minus delivered |
 | In Cargo | What is in your hold now (ship or SRV) |
-| To Source | Remaining minus what you're already carrying: what you still have to buy or mine |
-| FC | Tonnes of that commodity you have transferred onto your **fleet carrier** (only shown once WNTB has seen you have one) |
+| Trips Left | How many more loads of **your current ship** it takes to deliver the rest of that commodity: Remaining divided by your ship's cargo capacity. It uses at most two decimals (`4`, `1.5`, `1.25`, `0.33`), never rounds a small remainder down to 0, and shows a dash until EDMC has given your ship's capacity |
+| FC | Tons of that commodity you have transferred onto your **fleet carrier** (only shown once WNTB has seen you have one) |
 
 **Row colors.** The whole row is tinted by what you already have for that commodity, counting your hold **plus** what
 you have moved onto your fleet carrier (the FC column):
@@ -185,14 +185,15 @@ you have moved onto your fleet carrier (the FC column):
 - **No tint:** you are still short. This is the normal look while you work on it.
 
 The carrier figure is what WNTB saw you transfer (see the FC column notes), so it can drift from the carrier's real
-cargo. The To Source column still counts only your hold, so it does not drop when you move cargo onto the carrier.
+cargo. The **t still to get** total and the copied shopping list count it too, so they drop when you move cargo onto the
+carrier. Trips Left does not: it is about hauling the rest to the site, whatever is stored where.
 
-**The FC column.** It adds up the journal's `CargoTransfer` events made while docked at your fleet carrier: tonnes
-moved to the carrier minus tonnes moved back to the ship. It appears for a commander WNTB knows has a fleet carrier, using the **same knowledge as Trade**: your
+**The FC column.** It adds up the journal's `CargoTransfer` events made while docked at your fleet carrier: tons
+moved to the carrier minus tons moved back to the ship. It appears for a commander WNTB knows has a fleet carrier, using the **same knowledge as Trade**: your
 choice for that commander in the Trade settings (None, Fleet, Squadron, Both or Auto) decides when it names the
 carriers, and on Auto a fleet carrier Trade has recorded counts (it reads your recent journals at start-up and
 remembers them). Failing that, it appears once WNTB has seen one of yours itself (a transfer, opening Carrier
-Management, buying one, or docking at one). It is per commander. It does not change To Source.
+Management, buying one, or docking at one). It is per commander. It does lower the **t still to get** total.
 
 - **Transfers made with EDMC closed are found.** They are in the journal, and at start-up WNTB reads the recent
   journals and adds any transfer it hasn't counted. A transfer is never counted twice, even if EDMC also saw it live.
@@ -218,8 +219,10 @@ system you search around are sent.
 | Landing pad | **Any size** (default), **Medium or larger**, or **Large only**. Any size lists stations whose biggest pad is small, so you can swap to a smaller cargo ship when a commodity isn't sold at a large-pad station. The **Pad** column shows each station's largest pad |
 | Include fleet carriers | Off by default. When ticked, carriers are searched separately and listed under their own **Fleet carriers** heading after the stations |
 
-Each result shows the station, system, type, largest pad, distance in light years, distance from the arrival star,
-the price per tonne and the stock. **Copy System** copies the selected row's system name, to paste into the galaxy map.
+Each result shows the station, system, type, whether it is **Planetary**, largest pad, distance in light years,
+distance from the arrival star, the price per ton and the stock. **Planetary: Yes** means a base on a planet's
+surface, so you have to descend to land (planetary ports and outposts, settlements); **No** means an orbital
+station, asteroid base, megaship or fleet carrier, which you dock at in space. Click the heading to sort by it. **Copy System** copies the selected row's system name, to paste into the galaxy map.
 
 Things worth knowing:
 
@@ -234,7 +237,7 @@ Things worth knowing:
 **Buttons.** They act on the site picked on the left:
 
 - **Copy Shopping List** copies that site's list to the clipboard, as lines like `1,200 t  Steel`, biggest first.
-  The amounts are the **To Source** figures, so what you already carry is taken off. If nothing is needed it says
+  The amounts are the **t still to get** figures, so what is on your ship and on your carrier is taken off. If nothing is needed it says
   so.
 - **Remove Site** stops tracking that site.
 - **Remove Finished** deletes every complete or failed site.
@@ -255,7 +258,7 @@ It draws a table laid out like SRVSurvey's, with the site name as its title and 
   your hold **plus** what is on your fleet carrier already covers it (the row turns green, the same rule as the
   window's green rows); the row turns amber if together they are **more** than the site needs.
 
-Commodities are alphabetical so rows stay put while numbers change. A last line gives the tonnes remaining and the
+Commodities are alphabetical so rows stay put while numbers change. A last line gives the tons remaining and the
 trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the same count as the window's trips to finish) (the trips need your ship's
 cargo capacity, which EDMC supplies).
 

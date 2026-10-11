@@ -109,9 +109,16 @@ for _ in range(4):
 check(window._selected == 1, f"the first active site should be picked, got {window._selected}")
 check(len(window._site_table) == 2, "both of the commander's sites should be listed (not the other commander's)")
 check(len(window._commodity_table) == 3, "three commodities are outstanding")
-check(window._tile_source.winfo_exists(), "the totals tiles should exist")
+check(window._tile_get.winfo_exists(), "the totals tiles should exist")
 check(window._tile_trips._value.cget("text") == "6", f"trips: {window._tile_trips._value.cget('text')}")  # 530 t left / 100
 check(window._tile_ship._value.cget("text") == "100", f"ship hold: {window._tile_ship._value.cget('text')}")
+
+# Trips Left: each commodity's remaining tons over the ship's 100 t capacity, two decimals at most.
+window._on_sort("label")
+for _ in range(4):
+    root.update()
+trips = {row.values[0]: row.values[-1] for row in window._commodity_table._rows.values()}
+check(trips == {"Aluminium": "0.8", "Steel": "4", "Water": "0.5"}, f"Trips Left column: {trips}")
 
 # Picking the other site switches the detail.
 for _ in range(4):
@@ -132,10 +139,10 @@ window._filter_text.set("ste")
 check(len(window._commodity_table) == 1, "the text filter should keep only Steel")
 window._filter_text.set("")
 
-# Sorting by To Source, twice (descending).
-window._on_sort("source")
-check(window._sort_key == "source" and not window._sort_desc, "first header click sorts ascending")
-window._on_sort("source")
+# Sorting by Trips Left, twice (descending).
+window._on_sort("trips")
+check(window._sort_key == "trips" and not window._sort_desc, "first header click sorts ascending")
+window._on_sort("trips")
 check(window._sort_desc, "second header click sorts descending")
 
 # Row tints: green when the hold covers the need exactly, orange when it is more, none while short.
@@ -163,7 +170,7 @@ asked = []
 def fake_find(system, commodity, **kwargs):
     asked.append((system, commodity, kwargs))
     near = S.Source("Near Port", "Sol", "Coriolis Starport", False, False, "Large", 4.0, 300.0, 410, 900)
-    outpost = S.Source("Small Post", "Alpha", "Outpost", False, False, "Medium", 9.5, 1200.0, 380, 50)
+    outpost = S.Source("Small Post", "Alpha", "Planetary Outpost", False, True, "Medium", 9.5, 1200.0, 380, 50)
     fc = S.Source("K7X-LLL", "Beta", "Drake-Class Carrier", True, False, "Large", 12.0, 0.0, 300, 20)
     return S.SearchResult([near, outpost], [fc] if kwargs.get("include_carriers") else [])
 
@@ -194,6 +201,9 @@ check(len(asked) == 1 and asked[0][1] == "Steel", "the search should ask for Ste
 check(asked[0][2]["pad"] == "any", "the pad size must default to ANY")
 check(asked[0][2]["include_carriers"] is False, "fleet carriers must be off by default")
 check(len(window._source_table) == 2, "two stations should be listed")
+planetary = {row.values[0]: row.values[3] for row in window._source_table._rows.values()}
+check(planetary == {"Near Port": "No", "Small Post": "Yes"},
+      f"the Planetary column should say whether landing on a surface is needed, got {planetary}")
 
 window._pad.set("Large only")
 window._carriers_var.set(True)
