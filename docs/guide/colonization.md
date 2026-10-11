@@ -4,6 +4,9 @@ Colonization has its own mode: press the **COL** button. The page has two parts,
 your history, and a **REPORT** button that opens the full sites window. It works the same for a commander with a fleet
 carrier and for one without; the wording changes to match, and the carrier lines are left out when you have none.
 
+> **Work in progress.** Co-op building (several commanders on one project) and colony tracking are planned, through a separate
+> app that is in development. For now this page is about your own deliveries, ship and carrier, and details may change.
+
 **On this page:** [The COL page](#the-col-page) · [Tracking a site](#tracking-a-site) ·
 [The Colonization Sites window](#the-colonization-sites-window) · [Where to buy](#where-to-buy) ·
 [The shopping list on the overlay](#the-shopping-list-on-the-overlay) ·

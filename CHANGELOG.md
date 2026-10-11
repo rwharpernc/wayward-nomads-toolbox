@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.6.0 - 2026-10-11
 
 ### Changed
 - **Colonization moved out of Field Ops** into its own mode (the **COL** button). The REPORT button moved with it, and the SHOW / HIDE button is now **OVERLAY** (it lights up while the card is forced on).

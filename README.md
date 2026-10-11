@@ -25,6 +25,7 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CM
 
 - [What's in the toolbox](#whats-in-the-toolbox)
 - [Quick start](#quick-start)
+- [Tips, quirks and workarounds](#tips-quirks-and-workarounds)
 - [Guides](#guides)
 - [Getting help](#getting-help)
 - [For developers, credits and licence](#for-developers-credits-and-licence)
@@ -66,6 +67,15 @@ cargo is only exact after you open Carrier Management). Each mode guide ends wit
 doesn't tell us, and how to work around it", listing every gap we know of and what to do about it. Estimates are
 marked as estimates on screen.
 
+> **Colonization is a work in progress.** The COL page, the Colonization Sites window and the overlay shopping list work
+> today, but more is planned: **co-op building** (several commanders working on one project) and **colony tracking**, which
+> will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
+> on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
+
+> **Linux is lightly tested for this release.** The newest parts (Colonization, and the Overlays tab with Placement and
+> Appearance) have had a first pass on Linux and look fine, but a few small fixes for Linux are expected in a later
+> update. If something looks off there, please [report it](#getting-help).
+
 ## Quick start
 
 **You need:** [EDMC](https://github.com/EDCD/EDMarketConnector) on Windows or Linux. For on-screen alerts you also
@@ -83,6 +93,53 @@ everything else works without one.
 On **Linux**, one more step is needed so WNTB can read your game's journals. See [WNTB on Linux](docs/guide/linux.md).
 
 To update, extract the new ZIP over the old `WNTB` folder (don't delete it first: your saved data lives there).
+
+## Tips, quirks and workarounds
+
+Things that surprise people, and what to do about them. Every mode guide has a longer list at its end.
+
+**Installing and updating**
+- **Restart EDMC** after installing or updating. The WNTB panel only appears after a restart.
+- Extract the ZIP **over** the old `WNTB` folder, don't delete it first: your saved data lives there.
+- Use the ZIP from the **Releases** page (Assets), not the green **Code → Download ZIP** button.
+- The WNTB panel got a little wider in this release (there are eight mode buttons now). EDMC sizes its window to the widest
+  plugin, so you may see the main window grow slightly.
+
+**EDMC, the journal and catching up**
+- **Run EDMC** while you play. If you forget, WNTB catches up from your recent journals when EDMC starts (up to about 14 to 30
+  days for most features), counting nothing twice. It cannot catch up on things the game never writes down.
+- WNTB only knows what the game writes to its journal. Where it can't be sure, it says so. Each guide lists these gaps and
+  the workaround in "What the game does and doesn't tell us".
+- Everything is kept **per commander**. Switching commanders in EDMC switches the data.
+- **Linux:** EDMC's **Journal directory** must point at Elite's journal folder inside the Proton/Wine folder, or most
+  features will find nothing. Auto-Honk and the screenshot timer also need `xdotool`, and a Flatpak EDMC needs permissions
+  granted. See [WNTB on Linux](docs/guide/linux.md).
+
+**On-screen overlays**
+- Overlays need an overlay program running ([EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) is
+  recommended; the older EDMCOverlay is Windows only). Press a **Test** button to check. Everything is **off until you turn it on**.
+- All overlay settings are in one place: **Settings → WNTB → Overlays** (Connection, Placement, Appearance, and a tab per feature).
+- **Placement** puts each display at one of nine spots plus pixel offsets, read from your real screen. If it looks wrong,
+  press **Show placement preview**, then **Detect screen again**, or **Reset all to defaults**. The overlay can't draw
+  flush against the right edge by itself; WNTB works around that with an offset (a switch on the Placement tab turns it off).
+- **Appearance** sets the text size, padding, line spacing and color scheme for every overlay. Larger text makes bigger
+  cards. The Interdiction warning always stays red.
+- Run Elite in borderless or windowed mode; some overlays can't draw over exclusive fullscreen (see the [overlay setup](docs/OVERLAY_SETUP.md)).
+
+**Colonization (work in progress)**
+- Dock at a construction depot (or open its market) **once** to register a site. Nothing is typed in.
+- The COL page and window show **your** deliveries and cargo. The depot's totals include everyone's deliveries.
+- Your **history counts from the first delivery WNTB saw** (the page says the date). The game keeps no older history.
+- **Fleet carrier cargo:** the journal only records cargo you *transfer* to the carrier. For the real hold, sign EDMC in to
+  Frontier and open **Carrier Management** once; WNTB then reads the carrier's actual cargo. It can lag behind the game.
+- Commanders **without** a carrier see simpler wording and one Trips column; the carrier lines appear only if you have one.
+- **Where to buy** needs the internet (Spansh) and caches a search for two minutes.
+- Shopping-list overlay: it appears when you are at a market, in Carrier Management or at a construction site. The
+  **OVERLAY** button forces it on.
+
+**Windows**
+- If screenshots don't save, Windows **Controlled Folder Access** or your antivirus may be blocking EDMC. Allow it, or choose
+  another folder.
 
 ## Guides
 

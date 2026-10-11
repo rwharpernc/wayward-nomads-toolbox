@@ -2,7 +2,9 @@
 
 WNTB runs on Linux wherever EDMC does. It has been tested on a real install (KDE Plasma on Wayland, Elite under
 Steam Proton, EDMC as a Flatpak): the Settings panel, the on-screen overlays (test overlay, Discovery Alerts,
-Notable Bodies), Auto-Honk, the screenshot features and Trade all work. Please report anything odd.
+Notable Bodies), Auto-Honk, the screenshot features and Trade all work. The newest parts (the Colonization mode, and the
+Overlays tab with Placement and Appearance) have had only a first pass on Linux, and small fixes are expected in a later
+update. Please report anything odd.
 
 Elite runs under Steam Proton or Wine on Linux, which needs a few extras. **Work through the steps in order.**
 

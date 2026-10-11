@@ -66,6 +66,34 @@ The full checklist is in [Setting up the overlay](../OVERLAY_SETUP.md#if-nothing
 It is switched off until you tick **Enable** under **Settings → Overlays → Notable Bodies**. Only some
 rules are on to start with, so tick the ones you want. A banner needs the overlay to be running.
 
+### Overlay displays are in the wrong place, cut off, or stop short of the right edge
+
+Open **Settings → Overlays → Overlay Placement**. Press **Show placement preview** to see a box for every display at its real
+size, then **Detect screen again** if the screen size or scaling line looks wrong. **Reset all to defaults** puts every spot back.
+Displays on the right use an offset to reach the screen edge; if that misbehaves, untick **Carry displays on the right to the
+screen edge**. The details are in [Setting up the overlay](../OVERLAY_SETUP.md).
+
+### Overlay text wraps, or a card is too small or too big
+
+Open **Settings → Overlays → Appearance** and press **Show sample**. Cards are sized from an estimate of the text at the
+chosen size, so a very large size on a small screen can be tight; step the **Text size** down, or the padding to Compact.
+
+## Colonization
+
+### The COL page says "No active construction site"
+
+Dock at the construction depot, or open its market, **once**. The game writes the site's needs only then.
+
+### "Covered" or the Carrier row looks wrong
+
+The journal only records cargo you transfer to the carrier. Sign EDMC in to Frontier and open **Carrier Management** once so
+WNTB can read the carrier's real cargo hold; it is refreshed about every 15 minutes at most and can lag the game.
+
+### My history is smaller than what I delivered
+
+The game keeps no delivery history. WNTB counts from the first delivery it saw and catches up from 14 to 30 days of
+journals at start-up. The page says which date it counts since.
+
 ## Linux
 
 See [WNTB on Linux](linux.md) for the setup these refer to.
