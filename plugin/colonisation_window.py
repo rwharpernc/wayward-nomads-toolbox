@@ -1,5 +1,5 @@
 """Colonisation Sites window - the commander's construction sites on the left, and the selected site's shopping list on
-the right: progress, the totals (still to source, trips in this ship), filters, and a sortable commodity table with
+the right: progress, the totals (still to source, the ship's hold, trips to finish the build), filters, and a sortable commodity table with
 what the hold and the fleet carrier already cover. Beneath that, "Where to buy" finds the closest stations (and, if
 asked, fleet carriers) with the picked commodity in stock. Same singleton window + geometry-persistence convention as
 the other WNTB windows, built on the shared window kit (plugin/uikit - see docs/WINDOW_FRAMEWORK_SPEC.md). What is
@@ -148,7 +148,7 @@ class ColonisationWindow:
         left = tk.Frame(panes, bg=P.PANE)
         section_header(left, "Sites").pack(fill="x")
         self._site_table = DataTable(
-            left, _SITE_COLUMNS, sortable=False, on_activate=self._on_pick_site,
+            left, _SITE_COLUMNS, sortable=False, on_select=self._on_pick_site,
             empty_text="No construction sites yet - dock at a construction depot to register one.")
         self._site_table.tag_configure("done", foreground=P.MUTED)
         self._site_table.pack(fill="both", expand=True)
@@ -185,8 +185,9 @@ class ColonisationWindow:
         self._tile_source = StatTile(tiles, "–", "t still to source", P.ACCENT)
         self._tile_remaining = StatTile(tiles, "–", "t remaining")
         self._tile_hold = StatTile(tiles, "–", "t already in the hold", P.OK)
-        self._tile_trips = StatTile(tiles, "–", "trips in this ship", P.INFO)
-        for tile in (self._tile_source, self._tile_remaining, self._tile_hold, self._tile_trips):
+        self._tile_ship = StatTile(tiles, "–", "t ship hold")
+        self._tile_trips = StatTile(tiles, "–", "trips to finish", P.INFO)
+        for tile in (self._tile_source, self._tile_remaining, self._tile_hold, self._tile_ship, self._tile_trips):
             tile.pack(side="left", padx=(0, P.PAD_SM))
 
         filters = tk.Frame(right, bg=P.PANE, padx=P.PAD, pady=P.PAD_SM)
@@ -210,7 +211,7 @@ class ColonisationWindow:
     def _build_commodity_table(self) -> DataTable:
         columns = _COMMODITY_COLUMNS + ((_FC_COLUMN,) if self._with_fc else ())
         table = DataTable(self._table_host, columns, sortable=False, on_header=self._on_sort,
-                          on_activate=self._on_pick_commodity, empty_text="Nothing left to deliver here.")
+                          on_select=self._on_pick_commodity, empty_text="Nothing left to deliver here.")
         # Whole-row tints: green when the hold plus the fleet carrier covers the need, orange when it is more than needed.
         table.tag_configure(view.STATE_ENOUGH, foreground=P.TEXT, background=P.ROW_OK)
         table.tag_configure(view.STATE_OVER, foreground=P.TEXT, background=P.ROW_OVER)
@@ -343,7 +344,7 @@ class ColonisationWindow:
             self._title.configure(text="No site selected")
             self._where.configure(text="")
             self._progress.set(0)
-            for tile in (self._tile_source, self._tile_remaining, self._tile_hold, self._tile_trips):
+            for tile in (self._tile_source, self._tile_remaining, self._tile_hold, self._tile_ship, self._tile_trips):
                 tile.set("–")
             return
 
@@ -354,10 +355,12 @@ class ColonisationWindow:
         if site.system and not self._system_edited:   # search around the site unless the commander chose elsewhere
             self._system_var.set(site.system)
         on_carrier = self._carrier.tonnes(self._cmdr) if wants_fc and self._carrier else {}
-        totals = view.totals(site, self._cargo, self._capacity(), on_carrier)
+        capacity = self._capacity()
+        totals = view.totals(site, self._cargo, capacity, on_carrier)
         self._tile_source.set(f"{totals.to_source:,}")
         self._tile_remaining.set(f"{totals.remaining:,}")
         self._tile_hold.set(f"{totals.in_hold:,}")
+        self._tile_ship.set(f"{capacity:,}" if capacity > 0 else "–")
         self._tile_trips.set(f"{totals.trips:,}" if totals.trips else "–")
 
         rows: List[view.CommodityRow] = view.commodity_rows(
@@ -379,8 +382,10 @@ class ColonisationWindow:
         if totals.lines and not rows:
             self._shell.set_status("The filters hide every commodity this site still needs.")
         else:
+            ship = (f"Your {capacity:,} t hold takes {totals.trips:,} trip{'s' if totals.trips != 1 else ''} to finish."
+                    if capacity > 0 and totals.trips else "Your ship's hold size isn't known yet.")
             self._shell.set_status(f"{totals.lines} commodit{'y' if totals.lines == 1 else 'ies'} still needed, "
-                                   f"{totals.covered} covered by the hold and carrier.")
+                                   f"{totals.covered} covered by the hold and carrier. {ship}")
 
     # --- where to buy ----------------------------------------------------------
 

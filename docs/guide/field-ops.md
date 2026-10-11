@@ -161,7 +161,8 @@ The totals are always for the whole site, whatever the filters hide:
 | t still to source | What you still have to buy or mine, after what your hold already carries |
 | t remaining | What the site still needs in total |
 | t already in the hold | Of that, what you are carrying now (never more than the site needs) |
-| trips in this ship | The still-to-source tonnes divided by your ship's cargo capacity, rounded up (a dash when EDMC hasn't given the capacity) |
+| t ship hold | Your current ship's cargo capacity, as EDMC reports it. It follows you when you swap ships; a dash until EDMC has given it |
+| trips to finish | **All** the tonnes the site still needs, divided by that capacity and rounded up: how many full loads it takes to complete the build with this ship. What you already carry is the start of the first load, so it is not taken off. A dash when the capacity is unknown |
 
 The **Filter** box keeps the commodities whose names contain what you type, and **Hide rows already covered**
 drops the rows you needn't buy any more (see the colors below for what counts as covered). Click a column heading to sort by it, and again to reverse; the
@@ -255,7 +256,7 @@ It draws a table laid out like SRVSurvey's, with the site name as its title and 
   window's green rows); the row turns amber if together they are **more** than the site needs.
 
 Commodities are alphabetical so rows stay put while numbers change. A last line gives the tonnes remaining and the
-trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the trips need your ship's
+trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the same count as the window's trips to finish) (the trips need your ship's
 cargo capacity, which EDMC supplies).
 
 - **When it shows:**

@@ -110,12 +110,18 @@ check(window._selected == 1, f"the first active site should be picked, got {wind
 check(len(window._site_table) == 2, "both of the commander's sites should be listed (not the other commander's)")
 check(len(window._commodity_table) == 3, "three commodities are outstanding")
 check(window._tile_source.winfo_exists(), "the totals tiles should exist")
-check(window._tile_trips._value.cget("text") == "5", f"trips: {window._tile_trips._value.cget('text')}")  # 480 t to source / 100
+check(window._tile_trips._value.cget("text") == "6", f"trips: {window._tile_trips._value.cget('text')}")  # 530 t left / 100
+check(window._tile_ship._value.cget("text") == "100", f"ship hold: {window._tile_ship._value.cget('text')}")
 
 # Picking the other site switches the detail.
-window._on_pick_site("2")
-check(window._selected == 2, "picking a site should select it")
-window._on_pick_site("1")
+for _ in range(4):
+    root.update()
+window._site_table._rows["2"].cells[0].event_generate("<Button-1>")
+root.update()
+check(window._selected == 2, "clicking a site should select it")
+window._site_table._rows["1"].cells[0].event_generate("<Button-1>")
+root.update()
+check(window._selected == 1, "clicking the first site should select it again")
 
 # Filters.
 window._hide_covered.set(True)
@@ -174,7 +180,12 @@ S_find = W.sources.find
 W.sources.find = fake_find
 window._on_find()
 check(not asked, "Find nearest with no commodity picked must not search")
-window._on_pick_commodity("1:steel")
+# A real single click on the row (not a direct call), the way the commander picks a commodity.
+for _ in range(4):
+    root.update()
+steel_row = window._commodity_table._rows["1:steel"]
+steel_row.cells[0].event_generate("<Button-1>")
+root.update()
 check(window._wanted == "Steel", f"picking a commodity row should set the wanted commodity, got {window._wanted}")
 check(window._system_var.get() == "Sol", "the search should default to the site's system")
 window._on_find()

@@ -11,6 +11,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the hold counted).
 
 ### Added
+- **Colonization Sites window: your ship's hold and the trips to finish.** The totals row gains **t ship hold** (your
+  current ship's cargo capacity, kept up to date when you swap ships) and **trips to finish**, which counts the whole
+  remaining need in full loads of that hold. The old figure only counted what was still to buy, so it understated the
+  trips.
 - **Colonization Sites window: row colors by coverage.** A commodity row now turns green when your hold plus the tonnes
   you moved onto your fleet carrier cover what the site still needs, and orange when together they are more than it
   needs; while you are still short it keeps the normal look. The whole row is tinted, not just the text. **Hide rows
@@ -40,6 +44,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the commander straight away.
 
 ### Fixed
+- **Colonization window: Find nearest did nothing after a single click.** The site list and the commodity rows only
+  reacted to a double-click, so picking a commodity with one click left Find nearest saying to pick one. A single click
+  now picks a site or a commodity.
 - The open Colonization Sites window now follows the active commander instead of staying on the previous one's sites.
 
 ## 1.5.2 - 2026-10-10

@@ -51,7 +51,7 @@ class Totals:
     in_hold: int         # tonnes of needed commodities already in the hold (capped at what is needed)
     lines: int           # commodities still needed
     covered: int         # of those, how many the hold plus the fleet carrier already cover
-    trips: int           # trips to haul `to_source` in the current ship (0 when its capacity is unknown)
+    trips: int           # trips of the current ship to deliver everything still `remaining` (0 when its capacity is unknown)
 
 
 def commodity_rows(site: Site, cargo: Mapping[str, int], carrier: Optional[Mapping[str, int]] = None,
@@ -82,8 +82,11 @@ def totals(site: Site, cargo: Mapping[str, int], capacity: int = 0,
     rows = commodity_rows(site, cargo, carrier)
     to_source = sum(r.to_source for r in rows)
     in_hold = sum(min(r.in_cargo, r.remaining) for r in rows)
-    trips = math.ceil(to_source / capacity) if capacity and capacity > 0 and to_source > 0 else 0
-    return Totals(remaining=sum(r.remaining for r in rows), to_source=to_source, in_hold=in_hold,
+    remaining = sum(r.remaining for r in rows)
+    # Deliveries are what the trips count: the whole remaining need, a full hold at a time. What is already in the hold
+    # is the start of the first load, so it is not taken off.
+    trips = math.ceil(remaining / capacity) if capacity and capacity > 0 and remaining > 0 else 0
+    return Totals(remaining=remaining, to_source=to_source, in_hold=in_hold,
                   lines=len(rows), covered=sum(1 for r in rows if r.covered), trips=trips)
 
 

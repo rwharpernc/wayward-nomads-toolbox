@@ -160,11 +160,15 @@ class ColonisationController:
             logger.exception("Fleet carrier transfer tracking failed")
 
         capacity = state.get("CargoCapacity")
+        capacity_changed = False
         if isinstance(capacity, (int, float)) and not isinstance(capacity, bool):
+            capacity_changed = int(capacity) != self._capacity
             self._capacity = int(capacity)
         cargo = colonisation.cargo_by_key(state.get("Cargo"))
         if cargo != self._cargo:
             self._cargo = cargo
+            colonisation_window.refresh_cargo(cargo)
+        elif capacity_changed:   # a different ship with the same cargo (say both empty): the trips figure changes
             colonisation_window.refresh_cargo(cargo)
 
         event = entry.get("event")

@@ -88,13 +88,13 @@ class CoverageStateTests(unittest.TestCase):
 
 class TotalsTests(unittest.TestCase):
     def test_totals_ignore_the_filters_and_count_trips(self):
-        totals = view.totals(site(), {"steel": 100}, capacity=200)
+        totals = view.totals(site(), {"steel": 100}, capacity=100)
         self.assertEqual(totals.remaining, 400 + 50 + 80)
         self.assertEqual(totals.to_source, 300 + 50 + 80)
         self.assertEqual(totals.in_hold, 100)
         self.assertEqual(totals.lines, 3)
         self.assertEqual(totals.covered, 0)
-        self.assertEqual(totals.trips, 3)   # 430 t in 200 t trips
+        self.assertEqual(totals.trips, 6)   # all 530 t still to deliver in 100 t trips; the hold is the first load
 
     def test_surplus_in_the_hold_is_not_counted_as_needed(self):
         totals = view.totals(site(), {"water": 500})
@@ -104,9 +104,16 @@ class TotalsTests(unittest.TestCase):
     def test_unknown_capacity_gives_no_trips(self):
         self.assertEqual(view.totals(site(), {}, capacity=0).trips, 0)
 
-    def test_nothing_to_source_gives_no_trips(self):
+    def test_a_full_hold_still_has_to_be_delivered(self):
         everything = {"steel": 400, "water": 50, "aluminium": 80}
-        self.assertEqual(view.totals(site(), everything, capacity=100).trips, 0)
+        totals = view.totals(site(), everything, capacity=100)
+        self.assertEqual((totals.to_source, totals.trips), (0, 6))   # nothing to buy, 530 t to deliver
+
+    def test_a_finished_site_needs_no_trips(self):
+        done = site()
+        for resource in done.resources:
+            resource.provided = resource.required
+        self.assertEqual(view.totals(done, {}, capacity=100).trips, 0)
 
 
 class StatusTests(unittest.TestCase):
