@@ -249,7 +249,7 @@ def still_to_source(resource: Resource, cargo: Mapping[str, int]) -> int:
 def shopping_list(site: Site, cargo: Optional[Mapping[str, int]] = None,
                   carrier: Optional[Mapping[str, int]] = None) -> List[Tuple[str, int]]:
     """(label, tons) for every commodity still needed, biggest first.
-    With `cargo`, subtracts what's already aboard (the "still to source"
+    With `cargo`, subtracts what's already aboard (the "still to get"
     view); without, the full outstanding amount."""
     rows = []
     for resource in site.resources:

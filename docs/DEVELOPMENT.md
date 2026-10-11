@@ -111,7 +111,9 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
   stays visible. Nothing changes for a feature: keep calling `notebook.add(frame, text=...)`. Plain `tk.Frame` rows
   on a Settings page are recoloured to the page colour (`ui._match_page_background`), so they don't show as grey bands.
 - Where a new feature's Settings go: `ui._build_settings_tabs` lays the tabs out (General, Powerplay, Missions,
-  Exploration, Mining, Trade, BGS, Field Ops, Always On). Add the feature to the right group there. A feature with a
+  Exploration, Mining, Trade, BGS, Field Ops, Overlays). Add the feature to the right group there, and anything it draws on the
+  overlay goes in the Overlays group (a `build_overlay_settings`, or the whole tab if it is an overlay feature), with its
+  place registered in `overlay_placement.SLOTS`. A feature with a
   `build_settings` that isn't listed still gets a tab, under "Other". To put two small pages on one tab, wrap
   them with `_stacked_page`: each feature's `build_settings(notebook)` keeps working unchanged, because the
   stack accepts `add(frame, text=...)` like a notebook does.

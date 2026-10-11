@@ -53,7 +53,14 @@ being listed doesn't mean a tool was the first or the only one.
   [EDMC-PlanetPOI](https://github.com/bbbkada/EDMC-PlanetPOI) (whose hotspot file and share-link format
   WNTB can import).
 - **Colonisation tracking:** Architect Tracker, [Raven Colonial](https://ravencolonial.com/),
-  ED Colonization Helper, EDColony and BGS-Tally.
+  ED Colonization Helper, EDColony and BGS-Tally. The shopping-list overlay card follows
+  [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s layout. Raven Colonial publishes its API as OpenAPI, which SrvSurvey and
+  BGS-Tally use and which informed WNTB's plans for it (nothing is sent to Raven Colonial yet).
+- **Where to buy a colonisation commodity:** [Spansh](https://spansh.co.uk/)'s station search, the same one the Mining and Trade
+  finders use.
+- **Overlay placement:** SrvSurvey places each overlay relative to the game window (left, center or right; top, middle or
+  bottom; plus pixels), which is the model WNTB's Overlay Placement follows. EDMCModernOverlay's open source made it possible to
+  check how it maps positions and sizes onto the screen.
 - **Landing pad guidance:** [LandingPad](https://github.com/bgol/LandingPad) and ED Recon.
 - **Screenshot conversion and renaming:** EDMC's own built-in screenshot handling and
   [EDMC-Screenshot](https://github.com/NoFoolLikeOne/EDMC-Screenshot).

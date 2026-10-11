@@ -27,8 +27,8 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `load.py` | The EDMC entry point: `plugin_start3`, `plugin_app`, `journal_entry`, `dashboard_entry`, `plugin_stop`, the one-time overlay reset, and forwarding to every feature |
 | `notifier.py` | A tiny subscribe/notify helper for where one module's data changes and others must redraw |
 | `overlay.py` | The one shared overlay client (EDMCModernOverlay / EDMCOverlay over a local TCP port) and its Plugin Group registration |
-| `overlay_layout.py` | Where overlay displays go, the same on any screen: the visible part of the overlay's canvas for a screen shape and fit/fill mode, nine anchor spots plus offsets, and a client wrapper that moves a display; pure, no Tk |
-| `overlay_placement.py` | Global overlay placement: reads the screen shape from Elite's `DisplaySettings.xml` and the overlay's scale mode, keeps every display's saved spot, and the Overlay Placement Settings tab with its preview |
+| `overlay_layout.py` | Where overlay displays go, the same on any screen: how big a pixel is on the overlay's canvas (positions are screen fractions, sizes are pixels), nine anchor spots plus pixel offsets, the overlay's right-edge clamp, and a client wrapper that moves a display; pure, no Tk |
+| `overlay_placement.py` | Global overlay placement: reads the real window size, mode and display scaling from EDMCModernOverlay's log (falling back to Elite's `DisplaySettings.xml` and Windows' scaling), keeps every display's saved spot, and the Overlay Placement Settings tab with its preview |
 | `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming |
 | `platform_support.py` | Windows/Linux differences in one place: Elite's folders, key presses (`xdotool`), host programs under Flatpak, "Works on" notes |
 | `restore.py` | Names the last commander from the newest journal and tells every feature when EDMC starts without the game running, so nothing waits for a login |
@@ -205,10 +205,10 @@ Spec: [SCREENSHOTS_AND_INPUT_TECH_SPEC.md](SCREENSHOTS_AND_INPUT_TECH_SPEC.md), 
 | `colonisation_carrier.py` | Tonnes of each commodity transferred to the commander's fleet carrier, for the window's FC column (per commander, caught up from the journals without double counting) |
 | `colonisation_catchup.py` | Folds the recent journals into the saved construction sites at start-up, never counting a delivery twice |
 | `colonisation_data.py` | JSON persistence for construction sites (each carries `journal_at`, the newest journal event folded in) |
-| `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to source for the active site (pure formatting plus drawing) |
+| `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to get for the active site (pure formatting plus drawing) |
 | `colonisation_panel.py` | The Colonisation section of Field Ops |
 | `colonisation_sources.py` | Where to buy a colonisation commodity: the closest stations (and optionally fleet carriers) with it in stock, any landing-pad size by default, via Spansh; pure shaping around an injected search |
-| `colonisation_view.py` | What the Colonisation Sites window shows for a site: the commodity rows after the filters, and the totals (still to get, in the ship, trips); pure, no Tk |
+| `colonisation_view.py` | What the Colonisation Sites window shows for a site: the commodity rows after the filters, and the totals (still to get, on the carrier, in the ship, buy and haul trips); pure, no Tk |
 | `colonisation_window.py` | The Colonisation Sites window: sites on the left; the picked site's progress, totals, filters and sortable commodity table, and the Where to buy search, on the right |
 | `inventory.py` | Backpack, ship locker and carrier locker tracking |
 | `inventory_cargo.py` | Ship and SRV cargo-hold tracking |

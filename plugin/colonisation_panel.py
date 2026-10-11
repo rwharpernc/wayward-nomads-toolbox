@@ -1,6 +1,6 @@
 """Colonisation: tracks what each colonisation construction site still needs
 delivered (see colonisation.py), and compares it to the cargo currently
-aboard so a hauler can see what's left to source.
+aboard so a hauler can see what's left to get.
 
 Field Ops only (PANEL_PLACEMENT = "fieldops") - hauling is ship/SRV cargo
 work, alongside Inventory and Ship Builds. Same "one summary line + one
@@ -221,7 +221,7 @@ class ColonisationController:
 
     def _update_overlay(self) -> None:
         """Redraw the shopping-list card if its content or position changed, or it is due a re-send before its time to
-        live runs out; clear it when disabled, out of view, or nothing is left to source. Cheap enough to call on every
+        live runs out; clear it when disabled, out of view, or nothing is left to get. Cheap enough to call on every
         event."""
         shown = self._current_card()
         reason = (f"{'show' if shown else 'hide'}: enabled={overlay_enabled()} cmdr={bool(self._cmdr)} "

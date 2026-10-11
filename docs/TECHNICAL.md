@@ -161,14 +161,18 @@ abbreviations (the table is in the user guide's "Button names"), and `panelkit.a
 hover. The tooltip is a borderless `Toplevel`, so it can't affect the main window's size. The mode buttons use
 `ui._MODE_BUTTON_TEXT`; their tooltips (`ui._MODE_TOOLTIPS`) give the full name and a one-line description, and `PANEL_MODES` keeps the full labels for the "coming soon" placeholder. EDMC sizes its window to the widest row across all plugins, and the mode row used to be WNTB's widest, so the mode row is held at the size measured from a throwaway row of full-label buttons (`ui._mode_row_full_label_size`), with the short buttons centered inside it; without that the shortened labels made EDMC open far narrower. Don't implement this with a thin spacer widget in the same grid cell: it draws a line across the buttons.
 
-**Settings layout.** `ui._build_settings_tabs` builds nine top-level Settings tabs: General (Overlay
-Connection, Window, Updates), Powerplay, Missions, Exploration, Mining, Trade, BGS, Field Ops and Always On
-(Interdiction, Landing). A group is a plain tab holding its own `nb.Notebook` (`_settings_group`). In
-Exploration, GEC, Canonn and Codex share one "Points of Interest" page and Auto-Honk and Discovery share an
-"Alerts" page: `_SectionStack` is an `nb.Frame` whose `add()` grids each feature's frame one under the other,
-so features still call `notebook.add(frame, text=...)` unchanged. Everything is placed with `grid`. Features
-not listed fall into "Other" rather than losing their tab. A group page adds about 53px for its tab strip,
-and the tallest page (Alerts, 632px, in the Exploration group) now sets the Settings window height.
+**Settings layout.** `ui._build_settings_tabs` builds nine top-level Settings tabs: General (Window, Updates), Powerplay,
+Missions, Exploration, Mining, Trade, BGS, Field Ops and Overlays. A group is a plain tab holding its own `nb.Notebook`
+(`_settings_group`). The **Overlays** group holds every overlay setting and toggle: Overlay Connection, Overlay Placement,
+then one tab per feature that draws on the overlay (Colonization, Discovery, Inventory, Interdiction Warning, Landing,
+Mining, Notable Bodies, Screenshots). Interdiction, Landing, Discovery and Notable Bodies are overlay features through and
+through, so their whole `build_settings` is listed there; Colonization, Inventory, Mining and Screenshots keep their other
+settings in their own tabs (Field Ops, Mining) and expose a second builder, `build_overlay_settings`, for the Overlays group,
+sharing the controller's variables so `save_settings` is unchanged (it skips a variable whose tab was not built). In
+Exploration, GEC, Canonn and Codex share one "Points of Interest" page: `_SectionStack` is an `nb.Frame` whose `add()` grids
+each feature's frame one under the other, so features still call `notebook.add(frame, text=...)` unchanged. Everything is
+placed with `grid`. Features not listed fall into "Other" rather than losing their tab. A group page adds about 53px for its
+tab strip, and the tallest page (about 690px) sets the Settings window height.
 
 **Height fitting.** Once a window has an explicit size, Tk stops fitting it to its content. `ui._sync_mode_holder_height` is the single place the panel's height changes (mode switch, startup, a section expanding), and it schedules `ui._fit_window_height` once at idle: it sets the top-level window's geometry to its current width and the height its content requests (`winfo_reqheight`), so a taller mode is never cut off. It is skipped when the window is maximized, minimized or not yet visible, and keeps the width and position. The Settings → Window tab has a checkbox (`wntb_fit_window_height`, default on) that turns it off; that tab is built with `grid` only, per the Settings rule in the development guide.
 
@@ -502,29 +506,42 @@ there.
 
 ### Placement (`overlay_layout.py`, `overlay_placement.py`)
 
-Overlay programs map a fixed 1280 x 960 canvas onto the game window. In fill mode (EDMCModernOverlay's default) the canvas is
-scaled until it covers the window and the rest is cut off, so a 16:9 window shows only the top 1280 x 720, a 21:9 one
-1280 x 536 and a 32:9 one 1280 x 360. A bare y of 600 is therefore on screen for one commander and off the bottom for
-another. Placement is relative to the *visible* part instead:
+EDMCModernOverlay maps a fixed 1280 x 960 canvas onto the game window, and (measured on 3840 x 2160 at 125% display scaling,
+fill mode, by drawing probe shapes and photographing the screen) it treats positions and sizes differently:
 
-- **Model** (`overlay_layout.py`, pure): `visible_area(width, height, mode)`, a `Placement` (a horizontal anchor, a vertical
-  anchor and an inward offset, or an exact canvas x/y), `block_origin` (where a block of a given size goes; kept inside the
-  visible area, and a block bigger than the area is pinned to its top left so the start of it shows) and `ShiftedClient`.
+- A **position** is a fraction of the screen: x / 1280 across, y / 960 down. In fill mode the canvas is stretched over the
+  whole window (non-uniformly when the window is not 4:3), so none of it is cut off. In fit mode it keeps its shape with
+  bars.
+- A **size** (a shape's w and h, and the offsets between the pieces of a registered display) is in logical screen
+  pixels, that is device pixels over the operating system's display scaling. A 360-wide card is 360 / 3072 = 12% of the
+  width, which is 150 canvas units, not 360.
+- On the axis the overlay does not stretch (across, on a wide screen; both in fit mode) it clamps a shape's x + w to 1280,
+  mixing a canvas position with a pixel width, and squashes whatever passes it. So a display must start at or before
+  `1280 - its pixel width` there. (`Screen.clamped`)
+
+Placement is therefore relative to the screen and aware of display size:
+
+- **Model** (`overlay_layout.py`, pure): `Screen` (window size, mode, display scaling), `units_per_px`, `block_units`, a
+  `Placement` (a horizontal anchor, a vertical anchor and offsets in screen pixels, or an exact canvas x/y), `block_origin`
+  (where a display of a given pixel size goes; kept on the canvas and before the overlay's clamp) and `ShiftedClient`.
 - **Features keep their own layout.** Each draws at its fixed origin exactly as before and reports the rectangle it occupies
-  (`block_rect()`); `overlay_placement.client_for(slot, client, block)` returns the client wrapped so every `send_message`,
-  `send_shape` and `send_vector` is shifted to the chosen place. A feature that positions itself from an origin (Inventory)
-  uses `origin_for(slot, size)` instead. Clearing is by id, so a clear needs no matching shift. Placement is applied at the
-  call sites (never inside a `render()`), so the render functions stay pure and testable.
-- **The screen** (`overlay_placement.py`): `ScreenWidth`/`ScreenHeight`/`FullScreen` from Elite's
-  `Options/Graphics/DisplaySettings.xml` (`platform_support.elite_graphics_dir`, which also finds it inside a Proton prefix),
-  and `scale_mode` from `EDMCModernOverlay/overlay_settings.json` beside WNTB in the plugins folder. Both are cached for 30
-  seconds and can be overridden in Settings. When neither can be read the assumption is 16:9 in fill mode, the smallest
-  common area, because a position that is visible there is visible everywhere.
-- **Settings:** `wntb_overlay_place_<slot>` holds `h,v,dx,dy` or `custom,x,y`; `wntb_overlay_aspect` and
+  (`block_rect()`: left and top on the canvas, width and height in pixels); `overlay_placement.client_for(slot, client,
+  block)` returns the client wrapped so every `send_message`, `send_shape` and `send_vector` is moved by the same canvas
+  offset, which moves the whole display as a unit. A feature that positions itself from an origin (Inventory) uses
+  `origin_for(slot, size)` instead. Clearing is by id, so a clear needs no matching shift. Placement is applied at the call
+  sites (never inside a `render()`), so the render functions stay pure and testable.
+- **The screen** (`overlay_placement.py`): the overlay's own log first (`parse_scaling_line`: the newest "Overlay scaling
+  updated" line gives the real window, mode and display scaling = scale_x / base_scale; ignored if the game's
+  `DisplaySettings.xml` is newer), then `DisplaySettings.xml` (`platform_support.elite_graphics_dir`, which also finds it
+  inside a Proton prefix) with Windows' scale factor (`shcore.GetScaleFactorForDevice`) and the mode from
+  `EDMCModernOverlay/overlay_settings.json`. Cached for 30 seconds; the mode and the scaling can be overridden. Without
+  EDMCModernOverlay installed sizes are assumed to be canvas units (`pixel_sizes = False`) and nothing is rescaled.
+- **Settings:** `wntb_overlay_place_<slot>` holds `h,v,dx,dy` or `custom,x,y`; `wntb_overlay_display_scaling` and
   `wntb_overlay_scale_mode` hold the overrides. A slot with no saved value reads the old per-feature x/y once and keeps a
   hand-set position as an exact one (`layout.migrated_placement`).
-- **Adding an overlay:** add a `Slot` to `SLOTS` (key, label, default spot, size, legacy keys), wrap its client with
-  `client_for`, and give its settings a tab in the Overlays group in `ui.py`.
+- **Adding an overlay:** add a `Slot` to `SLOTS` (key, label, default spot, pixel size, legacy keys), wrap its client with
+  `client_for`, and give its settings a tab in the Overlays group in `ui.py`. Register its ids as an EDMCModernOverlay Plugin
+  Group so its pieces scale together.
 
 ### Plugin Groups (EDMCModernOverlay)
 

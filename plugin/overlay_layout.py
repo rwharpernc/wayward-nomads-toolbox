@@ -1,23 +1,25 @@
 """Where WNTB's overlay displays go on the screen: one placement model for every overlay in the plugin. Pure logic (no Tk,
 no EDMC), so it is tested without a game or an overlay program.
 
-**The problem it solves.** Overlay programs draw on a fixed 1280 x 960 (4:3) canvas and map it onto the game window. How
-the canvas fits depends on the window's shape and on the overlay's scale mode:
+**How the overlay draws** (measured on EDMCModernOverlay in its default fill mode, 3840 x 2160 at 125% display scaling):
 
-- **fit**: the whole canvas is shown, centered, with unused bars on the sides (or top and bottom). Every canvas position
-  is visible.
-- **fill** (EDMCModernOverlay's default): the canvas is scaled up until it covers the window, and what does not fit is
-  cut off. On a 16:9 screen only the top 1280 x 720 of the canvas is visible; on a 32:9 ultrawide, only 1280 x 360.
+- A display is drawn at a **position** on a fixed 1280 x 960 canvas, and the canvas is stretched over the *whole* screen, so
+  a position is a fraction of the screen: x / 1280 across and y / 960 down. Nothing of the canvas is cut off.
+- A display's **size** is not in canvas units. Widths, heights and the offsets between the pieces of one display are in
+  *screen pixels* (logical pixels, after the operating system's display scaling), so a 360-wide card is 360 pixels wide
+  whether the screen is 1080p or 4K. On a 3072 x 1728 logical screen that is 360 / 3072 = 12% of the width, which is
+  360 / 2.4 = 150 canvas units, not 360.
 
-So a bare "y = 600" lands on screen on one monitor and below the bottom edge on another, which is why raw x/y values feel
-arbitrary. Placement here is instead **relative to the visible area**, like SRVSurvey's overlays are relative to the game
-window: a horizontal anchor (left, center, right), a vertical anchor (top, middle, bottom) and an offset in canvas units
-(1/1280 of the canvas width). "Bottom right, 20 in" is the bottom right corner of whatever is visible, on any screen.
+So a display placed "at x = 900" does not end at 900 + 360 on the canvas: it ends at 900 + 150. Anchoring it to the right or
+bottom edge, or centering it, needs its size converted from pixels to canvas units, which is what this module does. A bare
+x/y number also means a different place on each monitor shape, which is why raw numbers feel arbitrary. Placement here is
+instead **relative to the screen**, like SRVSurvey's overlays: a horizontal anchor (left, center, right), a vertical anchor
+(top, middle, bottom) and an offset in screen pixels.
 
 **How features use it.** Each feature keeps drawing at its own fixed coordinates, exactly as before, and reports the
-rectangle it occupies (its "block"). `shift_for` says how far to move that block to reach the chosen place, and
-`ShiftedClient` applies the move to everything drawn through it, so no feature has to be rewritten around a new
-coordinate system.
+rectangle it occupies (its "block", whose left and top are canvas coordinates and whose width and height are pixels).
+`shift_for` says how far to move that block, and `ShiftedClient` applies the move to everything drawn through it, so no
+feature has to be rewritten around a new coordinate system.
 """
 
 from __future__ import annotations
@@ -39,10 +41,12 @@ MODE_FILL = "fill"
 
 MIN_ASPECT = 1.0           # screens outside this range are treated as unreadable data, not as real monitors
 MAX_ASPECT = 8.0
+MIN_RATIO = 0.5            # display scaling outside this range is treated as unreadable data too
+MAX_RATIO = 6.0
 
-# Screen shapes offered when the game's own files can't be read (the common ones), as (label, width, height).
-ASPECT_CHOICES: Tuple[Tuple[str, int, int], ...] = (
-    ("4:3", 4, 3), ("5:4", 5, 4), ("16:10", 16, 10), ("16:9", 16, 9), ("21:9", 21, 9), ("32:9", 32, 9),
+# Display scaling choices offered when it can't be detected: (label, ratio).
+SCALING_CHOICES: Tuple[Tuple[str, float], ...] = (
+    ("100%", 1.0), ("125%", 1.25), ("150%", 1.5), ("175%", 1.75), ("200%", 2.0), ("250%", 2.5), ("300%", 3.0),
 )
 
 
@@ -50,32 +54,59 @@ ASPECT_CHOICES: Tuple[Tuple[str, int, int], ...] = (
 
 @dataclass(frozen=True)
 class Screen:
-    """The game's picture shape, and how the overlay maps its canvas onto it."""
-    width: int = 1920
+    """The overlay window and how its canvas is mapped onto it."""
+    width: int = 1920                  # the overlay window, in device pixels
     height: int = 1080
     mode: str = MODE_FILL
-    source: str = "default"            # where the shape came from, for the settings page to say
+    source: str = "default"            # where this came from, for the settings page to say
     full_screen: Optional[int] = None  # the game's FullScreen value: 0 windowed, 1 borderless, 2 full screen
+    ratio: float = 1.0                 # device pixels per logical pixel: the operating system's display scaling (1.25 = 125%)
+    pixel_sizes: bool = True           # sizes are screen pixels (EDMCModernOverlay); False: canvas units (older overlays)
 
     @property
     def aspect(self) -> float:
         return self.width / self.height
 
     @property
+    def logical(self) -> Tuple[float, float]:
+        """The window size in logical pixels, the unit display sizes are in."""
+        return self.width / self.ratio, self.height / self.ratio
+
+    @property
+    def units_per_px(self) -> Tuple[float, float]:
+        """Canvas units per pixel, across and down: how big a pixel is on the 1280 x 960 canvas."""
+        if not self.pixel_sizes:
+            return 1.0, 1.0
+        logical_w, logical_h = self.logical
+        if self.mode == MODE_FIT:
+            scale = min(logical_w / BASE_WIDTH, logical_h / BASE_HEIGHT)    # the canvas keeps its shape: one scale
+            return 1.0 / scale, 1.0 / scale
+        return BASE_WIDTH / logical_w, BASE_HEIGHT / logical_h             # the canvas is stretched over the window
+
+    @property
     def visible(self) -> Tuple[int, int]:
-        return visible_area(self.width, self.height, self.mode)
-
-
-def visible_area(width: int, height: int, mode: str) -> Tuple[int, int]:
-    """The part of the 1280 x 960 canvas that shows on a `width` x `height` window, as (w, h) from the canvas's top left.
-    Fit shows all of it. Fill shows the part that covers the window: the full width and a shorter height on wide screens
-    (16:9 -> 1280 x 720), the full height and a narrower width on tall ones (5:4 -> 1200 x 960)."""
-    if width <= 0 or height <= 0 or mode == MODE_FIT:
+        """The canvas area that shows: all of it (fill stretches it over the screen; fit shows it with bars)."""
         return BASE_WIDTH, BASE_HEIGHT
-    aspect = width / height
-    if aspect >= BASE_WIDTH / BASE_HEIGHT:
-        return BASE_WIDTH, max(1, round(BASE_WIDTH / aspect))
-    return max(1, round(BASE_HEIGHT * aspect)), BASE_HEIGHT
+
+    @property
+    def clamped(self) -> Tuple[bool, bool]:
+        """Which axes the overlay clamps a shape's far edge on. It limits x + width (a pixel width added to a canvas
+        position) to the canvas size and squashes the shape if it would pass it, but only on the axis it does not stretch
+        (measured: on a wide screen it stretches the canvas down the screen so y is free, and clamps across it, so x is
+        clamped; in fit mode both are). A display placed past `canvas size - its pixel size` on a clamped axis loses the
+        part beyond, so placement stops it before that. Overlays that draw in canvas units have no such limit."""
+        if not self.pixel_sizes:
+            return False, False
+        if self.mode == MODE_FIT:
+            return True, True
+        logical_w, logical_h = self.logical
+        return (True, False) if logical_w / BASE_WIDTH >= logical_h / BASE_HEIGHT else (False, True)
+
+
+def block_units(size_px: Tuple[int, int], screen: Screen) -> Tuple[float, float]:
+    """A display's size in canvas units, given its size in pixels."""
+    ux, uy = screen.units_per_px
+    return size_px[0] * ux, size_px[1] * uy
 
 
 def parse_display_settings(text: str) -> Optional[Tuple[int, int, Optional[int]]]:
@@ -101,27 +132,55 @@ def parse_display_settings(text: str) -> Optional[Tuple[int, int, Optional[int]]
     return width, height, number("FullScreen")
 
 
-def screen_from_aspect(aspect_width: int, aspect_height: int, mode: str, source: str) -> Screen:
-    """A screen of the given shape (the pixel size is a stand-in; only the shape matters to the overlay's mapping)."""
-    return Screen(width=aspect_width * 120, height=aspect_height * 120, mode=mode, source=source)
+# What EDMCModernOverlay's client writes whenever its window or scale changes, e.g.
+# "Overlay scaling updated: window=3840x2160 px mode=fill base_scale=2.4000 scale_x=3.000 scale_y=3.000 ..."
+_SCALING_LINE = re.compile(
+    r"Overlay scaling updated: window=(\d+)x(\d+) px mode=(\w+) base_scale=([0-9.]+) scale_x=([0-9.]+)")
+
+
+def parse_scaling_line(text: str) -> Optional[Tuple[int, int, str, float]]:
+    """(window width, window height, mode, display scaling ratio) from the newest 'Overlay scaling updated' line in the
+    overlay's own log, or None. The ratio is scale_x / base_scale: the overlay's device-pixel scale over its logical one."""
+    found = None
+    for match in _SCALING_LINE.finditer(text):
+        found = match
+    if found is None:
+        return None
+    width, height, mode = int(found.group(1)), int(found.group(2)), found.group(3).lower()
+    try:
+        base, scale_x = float(found.group(4)), float(found.group(5))
+    except ValueError:
+        return None
+    if base <= 0 or scale_x <= 0 or mode not in (MODE_FIT, MODE_FILL):
+        return None
+    ratio = scale_x / base
+    if not (MIN_ASPECT <= width / max(height, 1) <= MAX_ASPECT) or not (MIN_RATIO <= ratio <= MAX_RATIO):
+        return None
+    return width, height, mode, ratio
 
 
 def describe_screen(screen: Screen) -> str:
     """One line for the settings page: what was found and what that means for the overlay."""
-    vw, vh = screen.visible
-    shape = f"{screen.width} x {screen.height}"
     modes = {0: "windowed", 1: "borderless", 2: "full screen"}
+    shape = f"{screen.width} x {screen.height}"
     if screen.full_screen in modes:
         shape += f", {modes[screen.full_screen]}"
-    area = "all of the 1280 x 960 canvas" if (vw, vh) == (BASE_WIDTH, BASE_HEIGHT) else f"{vw} x {vh} of the 1280 x 960 canvas"
-    return f"{shape} ({screen.source}); overlay mode {screen.mode} shows {area}."
+    if abs(screen.ratio - 1.0) > 0.01:
+        shape += f", display scaling {round(screen.ratio * 100)}%"
+    if not screen.pixel_sizes:
+        return f"{shape} ({screen.source}); this overlay draws sizes in canvas units, so displays are anchored directly."
+    logical_w, logical_h = screen.logical
+    how = ("the canvas is stretched over your whole screen" if screen.mode == MODE_FILL
+           else "the canvas keeps its shape, with bars on the sides or top and bottom")
+    return (f"{shape} ({screen.source}); overlay mode {screen.mode}: {how}. Displays are drawn at pixel size on a "
+            f"{round(logical_w)} x {round(logical_h)} pixel screen.")
 
 
 # --- placements --------------------------------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class Placement:
-    """Where a display sits: anchors plus an offset, or (for `h == CUSTOM`) an exact canvas position.
+    """Where a display sits: anchors plus an offset in screen pixels, or (for `h == CUSTOM`) an exact canvas position.
 
     The offset moves the display *inward* from a left/top/right/bottom anchor (toward the middle of the screen), and to
     the right/down from a center/middle anchor."""
@@ -129,7 +188,7 @@ class Placement:
     v: str = "top"
     dx: int = 0
     dy: int = 0
-    x: int = 0              # used only when h == CUSTOM
+    x: int = 0              # used only when h == CUSTOM (canvas units)
     y: int = 0
 
     @property
@@ -179,8 +238,8 @@ def preset_label(placement: Placement) -> str:
 
 
 def placement_from_choice(label: str, first: int, second: int) -> Placement:
-    """The placement for a menu choice and the two numbers beside it. For a named spot they are the offsets from it; for
-    "Exact position" they are the canvas x and y."""
+    """The placement for a menu choice and the two numbers beside it. For a named spot they are the offsets from it, in
+    screen pixels; for "Exact position" they are the canvas x and y."""
     if label == EXACT_LABEL:
         return custom_placement(first, second)
     for name, h, v in PRESETS:
@@ -190,41 +249,48 @@ def placement_from_choice(label: str, first: int, second: int) -> Placement:
 
 
 def block_origin(placement: Placement, block_size: Tuple[int, int], screen: Screen) -> Tuple[int, int]:
-    """Canvas position of the top left corner of a `block_size` display placed as `placement` on `screen`. The result is
-    kept inside the visible area when the display fits in it; a display bigger than the area is pinned to its top left so
-    that the start of it is what shows. A custom placement is returned as given (it is the person's exact choice)."""
+    """Canvas position of the top left corner of a display whose size is `block_size` (pixels) placed as `placement` on
+    `screen`. The size is converted to canvas units first, so "right" and "bottom" land on the real edge. The result is
+    kept on the canvas when the display fits; a display bigger than the canvas is pinned to its top left so that the start
+    of it shows. A custom placement is returned as given (it is the person's exact choice)."""
     if placement.custom:
         return placement.x, placement.y
-    width, height = block_size
-    area_w, area_h = screen.visible
+    width, height = block_units(block_size, screen)
+    ux, uy = screen.units_per_px
+    offset_x, offset_y = placement.dx * ux, placement.dy * uy
     if placement.h == "left":
-        x = placement.dx
+        x = offset_x
     elif placement.h == "right":
-        x = area_w - width - placement.dx
+        x = BASE_WIDTH - width - offset_x
     else:
-        x = (area_w - width) // 2 + placement.dx
+        x = (BASE_WIDTH - width) / 2 + offset_x
     if placement.v == "top":
-        y = placement.dy
+        y = offset_y
     elif placement.v == "bottom":
-        y = area_h - height - placement.dy
+        y = BASE_HEIGHT - height - offset_y
     else:
-        y = (area_h - height) // 2 + placement.dy
-    x = max(0, min(x, area_w - width)) if width <= area_w else 0
-    y = max(0, min(y, area_h - height)) if height <= area_h else 0
-    return x, y
+        y = (BASE_HEIGHT - height) / 2 + offset_y
+    x = max(0.0, min(x, BASE_WIDTH - width)) if width <= BASE_WIDTH else 0.0
+    y = max(0.0, min(y, BASE_HEIGHT - height)) if height <= BASE_HEIGHT else 0.0
+    clamp_x, clamp_y = screen.clamped
+    if clamp_x and block_size[0] <= BASE_WIDTH:
+        x = min(x, BASE_WIDTH - block_size[0])       # past this the overlay squashes the display's width
+    if clamp_y and block_size[1] <= BASE_HEIGHT:
+        y = min(y, BASE_HEIGHT - block_size[1])
+    return round(x), round(y)
 
 
 def shift_for(placement: Placement, block: Tuple[int, int, int, int], screen: Screen) -> Tuple[int, int]:
     """How far to move a display, given the rectangle `block` = (left, top, width, height) it occupies in its own
-    drawing coordinates, to put it where `placement` says."""
+    drawing coordinates (left and top on the canvas, width and height in pixels), to put it where `placement` says."""
     left, top, width, height = block
     x, y = block_origin(placement, (width, height), screen)
     return x - left, y - top
 
 
 class ShiftedClient:
-    """An overlay client that moves everything drawn through it by a fixed (dx, dy). Features keep their own layout; this
-    carries them to the chosen place. Anything it doesn't know about passes straight to the real client."""
+    """An overlay client that moves everything drawn through it by a fixed (dx, dy) in canvas units. Features keep their
+    own layout; this carries them to the chosen place. Anything it doesn't know about passes straight to the real client."""
 
     def __init__(self, client: Any, dx: int, dy: int) -> None:
         self._client, self._dx, self._dy = client, int(dx), int(dy)
@@ -250,7 +316,7 @@ class ShiftedClient:
 @dataclass(frozen=True)
 class Slot:
     """One display that can be placed. `key` names it in settings; `legacy_keys` are the old x/y settings (if any) read
-    once so that a position somebody chose by hand is not lost; `size` is the block used to preview it."""
+    once so that a position somebody chose by hand is not lost; `size` is the block (in pixels) used to preview it."""
     key: str
     label: str
     default: Placement

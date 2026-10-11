@@ -1,10 +1,11 @@
-"""Global overlay placement glue (overlay_placement.py): reading the screen from the game's files, saved and migrated
-placements, and the preview. EDMC's config is replaced by a dictionary."""
+"""Global overlay placement glue (overlay_placement.py): reading the screen from the overlay's log and the game's files,
+saved and migrated placements, and the preview. EDMC's config is replaced by a dictionary."""
 from __future__ import annotations
 
 import os
 import sys
 import tempfile
+import time
 import types
 import unittest
 from unittest import mock
@@ -38,14 +39,46 @@ from plugin import overlay_placement as P  # noqa: E402
 
 DISPLAY_XML = ("<DisplayConfig><ScreenWidth>3840</ScreenWidth><ScreenHeight>2160</ScreenHeight>"
                "<FullScreen>2</FullScreen></DisplayConfig>")
+SCALING_LINE = ("2026-10-11 09:48:11 UTC - DEBUG - Overlay scaling updated: window=3840x2160 px mode=fill base_scale=2.4000 "
+                "scale_x=3.000 scale_y=3.000 diag=3.00 scaled=3072.0x2304.0 offset=(0.0,0.0) overflow_x=0 overflow_y=1")
+MEASURED = L.Screen(3840, 2160, L.MODE_FILL, "test", 2, 1.25, True)
 
 
-def with_display_file(xml):
-    folder = tempfile.mkdtemp()
-    if xml is not None:
-        with open(os.path.join(folder, P.DISPLAY_SETTINGS_FILE), "w", encoding="utf-8") as handle:
-            handle.write(xml)
-    return folder
+class Install:
+    """A throwaway EDMC data folder: plugins/ (with or without EDMCModernOverlay), logs/ and the game's graphics folder."""
+
+    def __init__(self, modern=True, log_line=None, display_xml=None, settings_json=None):
+        self.root = tempfile.mkdtemp()
+        self.plugins = os.path.join(self.root, "plugins")
+        self.graphics = os.path.join(self.root, "graphics")
+        os.makedirs(self.plugins)
+        os.makedirs(self.graphics)
+        if modern:
+            os.makedirs(os.path.join(self.plugins, P.MODERN_OVERLAY_FOLDER))
+        if settings_json is not None:
+            with open(os.path.join(self.plugins, P.MODERN_OVERLAY_FOLDER, P.MODERN_OVERLAY_SETTINGS), "w") as handle:
+                handle.write(settings_json)
+        self.log = os.path.join(self.root, P.MODERN_OVERLAY_LOG)
+        if log_line is not None:
+            os.makedirs(os.path.dirname(self.log))
+            with open(self.log, "w", encoding="utf-8") as handle:
+                handle.write("some other line\n" + log_line + "\nand another\n")
+        self.display = os.path.join(self.graphics, P.DISPLAY_SETTINGS_FILE)
+        if display_xml is not None:
+            with open(self.display, "w", encoding="utf-8") as handle:
+                handle.write(display_xml)
+            two_hours_ago = time.time() - 7200      # explicit times, so the order the files were written in never matters
+            os.utime(self.display, (two_hours_ago, two_hours_ago))
+
+    def patches(self, windows_scaling=None):
+        return (mock.patch.object(P, "_plugins_dir", return_value=self.plugins),
+                mock.patch.object(P.platform_support, "elite_graphics_dir", return_value=self.graphics),
+                mock.patch.object(P, "windows_display_scaling", return_value=windows_scaling))
+
+    def screen(self, scaling="auto", mode="auto", windows_scaling=None):
+        a, b, c = self.patches(windows_scaling)
+        with a, b, c:
+            return P.screen_for(scaling, mode)
 
 
 class ScreenTests(unittest.TestCase):
@@ -53,57 +86,73 @@ class ScreenTests(unittest.TestCase):
         STORE.clear()
         P.refresh()
 
-    def test_the_screen_comes_from_the_games_display_file(self):
-        folder = with_display_file(DISPLAY_XML)
-        with mock.patch.object(P.platform_support, "elite_graphics_dir", return_value=folder), \
-                mock.patch.object(P, "detect_scale_mode", return_value=(L.MODE_FILL, "assumed")):
-            screen = P.screen_for(P.AUTO, P.AUTO)
-        self.assertEqual((screen.width, screen.height, screen.full_screen, screen.mode), (3840, 2160, 2, L.MODE_FILL))
-        self.assertEqual(screen.visible, (1280, 720))
+    def test_the_overlays_own_log_is_the_best_source(self):
+        screen = Install(log_line=SCALING_LINE, display_xml=DISPLAY_XML).screen()
+        self.assertEqual((screen.width, screen.height, screen.mode, screen.pixel_sizes), (3840, 2160, "fill", True))
+        self.assertAlmostEqual(screen.ratio, 1.25)
+        self.assertEqual(screen.logical, (3072.0, 1728.0))
+        self.assertIn("log", screen.source)
+        self.assertEqual(screen.full_screen, 2)          # the game's own FullScreen value is still reported
 
-    def test_no_file_assumes_the_smallest_common_area_so_nothing_is_out_of_sight(self):
-        folder = with_display_file(None)
-        with mock.patch.object(P.platform_support, "elite_graphics_dir", return_value=folder), \
-                mock.patch.object(P, "detect_scale_mode", return_value=(L.MODE_FILL, "assumed")):
-            screen = P.screen_for(P.AUTO, P.AUTO)
-        self.assertEqual(screen.visible, (1280, 720))
+    def test_a_log_older_than_the_games_screen_settings_is_not_trusted(self):
+        install = Install(log_line=SCALING_LINE, display_xml=DISPLAY_XML.replace("3840", "2560").replace("2160", "1440"))
+        old = time.time() - 10_000                  # older than the settings file, which is two hours old
+        os.utime(install.log, (old, old))
+        screen = install.screen(windows_scaling=1.0)
+        self.assertEqual((screen.width, screen.height), (2560, 1440))
+        self.assertEqual(screen.ratio, 1.0)
+
+    def test_without_a_log_the_games_files_and_windows_scaling_are_used(self):
+        screen = Install(display_xml=DISPLAY_XML, settings_json='{"scale_mode": "fit"}').screen(windows_scaling=1.5)
+        self.assertEqual((screen.width, screen.height, screen.mode, screen.ratio), (3840, 2160, "fit", 1.5))
+        self.assertTrue(screen.pixel_sizes)
+        self.assertIn("Windows", screen.source)
+
+    def test_nothing_known_about_scaling_assumes_100_percent_and_says_so(self):
+        screen = Install(display_xml=DISPLAY_XML).screen()
+        self.assertEqual(screen.ratio, 1.0)
+        self.assertIn("assumed", screen.source)
+        self.assertEqual(screen.mode, "fill")
+
+    def test_chosen_scaling_and_mode_win_over_what_was_found(self):
+        screen = Install(log_line=SCALING_LINE, display_xml=DISPLAY_XML).screen(scaling="150%", mode="fit")
+        self.assertEqual((screen.ratio, screen.mode), (1.5, "fit"))
+        screen = Install(display_xml=DISPLAY_XML).screen(scaling="200%", mode="fit", windows_scaling=1.25)
+        self.assertEqual((screen.ratio, screen.mode), (2.0, "fit"))
+
+    def test_no_files_at_all_assumes_a_1080p_screen(self):
+        screen = Install().screen()
+        self.assertEqual((screen.width, screen.height), P.ASSUMED_SCREEN)
         self.assertIn("assuming", screen.source)
 
-    def test_an_unreadable_folder_is_not_a_crash(self):
-        with mock.patch.object(P.platform_support, "elite_graphics_dir", return_value=None), \
-                mock.patch.object(P, "detect_scale_mode", return_value=(L.MODE_FILL, "assumed")):
-            self.assertEqual(P.screen_for(P.AUTO, P.AUTO).visible, (1280, 720))
+    def test_without_edmcmodernoverlay_sizes_are_canvas_units(self):
+        screen = Install(modern=False, display_xml=DISPLAY_XML).screen()
+        self.assertFalse(screen.pixel_sizes)
+        self.assertEqual(screen.units_per_px, (1.0, 1.0))
 
-    def test_a_chosen_shape_and_mode_win_over_the_files(self):
-        folder = with_display_file(DISPLAY_XML)
-        with mock.patch.object(P.platform_support, "elite_graphics_dir", return_value=folder):
-            ultrawide = P.screen_for("32:9", L.MODE_FILL)
-            fit = P.screen_for("32:9", L.MODE_FIT)
-        self.assertEqual(ultrawide.visible, (1280, 360))
-        self.assertEqual(fit.visible, (1280, 960))
+    def test_a_damaged_log_is_not_a_crash(self):
+        install = Install(log_line="Overlay scaling updated: window=oops", display_xml=DISPLAY_XML)
+        self.assertEqual((install.screen().width, install.screen().height), (3840, 2160))
 
-    def test_the_overlays_scale_mode_is_read_from_its_settings_file(self):
-        plugins = tempfile.mkdtemp()
-        os.makedirs(os.path.join(plugins, P.MODERN_OVERLAY_FOLDER))
-        path = os.path.join(plugins, P.MODERN_OVERLAY_FOLDER, P.MODERN_OVERLAY_SETTINGS)
-        with mock.patch.object(P, "_plugins_dir", return_value=plugins):
-            self.assertEqual(P.detect_scale_mode()[0], L.MODE_FILL)           # no file: assume fill
-            with open(path, "w", encoding="utf-8") as handle:
-                handle.write('{"scale_mode": "fit"}')
+    def test_the_overlays_mode_file_is_read_and_a_damaged_one_ignored(self):
+        install = Install(display_xml=DISPLAY_XML, settings_json='{"scale_mode": "fit"}')
+        a, b, c = install.patches()
+        with a, b, c:
             self.assertEqual(P.detect_scale_mode(), (L.MODE_FIT, "EDMCModernOverlay settings"))
-            with open(path, "w", encoding="utf-8") as handle:
-                handle.write("{not json")
-            self.assertEqual(P.detect_scale_mode()[0], L.MODE_FILL)           # damaged: assume fill
+        damaged = Install(display_xml=DISPLAY_XML, settings_json="{not json")
+        a, b, c = damaged.patches()
+        with a, b, c:
+            self.assertEqual(P.detect_scale_mode()[0], L.MODE_FILL)
 
     def test_the_screen_is_cached_until_refreshed(self):
-        folder = with_display_file(DISPLAY_XML)
-        with mock.patch.object(P.platform_support, "elite_graphics_dir", return_value=folder), \
-                mock.patch.object(P, "detect_scale_mode", return_value=(L.MODE_FILL, "assumed")):
+        install = Install(log_line=SCALING_LINE, display_xml=DISPLAY_XML)
+        a, b, c = install.patches()
+        with a, b, c:
             first = P.current_screen()
-            os.remove(os.path.join(folder, P.DISPLAY_SETTINGS_FILE))
+            os.remove(install.log)
             self.assertIs(P.current_screen(), first)
             P.refresh()
-            self.assertIn("assuming", P.current_screen().source)
+            self.assertIsNot(P.current_screen(), first)
 
 
 class SavedPlacementTests(unittest.TestCase):
@@ -150,7 +199,6 @@ class ClientTests(unittest.TestCase):
     def setUp(self):
         STORE.clear()
         P.refresh()
-        self.screen = L.Screen(3840, 2160, L.MODE_FILL, "test")
 
     def recorder(self):
         calls = []
@@ -163,7 +211,7 @@ class ClientTests(unittest.TestCase):
     def test_a_display_is_moved_to_its_place(self):
         P.save_placement("landing", L.Placement("left", "top", 0, 0))      # block drawn at (20, 636)
         rec, calls = self.recorder()
-        with mock.patch.object(P, "current_screen", return_value=self.screen):
+        with mock.patch.object(P, "current_screen", return_value=MEASURED):
             client = P.client_for("landing", rec, (20, 636, 320, 324))
             client.send_message("id", "hi", "red", 40, 650)
         self.assertEqual(calls[0][0][3:5], (20, 14))     # moved by (-20, -636)
@@ -171,7 +219,7 @@ class ClientTests(unittest.TestCase):
     def test_a_display_already_in_place_is_not_wrapped(self):
         P.save_placement("landing", L.custom_placement(20, 636))
         rec, _calls = self.recorder()
-        with mock.patch.object(P, "current_screen", return_value=self.screen):
+        with mock.patch.object(P, "current_screen", return_value=MEASURED):
             self.assertIs(P.client_for("landing", rec, (20, 636, 320, 324)), rec)
 
     def test_a_placement_failure_leaves_the_display_where_it_was_drawn(self):
@@ -179,33 +227,45 @@ class ClientTests(unittest.TestCase):
         with mock.patch.object(P, "current_screen", side_effect=RuntimeError("boom")):
             self.assertIs(P.client_for("landing", rec, (20, 636, 320, 324)), rec)
 
-    def test_origin_for_keeps_a_right_edge_display_inside_the_screen(self):
-        P.save_placement("inventory", L.Placement("right", "top", 20, 120))
-        with mock.patch.object(P, "current_screen", return_value=self.screen):
+    def test_origin_for_keeps_a_right_edge_display_whole(self):
+        P.save_placement("inventory", L.Placement("right", "top", 0, 120))
+        with mock.patch.object(P, "current_screen", return_value=MEASURED):
             x, y = P.origin_for("inventory", (420, 226))
-        self.assertEqual((x, y), (1280 - 420 - 20, 120))
+        self.assertEqual(x, 1280 - 420)           # as far right as the overlay will draw all 420 px of it
+        self.assertEqual(y, round(120 * 960 / 1728))
 
 
 class PreviewTests(unittest.TestCase):
-    def test_the_preview_has_the_edge_and_one_box_per_display_inside_the_visible_area(self):
-        screen = L.Screen(3840, 2160, L.MODE_FILL, "test")
-        placements = {key: slot.default for key, slot in P.SLOTS.items()}
-        items = P.preview_shapes(placements, screen)
-        self.assertEqual(len(items), len(P.SLOTS) + 1)
-        edge = items[0]
-        self.assertEqual((edge["w"], edge["h"]), (1280, 720))
-        for item in items[1:]:
-            self.assertGreaterEqual(item["x"], 0)
-            self.assertGreaterEqual(item["y"], 0)
-            self.assertLessEqual(item["x"] + item["w"], 1280, item["label"])
-            self.assertLessEqual(item["y"] + item["h"], 720, item["label"])
+    def test_there_is_a_marker_at_the_screens_top_left_corner_and_no_full_screen_outline(self):
+        items = P.preview_shapes({}, MEASURED)
+        self.assertEqual(len(items), 1)
+        self.assertEqual((items[0]["x"], items[0]["y"]), (0, 0))
+        self.assertLess(items[0]["w"], 400)       # the overlay squashes anything wider than the canvas, so no big outline
 
-    def test_every_default_stays_inside_the_smallest_common_area_too(self):
-        screen = L.Screen(5120, 1440, L.MODE_FILL, "test")        # 32:9: 1280 x 360 visible
-        for item in P.preview_shapes({k: s.default for k, s in P.SLOTS.items()}, screen)[1:]:
-            self.assertLessEqual(item["x"] + item["w"], 1280, item["label"])
-            # Bigger than the area: pinned to the top so the start of it shows.
-            self.assertTrue(item["y"] + item["h"] <= 360 or item["y"] == 0, item["label"])
+    def test_every_default_box_is_on_the_screen_at_its_real_size(self):
+        placements = {key: slot.default for key, slot in P.SLOTS.items()}
+        items = P.preview_shapes(placements, MEASURED)
+        self.assertEqual(len(items), len(P.SLOTS) + 1)
+        ux, uy = MEASURED.units_per_px
+        for item in items[1:]:
+            self.assertGreaterEqual(item["x"], 0, item["label"])
+            self.assertGreaterEqual(item["y"], 0, item["label"])
+            self.assertLessEqual(item["x"] + item["w"] * ux, 1280.5, item["label"])      # the right edge is on the canvas
+            self.assertLessEqual(item["y"] + item["h"] * uy, 960.5, item["label"])
+
+    def test_a_bottom_right_box_is_whole_and_reaches_the_bottom_where_the_overlay_allows(self):
+        for screen in (MEASURED, L.Screen(1920, 1080, ratio=1.0, pixel_sizes=True),
+                       L.Screen(5120, 1440, ratio=1.0, pixel_sizes=True)):
+            item = P.preview_shapes({"screenshots": L.Placement("right", "bottom", 0, 0)}, screen)[1]
+            ux, uy = screen.units_per_px
+            self.assertLessEqual(item["x"] + item["w"], 1280, str(screen))            # never squashed by the overlay
+            self.assertAlmostEqual(item["y"] + item["h"] * uy, 960, delta=1.0, msg=str(screen))   # flush with the bottom
+
+    def test_a_fit_overlay_clamps_both_ways_so_the_box_stays_whole(self):
+        screen = L.Screen(1920, 1200, mode=L.MODE_FIT)
+        item = P.preview_shapes({"screenshots": L.Placement("right", "bottom", 0, 0)}, screen)[1]
+        self.assertLessEqual(item["x"] + item["w"], 1280)
+        self.assertLessEqual(item["y"] + item["h"], 960)
 
 
 if __name__ == "__main__":

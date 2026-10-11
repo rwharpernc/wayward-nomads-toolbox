@@ -77,33 +77,38 @@ see the message on your screen, you're set.
 
 Where each display goes is set once, for every WNTB overlay, on **Settings → WNTB → Overlays → Overlay Placement**.
 
-**Why not just x and y numbers?** An overlay program draws on a fixed 1280 × 960 canvas and maps it onto your game
-window. In EDMCModernOverlay's default **fill** mode that means part of the canvas is cut off whenever your screen is
-wider than 4:3: on a 16:9 monitor you see the top 1280 × 720 of it, on a 21:9 ultrawide 1280 × 536, and on a 32:9
-monitor only 1280 × 360. A number that is fine on one monitor lands off the bottom of another. So WNTB places each
-display **relative to the part you can actually see**, the way SRVSurvey places its overlays relative to the game
-window.
+**Why not just x and y numbers?** An overlay program places things on a fixed 1280 × 960 canvas and maps it onto your game
+window, and it treats *positions* and *sizes* differently. A position is a fraction of the screen (x ÷ 1280 across, y ÷ 960
+down), so the canvas is stretched over the whole screen. A size, though, is in screen pixels, scaled by Windows' display
+scaling. On a 3840 × 2160 screen at 125% scaling that makes a 360-pixel-wide card only 12% of the screen's width. A raw
+number therefore means a different place on every monitor, and a "right edge" position depends on how big the display is.
 
 **How to place something.** Pick one of nine spots (Top left, Top center, Top right, Middle left, Center, Middle right,
-Bottom left, Bottom center, Bottom right) and two offsets. For the edge spots the offsets move the display inward from
-the edge you chose; for Center and Middle they nudge it. "Bottom right, 20 and 20" is the bottom right corner of your
-screen on any monitor. **Exact position** is there if you want an overlay-canvas x and y instead.
+Bottom left, Bottom center, Bottom right) and two offsets **in screen pixels**. For the edge spots the offsets move the
+display inward from the edge you chose; for Center and Middle they nudge it. "Bottom left, 40 and 40" is 40 pixels in from the
+bottom left corner of your screen on any monitor, whatever size the display is. **Exact position** is there if you want an
+overlay-canvas x and y instead.
 
-**How WNTB knows your screen.** It reads the size from Elite's own `DisplaySettings.xml` (in `Options\Graphics`; on
-Linux inside the Proton prefix) and whether the overlay fits or fills the screen from EDMCModernOverlay's settings
-(`scale_mode`). The tab shows what it found, for example *3840 x 2160, full screen (DisplaySettings.xml); overlay mode
-fill shows 1280 x 720 of the 1280 x 960 canvas*. If either file can't be found, WNTB assumes a 16:9 screen in fill
-mode, the smallest common area, so nothing is placed out of sight. You can also choose the screen shape and the mode
-yourself on that tab. Elite's `FullScreen` value (windowed, borderless or full screen) is shown for information; the
-overlay follows the game window either way.
+**How WNTB knows your screen.** It reads what the overlay itself is using: the window size, fit or fill mode and display
+scaling from EDMCModernOverlay's own log (its newest "Overlay scaling updated" line). If that isn't there it falls back to
+Elite's `DisplaySettings.xml` (in `Options\Graphics`; on Linux inside the Proton prefix) for the size, Windows' display scaling,
+and EDMCModernOverlay's settings for the mode. The tab shows what it found, for example *3840 x 2160, full screen, display
+scaling 125% (EDMCModernOverlay log); overlay mode fill*. You can set the display scaling and the mode yourself on that tab if
+they are wrong.
 
-**Check it on your real screen.** **Show placement preview** draws a labeled box for every display, and an outline of
-the visible area, for 12 seconds, using the values currently typed (even before you press OK). **Reset all to
-defaults** puts everything back, and **Detect screen again** re-reads the game's files.
+**A limit of EDMCModernOverlay.** Across a wide screen it limits a shape's left position plus its pixel width to the
+canvas width, and squashes the shape if it would pass that. So a display cannot be pushed all the way to the right edge
+without losing width: WNTB keeps it whole and stops it as far right as the overlay allows, so a "Right" spot sits a little
+short of the edge for wide displays. The bottom is not affected on a wide screen. If you want something flush against the
+right edge, EDMCModernOverlay's own Overlay Controller can anchor each plugin's display to an edge.
 
-Positions you set in the older per-feature x/y boxes are carried over as **Exact position** the first time.
-Defaults for the displays that used to sit in fixed places (Landing, Interdiction, Mining, Screenshots) now follow
-your screen shape, so they may sit slightly differently than before.
+**Check it on your real screen.** **Show placement preview** draws a labeled box for every display, at its real size, for
+12 seconds, using the values currently typed (even before you press OK). **Reset all to defaults** puts everything back, and
+**Detect screen again** re-reads the overlay's log and the game's files.
+
+Positions you set in the older per-feature x/y boxes are carried over as **Exact position** the first time. Defaults for
+the displays that used to sit in fixed places (Landing, Interdiction, Mining, Screenshots) now follow your screen, so they
+may sit slightly differently than before.
 
 - If the overlay is still starting when Landing Assist has something to draw, WNTB retries for up to three minutes, so
   the diagram shows up once the overlay is ready.

@@ -79,9 +79,31 @@ class TripsTests(unittest.TestCase):
 
     def test_rows_carry_their_trips_from_what_remains(self):
         rows = {r.label: r for r in view.commodity_rows(site(), {"steel": 100}, {"steel": 150}, capacity=100)}
-        self.assertEqual(view.format_trips(rows["Steel"].trips), "4")        # 400 t remaining, whatever is already held
-        self.assertEqual(view.format_trips(rows["Aluminium"].trips), "0.8")  # 80 t
-        self.assertIsNone({r.label: r for r in view.commodity_rows(site(), {})}["Steel"].trips)
+        self.assertEqual(view.format_trips(rows["Steel"].haul_trips), "4")        # 400 t remaining, whatever is already held
+        self.assertEqual(view.format_trips(rows["Aluminium"].haul_trips), "0.8")  # 80 t
+        self.assertIsNone({r.label: r for r in view.commodity_rows(site(), {})}["Steel"].haul_trips)
+        self.assertIsNone({r.label: r for r in view.commodity_rows(site(), {})}["Steel"].buy_trips)
+
+
+class TwoLegTests(unittest.TestCase):
+    """Stock stored on the carrier while it fills: nothing left to buy, but all of it still has to be hauled."""
+
+    def test_a_commodity_fully_on_the_carrier_needs_no_buying_but_still_needs_hauling(self):
+        row = {r.label: r for r in view.commodity_rows(site(), {}, {"steel": 400}, capacity=100)}["Steel"]
+        self.assertEqual(view.format_trips(row.buy_trips), "0")
+        self.assertEqual(view.format_trips(row.haul_trips), "4")
+        self.assertEqual(row.state, view.STATE_ENOUGH)
+
+    def test_the_carrier_lowers_the_buying_trips_but_not_the_hauling_ones(self):
+        row = {r.label: r for r in view.commodity_rows(site(), {}, {"steel": 150}, capacity=100)}["Steel"]
+        self.assertEqual(view.format_trips(row.buy_trips), "2.5")      # 250 t still to buy
+        self.assertEqual(view.format_trips(row.haul_trips), "4")        # all 400 t still go to the site
+
+    def test_the_totals_show_the_carrier_and_both_legs(self):
+        totals = view.totals(site(), {}, capacity=100, carrier={"steel": 400, "water": 999})
+        self.assertEqual(totals.on_carrier, 400 + 50)              # capped at what the site needs
+        self.assertEqual(totals.buy_trips, 1)                      # only the 80 t of aluminium is missing
+        self.assertEqual(totals.haul_trips, 6)                     # 530 t to carry over
 
 
 class StillToGetTests(unittest.TestCase):
@@ -143,7 +165,8 @@ class TotalsTests(unittest.TestCase):
         self.assertEqual(totals.in_hold, 100)
         self.assertEqual(totals.lines, 3)
         self.assertEqual(totals.covered, 0)
-        self.assertEqual(totals.trips, 6)   # all 530 t still to deliver in 100 t trips; the hold is the first load
+        self.assertEqual(totals.haul_trips, 6)   # all 530 t still to haul in 100 t trips; the ship is the first load
+        self.assertEqual(totals.buy_trips, 5)    # 430 t still to buy
 
     def test_surplus_in_the_hold_is_not_counted_as_needed(self):
         totals = view.totals(site(), {"water": 500})
@@ -151,18 +174,18 @@ class TotalsTests(unittest.TestCase):
         self.assertEqual(totals.covered, 1)
 
     def test_unknown_capacity_gives_no_trips(self):
-        self.assertEqual(view.totals(site(), {}, capacity=0).trips, 0)
+        self.assertEqual((view.totals(site(), {}, capacity=0).buy_trips, view.totals(site(), {}, capacity=0).haul_trips), (0, 0))
 
     def test_a_full_hold_still_has_to_be_delivered(self):
         everything = {"steel": 400, "water": 50, "aluminium": 80}
         totals = view.totals(site(), everything, capacity=100)
-        self.assertEqual((totals.to_get, totals.trips), (0, 6))   # nothing to buy, 530 t to deliver
+        self.assertEqual((totals.to_get, totals.buy_trips, totals.haul_trips), (0, 0, 6))   # nothing to buy, 530 t to haul
 
     def test_a_finished_site_needs_no_trips(self):
         done = site()
         for resource in done.resources:
             resource.provided = resource.required
-        self.assertEqual(view.totals(done, {}, capacity=100).trips, 0)
+        self.assertEqual(view.totals(done, {}, capacity=100).haul_trips, 0)
 
 
 class StatusTests(unittest.TestCase):

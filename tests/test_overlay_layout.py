@@ -1,4 +1,4 @@
-"""Overlay placement: the visible part of the canvas, anchors and offsets, and the shifted client (overlay_layout.py)."""
+"""Overlay placement: how big a pixel is on the canvas, anchors and offsets, and the shifted client (overlay_layout.py)."""
 from __future__ import annotations
 
 import os
@@ -10,25 +10,64 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from plugin import overlay_layout as L  # noqa: E402
 
 
-def screen(w, h, mode=L.MODE_FILL):
-    return L.Screen(width=w, height=h, mode=mode, source="test")
+def screen(w, h, mode=L.MODE_FILL, ratio=1.0, pixel_sizes=True):
+    return L.Screen(width=w, height=h, mode=mode, source="test", ratio=ratio, pixel_sizes=pixel_sizes)
 
 
-class VisibleAreaTests(unittest.TestCase):
-    def test_fit_always_shows_the_whole_canvas(self):
-        for w, h in ((3840, 2160), (1024, 768), (5120, 1440)):
-            self.assertEqual(L.visible_area(w, h, L.MODE_FIT), (1280, 960))
+# The measured case: 3840 x 2160 at 125% display scaling, EDMCModernOverlay in fill mode (3072 x 1728 logical pixels).
+MEASURED = screen(3840, 2160, ratio=1.25)
 
-    def test_fill_on_the_common_shapes(self):
-        self.assertEqual(L.visible_area(3840, 2160, L.MODE_FILL), (1280, 720))     # 16:9
-        self.assertEqual(L.visible_area(2560, 1600, L.MODE_FILL), (1280, 800))     # 16:10
-        self.assertEqual(L.visible_area(3440, 1440, L.MODE_FILL), (1280, 536))     # 21:9
-        self.assertEqual(L.visible_area(5120, 1440, L.MODE_FILL), (1280, 360))     # 32:9
-        self.assertEqual(L.visible_area(1024, 768, L.MODE_FILL), (1280, 960))      # 4:3 is the canvas
-        self.assertEqual(L.visible_area(1280, 1024, L.MODE_FILL), (1200, 960))     # 5:4 is narrower
 
-    def test_nonsense_sizes_show_the_whole_canvas(self):
-        self.assertEqual(L.visible_area(0, 1080, L.MODE_FILL), (1280, 960))
+class ScaleTests(unittest.TestCase):
+    def test_the_measured_screen_has_the_pixel_size_the_overlay_really_uses(self):
+        self.assertEqual(MEASURED.logical, (3072.0, 1728.0))
+        ux, uy = MEASURED.units_per_px
+        self.assertAlmostEqual(ux, 1280 / 3072)          # a 1280-wide outline covers 41.7% of the width, as photographed
+        self.assertAlmostEqual(uy, 960 / 1728)
+
+    def test_a_display_is_its_pixel_size_in_canvas_units(self):
+        width, height = L.block_units((360, 300), MEASURED)
+        self.assertAlmostEqual(width, 150.0)             # 360 px of 3072 is 150 of 1280 canvas units
+        self.assertAlmostEqual(height, 300 * 960 / 1728)
+
+    def test_the_whole_canvas_always_shows(self):
+        self.assertEqual(MEASURED.visible, (1280, 960))
+        self.assertEqual(screen(5120, 1440).visible, (1280, 960))
+
+    def test_without_scaling_a_4k_screen_is_a_pixel_size_of_one_third(self):
+        ux, uy = screen(3840, 2160).units_per_px
+        self.assertAlmostEqual(ux, 1280 / 3840)
+        self.assertAlmostEqual(uy, 960 / 2160)
+
+    def test_fit_mode_uses_one_scale_for_both_directions(self):
+        fit = screen(1920, 1080, mode=L.MODE_FIT)
+        ux, uy = fit.units_per_px
+        self.assertAlmostEqual(ux, uy)
+        self.assertAlmostEqual(ux, 1 / min(1920 / 1280, 1080 / 960))
+
+    def test_an_overlay_that_draws_in_canvas_units_is_not_rescaled(self):
+        self.assertEqual(screen(3840, 2160, ratio=1.25, pixel_sizes=False).units_per_px, (1.0, 1.0))
+
+
+class ScalingLineTests(unittest.TestCase):
+    LINE = ("2026-10-03 12:01:59.003 UTC - DEBUG - Overlay scaling updated: window=3840x2160 px mode=fill base_scale=2.4000 "
+            "scale_x=3.000 scale_y=3.000 diag=3.00 scaled=3072.0x2304.0 offset=(0.0,0.0) overflow_x=0 overflow_y=1")
+
+    def test_the_window_mode_and_display_scaling_are_read(self):
+        width, height, mode, ratio = L.parse_scaling_line("noise\n" + self.LINE + "\nmore noise")
+        self.assertEqual((width, height, mode), (3840, 2160, "fill"))
+        self.assertAlmostEqual(ratio, 1.25)
+
+    def test_the_newest_line_wins(self):
+        older = self.LINE.replace("3840x2160", "800x600").replace("mode=fill", "mode=fit").replace("base_scale=2.4000", "base_scale=0.5000").replace("scale_x=3.000", "scale_x=0.625")
+        self.assertEqual(L.parse_scaling_line(older + "\n" + self.LINE)[:3], (3840, 2160, "fill"))
+        self.assertEqual(L.parse_scaling_line(self.LINE + "\n" + older)[:3], (800, 600, "fit"))
+
+    def test_nothing_usable_gives_none(self):
+        self.assertIsNone(L.parse_scaling_line("no scaling here"))
+        self.assertIsNone(L.parse_scaling_line(self.LINE.replace("mode=fill", "mode=stretch")))
+        self.assertIsNone(L.parse_scaling_line(self.LINE.replace("base_scale=2.4000", "base_scale=0.0")))
+        self.assertIsNone(L.parse_scaling_line(self.LINE.replace("scale_x=3.000", "scale_x=90.0")))   # a 37x ratio is not a monitor
 
 
 class DisplaySettingsTests(unittest.TestCase):
@@ -51,10 +90,12 @@ class DisplaySettingsTests(unittest.TestCase):
             "<DisplayConfig><ScreenWidth>10000</ScreenWidth><ScreenHeight>100</ScreenHeight></DisplayConfig>"))
 
     def test_the_description_says_what_it_means(self):
-        text = L.describe_screen(L.Screen(3840, 2160, L.MODE_FILL, "DisplaySettings.xml", 2))
-        self.assertIn("3840 x 2160", text)
-        self.assertIn("full screen", text)
-        self.assertIn("1280 x 720", text)
+        text = L.describe_screen(L.Screen(3840, 2160, L.MODE_FILL, "EDMCModernOverlay log", 2, 1.25))
+        for expected in ("3840 x 2160", "full screen", "125%", "3072 x 1728", "whole screen"):
+            self.assertIn(expected, text)
+
+    def test_the_description_for_an_overlay_that_uses_canvas_units(self):
+        self.assertIn("canvas units", L.describe_screen(L.Screen(1920, 1080, pixel_sizes=False)))
 
 
 class PlacementTextTests(unittest.TestCase):
@@ -98,47 +139,76 @@ class PresetTests(unittest.TestCase):
 
 
 class BlockOriginTests(unittest.TestCase):
-    S = screen(3840, 2160)          # visible 1280 x 720
+    """On the measured screen a pixel is 0.4167 canvas units across and 0.5556 down."""
 
-    def origin(self, h, v, dx, dy, size=(300, 100)):
-        return L.block_origin(L.Placement(h, v, dx, dy), size, self.S)
+    def origin(self, h, v, dx, dy, size=(360, 300), scr=MEASURED):
+        return L.block_origin(L.Placement(h, v, dx, dy), size, scr)
 
-    def test_corners(self):
-        self.assertEqual(self.origin("left", "top", 20, 10), (20, 10))
-        self.assertEqual(self.origin("right", "top", 20, 10), (1280 - 300 - 20, 10))
-        self.assertEqual(self.origin("left", "bottom", 20, 10), (20, 720 - 100 - 10))
-        self.assertEqual(self.origin("right", "bottom", 20, 10), (960, 610))
+    def test_a_right_aligned_display_stops_where_the_overlay_would_squash_it(self):
+        # Ideally a 360 px display (150 canvas units) would start at 1130 to end on the screen's right edge. But across the
+        # screen the overlay clamps x + width (a pixel width) to 1280, so past 1280 - 360 = 920 it would be squashed.
+        x, y = self.origin("right", "top", 0, 0)
+        self.assertEqual(x, 1280 - 360)
+        self.assertEqual(y, 0)
+
+    def test_the_clamp_is_only_on_the_axis_the_overlay_does_not_stretch(self):
+        self.assertEqual(MEASURED.clamped, (True, False))                      # wide screen: across is clamped, down is free
+        self.assertEqual(screen(1280, 1024).clamped, (False, True))             # taller than 4:3: the other way round
+        self.assertEqual(screen(1920, 1080, mode=L.MODE_FIT).clamped, (True, True))
+        self.assertEqual(screen(1920, 1080, pixel_sizes=False).clamped, (False, False))
+
+    def test_on_a_free_axis_a_display_does_reach_the_edge(self):
+        _x, y = self.origin("left", "bottom", 0, 0)
+        self.assertEqual(y, round(960 - 300 * 960 / 1728))                      # down the wide screen: flush with the bottom
+        tall = screen(1280, 1024)                                               # across is free, down is clamped
+        self.assertEqual(self.origin("right", "top", 0, 0, scr=tall)[0], 1280 - 360)   # 1 px = 1 unit here, so same as clamp
+        wide_tall = screen(2560, 2048, ratio=1.0)                                # 1 px = 0.5 units across
+        x, _y = self.origin("right", "top", 0, 0, scr=wide_tall)
+        self.assertEqual(x, 1280 - 180)                                         # 360 px is 180 units, ends on the edge
+        self.assertEqual(wide_tall.clamped, (False, True))
+
+    def test_offsets_are_screen_pixels_not_canvas_units(self):
+        x, y = self.origin("left", "top", 100, 100)
+        self.assertEqual((x, y), (round(100 * 1280 / 3072), round(100 * 960 / 1728)))   # 100 px is 42 across and 56 down
+        _x, y = self.origin("left", "bottom", 100, 100)
+        self.assertEqual(y, round(960 - 300 * 960 / 1728 - 100 * 960 / 1728))
 
     def test_centers(self):
-        self.assertEqual(self.origin("center", "middle", 0, 0), (490, 310))
-        self.assertEqual(self.origin("center", "top", 0, 60), (490, 60))
-        self.assertEqual(self.origin("center", "middle", 30, -20), (520, 290))
+        x, y = self.origin("center", "middle", 0, 0)
+        self.assertEqual(x, round((1280 - 150) / 2))
+        self.assertEqual(y, round((960 - 300 * 960 / 1728) / 2))
 
-    def test_the_same_placement_follows_the_screen_shape(self):
-        bottom_left = L.Placement("left", "bottom", 20, 20)
-        wide = L.block_origin(bottom_left, (300, 100), screen(5120, 1440))     # visible height 360
-        tall = L.block_origin(bottom_left, (300, 100), screen(3840, 2160))     # 720
-        self.assertEqual((wide[1], tall[1]), (360 - 100 - 20, 720 - 100 - 20))
-        self.assertEqual(L.block_origin(bottom_left, (300, 100), screen(1024, 768, L.MODE_FIT))[1], 960 - 100 - 20)
+    def test_the_same_placement_follows_the_screen(self):
+        # Down the screen the canvas is stretched, so "bottom" is the bottom whatever the monitor shape.
+        full_hd = screen(1920, 1080)
+        self.assertEqual(self.origin("left", "bottom", 0, 0, scr=full_hd)[1], round(960 - 300 * 960 / 1080))
+        ultrawide = screen(5120, 1440)
+        self.assertEqual(self.origin("left", "bottom", 0, 0, scr=ultrawide)[1], round(960 - 300 * 960 / 1440))
+        # A fit overlay keeps one scale for both directions, and clamps both, so the bottom stops at 960 - 300 px.
+        fit = screen(1920, 1080, mode=L.MODE_FIT)
+        self.assertEqual(self.origin("left", "bottom", 0, 0, scr=fit)[1], 960 - 300)
 
-    def test_a_display_is_kept_inside_the_visible_area(self):
-        self.assertEqual(self.origin("left", "top", 5000, 5000), (980, 620))
-        self.assertEqual(self.origin("right", "bottom", 5000, 5000), (0, 0))
-        self.assertEqual(self.origin("left", "top", -50, -50), (0, 0))
+    def test_a_display_is_kept_on_the_canvas(self):
+        self.assertEqual(self.origin("left", "top", 99999, 99999), (1280 - 360, round(960 - 300 * 960 / 1728)))
+        self.assertEqual(self.origin("right", "bottom", 99999, 99999), (0, 0))
+        self.assertEqual(self.origin("left", "top", -500, -500), (0, 0))
 
-    def test_a_display_bigger_than_the_area_starts_at_the_top_left(self):
-        self.assertEqual(L.block_origin(L.Placement("center", "middle", 0, 0), (400, 900), self.S), (440, 0))
-        self.assertEqual(L.block_origin(L.Placement("right", "bottom", 0, 0), (2000, 900), self.S), (0, 0))
+    def test_a_display_bigger_than_the_canvas_starts_at_the_top_left(self):
+        self.assertEqual(L.block_origin(L.Placement("center", "middle", 0, 0), (5000, 4000), MEASURED), (0, 0))
 
-    def test_custom_is_taken_exactly(self):
-        self.assertEqual(L.block_origin(L.custom_placement(700, 900), (300, 100), self.S), (700, 900))
+    def test_custom_is_taken_exactly_in_canvas_units(self):
+        self.assertEqual(L.block_origin(L.custom_placement(700, 900), (300, 100), MEASURED), (700, 900))
+
+    def test_canvas_unit_overlays_anchor_directly(self):
+        classic = screen(1920, 1080, pixel_sizes=False)
+        self.assertEqual(self.origin("right", "top", 0, 0, scr=classic)[0], 1280 - 360)
 
 
 class ShiftTests(unittest.TestCase):
     def test_shift_is_target_minus_where_it_is_drawn(self):
-        s = screen(3840, 2160)
-        self.assertEqual(L.shift_for(L.Placement("left", "top", 0, 0), (20, 292, 300, 100), s), (-20, -292))
-        self.assertEqual(L.shift_for(L.Placement("right", "top", 0, 0), (20, 292, 300, 100), s), (1280 - 300 - 20, -292))
+        self.assertEqual(L.shift_for(L.Placement("left", "top", 0, 0), (20, 292, 300, 100), MEASURED), (-20, -292))
+        self.assertEqual(L.shift_for(L.Placement("right", "top", 0, 0), (20, 292, 300, 100), MEASURED),
+                         (1280 - 300 - 20, -292))      # the overlay would squash it past 1280 - 300
 
 
 class Recorder:

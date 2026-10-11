@@ -27,7 +27,9 @@ class CommodityRow:
     in_cargo: int
     to_get: int          # remaining less what is in the ship and on the fleet carrier: still to buy or mine
     on_carrier: int      # tons moved onto the commander's fleet carrier (0 when none)
-    trips: Optional[Decimal] = None   # trips of the current ship to deliver `remaining` (None when its capacity is unknown)
+    buy_trips: Optional[Decimal] = None    # loads of the current ship to gather what is still `to_get` (0 when covered)
+    haul_trips: Optional[Decimal] = None   # loads of the current ship to carry all of `remaining` to the site
+                                           # (both None when the ship's capacity is unknown)
 
     @property
     def stock(self) -> int:
@@ -51,9 +53,11 @@ class Totals:
     remaining: int       # tons the site still needs
     to_get: int          # of that, tons not yet in the ship or on the fleet carrier
     in_hold: int         # tons of needed commodities already in the ship (capped at what is needed)
+    on_carrier: int      # tons of needed commodities already on the fleet carrier (capped at what is needed)
     lines: int           # commodities still needed
     covered: int         # of those, how many the ship plus the fleet carrier already cover
-    trips: int           # trips of the current ship to deliver everything still `remaining` (0 when its capacity is unknown)
+    buy_trips: int       # whole loads of the current ship to gather what is still `to_get` (0 when covered or unknown)
+    haul_trips: int      # whole loads of the current ship to carry everything still `remaining` to the site
 
 
 def trips_for(tons: int, capacity: int) -> Optional[Decimal]:
@@ -87,11 +91,13 @@ def commodity_rows(site: Site, cargo: Mapping[str, int], carrier: Optional[Mappi
             continue
         if wanted and wanted not in resource.label.casefold():
             continue
+        to_get = max(0, resource.remaining - cargo.get(resource.key, 0) - carrier.get(resource.key, 0))
         row = CommodityRow(
             key=resource.key, label=resource.label, required=resource.required, delivered=resource.provided,
             remaining=resource.remaining, in_cargo=cargo.get(resource.key, 0),
-            to_get=max(0, resource.remaining - cargo.get(resource.key, 0) - carrier.get(resource.key, 0)),
-            on_carrier=carrier.get(resource.key, 0), trips=trips_for(resource.remaining, capacity))
+            to_get=to_get,
+            on_carrier=carrier.get(resource.key, 0), buy_trips=trips_for(to_get, capacity),
+            haul_trips=trips_for(resource.remaining, capacity))
         if hide_covered and row.covered:
             continue
         rows.append(row)
@@ -105,11 +111,15 @@ def totals(site: Site, cargo: Mapping[str, int], capacity: int = 0,
     to_get = sum(r.to_get for r in rows)
     in_hold = sum(min(r.in_cargo, r.remaining) for r in rows)
     remaining = sum(r.remaining for r in rows)
-    # Deliveries are what the trips count: the whole remaining need, a full ship at a time. What is already in the ship
-    # is the start of the first load, so it is not taken off.
-    trips = math.ceil(remaining / capacity) if capacity and capacity > 0 and remaining > 0 else 0
-    return Totals(remaining=remaining, to_get=to_get, in_hold=in_hold,
-                  lines=len(rows), covered=sum(1 for r in rows if r.covered), trips=trips)
+    on_carrier = sum(min(r.on_carrier, r.remaining) for r in rows)
+    known = bool(capacity and capacity > 0)
+    # Two legs, counted apart. Buying: a full ship at a time for what is still missing (nothing when everything is
+    # already in the ship or on the carrier). Hauling: the whole remaining need to the site, a full ship at a time; what
+    # is already in the ship is the start of the first load and what is on the carrier still has to be carried over.
+    buy_trips = math.ceil(to_get / capacity) if known and to_get > 0 else 0
+    haul_trips = math.ceil(remaining / capacity) if known and remaining > 0 else 0
+    return Totals(remaining=remaining, to_get=to_get, in_hold=in_hold, on_carrier=on_carrier,
+                  lines=len(rows), covered=sum(1 for r in rows if r.covered), buy_trips=buy_trips, haul_trips=haul_trips)
 
 
 def site_status(site: Site) -> str:

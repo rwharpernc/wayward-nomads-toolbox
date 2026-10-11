@@ -119,7 +119,7 @@ the address. **Edit** and **Delete** work the same way.
 ## Colonisation
 
 Keeps track of what each colonisation construction site still needs delivered. You can read it from anywhere, not
-just while docked, and it shows what's left to find after counting the cargo already in your hold. There is no
+just while docked, and it shows what's left to find after counting the cargo already in your ship. There is no
 on/off setting for it.
 
 **Where the data comes from.** The journal writes a `ColonisationConstructionDepot` event when you dock at a
@@ -152,7 +152,7 @@ for is ignored, since there is nothing to add it to.
 
 Sites are listed on the left (name, tons left, and its progress as a percentage, or `complete` or `failed`);
 finished ones are grayed out. The subtitle reads `<commander> — N active of M sites`. Click a site to see it on the right:
-its name, system, a progress bar, five totals, two filters and a table with one row per commodity **still
+its name, system, a progress bar, six totals, two filters and a table with one row per commodity **still
 outstanding**. The first active site is picked when the window opens.
 
 The totals are always for the whole site, whatever the filters hide:
@@ -160,10 +160,15 @@ The totals are always for the whole site, whatever the filters hide:
 | Total | Meaning |
 |---|---|
 | t still to get | What you still have to buy or mine: Remaining, less what is in your ship and what you have moved onto your fleet carrier |
-| t remaining | What the site still needs in total |
+| t on your carrier | Of the remaining need, what you have moved onto your fleet carrier (never more than the site needs). A dash without a carrier |
 | t already in your ship | Of the remaining need, what your ship is carrying now (never more than the site needs) |
 | t ship capacity | Your current ship's cargo capacity, as EDMC reports it. It follows you when you swap ships; a dash until EDMC has given it |
-| trips to finish | **All** the tons the site still needs, divided by that capacity and rounded up: how many full loads it takes to complete the build with this ship. What you already carry is the start of the first load, so it is not taken off. A dash when the capacity is unknown |
+| trips to buy | Loads of that capacity to gather what is **still to get**, rounded up. **0** once everything is in your ship or on your carrier |
+| trips to haul | Loads of that capacity to carry **all** the tons the site still needs to the site, rounded up. What you carry is the start of the first load, and what is on your carrier still has to be carried over, so this does not fall when you move cargo to the carrier |
+
+Building a colony has two legs, and the window counts them apart. **Buying** takes cargo from the markets to your carrier (or
+straight to the site). **Hauling** takes it from the carrier, or your ship, to the construction site. A commodity you have
+already stored on the carrier needs no more buying trips but still needs its hauling trips.
 
 The **Filter** box keeps the commodities whose names contain what you type, and **Hide rows already covered**
 drops the rows you needn't buy any more (see the colors below for what counts as covered). Click a column heading to sort by it, and again to reverse; the
@@ -174,11 +179,15 @@ default is alphabetical, so rows stay put while numbers change.
 | Required | What the site needs in total |
 | Delivered | What's been handed over |
 | Remaining | Required minus delivered |
-| In Cargo | What is in your hold now (ship or SRV) |
-| Trips Left | How many more loads of **your current ship** it takes to deliver the rest of that commodity: Remaining divided by your ship's cargo capacity. It uses at most two decimals (`4`, `1.5`, `1.25`, `0.33`), never rounds a small remainder down to 0, and shows a dash until EDMC has given your ship's capacity |
+| In Cargo | What is in your ship (or SRV) now |
 | FC | Tons of that commodity you have transferred onto your **fleet carrier** (only shown once WNTB has seen you have one) |
+| Buy Trips | Loads of **your current ship** to gather what is still missing of that commodity: what is left to get (Remaining less your ship and your carrier) divided by your ship's cargo capacity. **0** when you already have enough, wherever it is stored |
+| Haul Trips | Loads of your current ship to carry all of that commodity's Remaining to the site. This stays above 0 for a commodity sitting on your carrier, because it still has to be moved |
 
-**Row colors.** The whole row is tinted by what you already have for that commodity, counting your hold **plus** what
+Both trip columns use at most two decimals (`4`, `1.5`, `1.25`, `0.33`), never round a small remainder down to 0, and show a dash
+until EDMC has given your ship's capacity.
+
+**Row colors.** The whole row is tinted by what you already have for that commodity, counting your ship **plus** what
 you have moved onto your fleet carrier (the FC column):
 
 - **Green:** the two together cover what the site still needs, exactly or with room to spare. Nothing more to buy.
@@ -187,7 +196,7 @@ you have moved onto your fleet carrier (the FC column):
 
 The carrier figure is what WNTB saw you transfer (see the FC column notes), so it can drift from the carrier's real
 cargo. The **t still to get** total and the copied shopping list count it too, so they drop when you move cargo onto the
-carrier. Trips Left does not: it is about hauling the rest to the site, whatever is stored where.
+carrier, and so does Buy Trips. Haul Trips does not: everything still has to be carried to the site, whatever is stored where.
 
 **The FC column.** It adds up the journal's `CargoTransfer` events made while docked at your fleet carrier: tons
 moved to the carrier minus tons moved back to the ship. It appears for a commander WNTB knows has a fleet carrier, using the **same knowledge as Trade**: your
@@ -260,7 +269,7 @@ It draws a table laid out like SRVSurvey's, with the site name as its title and 
   window's green rows); the row turns amber if together they are **more** than the site needs.
 
 Commodities are alphabetical so rows stay put while numbers change. A last line gives the tons remaining and the
-trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the same count as the window's trips to finish) (the trips need your ship's
+trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the same count as the window's trips to haul) (the trips need your ship's
 cargo capacity, which EDMC supplies).
 
 - **When it shows:**
@@ -287,7 +296,7 @@ cargo capacity, which EDMC supplies).
 
   Most of these rely on the game's `Status.json` reporting which screen is open.
 - **Which site:** your most recently updated active site, the one the Field Ops summary line names. Completed and
-  failed sites are never shown. The card disappears when nothing is left to source.
+  failed sites are never shown. The card disappears when nothing is left to get.
 - **Settings:** where the card sits (Settings → Overlays → Overlay Placement; the default is the left edge, vertically
   centered, on any screen shape), and **Rows**,
   how many commodities to list (1 to 60; any more are summarized as `+N more`). The default, 0, lists them all. **Test Overlay** shows a

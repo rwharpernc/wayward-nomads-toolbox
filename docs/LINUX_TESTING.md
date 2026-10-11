@@ -265,8 +265,10 @@ Windows. Needs a commander with at least one registered construction site and an
 
 - [ ] The window opens at about 1300 x 780 with the sites on the left and the detail on the right; nothing is clipped at
       its minimum size (1180 x 640), and the divider between the commodity table and Where to buy drags.
-- [ ] Picking a site shows its progress bar, the five totals, and its commodities; the Filter box, **Hide rows
+- [ ] Picking a site shows its progress bar, the six totals, and its commodities; the Filter box, **Hide rows
       already covered** and the column headings (click, click again to reverse) all work.
+- [ ] **Buy Trips and Haul Trips** (needs a fleet carrier with stock stored on it): a commodity fully on the carrier shows Buy
+      Trips 0 and a Haul Trips above 0; the totals show **t on your carrier**, **trips to buy** and **trips to haul**.
 - [ ] **Row colors**: a commodity row turns green when the hold plus the FC column covers the site's remaining need
       (exactly equal is green), orange when together they are more than needed, and keeps the normal look while short.
       The tint stays visible, only lightened, when the row is hovered or selected.
@@ -282,18 +284,20 @@ Windows. Needs a commander with at least one registered construction site and an
 ## 7f. Overlay Placement and the Overlays settings tab (added 2026-10-11, Windows-tested only: check on Linux)
 
 Written on Windows against a 3840 x 2160 screen in EDMCModernOverlay's fill mode. The logic is platform-neutral, but
-reading the screen shape from inside the Proton prefix, and how the overlay maps its canvas under XWayland, have not been
-seen on Linux.
+reading the screen size from inside the Proton prefix (and the overlay's log), the display scaling under XWayland, and how the
+overlay maps its canvas and sizes there, have not been seen on Linux.
 
 - [ ] **Settings -> Overlays** has the tabs Overlay Connection, Overlay Placement, Colonization, Discovery, Inventory,
       Interdiction Warning, Landing, Mining, Notable Bodies and Screenshots; General no longer has an overlay tab.
-- [ ] The Overlay Placement tab's info line shows your real screen size, with `DisplaySettings.xml` as the source (if it says
-      "game files not found", note the Wine/Proton prefix path and report it).
-- [ ] It shows the overlay mode EDMCModernOverlay uses (fit or fill) and how much of the canvas that leaves visible.
-- [ ] **Show placement preview** draws a labeled box for every display, all inside the outline of the visible area.
-- [ ] Change a display to **Bottom right** with offsets 20 / 20, press OK, then **Test Overlay** (or the feature's test
-      button): it appears in the bottom right corner of the game screen.
-- [ ] Picking a different **Screen shape** (say 32:9) in the tab moves the previewed boxes up into the shorter area.
+- [ ] The Overlay Placement tab's info line shows your real screen size and display scaling, from the EDMCModernOverlay log or
+      `DisplaySettings.xml` (if it says "game files not found", note the Wine/Proton prefix path and report it). Under
+      XWayland or Wayland scaling the overlay's log is the best source; check its numbers match what you see.
+- [ ] It shows the overlay mode EDMCModernOverlay uses (fit or fill).
+- [ ] **Show placement preview** draws a labeled box for every display, at its real size, all on the screen.
+- [ ] Change a display to **Bottom left** with offsets 20 / 20, press OK, then **Test Overlay** (or the feature's test
+      button): it appears in the bottom left corner of the game screen.
+- [ ] A display set to **Bottom left** with offsets 40 / 40 sits 40 pixels in from the bottom left corner of the screen.
+- [ ] A display set to a **Right** spot keeps its full width and stops where the overlay allows (a little short of the edge).
 - [ ] A position set in an older version's X/Y boxes shows as **Exact position** with the same numbers.
 
 ## Reporting
