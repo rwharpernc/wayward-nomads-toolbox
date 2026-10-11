@@ -6,6 +6,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Colonization Sites window: sites on the left, the shopping list on the right.** Click a site to see its progress bar, four totals (tonnes still to source, remaining, already in the hold, trips in this ship), a filter box, a "hide those the hold already covers" switch and a commodity table you can sort by any column. Rows turn green when the hold covers them and amber when you carry more than needed. The buttons now act on the picked site, so you no longer have to select a commodity row first. The window is larger by default (1100 x 640).
 - **Colonization: FC column.** The Colonization Sites window gains an **FC** column for a commander with a fleet
   carrier: the tonnes of each commodity transferred to it (net of any taken back), from the journal's `CargoTransfer`
   events made at the carrier. It is per commander, caught up from the journals at start-up without counting a transfer

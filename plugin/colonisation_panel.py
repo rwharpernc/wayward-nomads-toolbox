@@ -307,7 +307,8 @@ class ColonisationController:
     def _on_manage_clicked(self) -> None:
         if self._parent is None:
             return
-        colonisation_window.show(self._parent, self._repository, self._cmdr or "", self._cargo, self._carrier_cargo)
+        colonisation_window.show(self._parent, self._repository, self._cmdr or "", self._cargo, self._carrier_cargo,
+                               lambda: self._capacity)
 
     # --- Settings tab --------------------------------------------------
 

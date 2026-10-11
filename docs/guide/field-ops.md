@@ -149,9 +149,23 @@ for is ignored, since there is nothing to add it to.
 
 ### The Colonisation Sites window
 
-The subtitle reads `<commander> — N active of M sites`. Each site is a group with its system name and, on the same
-row, the tonnes remaining and a status: its progress as a percentage, or `complete` or `failed`. Active sites start
-open; finished ones are greyed. Under each site is one row per commodity **still outstanding**:
+Sites are listed on the left (name, tonnes left, and its progress as a percentage, or `complete` or `failed`);
+finished ones are greyed. The subtitle reads `<commander> — N active of M sites`. Click a site to see it on the right:
+its name, system, a progress bar, four totals, two filters and a table with one row per commodity **still
+outstanding**. The first active site is picked when the window opens.
+
+The totals are always for the whole site, whatever the filters hide:
+
+| Total | Meaning |
+|---|---|
+| t still to source | What you still have to buy or mine, after what your hold already carries |
+| t remaining | What the site still needs in total |
+| t already in the hold | Of that, what you are carrying now (never more than the site needs) |
+| trips in this ship | The still-to-source tonnes divided by your ship's cargo capacity, rounded up (a dash when EDMC hasn't given the capacity) |
+
+The **Filter** box keeps the commodities whose names contain what you type, and **Hide those the hold already
+covers** drops the rows you needn't buy any more. Click a column heading to sort by it, and again to reverse; the
+default is alphabetical, so rows stay put while numbers change.
 
 | Column | Meaning |
 |---|---|
@@ -161,6 +175,8 @@ open; finished ones are greyed. Under each site is one row per commodity **still
 | In Cargo | What is in your hold now (ship or SRV) |
 | To Source | Remaining minus what you're already carrying: what you still have to buy or mine |
 | FC | Tonnes of that commodity you have transferred onto your **fleet carrier** (only shown once WNTB has seen you have one) |
+
+A row turns green when your hold already covers it and amber when you carry **more** than the site needs.
 
 **The FC column.** It adds up the journal's `CargoTransfer` events made while docked at your fleet carrier: tonnes
 moved to the carrier minus tonnes moved back to the ship. It appears for a commander WNTB knows has a fleet carrier, using the **same knowledge as Trade**: your
@@ -178,15 +194,13 @@ Management, buying one, or docking at one). It is per commander. It does not cha
   journal as transfers, so they are not counted: buying from or selling to the carrier's market, trade orders, and a
   squadron mate moving cargo. The figure can therefore drift from the real contents.
 
-**Buttons.** For these you **select a commodity row** under the site you mean (selecting the site's heading is not
-enough):
+**Buttons.** They act on the site picked on the left:
 
 - **Copy Shopping List** copies that site's list to the clipboard, as lines like `1,200 t  Steel`, biggest first.
   The amounts are the **To Source** figures, so what you already carry is taken off. If nothing is needed it says
   so.
 - **Remove Site** stops tracking that site.
-- **Remove Finished** needs no selection. It deletes every complete or failed site, because those have no
-  commodity rows to select.
+- **Remove Finished** deletes every complete or failed site.
 
 ### The shopping list on the overlay
 
