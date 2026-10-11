@@ -253,8 +253,8 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
       Commodity, Need, FC and Ship, with a tick when the hold covers a row, and a remaining/trips footer.
 - [ ] The card appears: in a commodity market at a station; at your own carrier in the station-services screens (the game
       writes no `Market` event for a carrier's market); with the right-hand cockpit panel open when docked at the carrier
-      (the cargo transfer); in Carrier Management; docked at a construction site. It goes when you leave, and the SHOW /
-      HIDE button forces it on and off. The EDMC debug log lines "Colonization overlay ..." say what was decided and why.
+      (the cargo transfer); in Carrier Management; docked at a construction site. It goes when you leave, and the OVERLAY
+      button forces it on and off. The EDMC debug log lines "Colonization overlay ..." say what was decided and why.
 - [ ] Rows left at the default list every commodity; the card fits on screen from the default position (20, 300).
 - [ ] Windows paths: `Status.json` reports the same `GuiFocus` values (5 in the services screens, 1 for the right-hand panel).
 
@@ -318,7 +318,7 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 
 - [ ] The button row has a **COL** button (eight buttons); the panel is not noticeably wider than before.
 - [ ] COL shows **Current project** for your newest active site and a **History** block; REPORT opens the sites window, and
-      SHOW/HIDE toggles the overlay card.
+      OVERLAY toggles the overlay card (lit while on).
 - [ ] Without a fleet carrier there is no Carrier row, Trips left reads like "3 loads of 400 t", and the sites window has a single
       Trips column. With one, Carrier is shown and Trips left reads "N to buy · N to haul".
 - [ ] After delivering cargo to a depot, "You delivered" and "Recently" go up by the same tonnes, and again after restarting EDMC

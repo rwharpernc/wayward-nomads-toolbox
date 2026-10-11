@@ -109,6 +109,7 @@ class ColonisationController:
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
         self._right_panel_var: Optional[tk.BooleanVar] = None
         self._show_button: Optional[tk.Button] = None
+        self._show_off_colors = ("", "")
         self._overlay_vars: Dict[str, tk.StringVar] = {}
         self._overlay_result: Optional[tk.Label] = None
 
@@ -417,7 +418,7 @@ class ColonisationController:
         line("delivered", "Delivered")
         line("needed", "Still needed")
         line("coverage", "Covered")
-        line("hold", "In hand")
+        line("hold", "On hand")
         line("carrier", "Carrier")
         line("to_get", "Still to get")
         line("trips", "Trips left")
@@ -440,17 +441,18 @@ class ColonisationController:
         manage_button = tk.Button(buttons, text="REPORT", command=self._on_manage_clicked)
         manage_button.pack(side=tk.LEFT)
         panelkit.add_tooltip(manage_button, "Colonization Sites - open your colonization sites")
-        self._show_button = tk.Button(buttons, text="SHOW", command=self._on_show_clicked)
+        self._show_button = tk.Button(buttons, text="OVERLAY", command=self._on_show_clicked)
+        self._show_off_colors = panelkit.capture_toggle_off_colors(self._show_button)
         self._show_button.pack(side=tk.LEFT, padx=(6, 0))
         panelkit.add_tooltip(self._show_button, "Show the shopping list on the overlay now, whatever screen you are on "
-                                                "(press again to hide). Works even if the overlay option is off.")
+                                                "(lit while forced on; press again to let go). Works even if the overlay option is off.")
         self._refresh_summary()
 
     def _on_show_clicked(self) -> None:
         """Manual override of the automatic screens: force the shopping list on the overlay, or let go again."""
         self._visibility.forced = not self._visibility.forced
         if self._show_button is not None:
-            self._show_button["text"] = "HIDE" if self._visibility.forced else "SHOW"
+            panelkit.apply_toggle_button_state(self._show_button, self._visibility.forced, self._show_off_colors)
         self._update_overlay()
 
     def _on_manage_clicked(self) -> None:

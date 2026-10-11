@@ -18,7 +18,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Name, system and a bar | The site, and how far its build has come (the bar turns green when the build is complete) |
 | Progress, Delivered, Still needed | The build's percentage, the tons handed over by everyone against the tons it needs, and what is left |
 | Covered | Of the commodities still needed, how many are **fully** covered, **partly** covered and **not yet** covered, counting your ship, or your ship and carrier together if you have one |
-| In hand | Tons of needed commodities in your ship now |
+| On hand | Tons of needed commodities in your ship now |
 | Carrier | (Only with a fleet carrier.) Tons of needed commodities you have moved onto it |
 | Still to get | What is left to buy or mine after your ship (and carrier) |
 | Trips left | **Without a carrier:** the loads of your current ship it takes to finish (one trip buys and delivers). **With a carrier:** trips to buy what is missing and trips to haul everything to the site |
@@ -217,7 +217,7 @@ cargo capacity, which EDMC supplies).
   - Optionally, **whenever the right-hand cockpit panel is open, anywhere** (even in flight), as SRVSurvey does. Off by
     default; tick it in the Colonization settings.
 
-  And you can always force it: the **SHOW** button beside REPORT in the the Colonization mode panel puts the card on the overlay
+  And you can always force it: the **OVERLAY** button beside REPORT on the COL page (it lights up while forced on; press it again to let go) puts the card on the overlay
   now, whatever screen you are on, even if the overlay option is off; the button then reads **HIDE**. It lasts until you
   press it again or restart EDMC.
 

@@ -920,7 +920,7 @@ and `CargoTransfer` comes only after a transfer is made). (3) The commander is d
 type `SpaceConstructionDepot`, `PlanetaryConstructionDepot` or `ColonisationShip`, a "Construction Site" station name,
 or a `ColonisationConstructionDepot` event) and `GuiFocus` is 0 or 5. (4) The `Music` event's track is `FleetCarrier_Managment` (Carrier Management; both opening and closing are
 announced). (5) Optionally (`wntb_colonisation_overlay_right_panel`) `GuiFocus` 1 anywhere. A manual `forced` flag (the
-Field Ops SHOW / HIDE button) overrides all of it and the enabled setting. SRVSurvey uses the same signals; it shows its list
+COL page OVERLAY button) overrides all of it and the enabled setting. SRVSurvey uses the same signals; it shows its list
 on the right-hand panel anywhere (default on) rather than only docked at a carrier. Settings keys:
 `wntb_colonisation_overlay_enabled` / `_x` / `_y` / `_rows`.
 

@@ -6,7 +6,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Changed
-- **Colonization moved out of Field Ops** into its own mode (the **COL** button). The REPORT and SHOW buttons moved with it.
+- **Colonization moved out of Field Ops** into its own mode (the **COL** button). The REPORT button moved with it, and the SHOW / HIDE button is now **OVERLAY** (it lights up while the card is forced on).
   The mode row is now eight buttons wide, so the WNTB panel is a little wider than before. Colonization's guide is its own page.
 - **One Overlays tab in Settings.** Every overlay setting and toggle is now under **Settings -> Overlays**, with a tab for
   the shared **Overlay Connection**, one for **Overlay Placement**, and one for each feature that draws on your screen:

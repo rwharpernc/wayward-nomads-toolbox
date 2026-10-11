@@ -283,7 +283,7 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **SHIPS** | Manage ship builds | Field Ops |
 | **REPORT** | Colonization sites | Colonization |
-| **SHOW** / **HIDE** | Force the colonization shopping list onto the overlay, or take it off again | Colonization |
+| **OVERLAY** | Force the colonization shopping list onto the overlay (lit while on), press again to let go | Colonization |
 
 ---
 
