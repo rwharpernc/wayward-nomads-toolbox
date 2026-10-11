@@ -5,6 +5,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ## Unreleased
 
+### Changed
+- **Colonization overlay card follows the window's coverage rule.** The green text and the ✓ now mean your hold plus
+  what you moved onto your fleet carrier cover the need, and amber means together they are more than needed (before, only
+  the hold counted).
+
 ### Added
 - **Colonization Sites window: row colors by coverage.** A commodity row now turns green when your hold plus the tonnes
   you moved onto your fleet carrier cover what the site still needs, and orange when together they are more than it

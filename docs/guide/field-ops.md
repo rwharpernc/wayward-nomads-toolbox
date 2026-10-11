@@ -249,9 +249,10 @@ It draws a table laid out like SRVSurvey's, with the site name as its title and 
 - **Need** is what the site still requires (required less delivered). It does **not** drop as you load up, so you can
   see what you need and what you have side by side. It falls when you deliver.
 - **FC** appears only if you have a fleet carrier (see the FC column above): what you have moved onto it. It is blue
-  once it covers the need, grey while it doesn't, and blank when none.
+  once it covers the need, gray while it doesn't, and blank when none.
 - **Ship** is what is in your ship's hold right now, so you can see what you just bought. A **✓** after the name means
-  your hold already covers it (the row turns green); the row turns amber if you carry **more** than the site needs.
+  your hold **plus** what is on your fleet carrier already covers it (the row turns green, the same rule as the
+  window's green rows); the row turns amber if together they are **more** than the site needs.
 
 Commodities are alphabetical so rows stay put while numbers change. A last line gives the tonnes remaining and the
 trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the trips need your ship's

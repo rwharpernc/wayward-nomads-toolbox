@@ -5,8 +5,8 @@ construction site still needs, with the columns Commodity, Need, FC and Ship.
 - **Need** is what the site still requires (required less delivered). It does not fall as you load up, so you can see
   how much you need and how much you have side by side.
 - **FC** (only for a commander with a fleet carrier) is what has been transferred to the carrier (`colonisation_carrier`).
-- **Ship** is what is in the ship's hold now. A ✓ marks a commodity the hold already covers; the number turns amber when
-  the hold holds more than is needed.
+- **Ship** is what is in the ship's hold now. A ✓ marks a commodity the hold plus the fleet carrier already cover (the
+  same rule as the Colonization window's green rows); the row turns amber when together they are more than is needed.
 
 A footer gives the tonnes remaining and the trips that is in the current ship (from its cargo capacity). Commodities are
 alphabetical, so rows stay put as the numbers change.
@@ -150,8 +150,8 @@ BORDER = "#f97316"
 TITLE_COLOUR = "#fdba74"
 HEADER_COLOUR = "#c2790e"
 TEXT_COLOUR = "#e5e7eb"
-ENOUGH_COLOUR = "#86efac"    # the ship already holds what is needed
-SURPLUS_COLOUR = "#fbbf24"   # the ship holds more than is needed
+ENOUGH_COLOUR = "#86efac"    # the hold plus the fleet carrier already cover what is needed
+SURPLUS_COLOUR = "#fbbf24"   # the hold plus the fleet carrier are more than is needed
 FC_COLOUR = "#7dd3fc"
 DIM_COLOUR = "#9ca3af"
 CHECK = "✓"
@@ -167,11 +167,13 @@ class Row:
 
     @property
     def covered(self) -> bool:
-        return self.ship >= self.need
+        """The hold plus the fleet carrier cover the need, exactly or with room to spare."""
+        return self.ship + self.fc >= self.need
 
     @property
     def surplus(self) -> bool:
-        return self.ship > self.need
+        """The hold plus the fleet carrier are more than the need."""
+        return self.ship + self.fc > self.need
 
 
 @dataclass(frozen=True)

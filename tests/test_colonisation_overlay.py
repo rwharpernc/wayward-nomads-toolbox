@@ -51,6 +51,14 @@ class BuildCardTests(unittest.TestCase):
         self.assertTrue(steel.covered and not steel.surplus)
         self.assertTrue(water.covered and water.surplus)
 
+    def test_the_carrier_counts_toward_covered_and_surplus(self) -> None:
+        built = card.build_card(site(), {"steel": 100}, {"steel": 300, "water": 60}, show_fc=True)
+        steel, water = built.rows
+        self.assertTrue(steel.covered and not steel.surplus)      # 100 + 300 = the 400 needed
+        self.assertTrue(water.covered and water.surplus)          # 60 on the carrier, 50 needed
+        short = card.build_card(site(), {"steel": 100}, {"steel": 299}, show_fc=True).rows[0]
+        self.assertFalse(short.covered)
+
     def test_carrier_tonnes_and_trips(self) -> None:
         built = card.build_card(site(), {}, {"water": 40}, show_fc=True, capacity=200)
         self.assertEqual([r.fc for r in built.rows], [0, 40])
