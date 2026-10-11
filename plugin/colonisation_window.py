@@ -1,35 +1,38 @@
 """Colonisation Sites window - the commander's construction sites on the left, and the selected site's shopping list on
 the right: progress, the totals (still to source, trips in this ship), filters, and a sortable commodity table with
-what the hold and the fleet carrier already cover. Same singleton window + geometry-persistence convention as the other
-WNTB windows, built on the shared window kit (plugin/uikit - see docs/WINDOW_FRAMEWORK_SPEC.md). What is shown and
-how it adds up lives in colonisation_view.py; this file only draws it."""
+what the hold and the fleet carrier already cover. Beneath that, "Where to buy" finds the closest stations (and, if
+asked, fleet carriers) with the picked commodity in stock. Same singleton window + geometry-persistence convention as
+the other WNTB windows, built on the shared window kit (plugin/uikit - see docs/WINDOW_FRAMEWORK_SPEC.md). What is
+shown and how it adds up lives in colonisation_view.py, and the search in colonisation_sources.py; this file only
+draws them."""
 
 from __future__ import annotations
 
 import logging
 import os
+import threading
 import tkinter as tk
-from typing import Callable, Dict, List, Mapping, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from config import appname, config
 
-from . import colonisation, colonisation_view as view, panelkit
+from . import colonisation, colonisation_sources as sources, colonisation_view as view, panelkit
 from .colonisation_carrier import CarrierCargo
 from .colonisation import Site
 from .colonisation_data import SiteRepository
 from .uikit import palette as P, style
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
-from .uikit.widgets import Card, ProgressBar, StatTile, section_header
+from .uikit.widgets import Combobox, FlatButton, ProgressBar, StatTile, section_header
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CONFIG_GEOMETRY = "wntb_colonisation_window_geometry"
 
-MIN_WIDTH = 860
-MIN_HEIGHT = 460
-DEFAULT_SIZE = (1100, 640)
+MIN_WIDTH = 1100
+MIN_HEIGHT = 640
+DEFAULT_SIZE = (1280, 780)
 
 _SITE_COLUMNS = (
     Column("name", "Site", 190, stretch=True, max_chars=40),
@@ -46,22 +49,38 @@ _COMMODITY_COLUMNS = (
 )
 # Shown only for a commander with a fleet carrier: tonnes moved onto it (colonisation_carrier.py).
 _FC_COLUMN = Column("fc", "FC", 70, anchor="e", max_chars=10)
-
-_NAME_MAX = 60    # a site's name or system is clipped to this in the detail heading
+_SOURCE_COLUMNS = (
+    Column("station", "Station", 150, stretch=True, max_chars=32),
+    Column("system", "System", 130, stretch=True, max_chars=30),
+    Column("kind", "Type", 110, max_chars=20),
+    Column("pad", "Pad", 60, max_chars=8),
+    Column("distance", "Distance", 70, anchor="e", max_chars=12),
+    Column("arrival", "Arrival", 80, anchor="e", max_chars=12),
+    Column("price", "Price", 70, anchor="e", max_chars=10),
+    Column("supply", "Supply", 70, anchor="e", max_chars=10),
+)
+_PAD_ORDER = {"Large": 0, "Medium": 1, "Small": 2, "?": 3}
+_NO_LIMIT = "No limit"
+_SORT_CHOICES = (("Closest first", sources.SORT_DISTANCE), ("Cheapest first", sources.SORT_PRICE))
+_POLL_MS = 150
+_ERROR_MAX = 90    # a failure message from outside is clipped to this
+_NAME_MAX = 60     # a site's name or system is clipped to this in the detail heading
 _window: Optional["ColonisationWindow"] = None
 
 
 def show(parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int],
-         carrier: Optional[CarrierCargo] = None, capacity: Optional[Callable[[], int]] = None) -> None:
+         carrier: Optional[CarrierCargo] = None, capacity: Optional[Callable[[], int]] = None,
+         current_system: Optional[Callable[[], str]] = None) -> None:
     """Open the window for `cmdr`, or raise/refresh it if already open. `capacity` returns the current ship's cargo
-    capacity (0 when unknown), for the trips figure."""
+    capacity (0 when unknown), for the trips figure; `current_system` the system the commander is in, for the
+    "Here" button of the where-to-buy search."""
     global _window
     if _window is not None and _window.alive:
         _window.set_cmdr(cmdr)
         _window.set_cargo(cargo)
         _window.lift()
         return
-    _window = ColonisationWindow(parent, repository, cmdr, cargo, carrier, capacity)
+    _window = ColonisationWindow(parent, repository, cmdr, cargo, carrier, capacity, current_system)
 
 
 def refresh_cargo(cargo: Mapping[str, int]) -> None:
@@ -84,10 +103,12 @@ def _clip(text: str, limit: int) -> str:
 
 class ColonisationWindow:
     def __init__(self, parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int],
-                 carrier: Optional[CarrierCargo] = None, capacity: Optional[Callable[[], int]] = None) -> None:
+                 carrier: Optional[CarrierCargo] = None, capacity: Optional[Callable[[], int]] = None,
+                 current_system: Optional[Callable[[], str]] = None) -> None:
         self._repository = repository
         self._carrier = carrier
         self._capacity = capacity or (lambda: 0)
+        self._current_system = current_system or (lambda: "")
         self._with_fc = False
         self._cmdr = cmdr
         self._cargo: Dict[str, int] = dict(cargo)
@@ -95,6 +116,14 @@ class ColonisationWindow:
         self._selected: Optional[int] = None   # the market id of the site shown on the right
         self._sort_key = "label"
         self._sort_desc = False
+        self._row_label: Dict[str, str] = {}     # commodity table row id -> the commodity's name
+        self._wanted: Optional[str] = None       # the commodity row picked for the where-to-buy search
+        self._system_edited = False              # the commander typed their own search system
+        self._search_id = 0                      # which search the window waits for; older answers are dropped
+        self._result: Optional[sources.SearchResult] = None
+        self._result_label = ""
+        self._source_sort = ("distance", False)
+        self._source_rows: Dict[str, str] = {}   # result row id -> its system name, for Copy System
 
         self._shell = WindowShell(
             parent, "Colonisation Sites", "", size=DEFAULT_SIZE, min_size=(MIN_WIDTH, MIN_HEIGHT),
@@ -109,6 +138,8 @@ class ColonisationWindow:
 
         self._hide_covered = tk.BooleanVar(master=self._toplevel, value=False)
         self._filter_text = tk.StringVar(master=self._toplevel, value="")
+        self._system_var = tk.StringVar(master=self._toplevel, value="")
+        self._carriers_var = tk.BooleanVar(master=self._toplevel, value=False)
 
         panes = tk.PanedWindow(self._shell.body, orient="horizontal", bg=P.BG, bd=0, sashwidth=6,
                                sashrelief="flat", opaqueresize=True)
@@ -124,10 +155,11 @@ class ColonisationWindow:
         panes.add(left, stretch="never", minsize=300, width=340)
 
         right = tk.Frame(panes, bg=P.PANE)
-        panes.add(right, stretch="always", minsize=480)
+        panes.add(right, stretch="always", minsize=760)
         self._build_detail(right)
 
         self._commodity_table = self._build_commodity_table()
+        self._build_sources(self._sources_host)
         self._shell.set_status("Select a site on the left. Everything on the right, and the buttons above, are for it.")
 
         repository.add_listener(self._refresh)
@@ -166,15 +198,66 @@ class ColonisationWindow:
         tk.Checkbutton(filters, text="Hide those the hold already covers", variable=self._hide_covered,
                        command=self._refresh_detail).pack(side="left")
 
+        # The commodity table above, the where-to-buy panel below; the divider between them can be dragged.
+        rows = tk.PanedWindow(right, orient="vertical", bg=P.BG, bd=0, sashwidth=6, sashrelief="flat",
+                              opaqueresize=True)
+        rows.pack(fill="both", expand=True)
+        self._table_host = tk.Frame(rows, bg=P.PANE)
+        rows.add(self._table_host, stretch="always", minsize=150)
+        self._sources_host = tk.Frame(rows, bg=P.PANE)
+        rows.add(self._sources_host, stretch="always", minsize=230)
+
     def _build_commodity_table(self) -> DataTable:
         columns = _COMMODITY_COLUMNS + ((_FC_COLUMN,) if self._with_fc else ())
-        table = DataTable(self._detail, columns, sortable=False, on_header=self._on_sort,
-                          empty_text="Nothing left to deliver here.")
+        table = DataTable(self._table_host, columns, sortable=False, on_header=self._on_sort,
+                          on_activate=self._on_pick_commodity, empty_text="Nothing left to deliver here.")
         table.tag_configure("covered", foreground=P.OK)
         table.tag_configure("surplus", foreground=P.WARN)
-        table.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
+        table.pack(fill="both", expand=True)
         table.mark_sorted(self._sort_key, self._sort_desc)
         return table
+
+    def _build_sources(self, host: tk.Frame) -> None:
+        """The where-to-buy search: its options, the Find nearest button and the table of results."""
+        section_header(host, "Where to buy").pack(fill="x")
+        options = tk.Frame(host, bg=P.PANE, padx=P.PAD, pady=P.PAD_SM)
+        options.pack(fill="x")
+        first = tk.Frame(options, bg=P.PANE)
+        first.pack(fill="x")
+        tk.Label(first, text="Around", fg=P.MUTED, bg=P.PANE).pack(side="left")
+        entry = tk.Entry(first, textvariable=self._system_var, width=26)
+        entry.pack(side="left", padx=(P.PAD_SM, P.PAD_SM))
+        entry.bind("<KeyRelease>", lambda _e: setattr(self, "_system_edited", True))
+        FlatButton(first, "Here", self._on_here).pack(side="left", padx=(0, P.PAD))
+        tk.Label(first, text="Within", fg=P.MUTED, bg=P.PANE).pack(side="left")
+        self._radius = Combobox(first, state="readonly", width=9,
+                                values=[f"{r} ly" for r in sources.RADIUS_CHOICES] + [_NO_LIMIT])
+        self._radius.set(f"{sources.DEFAULT_RADIUS_LY} ly")
+        self._radius.pack(side="left", padx=(P.PAD_SM, P.PAD))
+        tk.Label(first, text="Sort", fg=P.MUTED, bg=P.PANE).pack(side="left")
+        self._sort = Combobox(first, state="readonly", width=14, values=[label for label, _ in _SORT_CHOICES])
+        self._sort.current(0)
+        self._sort.pack(side="left", padx=(P.PAD_SM, 0))
+
+        second = tk.Frame(options, bg=P.PANE, pady=P.PAD_SM)
+        second.pack(fill="x")
+        tk.Label(second, text="Landing pad", fg=P.MUTED, bg=P.PANE).pack(side="left")
+        self._pad = Combobox(second, state="readonly", width=17, values=[label for _, label in sources.PAD_CHOICES])
+        self._pad.current(0)
+        self._pad.pack(side="left", padx=(P.PAD_SM, P.PAD))
+        tk.Checkbutton(second, text="Include fleet carriers", variable=self._carriers_var).pack(side="left")
+        self._find_button = FlatButton(second, "Find nearest", self._on_find, kind="accent")
+        self._find_button.pack(side="right")
+        FlatButton(second, "Copy System", self._on_copy_system).pack(side="right", padx=(0, 6))
+
+        self._sources_note = tk.Label(host, text="Pick a commodity row above, then Find nearest.", fg=P.MUTED,
+                                      bg=P.PANE, anchor="w", justify="left", padx=P.PAD)
+        self._sources_note.pack(fill="x")
+        host.bind("<Configure>", lambda e: self._sources_note.configure(wraplength=max(e.width - 2 * P.PAD, 100)))
+        self._source_table = DataTable(host, _SOURCE_COLUMNS, sortable=False, on_header=self._on_source_sort,
+                                       empty_text="No search yet.")
+        self._source_table.tag_configure("carrier", foreground=P.INFO)
+        self._source_table.pack(fill="both", expand=True)
 
     # --- state ------------------------------------------------------------
 
@@ -189,6 +272,7 @@ class ColonisationWindow:
     def set_cmdr(self, cmdr: str) -> None:
         if cmdr != self._cmdr:
             self._selected = None
+            self._wanted = None
         self._cmdr = cmdr
         self._refresh()
 
@@ -201,7 +285,13 @@ class ColonisationWindow:
             self._selected = int(iid)
         except ValueError:
             return
+        self._wanted = None
         self._refresh_detail()
+
+    def _on_pick_commodity(self, iid: str) -> None:
+        self._wanted = self._row_label.get(iid)
+        if self._wanted:
+            self._sources_note.configure(text=f"Ready to search for {self._wanted}. Press Find nearest.")
 
     def _on_sort(self, key: str) -> None:
         self._sort_desc = (self._sort_key == key) and not self._sort_desc
@@ -247,6 +337,7 @@ class ColonisationWindow:
             self._commodity_table = self._build_commodity_table()
 
         self._commodity_table.clear()
+        self._row_label.clear()
         if site is None:
             self._title.configure(text="No site selected")
             self._where.configure(text="")
@@ -259,6 +350,8 @@ class ColonisationWindow:
         self._where.configure(text=_clip(site.system, _NAME_MAX) + f"  ·  {view.site_status(site)}"
                               if site.system else view.site_status(site))
         self._progress.set(100 if site.complete else site.progress * 100, P.OK if site.complete else P.INFO)
+        if site.system and not self._system_edited:   # search around the site unless the commander chose elsewhere
+            self._system_var.set(site.system)
         totals = view.totals(site, self._cargo, self._capacity())
         self._tile_source.set(f"{totals.to_source:,}")
         self._tile_remaining.set(f"{totals.remaining:,}")
@@ -276,12 +369,143 @@ class ColonisationWindow:
             if wants_fc:
                 values += (f"{row.on_carrier:,}" if row.on_carrier else "",)
             tag = "surplus" if row.in_cargo > row.remaining else "covered" if row.covered else None
-            self._commodity_table.insert(f"{site.market_id}:{row.key}", values, tag=tag)
+            iid = f"{site.market_id}:{row.key}"
+            self._row_label[iid] = row.label
+            self._commodity_table.insert(iid, values, tag=tag)
+        wanted_iid = next((i for i, label in self._row_label.items() if label == self._wanted), None)
+        if wanted_iid:
+            self._commodity_table.select(wanted_iid)
         if totals.lines and not rows:
             self._shell.set_status("The filters hide every commodity this site still needs.")
         else:
             self._shell.set_status(f"{totals.lines} commodit{'y' if totals.lines == 1 else 'ies'} still needed, "
                                    f"{totals.covered} covered by the hold.")
+
+    # --- where to buy ----------------------------------------------------------
+
+    def _on_here(self) -> None:
+        here = self._current_system()
+        if not here:
+            self._sources_note.configure(text="WNTB hasn't seen which system you are in yet.")
+            return
+        self._system_var.set(here)
+        self._system_edited = True
+
+    def _radius_ly(self) -> Optional[float]:
+        text = self._radius.get()
+        if text == _NO_LIMIT:
+            return None
+        try:
+            return float(text.split()[0])
+        except (ValueError, IndexError):
+            return float(sources.DEFAULT_RADIUS_LY)
+
+    def _pad_choice(self) -> str:
+        label = self._pad.get()
+        return next((key for key, text in sources.PAD_CHOICES if text == label), sources.PAD_ANY)
+
+    def _sort_choice(self) -> str:
+        label = self._sort.get()
+        return next((key for text, key in _SORT_CHOICES if text == label), sources.SORT_DISTANCE)
+
+    def _on_find(self) -> None:
+        """Starts the search on a worker thread (Spansh can take seconds) and polls for its answer."""
+        if not self._wanted:
+            self._sources_note.configure(text="Pick a commodity row above first.")
+            return
+        system = self._system_var.get().strip()
+        if not system:
+            self._sources_note.configure(text="Enter a system to search around, or press Here.")
+            return
+        commodity, radius, pad = self._wanted, self._radius_ly(), self._pad_choice()
+        carriers, order = bool(self._carriers_var.get()), self._sort_choice()
+        self._search_id += 1
+        job: Dict[str, Any] = {"id": self._search_id, "done": False, "result": None, "error": ""}
+        self._find_button.set_enabled(False)
+        self._sources_note.configure(text=f"Searching for {commodity} around {_clip(system, _NAME_MAX)}…")
+
+        def work() -> None:
+            try:
+                job["result"] = sources.find(system, commodity, radius_ly=radius, pad=pad,
+                                             include_carriers=carriers, sort=order)
+            except Exception as exc:   # network, parse or bad input: shown, not raised into the main thread
+                logger.exception("Colonization where-to-buy search failed")
+                job["error"] = str(exc) or exc.__class__.__name__
+            job["done"] = True
+
+        threading.Thread(target=work, daemon=True, name="WNTB-colonisation-sources").start()
+        self._toplevel.after(_POLL_MS, self._poll_search, job, commodity, system)
+
+    def _poll_search(self, job: Dict[str, Any], commodity: str, system: str) -> None:
+        if not self.alive or job["id"] != self._search_id:
+            return
+        if not job["done"]:
+            self._toplevel.after(_POLL_MS, self._poll_search, job, commodity, system)
+            return
+        self._find_button.set_enabled(True)
+        if job["error"]:
+            self._sources_note.configure(
+                text=f"The search failed: {_clip(job['error'], _ERROR_MAX)}. Spansh may be busy; try again shortly.")
+            return
+        self._result, self._result_label = job["result"], commodity
+        self._render_sources(system)
+
+    def _on_source_sort(self, key: str) -> None:
+        descending = self._source_sort[0] == key and not self._source_sort[1]
+        self._source_sort = (key, descending)
+        if self._result is not None:
+            self._render_sources()
+
+    @staticmethod
+    def _source_value(source: sources.Source, key: str):
+        return {"station": source.station.casefold(), "system": source.system.casefold(), "kind": source.kind.casefold(),
+                "pad": _PAD_ORDER.get(source.pad, 3), "distance": source.distance_ly, "arrival": source.arrival_ls,
+                "price": source.price, "supply": source.supply}[key]
+
+    def _render_sources(self, system: str = "") -> None:
+        result = self._result
+        if result is None or not self.alive:
+            return
+        key, descending = self._source_sort
+        self._source_table.clear()
+        self._source_table.mark_sorted(key, descending)
+        self._source_rows.clear()
+
+        def add(group: List[sources.Source], prefix: str, tag: Optional[str], parent: Optional[str]) -> None:
+            for index, item in enumerate(sorted(group, key=lambda s: self._source_value(s, key), reverse=descending)):
+                iid = f"{prefix}{index}"
+                self._source_rows[iid] = item.system
+                kind = item.kind + (" (ground)" if item.is_planetary and "lanetary" not in item.kind else "")
+                self._source_table.insert(
+                    iid, (item.station, item.system, kind, item.pad, f"{item.distance_ly:,.1f} ly",
+                          f"{item.arrival_ls:,.0f} ls" if item.arrival_ls else "", f"{item.price:,}",
+                          f"{item.supply:,}"), tag=tag, parent=parent)
+
+        add(result.stations, "s", None, None)
+        if result.carriers:
+            self._source_table.insert("carriers", (f"Fleet carriers ({len(result.carriers)})", "", "", "", "", "", "", ""),
+                                      tag="carrier", group=True, open=True)
+            add(result.carriers, "c", "carrier", "carriers")
+        stations, carriers = len(result.stations), len(result.carriers)
+        if not stations and not carriers:
+            self._sources_note.configure(
+                text=f"Nothing found with {self._result_label} in stock. Try a larger radius, any landing pad size, "
+                     f"or include fleet carriers.")
+            return
+        extra = f" and {carriers} fleet carrier{'s' if carriers != 1 else ''}" if carriers else ""
+        around = f" around {_clip(system, _NAME_MAX)}" if system else ""
+        self._sources_note.configure(
+            text=f"{self._result_label}: {stations} station{'s' if stations != 1 else ''}{extra}{around}. Price is per "
+                 f"tonne; the data is from players' own market updates, so confirm on arrival.")
+
+    def _on_copy_system(self) -> None:
+        selection = self._source_table.selection()
+        system = self._source_rows.get(selection[0]) if selection else None
+        if not system:
+            self._sources_note.configure(text="Select a result row first.")
+            return
+        if panelkit.copy_to_clipboard(self._toplevel, system):
+            self._sources_note.configure(text=f"Copied {_clip(system, _NAME_MAX)} to the clipboard.")
 
     # --- buttons -----------------------------------------------------------
 
@@ -317,4 +541,5 @@ class ColonisationWindow:
         self._shell.set_status(f"Removed {len(finished)} finished site{'s' if len(finished) != 1 else ''}.")
 
     def close(self) -> None:
+        self._search_id += 1   # a search still running has nowhere to show its answer
         self._shell.close()

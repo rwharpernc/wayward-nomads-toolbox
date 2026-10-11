@@ -6,6 +6,13 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Colonization: where to buy.** The Colonisation Sites window gains a **Where to buy** panel: pick a commodity row
+  and press **Find nearest** to list the closest stations with it in stock, from Spansh. Choose the system to measure
+  from (the site's, or **Here**), how far to look, closest or cheapest first, and the **landing pad** size: **Any
+  size** by default (so you can swap to a smaller cargo ship when a commodity isn't sold at a large-pad station),
+  **Medium or larger**, or **Large only**. **Include fleet carriers** is a switch, off by default, and carriers are
+  listed under their own heading. **Copy System** copies a result's system name. Nothing is fetched until you press the
+  button. The shared Spansh price search gained a distance sort and a pad-size filter for this.
 - **Colonization Sites window: sites on the left, the shopping list on the right.** Click a site to see its progress bar, four totals (tonnes still to source, remaining, already in the hold, trips in this ship), a filter box, a "hide those the hold already covers" switch and a commodity table you can sort by any column. Rows turn green when the hold covers them and amber when you carry more than needed. The buttons now act on the picked site, so you no longer have to select a commodity row first. The window is larger by default (1100 x 640).
 - **Colonization: FC column.** The Colonization Sites window gains an **FC** column for a commander with a fleet
   carrier: the tonnes of each commodity transferred to it (net of any taken back), from the journal's `CargoTransfer`

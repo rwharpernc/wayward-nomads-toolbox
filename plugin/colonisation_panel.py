@@ -75,6 +75,7 @@ class ColonisationController:
     def __init__(self, repository: SiteRepository) -> None:
         self._repository = repository
         self._cmdr: Optional[str] = None
+        self._system = ""   # the system the commander is in, for the window's "where to buy" search
         # The depot events carry only a MarketID, so the station name is
         # remembered from the latest Docked (MarketID -> (station, system)).
         self._docked: Dict[int, tuple] = {}
@@ -144,6 +145,8 @@ class ColonisationController:
         self._update_overlay()
 
     def _handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
+        if system:
+            self._system = system
         if cmdr and cmdr != self._cmdr:
             self._cmdr = cmdr
             self._refresh_summary()
@@ -308,7 +311,7 @@ class ColonisationController:
         if self._parent is None:
             return
         colonisation_window.show(self._parent, self._repository, self._cmdr or "", self._cargo, self._carrier_cargo,
-                               lambda: self._capacity)
+                               lambda: self._capacity, lambda: self._system)
 
     # --- Settings tab --------------------------------------------------
 

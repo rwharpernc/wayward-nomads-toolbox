@@ -194,6 +194,34 @@ Management, buying one, or docking at one). It is per commander. It does not cha
   journal as transfers, so they are not counted: buying from or selling to the carrier's market, trade orders, and a
   squadron mate moving cargo. The figure can therefore drift from the real contents.
 
+### Where to buy
+
+Under the commodity table, **Where to buy** finds the closest places to buy a commodity. Click a commodity row, check
+the options and press **Find nearest**. It asks [Spansh](https://spansh.co.uk) (a community-run map of the game), so it
+needs an internet connection, and nothing is fetched until you press the button. Only the commodity name and the
+system you search around are sent.
+
+| Option | Meaning |
+|---|---|
+| Around | The system to measure from. It starts as the site's system; type another, or press **Here** for the system you are in now |
+| Within | How far to look: 25, 50, 100, 200 or 500 ly, or no limit. Default 50 |
+| Sort | **Closest first** (default) or **Cheapest first**. This decides which stations Spansh returns, not just their order. Click a result heading to re-sort what came back |
+| Landing pad | **Any size** (default), **Medium or larger**, or **Large only**. Any size lists stations whose biggest pad is small, so you can swap to a smaller cargo ship when a commodity isn't sold at a large-pad station. The **Pad** column shows each station's largest pad |
+| Include fleet carriers | Off by default. When ticked, carriers are searched separately and listed under their own **Fleet carriers** heading after the stations |
+
+Each result shows the station, system, type, largest pad, distance in light years, distance from the arrival star,
+the price per tonne and the stock. **Copy System** copies the selected row's system name, to paste into the galaxy map.
+
+Things worth knowing:
+
+- Only stations whose market was updated in the last 7 days are listed, because older figures are probably out of date.
+  The prices and stock come from players' own market updates, so confirm on arrival.
+- A fleet carrier can move or sell out at any time, and its prices are set by its owner, which is why carriers are
+  opt-in and kept in their own section.
+- A station for which Spansh gives no pad figures is kept in the list (its Pad shows `?`) rather than hidden.
+- If Spansh is busy or unreachable, the panel says the search failed; try again shortly. Nothing else in WNTB is affected.
+- The search looks for stock that is **for sale**. It does not know what a station's market will have tomorrow.
+
 **Buttons.** They act on the site picked on the left:
 
 - **Copy Shopping List** copies that site's list to the clipboard, as lines like `1,200 t  Steel`, biggest first.

@@ -580,6 +580,9 @@ for as little as it can. These are the measures that are in the code today.
   (`codex_catalog.json`) and reused for 14 days.
 - The automatic ring-reserve check (opt-in) is remembered per ring for the session, and is never run
   while the journal is being replayed at start-up.
+- The Colonisation window's Where to buy search remembers an identical search (same system, commodity, radius, pad
+  size, carriers and sort) for 2 minutes, and runs only when you press Find nearest, one at a time, asking for at most
+  25 stations and 10 carriers.
 - Earth-like-world rarity is remembered per system for the session, and EDSM upload status per
   system for 10 minutes, so re-selecting the same target costs no extra calls.
 - The Boxel Survey keeps a local log of systems you've visited, so the RND (Random) button never spends an

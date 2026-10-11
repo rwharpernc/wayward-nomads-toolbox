@@ -132,6 +132,64 @@ check(window._sort_key == "source" and not window._sort_desc, "first header clic
 window._on_sort("source")
 check(window._sort_desc, "second header click sorts descending")
 
+# Where to buy: the search runs on a thread; Spansh is replaced by a stand-in that records what was asked.
+import time
+from plugin import colonisation_sources as S
+
+asked = []
+
+
+def fake_find(system, commodity, **kwargs):
+    asked.append((system, commodity, kwargs))
+    near = S.Source("Near Port", "Sol", "Coriolis Starport", False, False, "Large", 4.0, 300.0, 410, 900)
+    outpost = S.Source("Small Post", "Alpha", "Outpost", False, False, "Medium", 9.5, 1200.0, 380, 50)
+    fc = S.Source("K7X-LLL", "Beta", "Drake-Class Carrier", True, False, "Large", 12.0, 0.0, 300, 20)
+    return S.SearchResult([near, outpost], [fc] if kwargs.get("include_carriers") else [])
+
+
+def wait_for_search():
+    for _ in range(100):
+        root.update()
+        if window._find_button._enabled:
+            return
+        time.sleep(0.02)
+
+
+S_find = W.sources.find
+W.sources.find = fake_find
+window._on_find()
+check(not asked, "Find nearest with no commodity picked must not search")
+window._on_pick_commodity("1:steel")
+check(window._wanted == "Steel", f"picking a commodity row should set the wanted commodity, got {window._wanted}")
+check(window._system_var.get() == "Sol", "the search should default to the site's system")
+window._on_find()
+wait_for_search()
+check(len(asked) == 1 and asked[0][1] == "Steel", "the search should ask for Steel")
+check(asked[0][2]["pad"] == "any", "the pad size must default to ANY")
+check(asked[0][2]["include_carriers"] is False, "fleet carriers must be off by default")
+check(len(window._source_table) == 2, "two stations should be listed")
+
+window._pad.set("Large only")
+window._carriers_var.set(True)
+window._on_find()
+wait_for_search()
+check(asked[1][2]["pad"] == "large" and asked[1][2]["include_carriers"] is True, "the options should reach the search")
+check(len(window._source_table) == 4, "two stations, the carrier group row and one carrier should be listed")
+window._source_table.select("s0")
+window._on_copy_system()
+check("Copied" in window._sources_note.cget("text"), "Copy System should confirm")
+
+def failing_find(*args, **kwargs):
+    raise OSError("boom")
+
+
+W.sources.find = failing_find
+window._on_find()
+wait_for_search()
+check("failed" in window._sources_note.cget("text"), "a failed search should say so")
+check(window._find_button._enabled, "the button must come back after a failure")
+W.sources.find = S_find
+
 # No FC column without a carrier; the table never asks for more than the window has.
 check(window._with_fc is False, "no FC column for a commander without a carrier")
 for _ in range(4):

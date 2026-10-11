@@ -205,8 +205,9 @@ Spec: [SCREENSHOTS_AND_INPUT_TECH_SPEC.md](SCREENSHOTS_AND_INPUT_TECH_SPEC.md), 
 | `colonisation_data.py` | JSON persistence for construction sites (each carries `journal_at`, the newest journal event folded in) |
 | `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to source for the active site (pure formatting plus drawing) |
 | `colonisation_panel.py` | The Colonisation section of Field Ops |
+| `colonisation_sources.py` | Where to buy a colonisation commodity: the closest stations (and optionally fleet carriers) with it in stock, any landing-pad size by default, via Spansh; pure shaping around an injected search |
 | `colonisation_view.py` | What the Colonisation Sites window shows for a site: the commodity rows after the filters, and the totals (to source, in the hold, trips); pure, no Tk |
-| `colonisation_window.py` | The Colonisation Sites window: sites on the left, the picked site's progress, totals, filters and sortable commodity table on the right |
+| `colonisation_window.py` | The Colonisation Sites window: sites on the left; the picked site's progress, totals, filters and sortable commodity table, and the Where to buy search, on the right |
 | `inventory.py` | Backpack, ship locker and carrier locker tracking |
 | `inventory_cargo.py` | Ship and SRV cargo-hold tracking |
 | `inventory_names.py` | Microresource ID to display name |

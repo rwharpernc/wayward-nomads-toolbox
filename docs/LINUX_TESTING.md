@@ -258,6 +258,21 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 - [ ] Rows left at the default list every commodity; the card fits on screen from the default position (20, 300).
 - [ ] Windows paths: `Status.json` reports the same `GuiFocus` values (5 in the services screens, 1 for the right-hand panel).
 
-## Reporting
+## 7e. Colonization Sites window: sites list, totals, Where to buy (added 2026-10-11, Windows-tested only: check on Linux)
+
+Written and tried on Windows. The code is platform-neutral Python and Tk, but the window layout has only been seen on
+Windows. Needs a commander with at least one registered construction site and an internet connection.
+
+- [ ] The window opens at about 1280 x 780 with the sites on the left and the detail on the right; nothing is clipped at
+      its minimum size (1100 x 640), and the divider between the commodity table and Where to buy drags.
+- [ ] Picking a site shows its progress bar, the four totals, and its commodities; the Filter box, **Hide those the hold
+      already covers** and the column headings (click, click again to reverse) all work.
+- [ ] **Where to buy**: pick a commodity row, press **Find nearest**: results appear, closest first, the button is
+      disabled while it searches, and the window stays responsive.
+- [ ] **Landing pad**: Any size lists stations whose largest pad is Medium or Small; Large only lists none of those.
+- [ ] **Include fleet carriers** off lists no carriers; on adds a **Fleet carriers** group under the stations.
+- [ ] **Here** puts the system you are in (the last system EDMC saw) into Around. **Copy System** copies the selected row.
+- [ ] With no network, the panel says the search failed and the button comes back.
+
 
 Open an issue with your setup line, the failing step number, and the log excerpt.

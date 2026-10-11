@@ -203,7 +203,8 @@ since moved or stopped trading."""
 def search_best_price_stations(reference_system: str, commodity: str, transaction: str,
                                max_distance_ly: Optional[float], max_results: int = 10,
                                market_days_old: int = _MARKET_DAYS_OLD_DEFAULT,
-                               station_types: Optional[Sequence[str]] = None) -> list[StationPrice]:
+                               station_types: Optional[Sequence[str]] = None,
+                               sort_by: str = "price", required_pad: Optional[str] = None) -> list[StationPrice]:
     """Queries Spansh for the best-price stations trading `commodity`
     within `max_distance_ly` of `reference_system` (None = no distance limit,
     i.e. the whole galaxy, still sorted by price; Spansh accepts that,
@@ -212,9 +213,18 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
     price) or "Buy" (commander buys from the station - sorted by lowest
     buy price); anything else raises ValueError. Raises on any network/
     parse failure - synchronous, blocking call, same calling convention
-    as search_ring_hotspots()."""
+    as search_ring_hotspots().
+
+    `sort_by` is "price" (the default: best price first) or "distance" (closest first, checked live 2026-10-11).
+    `required_pad` is None (any station) or "medium" / "large": only stations with at least one pad of that size
+    (Spansh filters on `medium_pads` / `large_pads`, checked live 2026-10-11). A small-pad ship fits anywhere, so
+    there is no "small"."""
     if transaction not in ("Sell", "Buy"):
         raise ValueError('transaction must be "Sell" or "Buy"')
+    if sort_by not in ("price", "distance"):
+        raise ValueError('sort_by must be "price" or "distance"')
+    if required_pad not in (None, "medium", "large"):
+        raise ValueError('required_pad must be None, "medium" or "large"')
 
     commodity = _normalize_commodity_name(commodity)
     market_filter: dict = {"name": commodity}
@@ -231,11 +241,15 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
     }
     if max_distance_ly is not None:
         filters["distance"] = {"min": "0", "max": str(max_distance_ly)}
+    if required_pad:
+        filters[f"{required_pad}_pads"] = {"comparison": "<=>", "value": [1, 999]}
     if station_types:
         # Only these kinds of station (Spansh's own names). Used to ask for stations and fleet carriers
         # separately: carriers are priced very differently, so in one price-sorted list they can crowd
         # every real station out of the first page of results (checked live, 2026-10-09).
         filters["type"] = {"value": list(station_types)}
+    if sort_by == "distance":
+        sort_object = {"distance": {"direction": "asc"}}
     request_body = {
         "filters": filters,
         "sort": [sort_object],
