@@ -28,8 +28,10 @@ SIZES = ("small", "normal", "large", "huge")
 
 # Estimated width of one character, and the height of one line, at each size, in the pixels the overlay draws in (it offers no
 # text measurement; these were tuned on EDMCModernOverlay and err a little wide, since a card slightly too wide looks fine and
-# text running past a card that is too narrow does not).
-CHAR_PX: Dict[str, float] = {"small": 6.0, "normal": 8.0, "large": 11.0, "huge": 14.0}
+# text running past a card that is too narrow does not). The larger sizes are widened further: EDMCModernOverlay steps its font
+# by a fixed number of points, and that step does not shrink with the window, so large and huge text outgrow a proportional
+# estimate first and ran past the right edge of their cards.
+CHAR_PX: Dict[str, float] = {"small": 6.0, "normal": 8.0, "large": 12.5, "huge": 16.5}
 LINE_PX: Dict[str, int] = {"small": 16, "normal": 20, "large": 26, "huge": 34}
 
 TEXT_CHOICES: Tuple[Tuple[str, int], ...] = (("Smaller", -1), ("Default", 0), ("Larger", 1), ("Largest", 2))

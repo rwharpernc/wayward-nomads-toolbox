@@ -51,7 +51,7 @@ MAX_QUEUED = 3  # cards waiting behind the one on screen; any further ones are c
 
 # Worst-case sizes. The overlay is not EDMC's main window, but discovery.py's centring math
 # estimates text width from character count, so the text must stay inside the card.
-TITLE_MAX_CHARS = 28  # the card is ~416 px of text; "huge" estimates 14 px per character
+TITLE_MAX_CHARS = 28  # the card is ~460 px of text; "huge" estimates 16.5 px per character
 NAME_MAX_CHARS = 24
 NAME_WITH_MORE_MAX_CHARS = 34
 

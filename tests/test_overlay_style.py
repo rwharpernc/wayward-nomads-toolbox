@@ -86,7 +86,7 @@ class LookTests(unittest.TestCase):
     def test_the_legacy_look_is_the_geometry_the_displays_always_had(self):
         look = S.LEGACY
         self.assertEqual((look.char_px("normal"), look.line_px("normal"), look.pad_x(10), look.pad_y(8)), (8.0, 20, 10, 8))
-        self.assertEqual((look.char_px("large"), look.line_px("large"), look.char_px("huge"), look.line_px("huge")), (11.0, 26, 14.0, 34))
+        self.assertEqual((look.char_px("large"), look.line_px("large"), look.char_px("huge"), look.line_px("huge")), (12.5, 26, 16.5, 34))
         self.assertEqual(look.size("large"), "large")
 
     def test_text_size_steps_through_the_four_sizes_and_stops_at_the_ends(self):
