@@ -17,7 +17,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 |---|---|
 | Name, system and a bar | The site, and how far its build has come (the bar turns green when the build is complete) |
 | Progress, Delivered, Still needed | The build's percentage, the tons handed over by everyone against the tons it needs, and what is left |
-| Covered | How many of the commodities still needed are already covered: by **your ship** if you have no fleet carrier, by **your ship and carrier** together if you have one |
+| Covered | Of the commodities still needed, how many are **fully** covered, **partly** covered and **not yet** covered, counting your ship, or your ship and carrier together if you have one |
 | In hand | Tons of needed commodities in your ship now |
 | Carrier | (Only with a fleet carrier.) Tons of needed commodities you have moved onto it |
 | Still to get | What is left to buy or mine after your ship (and carrier) |
@@ -234,6 +234,7 @@ cargo capacity, which EDMC supplies).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|
+| Everything on your carrier to count | The journal only records cargo you **transfer** to or from the carrier. Stock that arrived any other way is invisible to it. Frontier's carrier data lists the real hold, but only when EDMC is signed in, and it is fetched when you open Carrier Management (or about every 15 minutes) and can lag. | Sign EDMC in to Frontier, then open Carrier Management once; the Covered line and the Carrier row then follow the real hold. |
 | Colonization sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB has never seen a depot snapshot for is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. Deliveries made with EDMC closed are caught up from the last 14 to 30 days of journals at start-up. |
 | A site to have its real name | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. | Dock at the market once to pick up the name. |
 | A full history of everything you ever delivered | The journal records each delivery as it happens, and WNTB reads only the recent journals when it starts. | The history counts from the first delivery WNTB saw (shown on the page) and keeps growing. |

@@ -93,6 +93,21 @@ class CatchUpTests(unittest.TestCase):
         self.assertEqual(ledger.record("A")["tonnes"], 125)
 
 
+class CarrierCapiTests(unittest.TestCase):
+    def test_frontiers_cargo_list_replaces_the_tally_and_later_transfers_add_on_top(self):
+        from plugin import colonisation_carrier as K
+        cargo = K.CarrierCargo()
+        cargo.apply_transfer("A", {"timestamp": "2026-10-01T10:00:00Z",
+                                   "Transfers": [{"Type": "steel", "Count": 10, "Direction": "tocarrier"}]})
+        self.assertTrue(cargo.apply_capi_cargo("A", [{"commodity": "Steel", "qty": 40}, {"commodity": "Water", "qty": 7},
+                                                      {"commodity": "Steel", "qty": 5}, "junk", {"commodity": "", "qty": 3}]))
+        self.assertEqual(cargo.tonnes("A"), {"steel": 45, "water": 7})
+        self.assertFalse(cargo.apply_capi_cargo("A", [{"commodity": "Steel", "qty": 45}, {"commodity": "Water", "qty": 7}]))
+        cargo.apply_transfer("A", {"timestamp": "2026-10-02T10:00:00Z",
+                                   "Transfers": [{"Type": "water", "Count": 2, "Direction": "toship"}]})
+        self.assertEqual(cargo.tonnes("A"), {"steel": 45, "water": 5})
+
+
 class SiteTimesTests(unittest.TestCase):
     def test_first_seen_and_completion_time_are_kept_and_survive_a_save(self):
         first = site(stamp="2026-10-01T10:00:00Z")
@@ -117,14 +132,20 @@ class ProjectTests(unittest.TestCase):
             self.assertNotIn("carrier", text.lower(), text)
             self.assertNotIn("haul", text.lower(), text)
         self.assertEqual(S.trips_text(project), "3 loads of 400 t")        # 1,100 t still needed
-        self.assertEqual(S.coverage_text(project), "Your ship covers 0 of 2 commodities")
+        self.assertEqual(S.coverage_text(project), "0 fully · 1 partly · 1 not yet (of 2 commodities)")
 
     def test_with_a_carrier_the_ship_and_carrier_together_cover_and_there_are_two_legs(self):
         project = S.project_for(site(), {"steel": 300}, {"steel": 500, "water": 300}, has_carrier=True, capacity=400)
-        self.assertEqual(S.coverage_text(project), "Ship and carrier cover 2 of 2 commodities")
+        self.assertEqual(S.coverage_text(project), "2 fully · 0 partly · 0 not yet (of 2 commodities)")
         self.assertEqual(project.to_get, 0)
         self.assertEqual(S.trips_text(project), "0 to buy · 3 to haul (400 t ship)")
         self.assertIn("ship and carrier", S.next_step(project).lower())
+
+    def test_fully_partly_and_not_yet_covered(self):
+        project = S.project_for(site(), {"steel": 100}, {"steel": 100, "water": 300}, has_carrier=True, capacity=400)
+        self.assertEqual(S.coverage_text(project), "1 fully · 1 partly · 0 not yet (of 2 commodities)")
+        project = S.project_for(site(), {"water": 5}, None, has_carrier=False, capacity=400)
+        self.assertEqual((project.covered, project.partial, project.uncovered), (0, 1, 1))
 
     def test_unknown_ship_size_and_a_finished_build(self):
         project = S.project_for(site(), {}, None, False, 0)

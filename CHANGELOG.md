@@ -31,6 +31,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the ship counted).
 
 ### Added
+- **Colonization page: the Covered line now says how many commodities are fully covered, partly covered and not yet covered**, and
+  the fleet carrier's cargo comes from Frontier's own carrier data when EDMC is signed in (fetched when you open Carrier
+  Management or at most every 15 minutes), so stock that reached the carrier by buying or a trade order counts too. Before it
+  counted only cargo you transferred, so some of what was really on the carrier showed as missing.
 - **Colonization has its own mode, with a COL button.** The page shows the project you are building now (name and system, a
   progress bar, what is delivered and still needed, how many commodities your ship and carrier cover, what is still to get,
   the trips left, the biggest gaps and a one-line next step) and your colonization history (sites done, in progress and

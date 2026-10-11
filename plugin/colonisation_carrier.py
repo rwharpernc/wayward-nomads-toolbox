@@ -7,6 +7,10 @@ while docked at the commander's own fleet carrier (`StationType` "FleetCarrier" 
 can transfer cargo, and a squadron carrier is a different `StationType`). The figure for a commodity is the net tonnes
 moved there: to the carrier minus back to the ship, never below zero.
 
+When EDMC is signed in to Frontier, `apply_capi_cargo` replaces the tally with the carrier's real cargo hold from the CAPI
+(`/fleetcarrier`, fetched on CarrierStats / CarrierBuy at most every 15 minutes, so it can lag); transfers after it are added on
+top. Without it:
+
 What it cannot see: stock that reached the carrier another way (bought through its market, a trade order) or left it
 (sold, a trade order, moved by a squadron mate) is not a `CargoTransfer`, so it is not counted. It is "what this tool
 saw you transfer", not the carrier's hold.
@@ -151,6 +155,30 @@ class CarrierCargo:
                 changed = True
         if stamp:
             record["journal_at"] = stamp
+            changed = True
+        return changed
+
+    def apply_capi_cargo(self, cmdr: str, cargo: List[Any]) -> bool:
+        """Replace the tally with what Frontier says is in the carrier's cargo hold (`cargo`: dicts with `commodity` and `qty`).
+        The watermark stays, so a transfer made after this is still added on top. True if anything changed."""
+        if not commander_data.key_for(cmdr):
+            return False
+        record = self._record(cmdr)
+        fresh: Dict[str, int] = {}
+        for item in cargo:
+            if not isinstance(item, dict):
+                continue
+            key = colonisation.commodity_key(item.get("commodity") or item.get("locName"))
+            try:
+                qty = int(item.get("qty") or 0)
+            except (TypeError, ValueError):
+                qty = 0
+            if key and qty > 0:
+                fresh[key] = fresh.get(key, 0) + qty
+        changed = self.note_carrier(cmdr)
+        if record.get("tonnes") != fresh or record.get("from_capi") is not True:
+            record["tonnes"] = fresh
+            record["from_capi"] = True
             changed = True
         return changed
 

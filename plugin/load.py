@@ -235,6 +235,7 @@ def capi_fleetcarrier(data: Any) -> None:
     throttle) - a separate hook from journal_entry, not a journal event.
     Only Inventory's fleet-carrier-locker tracking currently needs this."""
     inventory_panel.capi_fleetcarrier(data)
+    colonisation_panel.capi_fleetcarrier(data)
 
 
 def dashboard_entry(cmdr: str, is_beta: bool, entry: Dict[str, Any]) -> None:

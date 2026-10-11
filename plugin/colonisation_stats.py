@@ -39,7 +39,9 @@ class Project:
     delivered: int           # tons already handed over (by anyone)
     remaining: int
     lines: int               # commodities still needed
-    covered: int             # of those, how many the ship (and carrier) already cover
+    covered: int             # of those, how many the ship (and carrier) already cover in full
+    partial: int             # how many are partly covered (some of it in hand, not all)
+    uncovered: int           # how many have nothing in hand yet
     in_hold: int
     on_carrier: int
     to_get: int
@@ -62,18 +64,21 @@ def project_for(site: Site, cargo: Mapping[str, int], carrier: Optional[Mapping[
     return Project(
         name=site.display_name(), system=site.system, progress=1.0 if site.complete else site.progress,
         required=sum(r.required for r in site.resources), delivered=sum(r.provided for r in site.resources),
-        remaining=totals.remaining, lines=totals.lines, covered=totals.covered, in_hold=totals.in_hold,
+        remaining=totals.remaining, lines=totals.lines, covered=totals.covered,
+        partial=sum(1 for r in rows if r.stock > 0 and not r.covered), uncovered=sum(1 for r in rows if r.stock <= 0),
+        in_hold=totals.in_hold,
         on_carrier=totals.on_carrier, to_get=totals.to_get, capacity=max(0, capacity), buy_trips=totals.buy_trips,
         haul_trips=totals.haul_trips, has_carrier=has_carrier, gaps=gaps[:TOP_GAPS], more_active=more_active,
         complete=site.complete)
 
 
 def coverage_text(project: Project) -> str:
-    """Which commodities are already covered: by the ship alone, or by the ship and the carrier together."""
+    """Of the commodities still needed, how many are fully covered, partly covered and not covered yet, counting what is in
+    the ship, or in the ship and on the carrier together."""
     if project.lines == 0:
         return "Nothing left to deliver"
-    who = "Ship and carrier cover" if project.has_carrier else "Your ship covers"
-    return f"{who} {project.covered} of {project.lines} {_plural(project.lines, 'commodity', 'commodities')}"
+    return (f"{project.covered} fully · {project.partial} partly · {project.uncovered} not yet "
+            f"(of {project.lines} {_plural(project.lines, 'commodity', 'commodities')})")
 
 
 def trips_text(project: Project) -> str:

@@ -214,6 +214,20 @@ class ColonisationController:
                 if colonisation.apply_contribution(working, entry):
                     self._repository.upsert(self._cmdr, working)
 
+    def capi_fleetcarrier(self, data: Any) -> None:
+        """Frontier's own list of what is in the fleet carrier's cargo hold (EDMC fetches it when signed in, on CarrierStats and
+        CarrierBuy, at most every 15 minutes). It replaces the tally built from the transfers this tool saw, which cannot see
+        cargo that reached the carrier another way; transfers after it are counted on top as before."""
+        cmdr = getattr(data, "request_cmdr", None)
+        cargo = data.get("cargo") if hasattr(data, "get") else None
+        if not cmdr or not isinstance(cargo, list):
+            return
+        try:
+            if self._carrier_cargo.apply_capi_cargo(cmdr, cargo):
+                self._carrier_cargo.commit()
+        except Exception:
+            logger.exception("Could not read the fleet carrier cargo from the CAPI")
+
     # --- overlay card ---------------------------------------------------------
 
     def dashboard_status(self, entry: Dict[str, Any]) -> None:
@@ -585,6 +599,10 @@ def save_settings() -> None:
 
 def set_overlay_client(client: overlay.OverlayClient) -> None:
     controller.set_overlay_client(client)
+
+
+def capi_fleetcarrier(data: Any) -> None:
+    controller.capi_fleetcarrier(data)
 
 
 def dashboard_status(entry: Dict[str, Any]) -> None:
