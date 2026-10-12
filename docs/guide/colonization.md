@@ -223,9 +223,21 @@ building and its five biggest commodities in the footer, and the top of the wind
 system will need. The table is a snapshot: if the game changes a building's cost, it can be out of date until WNTB is updated, and a
 building the table does not know shows no cost.
 
-It asks Raven Colonial once, when the window opens or you press **Refresh**, and sends only the system's name (nothing about you
-or your deliveries is ever sent). The answer is remembered for a minute. It shows what *other people* have entered there, so a
+It asks Raven Colonial once, when the window opens or you press **Refresh**, and sends only the system's name. The answer is remembered for a minute. It shows what *other people* have entered there, so a
 system nobody has planned on that site shows nothing. See [what goes on the internet](internet-and-privacy.md).
+
+### Reporting a finished build to Raven Colonial
+
+Select a site your journal has reported **complete** and press **Report Complete to Raven** (top right of the Colonization Sites
+window). WNTB looks the site up in Raven Colonial's plan for its system (matching on the site's market id), then marks that
+project complete there. It never does this by itself: it asks you to confirm each time.
+
+- It needs your **Raven Colonial key**. The first time, WNTB asks you to paste it; it is saved for that commander only (in
+  `rcc_keys.json`, in the plugin folder, which updates leave alone) once Raven Colonial has accepted it, and masked as you type.
+- **What is sent:** your key and the one project's id, nothing else. No deliveries, cargo or journal data.
+- **Limits:** Raven Colonial must already list the site with a project linked to its market id. If it does not (for example it
+  is still only planned there), WNTB says so and sends nothing. Reporting does not copy anything back: WNTB's own tracking
+  stays as it is.
 
 ## The shopping list on the overlay
 

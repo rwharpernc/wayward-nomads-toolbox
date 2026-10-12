@@ -1,10 +1,14 @@
 """
-A thin read-only client for Raven Colonial's public API, for the Colonization window's "Planned Builds" view.
+A thin client for Raven Colonial's API: reads for the Colonization window's "Planned Builds" view, and one write, reporting a
+finished build as complete.
 
 Raven Colonial is a community site where commanders plan the colonization of a system: which buildings go where, and which are
 planned, being built or finished. The game's journal never reports a *planned* build, so this is the one place WNTB can show
 them. It asks one question per press of the button: the plan for one system (`GET /api/v2/system/<name>`, which needs no key):
-its architect, whether it is open, and its build sites. The journal stays the source of truth for your own deliveries; nothing is ever sent to Raven Colonial.
+its architect, whether it is open, and its build sites. The journal stays the source of truth for your own deliveries.
+
+The one thing ever sent is `complete_project`: when the commander presses "Report Complete to Raven", an empty POST to
+`/api/project/<build id>/complete` carrying the commander's Raven key in the `rcc-key` header. No delivery, cargo or journal data is sent.
 
 Pure parsing plus one network call (`fetch_sites`) whose opener is passed in, so the shaping and the error handling are tested
 without a connection. The request carries WNTB's User-Agent (http_identity), has a timeout, reads a bounded amount, and an answer
@@ -28,6 +32,9 @@ TIMEOUT_S = 15
 MAX_BYTES = 2_000_000           # a system's answer is a few tens of kilobytes; anything this large is not one
 CACHE_SECONDS = 60              # the same system asked again within this long is answered from memory
 MAX_SITES = 500                 # sites kept from one answer
+BUILD_ID_MAX = 64                # a build id is a short token; anything longer is clipped
+KEY_HEADER = "rcc-key"          # the per-commander key Raven Colonial wants on writes (not in its OpenAPI spec; confirm against the live API)
+COMPLETE_PATH = "/api/project/{build}/complete"
 NAME_MAX = 60                   # a site's name is clipped to this (it is text from outside)
 
 STATUS_BUILDING, STATUS_PLANNED, STATUS_COMPLETE, STATUS_DEMOLISH = "build", "plan", "complete", "demolish"
@@ -46,6 +53,7 @@ class RccSite:
     build_type: str              # the raw type key, e.g. "dual_truss"
     body_num: Optional[int]
     market_id: Optional[int]     # set once the site exists in the game; None while only planned
+    build_id: str = ""           # Raven Colonial's id for the project at this site ("" when it has none)
 
     @property
     def type_label(self) -> str:
@@ -90,7 +98,8 @@ def parse_sites(data: Any) -> List[RccSite]:
             status=status if status in STATUS_ORDER else "",
             build_type=str(raw.get("buildType") or "").strip(),
             body_num=_int(raw.get("bodyNum")),
-            market_id=_int(raw.get("marketId"))))
+            market_id=_int(raw.get("marketId")),
+            build_id=str(raw.get("buildId") or "").strip()[:BUILD_ID_MAX]))
     order = {status: index for index, status in enumerate(STATUS_ORDER)}
     return sorted(sites, key=lambda s: (order.get(s.status, len(order)), s.name.casefold()))
 
@@ -179,3 +188,39 @@ def fetch_system(system: str, opener: Callable[..., Any] = urllib.request.urlope
     result = parse_system(data, system)
     _cache[key] = (now(), result)     # a failure raised above, so it is never remembered
     return result
+
+
+def find_build_id(sites: List[RccSite], market_id: int) -> str:
+    """Raven Colonial's build id for the site with this market id, or "" when it has none (or none we can match)."""
+    for site in sites:
+        if site.market_id == market_id and site.build_id:
+            return site.build_id
+    return ""
+
+
+def complete_url(build_id: str) -> str:
+    return BASE_URL + COMPLETE_PATH.format(build=urllib.parse.quote(build_id.strip(), safe=""))
+
+
+def complete_project(build_id: str, key: str, opener: Callable[..., Any] = urllib.request.urlopen) -> None:
+    """Tell Raven Colonial the project `build_id` is finished. Sends nothing but the key; raises RccError with a message to show."""
+    build_id, key = (build_id or "").strip(), (key or "").strip()
+    if not build_id:
+        raise RccError("Raven Colonial has no project linked to this site, so there is nothing to mark complete.")
+    if not key:
+        raise RccError("No Raven Colonial key is saved for this commander.")
+    request = urllib.request.Request(
+        complete_url(build_id), data=b"", method="POST",
+        headers={"User-Agent": http_identity.user_agent("rcc-complete"), KEY_HEADER: key})
+    try:
+        with opener(request, timeout=TIMEOUT_S) as response:
+            response.read(1024)
+    except urllib.error.HTTPError as err:
+        if err.code in (401, 403):
+            raise RccError("Raven Colonial did not accept the key. Check it is this commander's key.") from err
+        if err.code == 404:
+            raise RccError("Raven Colonial does not know this project.") from err
+        raise RccError(f"Raven Colonial answered with an error ({err.code}). Try again later.") from err
+    except (urllib.error.URLError, OSError, TimeoutError) as err:
+        raise RccError("Could not reach Raven Colonial. Check your connection and try again.") from err
+    clear_cache()    # the system's sites have changed

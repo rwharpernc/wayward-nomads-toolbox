@@ -6,6 +6,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Report a finished build to Raven Colonial.** A **Report Complete to Raven** button in the Colonization Sites window marks the
+  selected site complete on Raven Colonial. It asks first, needs your Raven key (saved per commander) and sends only that key and the
+  project's id. Not yet checked against the live Raven Colonial write API, which needs a real key.
 - **A "Merits this session" line** under the credits line, e.g. `Merits this session: +1,234 (+567 merits/hr)`. It appears after
   your first Powerplay merit of the session and shows on every mode.
 

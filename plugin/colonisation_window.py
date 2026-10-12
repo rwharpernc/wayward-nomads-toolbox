@@ -14,11 +14,12 @@ import logging
 import os
 import threading
 import tkinter as tk
+from tkinter import messagebox, simpledialog
 from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 from config import appname, config
 
-from . import colonisation, colonisation_builds_window, colonisation_sources as sources, colonisation_view as view, panelkit
+from . import colonisation, colonisation_builds_window, colonisation_sources as sources, colonisation_view as view, panelkit, rcc_client, rcc_keys
 from .colonisation_carrier import CarrierCargo
 from .colonisation import Site
 from .colonisation_data import SiteRepository
@@ -160,6 +161,7 @@ class ColonisationWindow:
 
         self._shell.add_action("Copy Shopping List", self._on_copy, accent=True)
         self._shell.add_action("Planned Builds", self._on_builds)
+        self._shell.add_action("Report Complete to Raven", self._on_report_rcc)
         self._shell.add_action("Remove Site", self._on_remove)
         self._shell.add_action("Remove Finished", self._on_remove_finished)
 
@@ -771,6 +773,59 @@ class ColonisationWindow:
         colonisation_builds_window.show(
             self._toplevel, site.system,
             lambda: frozenset(s.market_id for s in self._repository.for_cmdr(self._cmdr)))
+
+    def _on_report_rcc(self) -> None:
+        """Tell Raven Colonial the selected site is finished. Asks first, and sends only the commander's Raven key to the one
+        project's `complete` address (see rcc_client.complete_project); nothing else leaves WNTB."""
+        site = self._selected_site()
+        if site is None:
+            self._shell.set_status("Select a site on the left first.")
+            return
+        if not site.complete:
+            self._shell.set_status("Your journal has not reported this site complete yet, so there is nothing to report.")
+            return
+        if not site.system or not self._cmdr:
+            self._shell.set_status("This site needs a system name and a commander before it can be reported.")
+            return
+        key = rcc_keys.keys.get(self._cmdr)
+        if not key:
+            entered = simpledialog.askstring(
+                "Raven Colonial key", f"Paste {self._cmdr}'s Raven Colonial key. It is saved for this commander only and sent "
+                "only to Raven Colonial.", show="*", parent=self._toplevel)
+            key = (entered or "").strip()
+            if not key:
+                return
+        if not messagebox.askyesno(
+                "Report to Raven Colonial",
+                f"Tell Raven Colonial that {site.display_name()} in {site.system} is complete?\n\nOnly your Raven key and this "
+                "one project's id are sent; none of your deliveries or cargo.", parent=self._toplevel):
+            return
+        market_id, system, cmdr = site.market_id, site.system, self._cmdr
+        job: Dict[str, Any] = {"done": False, "error": ""}
+        self._shell.set_status("Reporting to Raven Colonial…")
+
+        def work() -> None:
+            try:
+                build_id = rcc_client.find_build_id(rcc_client.fetch_system(system).sites, market_id)
+                rcc_client.complete_project(build_id, key)
+                rcc_keys.keys.set(cmdr, key)     # saved once it has worked, so a wrong key is not kept
+            except rcc_client.RccError as err:
+                job["error"] = str(err)
+            except Exception:
+                logger.exception("Reporting to Raven Colonial failed")
+                job["error"] = "Reporting failed unexpectedly; see the EDMC log."
+            job["done"] = True
+
+        threading.Thread(target=work, daemon=True, name="WNTB-rcc-complete").start()
+        self._poll_report(job, site.display_name())
+
+    def _poll_report(self, job: Dict[str, Any], name: str) -> None:
+        if not self._shell.alive:
+            return
+        if not job["done"]:
+            self._toplevel.after(150, self._poll_report, job, name)
+            return
+        self._shell.set_status(job["error"] or f"Raven Colonial now has {name} as complete.")
 
     def _on_remove(self) -> None:
         site = self._selected_site()

@@ -194,3 +194,44 @@ class FetchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CompleteProjectTests(unittest.TestCase):
+    def test_build_id_is_read_and_found_by_market_id(self) -> None:
+        sites = R.parse_sites(LIVE)
+        self.assertEqual(R.find_build_id(sites, 4244307203), "1c4aa5e6")
+        self.assertEqual(R.find_build_id(sites, 999), "")
+        self.assertEqual(R.find_build_id(sites, 4347887107), "")      # a site with no build id gives nothing
+
+    def test_sends_an_empty_post_with_only_the_key(self) -> None:
+        seen = []
+
+        def opener(request, timeout=None):
+            seen.append(request)
+            return FakeResponse(b"")
+
+        R.complete_project("abc 1", "secret", opener)
+        request = seen[0]
+        self.assertEqual(request.get_method(), "POST")
+        self.assertTrue(request.full_url.endswith("/api/project/abc%201/complete"))
+        self.assertEqual(request.data, b"")
+        self.assertEqual(request.get_header("Rcc-key"), "secret")
+
+    def test_refuses_without_a_build_or_a_key(self) -> None:
+        for build, key in (("", "k"), ("b", "")):
+            with self.assertRaises(R.RccError):
+                R.complete_project(build, key, lambda *a, **k: self.fail("must not call the network"))
+
+    def test_errors_are_worded_and_never_carry_the_key(self) -> None:
+        for code, words in ((401, "key"), (404, "does not know"), (500, "500")):
+            def opener(request, timeout=None, code=code):
+                raise urllib.error.HTTPError(request.full_url, code, "x", {}, None)
+            with self.assertRaises(R.RccError) as ctx:
+                R.complete_project("b", "secret", opener)
+            self.assertIn(words, str(ctx.exception))
+            self.assertNotIn("secret", str(ctx.exception))
+
+        def down(request, timeout=None):
+            raise urllib.error.URLError("no")
+        with self.assertRaises(R.RccError):
+            R.complete_project("b", "secret", down)
