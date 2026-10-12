@@ -1,0 +1,8 @@
+# Keeps every editor on the same line endings on Windows and Linux (see .gitattributes, which makes Git store LF).
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = false

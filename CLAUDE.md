@@ -9,4 +9,6 @@ only link between them.
 - After a change that touches platform behaviour, note what still needs checking on the other OS.
 - `git pull --rebase` before starting and push when done. Don't commit machine-specific paths or logs.
 - Setup and testing notes live in `docs/`.
+- Files are LF on both OSes (`.gitattributes`, `.editorconfig`, `tests/test_line_endings.py`). Write LF; if Git prints a
+  "CRLF will be replaced by LF" warning, convert the file rather than ignoring it.
 - Everything saved about play is per commander, never shared (`plugin/commander_data.py`, `tests/test_data_files_per_commander.py`); never put a commander name in a file name. See `docs/DEVELOPMENT.md`.
