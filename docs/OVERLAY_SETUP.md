@@ -87,6 +87,11 @@ display inward from the edge you chose; for Center and Middle they nudge it. "Bo
 bottom left corner of your screen on any monitor, whatever size the display is. **Exact position** is there if you want an
 overlay-canvas x and y instead.
 
+**Hiding a display.** Each row has a **Show** checkbox. Untick it and that display is never drawn, whatever its own settings say, and
+what is already on screen goes the next time it would redraw. The spot and offsets are kept, so ticking it again puts it back where it
+was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Interdiction, Landing, Inventory, Mining,
+Screenshot messages). **Reset all to defaults** shows them all again.
+
 **How WNTB knows your screen.** It reads what the overlay itself is using: the window size, fit or fill mode and display
 scaling from EDMCModernOverlay's own log (its newest "Overlay scaling updated" line). If that isn't there it falls back to
 Elite's `DisplaySettings.xml` (in `Options\Graphics`; on Linux inside the Proton prefix) for the size, Windows' display scaling,

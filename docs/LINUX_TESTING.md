@@ -259,6 +259,11 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 - [ ] Rows left at the default list every commodity; the card fits on screen from the default position (20, 300).
 - [ ] Windows paths: `Status.json` reports the same `GuiFocus` values (5 in the services screens, 1 for the right-hand panel).
 
+## 7e-3. Overlay Placement: Show checkbox (Windows-tested only: check on Linux)
+
+- [ ] Each row on **Overlays → Overlay Placement** has a **Show** checkbox. Unticking one (then OK) hides that display; ticking it brings it back
+      where it was. **Reset all to defaults** ticks them all.
+
 ## 7e-2. Raven Colonial sharing (needs a Raven project for a site; Windows-tested only: check on Linux)
 
 - [ ] **Settings → Colonization → Raven Colonial** has a master switch and two checkboxes (all off, the two greyed out until the master is ticked) and a masked key field. With the master off, Report Complete to Raven refuses.

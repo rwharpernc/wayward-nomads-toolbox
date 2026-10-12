@@ -37,6 +37,7 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_SCALING = "wntb_overlay_display_scaling"   # "auto" or one of layout.SCALING_CHOICES such as "125%"
 CFG_MODE = "wntb_overlay_scale_mode"           # "auto", "fit" or "fill"
+CFG_HIDDEN_PREFIX = "wntb_overlay_hidden_"          # + the display's key: "1" while the commander has hidden that display
 CFG_OFFSETS = "wntb_overlay_group_offsets"     # whether right-hand displays are carried past the overlay's clamp (default on)
 AUTO = "auto"
 
@@ -270,6 +271,18 @@ def save_placement(slot_key: str, placement: layout.Placement) -> None:
     config.set(layout.setting_key(slot_key), layout.format_placement(placement))
 
 
+def is_hidden(slot_key: str) -> bool:
+    """Whether the commander has hidden this display on the Overlay Placement tab (Show unticked). Every display is shown unless so."""
+    try:
+        return config.get_str(CFG_HIDDEN_PREFIX + slot_key) == "1"
+    except Exception:
+        return False
+
+
+def save_hidden(slot_key: str, hidden: bool) -> None:
+    config.set(CFG_HIDDEN_PREFIX + slot_key, "1" if hidden else "0")
+
+
 def offsets_enabled() -> bool:
     """The Settings switch for carrying displays past the overlay's right-hand clamp (on unless turned off)."""
     return config.get_str(CFG_OFFSETS) != "0"
@@ -288,7 +301,10 @@ def shift_for(slot_key: str, block: Tuple[int, int, int, int]) -> Tuple[int, int
 
 def client_for(slot_key: str, client: Any, block: Tuple[int, int, int, int]) -> Any:
     """`client` wrapped so everything drawn through it lands where `slot_key` is placed. A failure to work out the
-    placement (damaged settings, say) leaves the display where it was drawn rather than hiding it."""
+    placement (damaged settings, say) leaves the display where it was drawn rather than hiding it. A display the commander has hidden
+    gets a client that draws nothing."""
+    if is_hidden(slot_key):
+        return layout.HiddenClient(client)
     try:
         dx, dy = shift_for(slot_key, block)
     except Exception:
@@ -334,6 +350,7 @@ _MODE_AUTO_LABEL = "Automatic (from the overlay's settings)"
 _MODE_LABELS = {layout.MODE_FIT: "Fit (canvas keeps its shape)", layout.MODE_FILL: "Fill (canvas stretched over the screen)"}
 _PREVIEW_COLORS = ("#f97316", "#22d3ee", "#a3e635", "#f472b6", "#facc15", "#60a5fa", "#fb7185", "#34d399", "#c084fc")
 
+_hidden_vars: Dict[str, tk.BooleanVar] = {}
 _rows: Dict[str, Tuple[tk.StringVar, tk.StringVar, tk.StringVar]] = {}
 _scaling_var: Optional[tk.StringVar] = None
 _mode_var: Optional[tk.StringVar] = None
@@ -427,9 +444,10 @@ def build_settings(notebook: tk.Misc) -> None:
 
     grid = tk.Frame(frame)
     grid.grid(row=3, column=0, sticky=tk.W, padx=10, pady=(10, 4))
-    for column, heading in enumerate(("Display", "Spot", "Offset X", "Offset Y")):
+    for column, heading in enumerate(("Display", "Spot", "Offset X", "Offset Y", "Show")):
         nb.Label(grid, text=heading).grid(row=0, column=column, sticky=tk.W, padx=(0, 8))
     _rows.clear()
+    _hidden_vars.clear()
     for row_index, (key, slot) in enumerate(SLOTS.items(), start=1):
         placement = placement_for(key)
         first, second = (placement.x, placement.y) if placement.custom else (placement.dx, placement.dy)
@@ -439,7 +457,9 @@ def build_settings(notebook: tk.Misc) -> None:
         nb.Label(grid, text=slot.label).grid(row=row_index, column=0, sticky=tk.W, padx=(0, 8), pady=1)
         tk.OptionMenu(grid, choice, *layout.PRESET_LABELS).grid(row=row_index, column=1, sticky=tk.W, padx=(0, 8), pady=1)
         nb.EntryMenu(grid, textvariable=first_var, width=6).grid(row=row_index, column=2, sticky=tk.W, padx=(0, 8), pady=1)
-        nb.EntryMenu(grid, textvariable=second_var, width=6).grid(row=row_index, column=3, sticky=tk.W, pady=1)
+        nb.EntryMenu(grid, textvariable=second_var, width=6).grid(row=row_index, column=3, sticky=tk.W, padx=(0, 8), pady=1)
+        _hidden_vars[key] = tk.BooleanVar(value=not is_hidden(key))      # ticked = shown
+        nb.Checkbutton(grid, variable=_hidden_vars[key]).grid(row=row_index, column=4, sticky=tk.W, pady=1)
 
     buttons = tk.Frame(frame)
     buttons.grid(row=4, column=0, sticky=tk.W, padx=10, pady=(8, 2))
@@ -462,6 +482,8 @@ def save_settings() -> None:
     for key in SLOTS:
         if key in _rows:
             save_placement(key, _typed_placement(key))
+        if key in _hidden_vars:
+            save_hidden(key, not _hidden_vars[key].get())
     refresh()
     apply_group_offsets()
 
@@ -484,6 +506,8 @@ def _reset_all() -> None:
         choice.set(layout.preset_label(default))
         first.set(str(default.dx))
         second.set(str(default.dy))
+        if key in _hidden_vars:
+            _hidden_vars[key].set(True)      # shown again
     if _scaling_var is not None:
         _scaling_var.set(_SCALING_AUTO_LABEL)
     if _mode_var is not None:

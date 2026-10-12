@@ -6,6 +6,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **A Show checkbox for every display on the Overlay Placement tab.** Unticking it hides that display whatever its own settings say; its
+  spot and offsets are kept for when you tick it again. Reset all to defaults shows everything.
 - **Share your colonization progress with Raven Colonial (opt-in, off by default).** Settings → Colonization → Raven Colonial, behind a
   master switch that stops every write to Raven at once (including Report Complete) while keeping your other choices. WNTB
   sends the depot's figures and your deliveries as they happen, links your commander to the project, and (a second switch) the tons you

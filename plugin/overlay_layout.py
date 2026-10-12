@@ -338,6 +338,27 @@ def shift_for(placement: Placement, block: Tuple[int, int, int, int], screen: Sc
     return plan.x - left, plan.y - top
 
 
+class HiddenClient:
+    """An overlay client for a display the commander has hidden (Overlay Placement -> Show). Whatever the display draws becomes a
+    clear of the same id, so nothing appears and anything already on screen goes. Anything else passes to the real client."""
+
+    def __init__(self, client: Any) -> None:
+        self._client = client
+
+    def send_message(self, msg_id: str, text: str, color: str, x: int, y: int, ttl: int = 8, size: str = "normal") -> None:
+        self._client.send_message(msg_id, "", color, x, y, ttl=1, size=size)
+
+    def send_shape(self, shape_id: str, shape: str, color: str, fill: str, x: int, y: int, w: int, h: int, ttl: int = 8,
+                   thickness: Optional[int] = None) -> None:
+        self._client.send_shape(shape_id, shape, "", "", x, y, 0, 0, ttl=1, thickness=thickness)
+
+    def send_vector(self, shape_id: str, points: Sequence[Dict[str, Any]], color: str, ttl: int = 8) -> None:
+        self._client.send_vector(shape_id, [], color, ttl=1)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._client, name)
+
+
 class ShiftedClient:
     """An overlay client that moves everything drawn through it by a fixed (dx, dy) in canvas units. Features keep their
     own layout; this carries them to the chosen place. Anything it doesn't know about passes straight to the real client."""

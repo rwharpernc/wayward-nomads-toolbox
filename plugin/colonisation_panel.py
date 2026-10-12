@@ -350,7 +350,7 @@ class ColonisationController:
 
     def _current_card(self) -> Optional[card.Card]:
         self._visibility.right_panel_anywhere = overlay_right_panel()
-        if not self._cmdr:
+        if not self._cmdr or overlay_placement.is_hidden("colonisation"):     # hidden on the Overlay Placement tab
             return None
         if not self._visibility.forced and not (overlay_enabled() and self._visibility.visible):
             return None

@@ -216,6 +216,34 @@ class ClientTests(unittest.TestCase):
             client.send_message("id", "hi", "red", 40, 650)
         self.assertEqual(calls[0][0][3:5], (20, 14))     # moved by (-20, -636)
 
+    def test_a_hidden_display_draws_nothing_and_is_shown_by_default(self):
+        self.assertFalse(P.is_hidden("landing"))
+        P.save_hidden("landing", True)
+        self.addCleanup(P.save_hidden, "landing", False)
+        self.assertTrue(P.is_hidden("landing"))
+        calls = []
+
+        class Rec:
+            def send_message(self, *a, **k):
+                calls.append(("msg", a, k))
+
+            def send_shape(self, *a, **k):
+                calls.append(("shape", a, k))
+
+            def send_vector(self, *a, **k):
+                calls.append(("vect", a, k))
+
+        client = P.client_for("landing", Rec(), (20, 636, 320, 324))
+        client.send_message("id", "hi", "red", 40, 650, ttl=8)
+        client.send_shape("box", "rect", "red", "blue", 1, 2, 30, 40, ttl=8, thickness=2)
+        client.send_vector("v", [{"x": 1, "y": 2}], "red", ttl=8)
+        self.assertEqual(calls[0][1][1], "")                       # text cleared
+        self.assertEqual(calls[0][2]["ttl"], 1)
+        self.assertEqual(calls[1][1][2:4] + calls[1][1][6:8], ("", "", 0, 0))    # shape cleared to nothing
+        self.assertEqual(calls[2][1][1], [])                       # vector cleared
+        P.save_hidden("landing", False)
+        self.assertFalse(P.is_hidden("landing"))
+
     def test_a_display_already_in_place_is_not_wrapped(self):
         P.save_placement("landing", L.custom_placement(20, 636))
         rec, _calls = self.recorder()
