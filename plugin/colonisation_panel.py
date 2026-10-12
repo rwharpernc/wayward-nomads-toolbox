@@ -66,7 +66,11 @@ def overlay_shift(shown: Optional[card.Card], look=None) -> tuple:
     if shown is None:
         return (0, 0)
     look = look or overlay_appearance.current_look()
-    return overlay_placement.shift_for("colonisation", card.block_rect(shown, card.DEFAULT_X, card.DEFAULT_Y, look))
+    block = card.block_rect(shown, card.DEFAULT_X, card.DEFAULT_Y, look)
+    # The slot's nominal width is a worst-case guess; the card's real width is what a right edge or the group offset must use.
+    if overlay_placement.note_measured_size("colonisation", (block[2], block[3]), look):
+        threading.Thread(target=overlay_placement.apply_group_offsets, name="WNTB-overlay-offsets", daemon=True).start()
+    return overlay_placement.shift_for("colonisation", block)
 
 
 def overlay_rows() -> int:

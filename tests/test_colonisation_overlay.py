@@ -87,6 +87,31 @@ class PlacementSlotTests(unittest.TestCase):
         self.assertLessEqual(card.block_rect(widest)[2], slot_width)
 
 
+class MeasuredSlotTests(unittest.TestCase):
+    def setUp(self) -> None:
+        from plugin import overlay_placement
+        self.placement = overlay_placement
+        self.placement._measured.clear()
+        self.addCleanup(self.placement._measured.clear)
+
+    def test_the_measured_size_replaces_the_nominal_one_and_only_grows(self) -> None:
+        nominal = self.placement.slot_size("colonisation")
+        self.assertTrue(self.placement.note_measured_size("colonisation", (700, 200)))
+        self.assertEqual(self.placement.slot_size("colonisation"), (700, 200))
+        self.assertNotEqual(self.placement.slot_size("colonisation"), nominal)
+        self.assertFalse(self.placement.note_measured_size("colonisation", (650, 150)))     # smaller: nothing changes
+        self.assertTrue(self.placement.note_measured_size("colonisation", (720, 150)))
+        self.assertEqual(self.placement.slot_size("colonisation"), (720, 200))
+
+    def test_a_new_look_starts_again(self) -> None:
+        import dataclasses
+        from plugin.overlay_style import LEGACY
+        bigger = dataclasses.replace(LEGACY, text_level=LEGACY.text_level + 1)
+        self.assertTrue(self.placement.note_measured_size("colonisation", (900, 200), LEGACY))
+        self.assertTrue(self.placement.note_measured_size("colonisation", (400, 100), bigger))
+        self.assertEqual(self.placement.slot_size("colonisation", bigger), (400, 100))
+
+
 class BuildCardTests(unittest.TestCase):
     def test_need_is_not_reduced_by_the_hold_and_rows_are_alphabetical(self) -> None:
         built = card.build_card(site(), {"steel": 100}, {}, show_fc=False)

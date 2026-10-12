@@ -81,12 +81,33 @@ SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
 )}
 
 
+_measured: Dict[str, Tuple[overlay_style.Look, Tuple[int, int]]] = {}
+
+
+def note_measured_size(slot_key: str, size: Tuple[int, int], look: Optional[overlay_style.Look] = None) -> bool:
+    """A display that knows its own real size (a card that grows with its columns and text size) says so here, and right-anchoring
+    and the group offset use that instead of the nominal slot size, which has to guess the worst case and so strands a display well
+    away from its edge at the larger text sizes. The size only grows for a given look, so the card does not shift as its numbers
+    change; a new look starts again. True when the size used changed (the caller then re-applies the group offsets)."""
+    look = look or overlay_appearance.current_look()
+    old = _measured.get(slot_key)
+    if old is not None and old[0] == look:
+        size = (max(size[0], old[1][0]), max(size[1], old[1][1]))
+        if size == old[1]:
+            return False
+    _measured[slot_key] = (look, size)
+    return True
+
+
 def slot_size(slot_key: str, look: Optional[overlay_style.Look] = None) -> Tuple[int, int]:
     """A display's nominal size at the current look: the slot's size at the default text size, scaled to the chosen text size (its
     width by the estimated character width, its height by the line height) and grown by the padding on every side. It is what
     right- and bottom-anchoring, centering and the overlay group offsets are worked out from, so they stay right when the text
     size or padding changes."""
     look = look or overlay_appearance.current_look()
+    measured = _measured.get(slot_key)
+    if measured is not None and measured[0] == look:
+        return measured[1]
     width, height = SLOTS[slot_key].size
     char_ratio = look.char_px("normal") / overlay_style.LEGACY.char_px("normal")
     line_ratio = look.line_px("normal") / overlay_style.LEGACY.line_px("normal")
