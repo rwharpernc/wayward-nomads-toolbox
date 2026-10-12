@@ -1,0 +1,7 @@
+#!/bin/sh
+# Rejects AI author credit in commit messages. See CLAUDE.md: no co-author lines, "generated with" notes or
+# similar credit for an AI assistant anywhere in this project; the one place for acknowledgements is docs/ATTRIBUTIONS.md.
+if grep -qiE "^co-authored-by:.*(claude|anthropic|copilot|chatgpt|openai|gemini)|noreply@anthropic\.com|generated (with|by).*(claude|anthropic|ai\b)|^🤖" "$1"; then
+  echo "commit-msg: remove the AI co-author / generated-with line from the commit message." >&2
+  exit 1
+fi

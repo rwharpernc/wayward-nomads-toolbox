@@ -11,4 +11,7 @@ only link between them.
 - Setup and testing notes live in `docs/`.
 - Files are LF on both OSes (`.gitattributes`, `.editorconfig`, `tests/test_line_endings.py`). Write LF; if Git prints a
   "CRLF will be replaced by LF" warning, convert the file rather than ignoring it.
+- No author credit for an AI assistant anywhere: no co-author lines or "generated with" notes in commit messages, code comments,
+  docs or the changelog. The one place for acknowledgements is `docs/ATTRIBUTIONS.md`. `.githooks/commit-msg` rejects such lines
+  in commit messages and `tests/test_no_ai_credit.py` scans the files; on a new machine run `git config core.hooksPath .githooks`.
 - Everything saved about play is per commander, never shared (`plugin/commander_data.py`, `tests/test_data_files_per_commander.py`); never put a commander name in a file name. See `docs/DEVELOPMENT.md`.
