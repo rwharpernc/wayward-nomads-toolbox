@@ -24,6 +24,7 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CM
 ## Contents
 
 - [What's in the toolbox](#whats-in-the-toolbox)
+- [Planned and being researched](#planned-and-being-researched)
 - [Quick start](#quick-start)
 - [Tips, quirks and workarounds](#tips-quirks-and-workarounds)
 - [Guides](#guides)
@@ -75,6 +76,44 @@ marked as estimates on screen.
 > **Linux is lightly tested for this release.** The newest parts (Colonization, and the Overlays tab with Placement and
 > Appearance) have had a first pass on Linux and look fine, but a few small fixes for Linux are expected in a later
 > update. If something looks off there, please [report it](#getting-help).
+
+## Planned and being researched
+
+Things I would like to add or am still looking into, by feature. This is a wish list, not a promise: there are no dates, the order
+can change, and some of it may turn out not to be possible. If one of these matters to you, tell me (see [Getting help](#getting-help)).
+
+**Colonization**
+- **Raven Colonial, further.** The Planned Builds window already reads Raven Colonial for a system's plan. Next I am looking at
+  showing a project's remaining needs and other commanders' progress beside yours (still read-only), and a "what the whole squad
+  still needs" line. Sending your own deliveries there would be strictly **opt-in and off by default**, and the internet page would
+  list exactly what is sent and when before it ever exists.
+- **Where to buy from Raven Colonial's market search,** beside Spansh or instead of it. It could search the whole list in one
+  request. I am checking how its filters behave first.
+- **Team projects:** several commanders on one project, with a "what the team still needs" line. Everything today is per commander and
+  would stay that way until you choose to share.
+- **Co-op building and colony tracking** through a separate app that is in development; WNTB is to connect to it when it is ready.
+- *Being researched, may not happen:* tonnes per hour and credits earned per delivery. The journal does not say how long you spent
+  hauling, and I have not been able to confirm that the credits a depot lists are what is actually paid.
+
+**Landing Assist**
+- **My own pad layouts,** with fore and aft cues and diagrams for facilities that have none today, settlements first. I need to
+  confirm the pad numbering of settlements in the game before drawing any, so nothing misleading ships.
+
+**Trade**
+- **Round trip:** more detail on the second and third best partners' loads, starting from your own fleet carrier's market, and a
+  Powerplay bonus filter (that depends on what the price service can tell me).
+
+**Exploration**
+- **Boxel Survey:** catching WNTB's own survey log up from your old journals. WNTB only ever reads the game's journals and never
+  changes them. This needs a safer way to record each body in WNTB's log first, so a body is never counted twice.
+
+**Overlays**
+- **Tidier default spots,** where a few displays overlap on some screen shapes (for example Colonization, Landing and the Mining
+  waypoint on the left of a 16:9 screen). They rarely show together, so this is low priority.
+
+**Everywhere**
+- **More checking in the game on both Windows and Linux.** Several newer parts have had a first pass only, and each guide ends with
+  a list of what the game does not tell us.
 
 ## Quick start
 
