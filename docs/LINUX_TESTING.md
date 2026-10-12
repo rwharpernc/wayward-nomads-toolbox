@@ -340,6 +340,21 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 - [ ] **History chart:** the "Last 14 days" line draws a row of blocks of different heights (no empty boxes) and "Busiest site" names a site.
 - [ ] **Overlay card footer:** with a fleet carrier it reads `N remaining  N to buy  N to haul`; without one, `N trips to finish`.
 
+## 7i. Added in 1.7.0 (Windows-tested only: check on Linux)
+
+- [ ] **Boxel Survey catch-up:** scan a few bodies with EDMC closed, start EDMC: Settings -> Boxel Survey shows them, and a second
+      restart changes nothing. (Needs the journal folder; on Linux that is inside the Proton prefix.)
+- [ ] **Powerplay cycle tally:** the panel shows **Cycle N merits** and **Cycle N CP** under the session lines, and they are still
+      there after restarting EDMC.
+- [ ] **Trade, Round trip:** each pair lists its loads with prices, profit per tonne, supply and demand; docked at a fleet carrier
+      the result says it started from the carrier. The Trade setting for the search radius changes how far it looks.
+- [ ] **Trade, Session page:** ends with the game's career totals for the commander.
+- [ ] **Waypoint Route, From plotted route:** plot a route in the game, press the button: its systems are added.
+- [ ] **Community goals:** the Community Goals page lists payouts under **Paid out**.
+- [ ] **Colonization, Find all:** the results begin with a suggested shopping route, and **Copy Route** puts it on the clipboard.
+- [ ] **Planned Builds:** the **Full cost** column fills, the window's subtitle adds up the planned builds, and clicking a row names
+      the building and its five biggest commodities.
+
 ## Reporting
 
 Open an issue with your setup line, the failing step number, and the log excerpt.

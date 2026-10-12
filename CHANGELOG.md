@@ -3,15 +3,13 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.7.0 - 2026-10-12
 
 ### Added
 - **Powerplay panel: a cycle tally under the session tally.** Two new lines, **Cycle N merits** and **Cycle N CP**, total
   what you have earned across every system in the current Powerplay cycle (Thursday 07:00 UTC to the next). Unlike the
   session lines they carry over between game sessions, include what the start-up journal scan filled in, and reset when
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
-
-### Added
 - **Boxel Survey: the survey log catches up from recent journals.** Notable bodies and biological signals scanned while EDMC was closed (the
   last 14 days) are now added at start-up, along with the systems that were missing. A system the log already had keeps its scanned count,
   nothing is counted twice, and the game's journals are only read.
