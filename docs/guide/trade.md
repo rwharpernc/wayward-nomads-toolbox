@@ -89,6 +89,12 @@ out when it is 0). Below those, when the journal has told WNTB, come the carrier
 its balance and the trade orders you have set. Only shown if you have a carrier; see
 [below](#your-fleet-carrier-and-squadron-carrier).
 
+**Lifetime.** Near the bottom, the game's own career totals for this commander, kept apart from the session: market profits, tonnes
+traded, markets traded with, your best single deal and average profit; mining profits and tonnes mined; exobiology data sold and
+species found; and, if you own a fleet carrier, its jumps, distance, tonnes exported and imported and trade profit. These come from
+the `Statistics` event the game writes **when you log in**, so they are as of your last login (the page says the date) and do not
+change while you play; they never feed the session figures above. Nothing is sent anywhere.
+
 ### Buttons
 
 - **Reset**: starts the tally again (asks whether to save first if there are unsaved trades).
@@ -294,6 +300,7 @@ the figure it has and says how sure it is. Here is every gap we know about, what
 | A list of what commodities are in the carrier's bay | Only the **total tonnes** in the bay. Commodity names are not in the space report. | The carrier's own orders are the closest thing: WNTB lists them (below), and a sale order names a commodity that is aboard. Carrier Management in the game lists the contents. WNTB does not invent a per-commodity list. |
 | Trade orders to be tracked as they fill | The game writes an order **when you place or cancel it** (`CarrierTradeOrder`), not each tonne it later moves. | WNTB shows the orders you have set (commodity, tonnes, price). The tonnes that have moved, and the cargo figure, only update in the next space report: open Carrier Management after an order completes. Until then the cargo figure may be too high and shows a `~`. |
 | Space reserved for orders to follow along | Only updates in the space report. | Same: open Carrier Management. |
+| Lifetime totals to move while you play | The game writes its `Statistics` event only at login. | They refresh the next time you log in. |
 | Tritium, location and jump plans | Tritium comes from the space report and from each fuel deposit you make; the location is written at login and after a jump; a jump request carries the destination and departure time. Fuel the carrier burns jumping is **not** written. | WNTB shows the tritium, where the carrier is and a planned jump. After a jump, open Carrier Management for the real tritium figure. A plan is dropped once its departure time is well past. |
 | Cargo moved by someone else to be seen | WNTB follows the transfers **your** journal records while you are docked at the carrier. We have not seen the game report anyone else's. | Open Carrier Management when someone else may have used the bay (a squadron carrier especially). |
 | The figure to be right right after unloading | The transfer is in the journal but the total is not updated. | WNTB counts the transfer itself; open Carrier Management after a big load to put the exact number back. |

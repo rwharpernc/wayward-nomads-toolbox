@@ -57,6 +57,7 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_stock.py` | pure + file | The stock book (bought, not yet sold) and `trade_stock.json` |
 | `trade_history.py` | pure + file | Saved-session records, the `HistoryBook`, and `trade_history.json` |
 | `trade_hold.py` | pure + file read | Mission and stolen tonnes in the hold from the `Cargo` inventory / `Cargo.json` |
+| `trade_lifetime.py` | pure + file read | The game's lifetime totals from the `Statistics` event: parsing, the Session page's section, and finding each commander's newest event in the journals |
 | `trade_stats.py` | pure | Every number and table row shown from a saved session |
 | `trade_history_window.py` | UI | The Trade History pop-out window (uikit) |
 | `trade_market.py` | pure + file read | `Market.json` parsing and cargo valuation |
@@ -139,6 +140,7 @@ Journal events and EDMC state read by `trade_panel.handle_event` (every handler 
 | `LoadGame`, `StartUp`, `Commander` | Session boundaries; which commander the events belong to |
 | `CarrierStats`, `CarrierBuy`, `CargoTransfer` | Carrier cargo space |
 | `CarrierDepositFuel`, `CarrierLocation`, `CarrierJumpRequest`, `CarrierJumpCancelled`, `CarrierTradeOrder`, `CarrierFinance` (and `FuelLevel`, `Finance` and `PendingDecommission` on `CarrierStats`) | Running the carrier: tritium, location, planned jump, orders, balance (`trade_carrier_ops.py`) |
+| `Statistics` | The commander's lifetime totals (`Trading`, `Mining`, `Exobiology`, `FLEETCARRIER`): kept in memory per commander and shown as the Session page's last section, labelled with the event's date. The game writes it at login only. At start-up a worker thread reads the newest one per commander from the newest 40 journal files (`trade_lifetime.latest_in_journals`), and a live one is never replaced by an older one found there |
 | `Cargo` (its `Inventory`, else `Cargo.json` in the journal folder) | Mission and stolen tonnes in the hold (`trade_hold.py`) |
 | `state["Cargo"]`, `["CargoCapacity"]`, `["Credits"]`, `["ShipType"]` | Hold, capacity, route budget, ship fallback |
 
@@ -553,6 +555,7 @@ time, skipping the events it already counted, the record and book, and every num
 `tests/test_trade_journal_scan.py` (finding new, grown and copied journal files, oldest-first ordering, the first-pass floor,
 and applying a file twice or an older one late) and
 `tests/test_trade_route_start.py` (the per-commander route start, its file, and docks fed from the scan) and
+`tests/test_trade_lifetime.py` (reading the `Statistics` event, the lifetime section, and finding each commander's newest event) and
 `CarrierRunningTests` and `HoldSplitTests` in `tests/test_trade_search.py` (the carrier operations facts, newest-wins merging,
 and the mission / stolen split). The History window is opened by `tests/trade_history_window_smoke.py` (see below). The drawn page is
 checked by `tests/trade_view_smoke.py` (run by `test_trade_view_smoke.py` in a subprocess, skipped without a display):

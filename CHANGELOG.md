@@ -12,6 +12,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Trade: lifetime totals.** The Session page now ends with the game's own career totals for the commander (trading, mining, exobiology
+  and, with a fleet carrier, the carrier), from the `Statistics` event the game writes at login. They are labelled with that login's
+  date and kept apart from the session.
 - **Trade: count fines and bounties paid as a running cost (optional).** A new Trade setting, off by default, adds a **Fines and
   bounties paid** line to the running costs for payments made after you turn it on.
 - **Missions: Community Goal payouts.** The Community Goals page now lists the latest three payouts under **Paid out** (the goal, the

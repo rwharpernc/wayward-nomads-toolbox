@@ -163,6 +163,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_commodities.py` | Commodity name matching and the type-ahead list |
 | `trade_commodities_data.py` | The generated commodity table (from FDevIDs) |
 | `trade_commodity_entry.py` | The type-ahead Commodity box widget |
+| `trade_lifetime.py` | The game's lifetime totals (the `Statistics` event) for Trade's Session page: parsing, the section's blocks, and finding each commander's newest event in the journals |
 | `trade_hold.py` | Mission and stolen tonnes in the ship's hold, from the `Cargo` inventory |
 | `trade_history.py` | Saved sessions, the `HistoryBook` and `trade_history.json` |
 | `trade_history_window.py` | The Trade History window |
