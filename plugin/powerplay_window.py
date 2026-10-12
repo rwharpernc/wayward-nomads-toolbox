@@ -58,6 +58,7 @@ _ACTIVITY_COLUMNS = (
     Column("merits", "Merits", 110, anchor="e"),
     Column("ratio", "Merits/CP", 110, anchor="e"),
     Column("cp", "Est. CP", 110, anchor="e"),
+    Column("merits_hr", "Merits/hr", 110, anchor="e"),
     Column("cp_hr", "CP/hr", 110, anchor="e"),
 )
 _HISTORY_COLUMNS = (
@@ -374,6 +375,7 @@ class _CurrentTab:
                 f"{merits:,}",
                 f"{ratio:g}" if ratio else "—",
                 f"{cp:,.1f}" if has_cp else "—",
+                f"{per_hour(merits, hours):,.0f}" if hours > 0 else "—",
                 f"{cp_hr:,.1f}" if has_cp and hours > 0 else "—",
             ))
 
@@ -382,6 +384,7 @@ class _CurrentTab:
             f"{merits_sum:,}",
             "",
             f"{cp_sum:,.1f}",
+            f"{per_hour(merits_sum, hours):,.0f}" if hours > 0 else "—",
             f"{per_hour(cp_sum, hours):,.1f}" if hours > 0 else "—",
         ))
         self._activity_table.set_rows(rows)
