@@ -121,10 +121,21 @@ class OrderAndAvailabilityTests(unittest.TestCase):
         self.assertEqual({r.name: r.available for r in built.rows}, {"Water": False, "Steel": True})
         look = card.LEGACY
         colours = self.colours(built)
-        self.assertEqual(colours["Water"], look.color("muted"))
+        self.assertEqual(colours["Water" + card.NOT_SOLD], look.color("faint"))
         self.assertEqual(colours["Steel"], look.color("text"))
+        self.assertEqual(colours["CHEMICALS"], look.color("title"))     # a category heading is not a column heading
         covered = card.build_card(site(), {"water": 50}, {}, show_fc=False, grouped=True, market_keys=frozenset({"steel"}))
         self.assertEqual(self.colours(covered)["Water ✓"], look.color("ok"))        # covered: keeps its green
+
+    def test_a_commodity_sits_in_from_its_category_heading_and_the_name_column_fits_the_note(self) -> None:
+        built = card.build_card(site(), {}, {}, show_fc=False, grouped=True, market_keys=frozenset({"steel"}))
+        client = FakeClient()
+        card.render(client, built, 20, 300)
+        xs = {item[2]: item[4] for item in client.sent if item[0] == "msg" and item[1].endswith("_0") and item[2]}
+        self.assertEqual(xs["CHEMICALS"], 20)
+        self.assertGreater(xs["Steel"], 20)
+        flat = card.build_card(site(), {}, {}, show_fc=False, grouped=True, market_keys=None)
+        self.assertGreater(card.block_rect(built)[2], card.block_rect(flat)[2])      # the note makes the name column wider
 
     def test_no_dimming_without_a_market(self) -> None:
         for keys in (None, frozenset()):
@@ -392,8 +403,9 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(client.sent[0][:2], ("shape", card.CARD_ID))
         texts = self.texts(client)
         self.assertEqual([texts[f"s1_{i}"] for i in range(1, 6)], ["Required", "Remaining", "FC", "Cargo", "To buy"])
-        self.assertEqual(texts["s2_0"], "Chemicals")          # grouped: a heading before each market category
-        self.assertEqual(texts["s4_0"], "Metals")
+        self.assertEqual(texts["s2_0"], "CHEMICALS")          # grouped: a heading before each market category
+        self.assertEqual(texts["s4_0"], "METALS")
+        self.assertTrue(texts["s5_0"].endswith(card.NOT_SOLD))     # Aluminium: the market here does not sell it
         self.assertEqual(texts["s6_0"], "Steel ✓")
         self.assertEqual(texts["s6_1"], "15,000")
         self.assertEqual(texts["s6_4"], "14,000")

@@ -62,6 +62,15 @@ class Palette:
     series: Tuple[str, str, str, str]  # four distinct bar colors (inventory bars)
 
 
+def darken(color: str, factor: float) -> str:
+    """'#rrggbb' (or '#aarrggbb', alpha kept) with each channel scaled by `factor` (0 to 1)."""
+    if len(color) not in (7, 9) or not color.startswith("#"):
+        return color
+    head, rgb = color[:-6], color[-6:]
+    scaled = "".join(f"{int(int(rgb[i:i + 2], 16) * max(0.0, min(1.0, factor))):02x}" for i in (0, 2, 4))
+    return head + scaled
+
+
 def with_alpha(color: str, alpha: int) -> str:
     """'#rrggbb' as '#aarrggbb' with the given alpha (0 to 255); a color that already has one is returned unchanged."""
     if len(color) == 7 and color.startswith("#"):
@@ -91,7 +100,8 @@ COLOR_BLIND_SAFE = Palette(      # the Okabe-Ito set, which stays distinct for t
 SCHEMES: Dict[str, Palette] = {p.name: p for p in (
     ELITE_ORANGE, ICE_BLUE, PHOSPHOR_GREEN, AMBER_MONO, HIGH_CONTRAST, COLOR_BLIND_SAFE)}
 
-ROLES = ("border", "fill", "title", "header", "text", "muted", "ok", "warn", "info", "danger")
+ROLES = ("border", "fill", "title", "header", "text", "muted", "faint", "ok", "warn", "info", "danger")
+FAINT_FACTOR = 0.5   # "faint" is the scheme's muted color at this fraction of its brightness: clearly lesser than muted
 
 
 def scheme_named(name: Optional[str]) -> Palette:
@@ -112,6 +122,8 @@ class Look:
         """The color for a role ('title', 'text', 'ok', 'border' ...)."""
         if role not in ROLES:
             raise ValueError(f"unknown color role: {role!r}")
+        if role == "faint":
+            return darken(self.palette.muted, FAINT_FACTOR)
         return getattr(self.palette, role)
 
     def accent(self, index: int) -> str:

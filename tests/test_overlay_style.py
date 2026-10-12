@@ -44,11 +44,20 @@ class PaletteTests(unittest.TestCase):
         for name, palette in S.SCHEMES.items():
             self.assertEqual(name, palette.name)
             for role in S.ROLES:
-                self.assertRegex(getattr(palette, role), HEX, f"{name} {role}")
+                if role != "faint":      # derived from muted (below)
+                    self.assertRegex(getattr(palette, role), HEX, f"{name} {role}")
+            faint, muted = S.Look(palette).color("faint"), palette.muted
+            self.assertRegex(faint, HEX, f"{name} faint")
+            self.assertLess(int(faint[1:3], 16), int(muted[1:3], 16), f"{name}: faint is darker than muted")
             self.assertEqual(len(palette.accents), 3, name)
             self.assertEqual(len(palette.series), 4, name)
             for color in palette.accents + palette.series:
                 self.assertRegex(color, HEX, name)
+
+    def test_darken_scales_each_channel_and_keeps_alpha(self):
+        self.assertEqual(S.darken("#808040", 0.5), "#404020")
+        self.assertEqual(S.darken("#80ffffff", 0.5), "#807f7f7f")
+        self.assertEqual(S.darken("white", 0.5), "white")
 
     def test_card_fills_are_translucent_black_so_the_game_shows_through(self):
         for name, palette in S.SCHEMES.items():

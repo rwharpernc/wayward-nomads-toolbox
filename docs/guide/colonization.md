@@ -308,11 +308,11 @@ It draws a table, with the site name as its title and the columns **Commodity**,
 
 **Order, the same as SrvSurvey.** At a **construction site** the rows are alphabetical, so they stay put while numbers change.
 Everywhere else (a commodity market, the carrier's inventory) they are **grouped under the market's categories** (Chemicals, Foods,
-Industrial Materials, Machinery, Metals, Technology and so on), with a heading line for each group and the commodities alphabetical
-inside it. A commodity WNTB has no category for goes under **Other**, last.
+Industrial Materials, Machinery, Metals, Technology and so on), with a heading line for each group (in capitals, in the card's title color) and the commodities alphabetical
+inside it, indented under their heading. A commodity WNTB has no category for goes under **Other**, last.
 
-**Dimmed when this market does not sell it.** While you are docked at a commodity market, a commodity that market does not have for sale is
-shown dimmed (gray), so what you can buy here stands out. A commodity your hold and your fleet carrier already cover keeps its green
+**Grayed out when this market does not sell it.** While you are docked at a commodity market, a commodity that market does not have for
+sale is shown in a faint gray with **not available** after its name, so what you can buy here stands out. A commodity your hold and your fleet carrier already cover keeps its green
 (or amber) however the market stocks it. Nothing is dimmed away from a market, at a construction site, or if WNTB has not seen this
 market (open its commodity screen once).
 

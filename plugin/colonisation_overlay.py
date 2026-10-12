@@ -161,11 +161,13 @@ def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit - 1] + "…"
 
 
-# Colors come from the look's roles: border and fill (the card), title, header (column headings), text, ok (the ship plus the fleet
-# carrier already cover what is needed), warn (they are more than is needed), info (the carrier column once it covers the need) and
-# muted (the carrier column while it does not).
+# Colors come from the look's roles: border and fill (the card), title (the card's title and the category headings), header (column
+# headings), text, ok (the ship plus the fleet carrier already cover what is needed), warn (they are more than is needed), info (the
+# carrier column once it covers the need), muted (the carrier column while it does not) and faint (a commodity the market does not sell).
 CHECK = "✓"
 NAME_CHARS = 30
+NOT_SOLD = "  not available"    # beside a commodity the market here does not sell
+INDENT_CHARS = 2             # a commodity sits this far in from its category heading when the card is grouped
 # The wire protocol has no text metrics, so widths are estimated from character counts. Headings and numbers in the overlay font run
 # wider than the plain estimate (capitals, digits), so this card measures a little wide and the box always holds the text.
 CHAR_SCALE = 1.2
@@ -257,6 +259,11 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc, buy_trips, grouped)
 
 
+def _name_text(row: Row) -> str:
+    """The commodity's name cell: clipped, a tick when covered, and a note when the market here does not sell it (unless covered)."""
+    return _clip(row.name, NAME_CHARS) + (f" {CHECK}" if row.covered else "") + ("" if row.available or row.covered else NOT_SOLD)
+
+
 def _columns(card: Card) -> List[Tuple[str, str]]:
     """(heading, Row attribute) of each number column, left to right; FC only for a commander with a carrier."""
     return ([("Required", "required"), ("Remaining", "need")] + ([("FC", "fc")] if card.show_fc else [])
@@ -267,7 +274,8 @@ def _layout(card: Card, look: Look = LEGACY) -> Tuple[int, List[int], int]:
     """(x of the name column relative to the card, right edges of the number columns, total text width) in px,
     from character counts at the look's text size - the wire protocol has no text metrics, so this errs a little wide."""
     char = look.char_px("normal") * CHAR_SCALE
-    name_chars = max([len("Commodity")] + [len(_clip(r.name, NAME_CHARS)) + 2 for r in card.rows])
+    indent = INDENT_CHARS if card.grouped else 0
+    name_chars = max([len("Commodity")] + [len(_name_text(r)) + 2 + indent for r in card.rows])
     columns = [(head, [getattr(r, attr) for r in card.rows]) for head, attr in _columns(card)]
     widths = [max([len(head)] + [len(f"{v:,}") for v in values]) + 2 for head, values in columns]
     edges, edge = [], name_chars
@@ -313,12 +321,11 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
     for row in card.rows:
         if card.grouped and row.category != category:
             category = row.category
-            slots.append([(0, category, look.color("header"), x)])
+            slots.append([(0, category.upper(), look.color("title"), x)])
         # Covered rows keep their green or amber; otherwise a commodity the market here does not sell is dimmed.
         colour = (look.color("warn") if row.surplus else look.color("ok") if row.covered
-                  else look.color("text") if row.available else look.color("muted"))
-        name = _clip(row.name, NAME_CHARS) + (f" {CHECK}" if row.covered else "")
-        cells = [(0, name, colour, x)]
+                  else look.color("text") if row.available else look.color("faint"))
+        cells = [(0, _name_text(row), colour, x + (int(round(INDENT_CHARS * char)) if card.grouped else 0))]
         for column, ((head, attr), edge) in enumerate(zip(_columns(card), edges), start=1):
             value = getattr(row, attr)
             if not value:
@@ -328,7 +335,7 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
             if attr == "fc":
                 cell_colour = look.color("info") if row.fc >= row.need else look.color("muted")
             elif attr == "to_buy":
-                cell_colour = look.color("text") if row.available else look.color("muted")
+                cell_colour = look.color("text") if row.available else look.color("faint")
             cells.append((column, text, cell_colour, right(text, edge)))
         slots.append(cells)
     if card.hidden:

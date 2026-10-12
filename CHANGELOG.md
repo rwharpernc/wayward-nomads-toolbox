@@ -29,7 +29,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ### Changed
 - **Overlay shopping list: SrvSurvey's order, and dimming what the market does not sell.** At a construction site the rows are
   alphabetical as before; at a market or the carrier's inventory they are grouped under the market's categories (a heading for each,
-  alphabetical within it). A commodity the market you are docked at does not sell is dimmed unless your hold and carrier already cover it.
+  alphabetical within it). A commodity the market you are docked at does not sell is grayed out (a much fainter gray) with "not available" after its name, unless
+  your hold and carrier already cover it. Category headings are in capitals in the title color, and the commodities under them are indented.
 - **Overlay text size and spacing are fixed.** Settings -> Overlays -> Appearance now only has the color scheme. Every overlay uses one
   size (one step above normal) with the default padding and line spacing, so the shopping list's columns stay aligned. Earlier saved
   size, padding and spacing choices are ignored.
