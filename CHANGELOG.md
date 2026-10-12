@@ -3,13 +3,22 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.7.1 - 2026-10-12
 
 ### Added
 - **A plugin version line in the EDMC panel.** The first line under the mode buttons says **Plugin: vX.Y.Z**. When an automatic
   update has been downloaded it becomes a bold black-on-orange **vX.Y.Z download - Restart EDMC**, so the restart is hard to miss
   (it replaces the small notice in the title row, which could be missed if the download finished while EDMC was still starting).
   Clicking it opens the release page.
+
+### Fixed
+- **The "update downloaded" notice could be missed.** If an automatic update finished downloading before EDMC had built the WNTB
+  panel, the notice was dropped. The panel now shows the current state when it is built.
+
+### Documentation
+- The README and Acknowledgements credit CMDR Bocheaux (Wayward Nomads) only.
+- Getting started describes the plugin version line and the restart that applies an update.
+- The Linux checklist has the version line and the 1.7.0 features to check.
 
 ### Developer
 - `tests/test_powerplay_backfill.py` no longer depends on today's date.
