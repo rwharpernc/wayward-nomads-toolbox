@@ -83,12 +83,10 @@ Things I would like to add or am still looking into, by feature. This is a wish 
 can change, and some of it may turn out not to be possible. If one of these matters to you, tell me (see [Getting help](#getting-help)).
 
 **Colonization**
-- **Raven Colonial, further.** The Planned Builds window already reads Raven Colonial for a system's plan. Next I am looking at
-  showing a project's remaining needs and other commanders' progress beside yours (still read-only), and a "what the whole squad
-  still needs" line. Sending your own deliveries there would be strictly **opt-in and off by default**, and the internet page would
-  list exactly what is sent and when before it ever exists.
-- **Where to buy from Raven Colonial's market search,** beside Spansh or instead of it. It could search the whole list in one
-  request. I am checking how its filters behave first.
+- **Raven Colonial** is used as a read-only reference (the Planned Builds window reads a system's plan). Sending your own deliveries
+  there is not planned for now; if it ever happens it would be strictly **opt-in and off by default**, and the internet page would
+  list exactly what is sent and when before it exists.
+- **Where to buy, improved on WNTB's own terms:** searching for the whole list with fewer requests, from the sources WNTB already uses.
 - **Team projects:** several commanders on one project, with a "what the team still needs" line. Everything today is per commander and
   would stay that way until you choose to share.
 - **Co-op building and colony tracking** through a separate app that is in development; WNTB is to connect to it when it is ready.
