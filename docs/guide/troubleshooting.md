@@ -52,6 +52,23 @@ they were shared:
   interrupted, log in again or press **BKF**.
 - The Powerplay Sessions window's **History** tab now shows only the commander you are playing. The other commanders' sessions are still saved.
 
+### EDMC shows "Frontier CAPI query failure" for a commander with no fleet carrier
+
+This line comes from **EDMC itself**, not from WNTB. WNTB never asks Frontier for anything; it only receives carrier data
+when EDMC fetches it.
+
+EDMC's **Enable Fleetcarrier CAPI Queries** option (in EDMC's own Settings) is one switch for every commander. When it is on,
+EDMC asks Frontier for the fleet carrier at game start-up and on other events that any commander produces (a cargo
+transfer, buying a commodity), without first checking that the commander owns a carrier. Frontier answers with nothing for a
+commander who has none, and EDMC reports that as a failure. It does no harm, and WNTB works normally; the line is noise.
+
+If it bothers you:
+
+- Turn that option off while you play a commander without a carrier, and back on for the one who has one. The carrier's real
+  cargo and the Carrier Locker in Inventory only come from this query, so they need it on (see
+  [Covered or the Carrier row looks wrong](#covered-or-the-carrier-row-looks-wrong)).
+- Or leave it on: the commander with a carrier needs it, and the failures for the others are harmless.
+
 ## Overlay
 
 ### On-screen alerts don't show up
