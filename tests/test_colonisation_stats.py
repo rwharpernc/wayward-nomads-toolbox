@@ -5,10 +5,16 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
+import types
 import unittest
 from datetime import date
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+if "config" not in sys.modules:   # so this file also runs on its own
+    _stub = types.ModuleType("config")
+    _stub.appname = "EDMarketConnector"
+    _stub.config = types.SimpleNamespace(get_str=lambda key: "", default_journal_dir="")
+    sys.modules["config"] = _stub
 
 from plugin import colonisation as C  # noqa: E402
 from plugin import colonisation_history as H  # noqa: E402
@@ -184,8 +190,42 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(S.average_text(0.2), "under a day")
         self.assertEqual(S.average_text(None), "–")
 
+    def test_the_daily_chart_covers_the_last_fourteen_days_oldest_first(self):
+        ledger = H.DeliveryLedger()
+        ledger.apply_contribution("A", contribution("2026-09-27T10:00:00Z", [("steel", 999)]))      # 15 days back: outside
+        ledger.apply_contribution("A", contribution("2026-09-28T10:00:00Z", [("steel", 10)]))       # 14 days back: the first day
+        ledger.apply_contribution("A", contribution("2026-10-11T10:00:00Z", [("steel", 40)]))       # today
+        history = S.history_for([], ledger.record("A"), today=date(2026, 10, 11))
+        self.assertEqual(len(history.daily), S.CHART_DAYS)
+        self.assertEqual((history.daily[0], history.daily[-1], sum(history.daily)), (10, 40, 50))
+
+    def test_the_chart_text_scales_to_the_busiest_day_and_marks_quiet_days(self):
+        self.assertEqual(S.chart_text((0, 0, 0)), "")
+        self.assertEqual(S.chart_text(()), "")
+        self.assertEqual(S.chart_text((0, 100, 0)), "·█·")
+        text = S.chart_text((1, 50, 100, 25, 0))
+        self.assertEqual((text[0], text[2], text[4]), ("▁", "█", "·"))
+        self.assertTrue(text[1] < text[2] and text[3] < text[1])              # taller blocks sort higher
+        self.assertEqual(len(S.chart_text((5,) * S.CHART_DAYS)), S.CHART_DAYS)  # always one character a day
+
+    def test_the_busiest_site_is_named_from_the_tracked_sites(self):
+        alpha, beta = site(market_id=7, name="Alpha Port"), site(market_id=8, name="Beta Port")
+        ledger = H.DeliveryLedger()
+        ledger.apply_contribution("A", contribution("2026-10-10T10:00:00Z", [("steel", 30)], market_id=7))
+        ledger.apply_contribution("A", contribution("2026-10-10T11:00:00Z", [("steel", 90)], market_id=8))
+        ledger.apply_contribution("A", contribution("2026-10-10T12:00:00Z", [("steel", 20)], market_id=7))
+        history = S.history_for([alpha, beta], ledger.record("A"), today=date(2026, 10, 11))
+        self.assertEqual(history.top_site, ("Beta Port", 90))
+
+    def test_a_site_that_is_no_longer_tracked_still_gets_a_name(self):
+        ledger = H.DeliveryLedger()
+        ledger.apply_contribution("A", contribution("2026-10-10T10:00:00Z", [("steel", 30)], market_id=12345))
+        history = S.history_for([], ledger.record("A"), today=date(2026, 10, 11))
+        self.assertEqual(history.top_site, ("Construction site 12345", 30))
+
     def test_nothing_yet(self):
         history = S.history_for([], {})
+        self.assertEqual((history.daily, history.top_site), ((0,) * S.CHART_DAYS, None))
         self.assertEqual((history.sites, history.tonnes, history.busiest_day, history.average_days), (0, 0, None, None))
         self.assertEqual(S.sites_text(history), "None tracked yet")
 

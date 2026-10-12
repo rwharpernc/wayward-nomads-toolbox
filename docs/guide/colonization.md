@@ -35,7 +35,9 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Sites | How many tracked sites are done, in progress and failed |
 | You delivered | The tons and number of deliveries you made |
 | Recently | Tons in the last 7 and 30 days |
+| Last 14 days | A row of blocks, one a day (oldest first), as tall as that day's tons against your busiest of the 14; a dot is a day with nothing delivered. The peak is named beside it |
 | Best day | Your biggest single day |
+| Busiest site | The site you delivered the most tons to, with the tons |
 | Most delivered | Your top three commodities |
 | Average build | Days from the first time WNTB saw a site to the day the depot reported it complete, over the sites for which both are known |
 | Note | "Counted since [date]": the first delivery WNTB has counted |

@@ -11,6 +11,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   session lines they carry over between game sessions, include what the start-up journal scan filled in, and reset when
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
+### Added
+- **Colonization History: a 14-day chart and your busiest site.** Two new lines on the COL page: a row of blocks showing the tons you
+  delivered each of the last 14 days, and the construction site you have delivered the most to.
+
 ### Changed
 - **Colonization history now goes back as far as your journals do.** The first time WNTB sees a commander it rebuilds their delivery
   history once, in the background, from every journal file they have, instead of only the last 14 to 30 days. It never replaces

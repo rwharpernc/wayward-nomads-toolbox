@@ -445,7 +445,10 @@ class ColonisationController:
         self._set("h_tonnes", f"{h.tonnes:,} t in {h.deliveries:,} {'delivery' if h.deliveries == 1 else 'deliveries'}"
                   if has else "None counted yet")
         self._set("h_recent", f"{h.last_7_days:,} t this week · {h.last_30_days:,} t this month", show=has)
+        chart = stats.chart_text(h.daily)
+        self._set("h_chart", f"{chart}  (peak {max(h.daily):,} t a day)" if chart else "", show=bool(chart))
         self._set("h_busiest", f"{h.busiest_day[1]:,} t on {h.busiest_day[0]}" if h.busiest_day else "", show=bool(h.busiest_day))
+        self._set("h_site", f"{_clip(h.top_site[0], 30)} ({h.top_site[1]:,} t)" if h.top_site else "", show=bool(h.top_site))
         self._set("h_top", ", ".join(f"{_clip(label, 22)} {tons:,}" for label, tons in h.top_commodities),
                   show=bool(h.top_commodities))
         self._set("h_average", stats.average_text(h.average_days), show=h.average_days is not None)
@@ -506,7 +509,9 @@ class ColonisationController:
         line("h_sites", "Sites")
         line("h_tonnes", "You delivered")
         line("h_recent", "Recently")
+        line("h_chart", f"Last {stats.CHART_DAYS} days", wide=True)
         line("h_busiest", "Best day")
+        line("h_site", "Busiest site", wide=True)
         line("h_top", "Most delivered (t)", wide=True)
         line("h_average", "Average build")
         line("h_since", "Note")

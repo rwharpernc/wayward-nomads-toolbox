@@ -18,6 +18,9 @@ from .colonisation import Site, _parse_time
 
 TOP_GAPS = 4          # biggest outstanding commodities named
 TOP_COMMODITIES = 3   # most-delivered commodities named
+CHART_DAYS = 14       # days drawn in the little tonnes-per-day chart
+_CHART_STEPS = "▁▂▃▄▅▆▇█"   # one block per day, taller for more tonnes
+_CHART_QUIET = "·"           # a day with nothing delivered
 
 
 def _tons(value: int) -> str:
@@ -125,6 +128,8 @@ class History:
     average_days: Optional[float]   # days from first seen to complete, over the sites for which both are known
     tracked_required: int    # tons the tracked sites need in all
     tracked_delivered: int   # tons delivered to them by anyone
+    daily: Tuple[int, ...] = ()   # tons delivered on each of the last CHART_DAYS days, oldest first
+    top_site: Optional[Tuple[str, int]] = None   # the site this commander delivered most to: (name, tons)
 
 
 def history_for(sites: Sequence[Site], record: Mapping[str, Any], today: Optional[date] = None) -> History:
@@ -144,6 +149,10 @@ def history_for(sites: Sequence[Site], record: Mapping[str, Any], today: Optiona
         if site.complete and start and end and end >= start:
             spans.append((end - start).total_seconds() / 86400)
     first = str(record.get("first") or "")
+    daily = tuple(int(by_day.get((today - timedelta(days=back)).isoformat(), 0) or 0) for back in range(CHART_DAYS - 1, -1, -1))
+    names = {str(s.market_id): s.display_name() for s in sites}
+    by_site = [(names.get(str(key), f"Construction site {key}"), int(tons or 0)) for key, tons in (record.get("by_site") or {}).items()]
+    top_site = max(by_site, key=lambda kv: (kv[1], kv[0].casefold()), default=None)
     return History(
         sites=len(sites), completed=sum(1 for s in sites if s.complete), failed=sum(1 for s in sites if s.failed),
         in_progress=sum(1 for s in sites if s.active), systems=len({s.system for s in sites if s.system}),
@@ -153,7 +162,20 @@ def history_for(sites: Sequence[Site], record: Mapping[str, Any], today: Optiona
         top_commodities=tuple((label, tonnes) for label, tonnes in commodities if tonnes > 0)[:TOP_COMMODITIES],
         since=first[:10], average_days=sum(spans) / len(spans) if spans else None,
         tracked_required=sum(r.required for s in sites for r in s.resources),
-        tracked_delivered=sum(r.provided for s in sites for r in s.resources))
+        tracked_delivered=sum(r.provided for s in sites for r in s.resources),
+        daily=daily, top_site=top_site if top_site and top_site[1] > 0 else None)
+
+
+def chart_text(daily: Sequence[int]) -> str:
+    """The tonnes delivered per day as a row of blocks, oldest day first, each scaled to the busiest day shown; a day with
+    nothing is a dot. Empty when nothing was delivered in the period. Always as many characters as there are days, so it
+    cannot widen the panel."""
+    peak = max(daily, default=0)
+    if peak <= 0:
+        return ""
+    last = len(_CHART_STEPS) - 1
+    return "".join(_CHART_QUIET if tons <= 0 else _CHART_STEPS[min(last, max(0, -(-tons * len(_CHART_STEPS) // peak) - 1))]
+                   for tons in daily)
 
 
 def sites_text(history: History) -> str:

@@ -334,6 +334,7 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 - [ ] **History rebuild (added 2026-10-12):** the first start after updating, the log says "Colonization history rebuilt for [CMDR]"
       and the History note's "Counted since" date moves back to the oldest delivery in your journals. Restarting EDMC does not
       rebuild again, and the totals do not double. (Needs Elite's journal folder set; on Linux that is inside the Proton prefix.)
+- [ ] **History chart:** the "Last 14 days" line draws a row of blocks of different heights (no empty boxes) and "Busiest site" names a site.
 - [ ] **Overlay card footer:** with a fleet carrier it reads `N remaining  N to buy  N to haul`; without one, `N trips to finish`.
 
 ## Reporting
