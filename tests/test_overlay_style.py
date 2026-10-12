@@ -149,17 +149,22 @@ class SavedChoicesTests(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_nothing_saved_gives_the_default_look(self):
-        self.assertEqual(A.current_look(), S.DEFAULT)
-
-    def test_saved_choices_are_read_back(self):
-        STORE.update({A.CFG_SCHEME: "High contrast", A.CFG_TEXT: "1", A.CFG_PADDING: "14", A.CFG_SPACING: "7"})
+    def test_nothing_saved_gives_the_default_scheme_at_the_fixed_size(self):
         look = A.current_look()
-        self.assertEqual((look.palette.name, look.text_level, look.pad_extra, look.line_extra), ("High contrast", 1, 14, 7))
+        self.assertEqual((look.palette, look.text_level, look.pad_extra, look.line_extra),
+                         (S.DEFAULT.palette, A.LOCKED_TEXT_LEVEL, A.LOCKED_PADDING, A.LOCKED_SPACING))
 
-    def test_damaged_settings_fall_back_instead_of_failing(self):
-        STORE.update({A.CFG_SCHEME: "???", A.CFG_TEXT: "big", A.CFG_PADDING: "", A.CFG_SPACING: "x"})
-        self.assertEqual(A.current_look(), S.DEFAULT)
+    def test_only_the_scheme_is_read_back_and_size_and_spacing_cannot_be_changed(self):
+        # Choices saved by earlier versions are ignored.
+        STORE.update({A.CFG_SCHEME: "High contrast", "wntb_overlay_text_level": "2", "wntb_overlay_padding": "14",
+                      "wntb_overlay_line_spacing": "7"})
+        look = A.current_look()
+        self.assertEqual((look.palette.name, look.text_level, look.pad_extra, look.line_extra),
+                         ("High contrast", A.LOCKED_TEXT_LEVEL, A.LOCKED_PADDING, A.LOCKED_SPACING))
+
+    def test_a_damaged_scheme_falls_back_instead_of_failing(self):
+        STORE.update({A.CFG_SCHEME: "???"})
+        self.assertEqual(A.current_look().palette, S.DEFAULT.palette)
 
     def test_every_overlay_module_takes_its_look_from_the_shared_settings(self):
         plugin_dir = os.path.join(os.path.dirname(__file__), "..", "plugin")

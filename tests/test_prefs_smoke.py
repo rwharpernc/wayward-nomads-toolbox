@@ -36,7 +36,7 @@ class PrefsSmokeTests(unittest.TestCase):
                      "Overlays > Discovery", "Overlays > Inventory", "Overlays > Interdiction Warning",
                      "Overlays > Landing", "Overlays > Mining", "Overlays > Notable Bodies", "Overlays > Screenshots"):
             self.assertIn(leaf, result.stdout)
-        self.assertIn("OVERLAY APPEARANCE SAVED: 4 of 4", result.stdout)
+        self.assertIn("OVERLAY APPEARANCE SAVED: 1 of 1", result.stdout)
         self.assertIn("OVERLAY PLACEMENTS SAVED: 9 of 9", result.stdout)     # saving works across the split tabs
         for gone in ("General > Overlay", "Always On"):
             self.assertNotIn(gone, result.stdout)

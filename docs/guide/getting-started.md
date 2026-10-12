@@ -193,7 +193,7 @@ Trade, BGS, Colonization, Field Ops and Overlays. Some have a row of tabs of the
 | **General** | Window, Updates |
 | **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Auto-Honk |
 | **Field Ops** | Screenshots, Inventory, Ship Builds |
-| **Overlays** | Overlay Connection, Overlay Placement, Appearance (text size, padding, color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies, Screenshots |
+| **Overlays** | Overlay Connection, Overlay Placement, Appearance (color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies, Screenshots |
 
 This is where you switch things on and off and adjust how they behave.
 

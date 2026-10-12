@@ -113,21 +113,18 @@ Positions you set in the older per-feature x/y boxes are carried over as **Exact
 the displays that used to sit in fixed places (Landing, Interdiction, Mining, Screenshots) now follow your screen, so they
 may sit slightly differently than before.
 
-### Appearance: text size, padding, line spacing, colors
+### Appearance: colors (text size and spacing are fixed)
 
 **Settings → WNTB → Overlays → Appearance** sets how every WNTB overlay looks, all at once:
 
 - **Color scheme**: Elite orange (the default), Ice blue, Phosphor green, Amber mono, High contrast, or Color-blind safe
   (Okabe-Ito colors, so good, short and warning never rest on red against green). The chips show each color's role.
-- **Text size**: Smaller, Default, Larger or Largest. EDMCModernOverlay has four text sizes (small, normal, large, huge); each
-  display moves up or down the same number of steps, and stops at the ends.
-- **Padding**: Compact, Comfortable (default) or Roomy: the space between a border and its text.
-- **Line spacing**: Tight, Normal (default) or Loose: extra height per line.
-- **Show sample** draws the Colonization card with the choices currently picked (before you press OK); **Reset to defaults**
-  puts them back.
+- **Show sample** draws the Colonization card with the scheme currently picked (before you press OK); **Reset scheme**
+  puts the default back.
 
-Bigger text makes bigger cards. EDMCModernOverlay cannot measure text for a plugin, so each card's width and height are worked
-out from the character count at the chosen size, generously, so text sits inside the border instead of wrapping or spilling.
+The text size, padding and line spacing are **fixed** (one size up from EDMCModernOverlay's normal text, with the default padding and
+spacing) and cannot be changed, so columns stay lined up. EDMCModernOverlay cannot measure text for a plugin, so each card's width
+and height are worked out from the character count at that size, generously, so text sits inside the border.
 Placement accounts for the new size too (a display anchored to the bottom or right keeps its edge). The Interdiction warning
 keeps its fixed red alert colors whatever scheme is chosen. The default look is slightly roomier than older versions.
 

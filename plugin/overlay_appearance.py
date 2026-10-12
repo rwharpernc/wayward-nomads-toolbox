@@ -1,9 +1,9 @@
-"""Overlay appearance settings: the color scheme, text size, padding and line spacing that every WNTB overlay display follows.
+"""Overlay appearance: the color scheme every WNTB overlay display follows, and the one fixed text size, padding and line spacing.
 
 `overlay_style.py` is the model (palettes, and the size estimates that make a card fit its text). This module keeps the four
-choices in EDMC's settings, hands every display the current `Look`, and builds the **Overlays -> Appearance** Settings tab, whose
-**Show sample** button draws the Colonization card (the richest display) with the choices as they are typed, where that display
-sits, so a scheme or size can be judged on the real screen before it is saved.
+choice of scheme in EDMC's settings, hands every display the current `Look`, and builds the **Overlays -> Appearance** Settings tab,
+whose **Show sample** button draws the Colonization card (the richest display) with the scheme as picked, where that display sits.
+Text size, padding and line spacing are fixed (below): column alignment depends on estimates of the text width, and one size keeps it stable.
 """
 
 from __future__ import annotations
@@ -24,9 +24,11 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_SCHEME = "wntb_overlay_scheme"
-CFG_TEXT = "wntb_overlay_text_level"
-CFG_PADDING = "wntb_overlay_padding"
-CFG_SPACING = "wntb_overlay_line_spacing"
+# Fixed on 2026-10-12: one text size, padding and line spacing for every display. Earlier versions saved choices under
+# wntb_overlay_text_level, wntb_overlay_padding and wntb_overlay_line_spacing; they are no longer read.
+LOCKED_TEXT_LEVEL = 1      # "Larger"
+LOCKED_PADDING = style.DEFAULT_PADDING
+LOCKED_SPACING = style.DEFAULT_SPACING
 
 SAMPLE_SECONDS = 12
 
@@ -40,21 +42,14 @@ def _int(key: str, default: int) -> int:
 
 
 def current_look() -> style.Look:
-    """The look every display should draw with right now: the saved choices, or the defaults for any not yet chosen."""
+    """The look every display should draw with right now: the saved color scheme (or the default) at the fixed size and spacing."""
     return style.look_from_choices(
-        config.get_str(CFG_SCHEME) or style.DEFAULT_SCHEME,
-        _int(CFG_TEXT, style.DEFAULT_TEXT_LEVEL),
-        _int(CFG_PADDING, style.DEFAULT_PADDING),
-        _int(CFG_SPACING, style.DEFAULT_SPACING),
-    )
+        config.get_str(CFG_SCHEME) or style.DEFAULT_SCHEME, LOCKED_TEXT_LEVEL, LOCKED_PADDING, LOCKED_SPACING)
 
 
 # --- Settings tab --------------------------------------------------------------------------------------------------
 
 _scheme_var: Optional[tk.StringVar] = None
-_text_var: Optional[tk.StringVar] = None
-_padding_var: Optional[tk.StringVar] = None
-_spacing_var: Optional[tk.StringVar] = None
 _result_var: Optional[tk.StringVar] = None
 _frame: Optional[tk.Misc] = None
 _chips: dict = {}
@@ -67,12 +62,7 @@ def typed_look() -> style.Look:
     """The look as currently chosen on the tab (not yet saved), or the saved one when the tab isn't built."""
     if _scheme_var is None:
         return current_look()
-    return style.look_from_choices(
-        _scheme_var.get(),
-        style.value_for(style.TEXT_CHOICES, _text_var.get(), style.DEFAULT_TEXT_LEVEL),
-        style.value_for(style.PADDING_CHOICES, _padding_var.get(), style.DEFAULT_PADDING),
-        style.value_for(style.SPACING_CHOICES, _spacing_var.get(), style.DEFAULT_SPACING),
-    )
+    return style.look_from_choices(_scheme_var.get(), LOCKED_TEXT_LEVEL, LOCKED_PADDING, LOCKED_SPACING)
 
 
 def _refresh_chips(*_args) -> None:
@@ -85,7 +75,7 @@ def _refresh_chips(*_args) -> None:
 
 
 def build_settings(notebook: tk.Misc) -> None:
-    global _scheme_var, _text_var, _padding_var, _spacing_var, _result_var, _frame
+    global _scheme_var, _result_var, _frame
 
     frame = nb.Frame(notebook)
     _frame = frame
@@ -95,25 +85,18 @@ def build_settings(notebook: tk.Misc) -> None:
     nb.Label(
         frame,
         text=("How every WNTB overlay display looks, together: Colonization, Discovery, Notable Bodies, Interdiction, Landing, "
-              "Inventory, Mining and the Screenshot message. Text size steps each display through the overlay's four sizes; "
-              "the cards grow to fit the text, so nothing runs past its border. The Interdiction warning keeps its red alert "
+              "Inventory, Mining and the Screenshot message. Text size and spacing are fixed, so the columns "
+              "stay aligned. The Interdiction warning keeps its red alert "
               "colors whatever the scheme."),
         wraplength=460, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 8))
 
     look = current_look()
     _scheme_var = tk.StringVar(value=look.palette.name)
-    _text_var = tk.StringVar(value=style.label_for(style.TEXT_CHOICES, look.text_level))
-    _padding_var = tk.StringVar(value=style.label_for(style.PADDING_CHOICES, look.pad_extra))
-    _spacing_var = tk.StringVar(value=style.label_for(style.SPACING_CHOICES, look.line_extra))
 
     grid = tk.Frame(frame)
     grid.grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
-    for row, (label, var, values) in enumerate((
-            ("Color scheme", _scheme_var, list(style.SCHEMES)),
-            ("Text size", _text_var, [name for name, _v in style.TEXT_CHOICES]),
-            ("Padding (border to text)", _padding_var, [name for name, _v in style.PADDING_CHOICES]),
-            ("Line spacing", _spacing_var, [name for name, _v in style.SPACING_CHOICES]))):
+    for row, (label, var, values) in enumerate((("Color scheme", _scheme_var, list(style.SCHEMES)),)):
         nb.Label(grid, text=label + ":").grid(row=row, column=0, sticky=tk.W, padx=(0, 10), pady=2)
         tk.OptionMenu(grid, var, *values, command=_refresh_chips).grid(row=row, column=1, sticky=tk.W, pady=2)
 
@@ -131,7 +114,7 @@ def build_settings(notebook: tk.Misc) -> None:
     buttons = tk.Frame(frame)
     buttons.grid(row=3, column=0, sticky=tk.W, padx=10, pady=(8, 2))
     tk.Button(buttons, text="Show sample", command=_show_sample).pack(side=tk.LEFT)
-    tk.Button(buttons, text="Reset to defaults", command=_reset).pack(side=tk.LEFT, padx=(8, 0))
+    tk.Button(buttons, text="Reset scheme", command=_reset).pack(side=tk.LEFT, padx=(8, 0))
     _result_var = tk.StringVar(value="")
     nb.Label(frame, textvariable=_result_var, wraplength=460, justify=tk.LEFT).grid(
         row=4, column=0, sticky=tk.W, padx=10, pady=(2, 10))
@@ -142,21 +125,15 @@ def save_settings() -> None:
         return
     look = typed_look()
     config.set(CFG_SCHEME, look.palette.name)
-    config.set(CFG_TEXT, str(look.text_level))
-    config.set(CFG_PADDING, str(look.pad_extra))
-    config.set(CFG_SPACING, str(look.line_extra))
 
 
 def _reset() -> None:
     if _scheme_var is None:
         return
     _scheme_var.set(style.DEFAULT.palette.name)
-    _text_var.set(style.label_for(style.TEXT_CHOICES, style.DEFAULT.text_level))
-    _padding_var.set(style.label_for(style.PADDING_CHOICES, style.DEFAULT.pad_extra))
-    _spacing_var.set(style.label_for(style.SPACING_CHOICES, style.DEFAULT.line_extra))
     _refresh_chips()
     if _result_var is not None:
-        _result_var.set("Defaults are shown. Press OK in Settings to keep them.")
+        _result_var.set("The default scheme is shown. Press OK in Settings to keep it.")
 
 
 def _say(message: str) -> None:
@@ -169,7 +146,7 @@ def _say(message: str) -> None:
 
 
 def _show_sample() -> None:
-    """Draws the Colonization card with the choices as typed, where that display sits, for a few seconds."""
+    """Draws the Colonization card with the scheme as picked, where that display sits, for a few seconds."""
     if _result_var is None:
         return
     look = typed_look()
