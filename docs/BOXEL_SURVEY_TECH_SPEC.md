@@ -433,8 +433,8 @@ state) use EDMC's `config` store instead, via `wntb_boxel_*` keys.
   through this file and `test_boxel.py`.
 - `visited_systems.py` catch-up — arrivals for the right commander only (case-insensitive, `Commander`/`LoadGame`),
   old files skipped, missing folder (`tests/test_visited_catchup.py`).
-- API clients (`edsm_client.py`, `region_sweep_spansh.py`) — no automated tests; every EDSM call
-  degrades gracefully on failure by design, so a mock-based test would mostly be re-asserting that
-  contract rather than catching regressions. No test should hit live EDSM/Spansh.
+- API clients (`edsm_client.py`, `region_sweep_spansh.py`) — mocked, never live: a failed lookup gives `None`/empty rather
+  than a confident "no", the answer shapes (found, empty, surprising) are told apart, and every request carries the WNTB
+  User-Agent and a timeout (`tests/test_boxel_clients.py`). No test should hit live EDSM/Spansh.
 - UI (`boxel_survey.py`, `region_sweep_panel.py`, `waypoint_route_panel.py`) — manual/live-EDMC
   testing only, same as every other WNTB feature module.

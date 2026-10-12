@@ -93,6 +93,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - Documentation and comments no longer mention other tools or their authors; those credits are on the Acknowledgements page.
 
 ### Developer
+- New tests for the Boxel Survey EDSM and Spansh clients (`tests/test_boxel_clients.py`).
 - New tests for Powerplay's merit-to-CP conversion, session handling and "Copy Progress" line
   (`tests/test_powerplay_session.py`), and for screenshot file names, crop rectangles, conversion, thumbnail limits and the
   delayed delete (`tests/test_screenshot_files.py`).
