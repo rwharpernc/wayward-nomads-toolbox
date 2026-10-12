@@ -151,6 +151,9 @@ def _clip(text: str, limit: int) -> str:
 # muted (the carrier column while it does not).
 CHECK = "✓"
 NAME_CHARS = 30
+# The wire protocol has no text metrics, so widths are estimated from character counts. Headings and numbers in the overlay font run
+# wider than the plain estimate (capitals, digits), so this card measures a little wide and the box always holds the text.
+CHAR_SCALE = 1.2
 MAX_COLUMNS = 6   # name plus up to five number columns
 
 
@@ -234,7 +237,7 @@ def _columns(card: Card) -> List[Tuple[str, str]]:
 def _layout(card: Card, look: Look = LEGACY) -> Tuple[int, List[int], int]:
     """(x of the name column relative to the card, right edges of the number columns, total text width) in px,
     from character counts at the look's text size - the wire protocol has no text metrics, so this errs a little wide."""
-    char = look.char_px("normal")
+    char = look.char_px("normal") * CHAR_SCALE
     name_chars = max([len("Commodity")] + [len(_clip(r.name, NAME_CHARS)) + 2 for r in card.rows])
     columns = [(head, [getattr(r, attr) for r in card.rows]) for head, attr in _columns(card)]
     widths = [max([len(head)] + [len(f"{v:,}") for v in values]) + 2 for head, values in columns]
@@ -265,7 +268,7 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
     left, top, width, height = block_rect(card, x, y, look)
     line = look.line_px("normal")
     size = look.size("normal")
-    char = look.char_px("normal")
+    char = look.char_px("normal") * CHAR_SCALE
     client.send_shape(CARD_ID, "rect", look.color("border"), look.color("fill"), left, top, width, height, ttl=TTL, thickness=2)
 
     slots: List[List[Tuple[int, str, str, int]]] = []   # per line: (column, text, colour, x)
