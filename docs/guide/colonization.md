@@ -352,9 +352,9 @@ site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 t
   - Optionally, **whenever the right-hand cockpit panel is open, anywhere** (even in flight). Off by
     default; tick it in the Colonization settings.
 
-  And you can always force it: the **OVERLAY** button beside REPORT on the COL page (it lights up while forced on; press it again to let go) puts the card on the overlay
-  now, whatever screen you are on, even if the overlay option is off; the button then reads **HIDE**. It lasts until you
-  press it again or restart EDMC.
+  **Prefer to switch it yourself?** Leave the automatic option unticked and use the **OVERLAY** button beside REPORT on the COL page: it
+  turns the card on or off, whatever screen you are on (the button lights up while the card is on and then reads **HIDE**). The button
+  works whether or not the automatic option is ticked, and it **stays as you left it, even after you restart EDMC**.
 
   Most of these rely on the game's `Status.json` reporting which screen is open.
 - **Which site:** your most recently updated active site, the one the Colonization mode summary line names. Completed and

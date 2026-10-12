@@ -27,6 +27,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.
 
 ### Changed
+- **Shopping list overlay: the OVERLAY button is the switch.** It now turns the card on or off and stays as you left it, even after a restart.
+  The Settings option is renamed "Also show the shopping list automatically" and explains that leaving it unticked means only the button
+  controls the overlay.
 - **Colonization Sites window: the commodity table is a shopping list like the overlay.** A **Group by category** checkbox (on by default)
   puts the commodities under market-category headings, alphabetical inside, in SrvSurvey's order, and a commodity the docked market does not
   sell is grayed out with "(not available here)" unless your ship and carrier cover it. Sorting by a column shows a plain list.

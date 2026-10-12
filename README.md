@@ -165,8 +165,8 @@ Things that surprise people, and what to do about them. Every mode guide has a l
   Frontier and open **Carrier Management** once; WNTB then reads the carrier's actual cargo. It can lag behind the game.
 - Commanders **without** a carrier see simpler wording and one Trips column; the carrier lines appear only if you have one.
 - **Where to buy** needs the internet (Spansh) and caches a search for two minutes.
-- Shopping-list overlay: it appears when you are at a market, in Carrier Management or at a construction site. The
-  **OVERLAY** button forces it on.
+- Shopping-list overlay: switch it on and off with the **OVERLAY** button (it stays as you leave it). Tick the automatic option in
+  Settings if you want it to appear by itself at a market, in Carrier Management or at a construction site.
 
 **Windows**
 - If screenshots don't save, Windows **Controlled Folder Access** or your antivirus may be blocking EDMC. Allow it, or choose

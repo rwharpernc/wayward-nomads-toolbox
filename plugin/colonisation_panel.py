@@ -37,6 +37,7 @@ PANEL_PLACEMENT = "colonisation"
 _CFG_OVERLAY_ENABLED = "wntb_colonisation_overlay_enabled"
 _CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_row_limit"   # 0 = all; the older "..._rows" key held a default of 10
 _CFG_OVERLAY_RIGHT_PANEL = "wntb_colonisation_overlay_right_panel"
+_CFG_OVERLAY_FORCED = "wntb_colonisation_overlay_forced"   # the OVERLAY button: the card stays on until switched off, across restarts
 _CFG_RCC_PROGRESS = "wntb_rcc_share_progress"      # report depot progress and deliveries to Raven Colonial (off by default)
 _CFG_RCC_CARRIER = "wntb_rcc_share_carrier"        # report fleet carrier cargo changes to Raven Colonial (off by default)
 
@@ -562,14 +563,20 @@ class ColonisationController:
         self._show_button = tk.Button(buttons, text="OVERLAY", command=self._on_show_clicked)
         self._show_off_colors = panelkit.capture_toggle_off_colors(self._show_button)
         self._show_button.pack(side=tk.LEFT, padx=(6, 0))
-        panelkit.add_tooltip(self._show_button, "Show the shopping list on the overlay now, whatever screen you are on "
-                                                "(lit while forced on; press again to let go). Works even if the overlay option is off.")
+        panelkit.add_tooltip(self._show_button, "Turn the shopping list on the overlay on or off, whatever screen you are on "
+                                                "(lit while it is on). It stays as you leave it, even after a restart, and works "
+                                                "whether or not the automatic option in Settings is ticked.")
+        self._visibility.forced = config.get_bool(_CFG_OVERLAY_FORCED, default=False)
+        panelkit.apply_toggle_button_state(self._show_button, self._visibility.forced, self._show_off_colors)
+        if self._visibility.forced:
+            self._update_overlay()
         self._refresh_summary()
         parent.after(500, self._poll_history_backfill)
 
     def _on_show_clicked(self) -> None:
         """Manual override of the automatic screens: force the shopping list on the overlay, or let go again."""
         self._visibility.forced = not self._visibility.forced
+        config.set(_CFG_OVERLAY_FORCED, self._visibility.forced)
         if self._show_button is not None:
             panelkit.apply_toggle_button_state(self._show_button, self._visibility.forced, self._show_off_colors)
         self._update_overlay()
@@ -659,12 +666,15 @@ class ColonisationController:
 
         self._overlay_enabled_var = tk.BooleanVar(value=overlay_enabled())
         nb.Checkbutton(
-            frame, text="Show the shopping list on the in-game overlay", variable=self._overlay_enabled_var,
+            frame, text="Also show the shopping list automatically (markets, carrier inventory, construction sites)",
+            variable=self._overlay_enabled_var,
         ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(10, 2))
         nb.Label(
             frame,
             text=(
-                "Shown only while you are in a commodity market, the carrier inventory, or docked at a construction site. "
+                "Leave this off to switch the overlay on and off only with the OVERLAY button on the COL page; the button works "
+                "either way. When ticked, the card also appears by itself in a commodity market, the carrier inventory, or docked at a "
+                "construction site. "
                 "A table for your most recently updated active site: what it still needs, what is in your ship's hold "
                 "(a tick when it is covered), and, if you have a fleet carrier, what you have moved onto it."
             ),
