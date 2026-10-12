@@ -239,6 +239,8 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     )
     _version_label.grid(row=0, column=2, sticky=tk.E, padx=(4, 0))
     _version_label.grid_remove()
+    _show_version_state()
+    _schedule_clear_updated()
 
     # The row itself is held at the full-label size (see _mode_row_full_label_size) with
     # the short buttons left-justified inside it - no extra widget sits over the buttons.
@@ -644,7 +646,11 @@ def save_prefs() -> None:
 
 # --- Update-status slot ("Updated to vX") ---------------------------------
 
+# The state is kept here as well as on the label: the update check can finish (and the "Updated to" notice is raised) before EDMC
+# has built the panel, so the label is brought up to date when it is created (see _show_version_state).
 _version_state: str = "idle"
+_version_text: str = ""
+_version_color: str = ""
 
 
 def set_update_downloading(version: str) -> None:
@@ -657,19 +663,27 @@ def set_update_downloaded(version: str) -> None:
 
 def set_update_applied(version: str) -> None:
     _set_version_state("updated", f"Updated to v{version}", _UPDATED_COLOR)
-    if _frame is not None:
+    _schedule_clear_updated()
+
+
+def _schedule_clear_updated() -> None:
+    if _frame is not None and _version_state == "updated":
         _frame.after(_UPDATED_MESSAGE_DURATION_MS, _clear_updated_state)
 
 
 def _set_version_state(kind: str, text: str, color: str) -> None:
-    global _version_state
-    _version_state = kind
+    global _version_state, _version_text, _version_color
+    _version_state, _version_text, _version_color = kind, text, color
+    _show_version_state()
+
+
+def _show_version_state() -> None:
     if _version_label is None:
         return
-    _version_label["text"] = text
-    if color:
-        _version_label["foreground"] = color
-    if text:
+    _version_label["text"] = _version_text
+    if _version_color:
+        _version_label["foreground"] = _version_color
+    if _version_text:
         _version_label.grid()
     else:
         _version_label.grid_remove()

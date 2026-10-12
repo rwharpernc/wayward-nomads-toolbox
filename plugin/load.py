@@ -150,12 +150,16 @@ def plugin_start3(plugin_dir: str) -> str:
 
 
 def _on_update_downloading(version: str) -> None:
-    if _ui_frame is not None:
+    if _ui_frame is None:
+        ui.set_update_downloading(version)      # panel not built yet; it picks the state up when it is
+    else:
         _ui_frame.after(0, lambda: ui.set_update_downloading(version))
 
 
 def _on_update_ready(version: str) -> None:
-    if _ui_frame is not None:
+    if _ui_frame is None:
+        ui.set_update_downloaded(version)
+    else:
         _ui_frame.after(0, lambda: ui.set_update_downloaded(version))
 
 
