@@ -355,6 +355,12 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 - [ ] **Planned Builds:** the **Full cost** column fills, the window's subtitle adds up the planned builds, and clicking a row names
       the building and its five biggest commodities.
 
+## 7j. Plugin version line (added after 1.7.0, Windows-tested only: check on Linux)
+
+- [ ] The first line under the mode buttons reads **Plugin: vX.Y.Z** above the game-mode line, and does not widen the panel.
+- [ ] After an automatic update is downloaded it reads **vX.Y.Z download - Restart EDMC** in bold black on orange (check the Default,
+      Dark and Transparent themes); after the restart it reads **Plugin: vX.Y.Z (updated)** in green for about 15 seconds.
+
 ## Reporting
 
 Open an issue with your setup line, the failing step number, and the log excerpt.

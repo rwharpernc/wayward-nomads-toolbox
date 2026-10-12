@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 import os
+import webbrowser
 from typing import Callable, Dict, List, Optional, Tuple
 
 import tkinter as tk
@@ -113,11 +114,15 @@ _MODES_WITHOUT_CREDITS = {"exploration", "trade"}
 _MODE_KEYS = {key for key, _ in PANEL_MODES}
 
 _UPDATED_COLOR = "#2e7d32"
+_ATTENTION_BG = "#ff8c0d"       # Elite orange, black text: the line that says a restart is needed
+_ATTENTION_FG = "#000000"
+_ATTENTION_REASSERT_MS = 3_000
 _UPDATED_MESSAGE_DURATION_MS = 15_000
 
 _frame: Optional[tk.Frame] = None
 _title_label: Optional[tk.Label] = None
-_version_label: Optional[HyperlinkLabel] = None
+_version_label: Optional[tk.Label] = None
+_version_natural: Optional[Tuple[str, str, str]] = None   # the label's own (background, foreground, font) before an override
 _collapsed: bool = False
 _collapsible_widgets: List[tk.Widget] = []
 
@@ -234,14 +239,6 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     _title_label.grid(row=0, column=0, sticky=tk.W, padx=(0, 4))
     _title_label.bind("<Button-1>", _toggle_collapsed)
 
-    _version_label = HyperlinkLabel(
-        _frame, text="", background=nb.Label().cget("background"), url=RELEASES_PAGE_URL, underline=True,
-    )
-    _version_label.grid(row=0, column=2, sticky=tk.E, padx=(4, 0))
-    _version_label.grid_remove()
-    _show_version_state()
-    _schedule_clear_updated()
-
     # The row itself is held at the full-label size (see _mode_row_full_label_size) with
     # the short buttons left-justified inside it - no extra widget sits over the buttons.
     row_width, row_height = _mode_row_full_label_size(_frame)
@@ -262,8 +259,13 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     # Each line is its own module (game_mode.py, session_credits.py).
     session_strip = tk.Frame(_frame)
     session_strip.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
-    game_mode.build(session_strip, row=0)          # "You are in Solo mode."
-    session_credits.build(session_strip, row=1)    # "Credits this session: +N cr earned"
+    _version_label = panelkit.wrap_label(session_strip, anchor="w", cursor="hand2")   # "Plugin: v1.7.0" / "v1.7.1 download - Restart EDMC"
+    _version_label.grid(row=0, column=0, columnspan=3, sticky=tk.W)
+    _version_label.bind("<Button-1>", lambda _e: webbrowser.open(RELEASES_PAGE_URL))
+    _show_version_state()          # an update may already have finished before the panel existed
+    _schedule_clear_updated()
+    game_mode.build(session_strip, row=1)          # "You are in Solo mode."
+    session_credits.build(session_strip, row=2)    # "Credits this session: +N cr earned"
     panelkit.add_separator(_frame, 3)
     session_rule = _frame.grid_slaves(row=3, column=0)[0]
 
@@ -649,20 +651,30 @@ def save_prefs() -> None:
 # The state is kept here as well as on the label: the update check can finish (and the "Updated to" notice is raised) before EDMC
 # has built the panel, so the label is brought up to date when it is created (see _show_version_state).
 _version_state: str = "idle"
-_version_text: str = ""
-_version_color: str = ""
+_version_new: str = ""
+
+
+def version_line(state: str, new_version: str = "", current: str = __version__) -> str:
+    """The text of the plugin line above the game-mode line for an update `state`."""
+    if state == "downloading":
+        return f"Plugin: v{current} (downloading v{new_version}...)"
+    if state == "downloaded":
+        return f"v{new_version} download - Restart EDMC"
+    if state == "updated":
+        return f"Plugin: v{current} (updated)"
+    return f"Plugin: v{current}"
 
 
 def set_update_downloading(version: str) -> None:
-    _set_version_state("downloading", f"Downloading v{version}…", "")
+    _set_version_state("downloading", version)
 
 
 def set_update_downloaded(version: str) -> None:
-    _set_version_state("downloaded", f"v{version} ready — restart EDMC", "")
+    _set_version_state("downloaded", version)
 
 
 def set_update_applied(version: str) -> None:
-    _set_version_state("updated", f"Updated to v{version}", _UPDATED_COLOR)
+    _set_version_state("updated", version)
     _schedule_clear_updated()
 
 
@@ -671,24 +683,40 @@ def _schedule_clear_updated() -> None:
         _frame.after(_UPDATED_MESSAGE_DURATION_MS, _clear_updated_state)
 
 
-def _set_version_state(kind: str, text: str, color: str) -> None:
-    global _version_state, _version_text, _version_color
-    _version_state, _version_text, _version_color = kind, text, color
+def _set_version_state(kind: str, version: str) -> None:
+    global _version_state, _version_new
+    _version_state, _version_new = kind, version
     _show_version_state()
 
 
 def _show_version_state() -> None:
-    if _version_label is None:
+    """Bring the label up to date. 'A restart is needed' is bold black on orange so it cannot be missed; 'updated' is green."""
+    global _version_natural
+    label = _version_label
+    if label is None:
         return
-    _version_label["text"] = _version_text
-    if _version_color:
-        _version_label["foreground"] = _version_color
-    if _version_text:
-        _version_label.grid()
-    else:
-        _version_label.grid_remove()
+    try:
+        label["text"] = version_line(_version_state, _version_new)
+        if _version_natural is None and _version_state != "idle":
+            _version_natural = (label.cget("background"), label.cget("foreground"), label.cget("font"))
+        if _version_state == "downloaded":
+            label.configure(background=_ATTENTION_BG, foreground=_ATTENTION_FG, font=panelkit.bold_font(label))
+            label.after(_ATTENTION_REASSERT_MS, _reassert_attention)
+        elif _version_state == "updated":
+            label.configure(foreground=_UPDATED_COLOR, font=panelkit.bold_font(label))
+        elif _version_natural is not None:
+            bg, fg, font = _version_natural
+            label.configure(background=bg, foreground=fg, font=font)
+    except tk.TclError:
+        logger.debug("Could not update the plugin version line", exc_info=True)
+
+
+def _reassert_attention() -> None:
+    """EDMC re-themes labels when the theme changes, which would drop the colors; put them back while the restart is pending."""
+    if _version_state == "downloaded":
+        _show_version_state()
 
 
 def _clear_updated_state() -> None:
     if _version_state == "updated":
-        _set_version_state("idle", "", "")
+        _set_version_state("idle", "")

@@ -327,8 +327,9 @@ class ScanFilesTests(unittest.TestCase):
             self._write(folder, "Journal.2026-10-03T090000.01.log", _session("Mactavious", ts_day=3), 1)
             self._write(folder, "Journal.2026-08-01T090000.01.log", _session(ts_day=2, merits=((12, 5000),)), 90)
             self._write(folder, "Status.json", [{"event": "Nope"}], 1)
-            result = backfill.scan_journals("bocheaux", datetime.fromtimestamp(
-                datetime.now().timestamp() - 10 * 86400, timezone.utc), powerplay.PowerplayTracker, folder)
+            # A fixed cutoff: the sample events carry fixed October dates, so a "10 days ago" cutoff would stop covering them.
+            result = backfill.scan_journals("bocheaux", datetime(2026, 9, 15, tzinfo=timezone.utc),
+                                            powerplay.PowerplayTracker, folder)
         self.assertTrue(result.ok)
         self.assertEqual(result.files, 2)   # the old file and Status.json are skipped; the other commander is read, then ignored
         merits = [op.merits for op in result.ops if op.kind == backfill.OP_MERITS]
