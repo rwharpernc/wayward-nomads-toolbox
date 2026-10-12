@@ -66,6 +66,10 @@ WNTB can also update itself. Turn on **Automatically download and install update
 **File → Settings → WNTB → General → Updates**. It is **off by default**, and it only looks at official published
 releases. The **Release notes** link on that tab opens the latest release's page in your browser.
 
+While it works, the right end of the WNTB title row shows what is happening: **Downloading vX**, then **vX ready — restart EDMC**.
+The update only takes effect when EDMC starts again; nothing is swapped in while it runs. After the restart the title row shows
+**Updated to vX** for a short while.
+
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 
 ## A first five minutes
