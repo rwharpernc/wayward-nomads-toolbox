@@ -319,6 +319,7 @@ def fake_system(system):
     asked_rcc.append(system)
     return rcc_client.parse_system({"name": system, "architect": "ALICE", "open": False, "sites": [
         {"name": "Victor Xray", "status": "plan", "buildType": "hermes", "bodyNum": 31},
+        {"name": "Mystery", "status": "plan", "buildType": "not_in_the_table", "bodyNum": 2},
         {"name": "Depot One", "status": "build", "buildType": "no_truss", "bodyNum": 7, "marketId": 1},
         {"name": "Elsewhere", "status": "complete", "buildType": "dysnomia", "bodyNum": 7, "marketId": 999}]})
 
@@ -329,17 +330,30 @@ check(not asked_rcc, "nothing should be asked of Raven Colonial before the butto
 window._on_builds()
 for _ in range(60):
     root.update()
-    if asked_rcc and B._window is not None and len(B._window._table) == 3:
+    if asked_rcc and B._window is not None and len(B._window._table) == 4:
         break
     time.sleep(0.02)
 check(asked_rcc == ["Sol"], f"the selected site's system is the one looked up: {asked_rcc}")
 check(B._window is not None and B._window.alive, "the Planned Builds window should open")
 rows = [row.values for row in B._window._table._rows.values()]
-check([r[0] for r in rows] == ["Depot One", "Victor Xray", "Elsewhere"], f"building, planned, then complete: {[r[0] for r in rows]}")
-check([r[4] for r in rows] == ["yes", "", ""], f"only the site WNTB tracks (market id 1) is marked: {[r[4] for r in rows]}")
+check([r[0] for r in rows] == ["Depot One", "Mystery", "Victor Xray", "Elsewhere"], f"building, planned, then complete: {[r[0] for r in rows]}")
+check([r[5] for r in rows] == ["yes", "", "", ""], f"only the site WNTB tracks (market id 1) is marked: {[r[5] for r in rows]}")
+check([r[4] for r in rows] == ["53,723 t", "", "6,721 t", ""],
+      f"a planned or building site shows its full cost, an unknown one and a finished one do not: {[r[4] for r in rows]}")
+check([r[2] for r in rows] == ["Coriolis Starport", "Not in the table", "Satellite Installation", "Pirate Outpost"],
+      f"the game's building name is shown where the table knows it: {[r[2] for r in rows]}")
 subtitle = B._window._shell._subtitle.cget("text")
-check("1 building" in subtitle and "1 planned" in subtitle and "architect ALICE" in subtitle and "locked" in subtitle,
+check("1 building" in subtitle and "2 planned" in subtitle and "architect ALICE" in subtitle and "locked" in subtitle,
       f"the subtitle should summarize, name the architect and say it is locked: {subtitle}")
+check("planned builds need 6,721 t" in subtitle, f"the subtitle should total the planned builds' cost: {subtitle}")
+B._window._table.select("s2", notify=True)       # Victor Xray, a Hermes
+root.update()
+status = B._window._shell._status.cget("text")
+check("Satellite Installation" in status and "6,721 t in all" in status and "Steel 2,542" in status,
+      f"clicking a costed row names its biggest commodities: {status}")
+B._window._table.select("s1", notify=True)       # Mystery: not in the table
+root.update()
+check("Planned builds come from Raven Colonial" in B._window._shell._status.cget("text"), "an unknown type falls back to the usual note")
 B._window.refresh()
 for _ in range(40):
     root.update()

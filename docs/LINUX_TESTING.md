@@ -282,7 +282,7 @@ Windows. Needs a commander with at least one registered construction site and an
 - [ ] With no network, the panel says the search failed and the button comes back.
 - [x] **Find all** (added 2026-10-12): lists a heading per commodity still to buy with up to 5 stations under each; the
       button reads **Stop** while it runs and stopping keeps what was found; the window stays responsive.
-- [ ] **Planned Builds (added 2026-10-12, needs the internet):** select a site, press **Planned Builds**: a window lists Raven Colonial's sites for its system (building, planned, complete) and marks the ones you track; **Refresh** works; with no network it says it could not reach Raven Colonial.
+- [ ] **Planned Builds (added 2026-10-12, needs the internet):** select a site, press **Planned Builds**: a window lists Raven Colonial's sites for its system (building, planned, complete), marks the ones you track and shows each planned or building site's **Full cost**; clicking a row names its biggest commodities; **Refresh** works; with no network it says it could not reach Raven Colonial.
 - [ ] **Suggested route (added 2026-10-12):** after Find all, a "Suggested route" group comes first with numbered stops and the commodities to buy under each; **Copy Route** puts plain lines on the clipboard.
 - [x] **Remembered choices**: change Within, Sort, Landing pad and Include fleet carriers, run a search, close and reopen
       the window: the same choices are back.

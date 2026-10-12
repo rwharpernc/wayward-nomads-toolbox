@@ -217,6 +217,12 @@ the community planning site, has for the selected site's system: every site ther
 commander who planned it there) and whether Raven Colonial has it **open** or **locked**, as Raven Colonial reports them. A site you have docked at and WNTB tracks is marked **yes** under
 *In WNTB*.
 
+For a planned or building site it also shows the **full cost**: the tons the whole building needs, from a table of what each kind
+of building costs that is bundled with WNTB (compiled by SrvSurvey's author, see the Acknowledgements). Click a row to see its
+building and its five biggest commodities in the footer, and the top of the window adds up what all the *planned* builds in the
+system will need. The table is a snapshot: if the game changes a building's cost, it can be out of date until WNTB is updated, and a
+building the table does not know shows no cost.
+
 It asks Raven Colonial once, when the window opens or you press **Refresh**, and sends only the system's name (nothing about you
 or your deliveries is ever sent). The answer is remembered for a minute. It shows what *other people* have entered there, so a
 system nobody has planned on that site shows nothing. See [what goes on the internet](internet-and-privacy.md).

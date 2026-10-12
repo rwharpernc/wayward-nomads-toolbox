@@ -12,6 +12,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Planned Builds shows what each building costs.** Each planned or building site gets a **Full cost** (the tons the whole build needs,
+  from a table bundled with WNTB), the window adds up what the system's planned builds need, and clicking a row names the building
+  and its five biggest commodities. The table is a copy of SrvSurvey's cost data (GPL-3.0; credited in the Acknowledgements and the
+  third-party notices) and can lag the game.
 - **Colonization: Planned Builds.** A new button in the Colonization Sites window opens a window with the build sites Raven Colonial has for
   the selected site's system, including builds that are only planned (the journal never reports those): building first, then planned,
   then complete, with the type and body, and a mark on the ones you track, and it names the system's architect and whether it is open or

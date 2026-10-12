@@ -69,6 +69,14 @@ use under the GPL-3.0 that WNTB carries: the starport pad table, shell sizes and
 game's station design dictates), the fleet carrier and squadron carrier pad rectangles, and the list of
 colonisation ship market ids. The code that draws them is WNTB's own.
 
+## Colonization: what each building costs (GPL-3.0)
+
+`plugin/colonisation_costs.json` is a copy, unchanged, of `SrvSurvey/colonization-costs2.json` from
+[njthomson/SrvSurvey](https://github.com/njthomson/SrvSurvey) (last changed there 2026-03-20, commit c5cb2db), licensed GPL-3.0,
+the same licence as WNTB. It lists the tons of each commodity every kind of building needs, which the Planned Builds window uses
+to size a plan before any depot has been visited (`plugin/build_costs.py` reads it; that code is WNTB's own). The costs are the
+game's, as that project's author compiled them, and can go out of date when the game changes them.
+
 ## Micro-resource names
 
 `plugin/inventory_names_fdevids.py` is generated from the `microresources.csv` published by
