@@ -210,6 +210,11 @@ class Feeder:
         self.cmdr = cmdr
         self._only = commander_data.key_for(only)    # when set, other commanders' events are ignored (a rescan for one)
         self._at_fleet_carrier = False
+        self.carrier_market_id: Optional[int] = None    # the market id of the fleet carrier last docked at
+
+    @property
+    def at_fleet_carrier(self) -> bool:
+        return self._at_fleet_carrier
 
     def feed(self, entry: Dict[str, Any]) -> bool:
         """True if the stored figures changed (the caller then `commit`s)."""
@@ -225,6 +230,8 @@ class Feeder:
         if event in ("Docked", "Location"):
             docked = event == "Docked" or bool(entry.get("Docked"))
             self._at_fleet_carrier = docked and entry.get("StationType") == FLEET_STATION
+            if self._at_fleet_carrier and isinstance(entry.get("MarketID"), int):
+                self.carrier_market_id = entry["MarketID"]
             return False
         if event == "Undocked":
             self._at_fleet_carrier = False

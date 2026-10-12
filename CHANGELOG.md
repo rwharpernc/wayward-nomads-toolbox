@@ -6,6 +6,13 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Share your colonization progress with Raven Colonial (opt-in, off by default).** Settings → Colonization → Raven Colonial, behind a
+  master switch that stops every write to Raven at once (including Report Complete) while keeping your other choices. WNTB
+  sends the depot's figures and your deliveries as they happen, links your commander to the project, and (a second switch) the tons you
+  move to and from your fleet carrier as plus and minus amounts. It only sends live events for a site Raven already has a project for,
+  one request each, and never uses Raven's `supply` call. A **Raven Progress** button in the Colonization Sites window reads Raven's
+  figures for the selected site and sets them beside WNTB's. Not yet checked against the live write API, which needs a key; see the
+  guide for what is sent and for the warning not to run two reporting tools at once.
 - **Rescan Carrier.** A button in the Colonization Sites window that rebuilds the fleet carrier (FC) tally from the last 30 days of
   journals, for a transfer that did not register, for example after Frontier's lagging copy of the carrier's cargo replaced it.
 - **Report a finished build to Raven Colonial.** A **Report Complete to Raven** button in the Colonization Sites window marks the
@@ -20,6 +27,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.
 
 ### Changed
+- **Overlay shopping list: SrvSurvey's order, and dimming what the market does not sell.** At a construction site the rows are
+  alphabetical as before; at a market or the carrier's inventory they are grouped under the market's categories (a heading for each,
+  alphabetical within it). A commodity the market you are docked at does not sell is dimmed unless your hold and carrier already cover it.
 - **Overlay text size and spacing are fixed.** Settings -> Overlays -> Appearance now only has the color scheme. Every overlay uses one
   size (one step above normal) with the default padding and line spacing, so the shopping list's columns stay aligned. Earlier saved
   size, padding and spacing choices are ignored.

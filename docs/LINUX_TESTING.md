@@ -259,6 +259,12 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 - [ ] Rows left at the default list every commodity; the card fits on screen from the default position (20, 300).
 - [ ] Windows paths: `Status.json` reports the same `GuiFocus` values (5 in the services screens, 1 for the right-hand panel).
 
+## 7e-2. Raven Colonial sharing (needs a Raven project for a site; Windows-tested only: check on Linux)
+
+- [ ] **Settings → Colonization → Raven Colonial** has a master switch and two checkboxes (all off, the two greyed out until the master is ticked) and a masked key field. With the master off, Report Complete to Raven refuses.
+- [ ] With the first on, a delivery at a construction site Raven has a project for appears on Raven; with it off, nothing is sent.
+- [ ] **Raven Progress** shows Raven's remaining need beside WNTB's for the selected site.
+
 ## 7e-1. Rescan Carrier (Windows-tested only: check on Linux)
 
 - [ ] With a fleet carrier and some transfers in the journals, **Rescan Carrier** in the Colonization Sites window rebuilds the FC column

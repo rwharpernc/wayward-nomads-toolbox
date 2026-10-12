@@ -214,6 +214,8 @@ Guide: [Colonization](guide/colonization.md)
 | `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to get for the active site (pure formatting plus drawing) |
 | `colonisation_panel.py` | The Colonization mode's page (current project and history), the overlay card's controller and the settings tabs |
 | `build_costs.py` | What each kind of building costs in tons (the bundled `colonisation_costs.json`, a copy of a community-compiled table): looked up by a site's layout name, with its biggest commodities |
+| `commodity_categories.py` | The market category of each colonization commodity, so the shopping list can be grouped as the in-game market groups it |
+| `rcc_sync.py` | Opt-in sharing of live colonization progress with Raven Colonial: depot snapshot, deliveries, commander link and (separately) carrier cargo deltas, one request per event on a worker thread with a bounded queue |
 | `rcc_keys.py` | Each commander's Raven Colonial key, kept in `rcc_keys.json` (one entry per commander) |
 | `rcc_client.py` | A thin client for Raven Colonial's API: reading one system's plan (its architect, whether it is open, and its build sites: planned, building, complete), with a bounded read, a user-agent, a timeout and a one-minute memory |
 | `colonisation_builds_window.py` | The Planned Builds window: Raven Colonial's sites for the picked site's system, fetched on a worker thread when opened or refreshed |

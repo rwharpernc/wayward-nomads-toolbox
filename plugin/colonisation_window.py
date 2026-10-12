@@ -162,6 +162,7 @@ class ColonisationWindow:
         self._shell.add_action("Copy Shopping List", self._on_copy, accent=True)
         self._shell.add_action("Planned Builds", self._on_builds)
         self._shell.add_action("Rescan Carrier", self._on_rescan_carrier)
+        self._shell.add_action("Raven Progress", self._on_raven_progress)
         self._shell.add_action("Report Complete to Raven", self._on_report_rcc)
         self._shell.add_action("Remove Site", self._on_remove)
         self._shell.add_action("Remove Finished", self._on_remove_finished)
@@ -775,6 +776,49 @@ class ColonisationWindow:
             self._toplevel, site.system,
             lambda: frozenset(s.market_id for s in self._repository.for_cmdr(self._cmdr)))
 
+    def _on_raven_progress(self) -> None:
+        """Read Raven Colonial's own figures for the selected site and set them beside WNTB's (a read; nothing is sent but the project's
+        id). The site is matched on its market id in Raven's plan for the system."""
+        site = self._selected_site()
+        if site is None:
+            self._shell.set_status("Select a site on the left first.")
+            return
+        if not site.system:
+            self._shell.set_status("This site has no system name yet; dock at it once so WNTB knows where it is.")
+            return
+        job: Dict[str, Any] = {"done": False, "project": None, "error": ""}
+        self._shell.set_status("Asking Raven Colonial…")
+
+        def work() -> None:
+            try:
+                build_id = rcc_client.find_build_id(rcc_client.fetch_system(site.system).sites, site.market_id)
+                job["project"] = rcc_client.fetch_project(build_id)
+            except rcc_client.RccError as err:
+                job["error"] = str(err)
+            except Exception:
+                logger.exception("Raven Colonial progress lookup failed")
+                job["error"] = "The lookup failed unexpectedly; see the EDMC log."
+            job["done"] = True
+
+        threading.Thread(target=work, daemon=True, name="WNTB-rcc-progress").start()
+        self._poll_progress(job, site)
+
+    def _poll_progress(self, job: Dict[str, Any], site: Site) -> None:
+        if not self._shell.alive:
+            return
+        if not job["done"]:
+            self._toplevel.after(150, self._poll_progress, job, site)
+            return
+        project = job["project"]
+        if project is None:
+            self._shell.set_status(job["error"] or "Raven Colonial has no project linked to this site.")
+            return
+        ours = site.remaining_total
+        verdict = "they agree" if project.sum_need == ours else f"they differ by {abs(project.sum_need - ours):,} t"
+        state = " Raven Colonial has it marked complete." if project.complete else ""
+        self._shell.set_status(f"{site.display_name()}: Raven Colonial says {project.sum_need:,} t still needed of {project.max_need:,}; "
+                               f"WNTB says {ours:,} t ({verdict}).{state}")
+
     def _on_rescan_carrier(self) -> None:
         """Rebuild the fleet carrier tally from the last 30 days of journals, for a transfer that did not register (see
         colonisation_carrier.scan_journals). The files are read on a worker thread; the result is applied here on the Tk thread."""
@@ -815,6 +859,9 @@ class ColonisationWindow:
     def _on_report_rcc(self) -> None:
         """Tell Raven Colonial the selected site is finished. Asks first, and sends only the commander's Raven key to the one
         project's `complete` address (see rcc_client.complete_project); nothing else leaves WNTB."""
+        if not rcc_keys.enabled():
+            self._shell.set_status("Sending to Raven Colonial is switched off. Turn it on in Settings → Colonization → Raven Colonial.")
+            return
         site = self._selected_site()
         if site is None:
             self._shell.set_status("Select a site on the left first.")

@@ -249,6 +249,32 @@ building the table does not know shows no cost.
 It asks Raven Colonial once, when the window opens or you press **Refresh**, and sends only the system's name. The answer is remembered for a minute. It shows what *other people* have entered there, so a
 system nobody has planned on that site shows nothing. See [what goes on the internet](internet-and-privacy.md).
 
+### Sharing your progress with Raven Colonial
+
+Optional and **off by default**: nothing is sent to Raven Colonial until you tick the **master switch** in **Settings → Colonization → Raven Colonial**, and unticking it stops every write at once (progress, deliveries, carrier cargo and Report Complete), keeping your other choices for when you turn it back on. With the switch on, WNTB shares what happens at a
+construction site **as it happens**, in the way Raven Colonial's own documentation recommends for a tool that reads the journal.
+
+| Setting | What WNTB sends, and when |
+|---|---|
+| **Allow WNTB to send anything to Raven Colonial** (master switch) | Nothing by itself. Off by default. The three options below only work while it is ticked, and are greyed out while it is not. |
+| **Report my construction progress and deliveries** | When the depot's figures change (the game's `ColonisationConstructionDepot` event): the depot's numbers and how much of each commodity is still needed, which is what moves *Remaining* on Raven Colonial. When you deliver cargo (`ColonisationContribution`): the commodities and tons, which credits your commander name in Raven's history. Once per project, it also links your commander to the project. |
+| **Also report cargo I move to and from my fleet carrier** | When you transfer cargo at your own fleet carrier: the tons moved, to the carrier as plus and back to the ship as minus. It adds to Raven's carrier record; it never replaces it, because WNTB's own tally is only what it saw you move. Needs the key below. |
+| **Raven Colonial key** | Optional for progress and deliveries; needed for carrier cargo and for **Report Complete to Raven**. Saved per commander on your computer, shown masked, and sent only to Raven Colonial. |
+
+- **Only live events.** What you did while EDMC was closed, and anything the start-up catch-up reads, is never sent.
+- **Raven must already have a project for the site** (Raven matches it on the site's market id in its plan for the system). If it has none,
+  WNTB sends nothing and tries again no sooner than ten minutes later.
+- **One request per event.** They go one at a time in the background, are retried once if Raven says it is busy, and a failure is only
+  logged; it never interrupts play. The depot figures are sent only when the needed amounts actually changed.
+- **Raven's `supply` call is never used.** Raven documents it for tools that cannot read the journal; used beside the depot figures it
+  would reduce what is needed twice.
+- **Do not run two tools that report to Raven.** If another tool (the Raven Colonial EDMC plugin, SrvSurvey) also reports your
+  deliveries, Raven counts them twice. Turn one of them off.
+- **Raven Progress** (a button in the Colonization Sites window) reads Raven's own figures for the selected site and sets them beside
+  WNTB's (*Raven says 12,345 t still needed; WNTB says 12,345 t*). It sends only the project's id.
+
+WNTB's own tracking stays the source of truth for your site; Raven's figures never overwrite it.
+
 ### Reporting a finished build to Raven Colonial
 
 Select a site your journal has reported **complete** and press **Report Complete to Raven** (top right of the Colonization Sites
@@ -280,7 +306,17 @@ It draws a table, with the site name as its title and the columns **Commodity**,
   window's green rows); the row turns amber if together they are **more** than the site needs.
 - **To buy** is what is left to get after your hold and your carrier (remaining less both). Blank once it is covered.
 
-Commodities are alphabetical so rows stay put while numbers change. A last line gives the tons remaining and the
+**Order, the same as SrvSurvey.** At a **construction site** the rows are alphabetical, so they stay put while numbers change.
+Everywhere else (a commodity market, the carrier's inventory) they are **grouped under the market's categories** (Chemicals, Foods,
+Industrial Materials, Machinery, Metals, Technology and so on), with a heading line for each group and the commodities alphabetical
+inside it. A commodity WNTB has no category for goes under **Other**, last.
+
+**Dimmed when this market does not sell it.** While you are docked at a commodity market, a commodity that market does not have for sale is
+shown dimmed (gray), so what you can buy here stands out. A commodity your hold and your fleet carrier already cover keeps its green
+(or amber) however the market stocks it. Nothing is dimmed away from a market, at a construction site, or if WNTB has not seen this
+market (open its commodity screen once).
+
+A last line gives the tons remaining and the
 trips in your current ship, and they need your ship's cargo capacity, which EDMC supplies. **With a fleet carrier** it gives both legs, as
 the COL page and the window do: `► 32,769 remaining  ► 21 to buy  ► 33 to haul`. **To buy** is the loads to gather what is still to
 get after your ship and your carrier (0 once it is all stocked); **to haul** is the loads to carry everything still needed to the

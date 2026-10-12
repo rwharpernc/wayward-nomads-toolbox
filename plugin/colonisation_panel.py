@@ -23,7 +23,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card,
+from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card, rcc_keys, rcc_sync,
                colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_market, trade_panel)
 from .colonisation import Site
 from . import commander_data
@@ -37,6 +37,8 @@ PANEL_PLACEMENT = "colonisation"
 _CFG_OVERLAY_ENABLED = "wntb_colonisation_overlay_enabled"
 _CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_row_limit"   # 0 = all; the older "..._rows" key held a default of 10
 _CFG_OVERLAY_RIGHT_PANEL = "wntb_colonisation_overlay_right_panel"
+_CFG_RCC_PROGRESS = "wntb_rcc_share_progress"      # report depot progress and deliveries to Raven Colonial (off by default)
+_CFG_RCC_CARRIER = "wntb_rcc_share_carrier"        # report fleet carrier cargo changes to Raven Colonial (off by default)
 
 
 def _journal_dir() -> str:
@@ -54,6 +56,14 @@ def _get_int(key: str, default: int, low: int, high: int) -> int:
 
 def overlay_enabled() -> bool:
     return config.get_bool(_CFG_OVERLAY_ENABLED, default=False)
+
+
+def rcc_share_progress() -> bool:
+    return rcc_keys.enabled() and config.get_bool(_CFG_RCC_PROGRESS, default=False)
+
+
+def rcc_share_carrier() -> bool:
+    return rcc_keys.enabled() and config.get_bool(_CFG_RCC_CARRIER, default=False)
 
 
 def overlay_right_panel() -> bool:
@@ -109,6 +119,7 @@ class ColonisationController:
         self._history_pending: set = set()
         self._history_live: list = []
         self._carrier_feed = colonisation_carrier.Feeder(self._carrier_cargo)
+        self._rcc = rcc_sync.RccSync(rcc_share_progress, rcc_share_carrier, rcc_keys.keys.get)
 
         self._vars: Dict[str, tk.StringVar] = {}      # the page's value cells, by name
         self._rows: Dict[str, tuple] = {}             # name -> (caption label, value label), to hide a row that does not apply
@@ -126,6 +137,12 @@ class ColonisationController:
         self._last_reason = ""
         self._overlay_lock = threading.Lock()
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
+        self._rcc_enabled_var: Optional[tk.BooleanVar] = None
+        self._rcc_progress_box: Any = None
+        self._rcc_carrier_box: Any = None
+        self._rcc_progress_var: Optional[tk.BooleanVar] = None
+        self._rcc_carrier_var: Optional[tk.BooleanVar] = None
+        self._rcc_key_var: Optional[tk.StringVar] = None
         self._right_panel_var: Optional[tk.BooleanVar] = None
         self._show_button: Optional[tk.Button] = None
         self._show_off_colors = ("", "")
@@ -234,6 +251,8 @@ class ColonisationController:
                 self._carrier_cargo.commit()
         except Exception:
             logger.exception("Fleet carrier transfer tracking failed")
+        if entry.get("event") == "CargoTransfer" and self._carrier_feed.at_fleet_carrier and cmdr:
+            self._rcc.on_carrier_transfer(cmdr, self._carrier_feed.carrier_market_id, entry)
 
         capacity = state.get("CargoCapacity")
         capacity_changed = False
@@ -268,6 +287,7 @@ class ColonisationController:
             site = colonisation.apply_depot_event(entry, working, name=name, system=docked_system)
             if site is not None:
                 self._repository.upsert(self._cmdr, site)
+                self._rcc.on_depot(self._cmdr, entry, site.system or docked_system)
         elif event in colonisation.CLAIM_EVENTS:
             if commander_data.key_for(self._cmdr) in self._history_pending:
                 self._history_live.append((self._cmdr, entry))
@@ -284,6 +304,9 @@ class ColonisationController:
                 working = Site.from_dict(existing.to_dict())
                 if colonisation.apply_contribution(working, entry):
                     self._repository.upsert(self._cmdr, working)
+            if isinstance(market_id, int):
+                known = self._repository.get(self._cmdr, market_id)
+                self._rcc.on_contribution(self._cmdr, entry, (known.system if known else "") or self._system or "")
 
     def _track_market(self, event: Any, entry: Dict[str, Any], station: Optional[str]) -> None:
         """Remember what the station sells when its commodity market is opened, and forget it once the commander leaves
@@ -331,8 +354,11 @@ class ColonisationController:
         if not self._visibility.forced and not (overlay_enabled() and self._visibility.visible):
             return None
         sites = [s for s in self._repository.for_cmdr(self._cmdr) if s.active]
+        # Alphabetical at a construction site, grouped by market category elsewhere; at a market, what it does not sell is dimmed.
+        grouped = not self._visibility.at_depot
+        market_keys = self._market[1] if self._market is not None and grouped else None
         return card.build_card(sites[0] if sites else None, self._cargo, self._carrier_cargo.tonnes(self._cmdr),
-                               self._carrier_cargo.has_carrier(self._cmdr), self._capacity, overlay_rows())
+                               self._carrier_cargo.has_carrier(self._cmdr), self._capacity, overlay_rows(), grouped, market_keys)
 
     def _update_overlay(self) -> None:
         """Redraw the shopping-list card if its content or position changed, or it is due a re-send before its time to
@@ -580,6 +606,51 @@ class ColonisationController:
             wraplength=440, justify=tk.LEFT,
         ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
+        nb.Label(frame, text="Raven Colonial", font=("TkDefaultFont", 9, "bold")).grid(
+            row=3, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        nb.Label(
+            frame,
+            text=("Optional, and everything here is off until you tick the master switch. Shares your construction progress with Raven Colonial (ravencolonial.com), a community "
+                  "planning site, as it happens: the site's depot figures and the deliveries you make. It only sends live events, "
+                  "needs Raven to already have a project linked to the site, and uses your commander name. If another tool also "
+                  "reports your deliveries to Raven, turn one of them off or they are counted twice."),
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        self._rcc_enabled_var = tk.BooleanVar(value=rcc_keys.enabled())
+        nb.Checkbutton(frame, text="Allow WNTB to send anything to Raven Colonial (master switch)",
+                       variable=self._rcc_enabled_var, command=self._rcc_sync_state).grid(
+            row=5, column=0, sticky=tk.W, padx=10, pady=(0, 2))
+        self._rcc_progress_var = tk.BooleanVar(value=config.get_bool(_CFG_RCC_PROGRESS, default=False))
+        self._rcc_progress_box = nb.Checkbutton(frame, text="Report my construction progress and deliveries to Raven Colonial",
+                                                variable=self._rcc_progress_var)
+        self._rcc_progress_box.grid(row=6, column=0, sticky=tk.W, padx=(30, 10), pady=(0, 2))
+        self._rcc_carrier_var = tk.BooleanVar(value=config.get_bool(_CFG_RCC_CARRIER, default=False))
+        self._rcc_carrier_box = nb.Checkbutton(frame, text="Also report cargo I move to and from my fleet carrier (needs the key below)",
+                                               variable=self._rcc_carrier_var)
+        self._rcc_carrier_box.grid(row=7, column=0, sticky=tk.W, padx=(30, 10), pady=(0, 2))
+        key_row = tk.Frame(frame)
+        key_row.grid(row=8, column=0, sticky=tk.W, padx=10, pady=(0, 2))
+        nb.Label(key_row, text="Raven Colonial key:").pack(side=tk.LEFT)
+        self._rcc_key_var = tk.StringVar(value=rcc_keys.keys.get(self._cmdr or ""))
+        nb.EntryMenu(key_row, textvariable=self._rcc_key_var, width=34, show="*").pack(side=tk.LEFT, padx=(4, 0))
+        nb.Label(
+            frame,
+            text=(f"Saved for {self._cmdr or 'the current commander'} only, on this computer, and sent only to Raven Colonial. "
+                  "Also used by Report Complete to Raven. Leave it empty if you have none; progress and deliveries need no key."),
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=9, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        self._rcc_sync_state()
+
+    def _rcc_sync_state(self) -> None:
+        """Grey out the two Raven options while the master switch is off (their choices are kept)."""
+        state = tk.NORMAL if self._rcc_enabled_var is not None and self._rcc_enabled_var.get() else tk.DISABLED
+        for box in (self._rcc_progress_box, self._rcc_carrier_box):
+            if box is not None:
+                try:
+                    box.configure(state=state)
+                except tk.TclError:
+                    pass
+
     def build_overlay_settings(self, notebook: nb.Notebook) -> None:
         """The shopping-list card's options, on the Overlays tab."""
         frame = nb.Frame(notebook)
@@ -652,6 +723,13 @@ class ColonisationController:
         threading.Thread(target=worker, name="WNTB-colonisation-overlay-test", daemon=True).start()
 
     def save_settings(self) -> None:
+        if self._rcc_enabled_var is not None:
+            config.set(rcc_keys.CFG_ENABLED, self._rcc_enabled_var.get())
+        if self._rcc_progress_var is not None:
+            config.set(_CFG_RCC_PROGRESS, self._rcc_progress_var.get())
+            config.set(_CFG_RCC_CARRIER, self._rcc_carrier_var.get() if self._rcc_carrier_var is not None else False)
+            if self._rcc_key_var is not None and self._cmdr:
+                rcc_keys.keys.set(self._cmdr, self._rcc_key_var.get())
         if self._overlay_enabled_var is None:
             return
         config.set(_CFG_OVERLAY_ENABLED, self._overlay_enabled_var.get())

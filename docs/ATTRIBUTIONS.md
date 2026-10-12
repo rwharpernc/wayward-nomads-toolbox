@@ -54,10 +54,14 @@ being listed doesn't mean a tool was the first or the only one.
   ED Colonization Helper, EDColony and BGS-Tally. The shopping-list overlay card follows
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s layout. Raven Colonial publishes its API as OpenAPI, which SrvSurvey and
   BGS-Tally use and which informed WNTB's plans for it. WNTB's **Planned Builds** window reads one public, key-free endpoint of it (the
-  build sites of a system) when you press a button; nothing is ever sent to Raven Colonial.
+  build sites of a system) when you press a button. Anything WNTB sends to Raven Colonial (progress, deliveries, carrier cargo, a
+  completion) is opt-in, off by default, and listed in the privacy page.
 - **What each building costs:** the cost table behind the Planned Builds window is a copy of
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s `colonization-costs2.json` (GPL-3.0; notice in `THIRD-PARTY-NOTICES.md`),
   compiled by its author from the game. Raven Colonial's own totals for the same buildings agree with it where I checked.
+- **Shopping list order:** the overlay shopping list follows [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s shopping overlay: alphabetical
+  at a construction site, grouped under the market's categories elsewhere, with what the market does not sell dimmed. The category
+  table (`plugin/commodity_categories.py`) is taken from its `ColonyData.mapCargoType` (GPL-3.0; notice in `THIRD-PARTY-NOTICES.md`). The code is WNTB's own.
 - **Where to buy a colonisation commodity:** [Spansh](https://spansh.co.uk/)'s station search, the same one the Mining and Trade
   finders use.
 - **Overlay placement:** SrvSurvey places each overlay relative to the game window (left, center or right; top, middle or

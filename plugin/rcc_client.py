@@ -7,8 +7,9 @@ planned, being built or finished. The game's journal never reports a *planned* b
 them. It asks one question per press of the button: the plan for one system (`GET /api/v2/system/<name>`, which needs no key):
 its architect, whether it is open, and its build sites. The journal stays the source of truth for your own deliveries.
 
-The one thing ever sent is `complete_project`: when the commander presses "Report Complete to Raven", an empty POST to
-`/api/project/<build id>/complete` carrying the commander's Raven key in the `rcc-key` header. No delivery, cargo or journal data is sent.
+What is ever sent (each only when the commander has turned it on, see rcc_sync.py, or pressed its button): the project's depot
+snapshot, a delivery, a carrier cargo change, a commander link, and `complete_project` (an empty POST to
+`/api/project/<build id>/complete`). Writes carry the commander's Raven key in the `rcc-key` header when one is saved.
 
 Pure parsing plus one network call (`fetch_sites`) whose opener is passed in, so the shaping and the error handling are tested
 without a connection. The request carries WNTB's User-Agent (http_identity), has a timeout, reads a bounded amount, and an answer
@@ -209,18 +210,97 @@ def complete_project(build_id: str, key: str, opener: Callable[..., Any] = urlli
         raise RccError("Raven Colonial has no project linked to this site, so there is nothing to mark complete.")
     if not key:
         raise RccError("No Raven Colonial key is saved for this commander.")
-    request = urllib.request.Request(
-        complete_url(build_id), data=b"", method="POST",
-        headers={"User-Agent": http_identity.user_agent("rcc-complete"), KEY_HEADER: key})
+    try:
+        send_write("POST", COMPLETE_PATH.format(build=urllib.parse.quote(build_id, safe="")), None, key, opener)
+    except RccError as err:
+        if "error (404)" in str(err):
+            raise RccError("Raven Colonial does not know this project.") from err
+        raise
+    clear_cache()    # the system's sites have changed
+
+
+@dataclass(frozen=True)
+class RccProject:
+    """Raven Colonial's figures for one project (a read; no key)."""
+    build_id: str
+    sum_need: int                # tons still needed in all
+    max_need: int                # tons the whole build needs
+    complete: bool
+    commodities: Dict[str, int]  # commodity key -> tons still needed
+
+
+def parse_project(data: Any) -> RccProject:
+    if not isinstance(data, dict):
+        raise RccError("Raven Colonial sent something WNTB could not read.")
+    commodities = data.get("commodities") if isinstance(data.get("commodities"), dict) else {}
+    return RccProject(
+        build_id=str(data.get("buildId") or "")[:BUILD_ID_MAX],
+        sum_need=_int(data.get("sumNeed")) or 0, max_need=_int(data.get("maxNeed")) or 0,
+        complete=data.get("complete") is True,
+        commodities={str(k).casefold(): v for k, raw in list(commodities.items())[:200] if (v := _int(raw)) is not None})
+
+
+def project_url(build_id: str) -> str:
+    return BASE_URL + "/api/project/" + urllib.parse.quote(build_id.strip(), safe="")
+
+
+def fetch_project(build_id: str, opener: Callable[..., Any] = urllib.request.urlopen) -> RccProject:
+    """Raven Colonial's current figures for a project. Raises RccError with a message to show."""
+    build_id = (build_id or "").strip()
+    if not build_id:
+        raise RccError("Raven Colonial has no project linked to this site.")
+    request = urllib.request.Request(project_url(build_id), headers={"User-Agent": http_identity.user_agent("rcc-project")})
     try:
         with opener(request, timeout=TIMEOUT_S) as response:
-            response.read(1024)
+            body = response.read(MAX_BYTES + 1)
     except urllib.error.HTTPError as err:
-        if err.code in (401, 403):
-            raise RccError("Raven Colonial did not accept the key. Check it is this commander's key.") from err
-        if err.code == 404:
-            raise RccError("Raven Colonial does not know this project.") from err
-        raise RccError(f"Raven Colonial answered with an error ({err.code}). Try again later.") from err
+        raise RccError("Raven Colonial does not know this project." if err.code == 404
+                       else f"Raven Colonial answered with an error ({err.code}). Try again later.") from err
     except (urllib.error.URLError, OSError, TimeoutError) as err:
         raise RccError("Could not reach Raven Colonial. Check your connection and try again.") from err
-    clear_cache()    # the system's sites have changed
+    if len(body) > MAX_BYTES:
+        raise RccError("Raven Colonial sent more than expected, so it was ignored.")
+    try:
+        return parse_project(json.loads(body.decode("utf-8")))
+    except (ValueError, UnicodeDecodeError) as err:
+        raise RccError("Raven Colonial sent something WNTB could not read.") from err
+
+
+RETRY_CODES = (429, 503)
+RETRY_WAIT_S = 2.0
+RETRY_WAIT_MAX_S = 10.0
+
+
+def send_write(method: str, path: str, body: Optional[Any], key: str = "", opener: Callable[..., Any] = urllib.request.urlopen,
+               sleep: Callable[[float], None] = time.sleep) -> None:
+    """One write to Raven Colonial: `method` `path` with `body` as JSON (none for an empty body), the key in `rcc-key` when there is one.
+    Retried once after a short wait if it says 429 or 503 (it honors a short Retry-After). Raises RccError with a message that never
+    contains the key."""
+    headers = {"User-Agent": http_identity.user_agent("rcc-write")}
+    data: Optional[bytes] = None
+    if body is not None:
+        data = json.dumps(body, separators=(",", ":")).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    elif method in ("POST", "PUT", "PATCH"):
+        data = b""
+    if key.strip():
+        headers[KEY_HEADER] = key.strip()
+    for attempt in (1, 2):
+        request = urllib.request.Request(BASE_URL + path, data=data, method=method, headers=headers)
+        try:
+            with opener(request, timeout=TIMEOUT_S) as response:
+                response.read(1024)
+            return
+        except urllib.error.HTTPError as err:
+            if err.code in RETRY_CODES and attempt == 1:
+                try:
+                    wait = float(err.headers.get("Retry-After", "")) if err.headers else RETRY_WAIT_S
+                except (TypeError, ValueError):
+                    wait = RETRY_WAIT_S
+                sleep(max(0.0, min(RETRY_WAIT_MAX_S, wait)))
+                continue
+            if err.code in (401, 403):
+                raise RccError("Raven Colonial did not accept the key.") from err
+            raise RccError(f"Raven Colonial answered with an error ({err.code}).") from err
+        except (urllib.error.URLError, OSError, TimeoutError) as err:
+            raise RccError("Could not reach Raven Colonial.") from err

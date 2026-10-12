@@ -33,5 +33,27 @@ class KeyTests(unittest.TestCase):
             self.assertEqual(store.get(""), "")
 
 
+class MasterSwitchTests(unittest.TestCase):
+    def test_it_is_off_by_default_and_follows_the_setting(self) -> None:
+        from unittest import mock
+        with mock.patch.object(rcc_keys, "config", None):
+            self.assertFalse(rcc_keys.enabled())
+        for value in (False, True):
+            fake = type("C", (), {"get_bool": staticmethod(lambda key, default=False, v=value: v if key == rcc_keys.CFG_ENABLED else default)})
+            with mock.patch.object(rcc_keys, "config", fake):
+                self.assertEqual(rcc_keys.enabled(), value)
+        broken = type("C", (), {"get_bool": staticmethod(lambda *a, **k: 1 / 0)})
+        with mock.patch.object(rcc_keys, "config", broken):
+            self.assertFalse(rcc_keys.enabled())
+
+    def test_the_default_asked_for_is_off(self) -> None:
+        asked = {}
+        fake = type("C", (), {"get_bool": staticmethod(lambda key, default=None: asked.setdefault(key, default))})
+        from unittest import mock
+        with mock.patch.object(rcc_keys, "config", fake):
+            rcc_keys.enabled()
+        self.assertIs(asked[rcc_keys.CFG_ENABLED], False)
+
+
 if __name__ == "__main__":
     unittest.main()

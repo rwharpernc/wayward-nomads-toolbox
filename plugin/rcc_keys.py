@@ -12,7 +12,13 @@ from typing import Any, Dict, Optional
 
 from . import commander_data
 
+try:
+    from config import config
+except ImportError:  # unit tests outside EDMC
+    config = None
+
 STATE_FILENAME = "rcc_keys.json"
+CFG_ENABLED = "wntb_rcc_enabled"    # the master switch for everything WNTB writes to Raven Colonial; off unless the commander turns it on
 KEY_MAX = 200
 
 
@@ -43,3 +49,12 @@ class RccKeys:
 
 
 keys = RccKeys()
+
+
+def enabled() -> bool:
+    """The master switch: whether WNTB may send anything to Raven Colonial at all (progress, deliveries, carrier cargo, Report Complete).
+    Off by default; turning it off stops every write at once and leaves the other choices as they were."""
+    try:
+        return bool(config is not None and config.get_bool(CFG_ENABLED, default=False))
+    except Exception:
+        return False
