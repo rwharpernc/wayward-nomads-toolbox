@@ -251,7 +251,7 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
       show the last commander instead of "waiting for commander login", and the EDMC log has "No game running at
       start-up; restored commander ..." (about four seconds after start). Then log in as someone else: everything switches.
 - [ ] **Overlay card** (Settings, Colonisation: tick the overlay option; **Test Overlay** draws a sample): the table shows
-      Commodity, Need, FC and Ship, with a tick when the hold covers a row, and a remaining/trips footer.
+      Commodity, Required, Remaining, FC, Cargo and To buy, with a tick when the hold covers a row, and a remaining/trips footer.
 - [ ] The card appears: in a commodity market at a station; at your own carrier in the station-services screens (the game
       writes no `Market` event for a carrier's market); with the right-hand cockpit panel open when docked at the carrier
       (the cargo transfer); in Carrier Management; docked at a construction site. It goes when you leave, and the OVERLAY

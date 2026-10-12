@@ -15,6 +15,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.
 
 ### Changed
+- **Colonization shopping list on the overlay: more columns, and a wider card.** It now shows **Commodity, Required, Remaining,
+  FC, Cargo and To buy** (FC only with a fleet carrier). **Need** is now called **Remaining** and **Ship** is now **Cargo**; **To buy**
+  is remaining less the hold and the carrier. The card widens to fit.
 - **The lines under the mode buttons show on every mode.** The credits line is no longer hidden on Exploration and Trade, so the
   whole block (plugin version, game mode, credits) is the same everywhere.
 

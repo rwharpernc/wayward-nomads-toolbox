@@ -232,16 +232,18 @@ system nobody has planned on that site shows nothing. See [what goes on the inte
 Optional, and **off by default**. It needs an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md). Turn
 it on in **Settings → Overlays → Colonization**: **Show the shopping list on the in-game overlay**.
 
-It draws a table, with the site name as its title and the columns **Commodity**, **Need**,
-**FC** and **Ship**:
+It draws a table, with the site name as its title and the columns **Commodity**, **Required**, **Remaining**,
+**FC**, **Cargo** and **To buy**:
 
-- **Need** is what the site still requires (required less delivered). It does **not** drop as you load up, so you can
+- **Required** is the site's full requirement for that commodity.
+- **Remaining** is what the site still requires (required less delivered). It does **not** drop as you load up, so you can
   see what you need and what you have side by side. It falls when you deliver.
 - **FC** appears only if you have a fleet carrier (see the FC column above): what you have moved onto it. It is blue
-  once it covers the need, gray while it doesn't, and blank when none.
-- **Ship** is what is in your ship's hold right now, so you can see what you just bought. A **✓** after the name means
+  once it covers the remaining amount, gray while it doesn't, and blank when none.
+- **Cargo** is what is in your ship's hold right now, so you can see what you just bought. A **✓** after the name means
   your hold **plus** what is on your fleet carrier already covers it (the row turns green, the same rule as the
   window's green rows); the row turns amber if together they are **more** than the site needs.
+- **To buy** is what is left to get after your hold and your carrier (remaining less both). Blank once it is covered.
 
 Commodities are alphabetical so rows stay put while numbers change. A last line gives the tons remaining and the
 trips in your current ship, and they need your ship's cargo capacity, which EDMC supplies. **With a fleet carrier** it gives both legs, as

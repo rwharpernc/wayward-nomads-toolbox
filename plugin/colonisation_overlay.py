@@ -1,11 +1,13 @@
 """
 The Colonization shopping list on the in-game overlay: a table of the commodities a
-construction site still needs, with the columns Commodity, Need, FC and Ship.
+construction site still needs, with the columns Commodity, Required, Remaining, FC, Cargo and To buy.
 
-- **Need** is what the site still requires (required less delivered). It does not fall as you load up, so you can see
+- **Required** is the site's full requirement for the commodity.
+- **Remaining** is what the site still requires (required less delivered). It does not fall as you load up, so you can see
   how much you need and how much you have side by side.
 - **FC** (only for a commander with a fleet carrier) is what has been transferred to the carrier (`colonisation_carrier`).
-- **Ship** is what is in the ship's hold now. A ✓ marks a commodity the hold plus the fleet carrier already cover (the
+- **Cargo** is what is in the ship's hold now.
+- **To buy** is what is left to get after the hold and the carrier (0 shows blank). A ✓ marks a commodity the hold plus the fleet carrier already cover (the
   same rule as the Colonization window's green rows); the row turns amber when together they are more than is needed.
 
 A footer gives the tons remaining and the trips in the current ship (from its cargo capacity): trips to buy and to haul with a fleet
@@ -149,14 +151,21 @@ def _clip(text: str, limit: int) -> str:
 # muted (the carrier column while it does not).
 CHECK = "✓"
 NAME_CHARS = 30
+MAX_COLUMNS = 6   # name plus up to five number columns
 
 
 @dataclass(frozen=True)
 class Row:
     name: str
-    need: int
-    ship: int
+    need: int       # remaining
+    ship: int       # in the hold
     fc: int
+    required: int = 0   # the site's full requirement (0 when not known)
+
+    @property
+    def to_buy(self) -> int:
+        """Still to get after the hold and the fleet carrier."""
+        return max(0, self.need - self.ship - self.fc)
 
     @property
     def covered(self) -> bool:
@@ -205,7 +214,7 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     if not needed:
         return None
     limit = max_rows if max_rows > 0 else len(needed)
-    rows = tuple(Row(r.label, r.remaining, hold.get(r.key, 0), on_carrier.get(r.key, 0)) for r in needed[:limit])
+    rows = tuple(Row(r.label, r.remaining, hold.get(r.key, 0), on_carrier.get(r.key, 0), r.required) for r in needed[:limit])
     remaining = sum(r.remaining for r in needed)
     known = bool(capacity and capacity > 0)
     trips = math.ceil(remaining / capacity) if known else 0
@@ -216,15 +225,18 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc, buy_trips)
 
 
+def _columns(card: Card) -> List[Tuple[str, str]]:
+    """(heading, Row attribute) of each number column, left to right; FC only for a commander with a carrier."""
+    return ([("Required", "required"), ("Remaining", "need")] + ([("FC", "fc")] if card.show_fc else [])
+            + [("Cargo", "ship"), ("To buy", "to_buy")])
+
+
 def _layout(card: Card, look: Look = LEGACY) -> Tuple[int, List[int], int]:
-    """(x of the name column relative to the card, right edges of the Need / FC / Ship columns, total text width) in px,
+    """(x of the name column relative to the card, right edges of the number columns, total text width) in px,
     from character counts at the look's text size - the wire protocol has no text metrics, so this errs a little wide."""
     char = look.char_px("normal")
     name_chars = max([len("Commodity")] + [len(_clip(r.name, NAME_CHARS)) + 2 for r in card.rows])
-    columns = [("Need", [r.need for r in card.rows])]
-    if card.show_fc:
-        columns.append(("FC", [r.fc for r in card.rows]))
-    columns.append(("Ship", [r.ship for r in card.rows]))
+    columns = [(head, [getattr(r, attr) for r in card.rows]) for head, attr in _columns(card)]
     widths = [max([len(head)] + [len(f"{v:,}") for v in values]) + 2 for head, values in columns]
     edges, edge = [], name_chars
     for width in widths:
@@ -262,22 +274,24 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
         return int(round(x + edge - len(text) * char))
 
     slots.append([(0, card.title, look.color("title"), x)])
-    heads = [("Need", edges[0])] + ([("FC", edges[1])] if card.show_fc else []) + [("Ship", edges[-1])]
+    heads = [(head, edge) for (head, _attr), edge in zip(_columns(card), edges)]
     header = look.color("header")
     slots.append([(0, "Commodity", header, x)] + [(i + 1, h, header, right(h, e)) for i, (h, e) in enumerate(heads)])
     for row in card.rows:
         colour = look.color("warn") if row.surplus else look.color("ok") if row.covered else look.color("text")
         name = _clip(row.name, NAME_CHARS) + (f" {CHECK}" if row.covered else "")
-        cells = [(0, name, colour, x), (1, f"{row.need:,}", colour, right(f"{row.need:,}", edges[0]))]
-        column = 2
-        if card.show_fc:
-            fc = f"{row.fc:,}" if row.fc else ""
-            if fc:
-                cells.append((column, fc, look.color("info") if row.fc >= row.need else look.color("muted"), right(fc, edges[1])))
-            column += 1
-        if row.ship:
-            ship = f"{row.ship:,}"
-            cells.append((column, ship, colour, right(ship, edges[-1])))
+        cells = [(0, name, colour, x)]
+        for column, ((head, attr), edge) in enumerate(zip(_columns(card), edges), start=1):
+            value = getattr(row, attr)
+            if not value:
+                continue    # a zero is left blank: nothing in the hold, on the carrier or left to buy
+            text = f"{value:,}"
+            cell_colour = colour
+            if attr == "fc":
+                cell_colour = look.color("info") if row.fc >= row.need else look.color("muted")
+            elif attr == "to_buy":
+                cell_colour = look.color("text")
+            cells.append((column, text, cell_colour, right(text, edge)))
         slots.append(cells)
     if card.hidden:
         slots.append([(0, f"+{card.hidden} more", look.color("title"), x)])
@@ -287,11 +301,11 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
         used = {column for column, _t, _c, _x in cells}
         for column, text, colour, cell_x in cells:
             client.send_message(_id(index, column), text, colour, cell_x, y + index * line, ttl=TTL, size=size)
-        for column in range(4):
+        for column in range(MAX_COLUMNS):
             if column not in used and (index < previous_slots):
                 client.send_message(_id(index, column), "", "white", x, y + index * line, ttl=1)
     for index in range(len(slots), previous_slots):
-        for column in range(4):
+        for column in range(MAX_COLUMNS):
             client.send_message(_id(index, column), "", "white", x, y + index * line, ttl=1)
     return len(slots)
 
@@ -299,13 +313,13 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
 def clear(client: overlay.OverlayClient, x: int, y: int, slots: int) -> None:
     client.send_shape(CARD_ID, "rect", "", "", x, y, 0, 0, ttl=1)
     for index in range(slots):
-        for column in range(4):
+        for column in range(MAX_COLUMNS):
             client.send_message(_id(index, column), "", "white", x, y + index * LINE_HEIGHT, ttl=1)
 
 
 def preview_card() -> Card:
     """Sample content for the Settings "Test Overlay" button."""
     return Card("Preview Construction Site",
-                (Row("Aluminium", 10055, 0, 0), Row("Steel", 12900, 14000, 1265), Row("Titanium", 8205, 300, 9000),
-                 Row("Water", 1609, 1609, 0)),
+                (Row("Aluminium", 10055, 0, 0, 12000), Row("Steel", 12900, 14000, 1265, 15000),
+                 Row("Titanium", 8205, 300, 9000, 8205), Row("Water", 1609, 1609, 0, 2000)),
                 hidden=0, remaining=32769, trips=33, show_fc=True, buy_trips=21)

@@ -295,10 +295,11 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(slots, card.preview_card().slot_count)
         self.assertEqual(client.sent[0][:2], ("shape", card.CARD_ID))
         texts = self.texts(client)
-        self.assertEqual(texts["s1_1"], "Need")
-        self.assertEqual(texts["s1_3"], "Ship")
+        self.assertEqual([texts[f"s1_{i}"] for i in range(1, 6)], ["Required", "Remaining", "FC", "Cargo", "To buy"])
         self.assertEqual(texts["s3_0"], "Steel ✓")
-        self.assertEqual(texts["s3_3"], "14,000")
+        self.assertEqual(texts["s3_1"], "15,000")
+        self.assertEqual(texts["s3_4"], "14,000")
+        self.assertEqual(texts["s2_5"], "10,055")     # To buy: nothing in the hold or on the carrier
         self.assertTrue(texts[f"s{slots - 1}_0"].startswith("► 32,769 remaining  ► 21 to buy  ► 33 to haul"))
 
     def test_no_fc_column_without_a_carrier(self) -> None:
@@ -307,7 +308,8 @@ class RenderTests(unittest.TestCase):
         card.render(client, built, 20, 300)
         texts = self.texts(client)
         self.assertNotIn("FC", texts.values())
-        self.assertEqual(texts["s2_2"], "10")     # Ship is the third column
+        self.assertEqual(texts["s2_3"], "10")     # Cargo follows Required and Remaining when there is no FC column
+        self.assertEqual(texts["s2_4"], "390")    # To buy
 
     def test_shorter_card_clears_leftover_lines(self) -> None:
         client = FakeClient()
@@ -321,7 +323,7 @@ class RenderTests(unittest.TestCase):
         client = FakeClient()
         card.clear(client, 20, 300, 2)
         self.assertEqual(client.sent[0][1], card.CARD_ID)
-        self.assertEqual(sum(1 for item in client.sent if item[0] == "msg"), 8)
+        self.assertEqual(sum(1 for item in client.sent if item[0] == "msg"), 2 * card.MAX_COLUMNS)
 
 
 if __name__ == "__main__":
