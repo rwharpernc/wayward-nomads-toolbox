@@ -704,10 +704,10 @@ class InventoryPanelController:
             self._bar_rows[key] = {"row": row, "name": name_label, "bar": bar, "value": value_label}
             self._draw_bar(bar, 0, None, BAR_COLOURS.get(key, _BAR_DEFAULT_COLOUR))
 
-        self._last_event_label = panelkit.wrap_label(parent, text="")
+        self._last_event_label = panelkit.wrap_label(parent, text="", font=panelkit.view_fonts()["small"])
         self._last_event_label.grid(row=2, column=0, sticky=tk.W, pady=(2, 0))
 
-        tk.Label(parent, text="Click Inventory Bar to Open Inventory Panel", anchor=tk.W).grid(
+        tk.Label(parent, text="Click Inventory Bar to Open Inventory Panel", anchor=tk.W, font=panelkit.view_fonts()["small"]).grid(
             row=3, column=0, sticky=tk.W, pady=(4, 0),
         )
 

@@ -675,7 +675,7 @@ class BoxelSurveyController:
             row=6, column=0, columnspan=3, sticky=tk.W,
         )
 
-        seed_hint_label = panelkit.wrap_label(parent, textvariable=self._seed_hint_var, fg="grey")
+        seed_hint_label = panelkit.wrap_label(parent, textvariable=self._seed_hint_var, fg="grey", font=panelkit.view_fonts()["small"])
         seed_hint_label.grid(row=7, column=0, columnspan=3, sticky=tk.W)
         # trace_add (not a static grid label) since this needs to re-validate
         # on every keystroke, before the user commits to clicking Set.
@@ -688,7 +688,7 @@ class BoxelSurveyController:
             row=8, column=0, columnspan=3, sticky=tk.W,
         )
 
-        panelkit.wrap_label(parent, textvariable=self._status_var, fg="grey").grid(
+        panelkit.wrap_label(parent, textvariable=self._status_var, fg="grey", font=panelkit.view_fonts()["small"]).grid(
             row=9, column=0, columnspan=3, sticky=tk.W,
         )
 

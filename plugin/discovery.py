@@ -493,11 +493,11 @@ class DiscoveryController:
             panelkit.add_tooltip(button, tip)
             self._star_buttons.append(button)
 
-        self._status_label = panelkit.wrap_label(parent, text=_IDLE_STATUS)
+        self._status_label = panelkit.wrap_label(parent, text=_IDLE_STATUS, font=panelkit.view_fonts()["small"])
         self._status_label.grid(row=1, column=0, sticky=tk.W, pady=(4, 0))
         self._sync_status_label()
 
-        self._neutron_label = panelkit.wrap_label(parent, text="")
+        self._neutron_label = panelkit.wrap_label(parent, text="", font=panelkit.view_fonts()["small"])
         self._neutron_label.grid(row=2, column=0, sticky=tk.W, pady=(2, 0))
         self._neutron_label.grid_remove()  # nothing to say until the first click
         self._neutron_parent = parent

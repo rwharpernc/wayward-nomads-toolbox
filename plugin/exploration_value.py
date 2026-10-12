@@ -534,7 +534,7 @@ class ExplorationValueController:
         panelkit.wrap_label(parent, textvariable=self._scan_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
         )
-        panelkit.wrap_label(parent, textvariable=self._age_var, anchor="w").grid(
+        panelkit.wrap_label(parent, textvariable=self._age_var, anchor="w", font=panelkit.view_fonts()["small"]).grid(
             row=2, column=0, columnspan=3, sticky=tk.W,
         )
         panelkit.wrap_label(parent, textvariable=self._region_var, anchor="w").grid(
@@ -546,10 +546,10 @@ class ExplorationValueController:
         panelkit.wrap_label(parent, textvariable=self._sale_var, anchor="w").grid(
             row=5, column=0, columnspan=3, sticky=tk.W,
         )
-        panelkit.wrap_label(parent, textvariable=self._elw_rarity_var, anchor="w").grid(
+        panelkit.wrap_label(parent, textvariable=self._elw_rarity_var, anchor="w", font=panelkit.view_fonts()["small"]).grid(
             row=6, column=0, columnspan=3, sticky=tk.W,
         )
-        panelkit.wrap_label(parent, textvariable=self._upload_status_var, anchor="w").grid(
+        panelkit.wrap_label(parent, textvariable=self._upload_status_var, anchor="w", font=panelkit.view_fonts()["small"]).grid(
             row=7, column=0, columnspan=3, sticky=tk.W,
         )
 

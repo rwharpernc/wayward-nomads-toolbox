@@ -194,7 +194,7 @@ class CodexCompletionistController:
             backfill_button, "Backfill from Journal History - scan your old journal files for Codex entries you already found")
 
         self._status_var = tk.StringVar(value="")
-        panelkit.wrap_label(body, textvariable=self._status_var, fg="grey").grid(
+        panelkit.wrap_label(body, textvariable=self._status_var, fg="grey", font=panelkit.view_fonts()["small"]).grid(
             row=3, column=0, columnspan=3, sticky=tk.W,
         )
 

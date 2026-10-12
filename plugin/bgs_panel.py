@@ -399,7 +399,7 @@ class BgsController:
         )
 
         self._tick_status_var = tk.StringVar(value=self._tick_status_text)
-        panelkit.wrap_label(parent, textvariable=self._tick_status_var, anchor="w", fg="grey").grid(
+        panelkit.wrap_label(parent, textvariable=self._tick_status_var, anchor="w", fg="grey", font=panelkit.view_fonts()["small"]).grid(
             row=2, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
         )
 
