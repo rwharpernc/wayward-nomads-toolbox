@@ -573,13 +573,17 @@ class PowerplayLedger:
 
     # -- views --
 
-    def views(self) -> List[CycleView]:
-        """The live cycle first, then the closed ones, newest first and in order: a cycle the
-        ledger covers but nothing happened in (so it wasn't archived) appears as an empty view."""
-        live = CycleView(
+    def live_view(self) -> CycleView:
+        """The cycle in progress, as a read-only view."""
+        return CycleView(
             cycle_start=format_ts(self.cycle_start) if self.cycle_start else None, cycle_end=None,
             current=True, records=dict(self.records), powers=list(self.powers),
             daily={d: dict(m) for d, m in self.daily.items()})
+
+    def views(self) -> List[CycleView]:
+        """The live cycle first, then the closed ones, newest first and in order: a cycle the
+        ledger covers but nothing happened in (so it wasn't archived) appears as an empty view."""
+        live = self.live_view()
         closed = {r["cycle_start"]: view_from_archive(r) for r in self.archive if isinstance(r.get("cycle_start"), str)}
         if self.cycle_start is not None and self.covered_from is not None:
             start = self.cycle_start - CYCLE

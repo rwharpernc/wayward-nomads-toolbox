@@ -196,6 +196,23 @@ class ViewTests(unittest.TestCase):
         self.assertEqual(view.systems(None, L.TabPrefs(hidden=["Delta"]), limit=2), ["Charlie", "Bravo"])
 
 
+class LiveViewTests(unittest.TestCase):
+    def test_totals_span_systems_and_leave_out_closed_cycles(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_merits("Alpha", ACQUISITION, 5, IN_CYCLE_1)
+        ledger.record_merits("Bravo", ACQUISITION, 7, IN_CYCLE_1_LATER)
+        ledger.record_merits("Bravo", REINFORCEMENT, 3, IN_CYCLE_1_LATER)
+        ledger.record_merits("Alpha", ACQUISITION, 100, IN_CYCLE_2)  # rolls cycle 1 into the archive
+        live = ledger.live_view()
+        self.assertTrue(live.current)
+        self.assertEqual(live.merit_totals(), {ACQUISITION: 100})
+
+    def test_live_view_is_first_of_views(self):
+        ledger = L.PowerplayLedger()
+        ledger.record_merits("Alpha", ACQUISITION, 5, IN_CYCLE_1)
+        self.assertEqual(ledger.live_view().merit_totals(), ledger.views()[0].merit_totals())
+
+
 class TabPrefsTests(unittest.TestCase):
     def test_pin_cap(self):
         prefs = L.TabPrefs()

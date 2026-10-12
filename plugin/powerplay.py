@@ -513,6 +513,16 @@ def _here_lines(session: dict, current_system: Optional[str]) -> tuple:
     return f"Here: {merits:,} merits", f"CP: {cp_bits}"
 
 
+def _cycle_lines(view) -> tuple:
+    """The main panel's cumulative tally for the Powerplay cycle in progress (all systems,
+    from the per-commander ledger, so it spans game sessions and includes the journal scan)."""
+    totals = view.merit_totals()
+    number = view.number
+    label = f"Cycle {number}" if number is not None else "Cycle"
+    cp_bits = _cp_bits(_cp_by_activity(totals)) or "—"
+    return f"{label} merits: {sum(totals.values()):,}", f"{label} CP: {cp_bits}"
+
+
 def _system_summary(pp: PowerplayTracker) -> str:
     """'Nervi — Exploited (Zachary Hudson)' for the main panel. Deliberately
     just the controller, not the full rival/contested-Powers list — the
@@ -563,6 +573,8 @@ class PowerplayController:
         self._here_cp_label: Optional[tk.Label] = None
         self._merits_label: Optional[tk.Label] = None
         self._cp_label: Optional[tk.Label] = None
+        self._cycle_merits_label: Optional[tk.Label] = None
+        self._cycle_cp_label: Optional[tk.Label] = None
         self._last_event_label: Optional[tk.Label] = None
         self._panel_parent: Optional[tk.Frame] = None
 
@@ -994,11 +1006,17 @@ class PowerplayController:
         self._cp_label = panelkit.wrap_label(parent, text="Session CP: —")
         self._cp_label.grid(row=6, column=0, sticky=tk.W)
 
+        self._cycle_merits_label = panelkit.wrap_label(parent, text="Cycle merits: 0")
+        self._cycle_merits_label.grid(row=7, column=0, sticky=tk.W)
+
+        self._cycle_cp_label = panelkit.wrap_label(parent, text="Cycle CP: —")
+        self._cycle_cp_label.grid(row=8, column=0, sticky=tk.W)
+
         self._last_event_label = panelkit.wrap_label(parent, text="No merit events yet this session.")
-        self._last_event_label.grid(row=7, column=0, sticky=tk.W, pady=(4, 0))
+        self._last_event_label.grid(row=9, column=0, sticky=tk.W, pady=(4, 0))
 
         windows_row = tk.Frame(parent)
-        windows_row.grid(row=8, column=0, sticky=tk.W, pady=(4, 0))
+        windows_row.grid(row=10, column=0, sticky=tk.W, pady=(4, 0))
         sessions_button = tk.Button(windows_row, text="SES", command=self._show_sessions)
         sessions_button.pack(side=tk.LEFT, padx=(0, 6))
         panelkit.add_tooltip(sessions_button, "Sessions - open the Powerplay sessions window")
@@ -1052,6 +1070,11 @@ class PowerplayController:
         self._merits_label["text"] = f"Session merits: {merits:,}"
         if self._cp_label is not None:
             self._cp_label["text"] = f"Session CP: {_cp_bits(cp_by_activity)}"
+
+        if self._cycle_merits_label is not None and self._cycle_cp_label is not None:
+            cycle_merits_text, cycle_cp_text = _cycle_lines(self.ledger.live_view())
+            self._cycle_merits_label["text"] = cycle_merits_text
+            self._cycle_cp_label["text"] = cycle_cp_text
 
         from . import powerplay_window
         powerplay_window.refresh(self._current_system, self.systems_pane())
