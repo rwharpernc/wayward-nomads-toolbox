@@ -3,11 +3,6 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
-
-### Added
-- **Powerplay Sessions window: a Merits/hr column** beside CP/hr in the by-activity table, for each activity and the total.
-
 ## 1.7.1 - 2026-10-12
 
 ### Added

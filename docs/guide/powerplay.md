@@ -37,7 +37,7 @@ Click **SES**. It has five tabs.
 
 | Tab | What it shows |
 |---|---|
-| **Current session** | This login: merits and estimated Control Points by system and by activity, and the Power context WNTB is using. The by-activity table also shows **Merits/hr** and **CP/hr**, per activity and in total, over the time from the session's start to its last merit (a dash until there is some time to measure). |
+| **Current session** | This login: merits and estimated Control Points by system and by activity, and the Power context WNTB is using. |
 | **Systems** | One tab per system for the cycle, with the system's standing and what you earned there. |
 | **Cycles** | One row per Powerplay cycle, newest first: period, the Power you were pledged to, systems worked, merits, estimated CP, merits by activity. |
 | **Daily** | Merits and estimated CP (whole numbers) for each day of a cycle, with a total. |
