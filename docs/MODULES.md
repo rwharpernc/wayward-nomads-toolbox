@@ -211,6 +211,8 @@ Guide: [Colonization](guide/colonization.md)
 | `colonisation_history.py` | What the commander has delivered to construction sites (tonnes by commodity, site and day), kept per commander and caught up from the journals without double counting |
 | `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to get for the active site (pure formatting plus drawing) |
 | `colonisation_panel.py` | The Colonization mode's page (current project and history), the overlay card's controller and the settings tabs |
+| `rcc_client.py` | A thin read-only client for Raven Colonial's public API: the build sites of one system (planned, building, complete), with a bounded read, a user-agent, a timeout and a one-minute memory |
+| `colonisation_builds_window.py` | The Planned Builds window: Raven Colonial's sites for the picked site's system, fetched on a worker thread when opened or refreshed |
 | `colonisation_sources.py` | Where to buy a colonisation commodity: the closest stations (and optionally fleet carriers) with it in stock, any landing-pad size by default, via Spansh; the whole-list search (one request per commodity) and the remembered search choices; pure shaping around an injected search |
 | `colonisation_stats.py` | The figures and wording of the Colonization page: the current project and the history, worded for a commander with or without a fleet carrier; pure, no Tk |
 | `colonisation_view.py` | What the Colonisation Sites window shows for a site: the commodity rows after the filters, and the totals (still to get, on the carrier, in the ship, buy and haul trips); pure, no Tk |

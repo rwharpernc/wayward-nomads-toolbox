@@ -18,6 +18,7 @@ The table says exactly when.
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons. Some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings. Once on, the ring reserve lookup also runs by itself each time you drop into a ring |
+| Colonization: Planned Builds (button in the Colonization Sites window) | Raven Colonial (ravencolonial.com) | Only when you press **Planned Builds** or **Refresh** in that window. Sends the name of the site's system and nothing else; answers are remembered for a minute. It only reads: nothing about you or your deliveries goes to Raven Colonial |
 | Colonization: Where to buy (**Find nearest**, **Find all**) | Spansh | Only when you press the button. Sends the commodity name and the system you search around, one request per commodity for **Find all**. Identical searches are answered from memory for 2 minutes |
 | Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. See below for how often |
 | BGS tick detection | A community tick-time service (`tick.infomancer.uk`) | **On** by default. Every 60 seconds while BGS is on. Can be turned off in Settings → BGS. The service has no HTTPS, so this one request is **unencrypted**; it asks only for the time of the last tick and sends nothing about you but WNTB's name and version |
@@ -38,7 +39,8 @@ Only when you press a button:
 ## What never goes online
 
 Everything else makes **no internet connection at all**: Powerplay tracking, Missions, Inventory, Screenshots,
-Colonisation, Organic Scanning, Ship Builds, Landing Assist, Interdiction Warning, and Trade's session profit,
+Colonisation tracking, history and the shopping list overlay (Where to buy and Planned Builds are the only parts that go online,
+above), Organic Scanning, Ship Builds, Landing Assist, Interdiction Warning, and Trade's session profit,
 stock, carrier cargo and History.
 
 ## How WNTB keeps its traffic low

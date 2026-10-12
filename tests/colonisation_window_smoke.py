@@ -310,6 +310,43 @@ window._on_copy_route()
 check("Press Find all first" in window._sources_note.cget("text"), "Copy Route with no route says what to do")
 W.sources.find_whole_list = S_whole
 
+# Planned Builds: what Raven Colonial has for the site's system, in its own window; nothing is asked until the button is pressed.
+from plugin import colonisation_builds_window as B, rcc_client
+asked_rcc = []
+
+
+def fake_sites(system):
+    asked_rcc.append(system)
+    return rcc_client.parse_sites([
+        {"name": "Victor Xray", "status": "plan", "buildType": "hermes", "bodyNum": 31},
+        {"name": "Depot One", "status": "build", "buildType": "no_truss", "bodyNum": 7, "marketId": 1},
+        {"name": "Elsewhere", "status": "complete", "buildType": "dysnomia", "bodyNum": 7, "marketId": 999}])
+
+
+rcc_real = rcc_client.fetch_sites
+rcc_client.fetch_sites = fake_sites
+check(not asked_rcc, "nothing should be asked of Raven Colonial before the button is pressed")
+window._on_builds()
+for _ in range(60):
+    root.update()
+    if asked_rcc and B._window is not None and len(B._window._table) == 3:
+        break
+    time.sleep(0.02)
+check(asked_rcc == ["Sol"], f"the selected site's system is the one looked up: {asked_rcc}")
+check(B._window is not None and B._window.alive, "the Planned Builds window should open")
+rows = [row.values for row in B._window._table._rows.values()]
+check([r[0] for r in rows] == ["Depot One", "Victor Xray", "Elsewhere"], f"building, planned, then complete: {[r[0] for r in rows]}")
+check([r[4] for r in rows] == ["yes", "", ""], f"only the site WNTB tracks (market id 1) is marked: {[r[4] for r in rows]}")
+check("1 building" in B._window._shell._subtitle.cget("text") and "1 planned" in B._window._shell._subtitle.cget("text"),
+      f"the subtitle should summarize: {B._window._shell._subtitle.cget('text')}")
+B._window.refresh()
+for _ in range(40):
+    root.update()
+    time.sleep(0.01)
+check(len(asked_rcc) == 2, "Refresh asks again")
+rcc_client.fetch_sites = rcc_real
+B.close()
+
 # No FC column without a carrier; the table never asks for more than the window has.
 check(window._with_fc is False, "no FC column for a commander without a carrier")
 for _ in range(4):

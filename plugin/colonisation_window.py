@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tupl
 
 from config import appname, config
 
-from . import colonisation, colonisation_sources as sources, colonisation_view as view, panelkit
+from . import colonisation, colonisation_builds_window, colonisation_sources as sources, colonisation_view as view, panelkit
 from .colonisation_carrier import CarrierCargo
 from .colonisation import Site
 from .colonisation_data import SiteRepository
@@ -159,6 +159,7 @@ class ColonisationWindow:
         self._toplevel = self._shell.window
 
         self._shell.add_action("Copy Shopping List", self._on_copy, accent=True)
+        self._shell.add_action("Planned Builds", self._on_builds)
         self._shell.add_action("Remove Site", self._on_remove)
         self._shell.add_action("Remove Finished", self._on_remove_finished)
 
@@ -758,6 +759,19 @@ class ColonisationWindow:
         if panelkit.copy_to_clipboard(self._toplevel, "\n".join(lines)):
             self._shell.set_status(f"Copied the shopping list for {site.display_name()}.")
 
+    def _on_builds(self) -> None:
+        """Open the Planned Builds window (what Raven Colonial has for this site's system). Nothing is asked until this is pressed."""
+        site = self._selected_site()
+        if site is None:
+            self._shell.set_status("Select a site on the left first; its system is the one looked up.")
+            return
+        if not site.system:
+            self._shell.set_status("This site has no system name yet; dock at it once so WNTB knows where it is.")
+            return
+        colonisation_builds_window.show(
+            self._toplevel, site.system,
+            lambda: frozenset(s.market_id for s in self._repository.for_cmdr(self._cmdr)))
+
     def _on_remove(self) -> None:
         site = self._selected_site()
         if site is None or not self._cmdr:
@@ -775,6 +789,7 @@ class ColonisationWindow:
         self._shell.set_status(f"Removed {len(finished)} finished site{'s' if len(finished) != 1 else ''}.")
 
     def close(self) -> None:
+        colonisation_builds_window.close()
         if self._whole_job is not None:
             self._whole_job["cancel"] = True   # let the worker stop between commodities instead of running on
         self._search_id += 1   # a search still running has nowhere to show its answer

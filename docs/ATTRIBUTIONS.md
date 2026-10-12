@@ -53,7 +53,8 @@ being listed doesn't mean a tool was the first or the only one.
 - **Colonisation tracking:** Architect Tracker, [Raven Colonial](https://ravencolonial.com/),
   ED Colonization Helper, EDColony and BGS-Tally. The shopping-list overlay card follows
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s layout. Raven Colonial publishes its API as OpenAPI, which SrvSurvey and
-  BGS-Tally use and which informed WNTB's plans for it (nothing is sent to Raven Colonial yet).
+  BGS-Tally use and which informed WNTB's plans for it. WNTB's **Planned Builds** window reads one public, key-free endpoint of it (the
+  build sites of a system) when you press a button; nothing is ever sent to Raven Colonial.
 - **Where to buy a colonisation commodity:** [Spansh](https://spansh.co.uk/)'s station search, the same one the Mining and Trade
   finders use.
 - **Overlay placement:** SrvSurvey places each overlay relative to the game window (left, center or right; top, middle or

@@ -8,7 +8,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 > app that is in development. For now this page is about your own deliveries, ship and carrier, and details may change.
 
 **On this page:** [The COL page](#the-col-page) · [Tracking a site](#tracking-a-site) ·
-[The Colonization Sites window](#the-colonization-sites-window) · [Where to buy](#where-to-buy) ·
+[The Colonization Sites window](#the-colonization-sites-window) · [Where to buy](#where-to-buy) · [Planned builds](#planned-builds) ·
 [The shopping list on the overlay](#the-shopping-list-on-the-overlay) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
@@ -207,6 +207,18 @@ Things worth knowing:
   so.
 - **Remove Site** stops tracking that site.
 - **Remove Finished** deletes every complete or failed site.
+
+## Planned builds
+
+The journal only reports a construction site once you have docked at it, so a build you have only **planned** never appears
+in WNTB. Press **Planned Builds** (top right of the Colonization Sites window) to see what [Raven Colonial](https://ravencolonial.com),
+the community planning site, has for the selected site's system: every site there with its status (**Building**, **Planned**,
+**Complete**), its type and the body it is on, building first. A site you have docked at and WNTB tracks is marked **yes** under
+*In WNTB*.
+
+It asks Raven Colonial once, when the window opens or you press **Refresh**, and sends only the system's name (nothing about you
+or your deliveries is ever sent). The answer is remembered for a minute. It shows what *other people* have entered there, so a
+system nobody has planned on that site shows nothing. See [what goes on the internet](internet-and-privacy.md).
 
 ## The shopping list on the overlay
 
