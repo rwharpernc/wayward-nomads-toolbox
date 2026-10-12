@@ -30,6 +30,10 @@ LIVE = [
 ]
 
 
+SYSTEM = {"v": 6, "rev": 42, "cmdr": "MACTAVIOUS", "name": "Hyades Sector DB-W b2-6", "id64": 13864556963153, "architect": "MACTAVIOUS",
+          "reserveLevel": "pristine", "open": False, "sites": LIVE, "bodies": [{"name": "x"}]}
+
+
 class FakeResponse:
     def __init__(self, body: bytes):
         self._body = io.BytesIO(body)
@@ -103,69 +107,88 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(R.summary_text(R.parse_sites([{"name": "X", "status": "weird"}])), "1 other")
 
 
+class SystemTests(unittest.TestCase):
+    def test_the_architect_whether_it_is_open_and_the_sites_are_read(self):
+        plan = R.parse_system(SYSTEM)
+        self.assertEqual((plan.name, plan.architect, plan.is_open, plan.access_label), ("Hyades Sector DB-W b2-6", "MACTAVIOUS", False, "Locked"))
+        self.assertEqual(len(plan.sites), 4)
+        self.assertEqual(R.parse_system({"open": True}).access_label, "Open")
+
+    def test_missing_or_odd_fields_are_left_empty(self):
+        for data in (None, [], "x", {}, {"open": "yes", "architect": None, "sites": "x"}):
+            plan = R.parse_system(data, "Fallback")
+            self.assertEqual((plan.architect, plan.is_open, plan.access_label, plan.sites), ("", None, "", []))
+        self.assertEqual(R.parse_system({}, "Fallback").name, "Fallback")
+
+    def test_names_from_outside_are_clipped(self):
+        plan = R.parse_system({"name": "N" * 500, "architect": "A" * 500})
+        self.assertLessEqual(len(plan.name), R.NAME_MAX)
+        self.assertLessEqual(len(plan.architect), R.NAME_MAX)
+
+
 class FetchTests(unittest.TestCase):
     def setUp(self):
         R.clear_cache()
 
-    def test_one_request_to_the_sites_address_with_a_user_agent_and_a_timeout(self):
-        opener = Opener(LIVE)
-        sites = R.fetch_sites("Hyades Sector DB-W b2-6", opener)
+    def test_one_request_to_the_system_address_with_a_user_agent_and_a_timeout(self):
+        opener = Opener(SYSTEM)
+        plan = R.fetch_system("Hyades Sector DB-W b2-6", opener)
         request, timeout = opener.requests[0]
-        self.assertEqual(request.full_url, R.BASE_URL + "/api/v2/system/Hyades%20Sector%20DB-W%20b2-6/sites")
+        self.assertEqual(request.full_url, R.BASE_URL + "/api/v2/system/Hyades%20Sector%20DB-W%20b2-6")
         self.assertIn("WNTB", request.get_header("User-agent"))
         self.assertEqual(timeout, R.TIMEOUT_S)
-        self.assertEqual(len(sites), 4)
+        self.assertEqual(len(plan.sites), 4)
 
     def test_a_system_name_cannot_change_the_address(self):
-        opener = Opener([])
-        R.fetch_sites("Sol/../../admin?x=1#y", opener)
+        opener = Opener({})
+        R.fetch_system("Sol/../../admin?x=1#y", opener)
         url = opener.requests[0][0].full_url
         self.assertTrue(url.startswith(R.BASE_URL + "/api/v2/system/"))
-        self.assertTrue(url.endswith("/sites"))
         self.assertNotIn("?", url)
         self.assertNotIn("#", url)
-        self.assertEqual(url.count("/"), R.BASE_URL.count("/") + 5)     # /api/v2/system/<one segment>/sites
+        self.assertEqual(url.count("/"), R.BASE_URL.count("/") + 4)     # /api/v2/system/<one segment>
 
     def test_the_same_system_asked_again_soon_is_answered_from_memory(self):
         clock = [100.0]
-        opener = Opener(LIVE)
-        R.fetch_sites("Sol", opener, now=lambda: clock[0])
+        opener = Opener(SYSTEM)
+        R.fetch_system("Sol", opener, now=lambda: clock[0])
         clock[0] += R.CACHE_SECONDS - 1
-        self.assertEqual(len(R.fetch_sites("SOL", opener, now=lambda: clock[0])), 4)     # no second request, and case does not matter
+        self.assertEqual(len(R.fetch_system("SOL", opener, now=lambda: clock[0]).sites), 4)   # no second request, and case does not matter
         self.assertEqual(len(opener.requests), 1)
         clock[0] += 2
-        opener.answers.append([])
-        self.assertEqual(R.fetch_sites("Sol", opener, now=lambda: clock[0]), [])        # asked again after a minute
+        opener.answers.append({"sites": []})
+        self.assertEqual(R.fetch_system("Sol", opener, now=lambda: clock[0]).sites, [])        # asked again after a minute
         self.assertEqual(len(opener.requests), 2)
 
-    def test_a_system_it_has_no_record_of_is_an_empty_list(self):
+    def test_a_system_it_has_no_record_of_has_no_sites(self):
         opener = Opener(urllib.error.HTTPError("u", 404, "Not Found", {}, io.BytesIO(b"")))
-        self.assertEqual(R.fetch_sites("Nowhere", opener), [])
+        plan = R.fetch_system("Nowhere", opener)
+        self.assertEqual((plan.name, plan.sites, plan.architect, plan.is_open), ("Nowhere", [], "", None))
 
     def test_a_server_error_is_explained_and_not_remembered(self):
-        opener = Opener(urllib.error.HTTPError("u", 500, "Boom", {}, io.BytesIO(b"")), LIVE)
+        opener = Opener(urllib.error.HTTPError("u", 500, "Boom", {}, io.BytesIO(b"")), SYSTEM)
         with self.assertRaises(R.RccError) as caught:
-            R.fetch_sites("Sol", opener)
+            R.fetch_system("Sol", opener)
         self.assertIn("500", str(caught.exception))
-        self.assertEqual(len(R.fetch_sites("Sol", opener)), 4)                          # the failure was not cached
+        self.assertEqual(len(R.fetch_system("Sol", opener).sites), 4)                    # the failure was not cached
 
     def test_no_connection_and_a_timeout_are_explained(self):
         for failure in (urllib.error.URLError("down"), TimeoutError("slow"), OSError("reset")):
             with self.assertRaises(R.RccError) as caught:
-                R.fetch_sites("Sol", Opener(failure))
+                R.fetch_system("Sol", Opener(failure))
             self.assertIn("Could not reach Raven Colonial", str(caught.exception))
 
     def test_an_answer_that_is_not_json_or_far_too_large_is_refused(self):
         with self.assertRaises(R.RccError):
-            R.fetch_sites("Sol", Opener(b"<html>nope</html>"))
+            R.fetch_system("Sol", Opener(b"<html>nope</html>"))
         with self.assertRaises(R.RccError):
-            R.fetch_sites("Sol", Opener(b" " * (R.MAX_BYTES + 5)))
+            R.fetch_system("Sol", Opener(b" " * (R.MAX_BYTES + 5)))
 
     def test_a_blank_system_asks_nothing(self):
         opener = Opener()
         for name in ("", "   ", None):
             with self.assertRaises(R.RccError):
-                R.fetch_sites(name, opener)
+                R.fetch_system(name, opener)
         self.assertEqual(opener.requests, [])
 
 

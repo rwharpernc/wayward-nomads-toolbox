@@ -213,7 +213,8 @@ Things worth knowing:
 The journal only reports a construction site once you have docked at it, so a build you have only **planned** never appears
 in WNTB. Press **Planned Builds** (top right of the Colonization Sites window) to see what [Raven Colonial](https://ravencolonial.com),
 the community planning site, has for the selected site's system: every site there with its status (**Building**, **Planned**,
-**Complete**), its type and the body it is on, building first. A site you have docked at and WNTB tracks is marked **yes** under
+**Complete**), its type and the body it is on, building first. The top of the window also names the system's **architect** (the
+commander who planned it there) and whether Raven Colonial has it **open** or **locked**, as Raven Colonial reports them. A site you have docked at and WNTB tracks is marked **yes** under
 *In WNTB*.
 
 It asks Raven Colonial once, when the window opens or you press **Refresh**, and sends only the system's name (nothing about you

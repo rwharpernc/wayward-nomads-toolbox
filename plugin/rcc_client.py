@@ -3,8 +3,8 @@ A thin read-only client for Raven Colonial's public API, for the Colonization wi
 
 Raven Colonial is a community site where commanders plan the colonization of a system: which buildings go where, and which are
 planned, being built or finished. The game's journal never reports a *planned* build, so this is the one place WNTB can show
-them. It asks one question per press of the button: the build sites of one system (`GET /api/v2/system/<name>/sites`, which
-needs no key). The journal stays the source of truth for your own deliveries; nothing is ever sent to Raven Colonial.
+them. It asks one question per press of the button: the plan for one system (`GET /api/v2/system/<name>`, which needs no key):
+its architect, whether it is open, and its build sites. The journal stays the source of truth for your own deliveries; nothing is ever sent to Raven Colonial.
 
 Pure parsing plus one network call (`fetch_sites`) whose opener is passed in, so the shaping and the error handling are tested
 without a connection. The request carries WNTB's User-Agent (http_identity), has a timeout, reads a bounded amount, and an answer
@@ -23,9 +23,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from . import http_identity
 
 BASE_URL = "https://ravencolonial100-awcbdvabgze4c5cq.canadacentral-01.azurewebsites.net"
-SITES_PATH = "/api/v2/system/{system}/sites"
+SYSTEM_PATH = "/api/v2/system/{system}"
 TIMEOUT_S = 15
-MAX_BYTES = 2_000_000           # a system has dozens of sites; anything this large is not one
+MAX_BYTES = 2_000_000           # a system's answer is a few tens of kilobytes; anything this large is not one
 CACHE_SECONDS = 60              # the same system asked again within this long is answered from memory
 MAX_SITES = 500                 # sites kept from one answer
 NAME_MAX = 60                   # a site's name is clipped to this (it is text from outside)
@@ -95,6 +95,31 @@ def parse_sites(data: Any) -> List[RccSite]:
     return sorted(sites, key=lambda s: (order.get(s.status, len(order)), s.name.casefold()))
 
 
+@dataclass(frozen=True)
+class RccSystem:
+    """What Raven Colonial holds for one system."""
+    name: str
+    architect: str               # the commander who plans it there ("" when none is given)
+    is_open: Optional[bool]      # whether it is open (anyone may edit) or locked to its architect; None when not stated
+    sites: List[RccSite]
+
+    @property
+    def access_label(self) -> str:
+        return {True: "Open", False: "Locked"}.get(self.is_open, "")
+
+
+def parse_system(data: Any, fallback_name: str = "") -> RccSystem:
+    """The system in an answer (`{name, architect, open, sites: [...]}`). Anything missing is left empty."""
+    if not isinstance(data, dict):
+        return RccSystem(fallback_name, "", None, [])
+    is_open = data.get("open")
+    return RccSystem(
+        name=str(data.get("name") or fallback_name).strip()[:NAME_MAX],
+        architect=str(data.get("architect") or "").strip()[:NAME_MAX],
+        is_open=is_open if isinstance(is_open, bool) else None,
+        sites=parse_sites(data.get("sites")))
+
+
 def count_by_status(sites: List[RccSite]) -> Dict[str, int]:
     counts: Dict[str, int] = {}
     for site in sites:
@@ -111,36 +136,37 @@ def summary_text(sites: List[RccSite]) -> str:
     return " · ".join(parts)
 
 
-_cache: Dict[str, Tuple[float, List[RccSite]]] = {}
+_cache: Dict[str, Tuple[float, RccSystem]] = {}
 
 
 def clear_cache() -> None:
     _cache.clear()
 
 
-def sites_url(system: str) -> str:
-    return BASE_URL + SITES_PATH.format(system=urllib.parse.quote(system.strip(), safe=""))
+def system_url(system: str) -> str:
+    return BASE_URL + SYSTEM_PATH.format(system=urllib.parse.quote(system.strip(), safe=""))
 
 
-def fetch_sites(system: str, opener: Callable[..., Any] = urllib.request.urlopen,
-                now: Callable[[], float] = time.monotonic) -> List[RccSite]:
-    """The build sites Raven Colonial knows in `system`. Raises RccError with a message to show; a system it has no record of
-    gives an empty list. Network access is `opener` (urlopen's shape), so tests need no connection."""
+def fetch_system(system: str, opener: Callable[..., Any] = urllib.request.urlopen,
+                 now: Callable[[], float] = time.monotonic) -> RccSystem:
+    """The plan Raven Colonial holds for `system`. Raises RccError with a message to show; a system it has no record of gives one
+    with no sites. Network access is `opener` (urlopen's shape), so tests need no connection."""
     system = (system or "").strip()
     if not system:
         raise RccError("This site has no system name yet; dock at it once so WNTB knows where it is.")
     key = system.casefold()
     cached = _cache.get(key)
     if cached is not None and now() - cached[0] < CACHE_SECONDS:
-        return list(cached[1])
-    request = urllib.request.Request(sites_url(system), headers={"User-Agent": http_identity.user_agent("rcc-sites")})
+        return cached[1]
+    request = urllib.request.Request(system_url(system), headers={"User-Agent": http_identity.user_agent("rcc-system")})
     try:
         with opener(request, timeout=TIMEOUT_S) as response:
             body = response.read(MAX_BYTES + 1)
     except urllib.error.HTTPError as err:
         if err.code == 404:
-            _cache[key] = (now(), [])
-            return []
+            empty = RccSystem(system, "", None, [])
+            _cache[key] = (now(), empty)
+            return empty
         raise RccError(f"Raven Colonial answered with an error ({err.code}). Try again later.") from err
     except (urllib.error.URLError, OSError, TimeoutError) as err:
         raise RccError("Could not reach Raven Colonial. Check your connection and try again.") from err
@@ -150,6 +176,6 @@ def fetch_sites(system: str, opener: Callable[..., Any] = urllib.request.urlopen
         data = json.loads(body.decode("utf-8"))
     except (ValueError, UnicodeDecodeError) as err:
         raise RccError("Raven Colonial sent something WNTB could not read.") from err
-    sites = parse_sites(data)
-    _cache[key] = (now(), sites)     # a failure raised above, so it is never remembered
-    return list(sites)
+    result = parse_system(data, system)
+    _cache[key] = (now(), result)     # a failure raised above, so it is never remembered
+    return result

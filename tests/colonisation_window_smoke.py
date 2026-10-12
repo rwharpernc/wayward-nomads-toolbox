@@ -315,16 +315,16 @@ from plugin import colonisation_builds_window as B, rcc_client
 asked_rcc = []
 
 
-def fake_sites(system):
+def fake_system(system):
     asked_rcc.append(system)
-    return rcc_client.parse_sites([
+    return rcc_client.parse_system({"name": system, "architect": "ALICE", "open": False, "sites": [
         {"name": "Victor Xray", "status": "plan", "buildType": "hermes", "bodyNum": 31},
         {"name": "Depot One", "status": "build", "buildType": "no_truss", "bodyNum": 7, "marketId": 1},
-        {"name": "Elsewhere", "status": "complete", "buildType": "dysnomia", "bodyNum": 7, "marketId": 999}])
+        {"name": "Elsewhere", "status": "complete", "buildType": "dysnomia", "bodyNum": 7, "marketId": 999}]})
 
 
-rcc_real = rcc_client.fetch_sites
-rcc_client.fetch_sites = fake_sites
+rcc_real = rcc_client.fetch_system
+rcc_client.fetch_system = fake_system
 check(not asked_rcc, "nothing should be asked of Raven Colonial before the button is pressed")
 window._on_builds()
 for _ in range(60):
@@ -337,14 +337,15 @@ check(B._window is not None and B._window.alive, "the Planned Builds window shou
 rows = [row.values for row in B._window._table._rows.values()]
 check([r[0] for r in rows] == ["Depot One", "Victor Xray", "Elsewhere"], f"building, planned, then complete: {[r[0] for r in rows]}")
 check([r[4] for r in rows] == ["yes", "", ""], f"only the site WNTB tracks (market id 1) is marked: {[r[4] for r in rows]}")
-check("1 building" in B._window._shell._subtitle.cget("text") and "1 planned" in B._window._shell._subtitle.cget("text"),
-      f"the subtitle should summarize: {B._window._shell._subtitle.cget('text')}")
+subtitle = B._window._shell._subtitle.cget("text")
+check("1 building" in subtitle and "1 planned" in subtitle and "architect ALICE" in subtitle and "locked" in subtitle,
+      f"the subtitle should summarize, name the architect and say it is locked: {subtitle}")
 B._window.refresh()
 for _ in range(40):
     root.update()
     time.sleep(0.01)
 check(len(asked_rcc) == 2, "Refresh asks again")
-rcc_client.fetch_sites = rcc_real
+rcc_client.fetch_system = rcc_real
 B.close()
 
 # No FC column without a carrier; the table never asks for more than the window has.

@@ -14,8 +14,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ### Added
 - **Colonization: Planned Builds.** A new button in the Colonization Sites window opens a window with the build sites Raven Colonial has for
   the selected site's system, including builds that are only planned (the journal never reports those): building first, then planned,
-  then complete, with the type and body, and a mark on the ones you track. It asks only when you press the button and sends only the
-  system's name.
+  then complete, with the type and body, and a mark on the ones you track, and it names the system's architect and whether it is open or
+  locked. It asks only when you press the button and sends only the system's name.
 - **Trade, Routes: the wait says what Spansh is doing.** While a route search runs, the page now says whether it is waiting in Spansh's
   queue or being calculated, instead of only counting seconds.
 - **Colonization, Find all: a suggested shopping route.** After Find all, the results start with the few stops (at most 6) that between

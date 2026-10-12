@@ -2,7 +2,8 @@
 
 The journal only reports a construction site once you dock at it, so a build that is merely planned is invisible to WNTB. This
 shows what the community site has for the system (planned, being built, complete), and marks the ones WNTB is also tracking.
-Nothing is fetched until the window is opened or Refresh is pressed; only the system's name is sent (see rcc_client.py).
+Nothing is fetched until the window is opened or Refresh is pressed; only the system's name is sent (see rcc_client.py). The
+subtitle also names the system's architect and whether Raven Colonial has it open or locked.
 
 Built on the shared window kit (plugin/uikit); a worker thread does the one request and the Tk thread polls for its answer.
 """
@@ -45,7 +46,7 @@ _window: Optional["BuildsWindow"] = None
 
 
 def show(parent: tk.Misc, system: str, tracked: Callable[[], FrozenSet[int]],
-         fetch: Optional[Callable[[str], List[rcc_client.RccSite]]] = None) -> None:
+         fetch: Optional[Callable[[str], rcc_client.RccSystem]] = None) -> None:
     """Open the window for `system`, or raise it (showing that system) if it is already open. `tracked` gives the market ids of
     the sites WNTB is tracking for the commander."""
     global _window
@@ -53,7 +54,7 @@ def show(parent: tk.Misc, system: str, tracked: Callable[[], FrozenSet[int]],
         _window.set_system(system)
         _window.lift()
         return
-    _window = BuildsWindow(parent, system, tracked, fetch or rcc_client.fetch_sites)
+    _window = BuildsWindow(parent, system, tracked, fetch or rcc_client.fetch_system)
 
 
 def close() -> None:
@@ -63,7 +64,7 @@ def close() -> None:
 
 class BuildsWindow:
     def __init__(self, parent: tk.Misc, system: str, tracked: Callable[[], FrozenSet[int]],
-                 fetch: Callable[[str], List[rcc_client.RccSite]]) -> None:
+                 fetch: Callable[[str], rcc_client.RccSystem]) -> None:
         self._tracked = tracked
         self._fetch = fetch
         self._system = ""
@@ -100,7 +101,7 @@ class BuildsWindow:
         if not self.alive:
             return
         self._request_id += 1
-        job: Dict[str, Any] = {"id": self._request_id, "done": False, "sites": None, "error": ""}
+        job: Dict[str, Any] = {"id": self._request_id, "done": False, "system": None, "error": ""}
         system = self._system
         label = system[:_SYSTEM_MAX] + ("…" if len(system) > _SYSTEM_MAX else "")
         self._shell.set_subtitle(f"{label or 'No system'} - asking Raven Colonial…")
@@ -108,7 +109,7 @@ class BuildsWindow:
 
         def work() -> None:
             try:
-                job["sites"] = self._fetch(system)
+                job["system"] = self._fetch(system)
             except rcc_client.RccError as err:
                 job["error"] = str(err)
             except Exception:    # a bug or something unforeseen: shown plainly, never raised into the Tk thread
@@ -129,9 +130,18 @@ class BuildsWindow:
             self._shell.set_subtitle(f"{label} - not available")
             self._shell.set_status(job["error"])
             return
-        sites: List[rcc_client.RccSite] = job["sites"] or []
+        plan: rcc_client.RccSystem = job["system"]
+        sites: List[rcc_client.RccSite] = plan.sites
         summary = rcc_client.summary_text(sites)
-        self._shell.set_subtitle(f"{label} - {summary}" if summary else f"{label} - Raven Colonial has no sites for it")
+        if not summary:
+            self._shell.set_subtitle(f"{label} - Raven Colonial has no sites for it")
+        else:
+            facts = [summary]
+            if plan.architect:
+                facts.append(f"architect {plan.architect}")
+            if plan.access_label:
+                facts.append(plan.access_label.lower())
+            self._shell.set_subtitle(f"{label} - " + " · ".join(facts))
         self._shell.set_status(_NOTE)
         tracked = self._tracked()
         self._table.clear()
