@@ -416,6 +416,38 @@ def find_last_pledge_event(journal_file: Optional[str]) -> Optional[Dict[str, An
     return None
 
 
+def find_latest_standing(journal_file: Optional[str], power: Optional[str]) -> Tuple[Optional[int], Optional[int]]:
+    """(rank, total merits) from the newest `PowerplayRank` / `PowerplayMerits` events for `power` in `journal_file`, each None if
+    there is none. The login "Powerplay" snapshot goes stale as the session goes on (rank and merits climb afterwards), so after
+    EDMC is restarted mid-game the snapshot alone shows the rank you had at login. Events for another power are ignored."""
+    rank: Optional[int] = None
+    merits: Optional[int] = None
+    if not journal_file:
+        return rank, merits
+    try:
+        for raw_line in _iter_lines_reverse(journal_file):
+            try:
+                entry = json.loads(raw_line)
+            except ValueError:
+                continue
+            event = entry.get("event")
+            if event == "Fileheader":
+                break
+            if power and entry.get("Power") not in (None, power):
+                continue
+            if event == "PowerplayRank" and rank is None and isinstance(entry.get("Rank"), int):
+                rank = entry["Rank"]
+            elif event == "PowerplayMerits" and merits is None and isinstance(entry.get("TotalMerits"), int):
+                merits = entry["TotalMerits"]
+            elif event in _PLEDGE_LIFECYCLE_EVENTS:
+                break          # older than the latest pledge event: not this pledge's
+            if rank is not None and merits is not None:
+                break
+    except OSError:
+        logger.warning("Could not read %s for the latest Powerplay standing", journal_file, exc_info=True)
+    return rank, merits
+
+
 _PLEDGE_EVENT_APPLIERS = {
     "Powerplay": lambda pp, entry: pp.apply_login_snapshot(entry),
     "PowerplayJoin": lambda pp, entry: pp.apply_join(entry),
@@ -900,12 +932,25 @@ class PowerplayController:
         last pledge-lifecycle event when the tracker doesn't already know
         pledge status in memory. No-op if it already has an answer."""
         if self.tracker.pledge_status != PLEDGE_UNKNOWN:
+            if self.tracker.pledge_status == PLEDGED and self.tracker.rank is None:
+                self._recover_latest_standing()      # pledged (a merit event said so) but no rank seen yet
             return
         entry = find_last_pledge_event(monitor.logfile)
         if entry is not None:
             _PLEDGE_EVENT_APPLIERS[entry["event"]](self.tracker, entry)
+            self._recover_latest_standing()
             logger.info("Recovered pledge state from journal file: %s", self.tracker.pledge_summary() or "not pledged")
             self._record_power()
+
+    def _recover_latest_standing(self) -> None:
+        """The login snapshot's rank and merits are the values from login; apply any newer ones from the same journal file."""
+        if not self.tracker.my_power:
+            return
+        rank, merits = find_latest_standing(monitor.logfile, self.tracker.my_power)
+        if rank is not None:
+            self.tracker.rank = rank
+        if merits is not None:
+            self.tracker.total_merits = merits
 
     def rescan_journal(self) -> None:
         """"Rescan" button handler: re-reads the current journal file from

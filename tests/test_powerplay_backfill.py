@@ -350,6 +350,46 @@ class ScanFilesTests(unittest.TestCase):
         self.assertEqual([op.merits for op in result.ops if op.kind == backfill.OP_MERITS], [100])
 
 
+class LatestStandingTests(unittest.TestCase):
+    """After EDMC is restarted mid-game, the login "Powerplay" snapshot is stale: rank and merits climb afterwards."""
+
+    def _journal(self, folder, events):
+        import json
+        path = os.path.join(folder, "Journal.test.log")
+        with open(path, "w", encoding="utf-8") as fh:
+            for entry in [{"event": "Fileheader"}, *events]:
+                fh.write(json.dumps(entry) + chr(10))
+        return path
+
+    def test_the_newest_rank_and_merits_beat_the_login_snapshot(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = self._journal(folder, [
+                {"event": "Powerplay", "Power": "ALD", "Rank": 15, "Merits": 97025},
+                {"event": "PowerplayRank", "Power": "ALD", "Rank": 17},
+                {"event": "PowerplayMerits", "Power": "ALD", "MeritsGained": 5, "TotalMerits": 97030},
+                {"event": "PowerplayRank", "Power": "ALD", "Rank": 32},
+                {"event": "PowerplayMerits", "Power": "ALD", "MeritsGained": 5, "TotalMerits": 235011}])
+            self.assertEqual(powerplay.find_latest_standing(path, "ALD"), (32, 235011))
+
+    def test_nothing_after_the_snapshot_gives_none(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = self._journal(folder, [{"event": "Powerplay", "Power": "ALD", "Rank": 15, "Merits": 97025}])
+            self.assertEqual(powerplay.find_latest_standing(path, "ALD"), (None, None))
+
+    def test_another_power_and_older_pledges_are_ignored(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = self._journal(folder, [
+                {"event": "PowerplayRank", "Power": "Old Power", "Rank": 99},
+                {"event": "PowerplayDefect", "FromPower": "Old Power", "ToPower": "ALD"},
+                {"event": "PowerplayRank", "Power": "Other", "Rank": 50},
+                {"event": "PowerplayRank", "Power": "ALD", "Rank": 3}])
+            self.assertEqual(powerplay.find_latest_standing(path, "ALD"), (3, None))
+
+    def test_a_missing_file_or_name_gives_none(self):
+        self.assertEqual(powerplay.find_latest_standing(None, "ALD"), (None, None))
+        self.assertEqual(powerplay.find_latest_standing(os.path.join(tempfile.gettempdir(), "no-such-journal.log"), "ALD"), (None, None))
+
+
 class DeliveryClassificationTests(unittest.TestCase):
     """PowerplayDeliver claims the merit events it earns; the legacy hand-in events only count without it."""
 

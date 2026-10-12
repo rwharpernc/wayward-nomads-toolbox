@@ -9,6 +9,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **A "Merits this session" line** under the credits line, e.g. `Merits this session: +1,234 (+567 merits/hr)`. It appears after
   your first Powerplay merit of the session and shows on every mode.
 
+### Fixed
+- **Powerplay: the pledge rank (and merit total) was the one from login after restarting EDMC mid-game.** WNTB recovered the
+  pledge from the login `Powerplay` event only, so a rank that had climbed since (for example 15 at login, 32 now) showed the old
+  number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.
+
 ### Changed
 - **The lines under the mode buttons show on every mode.** The credits line is no longer hidden on Exploration and Trade, so the
   whole block (plugin version, game mode, credits) is the same everywhere.
