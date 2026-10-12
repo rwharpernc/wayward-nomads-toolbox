@@ -4,7 +4,7 @@ WNTB is a toolbox I built for the Wayward Nomads exploration squadron. Elite Dan
 community of tool authors, and many of WNTB's features were shaped by what they've built. This page
 credits the projects and people whose ideas, and in some cases published data and services, helped.
 
-Author: R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS) and CMDR Mactavious (Easy Day, EZPZ). Licensed under the GNU GPL v3.0; see `LICENSE`.
+Author: R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS). Licensed under the GNU GPL v3.0; see `LICENSE`.
 Notices that a licence requires are in `THIRD-PARTY-NOTICES.md`.
 
 ## Ideas that belong to the community
