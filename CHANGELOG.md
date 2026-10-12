@@ -12,6 +12,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Trade, Round trip: more detail on every pair's loads.** Each leg of each of the three pairs now lists its commodities with tonnes,
+  profit, the price you pay, the price you get, the profit per tonne and the supply and demand behind it (three per leg, then "+N more").
 - **Planned Builds shows what each building costs.** Each planned or building site gets a **Full cost** (the tons the whole build needs,
   from a table bundled with WNTB), the window adds up what the system's planned builds need, and clicking a row names the building
   and its five biggest commodities. The table is a copy of SrvSurvey's cost data (GPL-3.0; credited in the Acknowledgements and the

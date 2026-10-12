@@ -176,7 +176,10 @@ How it works, in plain terms:
 3. A pair only counts when **both legs make a profit, so you never fly empty**.
 4. Each leg fills the hold with the most profitable commodity first and tops up with the next, limited by the supply
    where you buy, the demand where you sell and what you can afford.
-5. Pairs are ranked by estimated profit per hour, and the top three are shown with what to carry each way.
+5. Pairs are ranked by estimated profit per hour, and the top three are shown with what to carry each way. Every pair, not
+   only the best, lists its commodities on each leg with the tonnes, the profit, what it costs where you buy, what it sells for
+   where you sell (and the profit per tonne), and the supply and demand behind it. Three commodities are listed per leg, with
+   "+N more" after.
 
 It uses the same filters as Find routes (price age, ground facilities, fleet carriers, your ship's pad size,
 distance from the star), plus the **least supply** and **least demand** settings (200 t each by default), so thin

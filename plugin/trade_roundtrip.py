@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from . import http_identity
 from . import trade_spansh_client as routes
+from .trade_blocks import Block, Item, Note
 
 SEARCH_URL = "https://spansh.co.uk/api/stations/search"
 REQUEST_TIMEOUT_S = 30
@@ -65,11 +66,31 @@ class Station:
 
 
 @dataclass
+class LoadLine:
+    """One commodity on a leg, with the prices and stock behind the choice."""
+    name: str
+    tonnes: int
+    buy_price: int       # what the station you leave charges per tonne
+    sell_price: int      # what the station you arrive at pays per tonne
+    supply: int          # tonnes the buying station has
+    demand: int          # tonnes the selling station wants
+
+    @property
+    def per_tonne(self) -> int:
+        return self.sell_price - self.buy_price
+
+    @property
+    def profit(self) -> int:
+        return self.tonnes * self.per_tonne
+
+
+@dataclass
 class Load:
     """What to carry on one leg."""
     items: List[tuple]   # (commodity, tonnes, profit per tonne)
     tonnes: int
     profit: int
+    lines: List[LoadLine] = field(default_factory=list)   # the same commodities with their prices, supply and demand
 
 
 @dataclass
@@ -149,7 +170,7 @@ def best_load(source: Station, dest: Station, cargo: int, capital: int, min_supp
             continue
         candidates.append((sell.sell_price - buy.buy_price, name, buy, sell))
     candidates.sort(key=lambda c: -c[0])
-    room, money, items, profit = max(0, int(cargo)), max(0, int(capital)), [], 0
+    room, money, items, lines, profit = max(0, int(cargo)), max(0, int(capital)), [], [], 0
     for per_t, name, buy, sell in candidates:
         if room <= 0 or money < buy.buy_price:
             break
@@ -157,12 +178,30 @@ def best_load(source: Station, dest: Station, cargo: int, capital: int, min_supp
         if tonnes <= 0:
             continue
         items.append((name, tonnes, per_t))
+        lines.append(LoadLine(name, tonnes, buy.buy_price, sell.sell_price, buy.supply, sell.demand))
         room -= tonnes
         money -= tonnes * buy.buy_price
         profit += tonnes * per_t
     if not items:
         return None
-    return Load(items, sum(i[1] for i in items), profit)
+    return Load(items, sum(i[1] for i in items), profit, lines)
+
+
+LEG_COMMODITIES_SHOWN = 3     # commodities listed under each leg; the rest are counted
+
+
+def leg_blocks(arrow: str, load: Load, destination: str, clip=lambda text: text) -> List[Block]:
+    """A leg as page blocks: a summary line, then each commodity (up to LEG_COMMODITIES_SHOWN) with its tonnes and profit and, beneath,
+    what it costs here, what it sells for there and the supply and demand behind it. `clip` shortens names that come from outside."""
+    blocks: List[Block] = [Note(f"{arrow} to {clip(destination)}: {load.tonnes} t, {load.profit:+,} cr")]
+    for line in load.lines[:LEG_COMMODITIES_SHOWN]:
+        blocks.append(Item(f"{clip(line.name)} \u00d7 {line.tonnes} t", (f"{line.profit:+,}",),
+                           detail=f"buy {line.buy_price:,} \u2192 sell {line.sell_price:,} ({line.per_tonne:+,}/t) \u00b7 "
+                                  f"supply {line.supply:,} / demand {line.demand:,}", indent=1))
+    hidden = len(load.lines) - LEG_COMMODITIES_SHOWN
+    if hidden > 0:
+        blocks.append(Note(f"+{hidden} more commodit{'y' if hidden == 1 else 'ies'}"))
+    return blocks
 
 
 def _fits(station: Station, ship_pad: Optional[str]) -> bool:

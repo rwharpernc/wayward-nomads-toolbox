@@ -1224,8 +1224,7 @@ class TradePanelController:
                                detail=f"{_clip(trip.b.system)} \u00b7 {trip.b.arrival_ls:,.0f} ls \u00b7 "
                                       f"~{trip.per_hour:,} cr/hr"))
             for arrow, load, dest in (("Out", trip.out, trip.b), ("Back", trip.back, trip.a)):
-                what = ", ".join(f"{_clip(name)} \u00d7 {tonnes} t" for name, tonnes, _ in load.items[:3])
-                blocks.append(Note(f"{arrow}: {what} ({load.profit:+,} cr, to {_clip(dest.name)})"))
+                blocks.extend(trade_roundtrip.leg_blocks(arrow, load, dest.name, _clip))
         self._route_blocks = blocks
         best = trips[0]
         self._next_system = best.b.system

@@ -88,6 +88,51 @@ class FindRoundTripsTests(unittest.TestCase):
         self.assertIsNone(rt.find_start([self.start], "Elsewhere", "Start"))
 
 
+class LegDetailTests(unittest.TestCase):
+    def _load(self):
+        a = station("A", {"Gold": (100, 90, 50, 0), "Tea": (10, 5, 1000, 0)})
+        b = station("B", {"Gold": (0, 200, 0, 40), "Tea": (0, 30, 0, 1000)})
+        return rt.best_load(a, b, cargo=100, capital=10_000_000)
+
+    def test_each_commodity_keeps_its_prices_supply_and_demand(self) -> None:
+        gold, tea = self._load().lines
+        self.assertEqual((gold.name, gold.tonnes, gold.buy_price, gold.sell_price, gold.supply, gold.demand),
+                         ("Gold", 40, 100, 200, 50, 40))
+        self.assertEqual((gold.per_tonne, gold.profit), (100, 4000))
+        self.assertEqual((tea.per_tonne, tea.profit), (20, 1200))
+
+    def test_the_lines_agree_with_the_items_and_the_total(self) -> None:
+        load = self._load()
+        self.assertEqual([(l.name, l.tonnes, l.per_tonne) for l in load.lines], load.items)
+        self.assertEqual(sum(l.profit for l in load.lines), load.profit)
+
+    def test_a_load_built_without_lines_still_works(self) -> None:
+        load = rt.Load([("Gold", 1, 5)], 1, 5)
+        self.assertEqual(load.lines, [])
+        self.assertEqual(len(rt.leg_blocks("Out", load, "B")), 1)
+
+    def test_the_leg_reads_as_a_summary_then_a_line_per_commodity(self) -> None:
+        from plugin.trade_blocks import to_text
+        text = to_text(rt.leg_blocks("Out", self._load(), "Station B"))
+        self.assertEqual(text[0], "Out to Station B: 100 t, +5,200 cr")
+        self.assertIn("Gold × 40 t  +4,000", text[1])
+        self.assertIn("buy 100 → sell 200 (+100/t) · supply 50 / demand 40", text[2])
+
+    def test_only_the_first_few_commodities_are_listed_and_the_rest_counted(self) -> None:
+        market_a = {f"C{i}": (10, 5, 100, 0) for i in range(6)}
+        market_b = {f"C{i}": (0, 20 + i, 0, 100) for i in range(6)}
+        load = rt.best_load(station("A", market_a), station("B", market_b), cargo=600, capital=10**9)
+        blocks = rt.leg_blocks("Back", load, "A")
+        self.assertEqual(len(blocks), 1 + rt.LEG_COMMODITIES_SHOWN + 1)
+        from plugin.trade_blocks import to_text
+        self.assertEqual(to_text(blocks)[-1], "+3 more commodities")
+
+    def test_a_name_from_outside_goes_through_the_clip(self) -> None:
+        from plugin.trade_blocks import to_text
+        text = to_text(rt.leg_blocks("Out", self._load(), "S" * 100, clip=lambda t: t[:10]))
+        self.assertTrue(text[0].startswith("Out to " + "S" * 10 + ":"))
+
+
 class SearchRadiusTests(unittest.TestCase):
     def test_with_nothing_chosen_it_follows_the_jump_range_within_limits(self):
         self.assertEqual(rt.search_radius(0, 30.0), 60.0)

@@ -421,6 +421,10 @@ the last hop ends at the first hop's start and every hop has cargo.
 
 ### 8.2 Round trip (`trade_roundtrip.py`)
 
+Each `Load` keeps, besides its `(commodity, tonnes, profit per tonne)` items, a `LoadLine` per commodity (buy and sell price, the buying
+station's supply, the selling station's demand); `leg_blocks` turns a leg into a summary line plus up to three commodity rows with
+the prices and stock beneath, for every pair shown (not only the best).
+
 Spansh's planner can't be asked for a pair that comes back, so the pair is found locally.
 
 1. `fetch_stations` posts to `https://spansh.co.uk/api/stations/search` with `distance` (the radius: the Settings value if set, 5 to 500 ly,
