@@ -43,6 +43,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | Module | What it is |
 |---|---|
 | `game_mode.py` | The "You are in Solo / Open / Private Group" line under the mode buttons |
+| `session_merits.py` | The "Merits this session" line under the credits line (Powerplay merits since login, with a per-hour rate) |
 | `session_credits.py` | The "Credits this session" line (earned or lost since login, with a per-hour rate) |
 
 ## Powerplay

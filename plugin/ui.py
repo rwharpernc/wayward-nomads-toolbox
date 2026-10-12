@@ -39,7 +39,7 @@ from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
     notable, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
-    game_mode, session_credits, settings_scroll, trade_panel,
+    game_mode, session_credits, session_merits, settings_scroll, trade_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
 
@@ -108,9 +108,6 @@ _MODE_TOOLTIPS = {
     "colonisation": "Colonization - the project you are building now (progress, what is left, trips) and your colonization history",
 }
 _DEFAULT_PANEL_MODE = PANEL_MODES[0][0]
-# The "Credits this session" line sits under the mode buttons and is shown on the modes where it is useful.
-# Exploration doesn't need it, and Trade has a net profit of its own that already counts running costs.
-_MODES_WITHOUT_CREDITS = {"exploration", "trade"}
 _MODE_KEYS = {key for key, _ in PANEL_MODES}
 
 _UPDATED_COLOR = "#2e7d32"
@@ -256,7 +253,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     # Session strip (game mode, then credits this session) + a separator,
     # directly under the buttons and before any page content: visible in every
     # mode (it is not part of one), hidden only by the master collapse toggle.
-    # Each line is its own module (game_mode.py, session_credits.py).
+    # Each line is its own module (game_mode.py, session_credits.py, session_merits.py).
     session_strip = tk.Frame(_frame)
     session_strip.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
     _version_label = panelkit.wrap_label(session_strip, anchor="w", cursor="hand2")   # "Plugin: v1.7.0" / "v1.7.1 download - Restart EDMC"
@@ -266,6 +263,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     _schedule_clear_updated()
     game_mode.build(session_strip, row=1)          # "You are in Solo mode."
     session_credits.build(session_strip, row=2)    # "Credits this session: +N cr earned"
+    session_merits.build(session_strip, row=3)     # "Merits this session: +N (+N merits/hr)", once there is a merit
     panelkit.add_separator(_frame, 3)
     session_rule = _frame.grid_slaves(row=3, column=0)[0]
 
@@ -414,7 +412,6 @@ def _apply_panel_mode_visibility() -> None:
             frame.grid()
         else:
             frame.grid_remove()
-    session_credits.set_visible(_panel_mode not in _MODES_WITHOUT_CREDITS)
     _sync_mode_holder_height()
 
 

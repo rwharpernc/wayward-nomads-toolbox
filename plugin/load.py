@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
     exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
-    missions, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, ship_builds_panel, trade_panel, ui,
+    missions, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, session_merits, ship_builds_panel, trade_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -51,7 +51,7 @@ if not logger.hasHandlers():
 _FEATURES = (
     powerplay, missions, autohonk, interdiction, landing, discovery, notable, boxel_survey, exploration_value,
     organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, ship_builds_panel, colonisation_panel, screenshots,
-    inventory_panel, mining_panel, trade_panel, bgs_panel, game_mode, session_credits,
+    inventory_panel, mining_panel, trade_panel, bgs_panel, game_mode, session_credits, session_merits,
 )
 
 _ui_frame: Optional[tk.Frame] = None

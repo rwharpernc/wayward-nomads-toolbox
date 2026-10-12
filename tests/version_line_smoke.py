@@ -111,6 +111,18 @@ try:
     check("downloading v9.9.9" in label["text"] and label["text"].startswith("Plugin: v"), f"downloading text: {label['text']!r}")
     ui.set_update_applied(ui.__version__)
     check(label["text"] == f"Plugin: v{ui.__version__} (updated)", f"updated text: {label['text']!r}")
+    from plugin import session_merits
+    merits = session_merits.controller._label
+    check(merits is not None and merits.winfo_manager() == "", "merits line is shown before any merit")
+    check(merits.grid_info() == {} and game_mode.tracker._label.master is merits.master, "merits line is not in the session strip")
+    session_merits._current_session = lambda: {"totals": {"fortify": 100}, "started_at": "2000-01-01T00:00:00Z"}
+    session_merits.controller.refresh()
+    check(merits.winfo_manager() == "grid" and merits["text"].startswith("Merits this session: +100"), f"merits text: {merits['text']!r}")
+    credits_row = [w for w in merits.master.grid_slaves() if w is not merits and w is not label and w is not game_mode.tracker._label]
+    check(merits.grid_info()["row"] == 3 and credits_row and credits_row[0].grid_info()["row"] == 2, "merits is not directly under credits")
+    session_merits._current_session = lambda: {"totals": {}, "started_at": "2000-01-01T00:00:00Z"}
+    session_merits.controller.refresh()
+    check(merits.winfo_manager() == "", "merits line stays shown with no merits")
     print("VERSION LINE:", "OK" if not problems else "; ".join(problems))
     code = 0 if not problems else 1
 except Exception as exc:  # noqa: BLE001

@@ -1211,8 +1211,11 @@ Both modules are platform-neutral by construction; what was checked, and why it 
 - **Display.** Number formatting is fixed (`f"{n:,}"`), not locale-dependent. The glyphs used are the ellipsis
   and ordinary punctuation. Both labels are `panelkit.wrap_label`s inside one frame, so a long private-group
   name wraps instead of widening EDMC's window, which matters most on Linux where window managers resize
-  more eagerly. The credits line is hidden (`grid_remove`) on the Exploration and Trade modes
-  (`ui._MODES_WITHOUT_CREDITS`) and its record keeps updating while hidden.
+  more eagerly. The credits line is shown on every mode.
+- `session_merits.py`: the "Merits this session" line under it. It keeps no data: the merits and the session start come from
+  Powerplay's session record (`powerplay.controller.sessions.current`), and `powerplay._refresh_panel` and the feature
+  dispatch (it runs after Powerplay in `load._FEATURES`) refresh it. Hidden (`grid_remove`) until the session has a merit.
+  The rate is merits over the time from `started_at` (parsed with `calendar.timegm`, as UTC) to now.
 
 ### 18.3 Platform notes for Trade mode (`trade_*.py`)
 

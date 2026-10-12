@@ -3,6 +3,16 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **A "Merits this session" line** under the credits line, e.g. `Merits this session: +1,234 (+567 merits/hr)`. It appears after
+  your first Powerplay merit of the session and shows on every mode.
+
+### Changed
+- **The lines under the mode buttons show on every mode.** The credits line is no longer hidden on Exploration and Trade, so the
+  whole block (plugin version, game mode, credits) is the same everywhere.
+
 ## 1.7.1 - 2026-10-12
 
 ### Added

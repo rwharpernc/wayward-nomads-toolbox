@@ -1086,7 +1086,8 @@ class PowerplayController:
             self._cycle_merits_label["text"] = cycle_merits_text
             self._cycle_cp_label["text"] = cycle_cp_text
 
-        from . import powerplay_window
+        from . import powerplay_window, session_merits
+        session_merits.controller.refresh()     # the "Merits this session" line under the mode buttons
         powerplay_window.refresh(self._current_system, self.systems_pane())
 
     # --- Settings tab --------------------------------------------------------

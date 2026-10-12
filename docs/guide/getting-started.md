@@ -100,18 +100,19 @@ WNTB has one panel with eight modes. You switch between them with the button row
 **Every mode keeps working in the background** while you look at a different one. Nothing pauses. If you're
 mining and flip to Trade to check a price, your mining stats keep counting.
 
-### Game mode and credits lines
+### The lines under the mode buttons
 
-Just under the mode buttons, above the page itself, WNTB shows two lines:
+Just under the mode buttons, above the page itself, WNTB shows these lines, on every mode:
 
-- **Game mode**: always shown. For example *You are in Solo mode.*, *Open*, or *Private Group* with its name.
+- **Plugin**: the version you are running, for example `Plugin: v1.7.1` (see "Updating" for what it says during an update).
+- **Game mode**: For example *You are in Solo mode.*, *Open*, or *Private Group* with its name.
 - **Credits**: what you've earned or lost since you logged in, for example
   `+1,234,567 cr earned (+411,522 cr/hr)` or `-5,000 cr lost`. It is your balance now minus your balance at login.
   The hourly rate appears once the session is a few minutes old.
-
-The credits line is shown on **Powerplay, BGS, Mining, Missions, Field Ops and Colonization**. It is hidden on **Exploration**
-(not useful there) and **Trade** (which has its own net profit that already counts your running costs). It keeps
-counting while hidden.
+- **Merits**: Powerplay merits earned since you logged in, for example `Merits this session: +1,234 (+567 merits/hr)`. It
+  appears after your first merit of the session, so it stays out of the way if you do not play Powerplay. The rate is the
+  merits divided by the time since you logged in, so it falls while you stop earning. The Powerplay mode's **CP** figures
+  are Control Points, a separate number.
 
 ### Pages
 

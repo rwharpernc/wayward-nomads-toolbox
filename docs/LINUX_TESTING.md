@@ -115,10 +115,11 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Before logging in, the first line reads "Game mode: waiting for login…" and the second "Credits this
       session: waiting for your balance…".
 - [ ] After loading into the game: "You are in Solo mode." (or Open, or Private Group with its name) and
-      "Credits this session: no change yet". The game-mode line stays visible on every mode button (the credits line
-      is hidden on Exploration and Trade) and both disappear when you collapse the WNTB title.
-- [ ] Switch modes: the credits line is **hidden on Exploration and Trade** and shown on Powerplay, BGS, Mining,
-      Missions and Field Ops; the game-mode line stays on every mode.
+      "Credits this session: no change yet". Both lines (and the Plugin version line above them) stay visible on every
+      mode button, and all disappear when you collapse the WNTB title.
+- [ ] Switch through every mode, including Exploration and Trade: the whole block under the mode buttons stays visible.
+- [ ] After earning a Powerplay merit, a **Merits this session: +N (+N merits/hr)** line appears under the credits line, on
+      every mode; the rate appears after a few minutes. It is absent before the first merit.
 - [ ] Earn or spend some credits: the second line changes to "+N cr earned" or "-N cr lost", and an hourly rate
       appears after a few minutes.
 - [ ] Log out to the main menu and back in: the credits total carries on (same session). Restart EDMC while the
