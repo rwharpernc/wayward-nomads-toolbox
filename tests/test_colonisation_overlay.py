@@ -36,7 +36,7 @@ class FakeClient:
         self.sent.append(("shape", shape_id, w, h, ttl))
 
     def send_message(self, msg_id, text, color, x, y, ttl=8, size="normal"):
-        self.sent.append(("msg", msg_id, text, ttl, x))
+        self.sent.append(("msg", msg_id, text, ttl, x, color))
 
 
 class BlockRectTests(unittest.TestCase):
@@ -85,6 +85,51 @@ class PlacementSlotTests(unittest.TestCase):
         widest = card.Card("T" * 40, rows, 0, 9_999_999, 9_999, True, 9_999)
         slot_width = overlay_placement.SLOTS["colonisation"].size[0]
         self.assertLessEqual(card.block_rect(widest)[2], slot_width)
+
+
+class OrderAndAvailabilityTests(unittest.TestCase):
+    """The SrvSurvey order: alphabetical at a construction site, grouped by market category elsewhere; what the market does not
+    sell is dimmed."""
+
+    def colours(self, built):
+        client = FakeClient()
+        card.render(client, built, 20, 300)
+        return {item[2]: item[5] for item in client.sent if item[0] == "msg" and item[2] and item[1].endswith("_0")}
+
+    def test_alphabetical_at_a_site_and_grouped_by_category_elsewhere(self) -> None:
+        flat = card.build_card(site(), {}, {}, show_fc=False)
+        self.assertEqual([r.name for r in flat.rows], ["Steel", "Water"])
+        self.assertFalse(flat.grouped)
+        grouped = card.build_card(site(), {}, {}, show_fc=False, grouped=True)
+        self.assertEqual([(r.category, r.name) for r in grouped.rows], [("Chemicals", "Water"), ("Metals", "Steel")])
+        self.assertEqual(grouped.slot_count, flat.slot_count + 2)        # a heading line per category
+
+    def test_categories_sort_alphabetically_then_by_name_with_unknown_last(self) -> None:
+        raw = {"ResourcesRequired": [
+            {"Name": "$zzzunknown_name;", "RequiredAmount": 5, "ProvidedAmount": 0},
+            {"Name": "$titanium_name;", "RequiredAmount": 5, "ProvidedAmount": 0},
+            {"Name": "$polymers_name;", "RequiredAmount": 5, "ProvidedAmount": 0},
+            {"Name": "$aluminium_name;", "RequiredAmount": 5, "ProvidedAmount": 0},
+            {"Name": "$water_name;", "RequiredAmount": 5, "ProvidedAmount": 0}], "MarketID": 9}
+        built = card.build_card(colonisation.apply_depot_event(raw, None, name="X", system="Sol"), {}, {}, False, grouped=True)
+        self.assertEqual([(r.category, r.name.casefold()) for r in built.rows],
+                         [("Chemicals", "water"), ("Industrial Materials", "polymers"), ("Metals", "aluminium"),
+                          ("Metals", "titanium"), ("Other", "zzzunknown")])
+
+    def test_a_commodity_the_market_does_not_sell_is_dimmed_unless_covered(self) -> None:
+        built = card.build_card(site(), {}, {}, show_fc=False, grouped=True, market_keys=frozenset({"steel"}))
+        self.assertEqual({r.name: r.available for r in built.rows}, {"Water": False, "Steel": True})
+        look = card.LEGACY
+        colours = self.colours(built)
+        self.assertEqual(colours["Water"], look.color("muted"))
+        self.assertEqual(colours["Steel"], look.color("text"))
+        covered = card.build_card(site(), {"water": 50}, {}, show_fc=False, grouped=True, market_keys=frozenset({"steel"}))
+        self.assertEqual(self.colours(covered)["Water ✓"], look.color("ok"))        # covered: keeps its green
+
+    def test_no_dimming_without_a_market(self) -> None:
+        for keys in (None, frozenset()):
+            built = card.build_card(site(), {}, {}, show_fc=False, grouped=True, market_keys=keys)
+            self.assertTrue(all(r.available for r in built.rows))
 
 
 class MeasuredSlotTests(unittest.TestCase):
@@ -347,10 +392,12 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(client.sent[0][:2], ("shape", card.CARD_ID))
         texts = self.texts(client)
         self.assertEqual([texts[f"s1_{i}"] for i in range(1, 6)], ["Required", "Remaining", "FC", "Cargo", "To buy"])
-        self.assertEqual(texts["s3_0"], "Steel ✓")
-        self.assertEqual(texts["s3_1"], "15,000")
-        self.assertEqual(texts["s3_4"], "14,000")
-        self.assertEqual(texts["s2_5"], "10,055")     # To buy: nothing in the hold or on the carrier
+        self.assertEqual(texts["s2_0"], "Chemicals")          # grouped: a heading before each market category
+        self.assertEqual(texts["s4_0"], "Metals")
+        self.assertEqual(texts["s6_0"], "Steel ✓")
+        self.assertEqual(texts["s6_1"], "15,000")
+        self.assertEqual(texts["s6_4"], "14,000")
+        self.assertEqual(texts["s5_5"], "10,055")     # To buy: nothing in the hold or on the carrier
         self.assertTrue(texts[f"s{slots - 1}_0"].startswith("► 32,769 remaining  ► 21 to buy  ► 33 to haul"))
 
     def test_no_fc_column_without_a_carrier(self) -> None:

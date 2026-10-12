@@ -10,6 +10,10 @@ construction site still needs, with the columns Commodity, Required, Remaining, 
 - **To buy** is what is left to get after the hold and the carrier (0 shows blank). A ✓ marks a commodity the hold plus the fleet carrier already cover (the
   same rule as the Colonization window's green rows); the row turns amber when together they are more than is needed.
 
+Order, as in SrvSurvey: at a construction site the rows are alphabetical; anywhere else (a market, the carrier's inventory) they are
+grouped under the market's categories, a heading line for each, alphabetical within a group. While docked at a market, a commodity it does
+not sell is dimmed (unless the hold and the carrier already cover it), so what to buy here stands out.
+
 A footer gives the tons remaining and the trips in the current ship (from its cargo capacity): trips to buy and to haul with a fleet
 carrier, one "to finish" figure without one. Commodities are
 alphabetical, so rows stay put as the numbers change.
@@ -31,9 +35,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Mapping, Optional, Tuple
+from typing import Collection, List, Mapping, Optional, Tuple
 
-from . import colonisation, overlay
+from . import colonisation, commodity_categories, overlay
 from .overlay_style import LEGACY, Look
 from .colonisation import Site
 from .screenshot_gui_focus import GUI_FOCUS_STATION_SERVICES
@@ -120,6 +124,11 @@ class Visibility:
         elif event in OTHER_SERVICE_EVENTS:
             self._service = "other"
 
+    @property
+    def at_depot(self) -> bool:
+        """Docked at a construction depot (where the list is alphabetical; elsewhere it is grouped by market category)."""
+        return self._at_depot
+
     def set_focus(self, focus: object) -> None:
         self._focus = focus if isinstance(focus, int) else 0
         if self._focus != GUI_FOCUS_STATION_SERVICES:
@@ -170,6 +179,8 @@ class Row:
     ship: int       # in the hold
     fc: int
     required: int = 0   # the site's full requirement (0 when not known)
+    category: str = ""  # the market category, for the grouped order ("" when the card is not grouped)
+    available: bool = True    # False when the market the commander is docked at does not sell it
 
     @property
     def to_buy(self) -> int:
@@ -196,6 +207,7 @@ class Card:
     trips: int           # trips to carry all of that to the site in the current ship (0 when its capacity is unknown)
     show_fc: bool
     buy_trips: int = 0   # trips to gather what is still to get, after the ship and the carrier (0 once it is all stocked)
+    grouped: bool = False    # rows sit under a heading line for each market category (away from a construction site)
 
     def footer_text(self) -> str:
         """The last line. With a fleet carrier building has two legs, so it gives both (the same words as the COL page and the
@@ -210,20 +222,31 @@ class Card:
 
     @property
     def slot_count(self) -> int:
-        """Text lines drawn: title, column headings, one per row, an optional "+N more", the footer."""
-        return 2 + len(self.rows) + (1 if self.hidden else 0) + 1
+        """Text lines drawn: title, column headings, one per row (and a heading before each category when grouped), an optional
+        "+N more", the footer."""
+        headings = len({r.category for r in self.rows}) if self.grouped else 0
+        return 2 + len(self.rows) + headings + (1 if self.hidden else 0) + 1
 
 
 def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mapping[str, int], show_fc: bool,
-               capacity: int = 0, max_rows: int = DEFAULT_ROWS) -> Optional[Card]:
-    """The card for `site`, or None when there is nothing to draw (no site, a finished site, nothing still needed)."""
+               capacity: int = 0, max_rows: int = DEFAULT_ROWS, grouped: bool = False,
+               market_keys: Optional[Collection[str]] = None) -> Optional[Card]:
+    """The card for `site`, or None when there is nothing to draw (no site, a finished site, nothing still needed).
+    `grouped` orders the rows by market category (the caller says so away from a construction site); `market_keys` is what the market
+    the commander is docked at sells (None when not at one), and a commodity outside it is marked unavailable."""
     if site is None or not site.active:
         return None
-    needed = sorted((r for r in site.resources if r.remaining > 0), key=lambda r: r.label.casefold())
+    needed = [r for r in site.resources if r.remaining > 0]
     if not needed:
         return None
+    if grouped:
+        needed.sort(key=lambda r: (commodity_categories.sort_key(commodity_categories.category_for(r.key)), r.label.casefold()))
+    else:
+        needed.sort(key=lambda r: r.label.casefold())
     limit = max_rows if max_rows > 0 else len(needed)
-    rows = tuple(Row(r.label, r.remaining, hold.get(r.key, 0), on_carrier.get(r.key, 0), r.required) for r in needed[:limit])
+    rows = tuple(Row(r.label, r.remaining, hold.get(r.key, 0), on_carrier.get(r.key, 0), r.required,
+                     commodity_categories.category_for(r.key) if grouped else "",
+                     market_keys is None or not market_keys or r.key in market_keys) for r in needed[:limit])
     remaining = sum(r.remaining for r in needed)
     known = bool(capacity and capacity > 0)
     trips = math.ceil(remaining / capacity) if known else 0
@@ -231,7 +254,7 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     # (the same sum as the sites window's "trips to buy").
     to_get = sum(max(0, r.remaining - hold.get(r.key, 0) - on_carrier.get(r.key, 0)) for r in needed)
     buy_trips = math.ceil(to_get / capacity) if known and to_get > 0 else 0
-    return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc, buy_trips)
+    return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc, buy_trips, grouped)
 
 
 def _columns(card: Card) -> List[Tuple[str, str]]:
@@ -286,8 +309,14 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
     heads = [(head, edge) for (head, _attr), edge in zip(_columns(card), edges)]
     header = look.color("header")
     slots.append([(0, "Commodity", header, x)] + [(i + 1, h, header, right(h, e)) for i, (h, e) in enumerate(heads)])
+    category = None
     for row in card.rows:
-        colour = look.color("warn") if row.surplus else look.color("ok") if row.covered else look.color("text")
+        if card.grouped and row.category != category:
+            category = row.category
+            slots.append([(0, category, look.color("header"), x)])
+        # Covered rows keep their green or amber; otherwise a commodity the market here does not sell is dimmed.
+        colour = (look.color("warn") if row.surplus else look.color("ok") if row.covered
+                  else look.color("text") if row.available else look.color("muted"))
         name = _clip(row.name, NAME_CHARS) + (f" {CHECK}" if row.covered else "")
         cells = [(0, name, colour, x)]
         for column, ((head, attr), edge) in enumerate(zip(_columns(card), edges), start=1):
@@ -299,7 +328,7 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
             if attr == "fc":
                 cell_colour = look.color("info") if row.fc >= row.need else look.color("muted")
             elif attr == "to_buy":
-                cell_colour = look.color("text")
+                cell_colour = look.color("text") if row.available else look.color("muted")
             cells.append((column, text, cell_colour, right(text, edge)))
         slots.append(cells)
     if card.hidden:
@@ -329,6 +358,6 @@ def clear(client: overlay.OverlayClient, x: int, y: int, slots: int) -> None:
 def preview_card() -> Card:
     """Sample content for the Settings "Test Overlay" button."""
     return Card("Preview Construction Site",
-                (Row("Aluminium", 10055, 0, 0, 12000), Row("Steel", 12900, 14000, 1265, 15000),
-                 Row("Titanium", 8205, 300, 9000, 8205), Row("Water", 1609, 1609, 0, 2000)),
-                hidden=0, remaining=32769, trips=33, show_fc=True, buy_trips=21)
+                (Row("Water", 1609, 1609, 0, 2000, "Chemicals"), Row("Aluminium", 10055, 0, 0, 12000, "Metals", available=False),
+                 Row("Steel", 12900, 14000, 1265, 15000, "Metals"), Row("Titanium", 8205, 300, 9000, 8205, "Metals")),
+                hidden=0, remaining=32769, trips=33, show_fc=True, buy_trips=21, grouped=True)

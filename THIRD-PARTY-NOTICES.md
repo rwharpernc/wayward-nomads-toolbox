@@ -77,6 +77,14 @@ the same licence as WNTB. It lists the tons of each commodity every kind of buil
 to size a plan before any depot has been visited (`plugin/build_costs.py` reads it; that code is WNTB's own). The costs are the
 game's, as that project's author compiled them, and can go out of date when the game changes them.
 
+## Colonization: market categories (GPL-3.0)
+
+`plugin/commodity_categories.py` lists the market category of each colonization commodity, which the overlay shopping list uses to group
+its rows as the in-game market does. The grouping is taken from `ColonyData.mapCargoType` in
+[njthomson/SrvSurvey](https://github.com/njthomson/SrvSurvey), licensed GPL-3.0, the same licence as WNTB; the code that uses it is
+WNTB's own. The order of the list (alphabetical at a construction site, grouped elsewhere, dimmed when the market does not sell a
+commodity) follows that project's shopping overlay.
+
 ## Micro-resource names
 
 `plugin/inventory_names_fdevids.py` is generated from the `microresources.csv` published by
