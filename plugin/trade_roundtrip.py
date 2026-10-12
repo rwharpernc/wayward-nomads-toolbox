@@ -26,7 +26,18 @@ PAGE_SIZE = 100
 MAX_PAGES = 3                 # up to 300 nearest stations
 CARRIER_TYPE = "Drake-Class Carrier"
 RESULTS_KEPT = 3
+AUTO_RADIUS_MIN, AUTO_RADIUS_MAX = 20.0, 100.0   # the radius worked out from the jump range stays between these (ly)
+CHOSEN_RADIUS_MIN, CHOSEN_RADIUS_MAX = 5, 500    # and a radius the commander types is held to these
 _USER_AGENT = http_identity.user_agent("trade-roundtrip")
+
+
+def search_radius(chosen: int, jump_range: float) -> float:
+    """How far around the start to look, in light years. With nothing chosen (0) it is twice the jump range, between 20 and
+    100 ly, so a ship that jumps far looks further. A radius the commander chose is used as given, held to 5-500 ly; the search
+    still reads at most 300 stations (3 pages of 100), so a very large radius in a crowded region ends up with the nearest 300."""
+    if chosen and chosen > 0:
+        return float(max(CHOSEN_RADIUS_MIN, min(CHOSEN_RADIUS_MAX, chosen)))
+    return max(AUTO_RADIUS_MIN, min(AUTO_RADIUS_MAX, float(jump_range or 0) * 2))
 
 
 @dataclass

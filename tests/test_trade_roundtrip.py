@@ -88,6 +88,26 @@ class FindRoundTripsTests(unittest.TestCase):
         self.assertIsNone(rt.find_start([self.start], "Elsewhere", "Start"))
 
 
+class SearchRadiusTests(unittest.TestCase):
+    def test_with_nothing_chosen_it_follows_the_jump_range_within_limits(self):
+        self.assertEqual(rt.search_radius(0, 30.0), 60.0)
+        self.assertEqual(rt.search_radius(0, 5.0), rt.AUTO_RADIUS_MIN)      # a short-range ship still looks 20 ly
+        self.assertEqual(rt.search_radius(0, 80.0), rt.AUTO_RADIUS_MAX)     # and a long-range one stops at 100 ly
+        self.assertEqual(rt.search_radius(0, 0.0), rt.AUTO_RADIUS_MIN)      # an unknown range
+        self.assertEqual(rt.search_radius(0, None), rt.AUTO_RADIUS_MIN)
+
+    def test_a_chosen_radius_is_used_as_given(self):
+        self.assertEqual(rt.search_radius(150, 30.0), 150.0)
+        self.assertEqual(rt.search_radius(25, 80.0), 25.0)               # smaller than the automatic one, if that is what was asked
+
+    def test_a_chosen_radius_is_held_to_sensible_limits(self):
+        self.assertEqual(rt.search_radius(1, 30.0), float(rt.CHOSEN_RADIUS_MIN))
+        self.assertEqual(rt.search_radius(100_000, 30.0), float(rt.CHOSEN_RADIUS_MAX))
+
+    def test_a_negative_choice_means_automatic(self):
+        self.assertEqual(rt.search_radius(-5, 30.0), 60.0)
+
+
 class ParseTests(unittest.TestCase):
     def test_a_spansh_record_becomes_a_station(self) -> None:
         raw = {"name": "Lloyd Dock", "system_name": "Candiaei", "system_x": 1.0, "system_y": 2.0, "system_z": 3.0,

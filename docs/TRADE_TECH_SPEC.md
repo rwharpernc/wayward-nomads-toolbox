@@ -423,8 +423,8 @@ the last hop ends at the first hop's start and every hop has cargo.
 
 Spansh's planner can't be asked for a pair that comes back, so the pair is found locally.
 
-1. `fetch_stations` posts to `https://spansh.co.uk/api/stations/search` with `distance` (radius = twice the jump range,
-   20 to 100 ly), `market_updated_at` (`now-<hours>h`, else `now-30d`), sorted nearest first, 100 per page, at most 3
+1. `fetch_stations` posts to `https://spansh.co.uk/api/stations/search` with `distance` (the radius: the Settings value if set, 5 to 500 ly,
+   else twice the jump range, 20 to 100 ly; `search_radius`), `market_updated_at` (`now-<hours>h`, else `now-30d`), sorted nearest first, 100 per page, at most 3
    pages. With no `market` filter each result still carries the station's **entire** `market` (`commodity`,
    `buy_price` = what it charges you, `sell_price` = what it pays you, `supply`, `demand`), checked live on 2026-10-09
    (300 stations in about 22 s). `Station` also keeps position (`system_x/y/z`), `distance_to_arrival`, `is_planetary`,
@@ -499,6 +499,7 @@ Settings > WNTB > Trade (a top-level tab between Mining and BGS).
 | `wntb_trade_route_permit` | Routes may use systems that need a permit | off |
 | `wntb_trade_min_supply` | Round trip: least tonnes the buying station must have | 200 |
 | `wntb_trade_min_demand` | Round trip: least tonnes the selling station must want | 200 |
+| `wntb_trade_round_radius_ly` | Round trip: search radius in ly (0 = twice the jump range, between 20 and 100; otherwise 5 to 500, `trade_roundtrip.search_radius`) | 0 |
 | `wntb_trade_near_radius_ly` | "Near me" radius | 100 |
 | `wntb_trade_include_carriers` | Fleet carriers in price results and routes (`allow_player_owned`) | on |
 | `wntb_trade_include_ground` | Ground facilities in price results and routes (`allow_planetary`) | on |

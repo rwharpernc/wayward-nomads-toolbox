@@ -74,6 +74,7 @@ _CFG_MIN_SUPPLY = "wntb_trade_min_supply"          # round trip: least tonnes th
 _CFG_MIN_DEMAND = "wntb_trade_min_demand"          # round trip: least tonnes the selling station must want
 _CFG_CURRENT_PAGE = "wntb_trade_current_page"
 _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
+_CFG_ROUND_RADIUS = "wntb_trade_round_radius_ly"   # round trip: how far to look (0 = from the jump range)
 _SCAN_FIRST_MS = 4000      # first look for unread journals, a few seconds after the panel appears
 _SCAN_EVERY_MS = 60_000    # then once a minute
 _CFG_CARRIERS = "wntb_trade_include_carriers"
@@ -248,6 +249,7 @@ class TradePanelController:
         self._carriers_var: Optional[tk.BooleanVar] = None
         self._ground_var: Optional[tk.BooleanVar] = None
         self._fines_var: Optional[tk.BooleanVar] = None
+        self._round_radius_var: Optional[tk.StringVar] = None
         self._carrier_mode_vars: Dict[str, tk.StringVar] = {}  # commander -> their carrier choice
         self._pad_override_var: Optional[tk.StringVar] = None
 
@@ -1163,7 +1165,7 @@ class TradePanelController:
             return
         system, station = start
         jump = self._jump_range_ly()
-        radius = max(20.0, min(100.0, jump * 2))
+        radius = trade_roundtrip.search_radius(_cfg_int(_CFG_ROUND_RADIUS, 0, 0, 100_000), jump)
         age = _cfg_int(_CFG_PRICE_AGE_H, _DEFAULT_PRICE_AGE_H, 0, 24 * 365)
         cargo, capital = self._capacity or 100, self._credits or 1_000_000
         ship_pad = self._ship_pad()
@@ -1321,6 +1323,7 @@ class TradePanelController:
         self._permit_var = tk.BooleanVar(value=config.get_bool(_CFG_PERMIT, default=False))
         self._pad_var = tk.BooleanVar(value=config.get_bool(_CFG_LARGE_PAD, default=False))
         self._near_var = tk.StringVar(value=str(self._near_radius()))
+        self._round_radius_var = tk.StringVar(value=str(_cfg_int(_CFG_ROUND_RADIUS, 0, 0, 100_000)))
         self._carriers_var = tk.BooleanVar(value=config.get_bool(_CFG_CARRIERS, default=True))
         self._ground_var = tk.BooleanVar(value=config.get_bool(_CFG_GROUND, default=True))
         self._fines_var = tk.BooleanVar(value=count_fines_enabled())
@@ -1335,7 +1338,8 @@ class TradePanelController:
                 ("Routes: ignore prices older than (hours, 0 = any)", self._age_var),
                 ("Round trip: least supply at the buying station (t)", self._supply_var),
                 ("Round trip: least demand at the selling station (t)", self._demand_var),
-                ("'Near me' price search radius (ly)", self._near_var))):
+                ("'Near me' price search radius (ly)", self._near_var),
+                ("Round trip: search radius (ly, 0 = from my jump range)", self._round_radius_var))):
             nb.Label(form, text=label).grid(row=row, column=0, sticky=tk.W, pady=2)
             tk.Entry(form, textvariable=var, width=8).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=2)
         nb.Checkbutton(frame, text="Only stations with a large landing pad", variable=self._pad_var).grid(
@@ -1418,6 +1422,7 @@ class TradePanelController:
                 (_CFG_MAX_HOPS, self._hops_var, _DEFAULT_MAX_HOPS, 1, 10),
                 (_CFG_MAX_ARRIVAL_LS, self._arrival_var, _DEFAULT_MAX_ARRIVAL_LS, 1, 1_000_000),
                 (_CFG_NEAR_RADIUS, self._near_var, _DEFAULT_NEAR_RADIUS_LY, 1, 100_000),
+                (_CFG_ROUND_RADIUS, self._round_radius_var, 0, 0, 100_000),
                 (_CFG_PRICE_AGE_H, self._age_var, _DEFAULT_PRICE_AGE_H, 0, 24 * 365),
                 (_CFG_MIN_SUPPLY, self._supply_var, _DEFAULT_MIN_STOCK, 0, 1_000_000),
                 (_CFG_MIN_DEMAND, self._demand_var, _DEFAULT_MIN_STOCK, 0, 1_000_000)):

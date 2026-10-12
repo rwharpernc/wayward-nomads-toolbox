@@ -12,6 +12,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Trade: choose the round trip search radius.** A new Trade setting sets how far around your start the round trip search looks (5 to 500
+  ly); 0, the default, keeps the old behavior of twice your jump range between 20 and 100 ly.
 - **Colonization History: a Claims line.** How many systems you have claimed, how many you released and how many colonisation beacons
   you deployed, counted from the game's `ColonisationSystemClaim`, `ColonisationSystemClaimRelease` and `ColonisationBeaconDeployed`
   events (the history rebuild runs once more after updating so it can find the older ones).
