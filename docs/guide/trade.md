@@ -67,10 +67,13 @@ first trade to last trade). You also see tonnes bought and sold and your best-se
   own line)
 - **Rearm** (ammunition, and restocking an SRV or fighter)
 - **Limpets** (bought, less any sold back)
+- **Fines and bounties paid** (only if you turn it on in Settings; see below)
 
 Once you've spent anything, the headline becomes **Net profit** (trade profit less those costs; the credits per hour
-is the net), with the trade profit and each cost listed under it. Insurance rebuys and fines aren't counted, and a
-cost only counts once WNTB has seen it.
+is the net), with the trade profit and each cost listed under it. Insurance rebuys aren't counted. Fines and bounties you pay
+off aren't counted either, unless you tick **Count fines and bounties I pay as a running cost** in Settings, because a fine
+usually has nothing to do with your trading. Turning it on counts payments from then on, not ones already made. A cost only
+counts once WNTB has seen it.
 
 **Ship hold.** Your ship and the landing pad it needs (for example "Type-9 Heavy, large"), how many tonnes are used,
 the capacity and how much is free, what the station you're docked at would pay for the whole hold, and what each
@@ -420,6 +423,7 @@ Copying these between computers is not needed and not recommended.
 | "Near me" price search radius | 100 ly | |
 | Include fleet carriers / ground facilities | On / On | Applies to prices **and routes**. |
 | Ship size (landing pad) | From my ship | Or Small, Medium or Large if it guesses wrong. |
+| Count fines and bounties I pay as a running cost | Off | Adds a **Fines and bounties paid** line to the costs; only payments made after you tick it. |
 | Carrier choice, per commander | Auto | See above. |
 
 See [what goes on the internet](internet-and-privacy.md) for exactly what is contacted, and the

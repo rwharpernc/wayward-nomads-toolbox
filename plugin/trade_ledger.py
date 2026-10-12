@@ -69,11 +69,26 @@ _ROW_FIELDS = ("bought", "spent", "sold", "revenue", "cost_basis")
 
 # Running costs: category -> (heading, journal events that add to it).
 EXPENSE_LABELS = {"fuel": "Fuel", "repairs": "Repairs", "maintenance": "Advanced maintenance",
-                  "rearm": "Rearm", "limpets": "Limpets"}
+                  "rearm": "Rearm", "limpets": "Limpets", "fines": "Fines and bounties paid"}
 _EXPENSE_OF_EVENT = {
     "RefuelAll": "fuel", "RefuelPartial": "fuel", "Repair": "repairs", "RepairAll": "repairs",
     "BuyAmmo": "rearm", "RestockVehicle": "rearm", "BuyDrones": "limpets", "SellDrones": "limpets",
 }
+
+# Paying off fines and bounties is only counted as a running cost when the commander asks for it (Trade settings): a fine
+# usually has nothing to do with the trade being tracked, so by default it would only dent the profit for no reason.
+_FINE_EVENTS = frozenset({"PayFines", "PayBounties", "PayLegacyFines"})
+_count_fines = False
+
+
+def set_count_fines(on: bool) -> None:
+    """Whether `PayFines` / `PayBounties` count as a running cost from now on (events already counted stay as they were)."""
+    global _count_fines
+    _count_fines = bool(on)
+
+
+def counts_fines() -> bool:
+    return _count_fines
 
 
 def _parse_timestamp(value: Any) -> Optional[float]:
@@ -200,7 +215,7 @@ def _log(ledger: Dict[str, Any], item: Dict[str, Any], entry: Dict[str, Any],
 
 _WANTED = re.compile(
     r'"event"\s*:\s*"(?:MarketBuy|MarketSell|RefuelAll|RefuelPartial|Repair|RepairAll|BuyAmmo|RestockVehicle|BuyDrones|'
-    r'SellDrones|FSDJump|CarrierJump|Docked|Undocked|Location|LoadGame|Commander)"')
+    r'SellDrones|PayFines|PayBounties|PayLegacyFines|FSDJump|CarrierJump|Docked|Undocked|Location|LoadGame|Commander)"')
 CATCH_UP_FILES = 80   # at most this many journal files are read in one catch-up
 
 
@@ -424,6 +439,19 @@ def _apply_expense(ledger: Dict[str, Any], entry: Dict[str, Any], event: str,
     return True
 
 
+def _apply_fine(ledger: Dict[str, Any], entry: Dict[str, Any],
+                where: Optional[Tuple[Optional[str], Optional[str]]] = None) -> bool:
+    """Count a `PayFines` / `PayBounties` payment (its `Amount`) as a running cost. Only called when the commander turned that on."""
+    amount = _int(entry.get("Amount"))
+    if amount <= 0:
+        return False
+    expenses = ledger.setdefault("expenses", {})
+    expenses["fines"] = expenses.get("fines", 0) + amount
+    _log(ledger, {"e": "cost", "c": "fines", "tot": amount}, entry, where)
+    _mark_seen(ledger, entry)
+    return True
+
+
 def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any],
                       where: Optional[Tuple[Optional[str], Optional[str]]] = None) -> bool:
     """Fold one trade (`MarketBuy` / `MarketSell`) or running-cost event into the ledger. Returns True
@@ -431,6 +459,8 @@ def apply_trade_event(ledger: Dict[str, Any], entry: Dict[str, Any],
     event = entry.get("event")
     if event in _EXPENSE_OF_EVENT:
         return _apply_expense(ledger, entry, event, where)
+    if event in _FINE_EVENTS:
+        return _apply_fine(ledger, entry, where) if _count_fines else False
     if event not in ("MarketBuy", "MarketSell"):
         return False
     count = _int(entry.get("Count"))

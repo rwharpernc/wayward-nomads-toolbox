@@ -158,8 +158,11 @@ category to credits (an older saved ledger without it still loads).
   as its own line; confirmed with the commander against a real journal, 2026-10-09, where one `Repair` listing the
   cockpit, hull, cargo bay door and Wear cost 905 cr, so the whole charge counts and can't be split); `BuyDrones` (`TotalCost`) adds and `SellDrones`
   (`TotalSale`) subtracts for *limpets*, so that category can read as a gain if you sell back more than you
-  bought this session. A zero or missing cost changes nothing. Not counted: insurance rebuys (`Resurrect`) and
-  fines (`PayFines`). Costs only count from when WNTB saw them, like trades.
+  bought this session. A zero or missing cost changes nothing. Not counted: insurance rebuys (`Resurrect`). Fines and
+  bounties (`PayFines`, `PayBounties`, `PayLegacyFines`; their `Amount`) are a *fines* category only when the commander ticks
+  the Trade setting (`wntb_trade_count_fines`, off by default), because they are usually unrelated to the trade being tracked; the
+  switch is `trade_ledger.set_count_fines`, read at start-up and when settings are saved, and it affects payments from then on (a
+  replay of the journal counts them too while it is on). Costs only count from when WNTB saw them, like trades.
 - **Net profit** = trade profit - running costs. With any cost recorded the headline reads "Net profit" with the
   trade profit and each cost beneath it; with none it reads "Profit", as before. Costs before the first trade
   still show ("No trades yet", the costs, "Net: ...").

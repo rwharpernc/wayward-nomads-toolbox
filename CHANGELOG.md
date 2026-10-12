@@ -12,6 +12,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Trade: count fines and bounties paid as a running cost (optional).** A new Trade setting, off by default, adds a **Fines and
+  bounties paid** line to the running costs for payments made after you turn it on.
 - **Missions: Community Goal payouts.** The Community Goals page now lists the latest three payouts under **Paid out** (the goal, the
   credits and the day), read from the game's `CommunityGoalReward` event, including ones from the last two weeks of journals.
 - **Exploration, Waypoint Route: From plotted route.** A new button adds the systems of the route you have plotted in the game

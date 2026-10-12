@@ -76,6 +76,7 @@ _CFG_NEAR_RADIUS = "wntb_trade_near_radius_ly"
 _SCAN_FIRST_MS = 4000      # first look for unread journals, a few seconds after the panel appears
 _SCAN_EVERY_MS = 60_000    # then once a minute
 _CFG_CARRIERS = "wntb_trade_include_carriers"
+_CFG_COUNT_FINES = "wntb_trade_count_fines"  # fines and bounties paid count as a running cost (off by default)
 _CFG_GROUND = "wntb_trade_include_ground"  # ground (planetary) facilities in price results
 _CFG_MARKET_SIDE = "wntb_trade_market_side"  # "sell" or "buy": which side of the market the search is for
 _CFG_COMMANDERS = "wntb_trade_commanders"  # commanders seen, "|"-separated
@@ -118,6 +119,10 @@ def _cfg_int(key: str, default: int, low: int, high: int) -> int:
 
 def lookups_enabled() -> bool:
     return config.get_bool(_CFG_LOOKUPS_ENABLED, default=False)
+
+
+def count_fines_enabled() -> bool:
+    return config.get_bool(_CFG_COUNT_FINES, default=False)
 
 
 def _current_logfile() -> Optional[str]:
@@ -237,6 +242,7 @@ class TradePanelController:
         self._near_var: Optional[tk.StringVar] = None
         self._carriers_var: Optional[tk.BooleanVar] = None
         self._ground_var: Optional[tk.BooleanVar] = None
+        self._fines_var: Optional[tk.BooleanVar] = None
         self._carrier_mode_vars: Dict[str, tk.StringVar] = {}  # commander -> their carrier choice
         self._pad_override_var: Optional[tk.StringVar] = None
 
@@ -244,6 +250,7 @@ class TradePanelController:
 
     def start(self, plugin_dir: str) -> None:
         self._plugin_dir = plugin_dir
+        ledger_mod.set_count_fines(count_fines_enabled())
         self._book = ledger_mod.load_book(plugin_dir)
         self._carrier.records = trade_carrier.load_all(plugin_dir)
         self._home = trade_route_start.load_all(plugin_dir)
@@ -1293,6 +1300,7 @@ class TradePanelController:
         self._near_var = tk.StringVar(value=str(self._near_radius()))
         self._carriers_var = tk.BooleanVar(value=config.get_bool(_CFG_CARRIERS, default=True))
         self._ground_var = tk.BooleanVar(value=config.get_bool(_CFG_GROUND, default=True))
+        self._fines_var = tk.BooleanVar(value=count_fines_enabled())
         self._pad_override_var = tk.StringVar(value=(config.get_str(_CFG_SHIP_PAD) or "auto").lower())
 
         form = tk.Frame(frame)
@@ -1317,6 +1325,8 @@ class TradePanelController:
                        variable=self._ground_var).grid(row=1, column=0, sticky=tk.W)
         nb.Checkbutton(where, text="Routes may use systems that need a permit",
                        variable=self._permit_var).grid(row=2, column=0, sticky=tk.W)
+        nb.Checkbutton(where, text="Count fines and bounties I pay as a running cost (from now on)",
+                       variable=self._fines_var).grid(row=3, column=0, sticky=tk.W)
         pad_row = tk.Frame(frame)
         pad_row.grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 2))
         nb.Label(pad_row, text="Ship size (landing pad):").pack(side=tk.LEFT, padx=(0, 6))
@@ -1376,6 +1386,9 @@ class TradePanelController:
         config.set(_CFG_CARRIERS, bool(self._carriers_var.get()) if self._carriers_var is not None else True)
         config.set(_CFG_PERMIT, bool(self._permit_var.get()) if self._permit_var is not None else False)
         config.set(_CFG_GROUND, bool(self._ground_var.get()) if self._ground_var is not None else True)
+        if self._fines_var is not None:
+            config.set(_CFG_COUNT_FINES, bool(self._fines_var.get()))
+            ledger_mod.set_count_fines(bool(self._fines_var.get()))
         pad_choice = (self._pad_override_var.get() if self._pad_override_var is not None else "auto").lower()
         config.set(_CFG_SHIP_PAD, pad_choice if pad_choice in (trade_ship.SMALL, trade_ship.MEDIUM, trade_ship.LARGE) else "")
         for key, var, default, low, high in (

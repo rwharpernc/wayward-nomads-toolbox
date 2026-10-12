@@ -171,6 +171,50 @@ class RunningCostTests(unittest.TestCase):
         self.assertFalse(ledger_mod.apply_trade_event(ledger, {"event": "RepairAll"}))
         self.assertEqual(ledger_mod.expenses_by_category(ledger), {})
 
+    def test_fines_and_bounties_are_not_a_running_cost_unless_asked_for(self) -> None:
+        # Shapes copied from a real journal (2026-10-12).
+        ledger = self._ledger()
+        self.assertFalse(ledger_mod.counts_fines())
+        self.assertFalse(ledger_mod.apply_trade_event(ledger, {"event": "PayFines", "Amount": 20140, "AllFines": True, "ShipID": 9, "BrokerPercentage": 25.0}))
+        self.assertFalse(ledger_mod.apply_trade_event(ledger, {"event": "PayBounties", "Amount": 1250, "AllFines": True, "ShipID": 16}))
+        self.assertEqual(ledger_mod.expenses_by_category(ledger), {})
+
+    def test_with_the_setting_on_a_fine_or_bounty_paid_is_a_cost_with_its_own_line(self) -> None:
+        ledger_mod.set_count_fines(True)
+        self.addCleanup(ledger_mod.set_count_fines, False)
+        ledger = self._ledger()
+        ledger_mod.apply_trade_event(ledger, sell("Gold", 1, 10_000, 0))
+        self.assertTrue(ledger_mod.apply_trade_event(ledger, {"event": "PayFines", "Amount": 20140, "AllFines": True}))
+        self.assertTrue(ledger_mod.apply_trade_event(ledger, {"event": "PayBounties", "Amount": 1250}))
+        self.assertEqual(ledger_mod.expenses_by_category(ledger), {"fines": 21_390})
+        lines = ledger_mod.summary_lines(ledger)
+        self.assertIn("Fines and bounties paid: -21,390 cr", lines)
+        self.assertEqual(ledger_mod.totals(ledger).net, 10_000 - 21_390)
+
+    def test_a_payment_with_no_amount_or_a_zero_one_changes_nothing(self) -> None:
+        ledger_mod.set_count_fines(True)
+        self.addCleanup(ledger_mod.set_count_fines, False)
+        ledger = self._ledger()
+        for entry in ({"event": "PayFines"}, {"event": "PayFines", "Amount": 0}, {"event": "PayBounties", "Amount": "lots"}):
+            self.assertFalse(ledger_mod.apply_trade_event(ledger, entry))
+        self.assertEqual(ledger_mod.expenses_by_category(ledger), {})
+
+    def test_a_payment_replayed_from_the_journal_is_counted_once(self) -> None:
+        ledger_mod.set_count_fines(True)
+        self.addCleanup(ledger_mod.set_count_fines, False)
+        ledger = ledger_mod.new_ledger("Bocheaux", "Journal.1.log", started="2026-10-12T08:00:00Z")
+        entries = [{"event": "Commander", "Name": "Bocheaux"},
+                   {"timestamp": "2026-10-12T09:00:00Z", "event": "PayFines", "Amount": 500}]
+        self.assertEqual(ledger_mod.replay_entries(ledger, entries, "Bocheaux"), 1)
+        self.assertEqual(ledger_mod.replay_entries(ledger, entries, "Bocheaux"), 0)
+        self.assertEqual(ledger_mod.expenses_by_category(ledger), {"fines": 500})
+
+    def test_the_journal_readers_pick_up_the_payment_events(self) -> None:
+        from plugin import trade_journal_scan
+        for event in ("PayFines", "PayBounties", "PayLegacyFines"):
+            self.assertTrue(ledger_mod._WANTED.search('{ "event":"%s", "Amount":1 }' % event))
+            self.assertTrue(trade_journal_scan._WANTED.search('{ "event":"%s", "Amount":1 }' % event))
+
     def test_net_is_trade_profit_less_costs(self) -> None:
         ledger = self._ledger()
         ledger_mod.apply_trade_event(ledger, buy("Gold", 10, 90_000))
