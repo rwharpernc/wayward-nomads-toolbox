@@ -165,7 +165,7 @@ adds what is new, so nothing is counted twice:
 | **Powerplay** | Merits and Control Points | The gap since EDMC last saw the journal (up to the scan depth in Settings) |
 | **BGS** | Your effect on factions this tick | From the start of the tick |
 | **Missions** | Active missions, kill progress, cargo progress, Community Goals | The last 2 weeks |
-| **Colonisation** | Deliveries (also counted into your history) and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most) |
+| **Colonisation** | Deliveries (also counted into your history) and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most); the delivery history is also rebuilt once from every journal |
 | **Codex Completionist** | Codex finds, for the active commander | Everything since the last find it counted (a one-time rebuild from all their journals after updating) |
 | **Boxel Survey** | Systems you arrived at | The last 14 days |
 | **Mining** | The run in progress | The current journal file |

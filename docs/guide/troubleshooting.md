@@ -108,8 +108,10 @@ WNTB can read the carrier's real cargo hold; it is refreshed about every 15 minu
 
 ### My history is smaller than what I delivered
 
-The game keeps no delivery history. WNTB counts from the first delivery it saw and catches up from 14 to 30 days of
-journals at start-up. The page says which date it counts since.
+The game keeps no delivery history, but your journal files do. The first time WNTB sees a commander it reads all of that
+commander's journals once and rebuilds the history from them, so it goes back as far as your journals do (it logs
+"Colonization history rebuilt" when it is done). Deliveries from journal files you have deleted are missing. After that
+it counts as you play and catches up from 14 to 30 days of journals at start-up. The page says which date it counts since.
 
 ## Linux
 

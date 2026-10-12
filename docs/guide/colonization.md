@@ -40,10 +40,12 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Average build | Days from the first time WNTB saw a site to the day the depot reported it complete, over the sites for which both are known |
 | Note | "Counted since [date]": the first delivery WNTB has counted |
 
-**How far back the history goes.** The game does not keep a delivery history for a plugin to read. WNTB counts each
-delivery as it happens, and when EDMC starts it catches up from the journals (14 days, or back to your oldest active
-site, never more than 30). Deliveries older than that, from before you installed this version, are not in the figures,
-which is why the page says what date it is counting since. A site's build time is only known for a site WNTB saw
+**How far back the history goes.** The game does not keep a delivery history for a plugin to read, but your journal files
+do. The first time WNTB sees a commander it reads **all** of that commander's journals once, in the background, and
+rebuilds the history from every delivery in them, so it reaches back as far as your journals do. After that it counts each
+delivery as it happens, and when EDMC starts it catches up from the recent journals (14 days, or back to your oldest active
+site, never more than 30). If you have deleted old journals, the figures can only go back as far as what is left; the
+page says what date it is counting since, and a rebuild never replaces figures that are larger than it can find. A site's build time is only known for a site WNTB saw
 being started or finished after this version; for the others the average leaves it out. The tons at the top
 ("Delivered") are everyone's, because the game reports them for the whole depot; "You delivered" is yours only.
 
@@ -255,5 +257,5 @@ site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 t
 | Everything on your carrier to count | The journal only records cargo you **transfer** to or from the carrier. Stock that arrived any other way is invisible to it. Frontier's carrier data lists the real hold, but only when EDMC is signed in, and it is fetched when you open Carrier Management (or about every 15 minutes) and can lag. | Sign EDMC in to Frontier, then open Carrier Management once; the Covered line and the Carrier row then follow the real hold. |
 | Colonization sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB has never seen a depot snapshot for is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. Deliveries made with EDMC closed are caught up from the last 14 to 30 days of journals at start-up. |
 | A site to have its real name | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. | Dock at the market once to pick up the name. |
-| A full history of everything you ever delivered | The journal records each delivery as it happens, and WNTB reads only the recent journals when it starts. | The history counts from the first delivery WNTB saw (shown on the page) and keeps growing. |
+| A full history of everything you ever delivered | The journal records each delivery as it happens. WNTB rebuilds your history once from every journal file you still have, so deliveries from journals you deleted are missing. | The history counts from the first delivery it found (shown on the page) and keeps growing. |
 | Your teammates' work on the same project | The depot reports only the project's totals, not who delivered what. | Today the page shows your deliveries and the project's overall progress. Team support is planned. |

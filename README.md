@@ -129,7 +129,7 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 **Colonization (work in progress)**
 - Dock at a construction depot (or open its market) **once** to register a site. Nothing is typed in.
 - The COL page and window show **your** deliveries and cargo. The depot's totals include everyone's deliveries.
-- Your **history counts from the first delivery WNTB saw** (the page says the date). The game keeps no older history.
+- Your **history is rebuilt once from all your journal files** and counts from the first delivery in them (the page says the date). Deleted journals can't be counted.
 - **Fleet carrier cargo:** the journal only records cargo you *transfer* to the carrier. For the real hold, sign EDMC in to
   Frontier and open **Carrier Management** once; WNTB then reads the carrier's actual cargo. It can lag behind the game.
 - Commanders **without** a carrier see simpler wording and one Trips column; the carrier lines appear only if you have one.

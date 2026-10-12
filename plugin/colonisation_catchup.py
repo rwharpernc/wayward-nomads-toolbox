@@ -18,7 +18,10 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from . import colonisation, journal_files
+import logging
+import os
+
+from . import colonisation, commander_data, journal_files
 from .colonisation_data import SiteRepository
 from .colonisation_history import DeliveryLedger
 
@@ -28,6 +31,9 @@ _WANTED = journal_files.event_pattern(
     "Commander", "LoadGame", "Docked", colonisation.EVENT_DEPOT, colonisation.EVENT_CONTRIBUTION)
 
 Event = Tuple[str, Dict[str, Any]]   # (commander name, journal entry)
+_CONTRIBUTION_MARK = b"ColonisationContribution"
+_WANTED_HISTORY = journal_files.event_pattern("Commander", "LoadGame", colonisation.EVENT_CONTRIBUTION)
+logger = logging.getLogger(__name__)
 
 
 def read_since(since_epoch: float, folder: Optional[str] = None) -> List[Event]:
@@ -114,3 +120,40 @@ def catch_up(repository: SiteRepository, cmdrs: Iterable[str], folder: Optional[
 
 def known_commanders(repository: SiteRepository) -> List[str]:
     return list(repository._by_cmdr)   # noqa: SLF001 - same package; the repository keeps no public listing
+
+
+def _file_has_contributions(path: str) -> bool:
+    """A quick look for the event's name before the file is parsed line by line: most journals have no deliveries at all."""
+    try:
+        with open(path, "rb") as handle:
+            return _CONTRIBUTION_MARK in handle.read()
+    except OSError:
+        return False
+
+
+def read_all_contributions(cmdr: str, folder: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Every `ColonisationContribution` `cmdr` has in the journal folder (no date limit), oldest first, for the one-time
+    history rebuild. A file says whose events follow in its `Commander` / `LoadGame` lines, and one file can hold more than
+    one commander. Real I/O over years of journals, so callers run it off the Tk thread."""
+    location = journal_files.journal_folder() if folder is None else folder
+    if not location or not os.path.isdir(location):
+        logger.warning("No journal folder to rebuild the colonization history from: %r", location)
+        return []
+    wanted = commander_data.key_for(cmdr)
+    found: List[Dict[str, Any]] = []
+    files = journal_files.files_modified_since(0.0, location)
+    for path in files:
+        if not _file_has_contributions(path):
+            continue
+        current = ""
+        for entry in journal_files.read_events(path, _WANTED_HISTORY):
+            kind = entry.get("event")
+            if kind == "Commander" and entry.get("Name"):
+                current = commander_data.key_for(entry["Name"])
+            elif kind == "LoadGame" and entry.get("Commander"):
+                current = commander_data.key_for(entry["Commander"])
+            elif kind == colonisation.EVENT_CONTRIBUTION and current == wanted:
+                found.append(entry)
+    found.sort(key=lambda e: str(e.get("timestamp") or ""))
+    logger.info("Colonization history: read %d journal file(s) for %s, found %d delivery event(s)", len(files), cmdr, len(found))
+    return found

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import os
+import queue
 import threading
 import time
 from typing import Any, Dict, FrozenSet, Optional, Tuple
@@ -25,6 +26,7 @@ from config import appname, config
 from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card,
                colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_market, trade_panel)
 from .colonisation import Site
+from . import commander_data
 from .colonisation_data import SiteRepository, site_repository
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -97,6 +99,11 @@ class ColonisationController:
         self._capacity = 0   # the ship's cargo capacity, for the trips figure on the overlay
         self._carrier_cargo = colonisation_carrier.carrier_cargo
         self._ledger = colonisation_history.DeliveryLedger()
+        # The one-time rebuild of each commander's delivery history from every journal they have: read on a worker thread,
+        # applied on the Tk thread (the queue), with any delivery made meanwhile held to be folded in afterwards.
+        self._history_results: "queue.Queue[Tuple[str, list]]" = queue.Queue()
+        self._history_pending: set = set()
+        self._history_live: list = []
         self._carrier_feed = colonisation_carrier.Feeder(self._carrier_cargo)
 
         self._vars: Dict[str, tk.StringVar] = {}      # the page's value cells, by name
@@ -148,12 +155,54 @@ class ColonisationController:
         self._carrier_cargo.add_listener(self._refresh_summary)
         self._ledger.add_listener(self._refresh_summary)
         self._carrier_cargo.load(plugin_dir)
+        for cmdr in {*colonisation_catchup.known_commanders(self._repository), self._cmdr or ""}:
+            self._maybe_backfill_history(cmdr)
         try:
             known = colonisation_catchup.known_commanders(self._repository)
             if colonisation_carrier.catch_up(self._carrier_cargo, known):
                 logger.info("Fleet carrier transfers caught up from the journals")
         except Exception:
             logger.exception("Fleet carrier transfer catch-up failed")
+
+    # --- delivery history rebuild ---------------------------------------------
+
+    def _maybe_backfill_history(self, cmdr: str) -> None:
+        """Once per commander, rebuild their delivery history from all their journals (the start-up catch-up only reads the
+        last 14 to 30 days). A failure is logged and tried again at the next start."""
+        key = commander_data.key_for(cmdr)
+        if not key or key in self._history_pending or self._ledger.backfilled(cmdr):
+            return
+        self._history_pending.add(key)
+
+        def work() -> None:
+            try:
+                self._history_results.put((cmdr, colonisation_catchup.read_all_contributions(cmdr)))
+            except Exception:
+                logger.exception("Colonization history rebuild failed for %s", cmdr)
+                self._history_pending.discard(key)
+
+        threading.Thread(target=work, daemon=True, name="WNTB-colonisation-history").start()
+
+    def _poll_history_backfill(self) -> None:
+        """On the Tk thread: apply a finished rebuild."""
+        try:
+            cmdr, entries = self._history_results.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            key = commander_data.key_for(cmdr)
+            newer = [e for who, e in self._history_live if commander_data.key_for(who) == key]
+            self._history_live = [(who, e) for who, e in self._history_live if commander_data.key_for(who) != key]
+            try:
+                replaced = self._ledger.rebuild(cmdr, entries, newer)
+                self._ledger.commit()
+                logger.info("Colonization history rebuilt for %s from %d delivery event(s)%s", cmdr, len(entries),
+                            "" if replaced else " (the saved figures were larger, so they were kept)")
+            except Exception:
+                logger.exception("Could not apply the rebuilt colonization history for %s", cmdr)
+            self._history_pending.discard(key)
+        if self._parent is not None:
+            self._parent.after(500, self._poll_history_backfill)
 
     # --- journal dispatch -----------------------------------------------
 
@@ -171,6 +220,7 @@ class ColonisationController:
             self._system = system
         if cmdr and cmdr != self._cmdr:
             self._cmdr = cmdr
+            self._maybe_backfill_history(cmdr)
             self._refresh_summary()
             colonisation_window.refresh_cmdr(cmdr)
         if cmdr:
@@ -215,6 +265,8 @@ class ColonisationController:
             if site is not None:
                 self._repository.upsert(self._cmdr, site)
         elif event == colonisation.EVENT_CONTRIBUTION:
+            if commander_data.key_for(self._cmdr) in self._history_pending:
+                self._history_live.append((self._cmdr, entry))   # the rebuild in progress may not have read this one
             if self._ledger.apply_contribution(self._cmdr, entry):
                 self._ledger.commit()
             market_id = entry.get("MarketID")
@@ -470,6 +522,7 @@ class ColonisationController:
         panelkit.add_tooltip(self._show_button, "Show the shopping list on the overlay now, whatever screen you are on "
                                                 "(lit while forced on; press again to let go). Works even if the overlay option is off.")
         self._refresh_summary()
+        parent.after(500, self._poll_history_backfill)
 
     def _on_show_clicked(self) -> None:
         """Manual override of the automatic screens: force the shopping list on the overlay, or let go again."""

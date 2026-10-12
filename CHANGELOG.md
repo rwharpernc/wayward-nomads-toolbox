@@ -12,6 +12,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Changed
+- **Colonization history now goes back as far as your journals do.** The first time WNTB sees a commander it rebuilds their delivery
+  history once, in the background, from every journal file they have, instead of only the last 14 to 30 days. It never replaces
+  larger figures (so deleted journals don't shrink it), and a delivery made while it reads is still counted once.
 - **Colonization overlay card footer gives both legs for a fleet carrier owner.** It now reads `► 32,769 remaining  ► 21 to buy  ► 33 to haul`
   (the same words as the COL page and the sites window) instead of one "trips in this ship" figure that was the haul count.
   Without a carrier it reads `► 32,769 remaining  ► 33 trips to finish`.
