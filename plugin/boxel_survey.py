@@ -47,7 +47,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import (
-    boxel, boxel_state, edsm_client, panelkit, region_sweep_panel, survey_log, visited_systems, waypoint_route_panel,
+    boxel, boxel_state, edsm_client, panelkit, region_sweep_panel, survey_catchup, survey_log, visited_systems, waypoint_route_panel,
 )
 from .boxel_walker import BoxelWalker, WalkerSnapshot
 
@@ -262,6 +262,8 @@ class BoxelSurveyController:
         # Systems found in recent journals for a commander, read on a worker thread at start-up and merged on the Tk
         # thread (see _poll_visited_catchup).
         self._visited_catchup: "queue.Queue[Tuple[str, Set[str]]]" = queue.Queue()
+        # The scans made while EDMC was closed, read the same way and replayed into the survey log on the Tk thread.
+        self._survey_catchup: "queue.Queue[Tuple[str, list]]" = queue.Queue()
 
         # Main-panel widgets/vars.
         self._target_var: Optional[tk.StringVar] = None
@@ -369,6 +371,11 @@ class BoxelSurveyController:
                 self._visited_catchup.put((cmdr, visited_systems.arrivals_since(cmdr, since)))
             except Exception:
                 logger.exception("Could not read visited systems from the journals")
+            try:
+                since = time.time() - survey_catchup.CATCH_UP_DAYS * 86400
+                self._survey_catchup.put((cmdr, survey_catchup.read_since(cmdr, since)))
+            except Exception:
+                logger.exception("Could not read recent scans from the journals")
 
         threading.Thread(target=work, name="WNTB-boxel-visited", daemon=True).start()
 
@@ -388,6 +395,21 @@ class BoxelSurveyController:
                     logger.info("Boxel Survey: %d visited system(s) found in recent journals for %s", added, cmdr)
                     self._save_visited_systems()
                     self._update_visited_count_label()
+        try:
+            cmdr, events = self._survey_catchup.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            if cmdr == self._current_cmdr and events:
+                with self._survey_log_lock:
+                    result = survey_catchup.apply(self._survey_log, events, self._boxel_key_for)
+                if result.systems_added or result.notable_found:
+                    logger.info("Boxel Survey: recovered %d system(s) and %d notable body(ies) from recent journals for %s",
+                                result.systems_added, result.notable_found, cmdr)
+                    self._persist_survey_log()
+                    with self._walker_lock:
+                        current = self._walker.current
+                    self._refresh_survey_stats(current)
         if self._parent is not None:
             self._parent.after(1000, self._poll_visited_catchup)
 

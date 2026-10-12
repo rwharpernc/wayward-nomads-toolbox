@@ -146,6 +146,12 @@ Survey** and press **Export Survey Log** to write them to a CSV file. The file i
 `boxel_survey_export.csv` and is saved **in the WNTB plugin folder**; you do not choose where. The survey log is kept
 **per commander** and the export holds the active commander's finds, so exporting as another commander replaces the file.
 
+**Scans made while EDMC was closed.** At start-up WNTB reads the last 14 days of your journals and adds the notable bodies and biological
+signals it finds there to the survey log, and the systems that were missing from it. It is careful not to count anything twice: a system
+the log already had keeps its "bodies scanned" number (only its missing finds are added), a system new to the log gets one count per
+body, and running it again changes nothing. Scans older than 14 days, made with EDMC closed, are not found. The game's journals are
+only read, never changed.
+
 **Settings → Exploration → Boxel Survey:**
 
 | Setting | Default |

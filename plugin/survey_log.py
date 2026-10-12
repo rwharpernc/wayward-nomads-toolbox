@@ -111,10 +111,15 @@ class SurveyLog:
         planet_class: Optional[str],
         terraform_state: Optional[str],
         distance_ls: Optional[float],
+        count: bool = True,
+        seen_at: Optional[str] = None,
     ) -> None:
-        """Record one `Scan` journal event."""
-        entry = self._get_or_create_system(system, boxel_key)
-        entry.bodies_scanned += 1
+        """Record one `Scan` journal event. A live event adds one to the system's scanned count; a catch-up from old journals
+        passes `count=False` for a system it must not change the count of (see survey_catchup.py). `seen_at` (an ISO time) is
+        when the system was first seen, if it has to be created from an old event."""
+        entry = self._get_or_create_system(system, boxel_key, seen_at)
+        if count:
+            entry.bodies_scanned += 1
 
         tags: List[str] = []
         if planet_class in NOTABLE_PLANET_CLASSES:
@@ -131,21 +136,24 @@ class SurveyLog:
             notable.add_tag(tag)
 
     def record_signals(
-        self, system: str, body: str, *, boxel_key: Optional[str], bio_signal_count: int
+        self, system: str, body: str, *, boxel_key: Optional[str], bio_signal_count: int, seen_at: Optional[str] = None,
     ) -> None:
         """Record one `FSSBodySignals`/`SAASignalsFound` journal event."""
         if bio_signal_count <= 0:
             return
-        entry = self._get_or_create_system(system, boxel_key)
+        entry = self._get_or_create_system(system, boxel_key, seen_at)
         notable = entry.notable_bodies.setdefault(body, NotableBody(body=body))
         notable.add_tag("bio")
         notable.bio_signal_count = max(notable.bio_signal_count, bio_signal_count)
 
-    def _get_or_create_system(self, system: str, boxel_key: Optional[str]) -> SystemEntry:
+    def has_system(self, system: str) -> bool:
+        return system in self._systems
+
+    def _get_or_create_system(self, system: str, boxel_key: Optional[str], seen_at: Optional[str] = None) -> SystemEntry:
         entry = self._systems.get(system)
         if entry is None:
             entry = SystemEntry(
-                boxel_key=boxel_key, first_seen=datetime.now(timezone.utc).isoformat()
+                boxel_key=boxel_key, first_seen=seen_at or datetime.now(timezone.utc).isoformat()
             )
             self._systems[system] = entry
         elif boxel_key is not None and entry.boxel_key is None:

@@ -110,6 +110,7 @@ Spec: [BOXEL_SURVEY_TECH_SPEC.md](BOXEL_SURVEY_TECH_SPEC.md)
 | `region_sweep_queue.py` | Pure logic for the Region Sweep cube queue |
 | `region_sweep_spansh.py` | Spansh systems typeahead used by Region Sweep |
 | `region_sweep_state.py` | JSON persistence for the Region Sweep queue |
+| `survey_catchup.py` | Catching the survey log up from the last 14 days of journals (scans made with EDMC closed): reading them, and replaying them without counting anything twice |
 | `survey_log.py` | The notable-finds log, one per commander, and its JSON persistence |
 | `visited_systems.py` | JSON persistence for the per-commander visited-systems log, and the start-up catch-up of jumps made while EDMC was closed |
 | `waypoint_route.py` | Pure logic for Waypoint Route, Boxel Survey's third sub-mode |

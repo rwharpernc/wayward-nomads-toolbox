@@ -229,8 +229,13 @@ commander is seen in a run, a worker thread reads the last `visited_systems.CATC
 (`visited_systems.arrivals_since`, via the shared `journal_files.py`) for that commander's `FSDJump`/`Location`
 arrivals and the Tk thread merges them into the set (`_poll_visited_catchup`). It is a set union, so it needs no
 watermark and running it every start is harmless. Jumps older than the window, made with EDMC closed, are not found.
-The survey log (§5a) is **not** caught up: its `bodies_scanned` counter is not idempotent, so a late replay would
-double-count.
+The survey log (§5a) is caught up by the same worker (`survey_catchup.read_since`, applied on the Tk thread in
+`_poll_visited_catchup` by `survey_catchup.apply`), but conservatively, because its `bodies_scanned` counter is not idempotent: the
+notable finds are keyed by body name and merge harmlessly, so they are recovered for every system; the scanned count is set only for
+a system the log did not have before the run (one count per distinct body, `record_scan(count=...)`), and a system already in the log
+keeps its count. A second run adds nothing, since the first run's systems are then "already in the log". The system of a signal event
+(which names none) is followed from the `FSDJump` / `Location` / `CarrierJump` before it; a `Scan` names its own. The first-seen time of a
+recovered system is the old event's time. The journals are only read.
 
 ### 4.5 Sequence mode running dry, and the fix already shipped
 
@@ -415,6 +420,8 @@ state) use EDMC's `config` store instead, via `wntb_boxel_*` keys.
   `test_real_boxel_survey_data_matches_stride_arithmetic` cross-validating §4.1's no-carry finding).
 - `survey_log.py` — classification, multi-tag merging, boxel aggregation, JSON round-trip
   (`tests/test_survey_log.py`).
+- `survey_catchup.py` — reading a commander's scans from journals, the no-double-count rules (a system the log had, a repeated run,
+  a body scanned twice), the system followed for signal events (`tests/test_survey_catchup.py`).
 - `waypoint_route.py` — nearest-neighbor ordering against a known-correct answer, CSV parsing edge
   cases, jump/target sequencing, mixed resolved/unresolved/visited reordering
   (`tests/test_waypoint_route.py`).

@@ -167,7 +167,7 @@ adds what is new, so nothing is counted twice:
 | **Missions** | Active missions, kill progress, cargo progress, Community Goals | The last 2 weeks |
 | **Colonisation** | Deliveries (also counted into your history) and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most); the delivery history is also rebuilt once from every journal |
 | **Codex Completionist** | Codex finds, for the active commander | Everything since the last find it counted (a one-time rebuild from all their journals after updating) |
-| **Boxel Survey** | Systems you arrived at | The last 14 days |
+| **Boxel Survey** | Systems you arrived at, and the notable bodies and biological signals you scanned (systems new to the survey log; a system it already had keeps its scanned count) | The last 14 days |
 | **Mining** | The run in progress | The current journal file |
 | **Exploration Value** | Region, system scan progress, last data sales | The current journal file |
 | **Inventory** | Backpack and ship locker | Taken from EDMC's own rebuilt state |

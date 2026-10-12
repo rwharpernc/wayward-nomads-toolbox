@@ -12,6 +12,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Boxel Survey: the survey log catches up from recent journals.** Notable bodies and biological signals scanned while EDMC was closed (the
+  last 14 days) are now added at start-up, along with the systems that were missing. A system the log already had keeps its scanned count,
+  nothing is counted twice, and the game's journals are only read.
 - **Trade, Round trip can start from a fleet carrier.** When you are docked at a fleet carrier (your own, say) the round trip now starts
   from its market instead of the last ordinary station, and the result says where it started. Routes still cannot, because Spansh's
   route planner does not know carriers.

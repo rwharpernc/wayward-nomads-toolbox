@@ -102,10 +102,6 @@ can change, and some of it may turn out not to be possible. If one of these matt
 **Trade**
 - **Round trip:** a Powerplay bonus filter (that depends on what the price service can tell me).
 
-**Exploration**
-- **Boxel Survey:** catching WNTB's own survey log up from your old journals. WNTB only ever reads the game's journals and never
-  changes them. This needs a safer way to record each body in WNTB's log first, so a body is never counted twice.
-
 **Overlays**
 - **Tidier default spots,** where a few displays overlap on some screen shapes (for example Colonization, Landing and the Mining
   waypoint on the left of a 16:9 screen). They rarely show together, so this is low priority.
