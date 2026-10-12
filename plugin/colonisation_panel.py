@@ -15,7 +15,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, FrozenSet, List, Optional, Tuple
 
 import tkinter as tk
 
@@ -23,7 +23,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card,
-               colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_panel)
+               colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_market, trade_panel)
 from .colonisation import Site
 from .colonisation_data import SiteRepository, site_repository
 
@@ -35,6 +35,11 @@ PANEL_PLACEMENT = "colonisation"
 _CFG_OVERLAY_ENABLED = "wntb_colonisation_overlay_enabled"
 _CFG_OVERLAY_ROWS = "wntb_colonisation_overlay_row_limit"   # 0 = all; the older "..._rows" key held a default of 10
 _CFG_OVERLAY_RIGHT_PANEL = "wntb_colonisation_overlay_right_panel"
+
+
+def _journal_dir() -> str:
+    """EDMC's journal folder, where the game writes Market.json."""
+    return config.get_str("journaldir") or getattr(config, "default_journal_dir", "") or ""
 
 
 def _get_int(key: str, default: int, low: int, high: int) -> int:
@@ -82,6 +87,9 @@ class ColonisationController:
         self._repository = repository
         self._cmdr: Optional[str] = None
         self._system = ""   # the system the commander is in, for the window's "where to buy" search
+        # The commodities the docked station has for sale, from its market when it was opened (None = no market known),
+        # for the window's "Only what this station sells" filter.
+        self._market: Optional[Tuple[str, FrozenSet[str]]] = None
         # The depot events carry only a MarketID, so the station name is
         # remembered from the latest Docked (MarketID -> (station, system)).
         self._docked: Dict[int, tuple] = {}
@@ -188,6 +196,7 @@ class ColonisationController:
             self._refresh_summary()
 
         event = entry.get("event")
+        self._track_market(event, entry, station)
         if not self._cmdr:
             return
         if event == "Docked":
@@ -214,6 +223,20 @@ class ColonisationController:
                 working = Site.from_dict(existing.to_dict())
                 if colonisation.apply_contribution(working, entry):
                     self._repository.upsert(self._cmdr, working)
+
+    def _track_market(self, event: Any, entry: Dict[str, Any], station: Optional[str]) -> None:
+        """Remember what the station sells when its commodity market is opened, and forget it once the commander leaves
+        (Market.json stays on disk after undocking, so the file alone would offer a station they are no longer at)."""
+        if event == "Market":
+            keys = trade_market.sold_keys(trade_market.read_market_file(_journal_dir()))
+            self._market = (str(entry.get("StationName") or station or ""), keys)
+        elif event in ("Undocked", "FSDJump", "SupercruiseEntry") or (event == "Location" and not station):
+            if self._market is None:
+                return
+            self._market = None
+        else:
+            return
+        colonisation_window.refresh_market()
 
     def capi_fleetcarrier(self, data: Any) -> None:
         """Frontier's own list of what is in the fleet carrier's cargo hold (EDMC fetches it when signed in, on CarrierStats and
@@ -459,7 +482,7 @@ class ColonisationController:
         if self._parent is None:
             return
         colonisation_window.show(self._parent, self._repository, self._cmdr or "", self._cargo, self._carrier_cargo,
-                               lambda: self._capacity, lambda: self._system)
+                               lambda: self._capacity, lambda: self._system, lambda: self._market)
 
     # --- Settings tab --------------------------------------------------
 

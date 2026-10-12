@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
-from typing import List, Mapping, Optional
+from typing import Collection, List, Mapping, Optional
 
 from .colonisation import Site
 
@@ -80,9 +80,11 @@ def format_trips(trips: Optional[Decimal]) -> str:
 
 
 def commodity_rows(site: Site, cargo: Mapping[str, int], carrier: Optional[Mapping[str, int]] = None,
-                   hide_covered: bool = False, text: str = "", capacity: int = 0) -> List[CommodityRow]:
+                   hide_covered: bool = False, text: str = "", capacity: int = 0,
+                   only_keys: Optional[Collection[str]] = None) -> List[CommodityRow]:
     """The site's outstanding commodities, alphabetical (so rows stay put while numbers change), less any the
-    filters take out: `hide_covered` drops those the ship plus the carrier already cover, `text` keeps labels containing it."""
+    filters take out: `hide_covered` drops those the ship plus the carrier already cover, `text` keeps labels containing it,
+    and `only_keys` (when given) keeps only the commodities whose key is in it - what the docked station sells."""
     wanted = text.strip().casefold()
     carrier = carrier or {}
     rows: List[CommodityRow] = []
@@ -90,6 +92,8 @@ def commodity_rows(site: Site, cargo: Mapping[str, int], carrier: Optional[Mappi
         if resource.remaining <= 0:
             continue
         if wanted and wanted not in resource.label.casefold():
+            continue
+        if only_keys is not None and resource.key not in only_keys:
             continue
         to_get = max(0, resource.remaining - cargo.get(resource.key, 0) - carrier.get(resource.key, 0))
         row = CommodityRow(

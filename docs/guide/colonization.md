@@ -101,7 +101,9 @@ straight to the site). **Hauling** takes it from the carrier, or your ship, to t
 already stored on the carrier needs no more buying trips but still needs its hauling trips.
 
 The **Filter** box keeps the commodities whose names contain what you type, and **Hide rows already covered**
-drops the rows you needn't buy any more (see the colors below for what counts as covered). Click a column heading to sort by it, and again to reverse; the
+drops the rows you needn't buy any more (see the colors below for what counts as covered). **Only what [station] sells**
+keeps just the commodities the station you are docked at has for sale: open its commodity market once and the box
+names the station and becomes usable. It switches itself off when you leave the station. Click a column heading to sort by it, and again to reverse; the
 default is alphabetical, so rows stay put while numbers change.
 
 | Column | Meaning |
@@ -158,6 +160,17 @@ system you search around are sent.
 | Sort | **Closest first** (default) or **Cheapest first**. This decides which stations Spansh returns, not just their order. Click a result heading to re-sort what came back |
 | Landing pad | **Any size** (default), **Medium or larger**, or **Large only**. Any size lists stations whose biggest pad is small, so you can swap to a smaller cargo ship when a commodity isn't sold at a large-pad station. The **Pad** column shows each station's largest pad |
 | Include fleet carriers | Off by default. When ticked, carriers are searched separately and listed under their own **Fleet carriers** heading after the stations |
+
+The options are **remembered** (within, sort, landing pad and fleet carriers) for the next time you open the window. The
+search system is not: it starts as the site's system again.
+
+**Find all** searches every commodity you still have to buy, using the same options, and lists the closest 5 stations
+(and, if carriers are ticked, the closest 2 carriers) under a heading for each commodity. It follows the table as you
+have it filtered: rows already covered are left out, and so are rows the Filter box or **Only what [station] sells** hide.
+Spansh can only look up one commodity per request, so it sends one request per commodity, about half a second apart; a
+list of 20 takes some seconds, and the note under the buttons shows how far it has got. Press **Stop** (the same button)
+to stop after the search in progress, keeping what it found. A commodity that fails is named and the others still
+show; press **Find all** again to retry. Commodities with no source in range are listed in the note.
 
 Each result shows the station, system, type, whether it is **Planetary**, largest pad, distance in light years,
 distance from the arrival star, the price per ton and the stock. **Planetary: Yes** means a base on a planet's

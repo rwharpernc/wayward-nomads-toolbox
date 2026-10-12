@@ -195,5 +195,95 @@ class SpanshRequestTests(unittest.TestCase):
             self.body_for(required_pad="small")
 
 
+class WholeListTests(unittest.TestCase):
+    def setUp(self):
+        src.clear_cache()
+        self.slept = []
+
+    def run_list(self, commodities, fake, **kwargs):
+        return src.find_whole_list("Sol", commodities, search=fake, sleep=self.slept.append, **kwargs)
+
+    def test_each_commodity_is_searched_once_in_the_order_given(self):
+        fake = FakeSpansh([item("Near", 5)])
+        result = self.run_list(["Steel", "Water", "Copper"], fake)
+        self.assertEqual([label for label, _ in result.found], ["Steel", "Water", "Copper"])
+        self.assertEqual([call[1] for call in fake.calls], ["Steel", "Water", "Copper"])
+        self.assertEqual(result.failed, [])
+        self.assertFalse(result.stopped)
+
+    def test_it_pauses_between_requests_but_not_before_the_first(self):
+        self.run_list(["Steel", "Water", "Copper"], FakeSpansh([item("Near", 5)]), pause=0.4)
+        self.assertEqual(self.slept, [0.4, 0.4])
+
+    def test_answers_from_memory_send_nothing_and_cost_no_pause(self):
+        fake = FakeSpansh([item("Near", 5)])
+        self.run_list(["Steel", "Water"], fake)
+        self.slept.clear()
+        self.run_list(["Steel", "Water"], fake)
+        self.assertEqual(len(fake.calls), 2)   # the second run was all cache hits
+        self.assertEqual(self.slept, [])
+
+    def test_one_failure_does_not_lose_the_others(self):
+        def flaky(system, commodity, transaction, radius, **kwargs):
+            if commodity == "Water":
+                raise RuntimeError("Spansh timed out")
+            return [item("Near", 5)]
+        result = self.run_list(["Steel", "Water", "Copper"], flaky)
+        self.assertEqual([label for label, _ in result.found], ["Steel", "Copper"])
+        self.assertEqual(result.failed, [("Water", "Spansh timed out")])
+
+    def test_stopping_keeps_what_was_found_so_far(self):
+        calls = []
+        result = self.run_list(["Steel", "Water", "Copper"], FakeSpansh([item("Near", 5)]),
+                               cancelled=lambda: len(calls) >= 1, progress=lambda i, n, label: calls.append(label))
+        self.assertEqual([label for label, _ in result.found], ["Steel"])
+        self.assertTrue(result.stopped)
+
+    def test_progress_reports_position_total_and_name(self):
+        seen = []
+        self.run_list(["Steel", "Water"], FakeSpansh([item("Near", 5)]), progress=lambda i, n, label: seen.append((i, n, label)))
+        self.assertEqual(seen, [(0, 2, "Steel"), (1, 2, "Water")])
+
+    def test_commodities_with_no_source_are_listed(self):
+        fake = FakeSpansh([])
+        result = self.run_list(["Steel", "Water"], fake)
+        self.assertEqual(result.without_sources(), ["Steel", "Water"])
+
+    def test_a_blank_system_is_refused_before_any_request(self):
+        fake = FakeSpansh([item("Near", 5)])
+        with self.assertRaises(ValueError):
+            src.find_whole_list("  ", ["Steel"], search=fake)
+        self.assertEqual(fake.calls, [])
+
+    def test_options_reach_every_request(self):
+        fake = FakeSpansh([item("Near", 5)])
+        self.run_list(["Steel", "Water"], fake, radius_ly=100, pad=src.PAD_LARGE)
+        self.assertEqual({call[3] for call in fake.calls}, {100})
+        self.assertEqual({call[4]["required_pad"] for call in fake.calls}, {"large"})
+
+
+class PrefsTests(unittest.TestCase):
+    def test_defaults_when_nothing_is_saved(self):
+        self.assertEqual(src.load_prefs(""), src.SearchPrefs())
+        self.assertEqual(src.load_prefs(None), src.SearchPrefs())
+
+    def test_a_round_trip_keeps_every_choice(self):
+        prefs = src.SearchPrefs(radius_ly=100.0, pad=src.PAD_LARGE, carriers=True, sort=src.SORT_PRICE)
+        self.assertEqual(src.load_prefs(src.dump_prefs(prefs)), prefs)
+
+    def test_no_limit_survives_a_round_trip(self):
+        prefs = src.SearchPrefs(radius_ly=None)
+        self.assertIsNone(src.load_prefs(src.dump_prefs(prefs)).radius_ly)
+
+    def test_junk_falls_back_to_the_defaults_field_by_field(self):
+        self.assertEqual(src.load_prefs("not json"), src.SearchPrefs())
+        self.assertEqual(src.load_prefs("[1, 2]"), src.SearchPrefs())
+        loaded = src.load_prefs('{"radius": 7, "pad": "huge", "carriers": "yes", "sort": "newest"}')
+        self.assertEqual(loaded, src.SearchPrefs())
+        self.assertEqual(src.load_prefs('{"radius": 25, "pad": "medium"}'),
+                         src.SearchPrefs(radius_ly=25.0, pad=src.PAD_MEDIUM))
+        self.assertEqual(src.load_prefs('{"radius": true}').radius_ly, src.DEFAULT_RADIUS_LY)
+
+
 if __name__ == "__main__":
     unittest.main()

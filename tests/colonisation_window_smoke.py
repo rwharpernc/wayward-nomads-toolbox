@@ -98,7 +98,8 @@ repo.upsert("Bocheaux", make(2, "Depot Two", complete=True))
 repo.upsert("Mactavious", make(3, "Other Depot"))
 carrier = colonisation_carrier.CarrierCargo()
 
-W.show(root, repo, "Bocheaux", {"water": 50}, carrier, lambda: 100)
+market_state = [None]   # what the docked station sells: None until a market is opened
+W.show(root, repo, "Bocheaux", {"water": 50}, carrier, lambda: 100, None, lambda: market_state[0])
 window = W._window
 check(window is not None and window.alive, "the window did not open")
 top = window._toplevel
@@ -231,6 +232,72 @@ wait_for_search()
 check("failed" in window._sources_note.cget("text"), "a failed search should say so")
 check(window._find_button._enabled, "the button must come back after a failure")
 W.sources.find = S_find
+
+# The search choices are remembered: the two searches above used "Large only" and carriers on.
+saved_prefs = S.load_prefs(saved.get(W.CONFIG_SEARCH))
+check(saved_prefs.pad == "large" and saved_prefs.carriers is True and saved_prefs.radius_ly == 50.0,
+      f"the search choices should be saved when a search starts, got {saved_prefs}")
+saved[W.CONFIG_SEARCH] = S.dump_prefs(S.SearchPrefs(radius_ly=None, pad="medium", carriers=True, sort="price"))
+reopened = W.ColonisationWindow(root, repo, "Bocheaux", {}, None, lambda: 100)
+check(reopened._radius.get() == "No limit" and reopened._pad.get() == "Medium or larger"
+      and reopened._sort.get() == "Cheapest first" and reopened._carriers_var.get() is True,
+      "a new window should start from the remembered choices")
+reopened.close()
+saved[W.CONFIG_SEARCH] = S.dump_prefs(S.SearchPrefs())
+
+# Only what this station sells: greyed out until a market is known, then narrows the list to what it has for sale.
+window._refresh_detail()
+check(str(window._station_check.cget("state")) == "disabled", "the station filter needs a market first")
+market_state[0] = ("Jameson Memorial", frozenset({"steel"}))
+W.refresh_market()
+check(str(window._station_check.cget("state")) == "normal"
+      and "Jameson Memorial" in window._station_check.cget("text"), "the filter should name the docked station")
+check(len(window._commodity_table) == 3, "the filter is off until it is ticked")
+window._station_only.set(True)
+window._refresh_detail()
+check([row.values[0] for row in window._commodity_table._rows.values()] == ["Steel"],
+      "only Steel is for sale at the station")
+market_state[0] = None
+W.refresh_market()
+check(not window._station_only.get() and len(window._commodity_table) == 3,
+      "leaving the station should switch the filter off and bring every row back")
+
+# Find all: every commodity still to buy (Water is covered by the hold), one heading each with its closest stations.
+whole_calls = []
+
+
+def fake_whole(system, commodities, **kwargs):
+    whole_calls.append((system, list(commodities), kwargs))
+    kwargs["progress"](0, len(commodities), commodities[0])
+    near = S.Source("Near Port", "Sol", "Coriolis Starport", False, False, "Large", 4.0, 300.0, 410, 900)
+    found = [(commodities[0], S.SearchResult([near], [])), (commodities[1], S.SearchResult([], []))]
+    return S.WholeListResult(found=found, failed=[])
+
+
+S_whole = W.sources.find_whole_list
+W.sources.find_whole_list = fake_whole
+window._on_find_all()
+for _ in range(100):
+    root.update()
+    if window._whole_job is None:
+        break
+    time.sleep(0.02)
+check(len(whole_calls) == 1 and whole_calls[0][1] == ["Aluminium", "Steel"],
+      f"Find all should search what is still to buy, got {whole_calls}")
+check(whole_calls[0][2]["pad"] == "large", "Find all should use the chosen options")
+headings = [row.values[0] for row in window._source_table._rows.values() if row.group]
+check(headings == ["Aluminium - 80 t to get", "Steel - 400 t to get - no source found"],
+      f"one heading per commodity: {headings}")
+check(len(window._source_table) == 3, "two headings and one station")
+check(window._find_all_button.cget("text") == "Find all" and window._find_button._enabled,
+      "the buttons come back when the search is done")
+check("No source found for Steel" in window._sources_note.cget("text"), "the note should name what had no source")
+window._source_table.select("g0s0")
+window._on_copy_system()
+check("Copied" in window._sources_note.cget("text"), "Copy System works on a Find all result")
+window._on_source_sort("price")
+check(len(window._source_table) == 3, "sorting a Find all result keeps it")
+W.sources.find_whole_list = S_whole
 
 # No FC column without a carrier; the table never asks for more than the window has.
 check(window._with_fc is False, "no FC column for a commander without a carrier")

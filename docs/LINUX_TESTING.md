@@ -280,6 +280,13 @@ Windows. Needs a commander with at least one registered construction site and an
       carriers; the whole results table fits at the window's minimum width.
 - [ ] **Here** puts the system you are in (the last system EDMC saw) into Around. **Copy System** copies the selected row.
 - [ ] With no network, the panel says the search failed and the button comes back.
+- [x] **Find all** (added 2026-10-12): lists a heading per commodity still to buy with up to 5 stations under each; the
+      button reads **Stop** while it runs and stopping keeps what was found; the window stays responsive.
+- [x] **Remembered choices**: change Within, Sort, Landing pad and Include fleet carriers, run a search, close and reopen
+      the window: the same choices are back.
+- [x] **Only what [station] sells**: greyed out until you open a station's commodity market; then it names the station and
+      narrows the list to what that market has for sale (in stock, with a buy price); it unticks itself when you undock.
+      (`Market.json` lives in the journal folder: check EDMC's journal path on Linux/Proton.) Checked on Linux 2026-10-12 (reported by the developer).
 
 ## 7f. Overlay Placement and the Overlays settings tab (added 2026-10-11, Windows-tested only: check on Linux)
 

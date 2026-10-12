@@ -4,7 +4,9 @@ what the ship and the fleet carrier already cover. Beneath that, "Where to buy" 
 asked, fleet carriers) with the picked commodity in stock. Same singleton window + geometry-persistence convention as
 the other WNTB windows, built on the shared window kit (plugin/uikit - see docs/WINDOW_FRAMEWORK_SPEC.md). What is
 shown and how it adds up lives in colonisation_view.py, and the search in colonisation_sources.py; this file only
-draws them."""
+draws them. "Find nearest" searches the picked commodity; "Find all" searches every commodity still to be bought, one
+request each, and lists the closest few stations under each. The search choices are remembered between sessions, and
+"Only what <station> sells" narrows the list to what the docked station's market has for sale."""
 
 from __future__ import annotations
 
@@ -12,7 +14,7 @@ import logging
 import os
 import threading
 import tkinter as tk
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 from config import appname, config
 
@@ -29,6 +31,7 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CONFIG_GEOMETRY = "wntb_colonisation_window_geometry"
+CONFIG_SEARCH = "wntb_colonisation_search_prefs"   # radius, pad, carriers and sort of the where-to-buy search
 
 MIN_WIDTH = 1180
 MIN_HEIGHT = 640
@@ -70,6 +73,7 @@ _PAD_ORDER = {"Large": 0, "Medium": 1, "Small": 2, "?": 3}
 _NO_LIMIT = "No limit"
 _SORT_CHOICES = (("Closest first", sources.SORT_DISTANCE), ("Cheapest first", sources.SORT_PRICE))
 _POLL_MS = 150
+_STATION_MAX = 24  # a station name is clipped to this in the "Only what ... sells" label
 _ERROR_MAX = 90    # a failure message from outside is clipped to this
 _NAME_MAX = 60     # a site's name or system is clipped to this in the detail heading
 _window: Optional["ColonisationWindow"] = None
@@ -77,17 +81,19 @@ _window: Optional["ColonisationWindow"] = None
 
 def show(parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int],
          carrier: Optional[CarrierCargo] = None, capacity: Optional[Callable[[], int]] = None,
-         current_system: Optional[Callable[[], str]] = None) -> None:
+         current_system: Optional[Callable[[], str]] = None,
+         market: Optional[Callable[[], Optional[Tuple[str, FrozenSet[str]]]]] = None) -> None:
     """Open the window for `cmdr`, or raise/refresh it if already open. `capacity` returns the current ship's cargo
     capacity (0 when unknown), for the trips figure; `current_system` the system the commander is in, for the
-    "Here" button of the where-to-buy search."""
+    "Here" button of the where-to-buy search; `market` the docked station's name and the commodities it has for
+    sale, or None when no market has been opened (for the "Only what this station sells" filter)."""
     global _window
     if _window is not None and _window.alive:
         _window.set_cmdr(cmdr)
         _window.set_cargo(cargo)
         _window.lift()
         return
-    _window = ColonisationWindow(parent, repository, cmdr, cargo, carrier, capacity, current_system)
+    _window = ColonisationWindow(parent, repository, cmdr, cargo, carrier, capacity, current_system, market)
 
 
 def refresh_cargo(cargo: Mapping[str, int]) -> None:
@@ -95,6 +101,12 @@ def refresh_cargo(cargo: Mapping[str, int]) -> None:
     window isn't open."""
     if _window is not None and _window.alive:
         _window.set_cargo(cargo)
+
+
+def refresh_market() -> None:
+    """Called by the controller when the docked station's market changes (opened, or left behind)."""
+    if _window is not None and _window.alive:
+        _window.refresh_market()
 
 
 def refresh_cmdr(cmdr: str) -> None:
@@ -111,8 +123,10 @@ def _clip(text: str, limit: int) -> str:
 class ColonisationWindow:
     def __init__(self, parent: tk.Misc, repository: SiteRepository, cmdr: str, cargo: Mapping[str, int],
                  carrier: Optional[CarrierCargo] = None, capacity: Optional[Callable[[], int]] = None,
-                 current_system: Optional[Callable[[], str]] = None) -> None:
+                 current_system: Optional[Callable[[], str]] = None,
+                 market: Optional[Callable[[], Optional[Tuple[str, FrozenSet[str]]]]] = None) -> None:
         self._repository = repository
+        self._market = market or (lambda: None)
         self._carrier = carrier
         self._capacity = capacity or (lambda: 0)
         self._current_system = current_system or (lambda: "")
@@ -129,6 +143,10 @@ class ColonisationWindow:
         self._search_id = 0                      # which search the window waits for; older answers are dropped
         self._result: Optional[sources.SearchResult] = None
         self._result_label = ""
+        self._whole: Optional[sources.WholeListResult] = None   # the last "Find all" answer (instead of _result)
+        self._whole_to_get: Dict[str, int] = {}                 # commodity label -> tons still to get, for its heading
+        self._whole_job: Optional[Dict[str, Any]] = None        # the "Find all" running now
+        self._prefs = sources.load_prefs(config.get_str(CONFIG_SEARCH))
         self._source_sort = ("distance", False)
         self._source_rows: Dict[str, str] = {}   # result row id -> its system name, for Copy System
 
@@ -146,7 +164,8 @@ class ColonisationWindow:
         self._hide_covered = tk.BooleanVar(master=self._toplevel, value=False)
         self._filter_text = tk.StringVar(master=self._toplevel, value="")
         self._system_var = tk.StringVar(master=self._toplevel, value="")
-        self._carriers_var = tk.BooleanVar(master=self._toplevel, value=False)
+        self._carriers_var = tk.BooleanVar(master=self._toplevel, value=self._prefs.carriers)
+        self._station_only = tk.BooleanVar(master=self._toplevel, value=False)
 
         panes = tk.PanedWindow(self._shell.body, orient="horizontal", bg=P.BG, bd=0, sashwidth=6,
                                sashrelief="flat", opaqueresize=True)
@@ -205,6 +224,10 @@ class ColonisationWindow:
         self._filter_text.trace_add("write", lambda *_: self._refresh_detail())
         tk.Checkbutton(filters, text="Hide rows already covered", variable=self._hide_covered,
                        command=self._refresh_detail).pack(side="left")
+        # What the docked station sells, from its market (Market.json); off and greyed out until a market is opened.
+        self._station_check = tk.Checkbutton(filters, text="Only what this station sells", variable=self._station_only,
+                                             command=self._refresh_detail)
+        self._station_check.pack(side="left", padx=(P.PAD, 0))
 
         # The commodity table above, the where-to-buy panel below; the divider between them can be dragged.
         rows = tk.PanedWindow(right, orient="vertical", bg=P.BG, bd=0, sashwidth=6, sashrelief="flat",
@@ -254,25 +277,27 @@ class ColonisationWindow:
         tk.Label(first, text="Within", fg=P.MUTED, bg=P.PANE).pack(side="left")
         self._radius = Combobox(first, state="readonly", width=9,
                                 values=[f"{r} ly" for r in sources.RADIUS_CHOICES] + [_NO_LIMIT])
-        self._radius.set(f"{sources.DEFAULT_RADIUS_LY} ly")
+        self._radius.set(_NO_LIMIT if self._prefs.radius_ly is None else f"{int(self._prefs.radius_ly)} ly")
         self._radius.pack(side="left", padx=(P.PAD_SM, P.PAD))
         tk.Label(first, text="Sort", fg=P.MUTED, bg=P.PANE).pack(side="left")
         self._sort = Combobox(first, state="readonly", width=14, values=[label for label, _ in _SORT_CHOICES])
-        self._sort.current(0)
+        self._sort.set(next((text for text, key in _SORT_CHOICES if key == self._prefs.sort), _SORT_CHOICES[0][0]))
         self._sort.pack(side="left", padx=(P.PAD_SM, 0))
 
         second = tk.Frame(options, bg=P.PANE, pady=P.PAD_SM)
         second.pack(fill="x")
         tk.Label(second, text="Landing pad", fg=P.MUTED, bg=P.PANE).pack(side="left")
         self._pad = Combobox(second, state="readonly", width=17, values=[label for _, label in sources.PAD_CHOICES])
-        self._pad.current(0)
+        self._pad.set(next((text for key, text in sources.PAD_CHOICES if key == self._prefs.pad), sources.PAD_CHOICES[0][1]))
         self._pad.pack(side="left", padx=(P.PAD_SM, P.PAD))
         tk.Checkbutton(second, text="Include fleet carriers", variable=self._carriers_var).pack(side="left")
         self._find_button = FlatButton(second, "Find nearest", self._on_find, kind="accent")
         self._find_button.pack(side="right")
+        self._find_all_button = FlatButton(second, "Find all", self._on_find_all)
+        self._find_all_button.pack(side="right", padx=(0, 6))
         FlatButton(second, "Copy System", self._on_copy_system).pack(side="right", padx=(0, 6))
 
-        self._sources_note = tk.Label(host, text="Pick a commodity row above, then Find nearest.", fg=P.MUTED,
+        self._sources_note = tk.Label(host, text="Pick a commodity row above, then Find nearest - or Find all to search everything still to buy.", fg=P.MUTED,
                                       bg=P.PANE, anchor="w", justify="left", padx=P.PAD)
         self._sources_note.pack(fill="x")
         host.bind("<Configure>", lambda e: self._sources_note.configure(wraplength=max(e.width - 2 * P.PAD, 100)))
@@ -297,6 +322,9 @@ class ColonisationWindow:
             self._wanted = None
         self._cmdr = cmdr
         self._refresh()
+
+    def refresh_market(self) -> None:
+        self._refresh_detail()
 
     def set_cargo(self, cargo: Mapping[str, int]) -> None:
         self._cargo = dict(cargo)
@@ -386,8 +414,7 @@ class ColonisationWindow:
         self._tile_buy.set(f"{totals.buy_trips:,}" if capacity > 0 else "–")
         self._tile_haul.set(f"{totals.haul_trips:,}" if capacity > 0 else "–")
 
-        rows: List[view.CommodityRow] = view.commodity_rows(
-            site, self._cargo, on_carrier, self._hide_covered.get(), self._filter_text.get(), capacity)
+        rows = self._visible_rows(site, on_carrier, capacity)
         rows.sort(key=self._commodity_value, reverse=self._sort_desc)
         self._commodity_table.mark_sorted(self._sort_key, self._sort_desc)
         for row in rows:
@@ -420,6 +447,25 @@ class ColonisationWindow:
             self._shell.set_status(f"{totals.lines} commodit{'y' if totals.lines == 1 else 'ies'} still needed, "
                                    f"{totals.covered} covered by {covered_by}. {ship}")
 
+    def _station_filter(self) -> Tuple[str, Optional[FrozenSet[str]]]:
+        """The docked station's name and what it sells when "Only what this station sells" is on and a market is known;
+        otherwise no filter. Also keeps the checkbox's text and state in step with the market."""
+        market = self._market()
+        if market is None:
+            self._station_only.set(False)
+            self._station_check.configure(text="Only what this station sells", state="disabled")
+            return "", None
+        station, keys = market
+        self._station_check.configure(text=f"Only what {_clip(station, _STATION_MAX)} sells" if station
+                                      else "Only what this station sells", state="normal")
+        return station, (keys if self._station_only.get() else None)
+
+    def _visible_rows(self, site: Site, on_carrier: Mapping[str, int], capacity: int) -> List[view.CommodityRow]:
+        """The commodity rows after every filter, as the table shows them."""
+        _station, only = self._station_filter()
+        return view.commodity_rows(site, self._cargo, on_carrier, self._hide_covered.get(), self._filter_text.get(),
+                                   capacity, only_keys=only)
+
     # --- where to buy ----------------------------------------------------------
 
     def _on_here(self) -> None:
@@ -447,6 +493,11 @@ class ColonisationWindow:
         label = self._sort.get()
         return next((key for text, key in _SORT_CHOICES if text == label), sources.SORT_DISTANCE)
 
+    def _save_prefs(self) -> None:
+        config.set(CONFIG_SEARCH, sources.dump_prefs(sources.SearchPrefs(
+            radius_ly=self._radius_ly(), pad=self._pad_choice(), carriers=bool(self._carriers_var.get()),
+            sort=self._sort_choice())))
+
     def _on_find(self) -> None:
         """Starts the search on a worker thread (Spansh can take seconds) and polls for its answer."""
         if not self._wanted:
@@ -458,6 +509,7 @@ class ColonisationWindow:
             return
         commodity, radius, pad = self._wanted, self._radius_ly(), self._pad_choice()
         carriers, order = bool(self._carriers_var.get()), self._sort_choice()
+        self._save_prefs()
         self._search_id += 1
         job: Dict[str, Any] = {"id": self._search_id, "done": False, "result": None, "error": ""}
         self._find_button.set_enabled(False)
@@ -486,13 +538,78 @@ class ColonisationWindow:
             self._sources_note.configure(
                 text=f"The search failed: {_clip(job['error'], _ERROR_MAX)}. Spansh may be busy; try again shortly.")
             return
-        self._result, self._result_label = job["result"], commodity
+        self._result, self._result_label, self._whole = job["result"], commodity, None
         self._render_sources(system)
+
+    def _on_find_all(self) -> None:
+        """Searches every commodity still to be bought (as the table lists them, covered rows left out), one request each
+        on a worker thread; pressing the button again while it runs stops it, keeping what it has found."""
+        if self._whole_job is not None:
+            self._whole_job["cancel"] = True
+            self._sources_note.configure(text="Stopping after the search in progress…")
+            return
+        site = self._selected_site()
+        system = self._system_var.get().strip()
+        if site is None:
+            self._sources_note.configure(text="Select a site on the left first.")
+            return
+        if not system:
+            self._sources_note.configure(text="Enter a system to search around, or press Here.")
+            return
+        on_carrier = self._carrier_tons()
+        rows = [r for r in self._visible_rows(site, on_carrier, self._capacity()) if r.to_get > 0]
+        if not rows:
+            self._sources_note.configure(text="Nothing left to buy in the list as it is shown.")
+            return
+        labels = [r.label for r in rows]
+        to_get = {r.label: r.to_get for r in rows}
+        radius, pad, carriers, order = self._radius_ly(), self._pad_choice(), bool(self._carriers_var.get()), self._sort_choice()
+        self._save_prefs()
+        self._search_id += 1
+        job: Dict[str, Any] = {"id": self._search_id, "done": False, "result": None, "error": "", "cancel": False,
+                               "progress": (0, len(labels), labels[0])}
+        self._whole_job = job
+        self._find_button.set_enabled(False)
+        self._find_all_button.configure(text="Stop")
+        self._sources_note.configure(text=f"Searching for {len(labels)} commodities around {_clip(system, _NAME_MAX)}…")
+
+        def work() -> None:
+            try:
+                job["result"] = sources.find_whole_list(
+                    system, labels, radius_ly=radius, pad=pad, include_carriers=carriers, sort=order,
+                    progress=lambda done, total, label: job.__setitem__("progress", (done, total, label)),
+                    cancelled=lambda: job["cancel"])
+            except Exception as exc:   # bad input or an unexpected failure: shown, not raised into the main thread
+                logger.exception("Colonization whole-list search failed")
+                job["error"] = str(exc) or exc.__class__.__name__
+            job["done"] = True
+
+        threading.Thread(target=work, daemon=True, name="WNTB-colonisation-sources-all").start()
+        self._toplevel.after(_POLL_MS, self._poll_whole, job, system, to_get)
+
+    def _poll_whole(self, job: Dict[str, Any], system: str, to_get: Dict[str, int]) -> None:
+        if not self.alive or job["id"] != self._search_id:
+            return
+        if not job["done"]:
+            done, total, label = job["progress"]
+            self._sources_note.configure(text=f"Searching {done + 1} of {total}: {label}…")
+            self._toplevel.after(_POLL_MS, self._poll_whole, job, system, to_get)
+            return
+        self._whole_job = None
+        self._find_button.set_enabled(True)
+        self._find_all_button.configure(text="Find all")
+        if job["error"]:
+            self._sources_note.configure(text=f"The search failed: {_clip(job['error'], _ERROR_MAX)}.")
+            return
+        self._whole, self._whole_to_get, self._result = job["result"], to_get, None
+        self._render_whole(system)
 
     def _on_source_sort(self, key: str) -> None:
         descending = self._source_sort[0] == key and not self._source_sort[1]
         self._source_sort = (key, descending)
-        if self._result is not None:
+        if self._whole is not None:
+            self._render_whole()
+        elif self._result is not None:
             self._render_sources()
 
     @staticmethod
@@ -536,6 +653,45 @@ class ColonisationWindow:
         self._sources_note.configure(
             text=f"{self._result_label}: {stations} station{'s' if stations != 1 else ''}{extra}{around}. Price is per "
                  f"ton; the data is from players' own market updates, so confirm on arrival.")
+
+    def _render_whole(self, system: str = "") -> None:
+        """The "Find all" answer: a heading per commodity, with its closest few stations (and carriers, if asked) below."""
+        whole = self._whole
+        if whole is None or not self.alive:
+            return
+        key, descending = self._source_sort
+        self._source_table.clear()
+        self._source_table.mark_sorted(key, descending)
+        self._source_rows.clear()
+        blank = ("",) * 8
+        for g, (label, result) in enumerate(whole.found):
+            need = self._whole_to_get.get(label)
+            wanted = f"{label} - {need:,} t to get" if need else label
+            stations = list(result.stations[:sources.WHOLE_LIST_STATIONS])
+            carriers = list(result.carriers[:sources.WHOLE_LIST_CARRIERS])
+            heading = wanted if stations or carriers else f"{wanted} - no source found"
+            gid = f"g{g}"
+            self._source_table.insert(gid, (heading,) + blank, group=True, open=True)
+            for prefix, group, tag in (("s", stations, None), ("c", carriers, "carrier")):
+                for index, item in enumerate(sorted(group, key=lambda s: self._source_value(s, key), reverse=descending)):
+                    iid = f"{gid}{prefix}{index}"
+                    self._source_rows[iid] = item.system
+                    self._source_table.insert(
+                        iid, (item.station, item.system, item.kind, "Yes" if item.is_planetary else "No", item.pad,
+                              f"{item.distance_ly:,.1f} ly", f"{item.arrival_ls:,.0f} ls" if item.arrival_ls else "",
+                              f"{item.price:,}", f"{item.supply:,}"), tag=tag, parent=gid)
+        around = f" around {_clip(system, _NAME_MAX)}" if system else ""
+        parts = [f"Searched {len(whole.found)} commodit{'y' if len(whole.found) == 1 else 'ies'}{around}"
+                 f"{' (stopped early)' if whole.stopped else ''}."]
+        missing = whole.without_sources()
+        if missing:
+            parts.append(f"No source found for {_clip(', '.join(missing), _ERROR_MAX)}; try a larger radius, any pad size "
+                         f"or include fleet carriers.")
+        if whole.failed:
+            parts.append(f"The search failed for {_clip(', '.join(label for label, _ in whole.failed), _ERROR_MAX)}"
+                         f" - Spansh may be busy; press Find all again.")
+        parts.append(f"The closest {sources.WHOLE_LIST_STATIONS} stations are listed for each; price is per ton.")
+        self._sources_note.configure(text=" ".join(parts))
 
     def _on_copy_system(self) -> None:
         selection = self._source_table.selection()
@@ -586,5 +742,11 @@ class ColonisationWindow:
         self._shell.set_status(f"Removed {len(finished)} finished site{'s' if len(finished) != 1 else ''}.")
 
     def close(self) -> None:
+        if self._whole_job is not None:
+            self._whole_job["cancel"] = True   # let the worker stop between commodities instead of running on
         self._search_id += 1   # a search still running has nowhere to show its answer
+        try:
+            self._save_prefs()
+        except tk.TclError:   # the widgets are already gone
+            pass
         self._shell.close()

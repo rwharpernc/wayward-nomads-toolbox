@@ -76,3 +76,8 @@ def cargo_value(cargo: Dict[str, int], market: Dict[str, MarketItem]) -> Optiona
             total += item.sell_price * tonnes
             matched = True
     return total if matched else None
+
+
+def sold_keys(market: Dict[str, MarketItem]) -> frozenset:
+    """The commodities this station has for sale (some in stock and a price to buy at), by canonical name."""
+    return frozenset(key for key, item in market.items() if item.stock > 0 and item.buy_price > 0)

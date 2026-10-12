@@ -647,8 +647,18 @@ for as little as it can. These are the measures that are in the code today.
 - The automatic ring-reserve check (opt-in) is remembered per ring for the session, and is never run
   while the journal is being replayed at start-up.
 - The Colonisation window's Where to buy search remembers an identical search (same system, commodity, radius, pad
-  size, carriers and sort) for 2 minutes, and runs only when you press Find nearest, one at a time, asking for at most
-  25 stations and 10 carriers.
+  size, carriers and sort) for 2 minutes, and runs only when you press Find nearest or Find all, asking for at most
+  25 stations and 10 carriers per commodity. Find all (`colonisation_sources.find_whole_list`) is the same search once per
+  outstanding commodity on one worker thread, in order, pausing 0.4 s before each request that really goes out (answers
+  from memory cost no pause; the cache key is shared with Find nearest), recording a failed commodity and carrying on, and
+  checking for a Stop between commodities. The window keeps the closest 5 stations and 2 carriers of each.
+- The Colonisation window's search choices (radius, pad, carriers, sort) are one JSON string in EDMC's config
+  (`wntb_colonisation_search_prefs`, `colonisation_sources.SearchPrefs`), written when a search starts and when the window
+  closes. They are window preferences like its geometry, so they are shared by every commander; nothing about play is in them.
+- "Only what [station] sells": on a `Market` event the Colonisation controller reads `Market.json` and keeps the commodities
+  with stock and a buy price (`trade_market.sold_keys`); it forgets them on `Undocked`, `FSDJump`, `SupercruiseEntry` and a
+  `Location` without a station, because the file stays on disk after you leave. Not saved; only the market opened this
+  session is known.
 - Earth-like-world rarity is remembered per system for the session, and EDSM upload status per
   system for 10 minutes, so re-selecting the same target costs no extra calls.
 - The Boxel Survey keeps a local log of systems you've visited, so the RND (Random) button never spends an
