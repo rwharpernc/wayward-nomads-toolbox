@@ -102,6 +102,8 @@ market_state = [None]   # what the docked station sells: None until a market is 
 W.show(root, repo, "Bocheaux", {"water": 50}, carrier, lambda: 100, None, lambda: market_state[0])
 window = W._window
 check(window is not None and window.alive, "the window did not open")
+window._group_by_category.set(False)    # the checks below count plain rows; grouping is checked at the end
+window._refresh_detail()
 top = window._toplevel
 top.geometry(f"{W.MIN_WIDTH}x{W.MIN_HEIGHT}+20+20")
 for _ in range(4):
@@ -398,6 +400,30 @@ window._on_pick_site("2")
 window._on_remove_finished()
 check(2 not in window._sites, "Remove Finished should delete the complete site")
 check(window._selected == 1, "the selection should fall back to an active site")
+# Grouped by market category, as in SrvSurvey's list; what the docked market does not sell is grayed out with a note.
+window._selected = 1
+window._sort_key, window._sort_desc = "label", False
+market_state[0] = ("Test Port", frozenset({"steel"}))
+window._group_by_category.set(True)
+window._refresh_detail()
+table = window._commodity_table
+heads = [(iid, row.values[0]) for iid, row in table._rows.items() if row.group]
+check([name for _iid, name in heads] == ["Chemicals", "Metals"], f"category headings, in order: {heads}")
+check(table._rows["1:steel"].parent == "1:cat:Metals", "Steel sits under Metals")
+check(table._rows["1:water"].tag == "unavailable" or table._rows["1:water"].tag in ("enough", "over"),
+      f"Water is not sold at the market: {table._rows['1:water'].tag}")
+if table._rows["1:water"].tag == "unavailable":
+    check(table._rows["1:water"].values[0].endswith(W.NOT_AVAILABLE.strip()) or "not available" in table._rows["1:water"].values[0],
+          "an unavailable commodity says so")
+check(table._rows["1:steel"].tag != "unavailable", "Steel is sold at the market")
+window._on_sort("remaining")
+check(not any(row.group for row in table._rows.values()), "sorting by another column gives a plain list")
+window._on_sort("label")
+check(any(row.group for row in table._rows.values()) or window._sort_desc, "sorting by commodity again")
+market_state[0] = None
+window._group_by_category.set(False)
+window._refresh_detail()
+
 window._on_remove()
 check(window._selected is None and len(window._site_table) == 0, "Remove Site should delete the picked site")
 check(window._title.cget("text") == "No site selected", "an empty window should say so")

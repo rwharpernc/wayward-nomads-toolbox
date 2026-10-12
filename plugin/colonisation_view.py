@@ -7,8 +7,9 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Collection, List, Mapping, Optional
+from typing import Collection, List, Mapping, Optional, Tuple
 
+from . import commodity_categories
 from .colonisation import Site
 
 
@@ -30,6 +31,7 @@ class CommodityRow:
     buy_trips: Optional[Decimal] = None    # loads of the current ship to gather what is still `to_get` (0 when covered)
     haul_trips: Optional[Decimal] = None   # loads of the current ship to carry all of `remaining` to the site
                                            # (both None when the ship's capacity is unknown)
+    available: bool = True                 # False when the market the commander is docked at does not sell it
 
     @property
     def stock(self) -> int:
@@ -81,10 +83,12 @@ def format_trips(trips: Optional[Decimal]) -> str:
 
 def commodity_rows(site: Site, cargo: Mapping[str, int], carrier: Optional[Mapping[str, int]] = None,
                    hide_covered: bool = False, text: str = "", capacity: int = 0,
-                   only_keys: Optional[Collection[str]] = None) -> List[CommodityRow]:
+                   only_keys: Optional[Collection[str]] = None,
+                   market_keys: Optional[Collection[str]] = None) -> List[CommodityRow]:
     """The site's outstanding commodities, alphabetical (so rows stay put while numbers change), less any the
     filters take out: `hide_covered` drops those the ship plus the carrier already cover, `text` keeps labels containing it,
-    and `only_keys` (when given) keeps only the commodities whose key is in it - what the docked station sells."""
+    and `only_keys` (when given) keeps only the commodities whose key is in it - what the docked station sells. `market_keys` (what
+    the docked market sells, or None away from one) only marks a row `available` or not, and filters nothing."""
     wanted = text.strip().casefold()
     carrier = carrier or {}
     rows: List[CommodityRow] = []
@@ -101,11 +105,22 @@ def commodity_rows(site: Site, cargo: Mapping[str, int], carrier: Optional[Mappi
             remaining=resource.remaining, in_cargo=cargo.get(resource.key, 0),
             to_get=to_get,
             on_carrier=carrier.get(resource.key, 0), buy_trips=trips_for(to_get, capacity),
-            haul_trips=trips_for(resource.remaining, capacity))
+            haul_trips=trips_for(resource.remaining, capacity),
+            available=not market_keys or resource.key in market_keys)
         if hide_covered and row.covered:
             continue
         rows.append(row)
     return sorted(rows, key=lambda r: r.label.casefold())
+
+
+def group_rows(rows: List[CommodityRow]) -> List[Tuple[str, List[CommodityRow]]]:
+    """`rows` grouped under their market category the way the in-game market (and SrvSurvey's shopping list) groups them: categories
+    alphabetical with "Other" last, each group's commodities alphabetical."""
+    groups: dict = {}
+    for row in rows:
+        groups.setdefault(commodity_categories.category_for(row.key), []).append(row)
+    return [(category, sorted(items, key=lambda r: r.label.casefold()))
+            for category, items in sorted(groups.items(), key=lambda pair: commodity_categories.sort_key(pair[0]))]
 
 
 def totals(site: Site, cargo: Mapping[str, int], capacity: int = 0,

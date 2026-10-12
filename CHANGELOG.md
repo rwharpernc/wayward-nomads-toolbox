@@ -27,6 +27,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.
 
 ### Changed
+- **Colonization Sites window: the commodity table is a shopping list like the overlay.** A **Group by category** checkbox (on by default)
+  puts the commodities under market-category headings, alphabetical inside, in SrvSurvey's order, and a commodity the docked market does not
+  sell is grayed out with "(not available here)" unless your ship and carrier cover it. Sorting by a column shows a plain list.
 - **Overlay shopping list: SrvSurvey's order, and dimming what the market does not sell.** At a construction site the rows are
   alphabetical as before; at a market or the carrier's inventory they are grouped under the market's categories (a heading for each,
   alphabetical within it). A commodity the market you are docked at does not sell is grayed out (a much fainter gray) with "not available" after its name, unless

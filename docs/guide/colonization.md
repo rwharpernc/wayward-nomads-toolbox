@@ -175,6 +175,19 @@ What to expect:
 - It is safe to press more than once, and it never counts a transfer twice. It only touches the commander shown in the window and
   reads files on your computer; nothing is sent anywhere.
 
+### The commodity table: grouped, like the overlay
+
+For anyone who does not use the overlay, the commodity table is the shopping list, with the same order and the same graying as the overlay
+(SrvSurvey's order):
+
+- **Group by category** (a checkbox above the table, on by default, remembered) puts the commodities under a heading for each market
+  category (Chemicals, Foods, Industrial Materials, Machinery, Metals and so on), each with the tons it still needs, and the commodities
+  alphabetical under it. Click a heading to fold or open its group. Untick the box, or click any column heading to sort by it (or the
+  commodity column a second time for reverse order), and you get a plain sorted list instead.
+- **Grayed out when the market does not sell it.** While you are docked at a commodity market WNTB has seen, a commodity that market does
+  not sell shows in a faint gray with **(not available here)** after its name, unless your ship and carrier already cover it (it keeps its
+  green or amber tint). This only marks rows; **Only what this station sells** still hides them.
+
 ## Where to buy
 
 Under the commodity table, **Where to buy** finds the closest places to buy a commodity. Click a commodity row, check

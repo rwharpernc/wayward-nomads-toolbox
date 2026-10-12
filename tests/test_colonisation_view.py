@@ -26,6 +26,19 @@ def site(**flags) -> colonisation.Site:
     return colonisation.apply_depot_event(entry, None, name="Depot One", system="Sol")
 
 
+class GroupingAndAvailabilityTests(unittest.TestCase):
+    def test_rows_group_under_market_categories_alphabetically(self):
+        groups = view.group_rows(view.commodity_rows(site(), {}))
+        self.assertEqual([(c, [r.label for r in rows]) for c, rows in groups],
+                         [("Chemicals", ["Water"]), ("Metals", ["Aluminium", "Steel"])])
+
+    def test_the_market_marks_rows_available_without_filtering_any(self):
+        rows = {r.label: r for r in view.commodity_rows(site(), {}, market_keys={"steel", "water"})}
+        self.assertEqual({k: r.available for k, r in rows.items()}, {"Aluminium": False, "Steel": True, "Water": True})
+        for keys in (None, set()):
+            self.assertTrue(all(r.available for r in view.commodity_rows(site(), {}, market_keys=keys)))
+
+
 class CommodityRowsTests(unittest.TestCase):
     def test_lists_only_what_is_outstanding_alphabetically(self):
         labels = [r.label for r in view.commodity_rows(site(), {})]

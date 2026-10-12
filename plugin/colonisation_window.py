@@ -32,6 +32,7 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CONFIG_GEOMETRY = "wntb_colonisation_window_geometry"
+CONFIG_GROUP = "wntb_colonisation_group_by_category"   # the commodity table groups rows under market categories (default on)
 CONFIG_SEARCH = "wntb_colonisation_search_prefs"   # radius, pad, carriers and sort of the where-to-buy search
 
 MIN_WIDTH = 1180
@@ -72,6 +73,7 @@ _SOURCE_COLUMNS = (
 )
 _PAD_ORDER = {"Large": 0, "Medium": 1, "Small": 2, "?": 3}
 _NO_LIMIT = "No limit"
+NOT_AVAILABLE = "  (not available here)"   # after a commodity the docked market does not sell
 _SORT_CHOICES = (("Closest first", sources.SORT_DISTANCE), ("Cheapest first", sources.SORT_PRICE))
 _POLL_MS = 150
 _STATION_MAX = 24  # a station name is clipped to this in the "Only what ... sells" label
@@ -172,6 +174,7 @@ class ColonisationWindow:
         self._system_var = tk.StringVar(master=self._toplevel, value="")
         self._carriers_var = tk.BooleanVar(master=self._toplevel, value=self._prefs.carriers)
         self._station_only = tk.BooleanVar(master=self._toplevel, value=False)
+        self._group_by_category = tk.BooleanVar(master=self._toplevel, value=config.get_bool(CONFIG_GROUP, default=True))
 
         panes = tk.PanedWindow(self._shell.body, orient="horizontal", bg=P.BG, bd=0, sashwidth=6,
                                sashrelief="flat", opaqueresize=True)
@@ -234,6 +237,8 @@ class ColonisationWindow:
         self._station_check = tk.Checkbutton(filters, text="Only what this station sells", variable=self._station_only,
                                              command=self._refresh_detail)
         self._station_check.pack(side="left", padx=(P.PAD, 0))
+        tk.Checkbutton(filters, text="Group by category", variable=self._group_by_category,
+                       command=self._on_group_changed).pack(side="left", padx=(P.PAD, 0))
 
         # The commodity table above, the where-to-buy panel below; the divider between them can be dragged.
         rows = tk.PanedWindow(right, orient="vertical", bg=P.BG, bd=0, sashwidth=6, sashrelief="flat",
@@ -262,6 +267,7 @@ class ColonisationWindow:
         table = DataTable(self._table_host, columns, sortable=False, on_header=self._on_sort,
                           on_select=self._on_pick_commodity, empty_text="Nothing left to deliver here.")
         # Whole-row tints: green when the ship plus the fleet carrier covers the need, orange when it is more than needed.
+        table.tag_configure("unavailable", foreground=P.FAINT)    # the docked market does not sell it
         table.tag_configure(view.STATE_ENOUGH, foreground=P.TEXT, background=P.ROW_OK)
         table.tag_configure(view.STATE_OVER, foreground=P.TEXT, background=P.ROW_OVER)
         table.pack(fill="both", expand=True)
@@ -377,6 +383,15 @@ class ColonisationWindow:
             self._site_table.select(str(self._selected))
         self._refresh_detail()
 
+    def _on_group_changed(self) -> None:
+        config.set(CONFIG_GROUP, self._group_by_category.get())
+        self._refresh_detail()
+
+    def _grouped(self) -> bool:
+        """Rows sit under category headings (alphabetical inside), as in SrvSurvey's list, while that is switched on and the table is in
+        its natural order; sorting by any other column, or the commodity column backwards, shows a plain sorted list instead."""
+        return self._group_by_category.get() and self._sort_key == "label" and not self._sort_desc
+
     def _commodity_value(self, row: view.CommodityRow):
         return {"label": row.label.casefold(), "required": row.required, "delivered": row.delivered,
                 "remaining": row.remaining, "cargo": row.in_cargo, "buy": row.to_get, "haul": row.remaining,
@@ -424,18 +439,28 @@ class ColonisationWindow:
         rows = self._visible_rows(site, on_carrier, capacity)
         rows.sort(key=self._commodity_value, reverse=self._sort_desc)
         self._commodity_table.mark_sorted(self._sort_key, self._sort_desc)
-        for row in rows:
-            values = (row.label, f"{row.required:,}", f"{row.delivered:,}", f"{row.remaining:,}",
-                      f"{row.in_cargo:,}" if row.in_cargo else "")
-            if wants_fc:
-                values += (f"{row.on_carrier:,}" if row.on_carrier else "",)
-            if wants_fc:
-                values += (view.format_trips(row.buy_trips),)
-            values += (view.format_trips(row.haul_trips),)
-            tag = None if row.state == view.STATE_SHORT else row.state
-            iid = f"{site.market_id}:{row.key}"
-            self._row_label[iid] = row.label
-            self._commodity_table.insert(iid, values, tag=tag)
+        if self._grouped():
+            layout = [(category, items) for category, items in view.group_rows(rows)]
+        else:
+            layout = [("", rows)]
+        for category, items in layout:
+            parent = None
+            if category:
+                parent = f"{site.market_id}:cat:{category}"
+                self._commodity_table.insert(parent, (category, "", "", f"{sum(r.remaining for r in items):,}", ""), group=True)
+            for row in items:
+                values = (row.label if row.available or row.covered else row.label + NOT_AVAILABLE,
+                          f"{row.required:,}", f"{row.delivered:,}", f"{row.remaining:,}",
+                          f"{row.in_cargo:,}" if row.in_cargo else "")
+                if wants_fc:
+                    values += (f"{row.on_carrier:,}" if row.on_carrier else "",)
+                if wants_fc:
+                    values += (view.format_trips(row.buy_trips),)
+                values += (view.format_trips(row.haul_trips),)
+                tag = ("unavailable" if not row.available else None) if row.state == view.STATE_SHORT else row.state
+                iid = f"{site.market_id}:{row.key}"
+                self._row_label[iid] = row.label
+                self._commodity_table.insert(iid, values, tag=tag, parent=parent)
         wanted_iid = next((i for i, label in self._row_label.items() if label == self._wanted), None)
         if wanted_iid:
             self._commodity_table.select(wanted_iid)
@@ -470,8 +495,9 @@ class ColonisationWindow:
     def _visible_rows(self, site: Site, on_carrier: Mapping[str, int], capacity: int) -> List[view.CommodityRow]:
         """The commodity rows after every filter, as the table shows them."""
         _station, only = self._station_filter()
+        market = self._market()
         return view.commodity_rows(site, self._cargo, on_carrier, self._hide_covered.get(), self._filter_text.get(),
-                                   capacity, only_keys=only)
+                                   capacity, only_keys=only, market_keys=market[1] if market else None)
 
     # --- where to buy ----------------------------------------------------------
 
