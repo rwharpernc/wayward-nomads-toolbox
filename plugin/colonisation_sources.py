@@ -192,6 +192,103 @@ def find_whole_list(reference_system: str, commodities: Sequence[str], *, radius
     return out
 
 
+# --- a shopping route from the whole-list answer ----------------------------------------------------------------------
+
+ROUTE_MAX_STOPS = 6   # a suggested route never has more stops than this: past that it is a different trip
+
+
+@dataclass(frozen=True)
+class Purchase:
+    commodity: str
+    tonnes: int
+    price: int           # cr per ton at this stop
+
+
+@dataclass(frozen=True)
+class Stop:
+    station: str
+    system: str
+    kind: str
+    is_carrier: bool
+    distance_ly: float
+    buys: Tuple[Purchase, ...]
+
+    @property
+    def tonnes(self) -> int:
+        return sum(b.tonnes for b in self.buys)
+
+
+@dataclass(frozen=True)
+class RoutePlan:
+    stops: Tuple[Stop, ...]
+    needed: int                       # tons the commodities searched for still need in all
+    covered: int                      # of that, how many tons the stops can supply
+    uncovered: Tuple[Tuple[str, int], ...]   # (commodity, tons) the stops cannot supply (not in range, or too little stock)
+
+    def lines(self) -> List[str]:
+        """The plan as plain lines: a summary, one line per stop, and what is left over."""
+        if not self.stops:
+            return []
+        out = [f"Suggested shopping route: {len(self.stops)} stop{'s' if len(self.stops) != 1 else ''}, "
+               f"{self.covered:,} of {self.needed:,} t covered"]
+        for number, stop in enumerate(self.stops, 1):
+            buys = ", ".join(f"{b.commodity} {b.tonnes:,} t" for b in stop.buys)
+            tag = " (fleet carrier)" if stop.is_carrier else ""
+            out.append(f"{number}. {stop.station} ({stop.system}){tag}, {stop.distance_ly:,.1f} ly: {buys}")
+        if self.uncovered:
+            out.append("Not covered: " + ", ".join(f"{label} {tons:,} t" for label, tons in self.uncovered))
+        return out
+
+
+def plan_route(found: Sequence[Tuple[str, "SearchResult"]], needs: Dict[str, int], max_stops: int = ROUTE_MAX_STOPS) -> RoutePlan:
+    """Pick the few stops that between them supply the most of what is still needed, from the per-commodity answers of a
+    whole-list search. `needs` is the tons still to get for each commodity (by label).
+
+    It is greedy: take the station that can supply the most tons of what is still outstanding (a station is offered once per
+    commodity it sells, so one that sells several wins), take that off the needs, and repeat until nothing is left, nothing more
+    can be covered, or `max_stops` is reached. Ties go to the nearer station, then the cheaper one. The stops are then put in
+    order of distance from the search's reference system (the nearest first), which is the order to fly them. Only the stations
+    the searches returned are considered, so a commodity with none in range is reported as not covered rather than guessed."""
+    remaining = {label: int(tons) for label, tons in needs.items() if tons and tons > 0}
+    needed = sum(remaining.values())
+    # (station, system) -> {commodity: (supply, price)} plus the details of the station
+    offers: Dict[Tuple[str, str], Dict[str, Tuple[int, int]]] = {}
+    details: Dict[Tuple[str, str], Source] = {}
+    for label, result in found:
+        if label not in remaining:
+            continue
+        for source in [*result.stations, *result.carriers]:
+            if source.supply <= 0:
+                continue
+            key = (source.station, source.system)
+            offers.setdefault(key, {})[label] = (source.supply, source.price)
+            details.setdefault(key, source)
+
+    chosen: List[Stop] = []
+    left = dict(remaining)
+    candidates = dict(offers)
+    while left and candidates and len(chosen) < max_stops:
+        def coverage(key: Tuple[str, str]) -> int:
+            return sum(min(supply, left.get(label, 0)) for label, (supply, _price) in candidates[key].items())
+        best = max(candidates, key=lambda k: (coverage(k), -details[k].distance_ly, -sum(p for _s, p in candidates[k].values())))
+        if coverage(best) <= 0:
+            break
+        buys = []
+        for label, (supply, price) in sorted(candidates[best].items(), key=lambda kv: kv[0].casefold()):
+            take = min(supply, left.get(label, 0))
+            if take > 0:
+                buys.append(Purchase(label, take, price))
+                left[label] -= take
+                if left[label] <= 0:
+                    del left[label]
+        source = details[best]
+        chosen.append(Stop(source.station, source.system, source.kind, source.is_carrier, source.distance_ly, tuple(buys)))
+        del candidates[best]
+    chosen.sort(key=lambda stop: (stop.distance_ly, stop.station.casefold()))
+    uncovered = tuple(sorted(left.items(), key=lambda kv: kv[0].casefold()))
+    return RoutePlan(stops=tuple(chosen), needed=needed, covered=needed - sum(left.values()), uncovered=uncovered)
+
+
 # --- remembered choices --------------------------------------------------------------------------------------------
 
 

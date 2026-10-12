@@ -286,17 +286,28 @@ check(len(whole_calls) == 1 and whole_calls[0][1] == ["Aluminium", "Steel"],
       f"Find all should search what is still to buy, got {whole_calls}")
 check(whole_calls[0][2]["pad"] == "large", "Find all should use the chosen options")
 headings = [row.values[0] for row in window._source_table._rows.values() if row.group]
-check(headings == ["Aluminium - 80 t to get", "Steel - 400 t to get - no source found"],
-      f"one heading per commodity: {headings}")
-check(len(window._source_table) == 3, "two headings and one station")
+check(headings == ["Suggested route", "1. Near Port", "Aluminium", "Steel"], f"the route, then one heading per commodity: {headings}")
+detail = {row.values[0]: row.values[1:3] for row in window._source_table._rows.values() if row.group}
+check(detail["Aluminium"] == ["80 t to get", ""] and detail["Steel"] == ["400 t to get", "no source found"],
+      f"the detail sits in later columns so the label is not clipped: {detail}")
+check(detail["Suggested route"][0] == "1 stop", f"the route heading counts its stops: {detail['Suggested route']}")
+check(len(window._source_table) == 6, f"the route (3 rows), two headings and one station: {len(window._source_table)}")
+check(window._plan is not None and [s.station for s in window._plan.stops] == ["Near Port"], "a plan should be kept for Copy Route")
 check(window._find_all_button.cget("text") == "Find all" and window._find_button._enabled,
       "the buttons come back when the search is done")
 check("No source found for Steel" in window._sources_note.cget("text"), "the note should name what had no source")
+check("shopping route of 1 stop" in window._sources_note.cget("text") and "Not covered: Steel 400 t" in window._sources_note.cget("text"),
+      f"the note should describe the route and what it leaves out: {window._sources_note.cget('text')}")
 window._source_table.select("g0s0")
 window._on_copy_system()
 check("Copied" in window._sources_note.cget("text"), "Copy System works on a Find all result")
+window._on_copy_route()
+check("Copied the 1-stop shopping route" in window._sources_note.cget("text"), "Copy Route should confirm")
 window._on_source_sort("price")
-check(len(window._source_table) == 3, "sorting a Find all result keeps it")
+check(len(window._source_table) == 6, "sorting a Find all result keeps it, route included")
+window._plan = None
+window._on_copy_route()
+check("Press Find all first" in window._sources_note.cget("text"), "Copy Route with no route says what to do")
 W.sources.find_whole_list = S_whole
 
 # No FC column without a carrier; the table never asks for more than the window has.

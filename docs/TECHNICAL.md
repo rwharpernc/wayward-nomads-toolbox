@@ -651,7 +651,10 @@ for as little as it can. These are the measures that are in the code today.
   25 stations and 10 carriers per commodity. Find all (`colonisation_sources.find_whole_list`) is the same search once per
   outstanding commodity on one worker thread, in order, pausing 0.4 s before each request that really goes out (answers
   from memory cost no pause; the cache key is shared with Find nearest), recording a failed commodity and carrying on, and
-  checking for a Stop between commodities. The window keeps the closest 5 stations and 2 carriers of each.
+  checking for a Stop between commodities. The window keeps the closest 5 stations and 2 carriers of each. `plan_route` then builds a
+  shopping route from the full answers: greedy by tons a station can supply of what is still outstanding (a station selling several
+  commodities counts for each), ties to the nearer then cheaper, at most 6 stops, shown nearest first; it reports what no returned
+  station can supply and never guesses beyond the stations searched.
 - The Colonisation window's search choices (radius, pad, carriers, sort) are one JSON string in EDMC's config
   (`wntb_colonisation_search_prefs`, `colonisation_sources.SearchPrefs`), written when a search starts and when the window
   closes. They are window preferences like its geometry, so they are shared by every commander; nothing about play is in them.

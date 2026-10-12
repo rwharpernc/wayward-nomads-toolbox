@@ -12,6 +12,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Colonization, Find all: a suggested shopping route.** After Find all, the results start with the few stops (at most 6) that between
+  them supply the most of what you still have to get, with what to buy at each and the stops nearest first. **Copy Route** copies it.
+  Find all's commodity headings also no longer get cut off.
 - **Trade: choose the round trip search radius.** A new Trade setting sets how far around your start the round trip search looks (5 to 500
   ly); 0, the default, keeps the old behavior of twice your jump range between 20 and 100 ly.
 - **Colonization History: a Claims line.** How many systems you have claimed, how many you released and how many colonisation beacons

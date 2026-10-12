@@ -178,6 +178,13 @@ list of 20 takes some seconds, and the note under the buttons shows how far it h
 to stop after the search in progress, keeping what it found. A commodity that fails is named and the others still
 show; press **Find all** again to retry. Commodities with no source in range are listed in the note.
 
+**Suggested route.** Find all also works out a shopping route and puts it first in the results: the few stops (at most 6) that
+between them supply the most of what you still have to get. A station that sells several of your commodities counts for all of
+them, so it is taken first; ties go to the nearer, then the cheaper. Each stop shows what to buy there and the price, and the stops
+are listed nearest first, which is the order to fly them. What no station in range can supply is named in the note. It only
+considers the stations Find all returned (the nearest 25 per commodity within your radius), and stock changes, so treat it as a plan
+to check on arrival. **Copy Route** copies it as plain lines to paste into a note or chat.
+
 Each result shows the station, system, type, whether it is **Planetary**, largest pad, distance in light years,
 distance from the arrival star, the price per ton and the stock. **Planetary: Yes** means a base on a planet's
 surface, so you have to descend to land (planetary ports and outposts, settlements); **No** means an orbital

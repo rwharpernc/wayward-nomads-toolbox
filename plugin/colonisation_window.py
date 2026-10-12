@@ -145,6 +145,7 @@ class ColonisationWindow:
         self._result_label = ""
         self._whole: Optional[sources.WholeListResult] = None   # the last "Find all" answer (instead of _result)
         self._whole_to_get: Dict[str, int] = {}                 # commodity label -> tons still to get, for its heading
+        self._plan: Optional[sources.RoutePlan] = None          # the suggested shopping route for the last "Find all"
         self._whole_job: Optional[Dict[str, Any]] = None        # the "Find all" running now
         self._prefs = sources.load_prefs(config.get_str(CONFIG_SEARCH))
         self._source_sort = ("distance", False)
@@ -296,6 +297,7 @@ class ColonisationWindow:
         self._find_all_button = FlatButton(second, "Find all", self._on_find_all)
         self._find_all_button.pack(side="right", padx=(0, 6))
         FlatButton(second, "Copy System", self._on_copy_system).pack(side="right", padx=(0, 6))
+        FlatButton(second, "Copy Route", self._on_copy_route).pack(side="right", padx=(0, 6))
 
         self._sources_note = tk.Label(host, text="Pick a commodity row above, then Find nearest - or Find all to search everything still to buy.", fg=P.MUTED,
                                       bg=P.PANE, anchor="w", justify="left", padx=P.PAD)
@@ -538,7 +540,7 @@ class ColonisationWindow:
             self._sources_note.configure(
                 text=f"The search failed: {_clip(job['error'], _ERROR_MAX)}. Spansh may be busy; try again shortly.")
             return
-        self._result, self._result_label, self._whole = job["result"], commodity, None
+        self._result, self._result_label, self._whole, self._plan = job["result"], commodity, None, None
         self._render_sources(system)
 
     def _on_find_all(self) -> None:
@@ -602,6 +604,7 @@ class ColonisationWindow:
             self._sources_note.configure(text=f"The search failed: {_clip(job['error'], _ERROR_MAX)}.")
             return
         self._whole, self._whole_to_get, self._result = job["result"], to_get, None
+        self._plan = sources.plan_route(job["result"].found, to_get)
         self._render_whole(system)
 
     def _on_source_sort(self, key: str) -> None:
@@ -663,15 +666,31 @@ class ColonisationWindow:
         self._source_table.clear()
         self._source_table.mark_sorted(key, descending)
         self._source_rows.clear()
-        blank = ("",) * 8
+        plan = self._plan
+        if plan is not None and plan.stops:
+            # The suggested shopping route first: a stop is a row with what to buy there as rows beneath it.
+            self._source_table.insert("route", ("Suggested route", f"{len(plan.stops)} stop{'s' if len(plan.stops) != 1 else ''}",
+                                                f"{plan.covered:,} of {plan.needed:,} t", "", "", "", "", "", ""),
+                                      group=True, open=True)
+            for number, stop in enumerate(plan.stops, 1):
+                stop_id = f"route{number}"
+                self._source_rows[stop_id] = stop.system
+                self._source_table.insert(
+                    stop_id, (f"{number}. {stop.station}", stop.system, stop.kind, "", "", f"{stop.distance_ly:,.1f} ly", "", "",
+                              f"{stop.tonnes:,} t"), group=True, open=True, parent="route", tag="carrier" if stop.is_carrier else None)
+                for index, buy in enumerate(stop.buys):
+                    self._source_table.insert(f"{stop_id}b{index}", (f"{buy.commodity} x {buy.tonnes:,} t", "", "", "", "", "", "",
+                                                                     f"{buy.price:,}", ""), parent=stop_id)
         for g, (label, result) in enumerate(whole.found):
             need = self._whole_to_get.get(label)
-            wanted = f"{label} - {need:,} t to get" if need else label
             stations = list(result.stations[:sources.WHOLE_LIST_STATIONS])
             carriers = list(result.carriers[:sources.WHOLE_LIST_CARRIERS])
-            heading = wanted if stations or carriers else f"{wanted} - no source found"
             gid = f"g{g}"
-            self._source_table.insert(gid, (heading,) + blank, group=True, open=True)
+            # The label in the first column and the rest in later ones: a cell is clipped to its column, so one long heading
+            # in the first would lose its end.
+            self._source_table.insert(
+                gid, (label, f"{need:,} t to get" if need else "", "" if stations or carriers else "no source found",
+                      "", "", "", "", "", ""), group=True, open=True)
             for prefix, group, tag in (("s", stations, None), ("c", carriers, "carrier")):
                 for index, item in enumerate(sorted(group, key=lambda s: self._source_value(s, key), reverse=descending)):
                     iid = f"{gid}{prefix}{index}"
@@ -690,8 +709,22 @@ class ColonisationWindow:
         if whole.failed:
             parts.append(f"The search failed for {_clip(', '.join(label for label, _ in whole.failed), _ERROR_MAX)}"
                          f" - Spansh may be busy; press Find all again.")
+        if plan is not None and plan.stops:
+            parts.append(f"A shopping route of {len(plan.stops)} stop{'s' if len(plan.stops) != 1 else ''} covers "
+                         f"{plan.covered:,} of {plan.needed:,} t (Copy Route copies it).")
+            if plan.uncovered:
+                parts.append("Not covered: " + _clip(", ".join(f"{label} {tons:,} t" for label, tons in plan.uncovered), _ERROR_MAX) + ".")
         parts.append(f"The closest {sources.WHOLE_LIST_STATIONS} stations are listed for each; price is per ton.")
         self._sources_note.configure(text=" ".join(parts))
+
+    def _on_copy_route(self) -> None:
+        plan = self._plan
+        if plan is None or not plan.stops:
+            self._sources_note.configure(text="Press Find all first; the shopping route is worked out from its answer.")
+            return
+        text = "\n".join(_clip(line, 240) for line in plan.lines())
+        if panelkit.copy_to_clipboard(self._toplevel, text):
+            self._sources_note.configure(text=f"Copied the {len(plan.stops)}-stop shopping route to the clipboard.")
 
     def _on_copy_system(self) -> None:
         selection = self._source_table.selection()
