@@ -1170,7 +1170,7 @@ class TradePanelController:
         """Best back-and-forth pair with the station the route would start from, loaded both ways."""
         if self._job is not None and not self._job.done:
             return
-        start = self._route_start()
+        start = trade_route_start.round_trip_start(self._home, self._cmdr, self._system, self._station)
         if start is None:
             self._route_blocks = [Heading("Round trip"), Note("Dock at a station once so WNTB knows where to start.", warn=True)]
             self._refresh()
@@ -1216,6 +1216,7 @@ class TradePanelController:
                      "longer price-age limit, lower minimum supply and demand, or a bigger jump range.")]
             return
         blocks: List[Block] = [Heading("Round trip (loaded both ways)"),
+                               Pair("From", _clip(self._route_label)),
                                Note(f"Best of {found.get('searched', 0)} stations within {found.get('radius', 0):.0f} ly, "
                                     "ranked by estimated profit per hour."), Columns(("Per loop", "ly"))]
         for number, trip in enumerate(trips, start=1):

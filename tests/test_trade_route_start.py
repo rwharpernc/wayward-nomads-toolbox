@@ -54,6 +54,24 @@ class RouteStartPerCommanderTests(unittest.TestCase):
         self.assertEqual(self.panel._route_start(), ("Shinrarta Dezhra", "Jameson Memorial"))
 
 
+    def test_a_round_trip_may_start_from_the_carrier_you_are_docked_at(self) -> None:
+        from plugin import trade_route_start
+        self.dock("Alice", "Jameson Memorial", "Shinrarta Dezhra")
+        self.panel.handle_event(docked("ABC-123", "Sol", "FleetCarrier"), "Alice", "Sol", "ABC-123", {})
+        panel = self.panel
+        # Routes cannot start from a carrier (Spansh's planner does not know them) ...
+        self.assertEqual(panel._route_start(), ("Shinrarta Dezhra", "Jameson Memorial"))
+        # ... but a round trip is paired from a station search, which lists carriers, so it can.
+        self.assertEqual(trade_route_start.round_trip_start(panel._home, "Alice", panel._system, panel._station), ("Sol", "ABC-123"))
+
+    def test_a_round_trip_falls_back_to_the_last_station_when_not_docked(self) -> None:
+        from plugin import trade_route_start
+        self.dock("Alice", "Jameson Memorial", "Shinrarta Dezhra")
+        self.assertEqual(trade_route_start.round_trip_start(self.panel._home, "Alice", "Sol", None), ("Shinrarta Dezhra", "Jameson Memorial"))
+        self.assertEqual(trade_route_start.round_trip_start(self.panel._home, "Alice", None, "Somewhere"), ("Shinrarta Dezhra", "Jameson Memorial"))
+        self.assertIsNone(trade_route_start.round_trip_start(self.panel._home, "Nobody", "Sol", None))
+
+
 class RouteStartFileTests(unittest.TestCase):
     """The pure module has no EDMC dependency, so it is imported directly."""
 

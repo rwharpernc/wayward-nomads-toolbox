@@ -53,7 +53,7 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_pages.py` | pure | Page names and order |
 | `trade_ledger.py` | pure + file | The session ledger and `trade_ledger.json` |
 | `trade_journal_scan.py` | pure + file | Which journal files have been read, finding new or grown ones, and applying them to the ledger, stock and carrier; `trade_journal_scan.json` |
-| `trade_route_start.py` | pure + file | Each commander's route start and `trade_route_start.json` |
+| `trade_route_start.py` | pure + file | Each commander's route start and `trade_route_start.json`; `round_trip_start`, which unlike Routes may start from a carrier you are docked at |
 | `trade_stock.py` | pure + file | The stock book (bought, not yet sold) and `trade_stock.json` |
 | `trade_history.py` | pure + file | Saved-session records, the `HistoryBook`, and `trade_history.json` |
 | `trade_hold.py` | pure + file read | Mission and stolen tonnes in the hold from the `Cargo` inventory / `Cargo.json` |

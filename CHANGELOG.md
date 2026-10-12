@@ -12,6 +12,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Trade, Round trip can start from a fleet carrier.** When you are docked at a fleet carrier (your own, say) the round trip now starts
+  from its market instead of the last ordinary station, and the result says where it started. Routes still cannot, because Spansh's
+  route planner does not know carriers.
 - **Trade, Round trip: more detail on every pair's loads.** Each leg of each of the three pairs now lists its commodities with tonnes,
   profit, the price you pay, the price you get, the profit per tonne and the supply and demand behind it (three per leg, then "+N more").
 - **Planned Builds shows what each building costs.** Each planned or building site gets a **Full cost** (the tons the whole build needs,

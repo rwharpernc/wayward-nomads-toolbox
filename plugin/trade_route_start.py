@@ -57,6 +57,15 @@ def lookup(starts: Starts, cmdr: str) -> Optional[Tuple[str, str]]:
     return (held["system"], held["station"]) if held else None
 
 
+def round_trip_start(starts: Starts, cmdr: str, system: Optional[str], station: Optional[str]) -> Optional[Tuple[str, str]]:
+    """(system, station) a round trip starts from: where you are docked right now, whatever kind of station it is, else the last
+    station you docked at. Spansh's route planner cannot plan from a fleet carrier, so Routes skips them, but a round trip is paired
+    here from a station search, which lists carriers too, so a carrier you are docked at (your own, say) is a valid start."""
+    if station and system:
+        return system, station
+    return lookup(starts, cmdr)
+
+
 def replay(starts: Starts, events: Iterable[Dict[str, Any]]) -> bool:
     """Fold the docks in a journal file's events into `starts`. The file says whose they are through its `Commander`
     and `LoadGame` events. Returns True if any start changed."""

@@ -154,6 +154,10 @@ Before you search, the page shows what it will use (start, ship, cargo, jump ran
 carrier, it starts from the last real station you docked at, and the page says where. If Spansh refuses a search,
 the page shows its reason.
 
+**Round trip is the exception:** it pairs stations itself from a station search, which lists fleet carriers, so when you are docked at
+a fleet carrier (your own, say) the round trip starts from that carrier's market, and the result names where it started. Spansh must
+have a recent market for the carrier, so open its commodity market once so it is reported; if it has none the page says so.
+
 ### Hops
 
 The **Hops** button shows the current length (for example `Hops: 3`). Each press cycles it through 2, 3, 4 and 5. It

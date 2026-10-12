@@ -100,8 +100,7 @@ can change, and some of it may turn out not to be possible. If one of these matt
   confirm the pad numbering of settlements in the game before drawing any, so nothing misleading ships.
 
 **Trade**
-- **Round trip:** starting from your own fleet carrier's market, and a Powerplay bonus filter (that depends on what the price
-  service can tell me).
+- **Round trip:** a Powerplay bonus filter (that depends on what the price service can tell me).
 
 **Exploration**
 - **Boxel Survey:** catching WNTB's own survey log up from your old journals. WNTB only ever reads the game's journals and never
