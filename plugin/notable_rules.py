@@ -10,9 +10,8 @@ neighbours - the other `Scan` events already seen in the same system (`bodies`, 
 `BodyID`). The journal reports distances in metres, periods in seconds and gravity in m/s^2;
 the constants below are in those same units.
 
-The rule definitions and limits follow the default criteria in Elite Observatory's Explorer
-plugin (ObservatoryExplorer/DefaultCriteria.cs, MIT licence - see THIRD-PARTY-NOTICES.md); the
-constants below say so. The green gas giant temperatures are community research (same notice).
+The rule definitions and limits are fixed defaults (see THIRD-PARTY-NOTICES.md for their
+source and licence). The green gas giant temperatures are community research (same notice).
 The code is WNTB's own.
 """
 
@@ -37,8 +36,7 @@ WIDE_RING_WIDTH_FACTOR = 5.0  # ring wider than 5x the body's own radius
 CLOSE_ORBIT_RATIO = 3.0  # orbit under 3x the parent's radius
 CLOSE_BINARY_MIN_RADIUS_RATIO = 0.4  # radius / semi-major axis above 0.4, for both bodies of the pair
 
-# Green gas giant surface temperatures (K) confirmed by community research - CMDR Arcanic's
-# ed-ggg.github.io, compiled for Observatory criteria by DaftMav and CMDR Julian Ford. The journal
+# Green gas giant surface temperatures (K) confirmed by community research (credits in THIRD-PARTY-NOTICES.md). The journal
 # never records a planet's colour, so a match is only ever a lead to check in the system map.
 GGG_TEMPERATURE_TOLERANCE_K = 0.001
 KNOWN_GGG_TEMPERATURES = {

@@ -3,7 +3,7 @@ Notable Bodies: an on-screen alert when a body you scan matches a rule you care 
 (a terraformable landable, a shepherd moon, a body with every premium FSD material...).
 
 Same shape as discovery.py: a tracker turns journal events into a card, `render()` draws it
-through the shared EDMCOverlay connection, and a controller owns the Settings page. The rules
+through the shared overlay connection, and a controller owns the Settings page. The rules
 themselves live in notable_rules.py (pure and unit-tested); this module only decides *when*
 to fire and *how long* to show it.
 
@@ -357,7 +357,7 @@ class NotableController:
             try:
                 render(snapshot, placed_client(_overlay_client, snapshot, look), look=look)
             except OSError:
-                logger.debug("Could not reach EDMCOverlay for notable body alert", exc_info=True)
+                logger.debug("Could not reach the overlay for notable body alert", exc_info=True)
 
         threading.Thread(target=worker, name="WNTB-notable-render", daemon=True).start()
 
@@ -375,7 +375,7 @@ class NotableController:
             frame,
             text=(
                 "Shows a violet alert on your in-game overlay when a body you scan matches one of the "
-                "rules below - via EDMCOverlay. A match is a lead from the scan data, not a promise: "
+                "rules below - via EDMCModernOverlay. A match is a lead from the scan data, not a promise: "
                 "check the body in the system map. Connection settings are on the Overlay Connection tab."
             ),
             wraplength=440, justify=tk.LEFT,
@@ -419,7 +419,7 @@ class NotableController:
 
         nb.Label(
             frame,
-            text="(Test Notable works even while disabled above, and reports whether EDMCOverlay was reachable.)",
+            text="(Test Notable works even while disabled above, and reports whether the overlay was reachable.)",
             wraplength=440, justify=tk.LEFT,
         ).grid(row=6, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(0, 10))
 
@@ -448,7 +448,7 @@ class NotableController:
                 render(snapshot, placed_client(client, snapshot, look), look=look)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
-                outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+                outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
             try:
                 label.after(0, lambda: label.configure(text=cap(outcome, 120), foreground=color))
             except tk.TclError:
@@ -469,7 +469,7 @@ class NotableController:
                 try:
                     clear(placed_client(_overlay_client))
                 except OSError:
-                    logger.debug("Could not reach EDMCOverlay to clear notable body alert", exc_info=True)
+                    logger.debug("Could not reach the overlay to clear notable body alert", exc_info=True)
 
             threading.Thread(target=worker, name="WNTB-notable-clear", daemon=True).start()
 

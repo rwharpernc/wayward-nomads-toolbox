@@ -12,7 +12,7 @@ No programming is needed.
 
 **1. EDMC.** WNTB is a plugin for [EDMC](https://github.com/EDCD/EDMarketConnector) (Elite Dangerous Market
 Connector), a free companion program. EDMC reads the game's journal files while you play and hands the events to
-plugins like WNTB. It runs on Windows and Linux. If you already use EDMC for EDSM or Inara, you have it.
+plugins like WNTB. It runs on Windows and Linux. If you already use EDMC, you have it.
 
 **2. An overlay (optional).** An *overlay* is a small helper program that draws on top of your game screen.
 WNTB only needs one for its on-screen extras: Discovery Alerts, Notable Bodies, Landing Assist, Interdiction
@@ -20,9 +20,8 @@ Warning, and the optional overlays for Inventory, Mining and Screenshots. Everyt
 
 - **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)** is the recommended one. It works
   on Windows and Linux.
-- The older [EDMCOverlay](https://github.com/inorton/EDMCOverlay) also works, on Windows only.
 
-Set Elite to **borderless** or **windowed** mode and either overlay will work. The step-by-step guide is
+Set Elite to **borderless** or **windowed** mode and the overlay will work. The step-by-step guide is
 [Setting up the on-screen overlay](../OVERLAY_SETUP.md).
 
 > **Every WNTB overlay is off until you tick it in Settings.** Inventory, Landing Assist and Screenshots used to
@@ -65,7 +64,7 @@ lives inside it.
 
 WNTB can also update itself. Turn on **Automatically download and install updates** under
 **File → Settings → WNTB → General → Updates**. It is **off by default**, and it only looks at official published
-releases.
+releases. The **Release notes** link on that tab opens the latest release's page in your browser.
 
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 

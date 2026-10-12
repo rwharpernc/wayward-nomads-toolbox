@@ -19,9 +19,8 @@ prediction, how scan progress is tracked, and where its answers can be wrong. Fo
 
 ## 2. Non-goals
 
-- **No network access, and nothing submitted anywhere.** It is a local, read-only companion. It is meant
-  to sit alongside the EDMC-Canonn plugin, which submits codex and biology data; WNTB does not duplicate
-  that, and does not need it.
+- **No network access, and nothing submitted anywhere.** It is a local, read-only companion and never
+  submits codex or biology data.
 - **No first-discovery bonus.** Exobiology analysis pays a flat per-species value regardless of who found
   it first.
 - **No certainty before a sample.** Until a scan names the species, the answer is a candidate list.

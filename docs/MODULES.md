@@ -26,7 +26,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `http_identity.py` | The User-Agent every web request sends, so services can tell which WNTB feature is calling |
 | `load.py` | The EDMC entry point: `plugin_start3`, `plugin_app`, `journal_entry`, `dashboard_entry`, `plugin_stop`, the one-time overlay reset, and forwarding to every feature |
 | `notifier.py` | A tiny subscribe/notify helper for where one module's data changes and others must redraw |
-| `overlay.py` | The one shared overlay client (EDMCModernOverlay / EDMCOverlay over a local TCP port), its Plugin Group registration and group offsets |
+| `overlay.py` | The one shared overlay client (EDMCModernOverlay over a local TCP port), its Plugin Group registration and group offsets |
 | `overlay_layout.py` | Where overlay displays go, the same on any screen: how big a pixel is on the overlay's canvas (positions are screen fractions, sizes are pixels), nine anchor spots plus pixel offsets, the overlay's right-edge clamp, the overlay's clamp and the offset that carries a display past it, and a client wrapper that moves a display; pure, no Tk |
 | `overlay_style.py` | The shared overlay look: six color schemes (color roles), the four text sizes with per-size character width and line height estimates, padding and line spacing; cards are sized from these so larger text never wraps; pure, no Tk |
 | `overlay_appearance.py` | The saved Appearance choices (scheme, text size, padding, line spacing), `current_look()` which every overlay draws with, and the Overlays > Appearance Settings tab with its sample |

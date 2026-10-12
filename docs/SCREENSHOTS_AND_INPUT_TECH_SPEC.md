@@ -47,7 +47,7 @@ arrive in a system. **Off by default.**
 
 Outcomes shown in Settings: sent; Elite window not found; no usable keybind; unsupported OS;
 `xdotool` missing (Linux); error (see the EDMC log). The **Test Honk Now** button runs the same steps on
-demand. **EDCoPilot** also has an auto-honk, so WNTB warns you to turn one off if both run.
+demand. A co-pilot app can have an auto-honk too, so WNTB warns you to turn one off if it sees one running.
 
 ## 3. Screenshots
 

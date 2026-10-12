@@ -38,7 +38,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Best day | Your biggest single day |
 | Most delivered | Your top three commodities |
 | Average build | Days from the first time WNTB saw a site to the day the depot reported it complete, over the sites for which both are known |
-| Note | "Counted since <date>": the first delivery WNTB has counted |
+| Note | "Counted since [date]": the first delivery WNTB has counted |
 
 **How far back the history goes.** The game does not keep a delivery history for a plugin to read. WNTB counts each
 delivery as it happens, and when EDMC starts it catches up from the journals (14 days, or back to your oldest active
@@ -103,8 +103,9 @@ already stored on the carrier needs no more buying trips but still needs its hau
 The **Filter** box keeps the commodities whose names contain what you type, and **Hide rows already covered**
 drops the rows you needn't buy any more (see the colors below for what counts as covered). **Only what [station] sells**
 keeps just the commodities the station you are docked at has for sale: open its commodity market once and the box
-names the station and becomes usable. It switches itself off when you leave the station. Click a column heading to sort by it, and again to reverse; the
-default is alphabetical, so rows stay put while numbers change.
+names the station and becomes usable. It switches itself off when you leave the station.
+
+Click a column heading to sort by it, and again to reverse; the default is alphabetical, so rows stay put while numbers change.
 
 | Column | Meaning |
 |---|---|
@@ -200,7 +201,7 @@ Things worth knowing:
 Optional, and **off by default**. It needs an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md). Turn
 it on in **Settings → Overlays → Colonization**: **Show the shopping list on the in-game overlay**.
 
-It draws a table laid out like SRVSurvey's, with the site name as its title and the columns **Commodity**, **Need**,
+It draws a table, with the site name as its title and the columns **Commodity**, **Need**,
 **FC** and **Ship**:
 
 - **Need** is what the site still requires (required less delivered). It does **not** drop as you load up, so you can
@@ -212,8 +213,8 @@ It draws a table laid out like SRVSurvey's, with the site name as its title and 
   window's green rows); the row turns amber if together they are **more** than the site needs.
 
 Commodities are alphabetical so rows stay put while numbers change. A last line gives the tons remaining and the
-trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship` (the same count as the window's trips to haul) (the trips need your ship's
-cargo capacity, which EDMC supplies).
+trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship`. The trips are the same count as the
+window's trips to haul, and need your ship's cargo capacity, which EDMC supplies.
 
 - **When it shows:**
   - In a **commodity market** at a station. It hides when you leave the screen, open another service such as
@@ -224,13 +225,12 @@ cargo capacity, which EDMC supplies).
     logged).
   - Whenever you are **docked at a carrier** and have the **right-hand cockpit panel** open (where your cargo is and
     where you transfer to the carrier). The game writes nothing when you open that, so the open panel is what WNTB
-    goes by; it hides when you close the panel or undock. SRVSurvey shows its list on that panel too, but anywhere
-    rather than only when docked at a carrier.
+    goes by; it hides when you close the panel or undock.
   - Whenever you are **docked at a construction site** (looking out of the cockpit or at the station services, but not
     in a map or another panel).
   - In the carrier's **Carrier Management** screen. The game announces both opening and closing it, so the card
     appears and goes exactly with the screen.
-  - Optionally, **whenever the right-hand cockpit panel is open, anywhere** (even in flight), as SRVSurvey does. Off by
+  - Optionally, **whenever the right-hand cockpit panel is open, anywhere** (even in flight). Off by
     default; tick it in the Colonization settings.
 
   And you can always force it: the **OVERLAY** button beside REPORT on the COL page (it lights up while forced on; press it again to let go) puts the card on the overlay
@@ -238,7 +238,7 @@ cargo capacity, which EDMC supplies).
   press it again or restart EDMC.
 
   Most of these rely on the game's `Status.json` reporting which screen is open.
-- **Which site:** your most recently updated active site, the one the the Colonization mode summary line names. Completed and
+- **Which site:** your most recently updated active site, the one the Colonization mode summary line names. Completed and
   failed sites are never shown. The card disappears when nothing is left to get.
 - **Settings:** where the card sits (Settings → Overlays → Overlay Placement; the default is the left edge, vertically
   centered, on any screen shape), and **Rows**,
@@ -254,4 +254,4 @@ cargo capacity, which EDMC supplies).
 | Colonization sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB has never seen a depot snapshot for is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. Deliveries made with EDMC closed are caught up from the last 14 to 30 days of journals at start-up. |
 | A site to have its real name | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. | Dock at the market once to pick up the name. |
 | A full history of everything you ever delivered | The journal records each delivery as it happens, and WNTB reads only the recent journals when it starts. | The history counts from the first delivery WNTB saw (shown on the page) and keeps growing. |
-| Your teammates' work on the same project | The depot reports only the project's totals, not who delivered what. | Today the page shows your deliveries and the project's overall progress. Team support is on the to-do list. |
+| Your teammates' work on the same project | The depot reports only the project's totals, not who delivered what. | Today the page shows your deliveries and the project's overall progress. Team support is planned. |

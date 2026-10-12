@@ -1,6 +1,5 @@
 """Organic Scanning — a new Exploration feature (see organic_scan.py's own
-docstring for the full "synergize with EDMC-Canonn, not duplicate it"
-rationale and scope boundaries).
+docstring for the rationale and scope boundaries).
 
 Lives inside Exploration mode's panel (PANEL_PLACEMENT = "exploration"),
 alongside Auto-Honk/Discovery/Boxel Survey/Exploration Value - each gets
@@ -426,8 +425,7 @@ class OrganicScanController:
                 "Analyse) and whether you've moved far enough for the next sample. What it's found "
                 "on a body is remembered per commander, so it's still there if you log out and back "
                 "in. Local and read-only, no network calls - a species may show as a candidate "
-                "slightly more often than the real game allows, never less. Designed to complement "
-                "EDMC-Canonn, not duplicate its own data submission."
+                "slightly more often than the real game allows, never less. It submits nothing."
             ),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 4))

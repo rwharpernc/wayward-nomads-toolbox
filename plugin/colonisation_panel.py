@@ -15,7 +15,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, FrozenSet, List, Optional, Tuple
+from typing import Any, Dict, FrozenSet, Optional, Tuple
 
 import tkinter as tk
 
@@ -311,7 +311,7 @@ class ColonisationController:
                         card.render(placed, shown, card.DEFAULT_X, card.DEFAULT_Y, previous_slots_now, look)
                     logger.debug("Colonization overlay sent (%s)", "card" if shown else "clear")
                 except OSError:
-                    logger.debug("Could not reach EDMCOverlay for the colonization shopping list", exc_info=True)
+                    logger.debug("Could not reach the overlay for the colonization shopping list", exc_info=True)
 
         threading.Thread(target=worker, name="WNTB-colonisation-overlay", daemon=True).start()
 
@@ -322,7 +322,7 @@ class ColonisationController:
                 card.clear(overlay_layout.ShiftedClient(self._overlay_client, *self._overlay_pos),
                            card.DEFAULT_X, card.DEFAULT_Y, self._overlay_sent.slot_count)
         except OSError:
-            logger.debug("Could not reach EDMCOverlay to clear on shutdown", exc_info=True)
+            logger.debug("Could not reach the overlay to clear on shutdown", exc_info=True)
         self._overlay_sent = None
 
     # --- the page ---------------------------------------------------------------
@@ -532,7 +532,7 @@ class ColonisationController:
 
         self._right_panel_var = tk.BooleanVar(value=overlay_right_panel())
         nb.Checkbutton(
-            frame, text="Also show whenever the right-hand cockpit panel is open, anywhere (as SRVSurvey does)",
+            frame, text="Also show whenever the right-hand cockpit panel is open, anywhere",
             variable=self._right_panel_var,
         ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 6))
 
@@ -573,7 +573,7 @@ class ColonisationController:
                 card.clear(placed, x, y, slots)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
-                outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+                outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
             try:
                 label.after(0, lambda: label.configure(text=outcome, foreground=color))
             except tk.TclError:

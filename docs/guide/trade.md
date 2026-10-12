@@ -110,7 +110,7 @@ the others are one drop-down choice away (or **All commanders**). The tabs:
 | **Commodities** | For each one: tonnes bought and sold, what you paid and received, average buy and sell price, profit, margin, profit per tonne and what was left unsold. |
 | **Stations** | The same, added up for each station you traded at (visits, bought, sold, profit, costs, net). |
 | **Route** | The stations in the order you flew them, with what was bought and sold at each, the net on that visit and a running net. Going back to a station later is a new visit. |
-| **Trades** | Every purchase, sale and cost with its time, price, total, profit, station and system, 200 at a time. |
+| **Trades** | Every purchase, sale and cost with its time, price, total, profit, station and system, 200 at a time (**◀ Earlier** and **Later ▶** change page). |
 | **Stock & carrier** | What was bought but not sold (a journal **estimate**), the ship hold, and your carrier's cargo space when you saved. |
 | **Lookups** | The Spansh routes and market searches you made during the session, and the best result of each. |
 

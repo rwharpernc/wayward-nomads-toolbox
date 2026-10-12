@@ -29,8 +29,31 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
     has for sale, from the market you opened. It is greyed out until you open a commodity market and switches off when you
     leave.
 
+### Documentation
+- **What goes on the internet** now says that the Canonn Nearby POI lists are hosted on Google Sheets and Google Drive (Google sees
+  those requests), that the BGS tick check is plain unencrypted HTTP because that service has no HTTPS, and that web links
+  open in your browser.
+- The Powerplay guide now describes the Sessions window's buttons (Refresh, Copy Progress, Reset Current System, Reset
+  Session). The guides also name the Mining Book's Add hotspot, the Trade History Earlier/Later buttons, the Release notes link,
+  the screenshot preview's Open Folder and the Organic Scanning switch, none of which were mentioned.
+
+- Fixed a link in the Landing Assist guide that pointed to a private notes file, and `<placeholder>` text in the Colonization
+  guide and test checklist that GitHub hid when displaying the page.
+
+### Removed
+- **Mining: importing hotspots from another plugin's file or share link.** The I/E dialogs and the Settings tab no longer
+  offer **Import from Link**, and **Import** reads only files WNTB exported. Hotspots you already imported are kept.
+- **The older EDMCOverlay is no longer listed as supported.** The docs and the Overlay Connection text now name only
+  EDMCModernOverlay. WNTB still talks to the same local port, so an older overlay may keep working, but it is not tested.
+- Documentation and comments no longer mention other tools or their authors; those credits are on the Acknowledgements page.
+
 ### Developer
 - Files are LF on Windows and Linux: new `.editorconfig`, and `tests/test_line_endings.py` fails on any CRLF in a text file.
+- A `commit-msg` hook (`.githooks/`, enabled with `git config core.hooksPath .githooks`) and `tests/test_no_ai_credit.py` keep
+  assistant credit lines out of commit messages and files; acknowledgements live only on the Acknowledgements page.
+- Opening a ship build's link now checks it starts with http:// or https://, even if the saved file was edited by hand.
+- Removed unused imports, dead constants left over from the old x/y overlay settings and the pre-Appearance overlay sizing, a
+  comment naming an npm script that does not exist, and two invalid-escape warnings in a test.
 
 ## 1.6.0 - 2026-10-11
 
@@ -84,7 +107,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   place things on a fixed 1280 x 960 canvas, and EDMCModernOverlay treats positions and sizes differently: a position is a
   fraction of the screen, but a size is in screen pixels (after Windows' display scaling), so a raw x/y number means a
   different place on every monitor and a "right edge" depends on how big the display is. Each display is now placed by one
-  of nine spots (top left, top center, ... bottom right) plus offsets in screen pixels, like SRVSurvey's overlays. WNTB reads
+  of nine spots (top left, top center, ... bottom right) plus offsets in screen pixels. WNTB reads
   the real window size, mode and display scaling from EDMCModernOverlay's own log (falling back to Elite's
   `DisplaySettings.xml` and Windows' scaling); the scaling and mode can be overridden. **Show placement preview** draws a
   labeled box for every display, at its real size, on your screen so you can judge a position; **Reset all to defaults**
@@ -121,7 +144,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   events made at the carrier. It is per commander, caught up from the journals at start-up without counting a transfer
   twice, and uses Trade's knowledge of whether you have a fleet carrier (including your Trade carrier setting). It is
   what WNTB saw you transfer, not the carrier's real hold.
-- **Colonization: shopping list on the overlay.** Optional, off by default, laid out like SRVSurvey's: a table of
+- **Colonization: shopping list on the overlay.** Optional, off by default: a table of
   **Commodity, Need, FC and Ship** for your most recently updated active site, a tick where your hold covers a
   commodity, and a footer with the tons remaining and trips in your current ship. It shows in a commodity market, at
   your own carrier's services screens, with the right-hand cockpit panel open when docked at your carrier (the cargo
@@ -451,7 +474,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   close binary, high eccentricity, fast orbit, fast rotation, wide ring). Off by default; only the seven rare
   rules start ticked. Settings only, under **Exploration → Alerts**, so the main panel stays the same size.
   A moon scanned before its parent is judged when the parent arrives, a body alerts once per rule, and
-  several matches in a row take turns. The thresholds are Elite Observatory's own defaults.
+  several matches in a row take turns. The thresholds are fixed defaults.
 - **Exploration: N.S. and W.D. buttons**, next to Discovery Alerts. **N.S.** finds the nearest system whose
   **primary star** is a neutron star, and **W.D.** the nearest whose primary star is a white dwarf (any class);
   a companion star doesn't count. Both measure from your current position, show the system name and distance,
@@ -543,14 +566,14 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ### Fixed
 - BGS: mission influence is now credited to the system it actually lands in, not the system the mission was
-  handed in at. Each influence entry's `SystemAddress` is resolved to a system (as BGSTally does); if it is
+  handed in at. Each influence entry's `SystemAddress` is resolved to a system; if it is
   unknown, the issuing faction's influence goes to the system the mission was accepted in, and only as a last
   resort to the hand-in system. See `docs/BGS_TECH_SPEC.md` section 4.2.
 
 ## 1.1.4 - 2026-10-03
 
 ### Added
-- **"You are in <mode> mode."** (Open, Solo or Private Group, with the group's name) and **Credits this
+- **"You are in [mode] mode."** (Open, Solo or Private Group, with the group's name) and **Credits this
   session** now sit directly under the mode buttons, visible in every mode, in one section with a separator
   before the page content. Each is its own module (`game_mode.py`, `session_credits.py`) and neither depends on
   Powerplay any more: they track the game mode and the balance themselves, from the journal, and keep their own
@@ -558,8 +581,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   rate once the session is a few minutes old.
 - Settings now state which systems each OS-dependent feature works on, and whether it can work on your
   machine right now (a **Works on:** line, green or orange): Auto-Honk, the Screenshots auto-timer and Thargoid
-  capture, the Inventory pickup sound, and the Overlay Connection tab (which says the older EDMCOverlay is
-  Windows-only). The BGS tab shows the Linux journal-folder hint.
+  capture, the Inventory pickup sound, and the Overlay Connection tab. The BGS tab shows the Linux journal-folder hint.
 - README has a new **Platform support: Windows and Linux** section (what works where, what is Windows-only,
   what is Linux-only). `docs/TECHNICAL.md` section 18 lists every file, folder and command each system uses and
   records the audit of all 126 modules. A BGS section was added to the Linux test checklist

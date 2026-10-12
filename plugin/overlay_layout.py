@@ -13,7 +13,7 @@ no EDMC), so it is tested without a game or an overlay program.
 So a display placed "at x = 900" does not end at 900 + 360 on the canvas: it ends at 900 + 150. Anchoring it to the right or
 bottom edge, or centering it, needs its size converted from pixels to canvas units, which is what this module does. A bare
 x/y number also means a different place on each monitor shape, which is why raw numbers feel arbitrary. Placement here is
-instead **relative to the screen**, like SRVSurvey's overlays: a horizontal anchor (left, center, right), a vertical anchor
+instead **relative to the screen**: a horizontal anchor (left, center, right), a vertical anchor
 (top, middle, bottom) and an offset in screen pixels.
 
 **The right-hand clamp, and how it is passed.** On the axis the overlay does not stretch (across, on a wide screen) it clamps a
@@ -68,7 +68,7 @@ class Screen:
     source: str = "default"            # where this came from, for the settings page to say
     full_screen: Optional[int] = None  # the game's FullScreen value: 0 windowed, 1 borderless, 2 full screen
     ratio: float = 1.0                 # device pixels per logical pixel: the operating system's display scaling (1.25 = 125%)
-    pixel_sizes: bool = True           # sizes are screen pixels (EDMCModernOverlay); False: canvas units (older overlays)
+    pixel_sizes: bool = True           # sizes are screen pixels (EDMCModernOverlay); False: canvas units (no EDMCModernOverlay found)
 
     @property
     def aspect(self) -> float:

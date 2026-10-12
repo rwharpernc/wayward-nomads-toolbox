@@ -50,9 +50,8 @@ PANEL_PLACEMENT = "exploration"
 FIRE_BUTTONS: Tuple[str, ...] = ("Primary", "Secondary")
 _ACTION_BY_FIRE_BUTTON: Dict[str, str] = {"Primary": "PrimaryFire", "Secondary": "SecondaryFire"}
 
-# Other ED companion apps whose own automation could double up with this
-# feature — currently just EDCoPilot, since it has its own AutoHonk
-# setting that fires the same physical key for the same purpose.
+# Other companion apps whose own automation could double up with this
+# feature: one with its own auto-honk fires the same physical key for the same purpose.
 COMPANION_APPS: Tuple[Tuple[str, str], ...] = (("EDCoPilot.exe", "EDCoPilot"),)
 
 # System-entry events that should trigger a honk attempt.
@@ -606,7 +605,7 @@ class AutoHonkController:
 
         nb.Label(
             frame,
-            text="If EDCoPilot is also running with its own Auto-Honk turned on, turn one of the two off.",
+            text="If another program (a co-pilot app, for example) is also running with its own Auto-Honk turned on, turn one of the two off.",
             wraplength=440, justify=tk.LEFT, foreground="#c07000",
         ).grid(row=1, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(0, 8))
 

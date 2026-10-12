@@ -15,7 +15,6 @@ same market id when the journal has one.
 """
 from __future__ import annotations
 
-import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 

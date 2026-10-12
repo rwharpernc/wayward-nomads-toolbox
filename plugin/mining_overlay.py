@@ -1,5 +1,5 @@
 """
-Mining mode's EDMCOverlay/EDMCModernOverlay HUD push - two independent
+Mining mode's EDMCModernOverlay HUD push - two independent
 pieces:
 
 - `push_stats_overlay(page)` - the same live numbers the panel itself is
@@ -43,15 +43,12 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 _OVERLAY_X = 20
 _OVERLAY_Y_START = 100
-_OVERLAY_LINE_HEIGHT = 22
 _OVERLAY_TTL_S = 3
-"""Fixed screen position/spacing for the HUD overlay text - the overlay's
-own coordinate space (a separate top-level canvas the companion app
-draws, not EDMC's plugin_app window), not user-configurable in this
-first cut. ttl a little over the once-a-second periodic re-render that
-resends it (see mining_render.py), so each line gets replaced before it
-would expire on its own - a stale value only lingers a couple of seconds
-past the last successful send (run ended, overlay app closed, etc.)."""
+"""The HUD overlay text's anchor in the overlay's own coordinate space (a separate top-level canvas the companion app
+draws, not EDMC's plugin_app window); where it ends up on screen is set by Overlay Placement. The line spacing and glyph
+widths come from the overlay look (overlay_style.py). ttl a little over the once-a-second periodic re-render that
+resends it (see mining_render.py), so each line gets replaced before it would expire on its own - a stale value only
+lingers a couple of seconds past the last successful send (run ended, overlay app closed, etc.)."""
 
 """Colors come from the overlay's look (overlay_style.py): the panel's border and fill, and the title color for the text, which
 at the default scheme is the Elite-orange-on-black HUD styling this display always had. Every measure below is the base one at
@@ -60,14 +57,6 @@ the legacy look; the text size, padding and line spacing chosen on the Appearanc
 
 _OVERLAY_PANEL_PAD_X = 10
 _OVERLAY_PANEL_PAD_Y = 8
-_OVERLAY_CHAR_WIDTH_PX = 8
-_OVERLAY_CHAR_WIDTH_PX_LARGE = 11
-"""Rough average glyph width for the overlay's "normal"/"large" text
-sizes, used only to size the backing panel rect to the longest line -
-the wire protocol has no text-metrics query, so this is an estimate
-tuned to look right rather than a measured value. Erring slightly wide
-is harmless (a little extra black margin); erring narrow would clip
-text against the border, which is the failure mode to avoid."""
 
 _WAYPOINT_OVERLAY_Y = 250
 """Below _OVERLAY_Y_START's stats lines (100 + up to 3*22 = 166), clear
@@ -82,11 +71,6 @@ placement for bearing.arrow_vector_points()'s rotated polyline, drawn
 alongside (not instead of) the 8-point glyph already in the text line,
 since the glyph degrades gracefully on an overlay app that ignores
 "vect" shapes and the vector arrow doesn't."""
-
-_OVERLAY_LARGE_LINE_HEIGHT = 26
-"""Rough line height for the overlay's "large" text size (the waypoint
-line uses it) - like _OVERLAY_CHAR_WIDTH_PX_LARGE, an estimate tuned to
-look right rather than a measured value."""
 
 _WAYPOINT_ARROW_GAP = 14
 """Between the waypoint text line and the arrow's center (the legacy layout has the arrow center 40 below the text's top, which is
@@ -205,7 +189,7 @@ def push_stats_overlay(page: str, *, display_cargo_bar: bool, display_session_to
                                     _OVERLAY_X, _OVERLAY_Y_START + index * _stat_pitch(look),
                                     ttl=_OVERLAY_TTL_S, size=look.size("normal"))
         except OSError:
-            logger.debug("Could not reach EDMCOverlay for Mining stats", exc_info=True)
+            logger.debug("Could not reach the overlay for Mining stats", exc_info=True)
 
     threading.Thread(target=worker, name="WNTB-mining-overlay", daemon=True).start()
 
@@ -272,6 +256,6 @@ def push_waypoint_overlay() -> None:
             if points is not None:
                 placed.send_vector(_WAYPOINT_ARROW_ID, points, look.color("border"), ttl=_OVERLAY_TTL_S)
         except OSError:
-            logger.debug("Could not reach EDMCOverlay for Mining waypoint", exc_info=True)
+            logger.debug("Could not reach the overlay for Mining waypoint", exc_info=True)
 
     threading.Thread(target=worker, name="WNTB-mining-waypoint-overlay", daemon=True).start()

@@ -1,5 +1,5 @@
 """
-The Colonization shopping list on the in-game overlay, laid out like SRVSurvey's: a table of the commodities a
+The Colonization shopping list on the in-game overlay: a table of the commodities a
 construction site still needs, with the columns Commodity, Need, FC and Ship.
 
 - **Need** is what the site still requires (required less delivered). It does not fall as you load up, so you can see
@@ -40,9 +40,6 @@ GROUP_NAME = "wntb_colonisation"
 GROUP_PREFIX = ID_PREFIX
 CARD_ID = f"{ID_PREFIX}card"
 
-# The overlay's legacy virtual screen is 1280 x 960.
-MAX_ORIGIN_X = 1280
-MAX_ORIGIN_Y = 960
 DEFAULT_X = 20
 DEFAULT_Y = 300
 DEFAULT_ROWS = 0   # 0 = every commodity
@@ -54,7 +51,6 @@ MAX_ROWS = 60
 LINE_HEIGHT = 20
 PAD_X = 10
 PAD_Y = 8
-CHAR_WIDTH_PX = 8   # rough glyph width, used only to size the card to its longest line (erring wide is harmless)
 TTL = 3600          # persistent; re-sent whenever the list changes, and before this runs out
 RESEND_AFTER_S = TTL / 2
 
@@ -79,13 +75,12 @@ class Visibility:
       station-services screen counts unless Outfitting or the Shipyard was the last one opened (they do write events);
     - docked at a carrier with the right-hand cockpit panel open (`GuiFocus` 1), where the ship's cargo and the transfer to
       the carrier live. The game writes nothing when that is opened (`CargoTransfer` comes only after a transfer is made),
-      so the open panel is the signal. SRVSurvey does the same with its "Show when looking at right-hand panel" setting,
-      though it shows it anywhere, not only docked at a carrier;
+      so the open panel is the signal;
     - docked at a construction depot (where the shopping list is what the commander is there for), whether looking at
       the ship's view or the station services, but not in a map or another panel;
     - in the carrier's management screen: the game writes a `Music` event with the track `FleetCarrier_Managment` when it
       opens and another track when it closes, so (unlike the other screens) both ends are known;
-    - with the right-hand panel open anywhere, if `right_panel_anywhere` is set (SRVSurvey's default behavior).
+    - with the right-hand panel open anywhere, if `right_panel_anywhere` is set.
 
     `forced` is the commander's manual "show now", which `visible` does not include (the caller decides how it combines
     with the enabled setting)."""

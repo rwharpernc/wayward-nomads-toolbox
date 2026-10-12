@@ -68,8 +68,10 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
    everything LF; leaving `autocrlf` on can fight it.
    Line endings are LF on both Windows and Linux: `.editorconfig` tells editors to write LF, and
    `tests/test_line_endings.py` fails if any text file in the working tree has CRLF. If it does, fix the
-   files with `sed -i 's/$//' <file>` (Git Bash or Linux), then run `git add -u` to refresh the index.
-3. Set your Git name and email for the repo (`git config user.name` / `user.email`).
+   files with `sed -i 's/\r$//' FILE` (Git Bash or Linux), then run `git add -u` to refresh the index.
+3. Set your Git name and email for the repo (`git config user.name` / `user.email`), and turn on the commit-message check
+   with `git config core.hooksPath .githooks` (it rejects co-author and "generated with" credit lines; on Linux the hook
+   must be executable, which the repo already records).
 4. Check it works: `python -m unittest discover -s tests`, `python tests/import_smoke.py`,
    `npm run build` (the first line should name the right OS) and `npm run package`.
 

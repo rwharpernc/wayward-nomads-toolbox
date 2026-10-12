@@ -2,9 +2,8 @@
 Codex Completionist: pure logic (no Tk) for a personal "how many of each
 scannable thing have I ever found" tally.
 
-Meant to sit alongside the EDMC-Canonn plugin rather than duplicate it - same
-principle as organic_scan.py. That plugin submits codex data to Canonn's cloud;
-this module never talks to any network service itself. The galaxy-wide list of
+A local, read-only tally, same principle as organic_scan.py: it submits nothing
+and this module never talks to any network service itself. The galaxy-wide list of
 possible entries (what the window's "Not found" tab diffs against) is
 Canonn's own catalog, fetched and cached by codex_catalog.py - this module
 stays pure and only knows what the commander has actually found.

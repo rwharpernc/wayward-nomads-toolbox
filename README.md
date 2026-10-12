@@ -102,7 +102,7 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 - **Restart EDMC** after installing or updating. The WNTB panel only appears after a restart.
 - Extract the ZIP **over** the old `WNTB` folder, don't delete it first: your saved data lives there.
 - Use the ZIP from the **Releases** page (Assets), not the green **Code → Download ZIP** button.
-- The WNTB panel got a little wider in this release (there are eight mode buttons now). EDMC sizes its window to the widest
+- The WNTB panel is a little wider since 1.6.0 (there are eight mode buttons). EDMC sizes its window to the widest
   plugin, so you may see the main window grow slightly.
 
 **EDMC, the journal and catching up**
@@ -117,7 +117,7 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 
 **On-screen overlays**
 - Overlays need an overlay program running ([EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) is
-  recommended; the older EDMCOverlay is Windows only). Press a **Test** button to check. Everything is **off until you turn it on**.
+  recommended). Press a **Test** button to check. Everything is **off until you turn it on**.
 - All overlay settings are in one place: **Settings → WNTB → Overlays** (Connection, Placement, Appearance, and a tab per feature).
 - **Placement** puts each display at one of nine spots plus pixel offsets, read from your real screen. If it looks wrong,
   press **Show placement preview**, then **Detect screen again**, or **Reset all to defaults**. The overlay can't draw

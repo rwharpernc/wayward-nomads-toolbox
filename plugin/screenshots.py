@@ -27,10 +27,9 @@ import tkinter as tk
 
 import myNotebook as nb
 from config import appname, config
-from theme import theme
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from .overlay_style import LEGACY, Look
+from .overlay_style import Look
 from .uikit import style as ui_style
 from . import overlay, overlay_appearance, overlay_placement, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
 
@@ -572,7 +571,7 @@ class ScreenshotsController:
             try:
                 self._render_overlay(lines, rendered_rows, now)
             except OSError:
-                logger.debug("Could not reach EDMCOverlay for screenshot notification", exc_info=True)
+                logger.debug("Could not reach the overlay for screenshot notification", exc_info=True)
 
         threading.Thread(target=worker, name="WNTB-screenshot-overlay", daemon=True).start()
 
@@ -610,7 +609,7 @@ class ScreenshotsController:
                     client.send_message(f"{_ID_PREFIX}{row}", "", "white", _ORIGIN_X, _ORIGIN_Y, ttl=1)
                 client.send_shape(_BG_ID, "rect", "", "", _ORIGIN_X, _ORIGIN_Y, 1, 1, ttl=1)
             except OSError:
-                logger.debug("Could not reach EDMCOverlay to clear screenshot notification", exc_info=True)
+                logger.debug("Could not reach the overlay to clear screenshot notification", exc_info=True)
 
         threading.Thread(target=worker, name="WNTB-screenshot-overlay-clear", daemon=True).start()
 
@@ -981,7 +980,7 @@ class ScreenshotsController:
                 )
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
-                outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+                outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
             try:
                 frame.after(0, lambda: (frame.configure(text=outcome, foreground=color)))
             except tk.TclError:

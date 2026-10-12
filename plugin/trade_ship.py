@@ -23,7 +23,6 @@ import re
 from typing import Dict, Optional
 
 SMALL, MEDIUM, LARGE = "small", "medium", "large"
-_RANK = {SMALL: 1, MEDIUM: 2, LARGE: 3}
 
 _BY_CLASS = {1: SMALL, 2: MEDIUM, 3: LARGE}
 

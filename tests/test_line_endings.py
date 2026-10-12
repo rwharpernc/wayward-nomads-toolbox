@@ -29,7 +29,7 @@ class LineEndingTests(unittest.TestCase):
         bad = []
         for path in _text_files():
             with open(path, "rb") as handle:
-                if b"\r\n" in handle.read():
+                if b"\r" in handle.read():
                     bad.append(os.path.relpath(path, ROOT))
         self.assertEqual(bad, [], "CRLF line endings (convert to LF, e.g. `sed -i 's/\r$//' <file>`): " + ", ".join(bad))
 

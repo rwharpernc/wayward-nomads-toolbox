@@ -116,7 +116,7 @@ exact percentage) and `Trend` is one of `UpGood`/`DownGood`/`UpBad`/`DownBad`.
 `UpBad`/`DownBad` → -INF; the pip count is the
 length of the `Influence` string (e.g. `"++"` → 2 pips).
 
-**Which system gets the INF** (same approach as BGSTally): each `Influence[]` entry carries a
+**Which system gets the INF**: each `Influence[]` entry carries a
 `SystemAddress`, resolved to a name via the addresses seen in `FSDJump`/`Location`/`CarrierJump`/`Docked`
 events. If it can't be resolved, the issuing faction's INF goes to the system the mission was *accepted*
 in; only if that is unknown too does it fall back to the system the mission was handed in at. Handing a

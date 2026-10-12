@@ -464,7 +464,7 @@ class DiscoveryController:
             try:
                 render(snapshot, placed_client(_overlay_client, snapshot, look), look=look)
             except OSError:
-                logger.debug("Could not reach EDMCOverlay for discovery alert", exc_info=True)
+                logger.debug("Could not reach the overlay for discovery alert", exc_info=True)
 
         threading.Thread(target=worker, name="WNTB-discovery-render", daemon=True).start()
 
@@ -572,7 +572,7 @@ class DiscoveryController:
                 try:
                     clear(placed_client(_overlay_client))
                 except OSError:
-                    logger.debug("Could not reach EDMCOverlay to clear discovery alerts", exc_info=True)
+                    logger.debug("Could not reach the overlay to clear discovery alerts", exc_info=True)
 
             threading.Thread(target=worker, name="WNTB-discovery-clear", daemon=True).start()
 
@@ -590,7 +590,7 @@ class DiscoveryController:
             text=(
                 "Shows a gold alert on your in-game overlay the moment you jump into a system nobody's "
                 "ever scanned before, and a cyan alert the moment you're the first to scan or map a "
-                "body — via EDMCOverlay. Connection settings are on the Overlay Connection tab."
+                "body — via EDMCModernOverlay. Connection settings are on the Overlay Connection tab."
             ),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(10, 4))
@@ -622,7 +622,7 @@ class DiscoveryController:
 
         nb.Label(
             frame,
-            text="(Test Discovery works even while disabled above, and reports whether EDMCOverlay was reachable.)",
+            text="(Test Discovery works even while disabled above, and reports whether the overlay was reachable.)",
             wraplength=440, justify=tk.LEFT,
         ).grid(row=5, column=0, columnspan=2, sticky=tk.W, padx=10, pady=(0, 10))
 
@@ -652,7 +652,7 @@ class DiscoveryController:
                 render(snapshot, placed_client(client, snapshot, look), look=look)
                 outcome, color = "Sent — check your overlay.", "#2e7d32"
             except OSError as err:
-                outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+                outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
             try:
                 frame.after(0, lambda: (frame.configure(text=outcome, foreground=color)))
             except tk.TclError:
@@ -677,7 +677,7 @@ class DiscoveryController:
                 try:
                     clear(placed_client(_overlay_client))
                 except OSError:
-                    logger.debug("Could not reach EDMCOverlay to clear discovery alerts", exc_info=True)
+                    logger.debug("Could not reach the overlay to clear discovery alerts", exc_info=True)
 
             threading.Thread(target=worker, name="WNTB-discovery-clear", daemon=True).start()
 

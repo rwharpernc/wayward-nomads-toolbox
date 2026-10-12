@@ -122,9 +122,6 @@ def build(frame: tk.Frame, start_row: int) -> None:
     def _on_export() -> None:
         hotspot_import_export.export_hotspots(frame)
 
-    def _on_import_link() -> None:
-        hotspot_import_export.import_from_link(frame)
-        _refresh()
 
     hotspots.hotspot_repository.add_listener(_refresh)
     _refresh()
@@ -136,5 +133,3 @@ def build(frame: tk.Frame, start_row: int) -> None:
     tk.Button(button_row, text="Delete", command=_on_delete).grid(row=0, column=2, padx=2)
     tk.Button(button_row, text="Import...", command=_on_import).grid(row=0, column=3, padx=2)
     tk.Button(button_row, text="Export...", command=_on_export).grid(row=0, column=4, padx=2)
-    tk.Button(button_row, text="Import from Link...", command=_on_import_link).grid(
-        row=0, column=5, padx=2)

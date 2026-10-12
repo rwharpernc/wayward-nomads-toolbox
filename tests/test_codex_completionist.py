@@ -246,7 +246,6 @@ class CatchUpTests(unittest.TestCase):
     def test_scan_since_reads_only_newer_events_from_recent_files(self) -> None:
         import json
         import tempfile
-        import time
         import types
         from unittest import mock
         stub = types.ModuleType("config")

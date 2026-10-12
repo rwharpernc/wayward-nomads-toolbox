@@ -31,7 +31,7 @@ Elite runs under Steam Proton or Wine on Linux, which needs a few extras. **Work
   work with a *native* Wayland window.
 
 - **EDMCModernOverlay** draws the on-screen cards. Install it as an EDMC plugin from its
-  [project page](https://github.com/SweetJonnySauce/EDMCModernOverlay). The original EDMCOverlay is Windows-only.
+  [project page](https://github.com/SweetJonnySauce/EDMCModernOverlay).
   WNTB's default connection settings (`127.0.0.1`, port 5010) already match it.
 - Optional: `canberra-gtk-play` or `paplay` for notification sounds.
 

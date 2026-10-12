@@ -48,7 +48,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## 3. Auto-Honk
 
-- [ ] Settings → Exploration → Auto-Honk → **Rescan** shows "Will press <key>" for your fire button.
+- [ ] Settings → Exploration → Auto-Honk → **Rescan** shows "Will press [key]" for your fire button.
 - [ ] Elite running and focused: **Test Honk Now** reports "sent" and the scanner fires.
 - [ ] The honk key stays down for the whole **hold time** (set 8 to 10 seconds): the scan completes instead
       of stopping after about a second.
@@ -152,7 +152,7 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
       button. Buy cargo, then save the session: Trade History's **Stock & carrier** tab shows it under "Bought, not yet
       sold (journal estimate...)".
 - [ ] Two computers: copy the other computer's newer journal files into this one's journal folder while EDMC is running.
-      Within a minute the foot of the Session page reads "Journals reviewed <local date and time>. N new journals since the last review.", and the trades,
+      Within a minute the foot of the Session page reads "Journals reviewed [local date and time]. N new journals since the last review.", and the trades,
       stock and carrier figure from those files appear (nothing doubles if you copy the same files again). Press
       **Rebuild** on the Session page, type the date and time the session began (UTC), and check the totals against the
       other computer. A carrier figure with a `~` in front means estimate: open Carrier Management and it goes away.
@@ -188,7 +188,7 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
 ## 7. BGS (rebuilt in 1.1.0)
 
 - [ ] The BGS panel's grey line shows "Last tick: ..." within a few seconds (network call works).
-- [ ] With the Journal directory set, the log has "BGS journal replay done for <CMDR>" and the totals
+- [ ] With the Journal directory set, the log has "BGS journal replay done for [CMDR]" and the totals
       cover the whole tick. With it cleared, the log says the replay was skipped and why.
 - [ ] **REPORT** (view BGS report) opens; the tick drop-down, the tabs (full system names, wrapping onto a second row
       when there are many), **Pin**, **× Close tab** and the footer key all render, with no missing glyphs.

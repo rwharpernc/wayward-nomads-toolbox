@@ -119,10 +119,10 @@ class EliteDirTests(unittest.TestCase):
             self.assertIsNone(ps.elite_bindings_dir(os.path.join(root, "nope")))
 
     def test_windows_bindings_dir_uses_localappdata(self) -> None:
-        with mock.patch.object(ps, "IS_WINDOWS", True), mock.patch.dict(os.environ, {"LOCALAPPDATA": "C:\L"}):
+        with mock.patch.object(ps, "IS_WINDOWS", True), mock.patch.dict(os.environ, {"LOCALAPPDATA": "C:\\L"}):
             self.assertEqual(
                 ps.elite_bindings_dir(),
-                os.path.join("C:\L", "Frontier Developments", "Elite Dangerous", "Options", "Bindings"),
+                os.path.join("C:\\L", "Frontier Developments", "Elite Dangerous", "Options", "Bindings"),
             )
 
 

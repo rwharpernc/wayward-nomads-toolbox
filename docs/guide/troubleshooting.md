@@ -50,13 +50,13 @@ they were shared:
   while it reads (the section title shows "rebuilding..." even when folded) and the summary fills in when it finishes (a
   minute or two for years of journals). If it was
   interrupted, log in again or press **BKF**.
-- **Powerplay History** now shows only the commander you are playing. The other commanders' sessions are still saved.
+- The Powerplay Sessions window's **History** tab now shows only the commander you are playing. The other commanders' sessions are still saved.
 
 ## Overlay
 
 ### On-screen alerts don't show up
 
-They need EDMCOverlay or EDMCModernOverlay running, and WNTB's **Overlay Connection** settings must match it. Use the
+They need EDMCModernOverlay running, and WNTB's **Overlay Connection** settings must match it. Use the
 **Test** buttons in each feature's Settings tab to check.
 
 The full checklist is in [Setting up the overlay](../OVERLAY_SETUP.md#if-nothing-shows-up).

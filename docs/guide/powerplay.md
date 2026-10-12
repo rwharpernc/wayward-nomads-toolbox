@@ -50,6 +50,18 @@ cycle 101 began on 2026-10-01. Each day of a cycle also runs 07:00 to 07:00 UTC,
 
 The Systems, Cycles and Daily tabs all have a drop-down to look at an earlier cycle.
 
+### The buttons at the top
+
+- **Refresh** redraws the window.
+- **Copy Progress** copies one line per system you have visited this session to the clipboard (format in Settings).
+- **Reset Current System** zeroes the merits earned in the system you are in during this session, and takes them off the
+  session totals too. It asks first and can't be undone.
+- **Reset Session** zeroes this session's merit totals (every system and activity) without ending the session. It asks first
+  and can't be undone. Use it to correct a bad count.
+
+Both resets change the **session** only. The cycle totals on the panel and the Systems, Cycles and Daily tabs come from your
+journal, so they are not affected; **RESCAN** is the way to rebuild a session from the journal.
+
 ### The Systems tab
 
 A line above the tabs totals the cycle: merits, estimated CP and how many systems you worked. Then, one tab per

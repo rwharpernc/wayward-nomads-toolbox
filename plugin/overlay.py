@@ -1,5 +1,5 @@
-"""EDMCOverlay transport: draws text/shapes on top of the game window via a
-separate, optional helper app (https://github.com/inorton/EDMCOverlay) that
+"""Overlay transport: draws text/shapes on top of the game window via a
+separate, optional helper app (EDMCModernOverlay) that
 listens on a local TCP socket and renders whatever it's sent. WNTB never
 installs or launches that app itself — it's the user's own tool to have
 running; this module just knows how to talk to it if it is.
@@ -78,7 +78,7 @@ def save_config(cfg: OverlayConfig) -> None:
 
 
 def register_modern_overlay_groups(groups: Iterable[Tuple[str, str]]) -> None:
-    """EDMCModernOverlay (unlike classic EDMCOverlay) has a "Plugin Group"
+    """EDMCModernOverlay has a "Plugin Group"
     concept: per its own wiki (Concepts.md), groups exist so a feature's
     several shape/text ids scale/anchor together as one unit instead of
     each being anchored from its own tiny individual bounding box.
@@ -100,8 +100,7 @@ def register_modern_overlay_groups(groups: Iterable[Tuple[str, str]]) -> None:
 
     `overlay_plugin.overlay_api` is EDMCModernOverlay's own module, only
     importable when it's installed as a sibling EDMC plugin - a plain
-    ImportError means either classic EDMCOverlay or no overlay plugin at
-    all, both of which this is a silent no-op for. Safe to call on every
+    ImportError means no overlay plugin at all, which this is a silent no-op for. Safe to call on every
     plugin_start3."""
     try:
         from overlay_plugin.overlay_api import define_plugin_group  # type: ignore[import-not-found]
@@ -212,9 +211,9 @@ class OverlayClient:
             self._unavailable_until = 0.0
 
     def _send(self, payload: dict) -> None:
-        """Raises OSError (e.g. EDMCOverlay isn't running, or the socket
+        """Raises OSError (e.g. the overlay isn't running, or the socket
         was reset) after trying once to reconnect - a single reconnect
-        attempt covers "EDMCOverlay wasn't running yet" and "EDMCOverlay
+        attempt covers "the overlay wasn't running yet" and "the overlay
         was restarted since our last send" without silently retrying
         forever on a send that's genuinely never going to land."""
         data = json.dumps(payload).encode("utf-8") + b"\n"
@@ -249,7 +248,7 @@ class OverlayClient:
     def send_message(
         self, msg_id: str, text: str, color: str, x: int, y: int, ttl: int = 8, size: str = "normal",
     ) -> None:
-        """Raises on failure (e.g. EDMCOverlay isn't running) — callers
+        """Raises on failure (e.g. the overlay isn't running) — callers
         decide whether that should be swallowed (live feature paths) or
         surfaced (a Settings "Test" button)."""
         self._send({"id": msg_id, "text": text, "color": color, "x": x, "y": y, "ttl": ttl, "size": size})
@@ -258,11 +257,8 @@ class OverlayClient:
         self, shape_id: str, shape: str, color: str, fill: str, x: int, y: int, w: int, h: int, ttl: int = 8,
         thickness: Optional[int] = None,
     ) -> None:
-        """`fill`/`color` accept "#AARRGGBB" (alpha channel first) on both
-        classic EDMCOverlay and EDMCModernOverlay. `thickness` (border
-        width) is an EDMCModernOverlay-only extension - included only when
-        given, and harmless on classic EDMCOverlay (an unknown JSON field,
-        silently ignored by its Newtonsoft.Json deserializer)."""
+        """`fill`/`color` accept "#AARRGGBB" (alpha channel first). `thickness` (border
+        width) is included only when given."""
         payload = {
             "id": shape_id, "shape": shape, "color": color, "fill": fill, "x": x, "y": y, "w": w, "h": h, "ttl": ttl,
         }
@@ -327,8 +323,7 @@ def build_settings(notebook: nb.Notebook) -> None:
     nb.Label(
         frame,
         text=(
-            "Connection to an overlay program: EDMCModernOverlay (recommended; Windows and Linux) or the "
-            "older EDMCOverlay (WINDOWS ONLY). It is a separate, optional helper app that WNTB does not "
+            "Connection to EDMCModernOverlay (Windows and Linux). It is a separate, optional helper app that WNTB does not "
             "install or launch itself, used by the on-screen features. Every feature works without one."
         ),
         wraplength=440, justify=tk.LEFT,

@@ -36,7 +36,7 @@ Puts an alert on your game screen the moment an interdiction starts. It has no p
 
 Both use the connection settings on the **Overlay Connection** Settings tab (Settings → Overlays), and where they appear
 on screen is set on **Overlay Placement** (same place). The defaults
-(`127.0.0.1`, port `5010`) match EDMCModernOverlay and EDMCOverlay as they come. **Check connection** tells you
+(`127.0.0.1`, port `5010`) match EDMCModernOverlay as they come. **Check connection** tells you
 whether an overlay is listening.
 
 ## What the game does and doesn't tell us, and how to work around it
@@ -46,7 +46,7 @@ WNTB can only show what Elite Dangerous writes to its journal files and what the
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | Landing Assist to show which way the pad faces | The journal gives only a **pad number** and the station type, with no orientation. | Use the diagram for which pad is yours; line up by the pad numbers in the game. |
-| A diagram for every kind of facility | Some facilities have no diagram today. Own layouts are planned (see the [roadmap](../roadmap.md)). | Use the pad number and follow the game's own docking guidance. |
+| A diagram for every kind of facility | Some facilities have no diagram today. Own layouts are planned. | Use the pad number and follow the game's own docking guidance. |
 | Interdiction Warning to fire before the game confirms | It combines three early signals, then the game's own `Interdicted` and `EscapeInterdiction` events, because they arrive separately. | Treat the alert as a prompt. The in-game screen is the final word. |
 | An overlay to be found automatically | WNTB can only draw if an overlay is listening on the connection details. | Use **Check connection**, **Test Overlay** and **Test Warning** in Settings. |
 

@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from plugin import mining_spansh_client as prices_client  # noqa: E402
 from plugin import trade_carrier as carrier  # noqa: E402
-from plugin.trade_blocks import Columns, Heading, Item, Note, Pair, to_text  # noqa: E402
+from plugin.trade_blocks import Heading, Note, Pair, to_text  # noqa: E402
 from plugin import trade_commodities as commodities  # noqa: E402
 from plugin import trade_prices as prices  # noqa: E402
 from plugin import trade_ship as ship  # noqa: E402

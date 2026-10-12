@@ -42,6 +42,7 @@ It lists the bodies you've scanned in this system and every hotspot you've saved
 
 - filter by material or number of rigs,
 - see tons mined and an estimate of tons left,
+- add a hotspot by hand (**Add hotspot**, top right),
 - edit a hotspot or mark it as depleted,
 - copy its coordinates,
 - view a zoomable map.

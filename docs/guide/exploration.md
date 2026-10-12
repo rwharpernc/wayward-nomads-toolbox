@@ -25,7 +25,7 @@ Fires your Discovery Scanner automatically every time you jump into a system, so
 4. Press **Test Honk Now** to check it works without waiting for a real jump. **Rescan** re-reads your key
    bindings.
 
-If you also run EDCoPilot with its own auto-honk, turn one of the two off, or they'll fight each other.
+If another program also fires your Discovery Scanner for you (some co-pilot apps do), turn one of the two off, or they'll fight each other.
 
 *On Linux this needs `xdotool` and a keyboard key bound to your fire button. See [WNTB on Linux](linux.md).*
 
@@ -59,7 +59,7 @@ data, so check the body in the system map before you plan around it. It needs th
 1. Open **Settings → Overlays → Notable Bodies**.
 2. Tick **Enable**. It is off until you do.
 3. Choose which rules you want.
-4. Press **Test Notable** to see a sample banner. The X and Y boxes move it.
+4. Press **Test Notable** to see a sample banner. Move it under **Settings → Overlays → Overlay Placement**.
 
 It has no button on the main panel.
 
@@ -85,8 +85,8 @@ eccentricity, fast orbit, fast rotation and wide ring.
 - If a body matches several rules you get **one banner**, for example "High-value body +2".
 - A body only alerts **once per rule**.
 - Banners take turns if several come at once.
-- The limits are Elite Observatory's own defaults.
-- If the banner lands on top of another plugin's overlay text (Canonn's, for example), change X and Y.
+- The limits are fixed defaults.
+- If the banner lands on top of other overlay text, move it under **Settings → Overlays → Placement**.
 
 ## Boxel Survey
 
@@ -259,8 +259,8 @@ Helps you find and identify exobiology life on a planet's surface.
 3. When you start sampling, it tracks your progress and tells you when you've walked far enough for the next sample
    to count.
 
-It uses only your own journal and makes no internet connection. It is designed to work alongside
-[EDMC-Canonn](https://github.com/canonn-science/EDMC-Canonn) if you run that too. Detail is in the
+You can switch it off under **Settings → Exploration → Organic Scanning** (**Show predicted species and scan progress**).
+It uses only your own journal and makes no internet connection, and it submits nothing. Detail is in the
 [specification](../ORGANIC_SCANNING_TECH_SPEC.md).
 
 ## Codex Completionist
@@ -340,6 +340,7 @@ The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **FIND
 
 - The first click downloads the lists, which are then kept for the rest of your session.
 - **REF** fetches fresh copies.
+- A **View site details** link under the result opens that site's page in your browser.
 - Choose which kinds of site to include in **Settings → Exploration → Points of Interest**.
 - By default it skips sites you've already logged in Codex Completionist, so it points you somewhere new. You can
   turn that off in the same place.
@@ -356,7 +357,7 @@ WNTB can only show what Elite Dangerous writes to its journal files and what the
 | "Not in EDSM" to mean undiscovered or real | It means nobody has uploaded it. It is not a guarantee the system exists or is unvisited. | Treat RND results as leads and confirm in the galaxy map. |
 | A cube's real system count | WNTB only knows what EDSM, Spansh and your own visits revealed, so "complete" means every system **known** is done, or you marked it **Empty**. | Use **Mark Empty** when you have judged a cube done. |
 | The colour of a gas giant | The game never records it. The Green gas giant rule uses the Codex or matches the surface temperature of a confirmed green one. | Treat it as a lead and check the body in the system map. |
-| Notable Bodies to be certain | A match comes from scan data, using Elite Observatory's default limits. | Check the body before you plan around it. |
+| Notable Bodies to be certain | A match comes from scan data, using its default limits. | Check the body before you plan around it. |
 | Organic Scanning to name the species | Until a sample names it, the result is a **list of candidates** worked out from the planet's conditions. The main star is assumed to be the illuminating one, which can be wrong near a secondary star. A species with no usable rules can't be predicted, and new species need a WNTB update. | Take a first sample, which replaces the list with the exact species. The in-game exobiology tools are the final word. |
 | Systems visited with EDMC closed to be known | The journals record every jump, so each start reads the last 14 days of journals for your arrivals and adds them to the visited list that **Skip systems already visited** and **RND** use. | Nothing needed for the last 14 days. Older jumps made with EDMC closed are not found. |
 | Bodies-scanned count to be right after a restart | The honk (`FSSDiscoveryScan`) gives the body count and each scan counts one. If EDMC started after the honk, WNTB replays the current journal file for them. | If it still says to honk, honk again. A system's scans made in another journal file are not included. |

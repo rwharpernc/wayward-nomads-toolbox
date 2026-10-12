@@ -59,7 +59,7 @@ _live_event_seen = False   # any journal event from EDMC (a running game sends S
 RESTORE_DELAY_MS = 4000
 _updater: Optional[UpdateManager] = None
 
-# One shared EDMCOverlay connection for every overlay-drawing feature
+# One shared overlay connection for every overlay-drawing feature
 # (Interdiction/Landing/Discovery) - see overlay.py's own docstring for why
 # a persistent, shared connection is required rather than one per feature.
 _overlay = overlay.OverlayClient()

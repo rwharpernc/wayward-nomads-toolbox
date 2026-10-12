@@ -1,7 +1,6 @@
 """Microresource display names imported from FDevIDs.
 
-AUTO-GENERATED - do not hand-edit. Regenerate with `npm run update-names`,
-which pulls Component/Item/Data rows from:
+AUTO-GENERATED - do not hand-edit. Regenerate by re-importing the Component/Item/Data rows from:
   https://raw.githubusercontent.com/EDCD/FDevIDs/master/microresources.csv
 """
 

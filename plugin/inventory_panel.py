@@ -62,12 +62,8 @@ GROUP_PREFIX = ID_PREFIX
 
 MAX_LINES = 5
 TTL_SECONDS = 8
-# Where the display sits is the global Overlay Placement setting. These are only the old default origin, kept for
-# overlay_placement's migration of a hand-set position, and the size the display is anchored by.
-DEFAULT_ORIGIN_X = 900
-DEFAULT_ORIGIN_Y = 120
+# Where the display sits is the global Overlay Placement setting (overlay_placement.py also reads the old x/y keys once).
 LINE_HEIGHT = 18
-COLOUR = "#ffbf00"
 TEXT_SIZE = "normal"
 
 # Pillage-line colour per journal category (Component/Item/Data), so the
@@ -111,14 +107,11 @@ CAPACITY_TTL = 3600
 # Ship locker capacity warning: distinct from pillage lines, so it gets its
 # own colour and a longer TTL — missing it can mean being forced to drop
 # loot rather than just missing a pickup notification.
-LOCKER_WARNING_COLOUR = "#ff3030"
 LOCKER_WARNING_TTL = 20
 
 # --- Config keys -----------------------------------------------------------
 
 _CFG_OVERLAY_ENABLED = "wntb_inventory_overlay_enabled"
-_CFG_OVERLAY_X = "wntb_inventory_overlay_x"
-_CFG_OVERLAY_Y = "wntb_inventory_overlay_y"
 _CFG_OVERLAY_BAR_PREFIX = "wntb_inventory_overlay_bar_"
 _CFG_SOUND_ENABLED = "wntb_inventory_sound_enabled"
 _CFG_MESSAGE_FORMAT = "wntb_inventory_message_format"
@@ -574,7 +567,7 @@ class InventoryPanelController:
                         f"{ID_PREFIX}pillage_{row}", "", "white", origin_x, origin_y + row * pitch, ttl=1,
                     )
             except OSError:
-                logger.debug("Could not reach EDMCOverlay for pillage notification", exc_info=True)
+                logger.debug("Could not reach the overlay for pillage notification", exc_info=True)
 
         threading.Thread(target=worker, name="WNTB-inventory-overlay", daemon=True).start()
 
@@ -643,7 +636,7 @@ class InventoryPanelController:
                 for key in stale_keys:
                     self._clear_bar_key(key)
             except OSError:
-                logger.debug("Could not reach EDMCOverlay for inventory bars", exc_info=True)
+                logger.debug("Could not reach the overlay for inventory bars", exc_info=True)
                 self._bars_broken = True
 
         threading.Thread(target=worker, name="WNTB-inventory-bars", daemon=True).start()
@@ -666,7 +659,7 @@ class InventoryPanelController:
             for key in self._rendered_bar_keys:
                 self._clear_bar_key(key)
         except OSError:
-            logger.debug("Could not reach EDMCOverlay to clear on shutdown", exc_info=True)
+            logger.debug("Could not reach the overlay to clear on shutdown", exc_info=True)
         self._overlay_lines = []
         self._overlay_rendered_rows = 0
         self._rendered_bar_keys = frozenset()

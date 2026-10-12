@@ -129,10 +129,8 @@ tons are derived from the journal. Saving a hotspot within **100 m** of an exist
 updates it instead of adding a duplicate.
 
 ### 6.2 Import and export
-WNTB exports and re-imports its own file format, with a merge or replace choice. It can also import a
-**PlanetPOI** `poi.json` export or a single shared POI link. The material is pulled out of PlanetPOI's
-free-text description using a list of known materials, and anything it can't read is kept in the notes.
-Imports are converted to WNTB's own format, so there's no ongoing dependency on the source format.
+WNTB exports and re-imports its own file format, with a merge or replace choice (the **I/E** button, and the buttons
+in Settings).
 
 ### 6.3 The Mining Book
 A three-pane window: bodies (the current system's scanned landable bodies plus every saved hotspot,
@@ -182,8 +180,7 @@ The automatic ring check runs only when enabled, never while replaying the journ
 answer is remembered for the session for each ring. A non-Metallic ring shows a laser-mining caution.
 Spansh does not publish the request shape used for its ring and station searches; it was worked out from
 live calls and checked against independent callers, and `mining_spansh_client.py` is the one place to fix
-if Spansh changes it. An earlier plan to use Inara was dropped because Inara has no commodity or market
-lookup to call.
+if Spansh changes it.
 
 Two details shared with [Trade mode](TRADE_TECH_SPEC.md): Spansh's market search is **case-sensitive and
 exact** ("Liquid oxygen" finds markets, "Liquid Oxygen" finds none), so the price finder resolves whatever is

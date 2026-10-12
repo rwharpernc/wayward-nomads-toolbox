@@ -446,8 +446,6 @@ def _style_settings_notebook() -> None:
 
 
 def create_prefs(parent: tk.Frame) -> nb.Frame:
-    global _auto_update_var
-
     outer = nb.Frame(parent)
     outer.columnconfigure(0, weight=1)
     outer.rowconfigure(1, weight=1)

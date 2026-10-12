@@ -13,7 +13,7 @@ Pure logic: no Tk, no EDMC.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Mapping, Optional, Set
+from typing import Any, Iterable, Mapping, Optional, Set
 
 ARRIVAL_EVENTS = ("FSDJump", "Location", "CarrierJump")
 _UNKNOWN_TEXT = "System bodies: (honk to count them)"

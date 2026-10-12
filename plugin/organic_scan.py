@@ -1,13 +1,9 @@
 """
 Organic Scanning: pure logic (no Tk) for exobiology tracking.
 
-Meant to sit alongside the EDMC-Canonn plugin (a separate EDMC plugin, not a
-WNTB dependency) rather than duplicate it: that plugin submits
-codex/journal/biology data to Canonn's cloud and shows per-system codex
-icons, but does not do per-genus species prediction, per-organism
-scan-stage tracking, scan-distance/exclusion-zone guidance, or credit
-estimates. That gap is this module's whole scope - a local, read-only
-companion, never a second submission pipeline. Nothing
+Per-genus species prediction, per-organism scan-stage tracking,
+scan-distance/exclusion-zone guidance and credit estimates. That is this
+module's whole scope - a local, read-only companion, never a submission pipeline. Nothing
 here talks to any network service.
 
 Species/genus reference data (organic_species_data.py) is empirically-

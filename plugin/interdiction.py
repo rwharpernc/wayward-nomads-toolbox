@@ -168,7 +168,7 @@ class InterdictionTracker:
         """Settings tab's "Test Warning" button — simulates a full,
         real interdiction lifecycle (active -> resolved -> auto-clear)
         through the same snapshot the live path renders, so the whole
-        pipeline (tracker -> overlay client -> EDMCOverlay) can be checked
+        pipeline (tracker -> overlay client -> overlay) can be checked
         without waiting for a real interdiction."""
         self._clear_test_timer()
         self._clear_scheduled_clear()
@@ -396,7 +396,7 @@ def placed_client(client: OverlayClient, snapshot: Optional[InterdictionSnapshot
 
 def render(snapshot: InterdictionSnapshot, client: OverlayClient, look: Look = LEGACY) -> None:
     """Draws (or clears) the interdiction warning. Raises on an
-    OverlayClient failure (e.g. EDMCOverlay isn't running) rather than
+    OverlayClient failure (e.g. the overlay isn't running) rather than
     swallowing it here - load.py's live listener wraps this call and
     decides that's an expected, silent-fail state; the Settings "Test
     Warning" button wraps its own call and surfaces it instead."""
@@ -468,7 +468,7 @@ def _on_change(snapshot: InterdictionSnapshot) -> None:
         try:
             render(snapshot, placed_client(_overlay_client, snapshot, look), look)
         except OSError:
-            logger.debug("Could not reach EDMCOverlay for interdiction warning", exc_info=True)
+            logger.debug("Could not reach the overlay for interdiction warning", exc_info=True)
 
     threading.Thread(target=worker, name="WNTB-interdiction-render", daemon=True).start()
 
@@ -496,7 +496,7 @@ def build_settings(notebook: nb.Notebook) -> None:
         frame,
         text=(
             "Shows a warning on your in-game overlay the moment an interdiction starts — before it "
-            "resolves — via EDMCOverlay, a separate, optional helper app WNTB does not install or "
+            "resolves — via EDMCModernOverlay, a separate, optional helper app WNTB does not install or "
             "launch itself. Connection settings are on the Overlay Connection tab."
         ),
         wraplength=440, justify=tk.LEFT,
@@ -520,7 +520,7 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     nb.Label(
         frame,
-        text="(Test Warning works even while disabled above, and reports whether EDMCOverlay was actually reachable.)",
+        text="(Test Warning works even while disabled above, and reports whether the overlay was actually reachable.)",
         wraplength=440, justify=tk.LEFT,
     ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
@@ -541,7 +541,7 @@ def _test_interdiction() -> None:
             render(sample, placed_client(client, sample, look), look)
             outcome, color = "Sent — check your overlay.", "#2e7d32"
         except OSError as err:
-            outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+            outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
 
         try:
             frame.after(0, lambda: (frame.configure(text=outcome, foreground=color)))

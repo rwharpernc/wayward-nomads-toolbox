@@ -25,10 +25,8 @@ on-screen extras.
 
 - **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)** (recommended). Its own
   installation guide is on its project wiki, so follow that for your system.
-- The older **[EDMCOverlay](https://github.com/inorton/EDMCOverlay)** also works, on Windows only.
 
-You only need one. WNTB talks to both in the same way, so it works with whichever you run. WNTB does not
-install or start the overlay for you.
+WNTB does not install or start the overlay for you.
 
 ## Step 2: Set Elite up so the overlay can show
 
@@ -43,7 +41,7 @@ In EDMC, open **File → Settings → WNTB**, choose **Overlays**, then the **Ov
 - **Host:** `127.0.0.1`
 - **Port:** `5010`
 
-These match EDMCModernOverlay and EDMCOverlay as they come, so you normally don't need to change anything.
+These match EDMCModernOverlay as they come, so you normally don't need to change anything.
 If you changed the port in your overlay, enter the same one here.
 
 ## Step 4: Turn the features on and test them

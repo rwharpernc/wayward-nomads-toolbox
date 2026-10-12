@@ -469,7 +469,7 @@ other commanders casually typing words like "pirate" with no interdiction happen
 ## 10. The overlay
 
 Overlay features (Landing, Interdiction, Discovery, Inventory bars, Mining, Screenshots) draw over the
-game window through a separate helper app, **EDMCModernOverlay** (recommended) or the older **EDMCOverlay**, which listen
+game window through a separate helper app, **EDMCModernOverlay**, which listens
 on a local TCP port. WNTB is only a client.
 
 **Every overlay switch defaults to off.** The Inventory, Landing and Screenshots overlays used to default on; on the first
@@ -495,7 +495,7 @@ as long as its graphics should be visible.
 seconds (`COOLOFF_S`) instead of trying again, so a user with no overlay program costs almost nothing:
 no thread waiting on a connection per pickup, screenshot or Mining update. The failure is logged once at
 INFO, and a changed host or port is applied straight away. The Settings test buttons build their own
-client, so they always try for real, and the Overlay Connection tab (Settings → General) has a **Check connection** button.
+client, so they always try for real, and the Overlay Connection tab (Settings → Overlays) has a **Check connection** button.
 
 **Why one for everything?** A connection per mode would duplicate work, and each would need its own
 reconnect logic.
@@ -692,8 +692,7 @@ for as little as it can. These are the measures that are in the code today.
 **If you add a network call,** follow the same rules: opt-in or user-triggered, cache what you can,
 cap what one action can do, set a timeout, and identify WNTB with `http_identity.user_agent()`.
 
-**Support the services.** These services are funded by their authors and their supporters. If WNTB is
-useful to you, please consider supporting them as I do: [EDSM](https://www.patreon.com/EDSM), [Spansh](https://www.patreon.com/cw/spansh) and [Inara](https://www.patreon.com/cw/artieinara).
+**Support the services.** They are funded by their authors and their supporters; `docs/ATTRIBUTIONS.md` has links.
 
 ## 12. Feature notes
 
@@ -755,8 +754,8 @@ case: it's a celebration, not a status readout.
 `notable_rules.py` is pure (no EDMC or Tk imports): a table of `Rule`s, each a function of one `Scan`
 event plus the other scans already seen in the system (`bodies`, by `BodyID`), returning a one-line
 detail or `None`. `evaluate()` runs the enabled rules and never raises on a malformed event. Units are the
-journal's own: metres, seconds, m/s^2. The rules and limits are Elite Observatory's defaults
-(`DefaultCriteria.cs`, MIT): landable above 29.4 m/s^2 (about 3 g), landable radius above 18,000 km, rotation
+journal's own: metres, seconds, m/s^2. The rules and limits are fixed defaults
+(see `THIRD-PARTY-NOTICES.md`): landable above 29.4 m/s^2 (about 3 g), landable radius above 18,000 km, rotation
 or orbit under 8 h, eccentricity above 0.9, 5 of 6 premium FSD materials on a landable, ring wider than 5x the
 body's radius, orbit under 3x the parent's radius, a shepherd moon is one orbiting inside the *outermost*
 ring's outer edge, and a close or colliding binary is a pair sharing a barycentre whose radius/semi-major-axis
@@ -793,7 +792,7 @@ the window. `tests/test_neutron_finder.py` covers the result-picking against can
 Predicts species per body from atmosphere, gravity, temperature, pressure, region and other rules,
 and tracks the Log, Sample, Analyse progression plus how far you must walk between samples. It
 shows estimated credits (a flat per-species value; there is no first-discovery bonus for
-exobiology). It is a local, read-only companion to EDMC-Canonn and submits nothing.
+exobiology). It is local and read-only and submits nothing.
 
 The two `*_data.py` files are **generated** and marked "do not hand-edit", so a new species is a
 regeneration, not a hand transcription that could silently introduce errors. Region lookup holds the
@@ -913,7 +912,7 @@ repository (see "Catching up on state EDMC missed"). `colonisation_carrier.py` k
 transferred to the commander's fleet carrier, per commander through `commander_data.py`. Whether a commander has a fleet carrier is asked of Trade first
 (`trade_panel.fleet_carrier`: the Settings choice, else a recorded fleet carrier; `None` means unknown) so the two
 features always agree, falling back to what this module has seen itself. It is fed live and caught up from
-`CargoTransfer` events the same way. `colonisation_overlay.py` draws the optional shopping-list card, laid out like SRVSurvey's (Commodity, Need, FC, Ship):
+`CargoTransfer` events the same way. `colonisation_overlay.py` draws the optional shopping-list card, laid out as a table (Commodity, Need, FC, Ship):
 `build_card` (pure) turns the most recently updated active site, the hold, the carrier tonnes and the ship's
 `CargoCapacity` into a frozen `Card` (Need is required less delivered and is not reduced by the hold; rows alphabetical;
 footer with tonnes remaining and trips), and `render` / `clear` send it through the shared `OverlayClient` (ids
@@ -930,8 +929,7 @@ and `CargoTransfer` comes only after a transfer is made). (3) The commander is d
 type `SpaceConstructionDepot`, `PlanetaryConstructionDepot` or `ColonisationShip`, a "Construction Site" station name,
 or a `ColonisationConstructionDepot` event) and `GuiFocus` is 0 or 5. (4) The `Music` event's track is `FleetCarrier_Managment` (Carrier Management; both opening and closing are
 announced). (5) Optionally (`wntb_colonisation_overlay_right_panel`) `GuiFocus` 1 anywhere. A manual `forced` flag (the
-COL page OVERLAY button) overrides all of it and the enabled setting. SRVSurvey uses the same signals; it shows its list
-on the right-hand panel anywhere (default on) rather than only docked at a carrier. Settings keys:
+COL page OVERLAY button) overrides all of it and the enabled setting. Settings keys:
 `wntb_colonisation_overlay_enabled` / `_x` / `_y` / `_rows`.
 
 ### Auto-Honk (`autohonk.py`)
@@ -1115,7 +1113,7 @@ isolated in `platform_support.py` (plus the Windows branches in `autohonk.py` an
 | Send a key | `keybd_event` (ctypes for Auto-Honk, pywin32 for screenshots) | `xdotool` (XTEST); a hold is one `keydown`, `sleep`, `keyup` call (`platform_support.hold_key`) |
 | Is a companion app running | `tasklist` | `pgrep -f` |
 | Notification sound | `winsound.MessageBeep` | `canberra-gtk-play`, else `paplay` with the freedesktop theme file |
-| Overlay | EDMCOverlay or EDMCModernOverlay | EDMCModernOverlay (or edmcoverlay2); same TCP protocol |
+| Overlay | EDMCModernOverlay | EDMCModernOverlay; same TCP protocol |
 | Modal dialogs | `grab_set` works at once | `ui.style.grab_when_visible`: X11 refuses a grab until the window is mapped, so it retries briefly |
 | Plain `tk.Listbox` colours | `SystemWindow` / `SystemWindowText` | `white` / `black` (those names are Windows-only Tk colours) |
 | Text symbols in the UI | Any | Only symbols every font has (`×`, `★`, `→`); `✕` was replaced because some Linux fonts lack it |
@@ -1166,8 +1164,7 @@ elsewhere, so WNTB never changes EDMC's setting itself.
 
 **Overlay.** WNTB's overlay client is plain loopback TCP with newline-delimited JSON, so it is
 platform-neutral. EDMCModernOverlay runs a legacy listener on `127.0.0.1:5010` on both Windows and
-Linux, and edmcoverlay2 does the same on Linux, so no WNTB code changed. The original EDMCOverlay is a
-Windows program. Plugin Group registration imports ModernOverlay's own module and is a silent no-op
+Linux, so no WNTB code changed. Plugin Group registration imports ModernOverlay's own module and is a silent no-op
 if it is absent.
 
 **Case sensitivity.** Windows ignores filename case and Linux does not. Elite writes `Status.json`
@@ -1182,7 +1179,7 @@ see irrelevant advice.
 **Settings labelling.** Any feature that depends on the operating system shows a **Works on:** line in
 its Settings tab, coloured green when this machine can run it and orange when it cannot (and why):
 Auto-Honk, the Screenshots auto-timer and Thargoid capture, the Inventory pickup sound, and the Overlay
-Connection tab (which says the older EDMCOverlay is Windows-only). The BGS tab shows the Linux journal
+Connection tab. The BGS tab shows the Linux journal
 folder hint. Wording lives in one place, `platform_support.py`, and is unit-tested.
 
 **Status.** The Linux paths are unit-tested with mocked subprocess calls and temporary directories

@@ -13,11 +13,7 @@ trusting it. If Spansh ever changes this endpoint, this is the one place
 to fix.
 
 Also wraps Spansh's `/api/stations/search` endpoint
-(search_best_price_stations()) - a best-price station finder, built as
-the replacement for an originally-planned Inara commodity-lookup feature
-once it turned out Inara's API has no commodity/market endpoint at all
-(confirmed against Inara's own API docs - its events are almost entirely
-write-only commander-profile-sync). This endpoint's shape was worked out
+(search_best_price_stations()) - a best-price station finder. This endpoint's shape was worked out
 the same way as bodies/search: from live calls, checked against real
 responses.
 

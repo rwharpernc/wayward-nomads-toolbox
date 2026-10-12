@@ -48,10 +48,8 @@ being listed doesn't mean a tool was the first or the only one.
   [EliteFactionTracker](https://github.com/Haelnorr/EliteFactionTracker) and other faction trackers.
 - **Surface mining aids** (tons-remaining estimates, driven-coverage maps, hotspot lists, waypoint
   arrows): [EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter),
-  [Rhino Surface Mapper](https://github.com/pbgaspar/rhino-surface-mapper), EDSMT, EliteMining,
-  [EDPlanetNavigator](https://github.com/mcjohnso/EDPlanetNavigator) and
-  [EDMC-PlanetPOI](https://github.com/bbbkada/EDMC-PlanetPOI) (whose hotspot file and share-link format
-  WNTB can import).
+  [Rhino Surface Mapper](https://github.com/pbgaspar/rhino-surface-mapper), EDSMT, EliteMining and
+  [EDPlanetNavigator](https://github.com/mcjohnso/EDPlanetNavigator).
 - **Colonisation tracking:** Architect Tracker, [Raven Colonial](https://ravencolonial.com/),
   ED Colonization Helper, EDColony and BGS-Tally. The shopping-list overlay card follows
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s layout. Raven Colonial publishes its API as OpenAPI, which SrvSurvey and
@@ -73,10 +71,9 @@ being listed doesn't mean a tool was the first or the only one.
 
 ## Overlay
 
-WNTB draws on the game through the optional helper apps
-**[inorton/EDMCOverlay](https://github.com/inorton/EDMCOverlay)** and
+WNTB draws on the game through the optional helper app
 **[SweetJonnySauce/EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)**. It talks
-to them over their documented local protocol and ships none of their code; they are the user's own
+to it over its documented local protocol and ships none of its code; it is the user's own
 install.
 
 ## Host application

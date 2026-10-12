@@ -17,13 +17,11 @@ Look for the **Works on:** line.
 | **Screenshot auto-timer** and **Thargoid-scan capture** (press the screenshot key for you) | Yes | Yes, needs **`xdotool`** |
 | Screenshot conversion and renaming | Yes | Yes (Elite's `Pictures` folder inside the Proton/Wine folder) |
 | Pickup **sound** (Field Ops → Inventory) | Yes (system beep) | Yes, needs `canberra-gtk-play` or `paplay` |
-| On-screen overlay features | EDMCModernOverlay **or** the older EDMCOverlay | EDMCModernOverlay only |
+| On-screen overlay features | EDMCModernOverlay | EDMCModernOverlay |
 | Self-update | Yes | Yes |
 
 ## Windows only
 
-- **The older EDMCOverlay** overlay program. EDMCModernOverlay replaces it and works on both. The Overlay
-  Connection tab (Settings → General) says so.
 - **OneDrive folder-redirect handling** for the Screenshot Directory, and the **Controlled Folder Access** hint
   when Windows blocks writing screenshots. Both are automatic and only appear on Windows.
 

@@ -1,7 +1,6 @@
 """Codex Completionist — a new Exploration feature: a personal "how many
 of each scannable thing have I ever found" tally (see codex_completionist.py's
-own docstring for the full "sit alongside EDMC-Canonn, don't duplicate it"
-rationale and scope boundaries — no galaxy-wide completion percentage,
+own docstring for the rationale and scope boundaries — no galaxy-wide completion percentage,
 that's Canonn's own job).
 
 Lives inside Exploration mode's panel (PANEL_PLACEMENT = "exploration"),

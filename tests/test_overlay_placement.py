@@ -299,7 +299,6 @@ class GroupOffsetTests(unittest.TestCase):
 
     def test_a_display_with_a_group_is_drawn_at_the_clamp_when_the_api_is_there(self):
         P.save_placement("inventory", L.Placement("right", "top", 0, 0))
-        rec = types.SimpleNamespace(calls=[], send_message=lambda *a, **k: None)
         with mock.patch.dict(sys.modules, fake_overlay_api([])), mock.patch.object(P, "current_screen", return_value=MEASURED):
             dx, dy = P.shift_for("inventory", (900, 120, 420, 226))
             origin = P.origin_for("inventory", (420, 226))

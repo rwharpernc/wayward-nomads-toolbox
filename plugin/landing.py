@@ -602,7 +602,6 @@ _CARD_W = 320
 _DIAGRAM_CX = _CARD_X + _CARD_W // 2
 _DIAGRAM_CY = 860
 _DIAGRAM_SIZE = 160
-_CARD_H = int(_DIAGRAM_CY + _DIAGRAM_SIZE / 2 + 20 - _CARD_Y)
 
 _TTL = 20
 
@@ -620,7 +619,6 @@ _FALLBACK_LABEL_GAP = 16
 _FALLBACK_LABEL_X = _DIAGRAM_CX + _PLACEHOLDER_W // 2 + _FALLBACK_LABEL_GAP
 _FALLBACK_LABEL_W = 180
 _FALLBACK_CARD_W = _FALLBACK_LABEL_X + _FALLBACK_LABEL_W + 10 - _CARD_X
-_FALLBACK_MAX_CHARS_PER_LINE = _FALLBACK_LABEL_W // 9
 _FALLBACK_LINE_HEIGHT = 22
 _FALLBACK_MAX_LINES = 6
 _FALLBACK_LINE_IDS = tuple(f"wntb_landing_fallback{i}" for i in range(_FALLBACK_MAX_LINES))
@@ -715,7 +713,7 @@ def placed_client(client: OverlayClient, info: Optional[LandingDisplayInfo] = No
 
 def render(info: LandingDisplayInfo, carrier_type: CarrierType, client: OverlayClient, look: Look = LEGACY) -> None:
     """Draws (or clears) the Landing widget. Raises on an OverlayClient
-    failure (e.g. EDMCOverlay isn't running) rather than swallowing it
+    failure (e.g. the overlay isn't running) rather than swallowing it
     here - load.py's live listener wraps this call and decides that's an
     expected, silent-fail state; the Settings "Test Overlay" button wraps
     its own call and surfaces it instead."""
@@ -1002,7 +1000,7 @@ class LandingController:
                     render(info, carrier_type, placed_client(_overlay_client, info, look), look)
                 deadline = 0.0
             except OSError:
-                logger.debug("Could not reach EDMCOverlay for landing pad overlay", exc_info=True)
+                logger.debug("Could not reach the overlay for landing pad overlay", exc_info=True)
                 if info is None:
                     continue  # nothing to show, so nothing to retry
                 now = time.monotonic()
@@ -1125,7 +1123,7 @@ class LandingController:
             frame,
             text=(
                 "Shows docking status and which pad you're assigned while requesting/approaching a "
-                "dock — on your in-game overlay (a pad-layout diagram too, via EDMCOverlay), and/or "
+                "dock — on your in-game overlay (a pad-layout diagram too, via EDMCModernOverlay), and/or "
                 "as a line + diagram on the EDMC main panel itself. Connection settings for the overlay "
                 "are on the Overlay Connection tab."
             ),
@@ -1202,7 +1200,7 @@ class LandingController:
                 render(preview_info, None, placed_client(client, preview_info, look), look)
                 outcome, color = "Sent — check your overlay (and the main panel diagram).", "#2e7d32"
             except OSError as err:
-                outcome, color = f"Could not reach EDMCOverlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+                outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
             try:
                 frame.after(0, lambda: (frame.configure(text=outcome, foreground=color)))
             except tk.TclError:

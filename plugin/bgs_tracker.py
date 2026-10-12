@@ -136,7 +136,7 @@ def parse_mission_faction_effects(entry: Dict[str, Any]) -> List[Tuple[str, Opti
     `(faction, system_address, inf_plus_pips, inf_minus_pips)` tuple per
     `Influence[]` entry. Each entry names the system (`SystemAddress`) the
     effect lands in - that, not the system the mission was handed in at, is
-    where the INF counts (BGSTally attributes it the same way). A faction
+    where the INF counts. A faction
     with no `Influence[]` entries still yields one `(faction, None, 0, 0)`
     so the completed mission is counted. `Trend` -> direction mapping
     (`UpGood`/`DownGood` => +INF, `UpBad`/`DownBad` => -INF) and pip-count-

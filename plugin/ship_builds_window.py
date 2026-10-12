@@ -136,7 +136,7 @@ class ShipBuildsWindow:
 
     def _on_open(self) -> None:
         build = self._selected()
-        if build is None:
+        if build is None or not build.url.startswith(("http://", "https://")):   # a hand-edited file could hold any scheme
             return
         webbrowser.open(build.url)
 

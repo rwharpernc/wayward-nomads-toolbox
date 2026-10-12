@@ -20,7 +20,6 @@ before that was a single shared list; the first commander seen claims it.
 Until a commander is known the list is empty, and anything added in that
 moment is kept for the first commander seen.
 """
-import base64
 import json
 import logging
 import os
@@ -32,7 +31,6 @@ from config import appname
 
 from . import commander_data
 from . import mining_bearing as bearing
-from . import mining_spansh_client as spansh_client
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -115,146 +113,6 @@ class Hotspot:
         return self.latitude is not None and self.longitude is not None
 
 
-def _looks_like_planetpoi_export(raw: object) -> bool:
-    """A PlanetPOI poi.json is a list of {"type": "folder"|"poi", ...}
-    tree nodes; WNTB's own export is a list of flat Hotspot-shaped dicts
-    (no "type" key). An empty list matches either shape - harmless, since
-    both produce zero imported hotspots."""
-    return isinstance(raw, list) and all(
-        isinstance(entry, dict) and "type" in entry for entry in raw)
-
-
-_KNOWN_MATERIAL_NAMES: tuple[str, ...] = spansh_client.KNOWN_RING_HOTSPOT_MATERIALS + (
-    "Antimony", "Polonium", "Ruthenium", "Selenium", "Technetium", "Tellurium",
-    "Tellerium",  # alternate spelling seen in real PlanetPOI export data
-    "Yttrium",
-)
-"""Used to pull a clean material name out of a PlanetPOI `description` -
-free text a commander wrote themselves ("Location 8; 3 rig Monazite
-node", "Crystalline shards Polonium"), not a structured field, so
-there's nothing else to key off. Combines mining_spansh_client's verified
-ring-hotspot commodities with a handful of Odyssey raw materials seen
-naming "Crystalline Shards" surface finds in real PlanetPOI export data.
-Community-sourced, same upkeep note as mining_methods.py's commodity
-table - extend this list as new description conventions turn up rather
-than trying to enumerate every possible Elite Dangerous material up
-front."""
-
-
-def _extract_material(description: str) -> tuple[str, str]:
-    """Best-effort split of a free-text description into (material,
-    extra_notes). If a known material name appears in it, that name
-    becomes `material` and the full original text is kept as
-    `extra_notes` so nothing is lost (e.g. "3 rig", a location label);
-    otherwise the whole description becomes `material` (matches the
-    field's own required-free-text nature - see Hotspot's docstring) and
-    `extra_notes` is empty. Longest name checked first so e.g. "Low
-    Temperature Diamonds" isn't shadowed by a shorter substring match."""
-    lowered = description.casefold()
-    for name in sorted(_KNOWN_MATERIAL_NAMES, key=len, reverse=True):
-        if name.casefold() in lowered:
-            return name, description
-    return description, ""
-
-
-def _material_and_notes_from_description(description: str, active: bool) -> tuple[str, str]:
-    """Shared by both PlanetPOI import paths (poi.json and a shareable
-    link): runs _extract_material() and folds in the "inactive" flag, so
-    neither caller has to duplicate the notes-assembly logic."""
-    material, extra_notes = _extract_material(description) if description else ("Unknown", "")
-    notes_parts = [extra_notes] if extra_notes else []
-    if not active:
-        notes_parts.append("Inactive in PlanetPOI export")
-    return material, " - ".join(notes_parts)
-
-
-def _flatten_planetpoi_export(nodes: list, folder_path: tuple[str, ...] = ()) -> list["Hotspot"]:
-    """Recursively flattens a PlanetPOI folder tree into Hotspots. Nested
-    folder names join with " / " into WNTB's single flat `folder` field
-    (no concept of nested folders); a poi outside any folder gets
-    folder="" (unfiled). PlanetPOI's single free-text `description` is
-    split via _extract_material() into `material` (a recognized name if
-    one appears in it) and `notes` (the original text, kept so nothing
-    is lost even when a name is recognized); an inactive POI (hidden,
-    not deleted, in PlanetPOI) is kept but flagged in `notes` too rather
-    than silently dropped."""
-    imported: list[Hotspot] = []
-    for node in nodes:
-        node_type = node.get("type")
-        if node_type == "folder":
-            name = str(node.get("name", "")).strip()
-            imported.extend(_flatten_planetpoi_export(
-                node.get("children") or [],
-                folder_path + (name,) if name else folder_path))
-        elif node_type == "poi":
-            material, notes = _material_and_notes_from_description(
-                str(node.get("description", "")).strip(), node.get("active", True))
-            imported.append(Hotspot(
-                system=str(node.get("system", "")).strip(),
-                body=str(node.get("body", "")).strip(),
-                material=material,
-                notes=notes,
-                latitude=node.get("lat"),
-                longitude=node.get("lon"),
-                folder=" / ".join(folder_path),
-            ))
-    return imported
-
-
-def parse_planetpoi_share_link(text: str) -> Hotspot:
-    """Decodes a PlanetPOI shareable single-POI link (or the bare payload
-    pasted without the surrounding URL) into a Hotspot. Confirmed
-    directly against PlanetPOI's own share/index.html: the payload is
-    whatever follows the last "#" in the URL (never sent to a server -
-    the share page decodes it entirely client-side), base64url-encoded
-    (unpadded, "-"/"_" in place of "+"/"/") UTF-8 JSON shaped like
-    {"v":1,"system":...,"body":...,"lat":...,"lon":...,"description":...,
-    "active":...}. lat/lon are optional (a system-only POI); an older
-    link shape carries only "body" holding what's actually the system
-    name, with no separate body - reproduced here for parity even though
-    every currently-observed link uses the new system+body shape.
-
-    Raises ValueError on anything that doesn't decode to that shape, so
-    the caller can show the error rather than silently doing nothing."""
-    payload = text.strip()
-    if "#" in payload:
-        payload = payload.rsplit("#", 1)[1]
-    if not payload:
-        raise ValueError("No POI data found in that link.")
-
-    padded = payload + "=" * (-len(payload) % 4)
-    try:
-        decoded = base64.urlsafe_b64decode(padded).decode("utf-8")
-        data = json.loads(decoded)
-    except Exception as exc:
-        raise ValueError("Could not decode that as a PlanetPOI share link.") from exc
-
-    if not isinstance(data, dict) or data.get("v") != 1:
-        raise ValueError("Unsupported or unrecognized POI link format.")
-
-    system = str(data.get("system") or "").strip()
-    body = str(data.get("body") or "").strip()
-    if not system and body:
-        # Old link shape: the sole "body" value is actually the system
-        # name (matches share/index.html's own fallback).
-        system, body = body, ""
-    if not system and not body:
-        raise ValueError("That link has no system or body.")
-
-    latitude = data.get("lat")
-    longitude = data.get("lon")
-    material, notes = _material_and_notes_from_description(
-        str(data.get("description") or "").strip(), data.get("active", True))
-    return Hotspot(
-        system=system,
-        body=body,
-        material=material,
-        notes=notes,
-        latitude=latitude if isinstance(latitude, (int, float)) else None,
-        longitude=longitude if isinstance(longitude, (int, float)) else None,
-    )
-
-
 class HotspotRepository:
     """Constructed empty (no file access at import time, matching
     WNTB's own convention of only touching disk once a `plugin_dir` is
@@ -335,10 +193,8 @@ class HotspotRepository:
     def search(self, material_query: str, rigs: Optional[int] = None) -> list[Hotspot]:
         """Case-insensitive substring match against `material` or
         `notes` - e.g. "diamond" matches "Low Temperature Diamonds".
-        Notes is included as a safety net for an imported hotspot whose
-        `material` extraction missed a real name buried in the original
-        free-text description that's preserved there (see
-        _extract_material()) - the query still finds it either way. A
+        Notes is searched too, so a name written only there is still
+        found. A
         blank query returns every recorded hotspot rather than none, so
         a search dialog can also serve as a plain "browse everything
         I've recorded" view. `rigs`, if given, further narrows to
@@ -441,21 +297,11 @@ class HotspotRepository:
         file so the caller can show the error rather than silently
         losing data.
 
-        Accepts two shapes: WNTB's own (same as HOTSPOTS_FILENAME - a
-        flat list of Hotspot-shaped dicts), or a PlanetPOI (github.com/
-        bbbkada/EDMC-PlanetPOI) `poi.json` export - a tree of {"type":
-        "folder", "name", "children": [...]} and {"type": "poi",
-        "system", "body", "lat", "lon", "description", "active"} nodes.
-        Either way the result is converted to Hotspot objects before
-        being kept, so the next save (import itself included) always
-        writes HOTSPOTS_FILENAME back out in WNTB's own flat shape -
-        there's no ongoing dependency on the source format."""
+        Reads WNTB's own export (same shape as HOTSPOTS_FILENAME - a flat
+        list of Hotspot-shaped dicts)."""
         with open(path, "r", encoding="utf8") as fh:
             raw = json.load(fh)
-        if _looks_like_planetpoi_export(raw):
-            imported = _flatten_planetpoi_export(raw)
-        else:
-            imported = [Hotspot(**entry) for entry in raw]
+        imported = [Hotspot(**entry) for entry in raw]
         self._hotspots = self._hotspots + imported if merge else imported
         self._save_and_notify()
         return len(imported)

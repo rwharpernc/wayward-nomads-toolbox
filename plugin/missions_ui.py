@@ -47,7 +47,6 @@ from typing import Callable, Optional
 
 from config import appname, config
 from theme import theme
-from ttkHyperlinkLabel import HyperlinkLabel
 
 from .uikit import style as ui_style
 from . import all_missions, community_goal_state, kill_missions, kill_tracker, mining_methods, mission_types, panelkit

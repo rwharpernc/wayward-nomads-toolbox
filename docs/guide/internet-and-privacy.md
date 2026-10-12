@@ -12,16 +12,19 @@ The table says exactly when.
 |---|---|---|
 | N.S. and W.D. buttons (nearest neutron star / white dwarf) | Spansh | Only when you click **N.S.** or **W.D.** |
 | Rare Goods Finder | Spansh | When you open the window, to see which Power controls each listed rare's origin system. Remembered until you restart EDMC |
-| Codex Completionist "Not found" tab | Canonn | Downloads a list when you open the details window (if it has none, or it's over two weeks old), or when you click **Refresh Catalog** |
+| Codex Completionist "Not found" tab | Canonn (its data service runs on Google's cloud) | Downloads a list when you open the details window (if it has none, or it's over two weeks old), or when you click **Refresh Catalog** |
 | GEC Nearby POI | edastro.com | Only when you click **FIND**: the first press of a session downloads their whole list (about 2 MB), then it is reused for six hours |
-| Canonn Nearby POI | Canonn | Downloads site lists when you click **FIND** |
+| Canonn Nearby POI | Canonn's published site lists, which are hosted on Google Sheets and Google Drive, so Google also sees the request | Downloads the lists when you click **FIND** |
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons. Some automatic checks are optional in Settings |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings. Once on, the ring reserve lookup also runs by itself each time you drop into a ring |
 | Colonization: Where to buy (**Find nearest**, **Find all**) | Spansh | Only when you press the button. Sends the commodity name and the system you search around, one request per commodity for **Find all**. Identical searches are answered from memory for 2 minutes |
 | Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. See below for how often |
-| BGS tick detection | A community tick-time service (`tick.infomancer.uk`) | **On** by default. Every 60 seconds while BGS is on. Can be turned off in Settings → BGS |
+| BGS tick detection | A community tick-time service (`tick.infomancer.uk`) | **On** by default. Every 60 seconds while BGS is on. Can be turned off in Settings → BGS. The service has no HTTPS, so this one request is **unencrypted**; it asks only for the time of the last tick and sends nothing about you but WNTB's name and version |
 | Automatic updates | GitHub | **Off** by default |
+
+Links that open a web page (Inara, Canonn or edastro.com pages, GitHub) open it in **your browser**, only when you click them; that is your
+browser connecting, not WNTB.
 
 ### How often do Trade lookups ask?
 
@@ -50,6 +53,5 @@ The technical details are in [TECHNICAL.md](../TECHNICAL.md#keeping-api-traffic-
 
 ## Please support the services
 
-These services are run and funded by volunteers. If WNTB is useful to you, please consider supporting them, as I
-do: [EDSM](https://www.patreon.com/EDSM), [Spansh](https://www.patreon.com/cw/spansh) and
-[Inara](https://www.patreon.com/cw/artieinara).
+These services are run and funded by volunteers. If WNTB is useful to you, please consider supporting them: the
+[Acknowledgements](../ATTRIBUTIONS.md) page has links.

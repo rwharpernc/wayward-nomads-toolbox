@@ -12,7 +12,8 @@ Converts Elite's screenshots to PNG automatically, with an optional crop to just
 
 **How to use it:** nothing to do. Screenshots convert as you take them.
 
-- Click **"Click to expand"** in the panel to see thumbnails of recent ones.
+- Click **"Click to expand"** in the panel to see thumbnails of recent ones. Click a thumbnail to preview it; the preview has an
+  **Open Folder** button that opens the folder it was saved in.
 - An optional auto-capture timer (a small clock icon) takes screenshots periodically for you.
 
 **Settings → Field Ops → Screenshots:**

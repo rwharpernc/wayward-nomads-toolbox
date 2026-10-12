@@ -18,7 +18,7 @@ from typing import Optional
 import myNotebook as nb
 from config import appname, config
 
-from . import overlay, overlay_layout, overlay_style as style
+from . import overlay, overlay_style as style
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
