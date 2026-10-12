@@ -142,6 +142,12 @@ class Visibility:
         return self._at_depot and self._focus in (GUI_FOCUS_NONE, GUI_FOCUS_STATION_SERVICES)
 
 
+def text_units(text: str) -> float:
+    """Width of `text` in digit widths: a comma or full stop is about half a digit, so right-aligned columns line up on this
+    rather than on the number of characters."""
+    return sum(0.5 if c in ",." else 1.0 for c in text)
+
+
 def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit - 1] + "…"
 
@@ -268,13 +274,13 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
     left, top, width, height = block_rect(card, x, y, look)
     line = look.line_px("normal")
     size = look.size("normal")
-    char = look.char_px("normal") * CHAR_SCALE
+    char = look.char_px("normal")    # alignment uses the true estimate; only the box is measured wide (CHAR_SCALE)
     client.send_shape(CARD_ID, "rect", look.color("border"), look.color("fill"), left, top, width, height, ttl=TTL, thickness=2)
 
     slots: List[List[Tuple[int, str, str, int]]] = []   # per line: (column, text, colour, x)
 
     def right(text: str, edge: int) -> int:
-        return int(round(x + edge - len(text) * char))
+        return int(round(x + edge - text_units(text) * char))
 
     slots.append([(0, card.title, look.color("title"), x)])
     heads = [(head, edge) for (head, _attr), edge in zip(_columns(card), edges)]

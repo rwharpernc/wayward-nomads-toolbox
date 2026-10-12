@@ -36,7 +36,7 @@ class FakeClient:
         self.sent.append(("shape", shape_id, w, h, ttl))
 
     def send_message(self, msg_id, text, color, x, y, ttl=8, size="normal"):
-        self.sent.append(("msg", msg_id, text, ttl))
+        self.sent.append(("msg", msg_id, text, ttl, x))
 
 
 class BlockRectTests(unittest.TestCase):
@@ -59,6 +59,21 @@ class BlockRectTests(unittest.TestCase):
         self.assertEqual(card.block_rect(one_row)[3], card.block_rect(narrow)[3])
         three_lines = card.Card("T", narrow.rows * 3, 0, 450, 0, False)
         self.assertGreater(card.block_rect(three_lines)[3], card.block_rect(narrow)[3])
+
+
+class AlignmentTests(unittest.TestCase):
+    def test_numbers_share_a_right_edge_whatever_their_digits_and_commas(self) -> None:
+        client = FakeClient()
+        rows = (card.Row("A", 145, 0, 0, 145), card.Row("B", 1046, 0, 0, 1046), card.Row("C", 10055, 0, 0, 10055))
+        card.render(client, card.Card("T", rows, 0, 11246, 0, False), 20, 300)
+        char = card.LEGACY.char_px("normal")
+        ends = {item[2]: item[4] + card.text_units(item[2]) * char for item in client.sent
+                if item[0] == "msg" and item[1].endswith("_1") and item[2][:1].isdigit()}
+        self.assertEqual(len(ends), 3)
+        self.assertEqual(len({round(v) for v in ends.values()}), 1, ends)
+
+    def test_a_comma_counts_as_half_a_digit(self) -> None:
+        self.assertEqual(card.text_units("1,046"), 4.5)
 
 
 class PlacementSlotTests(unittest.TestCase):
