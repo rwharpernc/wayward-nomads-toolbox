@@ -17,6 +17,7 @@ effect the same way.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import queue
@@ -29,7 +30,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import edsm_client, panelkit, waypoint_route_state
+from . import edsm_client, journal_files, panelkit, waypoint_route_state
 from .waypoint_route import WaypointRoute
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -181,9 +182,12 @@ class WaypointRouteController:
         tk.Button(add_button_row, text="Use Current", command=self._on_use_current).pack(side=tk.LEFT)
         tk.Button(add_button_row, text="Add", command=self._on_add).pack(side=tk.LEFT, padx=(4, 0))
 
-        tk.Button(parent, text="Import CSV…", command=self._on_import_csv).grid(
-            row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0),
-        )
+        import_row = tk.Frame(parent)
+        import_row.grid(row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
+        tk.Button(import_row, text="Import CSV…", command=self._on_import_csv).pack(side=tk.LEFT)
+        route_button = tk.Button(import_row, text="From plotted route", command=self._on_import_navroute)
+        route_button.pack(side=tk.LEFT, padx=(4, 0))
+        panelkit.add_tooltip(route_button, "Add the systems of the route you have plotted in the game (the galaxy map's route), with their coordinates")
 
         list_frame = tk.Frame(parent)
         list_frame.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))
@@ -308,6 +312,33 @@ class WaypointRouteController:
         self._refresh_list()
         self._refresh_target()
         self._set_status(f"Imported {added} new waypoint(s) from {os.path.basename(path)}")
+
+    def _on_import_navroute(self) -> None:
+        """Add the route plotted in the game, from `NavRoute.json` in the journal folder (the game rewrites it whenever the
+        route changes)."""
+        folder = journal_files.journal_folder()
+        if not folder:
+            self._set_status("Set EDMC's Journal directory first")
+            return
+        try:
+            with open(os.path.join(folder, "NavRoute.json"), encoding="utf-8") as handle:
+                data = json.load(handle)
+        except FileNotFoundError:
+            self._set_status("No plotted route found")
+            return
+        except (OSError, ValueError) as exc:
+            logger.debug("Could not read NavRoute.json: %s", exc)
+            self._set_status("Could not read the plotted route; try again in a moment")
+            return
+        systems = WaypointRoute.parse_navroute(data, skip_system=self._current_system)
+        if not systems:
+            self._set_status("No route is plotted in the game")
+            return
+        added = self._route.add_systems(systems)
+        self._save_route_state()
+        self._refresh_list()
+        self._refresh_target()
+        self._set_status(f"Added {added} new waypoint(s) from the plotted route ({len(systems)} systems)")
 
     def _on_remove_selected(self) -> None:
         wp = self._selected_waypoint()

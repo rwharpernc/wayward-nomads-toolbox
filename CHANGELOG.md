@@ -12,6 +12,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Exploration, Waypoint Route: From plotted route.** A new button adds the systems of the route you have plotted in the game
+  (read from the game's `NavRoute.json`), with their coordinates, so the nearest-neighbor reorder needs no EDSM lookup for them.
 - **Colonization History: a 14-day chart and your busiest site.** Two new lines on the COL page: a row of blocks showing the tons you
   delivered each of the last 14 days, and the construction site you have delivered the most to.
 

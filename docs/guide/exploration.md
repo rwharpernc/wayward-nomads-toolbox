@@ -197,6 +197,8 @@ squadron staging system.
 1. Type a name under *Add waypoint* and press **Add**, or press **Use Current**, or load a list with **Import
    CSV…**. The CSV import reads **one system name per row, from the first column**. Blank rows and a header row
    (a first cell like `system`, `name` or `waypoint`) are skipped, and names already in the list aren't added twice.
+   Or press **From plotted route** to add the systems of the route you have plotted on the galaxy map in the game (the system you
+   are in is left out). They come with their coordinates, so the reorder below needs no lookup for them.
 2. **Move Up** and **Move Down** change the order by hand. **Remove** deletes the selected waypoint.
 3. **Reorder (Nearest-Neighbor, EDSM)** asks EDSM for each system's coordinates, then builds a route that starts at
    your current position and always goes to the nearest unvisited waypoint next. Waypoints you've already visited

@@ -183,6 +183,43 @@ class WaypointRoute:
         target = self.current_target()
         return target.name if target else None
 
+    def add_systems(self, systems: List[Tuple[str, Optional[Tuple[float, float, float]]]]) -> int:
+        """Add systems that may come with coordinates (from a plotted route). A new one is appended with its coordinates, and an
+        existing one that has none yet is given them, so the nearest-neighbor reorder needs no EDSM lookup for these. Returns how
+        many were genuinely new."""
+        added = 0
+        for name, xyz in systems:
+            existing = self._find(name)
+            if existing is None:
+                waypoint = self.add(name)
+                added += 1
+            else:
+                waypoint = self._waypoints[existing]
+            if xyz is not None and not waypoint.has_coords:
+                waypoint.x, waypoint.y, waypoint.z = xyz
+        return added
+
+    @staticmethod
+    def parse_navroute(data: Any, skip_system: Optional[str] = None) -> List[Tuple[str, Optional[Tuple[float, float, float]]]]:
+        """The systems of the route the game has plotted, from the parsed `NavRoute.json` (`{"Route": [{"StarSystem": ...,
+        "StarPos": [x, y, z]}, ...]}`), in order, each with its coordinates when the game gave them. The route starts at the
+        system the commander is in, so `skip_system` (the current one) is left out. Anything malformed is skipped."""
+        route = data.get("Route") if isinstance(data, dict) else None
+        found: List[Tuple[str, Optional[Tuple[float, float, float]]]] = []
+        skip = skip_system.casefold() if skip_system else None
+        for hop in route if isinstance(route, list) else []:
+            if not isinstance(hop, dict):
+                continue
+            name = str(hop.get("StarSystem") or "").strip()
+            if not name or (skip and name.casefold() == skip):
+                continue
+            pos = hop.get("StarPos")
+            xyz = None
+            if isinstance(pos, (list, tuple)) and len(pos) == 3 and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in pos):
+                xyz = (float(pos[0]), float(pos[1]), float(pos[2]))
+            found.append((name, xyz))
+        return found
+
     @staticmethod
     def parse_csv_names(path: str) -> List[str]:
         """Reads one system name per row's first column. Blank rows and an

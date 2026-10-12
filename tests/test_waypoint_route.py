@@ -47,6 +47,63 @@ class AddRemoveMoveTests(unittest.TestCase):
         self.assertFalse(route.move("C", 1))  # already at the end
 
 
+REAL_ROUTE = {"timestamp": "2026-10-12T11:02:00Z", "event": "NavRoute", "Route": [
+    {"StarSystem": "Ngurii", "SystemAddress": 1, "StarPos": [100.0, -150.0, 20.0], "StarClass": "K"},
+    {"StarSystem": "HIP 9649", "SystemAddress": 358931632858, "StarPos": [108.09375, -171.75, 28.21875], "StarClass": "G"},
+    {"StarSystem": "Shui Wei Sector UT-R b4-2", "SystemAddress": 5070342727097, "StarPos": [110.84375, -138.28125, 45.375], "StarClass": "M"},
+]}
+
+
+class NavRouteTests(unittest.TestCase):
+    def test_the_plotted_systems_come_in_order_with_their_coordinates(self) -> None:
+        systems = WaypointRoute.parse_navroute(REAL_ROUTE)
+        self.assertEqual([name for name, _ in systems], ["Ngurii", "HIP 9649", "Shui Wei Sector UT-R b4-2"])
+        self.assertEqual(systems[1][1], (108.09375, -171.75, 28.21875))
+
+    def test_the_system_you_are_in_is_left_out_whatever_its_case(self) -> None:
+        systems = WaypointRoute.parse_navroute(REAL_ROUTE, skip_system="NGURII")
+        self.assertEqual([name for name, _ in systems], ["HIP 9649", "Shui Wei Sector UT-R b4-2"])
+
+    def test_an_empty_or_damaged_route_gives_nothing(self) -> None:
+        for data in (None, [], {}, {"Route": None}, {"Route": "x"}, {"Route": []}, {"event": "NavRoute"}):
+            self.assertEqual(WaypointRoute.parse_navroute(data), [])
+
+    def test_bad_entries_are_skipped_and_bad_coordinates_are_ignored(self) -> None:
+        data = {"Route": ["junk", {"StarSystem": ""}, {"StarSystem": " Sol ", "StarPos": [1, 2]},
+                          {"StarSystem": "Alpha", "StarPos": [1, "x", 3]}, {"StarSystem": "Beta", "StarPos": [True, 2, 3]},
+                          {"StarSystem": "Gamma", "StarPos": [1, 2, 3]}]}
+        self.assertEqual(WaypointRoute.parse_navroute(data),
+                         [("Sol", None), ("Alpha", None), ("Beta", None), ("Gamma", (1.0, 2.0, 3.0))])
+
+    def test_importing_adds_the_new_ones_with_coordinates_and_counts_only_those(self) -> None:
+        route = WaypointRoute()
+        route.add("HIP 9649")                                          # already there, no coordinates yet
+        added = route.add_systems(WaypointRoute.parse_navroute(REAL_ROUTE, skip_system="Ngurii"))
+        self.assertEqual(added, 1)
+        waypoints = {wp.name: wp for wp in route.waypoints}
+        self.assertEqual(waypoints["HIP 9649"].xyz, (108.09375, -171.75, 28.21875))   # filled in
+        self.assertEqual(waypoints["Shui Wei Sector UT-R b4-2"].xyz, (110.84375, -138.28125, 45.375))
+        self.assertEqual([wp.name for wp in route.waypoints], ["HIP 9649", "Shui Wei Sector UT-R b4-2"])
+
+    def test_importing_never_overwrites_coordinates_already_known(self) -> None:
+        route = WaypointRoute()
+        route.add("HIP 9649")
+        route.set_coords("HIP 9649", 1.0, 2.0, 3.0)
+        route.add_systems([("HIP 9649", (9.0, 9.0, 9.0))])
+        self.assertEqual(route.waypoints[0].xyz, (1.0, 2.0, 3.0))
+
+    def test_a_route_imported_twice_adds_nothing_the_second_time(self) -> None:
+        route = WaypointRoute()
+        systems = WaypointRoute.parse_navroute(REAL_ROUTE)
+        self.assertEqual(route.add_systems(systems), 3)
+        self.assertEqual(route.add_systems(systems), 0)
+
+    def test_the_imported_coordinates_let_the_reorder_work_without_edsm(self) -> None:
+        route = WaypointRoute()
+        route.add_systems(WaypointRoute.parse_navroute(REAL_ROUTE))
+        self.assertEqual(route.reorder_nearest_neighbor((0.0, 0.0, 0.0)), 3)
+
+
 class TargetingTests(unittest.TestCase):
     def test_current_target_is_first_unvisited(self) -> None:
         route = WaypointRoute()

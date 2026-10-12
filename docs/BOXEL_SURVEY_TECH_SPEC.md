@@ -56,7 +56,7 @@ region_sweep_spansh.py    Spansh systems-typeahead wrapper (§7) — raises on f
 region_sweep_panel.py     RegionSweepController — widgets, worker-thread/queue.Queue/after() EDSM+
                           Spansh lookups, its own Settings tab.
 waypoint_route.py         Pure logic for Waypoint Route: Waypoint/WaypointRoute, add/remove/manual
-                          move, greedy nearest-neighbor reordering, CSV import. Unit-tested
+                          move, greedy nearest-neighbor reordering, CSV import, the plotted-route import (`parse_navroute`, `add_systems`, from `NavRoute.json`). Unit-tested
                           (tests/test_waypoint_route.py) via the same try/except ImportError
                           fallback survey_log.py uses, so it doesn't need a live EDMC to import.
 waypoint_route_state.py   JSON persistence for the Waypoint Route list.
