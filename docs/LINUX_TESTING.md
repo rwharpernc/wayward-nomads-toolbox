@@ -282,6 +282,7 @@ Windows. Needs a commander with at least one registered construction site and an
 - [ ] With no network, the panel says the search failed and the button comes back.
 - [x] **Find all** (added 2026-10-12): lists a heading per commodity still to buy with up to 5 stations under each; the
       button reads **Stop** while it runs and stopping keeps what was found; the window stays responsive.
+- [ ] **Suggested route (added 2026-10-12):** after Find all, a "Suggested route" group comes first with numbered stops and the commodities to buy under each; **Copy Route** puts plain lines on the clipboard.
 - [x] **Remembered choices**: change Within, Sort, Landing pad and Include fleet carriers, run a search, close and reopen
       the window: the same choices are back.
 - [x] **Only what [station] sells**: greyed out until you open a station's commodity market; then it names the station and
