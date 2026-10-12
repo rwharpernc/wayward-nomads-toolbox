@@ -988,35 +988,45 @@ class PowerplayController:
     def build_panel(self, parent: tk.Frame) -> None:
         self._panel_parent = parent
 
+        fonts = panelkit.view_fonts()
+
         self._status_label = panelkit.wrap_label(parent, text="Awaiting PowerPlay activity…")
         self._status_label.grid(row=0, column=0, sticky=tk.W)
 
-        self._system_label = panelkit.wrap_label(parent, text="Awaiting system data…")
+        # Where the commander is: the system in bold, then this system's tally.
+        self._system_label = panelkit.wrap_label(parent, text="Awaiting system data…", font=fonts["bold"])
         self._system_label.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
 
         self._here_merits_label = panelkit.wrap_label(parent, text="Here: awaiting system data…")
         self._here_merits_label.grid(row=3, column=0, sticky=tk.W)
 
-        self._here_cp_label = panelkit.wrap_label(parent, text="")
+        self._here_cp_label = panelkit.wrap_label(parent, text="", font=fonts["small"])
         self._here_cp_label.grid(row=4, column=0, sticky=tk.W)
 
-        self._merits_label = panelkit.wrap_label(parent, text="Session merits: 0")
-        self._merits_label.grid(row=5, column=0, sticky=tk.W, pady=(4, 0))
+        # Each tally (this session, then this cycle) is a bold merits line over a small CP line,
+        # with a rule between the groups.
+        panelkit.add_separator(parent, 5)
 
-        self._cp_label = panelkit.wrap_label(parent, text="Session CP: —")
-        self._cp_label.grid(row=6, column=0, sticky=tk.W)
+        self._merits_label = panelkit.wrap_label(parent, text="Session merits: 0", font=fonts["bold"])
+        self._merits_label.grid(row=6, column=0, sticky=tk.W)
 
-        self._cycle_merits_label = panelkit.wrap_label(parent, text="Cycle merits: 0")
-        self._cycle_merits_label.grid(row=7, column=0, sticky=tk.W)
+        self._cp_label = panelkit.wrap_label(parent, text="Session CP: —", font=fonts["small"])
+        self._cp_label.grid(row=7, column=0, sticky=tk.W)
 
-        self._cycle_cp_label = panelkit.wrap_label(parent, text="Cycle CP: —")
-        self._cycle_cp_label.grid(row=8, column=0, sticky=tk.W)
+        panelkit.add_separator(parent, 8)
 
-        self._last_event_label = panelkit.wrap_label(parent, text="No merit events yet this session.")
-        self._last_event_label.grid(row=9, column=0, sticky=tk.W, pady=(4, 0))
+        self._cycle_merits_label = panelkit.wrap_label(parent, text="Cycle merits: 0", font=fonts["bold"])
+        self._cycle_merits_label.grid(row=9, column=0, sticky=tk.W)
+
+        self._cycle_cp_label = panelkit.wrap_label(parent, text="Cycle CP: —", font=fonts["small"])
+        self._cycle_cp_label.grid(row=10, column=0, sticky=tk.W)
+
+        self._last_event_label = panelkit.wrap_label(
+            parent, text="No merit events yet this session.", font=fonts["small"])
+        self._last_event_label.grid(row=11, column=0, sticky=tk.W, pady=(6, 0))
 
         windows_row = tk.Frame(parent)
-        windows_row.grid(row=10, column=0, sticky=tk.W, pady=(4, 0))
+        windows_row.grid(row=12, column=0, sticky=tk.W, pady=(4, 0))
         sessions_button = tk.Button(windows_row, text="SES", command=self._show_sessions)
         sessions_button.pack(side=tk.LEFT, padx=(0, 6))
         panelkit.add_tooltip(sessions_button, "Sessions - open the Powerplay sessions window")
