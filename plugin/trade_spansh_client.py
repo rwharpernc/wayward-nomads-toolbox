@@ -26,7 +26,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from . import http_identity
 
@@ -156,14 +156,40 @@ def _request(url: str, data: Optional[bytes] = None) -> Dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
-def search_routes(query: RouteQuery, cancel: Optional[threading.Event] = None) -> List[Hop]:
+_WAITING_STATES = {"queued", "pending", "waiting"}
+_WORKING_STATES = {"started", "running", "working", "processing", "in progress", "in_progress", "calculating", "computing"}
+STATE_MAX_CHARS = 30
+
+
+def describe_state(state: Any) -> str:
+    """What to tell the commander about a Spansh job's `state`/`status` while it is not finished: whether it is still waiting in
+    Spansh's queue or is being worked on. A word not known here is shown as Spansh wrote it (letters only, clipped), so a new one
+    still reads sensibly. Empty for nothing, and for "completed" (the answer is on its way)."""
+    if not isinstance(state, str):
+        return ""
+    word = state.strip().lower()
+    if not word or word in ("completed", "ok", "done", "finished"):
+        return ""
+    if word in _WAITING_STATES:
+        return "Waiting in Spansh's queue."
+    if word in _WORKING_STATES:
+        return "Spansh is calculating the route."
+    cleaned = "".join(ch for ch in word if ch.isalpha() or ch in " _-").replace("_", " ").strip()[:STATE_MAX_CHARS]
+    return f"Spansh says: {cleaned}." if cleaned else ""
+
+
+def search_routes(query: RouteQuery, cancel: Optional[threading.Event] = None,
+                  on_state: Optional[Callable[[str], None]] = None) -> List[Hop]:
     """Submit the search, wait for Spansh to finish it, return the hops (empty when
     no profitable route exists). Raises RouteSearchError, or a network error
-    (OSError / ValueError) for the caller to log."""
+    (OSError / ValueError) for the caller to log. `on_state(text)` is told, after the search is accepted and after each check,
+    whether the job is waiting in Spansh's queue or being calculated (`describe_state`), so the page can say which."""
     submitted = _request(ROUTE_URL, urllib.parse.urlencode(build_form(query)).encode("ascii"))
     job = submitted.get("job")
     if not job:
         raise RouteSearchError(str(submitted.get("error") or "Spansh did not accept the search."))
+    if on_state is not None:
+        on_state(describe_state(submitted.get("status")))
     deadline = time.monotonic() + MAX_WAIT_S
     while time.monotonic() < deadline:
         if cancel is not None and cancel.wait(POLL_INTERVAL_S):
@@ -172,6 +198,8 @@ def search_routes(query: RouteQuery, cancel: Optional[threading.Event] = None) -
             time.sleep(POLL_INTERVAL_S)
         data = _request(RESULTS_URL + urllib.parse.quote(str(job)))
         state = data.get("state")
+        if on_state is not None:
+            on_state(describe_state(state))
         if state == "completed":
             if data.get("status") not in (None, "ok"):
                 raise RouteSearchError(str(data.get("error") or "Spansh could not plan a route."))

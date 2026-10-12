@@ -152,6 +152,7 @@ class _Job:
         self.done = False
         self.result: Any = None
         self.error: Optional[str] = None
+        self.status = ""      # what the service says about the job while it runs (waiting in a queue, calculating)
         self._work = work
         threading.Thread(target=self._run, name=f"WNTB-trade-{kind}", daemon=True).start()
 
@@ -766,8 +767,10 @@ class TradePanelController:
         if not lookups_enabled():
             return self._lookups_off_blocks("Routes")
         if busy and self._job is not None:
-            return [Heading("Routes"), Note(f"Asking Spansh for routes... {int(time.monotonic() - self._job.started)} s"),
-                    Note("This can take a minute or two.")]
+            blocks = [Heading("Routes"), Note(f"Asking Spansh for routes... {int(time.monotonic() - self._job.started)} s")]
+            if self._job.status:
+                blocks.append(Note(self._job.status))
+            return blocks + [Note("This can take a minute or two.")]
         if self._route_blocks:
             return self._route_blocks
         start = self._route_start()
@@ -1089,7 +1092,16 @@ class TradePanelController:
         )
         self._route_blocks, self._next_system = [], None
         self._route_label = f"{start[1]} ({start[0]})"
-        self._start_job("routes", lambda cancel: spansh_routes.search_routes(query, cancel))
+        holder: Dict[str, _Job] = {}
+
+        def say(text: str) -> None:
+            job = holder.get("job")      # the worker can speak before the job has been handed back to us
+            if job is not None:
+                job.status = text
+
+        self._start_job("routes", lambda cancel: spansh_routes.search_routes(query, cancel, on_state=say))
+        if self._job is not None:
+            holder["job"] = self._job
 
     def _find_prices(self, scope: str) -> None:
         if not self._system or (self._job is not None and not self._job.done):

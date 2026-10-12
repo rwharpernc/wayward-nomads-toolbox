@@ -12,6 +12,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Trade, Routes: the wait says what Spansh is doing.** While a route search runs, the page now says whether it is waiting in Spansh's
+  queue or being calculated, instead of only counting seconds.
 - **Colonization, Find all: a suggested shopping route.** After Find all, the results start with the few stops (at most 6) that between
   them supply the most of what you still have to get, with what to buy at each and the stops nearest first. **Copy Route** copies it.
   Find all's commodity headings also no longer get cut off.

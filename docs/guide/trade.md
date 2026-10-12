@@ -184,7 +184,8 @@ markets are left out. It takes about 20 seconds and makes one to three Spansh re
 
 ### Reading the result
 
-Spansh can take a minute or two. **Cancel** stops waiting. The result shows:
+Spansh can take a minute or two. While you wait the page says whether the search is **waiting in Spansh's queue** or being
+calculated, so a busy Spansh no longer looks like a stalled search. **Cancel** stops waiting. The result shows:
 
 - the route's total profit and an **estimated profit per hour**,
 - each hop: stations, system, distance, best commodity and profit, with the supply at the buying station and the

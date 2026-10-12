@@ -356,6 +356,29 @@ class SpanshClientTests(unittest.TestCase):
         self.assertGreater(client.estimate_hop_seconds(hop, 10.0), seconds)  # a shorter range needs more jumps
         self.assertEqual(client.estimate_profit_per_hour([], 30.0), 0)
 
+    def test_the_job_state_is_told_as_waiting_or_calculating(self) -> None:
+        self.assertEqual(client.describe_state("queued"), "Waiting in Spansh's queue.")
+        self.assertEqual(client.describe_state(" QUEUED "), "Waiting in Spansh's queue.")
+        for working in ("started", "running", "in progress", "calculating"):
+            self.assertEqual(client.describe_state(working), "Spansh is calculating the route.")
+
+    def test_a_finished_or_missing_state_says_nothing_and_an_unknown_word_is_shown_cleaned_and_short(self) -> None:
+        for quiet in (None, 3, "", "  ", "completed", "ok"):
+            self.assertEqual(client.describe_state(quiet), "")
+        self.assertEqual(client.describe_state("rate_limited"), "Spansh says: rate limited.")
+        self.assertEqual(client.describe_state("<b>x</b>"), "Spansh says: bxb.")
+        self.assertLessEqual(len(client.describe_state("z" * 500)), len("Spansh says: .") + client.STATE_MAX_CHARS)
+
+    def test_the_search_reports_each_state_it_sees_in_order(self) -> None:
+        from unittest import mock
+        answers = [{"job": "abc", "status": "queued"}, {"state": "queued"}, {"state": "started"},
+                   {"state": "completed", "status": "ok", "result": []}]
+        told = []
+        with mock.patch.object(client, "_request", side_effect=answers), mock.patch.object(client.time, "sleep"):
+            hops = client.search_routes(client.RouteQuery("A", "B", 1000, 100), on_state=told.append)
+        self.assertEqual(hops, [])
+        self.assertEqual(told, ["Waiting in Spansh's queue.", "Waiting in Spansh's queue.", "Spansh is calculating the route.", ""])
+
     def test_a_refusal_shows_what_spansh_said(self) -> None:
         import io
         import urllib.error

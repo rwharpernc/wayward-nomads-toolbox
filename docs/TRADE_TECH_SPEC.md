@@ -391,7 +391,7 @@ is the one place to fix if it changes.
 1. `POST https://spansh.co.uk/api/trade/route`, form-encoded: `system`, `station`, `max_hops`,
    `max_hop_distance`, `starting_capital`, `max_cargo`, `max_system_distance` (arrival distance in ls),
    `requires_large_pad`. Returns `{"job": "<id>", "status": "queued"}`.
-2. `GET https://spansh.co.uk/api/results/<job>` repeatedly until `state == "completed"` (a small search took
+2. `GET https://spansh.co.uk/api/results/<job>` repeatedly (the state is told to the page each time: `describe_state` turns `queued` into "Waiting in Spansh's queue.", a working word into "Spansh is calculating the route.", and shows any other word as written, cleaned) until `state == "completed"` (a small search took
    about 80 s). `result` is a list of hops: `source` and `destination` (`system`, `station`,
    `distance_to_arrival`, `market_updated_at`), `distance` (ly), `commodities` (`name`, `amount`, `profit` per
    tonne, `total_profit`), `total_profit`, `cumulative_profit`.
