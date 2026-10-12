@@ -61,6 +61,17 @@ class BlockRectTests(unittest.TestCase):
         self.assertGreater(card.block_rect(three_lines)[3], card.block_rect(narrow)[3])
 
 
+class PlacementSlotTests(unittest.TestCase):
+    def test_the_placement_slot_is_wide_enough_for_the_widest_card(self) -> None:
+        """Right-anchoring and the overlay group offset are worked out from the slot's size, so a card wider than it runs
+        off the screen edge and the overlay's clamp squashes its last columns together."""
+        from plugin import overlay_placement
+        rows = tuple(card.Row("N" * 40, 999_999, 999_999, 999_999, 999_999) for _ in range(3))
+        widest = card.Card("T" * 40, rows, 0, 9_999_999, 9_999, True, 9_999)
+        slot_width = overlay_placement.SLOTS["colonisation"].size[0]
+        self.assertLessEqual(card.block_rect(widest)[2], slot_width)
+
+
 class BuildCardTests(unittest.TestCase):
     def test_need_is_not_reduced_by_the_hold_and_rows_are_alphabetical(self) -> None:
         built = card.build_card(site(), {"steel": 100}, {}, show_fc=False)
