@@ -60,6 +60,7 @@ subscribe and rebuild; the UI subscribes to those. The data layer never imports 
 | `Bounty` | One kill; the `VictimFaction` says whose |
 | `FactionKillBond` | A combat-zone kill; counted like a `Bounty` (it names `VictimFaction` but no ship type) |
 | `CommunityGoal` | Community Goal snapshots (may list several goals at once) |
+| `CommunityGoalReward` | The credits a finished Community Goal paid this commander (`CGID`, `Name`, `System`, `Reward`) |
 
 ## 4. Classification
 
@@ -147,6 +148,11 @@ journal never says a goal has gone away, and finished goals keep reappearing for
 **additive**: every goal id ever seen is kept and the newest snapshot wins. The panel then filters to
 goals that haven't expired. Each card shows the title, system, market, expiry, the community's tier
 reached, your contribution and rank, and the bonus. The tier shown is the *community's*, not yours.
+
+A `CommunityGoalReward` event is the payout. Payouts are kept per commander (the newest 20, each once, by goal id and time) in
+`community_goal_state.py`, read back from the last two weeks of journals at start-up like the goals, and the page lists the latest
+three under **Paid out** below the goal cards. A goal that has finished is past its expiry and no longer shown as a card, so this
+is where its payout appears.
 
 ## 8. Commanders and persistence
 

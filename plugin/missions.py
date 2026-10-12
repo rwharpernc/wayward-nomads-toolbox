@@ -121,7 +121,7 @@ class MissionsController:
             kill_tracker.initialize(
                 backlog.bounties, backlog.redirected, backlog.redirect_targets,
             )
-            community_goal_state.initialize(backlog.goals)
+            community_goal_state.initialize(backlog.goals, backlog.rewards)
             mission_cargo.tracker.initialize(backlog.cargo)
         except Exception:
             logger.exception("Journal scan failed - starting with empty state")
@@ -185,6 +185,9 @@ class MissionsController:
             # Not scoped to the current station - CurrentGoals can list
             # several Community Goals across different systems at once.
             community_goal_state.update_goals(cmdr, entry)
+
+        elif event == "CommunityGoalReward":
+            community_goal_state.add_reward(cmdr, entry)
 
     # --- main-panel widgets -------------------------------------------------
 

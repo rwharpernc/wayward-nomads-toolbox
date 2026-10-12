@@ -6,7 +6,7 @@ collects, per commander:
 - accepted missions (all of them; which are active is decided later)
 - bounty and combat-bond kills (to estimate kill progress)
 - ids of missions the game redirected (the authoritative "objective done" signal)
-- Community Goal progress
+- Community Goal progress and the payouts (`CommunityGoalReward`)
 - cargo mission progress (CargoDepot: collected and delivered so far)
 - which missions are still active at the end of the journals (see below)
 
@@ -46,6 +46,8 @@ class Backlog:
     when the redirect named one."""
     goals: dict[str, dict[int, dict]] = field(default_factory=dict)
     """cmdr -> {CGID -> newest CurrentGoals entry seen}"""
+    rewards: dict[str, list[dict]] = field(default_factory=dict)
+    """cmdr -> CommunityGoalReward events (the credits a finished Community Goal paid), in journal order"""
     cargo: dict[str, dict[int, dict]] = field(default_factory=dict)
     """cmdr -> {mission id -> newest CargoDepot event}: collect / delivery progress of cargo missions"""
     active_ids: dict[str, set[int]] = field(default_factory=dict)
@@ -125,6 +127,10 @@ def _take_goals(log: Backlog, cmdr: str, event: dict) -> None:
             known[goal_id] = goal
 
 
+def _take_reward(log: Backlog, cmdr: str, event: dict) -> None:
+    log.rewards.setdefault(cmdr, []).append(event)
+
+
 def _take_cargo_depot(log: Backlog, cmdr: str, event: dict) -> None:
     log.cargo.setdefault(cmdr, {})[event["MissionID"]] = event
 
@@ -149,6 +155,7 @@ _TAKERS: dict[str, Callable[[Backlog, str, dict], None]] = {
     "FactionKillBond": _take_bounty,   # a combat-zone kill; counts toward massacre missions like a bounty
     "MissionRedirected": _take_redirect,
     "CommunityGoal": _take_goals,
+    "CommunityGoalReward": _take_reward,
 }
 
 

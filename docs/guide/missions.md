@@ -1,6 +1,6 @@
 # Missions
 
-One view of every mission on your board, sorted by type, plus Community Goals.
+One view of every mission on your board, sorted by type, plus Community Goals and what they paid you.
 
 ## Using it
 
@@ -31,6 +31,7 @@ WNTB can only show what Elite Dangerous writes to its journal files and what the
 | Missions accepted a while ago to appear | WNTB reads only the **last two weeks** of journals at start-up. A mission still active but accepted earlier is not found and not shown. | Keep EDMC running while you hold long missions, and check the game's own mission board for older ones. |
 | Kills made while EDMC was closed | Counted only if they are in the last two weeks of journal files. | Run EDMC whenever you play. |
 | Every mission to land in the right category | Names WNTB does not recognise go to **Other**. | Click the card for details. If a type is always in Other, open an issue so it can be added. |
+| A Community Goal's payout to be remembered for long | The game writes the payout (`CommunityGoalReward`) once. WNTB lists the latest three under **Paid out** on the Community Goals page, found in the last two weeks of journals at start-up. | Note a big payout elsewhere if you want to keep it. |
 | A Community Goal to disappear when it ends | The game gives no "gone" signal, so the panel relies on each goal's expiry date. | Ignore a goal past its expiry; it clears itself. |
 
 ## Settings

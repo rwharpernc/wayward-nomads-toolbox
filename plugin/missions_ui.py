@@ -871,9 +871,26 @@ def _display_community_goal_card(frame: tk.Frame, goal: CommunityGoal, row: int)
     return row
 
 
+_PAYOUTS_SHOWN = 3
+"""How many of the latest Community Goal payouts the page lists."""
+
+
+def _display_community_goal_payouts(frame: tk.Frame, rewards: list, row: int) -> int:
+    fonts = _get_fonts()
+    heading = _line(frame, row, pady=(0, _LINE_PAD))
+    tk.Label(heading, text="Paid out", font=fonts["bold"]).pack(side=tk.LEFT)
+    row += 1
+    for reward in rewards[:_PAYOUTS_SHOWN]:
+        line = _line(frame, row, pady=(0, _LINE_PAD))
+        tk.Label(line, text=reward.text(), wraplength=_WRAP, justify=tk.LEFT, font=fonts["small"]).pack(side=tk.LEFT)
+        row += 1
+    return row
+
+
 def _display_community_goal_page(frame: tk.Frame, goals: dict[int, CommunityGoal],
-                                 row: int, no_data_text: str) -> int:
-    if not goals:
+                                 row: int, no_data_text: str, rewards: Optional[list] = None) -> int:
+    rewards = rewards or []
+    if not goals and not rewards:
         return _display_no_missions(frame, row, no_data_text)
 
     ordered = sorted(goals.values(), key=lambda g: (g.expiry == "", g.expiry))
@@ -881,6 +898,10 @@ def _display_community_goal_page(frame: tk.Frame, goals: dict[int, CommunityGoal
         if i > 0:
             row = _separator(frame, row, pady=_CARD_GAP)
         row = _display_community_goal_card(frame, goal, row)
+    if rewards:
+        if goals:
+            row = _separator(frame, row, pady=_CARD_GAP)
+        row = _display_community_goal_payouts(frame, rewards, row)
     return row
 
 
@@ -1075,8 +1096,8 @@ class MissionsUI:
         if category == _COMMUNITY_GOAL_PAGE:
             active = {cg_id: g for cg_id, g in self.__community_goals.items()
                      if not _is_expired(g.expiry)}
-            return _display_community_goal_page(frame, active, row,
-                                                "No active Community Goals.")
+            return _display_community_goal_page(frame, active, row, "No active Community Goals.",
+                                                community_goal_state.get_rewards(community_goal_state.current_cmdr))
 
         no_missions_text = f"No {mission_types.CATEGORY_LABELS[category].lower()} missions on the board."
 
