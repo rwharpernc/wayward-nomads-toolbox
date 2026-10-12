@@ -29,7 +29,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `overlay.py` | The one shared overlay client (EDMCModernOverlay over a local TCP port), its Plugin Group registration and group offsets |
 | `overlay_layout.py` | Where overlay displays go, the same on any screen: how big a pixel is on the overlay's canvas (positions are screen fractions, sizes are pixels), nine anchor spots plus pixel offsets, the overlay's right-edge clamp, the overlay's clamp and the offset that carries a display past it, and a client wrapper that moves a display; pure, no Tk |
 | `overlay_style.py` | The shared overlay look: six color schemes (color roles), the four text sizes with per-size character width and line height estimates, padding and line spacing; cards are sized from these so larger text never wraps; pure, no Tk |
-| `overlay_appearance.py` | The saved Appearance choices (scheme, text size, padding, line spacing), `current_look()` which every overlay draws with, and the Overlays > Appearance Settings tab with its sample |
+| `overlay_appearance.py` | The saved color scheme and the fixed text size, padding and line spacing, `current_look()` which every overlay draws with, and the Overlays > Appearance Settings tab with its sample |
 | `overlay_placement.py` | Global overlay placement: reads the real window size, mode and display scaling from EDMCModernOverlay's log (falling back to Elite's `DisplaySettings.xml` and Windows' scaling), keeps every display's saved spot, and the Overlay Placement Settings tab with its preview |
 | `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming |
 | `platform_support.py` | Windows/Linux differences in one place: Elite's folders, key presses (`xdotool`), host programs under Flatpak, "Works on" notes |
@@ -207,7 +207,7 @@ Guide: [Colonization](guide/colonization.md)
 | Module | What it is |
 |---|---|
 | `colonisation.py` | Pure logic for construction-site tracking |
-| `colonisation_carrier.py` | Tonnes of each commodity transferred to the commander's fleet carrier, for the window's FC column (per commander, caught up from the journals without double counting) |
+| `colonisation_carrier.py` | (Includes `scan_journals`, the rebuild behind Rescan Carrier.) Tonnes of each commodity transferred to the commander's fleet carrier, for the window's FC column (per commander, caught up from the journals without double counting) |
 | `colonisation_catchup.py` | Folds the recent journals into the saved construction sites at start-up, never counting a delivery twice |
 | `colonisation_data.py` | JSON persistence for construction sites (each carries `journal_at`, the newest journal event folded in) |
 | `colonisation_history.py` | What the commander has delivered to construction sites (tonnes by commodity, site and day), kept per commander and caught up from the journals without double counting |

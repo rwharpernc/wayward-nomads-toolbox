@@ -151,6 +151,29 @@ Management, buying one, or docking at one). It is per commander. It does lower t
 - **It is what WNTB saw you transfer, not the carrier's actual hold.** Changes that are not transfers are not in the
   journal as transfers, so they are not counted: buying from or selling to the carrier's market, trade orders, and a
   squadron mate moving cargo. The figure can therefore drift from the real contents.
+- **Frontier's own figure can replace it.** When EDMC is signed in to Frontier it fetches your carrier's real cargo (at most every
+  15 minutes, on opening Carrier Management and similar events), and WNTB replaces its tally with that list; transfers you make
+  afterwards are added on top. Frontier's copy can lag behind what you just did, so a very recent load may be missing from it.
+
+### Rescan Carrier: when a load did not register
+
+If the FC column is missing something you moved to the carrier, press **Rescan Carrier** (top right of the Colonization Sites
+window; it needs a commander with a fleet carrier).
+
+1. WNTB discards its saved carrier tally for that commander, including any figure taken from Frontier.
+2. It reads your journals for the **last 30 days**, oldest first, and counts every transfer you made while docked at your fleet
+   carrier: tons moved to the carrier minus tons moved back to the ship.
+3. The status line at the bottom says how many commodities and tons it found. Transfers you make after that count on top as usual.
+
+What to expect:
+
+- It only counts what the journals show you moving. Stock that reached the carrier another way (bought through its market, a
+  trade order, a squadron mate), or moved more than 30 days ago, is **not** included. Where that matters, leave the tally alone and let
+  Frontier's figure fill it in.
+- The next Frontier fetch replaces the rescanned figure with the carrier's real cargo, so a rescan is a quick fix for a missing load, not
+  a permanent override.
+- It is safe to press more than once, and it never counts a transfer twice. It only touches the commander shown in the window and
+  reads files on your computer; nothing is sent anywhere.
 
 ## Where to buy
 

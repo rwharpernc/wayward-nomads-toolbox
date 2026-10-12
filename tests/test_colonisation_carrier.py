@@ -142,5 +142,47 @@ class CatchUpTests(unittest.TestCase):
             self.assertFalse(live.feed(lines[2]))
 
 
+class RescanTests(unittest.TestCase):
+    def write_journal(self, folder: str, lines: list) -> None:
+        with open(os.path.join(folder, "Journal.2026-10-01T090000.01.log"), "w", encoding="utf-8") as handle:
+            handle.write("\n".join(json.dumps(line) for line in lines) + "\n")
+
+    def test_a_rescan_rebuilds_from_the_journals_and_ignores_the_saved_tally(self) -> None:
+        lines = [
+            {"event": "Commander", "Name": "Alice", "timestamp": "2026-10-01T09:59:00Z"},
+            docked(),
+            transfer("2026-10-01T10:01:00Z", ("steel", 100, "tocarrier"), ("copper", 60, "tocarrier")),
+            transfer("2026-10-01T10:05:00Z", ("steel", 30, "toship")),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            self.write_journal(folder, lines)
+            cargo = cc.CarrierCargo()
+            cargo.apply_capi_cargo("Alice", [{"commodity": "steel", "qty": 5000}])      # a Frontier snapshot that lost the copper
+            rebuilt = cc.scan_journals("Alice", folder)
+            self.assertTrue(cargo.replace_from_journals("Alice", rebuilt))
+            self.assertEqual(cargo.tonnes("Alice"), {"steel": 70, "copper": 60})
+            self.assertNotIn("from_capi", cargo._record("Alice"))
+            # a live transfer after the rescan still counts
+            live = cc.Feeder(cargo, "Alice")
+            live.feed(docked())
+            live.feed(transfer("2026-10-01T11:00:00Z", ("copper", 5, "tocarrier")))
+            self.assertEqual(cargo.tonnes("Alice")["copper"], 65)
+
+    def test_a_rescan_counts_only_the_one_commander(self) -> None:
+        lines = [
+            {"event": "Commander", "Name": "Bob", "timestamp": "2026-10-01T09:58:00Z"},
+            docked(), transfer("2026-10-01T10:00:00Z", ("tritium", 9, "tocarrier")),
+            {"event": "Commander", "Name": "Alice", "timestamp": "2026-10-01T10:30:00Z"},
+            docked(), transfer("2026-10-01T10:31:00Z", ("steel", 7, "tocarrier")),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            self.write_journal(folder, lines)
+            self.assertEqual(cc.scan_journals("Alice", folder)["tonnes"], {"steel": 7})
+
+    def test_nothing_in_the_journals_gives_an_empty_tally(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertEqual(cc.scan_journals("Alice", folder)["tonnes"], {})
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -259,6 +259,11 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 - [ ] Rows left at the default list every commodity; the card fits on screen from the default position (20, 300).
 - [ ] Windows paths: `Status.json` reports the same `GuiFocus` values (5 in the services screens, 1 for the right-hand panel).
 
+## 7e-1. Rescan Carrier (Windows-tested only: check on Linux)
+
+- [ ] With a fleet carrier and some transfers in the journals, **Rescan Carrier** in the Colonization Sites window rebuilds the FC column
+      from the last 30 days; the status line names the commodities and tons. Pressing it twice gives the same figures.
+
 ## 7e. Colonization Sites window: sites list, totals, Where to buy (added 2026-10-11, Windows-tested only: check on Linux)
 
 Written and tried on Windows. The code is platform-neutral Python and Tk, but the window layout has only been seen on
@@ -316,8 +321,8 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 
 ## 7g. Overlay Appearance (added 2026-10-11, Windows-tested only: check on Linux)
 
-- [ ] **Settings -> Overlays -> Appearance** exists, with Color scheme, Text size, Padding and Line spacing menus.
-- [ ] **Show sample** draws the Colonization card in the game in the picked scheme and size; a larger size gives a larger card.
+- [ ] **Settings -> Overlays -> Appearance** exists, with a Color scheme menu only (text size and spacing are fixed).
+- [ ] **Show sample** draws the Colonization card in the game in the picked scheme.
 - [ ] At **Largest** with **Roomy** padding, each display (Colonization, Discovery, Notable, Landing, Inventory, Mining,
       Screenshots) keeps its text inside its border without wrapping. Note any that do not, with the font and Proton/Wine setup.
 - [ ] Changing the scheme recolors every display; Interdiction stays red.

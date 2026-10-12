@@ -6,6 +6,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Rescan Carrier.** A button in the Colonization Sites window that rebuilds the fleet carrier (FC) tally from the last 30 days of
+  journals, for a transfer that did not register, for example after Frontier's lagging copy of the carrier's cargo replaced it.
 - **Report a finished build to Raven Colonial.** A **Report Complete to Raven** button in the Colonization Sites window marks the
   selected site complete on Raven Colonial. It asks first, needs your Raven key (saved per commander) and sends only that key and the
   project's id. Not yet checked against the live Raven Colonial write API, which needs a real key.
@@ -18,6 +20,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.
 
 ### Changed
+- **Overlay text size and spacing are fixed.** Settings -> Overlays -> Appearance now only has the color scheme. Every overlay uses one
+  size (one step above normal) with the default padding and line spacing, so the shopping list's columns stay aligned. Earlier saved
+  size, padding and spacing choices are ignored.
 - **Colonization shopping list on the overlay: more columns, and a wider card.** It now shows **Commodity, Required, Remaining,
   FC, Cargo and To buy** (FC only with a fleet carrier). **Need** is now called **Remaining** and **Ship** is now **Cargo**; **To buy**
   is remaining less the hold and the carrier. The card widens to fit.

@@ -182,6 +182,21 @@ class CarrierCargo:
             changed = True
         return changed
 
+    def replace_from_journals(self, cmdr: str, rebuilt: Record) -> bool:
+        """Swap this commander's tally for one rebuilt from the journals (`scan_journals`), dropping the Frontier baseline it
+        may have had. True if anything changed. The next Frontier fetch replaces it again, as always."""
+        if not commander_data.key_for(cmdr):
+            return False
+        record = self._record(cmdr)
+        tonnes = {k: v for k, v in (rebuilt.get("tonnes") or {}).items() if v > 0}
+        has_carrier = bool(record.get("has_carrier") or rebuilt.get("has_carrier"))
+        stamp = str(rebuilt.get("journal_at") or "")
+        changed = (record.get("tonnes") != tonnes or record.get("journal_at") != stamp
+                   or "from_capi" in record or record.get("has_carrier") != has_carrier)
+        record["tonnes"], record["journal_at"], record["has_carrier"] = tonnes, stamp, has_carrier
+        record.pop("from_capi", None)
+        return changed
+
     def commit(self) -> None:
         self._save_and_notify()
 
@@ -190,9 +205,10 @@ class Feeder:
     """Turns a stream of journal events (one commander's, in order) into updates on a `CarrierCargo`. Tracks whether the
     commander is docked at a fleet carrier, which is the only place a transfer is theirs to count."""
 
-    def __init__(self, cargo: CarrierCargo, cmdr: str = "") -> None:
+    def __init__(self, cargo: CarrierCargo, cmdr: str = "", only: str = "") -> None:
         self.cargo = cargo
         self.cmdr = cmdr
+        self._only = commander_data.key_for(only)    # when set, other commanders' events are ignored (a rescan for one)
         self._at_fleet_carrier = False
 
     def feed(self, entry: Dict[str, Any]) -> bool:
@@ -213,7 +229,7 @@ class Feeder:
         if event == "Undocked":
             self._at_fleet_carrier = False
             return False
-        if not self.cmdr:
+        if not self.cmdr or (self._only and commander_data.key_for(self.cmdr) != self._only):
             return False
         if event in ("CarrierStats", "CarrierBuy"):
             ctype = entry.get("CarrierType")
@@ -251,6 +267,20 @@ def catch_up(cargo: CarrierCargo, cmdrs: Iterable[str], folder: Optional[str] = 
     if changed:
         cargo.commit()
     return changed
+
+
+def scan_journals(cmdr: str, folder: Optional[str] = None, now: Optional[datetime] = None) -> Record:
+    """Rebuild one commander's tally from the journals alone: every fleet carrier transfer of theirs in the last MAX_DAYS, oldest
+    first, ignoring what is already saved. It can only count what the journals show moving, so stock that reached the carrier another
+    way is missing until the next Frontier fetch. Reads files only; nothing is saved (the caller applies it with
+    `CarrierCargo.replace_from_journals`), so it is safe on a worker thread."""
+    now = now or datetime.now(timezone.utc)
+    scratch = CarrierCargo()
+    for path in journal_files.files_modified_since((now - timedelta(days=MAX_DAYS)).timestamp(), folder):
+        feeder = Feeder(scratch, only=cmdr)
+        for entry in journal_files.read_events(path, _WANTED):
+            feeder.feed(entry)
+    return dict(scratch._record(cmdr)) if commander_data.known(scratch._store, cmdr) else _empty()   # noqa: SLF001
 
 
 carrier_cargo = CarrierCargo()

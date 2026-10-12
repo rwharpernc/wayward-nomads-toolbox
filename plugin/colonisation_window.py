@@ -19,7 +19,7 @@ from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tupl
 
 from config import appname, config
 
-from . import colonisation, colonisation_builds_window, colonisation_sources as sources, colonisation_view as view, panelkit, rcc_client, rcc_keys
+from . import colonisation, colonisation_builds_window, colonisation_carrier, colonisation_sources as sources, colonisation_view as view, panelkit, rcc_client, rcc_keys
 from .colonisation_carrier import CarrierCargo
 from .colonisation import Site
 from .colonisation_data import SiteRepository
@@ -161,6 +161,7 @@ class ColonisationWindow:
 
         self._shell.add_action("Copy Shopping List", self._on_copy, accent=True)
         self._shell.add_action("Planned Builds", self._on_builds)
+        self._shell.add_action("Rescan Carrier", self._on_rescan_carrier)
         self._shell.add_action("Report Complete to Raven", self._on_report_rcc)
         self._shell.add_action("Remove Site", self._on_remove)
         self._shell.add_action("Remove Finished", self._on_remove_finished)
@@ -773,6 +774,43 @@ class ColonisationWindow:
         colonisation_builds_window.show(
             self._toplevel, site.system,
             lambda: frozenset(s.market_id for s in self._repository.for_cmdr(self._cmdr)))
+
+    def _on_rescan_carrier(self) -> None:
+        """Rebuild the fleet carrier tally from the last 30 days of journals, for a transfer that did not register (see
+        colonisation_carrier.scan_journals). The files are read on a worker thread; the result is applied here on the Tk thread."""
+        if self._carrier is None or not self._cmdr or not self._carrier.has_carrier(self._cmdr):
+            self._shell.set_status("Rescan Carrier needs a commander with a fleet carrier.")
+            return
+        cmdr = self._cmdr
+        job: Dict[str, Any] = {"done": False, "record": None}
+        self._shell.set_status("Rescanning the journals for carrier transfers…")
+
+        def work() -> None:
+            try:
+                job["record"] = colonisation_carrier.scan_journals(cmdr)
+            except Exception:
+                logger.exception("Carrier rescan failed")
+            job["done"] = True
+
+        threading.Thread(target=work, daemon=True, name="WNTB-carrier-rescan").start()
+        self._poll_rescan(job, cmdr)
+
+    def _poll_rescan(self, job: Dict[str, Any], cmdr: str) -> None:
+        if not self._shell.alive:
+            return
+        if not job["done"]:
+            self._toplevel.after(150, self._poll_rescan, job, cmdr)
+            return
+        record = job["record"]
+        if record is None or self._carrier is None or cmdr != self._cmdr:
+            self._shell.set_status("The rescan failed; see the EDMC log." if record is None else "The commander changed; rescan again.")
+            return
+        self._carrier.replace_from_journals(cmdr, record)
+        self._carrier.commit()
+        tonnes = self._carrier.tonnes(cmdr)
+        self._shell.set_status(f"Rescanned the last {colonisation_carrier.MAX_DAYS} days of journals: {len(tonnes)} commodit"
+                               f"{'y' if len(tonnes) == 1 else 'ies'}, {sum(tonnes.values()):,} t on your carrier. The next Frontier "
+                               "fetch can replace this with the carrier's real cargo.")
 
     def _on_report_rcc(self) -> None:
         """Tell Raven Colonial the selected site is finished. Asks first, and sends only the commander's Raven key to the one
