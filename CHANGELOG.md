@@ -3,6 +3,35 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Powerplay panel: a cycle tally under the session tally.** Two new lines, **Cycle N merits** and **Cycle N CP**, total
+  what you have earned across every system in the current Powerplay cycle (Thursday 07:00 UTC to the next). Unlike the
+  session lines they carry over between game sessions, include what the start-up journal scan filled in, and reset when
+  the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
+
+### Changed
+- **Easier-to-read panels.** The Powerplay panel groups its tallies (here, this session, this cycle) with thin rules, shows
+  the system and the merit totals in bold, and the CP and last-event lines in the smaller font. The other modes' status and
+  secondary lines (Exploration Value's age, rarity and upload lines, Codex Completionist, Boxel Survey, Discovery Alerts,
+  BGS tick status, and Inventory's last event and hint) use the smaller font too, so the headline lines stand out. Nothing
+  gets wider: labels still wrap to the panel.
+
+- **Colonization window, Where to buy: three follow-ups.**
+  - **Find all** searches every commodity you still have to buy (the table as filtered, covered rows left out) and lists
+    the closest 5 stations, plus 2 carriers if you ticked them, under a heading per commodity. Spansh looks up one commodity per
+    request, so it sends one per commodity about half a second apart; the button turns into **Stop** while it runs and
+    keeps what it found. A commodity that fails is named and the rest still show.
+  - **Your search choices are remembered** (within, sort, landing pad, fleet carriers) between sessions. They are window
+    preferences, shared by every commander, like the window's size.
+  - **Only what [station] sells** (next to Hide rows already covered) keeps the commodities the station you are docked at
+    has for sale, from the market you opened. It is greyed out until you open a commodity market and switches off when you
+    leave.
+
+### Developer
+- Files are LF on Windows and Linux: new `.editorconfig`, and `tests/test_line_endings.py` fails on any CRLF in a text file.
+
 ## 1.6.0 - 2026-10-11
 
 ### Changed

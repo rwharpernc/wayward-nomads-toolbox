@@ -20,7 +20,9 @@ Just play. The panel shows:
 
 - your current system's Powerplay state,
 - what you've earned in that system,
-- running merit totals for the session.
+- running merit totals and estimated CP for the session,
+- running merit totals and estimated CP for the **whole Powerplay cycle** so far, across every system. These carry over
+  between game sessions and reset when the cycle ends (Thursday 07:00 UTC); the Cycles tab shows the same numbers per cycle.
 
 Your game mode and credits are on the two lines under the mode buttons.
 

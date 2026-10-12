@@ -56,7 +56,7 @@ Spec: [POWERPLAY_TECH_SPEC.md](POWERPLAY_TECH_SPEC.md)
 | `powerplay_backfill.py` | Rebuilds the per-system ledger from journal files for cycles played while EDMC was closed |
 | `powerplay_clipboard.py` | Formats the Sessions window's "Copy Progress" text |
 | `powerplay_control_lookup.py` | Spansh lookup of which Power controls a system |
-| `powerplay_ledger.py` | The per-commander, per-system, per-cycle ledger of what you did and how each system moved |
+| `powerplay_ledger.py` | The per-commander, per-system, per-cycle ledger of what you did and how each system moved (`live_view()` feeds the panel's cycle tally) |
 | `powerplay_state.py` | JSON persistence for that ledger |
 | `powerplay_systems_tab.py` | The Systems tab of the Powerplay Sessions window |
 | `powerplay_window.py` | The Powerplay Sessions window (current session, systems, cycles, daily, history) |
@@ -210,7 +210,7 @@ Guide: [Colonization](guide/colonization.md)
 | `colonisation_history.py` | What the commander has delivered to construction sites (tonnes by commodity, site and day), kept per commander and caught up from the journals without double counting |
 | `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to get for the active site (pure formatting plus drawing) |
 | `colonisation_panel.py` | The Colonization mode's page (current project and history), the overlay card's controller and the settings tabs |
-| `colonisation_sources.py` | Where to buy a colonisation commodity: the closest stations (and optionally fleet carriers) with it in stock, any landing-pad size by default, via Spansh; pure shaping around an injected search |
+| `colonisation_sources.py` | Where to buy a colonisation commodity: the closest stations (and optionally fleet carriers) with it in stock, any landing-pad size by default, via Spansh; the whole-list search (one request per commodity) and the remembered search choices; pure shaping around an injected search |
 | `colonisation_stats.py` | The figures and wording of the Colonization page: the current project and the history, worded for a commander with or without a fleet carrier; pure, no Tk |
 | `colonisation_view.py` | What the Colonisation Sites window shows for a site: the commodity rows after the filters, and the totals (still to get, on the carrier, in the ship, buy and haul trips); pure, no Tk |
 | `colonisation_window.py` | The Colonisation Sites window: sites on the left; the picked site's progress, totals, filters and sortable commodity table, and the Where to buy search, on the right |

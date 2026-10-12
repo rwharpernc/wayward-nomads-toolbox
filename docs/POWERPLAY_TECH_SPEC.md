@@ -173,6 +173,9 @@ is archived on the next start. `MAX_ARCHIVE` (52) closed cycles are kept.
   (section 3). CP is derived at display time from the current ratios, as in section 4, and is never stored.
   Merits timestamped before the cycle began are ignored.
 
+The main panel's **Cycle N merits / Cycle N CP** lines read the live cycle straight from this ledger
+(`PowerplayLedger.live_view().merit_totals()`, formatted by `_cycle_lines` in `powerplay.py`), using the same CP ratios as the
+session lines.
 The session tallies in section 6 are untouched and remain per game login; the ledger is per **cycle**, so
 they can differ (a session can straddle a cycle boundary). Reset Session / Reset Current System act on
 sessions only.
