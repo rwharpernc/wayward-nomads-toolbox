@@ -131,8 +131,9 @@ enabled, fire button, hold time, focus the game, skip repeats, and the Linux pre
 ## 8. Testing
 
 `tests/test_platform_support.py` covers the Linux helpers (prefix and folder finding, key naming). The
-file-name, crop and conversion code is pure logic but has **no automated tests yet**, and the key
-simulation is checked by hand in a live game. Every failure path returns a plain result rather than
+file-name masks, crop rectangles, conversion, thumbnails and delayed delete are covered by
+`tests/test_screenshot_files.py` (including that a thumbnail is bounded on both axes, so an ultrawide screenshot cannot widen
+EDMC's window), and the key simulation is checked by hand in a live game. Every failure path returns a plain result rather than
 raising.
 
 ## 9. Known gaps

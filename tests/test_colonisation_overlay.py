@@ -87,6 +87,21 @@ class BuildCardTests(unittest.TestCase):
         self.assertEqual(built.trips, 3)          # 450 t in a 200 t ship
         self.assertEqual(card.build_card(site(), {}, {}, show_fc=False, capacity=0).trips, 0)
 
+    def test_buy_trips_take_the_ship_and_the_carrier_off_and_count_every_commodity(self) -> None:
+        # 450 t needed (400 steel, 50 water); 100 steel in the ship, 40 water on the carrier -> 310 t still to get
+        built = card.build_card(site(), {"steel": 100}, {"water": 40}, show_fc=True, capacity=200)
+        self.assertEqual((built.buy_trips, built.trips), (2, 3))        # ceil(310/200), ceil(450/200)
+        limited = card.build_card(site(), {"steel": 100}, {"water": 40}, show_fc=True, capacity=200, max_rows=1)
+        self.assertEqual(limited.buy_trips, 2)                          # a hidden row still counts
+
+    def test_buy_trips_reach_zero_once_everything_is_stocked_but_hauling_does_not(self) -> None:
+        built = card.build_card(site(), {"steel": 100}, {"steel": 300, "water": 50}, show_fc=True, capacity=200)
+        self.assertEqual((built.buy_trips, built.trips), (0, 3))
+
+    def test_buy_trips_are_zero_when_the_capacity_is_unknown(self) -> None:
+        built = card.build_card(site(), {}, {}, show_fc=True, capacity=0)
+        self.assertEqual((built.buy_trips, built.trips), (0, 0))
+
     def test_row_limit_is_summarized(self) -> None:
         built = card.build_card(site(), {}, {}, show_fc=False, max_rows=1)
         self.assertEqual((len(built.rows), built.hidden), (1, 1))
@@ -99,6 +114,38 @@ class BuildCardTests(unittest.TestCase):
     def test_nothing_to_draw(self) -> None:
         self.assertIsNone(card.build_card(None, {}, {}, False))
         self.assertIsNone(card.build_card(site(complete=True), {}, {}, False))
+
+
+class FooterTests(unittest.TestCase):
+    def test_with_a_carrier_the_footer_gives_both_legs(self) -> None:
+        built = card.build_card(site(), {"steel": 100}, {"water": 40}, show_fc=True, capacity=200)
+        self.assertEqual(built.footer_text(), "► 450 remaining  ► 2 to buy  ► 3 to haul")
+
+    def test_with_a_carrier_all_stocked_it_still_says_what_is_left_to_haul(self) -> None:
+        built = card.build_card(site(), {}, {"steel": 400, "water": 50}, show_fc=True, capacity=200)
+        self.assertEqual(built.footer_text(), "► 450 remaining  ► 0 to buy  ► 3 to haul")
+
+    def test_without_a_carrier_there_is_one_figure_and_it_says_to_finish(self) -> None:
+        self.assertEqual(card.build_card(site(), {}, {}, show_fc=False, capacity=200).footer_text(),
+                         "► 450 remaining  ► 3 trips to finish")
+        self.assertEqual(card.build_card(site(), {}, {}, show_fc=False, capacity=1000).footer_text(),
+                         "► 450 remaining  ► 1 trip to finish")
+
+    def test_without_a_capacity_there_are_no_trip_figures(self) -> None:
+        for carrier in (False, True):
+            self.assertEqual(card.build_card(site(), {}, {}, show_fc=carrier, capacity=0).footer_text(), "► 450 remaining")
+
+    def test_the_card_is_wide_enough_for_the_longer_footer(self) -> None:
+        short = card.build_card(site(), {}, {}, show_fc=True, capacity=0)
+        long = card.build_card(site(), {}, {}, show_fc=True, capacity=1)      # 450 trips each way
+        self.assertGreaterEqual(card.block_rect(long)[2], card.block_rect(short)[2])
+
+    def test_the_footer_is_drawn(self) -> None:
+        built = card.build_card(site(), {}, {"water": 40}, show_fc=True, capacity=200)
+        client = FakeClient()
+        card.render(client, built, 40, 300)
+        texts = [c[2] for c in client.sent if c[0] == "msg"]
+        self.assertIn(built.footer_text(), texts)
 
 
 class VisibilityTests(unittest.TestCase):
@@ -252,7 +299,7 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(texts["s1_3"], "Ship")
         self.assertEqual(texts["s3_0"], "Steel ✓")
         self.assertEqual(texts["s3_3"], "14,000")
-        self.assertTrue(texts[f"s{slots - 1}_0"].startswith("► 32,769 remaining  ► 33 trips"))
+        self.assertTrue(texts[f"s{slots - 1}_0"].startswith("► 32,769 remaining  ► 21 to buy  ► 33 to haul"))
 
     def test_no_fc_column_without_a_carrier(self) -> None:
         client = FakeClient()

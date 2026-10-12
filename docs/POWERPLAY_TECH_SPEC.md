@@ -131,9 +131,8 @@ default 4, 1-12). Sessions, cycles and history need no setting.
 The Rare Goods lookup has unit tests (`tests/test_rare_goods.py`). The per-system ledger and the journal scan are
 covered by `tests/test_powerplay_ledger.py` and `tests/test_powerplay_backfill.py` (section 11.5), which also holds the
 delivery-classification tests (`DeliveryClassificationTests`: the `PowerplayDeliver` windows and the legacy signals).
-The merit-to-CP conversion, session handling and clipboard formatting are mostly pure logic but **have no automated
-tests yet**; they are exercised by hand in EDMC, along with the panel and windows. Adding tests for them is the most
-useful next step for this feature.
+The merit-to-CP conversion, session handling (continuing or starting a session, the resets, saving and reloading) and the
+clipboard line are covered by `tests/test_powerplay_session.py`. The panel and windows are exercised by hand in EDMC.
 
 ## 10. Known gaps
 

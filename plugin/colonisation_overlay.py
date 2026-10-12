@@ -8,7 +8,8 @@ construction site still needs, with the columns Commodity, Need, FC and Ship.
 - **Ship** is what is in the ship's hold now. A ✓ marks a commodity the hold plus the fleet carrier already cover (the
   same rule as the Colonization window's green rows); the row turns amber when together they are more than is needed.
 
-A footer gives the tons remaining and the trips that is in the current ship (from its cargo capacity). Commodities are
+A footer gives the tons remaining and the trips in the current ship (from its cargo capacity): trips to buy and to haul with a fleet
+carrier, one "to finish" figure without one. Commodities are
 alphabetical, so rows stay put as the numbers change.
 
 Which site: the commander's most recently updated active site (the one the Colonization page names as the current project).
@@ -174,8 +175,20 @@ class Card:
     rows: Tuple[Row, ...]
     hidden: int          # commodities beyond the row limit
     remaining: int       # tons still needed in total
-    trips: int           # trips that is in the current ship (0 when its capacity is unknown)
+    trips: int           # trips to carry all of that to the site in the current ship (0 when its capacity is unknown)
     show_fc: bool
+    buy_trips: int = 0   # trips to gather what is still to get, after the ship and the carrier (0 once it is all stocked)
+
+    def footer_text(self) -> str:
+        """The last line. With a fleet carrier building has two legs, so it gives both (the same words as the COL page and the
+        sites window: to buy, to haul); without one a single trip buys and delivers, so there is one figure."""
+        footer = f"► {self.remaining:,} remaining"
+        if self.trips:
+            if self.show_fc:
+                footer += f"  ► {self.buy_trips:,} to buy  ► {self.trips:,} to haul"
+            else:
+                footer += f"  ► {self.trips:,} trip{'s' if self.trips != 1 else ''} to finish"
+        return footer
 
     @property
     def slot_count(self) -> int:
@@ -194,8 +207,13 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     limit = max_rows if max_rows > 0 else len(needed)
     rows = tuple(Row(r.label, r.remaining, hold.get(r.key, 0), on_carrier.get(r.key, 0)) for r in needed[:limit])
     remaining = sum(r.remaining for r in needed)
-    trips = math.ceil(remaining / capacity) if capacity and capacity > 0 else 0
-    return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc)
+    known = bool(capacity and capacity > 0)
+    trips = math.ceil(remaining / capacity) if known else 0
+    # What is still to get is counted over every commodity, not only the rows shown, and takes off the ship and the carrier
+    # (the same sum as the sites window's "trips to buy").
+    to_get = sum(max(0, r.remaining - hold.get(r.key, 0) - on_carrier.get(r.key, 0)) for r in needed)
+    buy_trips = math.ceil(to_get / capacity) if known and to_get > 0 else 0
+    return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc, buy_trips)
 
 
 def _layout(card: Card, look: Look = LEGACY) -> Tuple[int, List[int], int]:
@@ -212,8 +230,7 @@ def _layout(card: Card, look: Look = LEGACY) -> Tuple[int, List[int], int]:
     for width in widths:
         edge += width
         edges.append(edge * char)
-    footer = len(f"► {card.remaining:,} remaining") + (len(f"  ► {card.trips:,} trips in this ship") if card.trips else 0)
-    chars = max(name_chars + sum(widths), footer, len(card.title), 12)
+    chars = max(name_chars + sum(widths), len(card.footer_text()), len(card.title), 12)
     return 0, edges, int(round(chars * char))
 
 
@@ -264,10 +281,7 @@ def render(client: overlay.OverlayClient, card: Card, x: int, y: int, previous_s
         slots.append(cells)
     if card.hidden:
         slots.append([(0, f"+{card.hidden} more", look.color("title"), x)])
-    footer = f"► {card.remaining:,} remaining"
-    if card.trips:
-        footer += f"  ► {card.trips:,} trip{'s' if card.trips != 1 else ''} in this ship"
-    slots.append([(0, footer, look.color("text"), x)])
+    slots.append([(0, card.footer_text(), look.color("text"), x)])
 
     for index, cells in enumerate(slots):
         used = {column for column, _t, _c, _x in cells}
@@ -294,4 +308,4 @@ def preview_card() -> Card:
     return Card("Preview Construction Site",
                 (Row("Aluminium", 10055, 0, 0), Row("Steel", 12900, 14000, 1265), Row("Titanium", 8205, 300, 9000),
                  Row("Water", 1609, 1609, 0)),
-                hidden=0, remaining=32769, trips=33, show_fc=True)
+                hidden=0, remaining=32769, trips=33, show_fc=True, buy_trips=21)

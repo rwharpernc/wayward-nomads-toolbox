@@ -213,8 +213,10 @@ It draws a table, with the site name as its title and the columns **Commodity**,
   window's green rows); the row turns amber if together they are **more** than the site needs.
 
 Commodities are alphabetical so rows stay put while numbers change. A last line gives the tons remaining and the
-trips that is in your current ship, such as `► 32,769 remaining  ► 33 trips in this ship`. The trips are the same count as the
-window's trips to haul, and need your ship's cargo capacity, which EDMC supplies.
+trips in your current ship, and they need your ship's cargo capacity, which EDMC supplies. **With a fleet carrier** it gives both legs, as
+the COL page and the window do: `► 32,769 remaining  ► 21 to buy  ► 33 to haul`. **To buy** is the loads to gather what is still to
+get after your ship and your carrier (0 once it is all stocked); **to haul** is the loads to carry everything still needed to the
+site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 trips to finish`, since one trip buys and delivers.
 
 - **When it shows:**
   - In a **commodity market** at a station. It hides when you leave the screen, open another service such as

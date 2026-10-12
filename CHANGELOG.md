@@ -12,6 +12,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Changed
+- **Colonization overlay card footer gives both legs for a fleet carrier owner.** It now reads `► 32,769 remaining  ► 21 to buy  ► 33 to haul`
+  (the same words as the COL page and the sites window) instead of one "trips in this ship" figure that was the haul count.
+  Without a carrier it reads `► 32,769 remaining  ► 33 trips to finish`.
 - **Easier-to-read panels.** The Powerplay panel groups its tallies (here, this session, this cycle) with thin rules, shows
   the system and the merit totals in bold, and the CP and last-event lines in the smaller font. The other modes' status and
   secondary lines (Exploration Value's age, rarity and upload lines, Codex Completionist, Boxel Survey, Discovery Alerts,
@@ -48,6 +51,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - Documentation and comments no longer mention other tools or their authors; those credits are on the Acknowledgements page.
 
 ### Developer
+- New tests for Powerplay's merit-to-CP conversion, session handling and "Copy Progress" line
+  (`tests/test_powerplay_session.py`), and for screenshot file names, crop rectangles, conversion, thumbnail limits and the
+  delayed delete (`tests/test_screenshot_files.py`).
 - Files are LF on Windows and Linux: new `.editorconfig`, and `tests/test_line_endings.py` fails on any CRLF in a text file.
 - A `commit-msg` hook (`.githooks/`, enabled with `git config core.hooksPath .githooks`) and `tests/test_no_ai_credit.py` keep
   assistant credit lines out of commit messages and files; acknowledgements live only on the Acknowledgements page.
