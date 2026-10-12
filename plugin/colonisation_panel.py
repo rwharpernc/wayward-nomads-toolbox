@@ -176,7 +176,7 @@ class ColonisationController:
 
         def work() -> None:
             try:
-                self._history_results.put((cmdr, colonisation_catchup.read_all_contributions(cmdr)))
+                self._history_results.put((cmdr, colonisation_catchup.read_all_events(cmdr)))
             except Exception:
                 logger.exception("Colonization history rebuild failed for %s", cmdr)
                 self._history_pending.discard(key)
@@ -264,6 +264,11 @@ class ColonisationController:
             site = colonisation.apply_depot_event(entry, working, name=name, system=docked_system)
             if site is not None:
                 self._repository.upsert(self._cmdr, site)
+        elif event in colonisation.CLAIM_EVENTS:
+            if commander_data.key_for(self._cmdr) in self._history_pending:
+                self._history_live.append((self._cmdr, entry))
+            if self._ledger.apply_event(self._cmdr, entry):
+                self._ledger.commit()
         elif event == colonisation.EVENT_CONTRIBUTION:
             if commander_data.key_for(self._cmdr) in self._history_pending:
                 self._history_live.append((self._cmdr, entry))   # the rebuild in progress may not have read this one
@@ -449,6 +454,8 @@ class ColonisationController:
         self._set("h_chart", f"{chart}  (peak {max(h.daily):,} t a day)" if chart else "", show=bool(chart))
         self._set("h_busiest", f"{h.busiest_day[1]:,} t on {h.busiest_day[0]}" if h.busiest_day else "", show=bool(h.busiest_day))
         self._set("h_site", f"{_clip(h.top_site[0], 30)} ({h.top_site[1]:,} t)" if h.top_site else "", show=bool(h.top_site))
+        claims = stats.claims_text(h)
+        self._set("h_claims", claims, show=bool(claims))
         self._set("h_top", ", ".join(f"{_clip(label, 22)} {tons:,}" for label, tons in h.top_commodities),
                   show=bool(h.top_commodities))
         self._set("h_average", stats.average_text(h.average_days), show=h.average_days is not None)
@@ -512,6 +519,7 @@ class ColonisationController:
         line("h_chart", f"Last {stats.CHART_DAYS} days", wide=True)
         line("h_busiest", "Best day")
         line("h_site", "Busiest site", wide=True)
+        line("h_claims", "Claims", wide=True)
         line("h_top", "Most delivered (t)", wide=True)
         line("h_average", "Average build")
         line("h_since", "Note")

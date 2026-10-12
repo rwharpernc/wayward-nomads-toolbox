@@ -1,6 +1,6 @@
 """
 The one-time rebuild of a commander's colonization delivery history from every journal they have
-(colonisation_catchup.read_all_contributions, colonisation_history.DeliveryLedger.rebuild).
+(colonisation_catchup.read_all_events, colonisation_history.DeliveryLedger.rebuild).
 
 Journal files in a temporary folder and a ledger with no plugin folder (nothing is written), so it behaves the same on
 Windows and Linux.
@@ -32,6 +32,18 @@ def give(ts, amount, market=SITE_A, name="steel", label="Steel"):
             "Contributions": [{"Name": f"${name}_name;", "Name_Localised": label, "Amount": amount}]}
 
 
+def claim(ts, system="Hyades Sector NE-W a3-1"):
+    return {"timestamp": ts, "event": "ColonisationSystemClaim", "StarSystem": system, "SystemAddress": 22949620763280}
+
+
+def release(ts):
+    return {"timestamp": ts, "event": "ColonisationSystemClaimRelease", "StarSystem": "Synuefe DO-L b55-8", "SystemAddress": 18267435247065}
+
+
+def beacon(ts):
+    return {"timestamp": ts, "event": "ColonisationBeaconDeployed"}
+
+
 def write_journal(folder, name, who, entries, as_loadgame=False):
     header = {"timestamp": "2026-01-01T00:00:00Z", "event": "LoadGame" if as_loadgame else "Commander",
               ("Commander" if as_loadgame else "Name"): who}
@@ -51,7 +63,7 @@ class ReaderTests(unittest.TestCase):
     def test_every_delivery_of_the_commander_is_found_oldest_first_across_files(self):
         write_journal(self.dir, "Journal.2026-03-01T000000.01.log", "Alice", [give("2026-03-01T10:00:00Z", 200)])
         write_journal(self.dir, "Journal.2025-06-01T000000.01.log", "Alice", [give("2025-06-01T10:00:00Z", 100)])
-        found = catchup.read_all_contributions("Alice", self.dir)
+        found = catchup.read_all_events("Alice", self.dir)
         self.assertEqual([e["timestamp"] for e in found], ["2025-06-01T10:00:00Z", "2026-03-01T10:00:00Z"])
 
     def test_other_commanders_deliveries_are_left_out_even_in_the_same_file(self):
@@ -59,8 +71,8 @@ class ReaderTests(unittest.TestCase):
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(json.dumps({"timestamp": "2026-03-01T11:00:00Z", "event": "LoadGame", "Commander": "Bob"}) + "\n")
             handle.write(json.dumps(give("2026-03-01T12:00:00Z", 999)) + "\n")
-        alice = catchup.read_all_contributions("Alice", self.dir)
-        bob = catchup.read_all_contributions("bob", self.dir)          # the name's case does not matter
+        alice = catchup.read_all_events("Alice", self.dir)
+        bob = catchup.read_all_events("bob", self.dir)          # the name's case does not matter
         self.assertEqual([e["Contributions"][0]["Amount"] for e in alice], [200])
         self.assertEqual([e["Contributions"][0]["Amount"] for e in bob], [999])
 
@@ -69,11 +81,11 @@ class ReaderTests(unittest.TestCase):
         path = write_journal(self.dir, "Journal.2026-02-01T000000.01.log", "Alice", [give("2026-02-01T10:00:00Z", 50)])
         with open(path, "a", encoding="utf-8") as handle:
             handle.write('{ "event":"ColonisationContribution", broken\n')
-        self.assertEqual(len(catchup.read_all_contributions("Alice", self.dir)), 1)
+        self.assertEqual(len(catchup.read_all_events("Alice", self.dir)), 1)
 
     def test_a_missing_or_unset_folder_gives_nothing(self):
-        self.assertEqual(catchup.read_all_contributions("Alice", os.path.join(self.dir, "nope")), [])
-        self.assertEqual(catchup.read_all_contributions("Alice", ""), [])
+        self.assertEqual(catchup.read_all_events("Alice", os.path.join(self.dir, "nope")), [])
+        self.assertEqual(catchup.read_all_events("Alice", ""), [])
 
 
 class RebuildTests(unittest.TestCase):
@@ -148,12 +160,68 @@ class RebuildTests(unittest.TestCase):
         self.assertFalse(ledger.rebuild("", [give("2026-03-01T10:00:00Z", 200)]))
         self.assertFalse(ledger.backfilled(""))
 
+    def test_claims_releases_and_beacons_are_counted_with_the_deliveries(self):
+        ledger = DeliveryLedger()
+        entries = [claim("2025-06-23T14:00:53Z"), beacon("2025-06-23T14:10:48Z"), claim("2025-07-01T09:00:00Z", "Sol"),
+                   release("2025-07-27T09:50:54Z"), give("2025-07-28T10:00:00Z", 100)]
+        ledger.rebuild("Alice", entries)
+        record = ledger.record("Alice")
+        self.assertEqual({k: record["claims"][k] for k in ("made", "released", "beacons")}, {"made": 2, "released": 1, "beacons": 1})
+        self.assertEqual((record["deliveries"], record["tonnes"]), (1, 100))
+
+    def test_a_claim_seen_live_after_the_rebuild_counts_once(self):
+        ledger = DeliveryLedger()
+        ledger.rebuild("Alice", [claim("2025-06-23T14:00:53Z")])
+        self.assertTrue(ledger.apply_event("Alice", claim("2025-08-01T00:00:00Z")))
+        self.assertFalse(ledger.apply_event("Alice", claim("2025-08-01T00:00:00Z")))        # the same event again
+        self.assertFalse(ledger.apply_event("Alice", claim("2025-06-23T14:00:53Z")))        # an older one the rebuild already had
+        self.assertEqual(ledger.record("Alice")["claims"]["made"], 2)
+
+    def test_claims_and_deliveries_keep_their_own_newest_marks(self):
+        ledger = DeliveryLedger()
+        ledger.apply_event("Alice", give("2026-03-01T10:00:00Z", 50))
+        self.assertTrue(ledger.apply_event("Alice", claim("2026-01-01T00:00:00Z")))          # older than the delivery, still new to claims
+        self.assertEqual(ledger.record("Alice")["claims"]["made"], 1)
+
+    def test_a_record_saved_before_claims_existed_gains_the_counters(self):
+        ledger = DeliveryLedger()
+        ledger.apply_contribution("Alice", give("2026-03-01T10:00:00Z", 50))
+        record = ledger.record("Alice")
+        del record["claims"]                                           # the shape version 1 wrote
+        self.assertTrue(ledger.apply_event("Alice", claim("2026-03-02T00:00:00Z")))
+        self.assertEqual(ledger.record("Alice")["claims"]["made"], 1)
+
+    def test_a_rebuild_from_the_first_version_is_done_again_so_claims_are_found(self):
+        ledger = DeliveryLedger()
+        ledger.rebuild("Alice", [give("2026-03-01T10:00:00Z", 50)])
+        ledger.record("Alice")["backfilled"] = True                    # what version 1 stored
+        self.assertFalse(ledger.backfilled("Alice"))
+        self.assertTrue(ledger.rebuild("Alice", [give("2026-03-01T10:00:00Z", 50), claim("2026-03-02T00:00:00Z")]))
+        self.assertTrue(ledger.backfilled("Alice"))
+        self.assertEqual(ledger.record("Alice")["claims"]["made"], 1)
+        self.assertEqual(ledger.record("Alice")["tonnes"], 50)         # not doubled
+
+    def test_the_reader_finds_claim_events_in_files_with_no_deliveries(self):
+        with tempfile.TemporaryDirectory() as folder:
+            write_journal(folder, "Journal.2025-06-23T000000.01.log", "Alice", [claim("2025-06-23T14:00:53Z"), beacon("2025-06-23T14:10:48Z")])
+            found = catchup.read_all_events("Alice", folder)
+            self.assertEqual([e["event"] for e in found], ["ColonisationSystemClaim", "ColonisationBeaconDeployed"])
+
+    def test_the_start_up_catch_up_counts_claims_too_once(self):
+        from plugin.colonisation_data import SiteRepository
+        ledger = DeliveryLedger()
+        events = [("Alice", claim("2026-03-01T00:00:00Z")), ("Alice", beacon("2026-03-02T00:00:00Z"))]
+        catchup.apply_events(SiteRepository(), events, ledger)
+        catchup.apply_events(SiteRepository(), events, ledger)
+        claims = ledger.record("Alice")["claims"]
+        self.assertEqual((claims["made"], claims["beacons"]), (1, 1))
+
     def test_the_whole_path_from_files_to_figures(self):
         with tempfile.TemporaryDirectory() as folder:
             write_journal(folder, "Journal.2025-06-01T000000.01.log", "Alice", [give("2025-06-01T10:00:00Z", 100)])
             write_journal(folder, "Journal.2026-03-01T000000.01.log", "Alice", [give("2026-03-01T10:00:00Z", 200)], as_loadgame=True)
             ledger = DeliveryLedger()
-            ledger.rebuild("Alice", catchup.read_all_contributions("Alice", folder))
+            ledger.rebuild("Alice", catchup.read_all_events("Alice", folder))
             self.assertEqual(ledger.record("Alice")["tonnes"], 300)
 
 

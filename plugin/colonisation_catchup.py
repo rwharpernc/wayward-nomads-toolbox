@@ -28,11 +28,11 @@ from .colonisation_history import DeliveryLedger
 DEFAULT_DAYS = 14   # how far back to read when no site says otherwise
 MAX_DAYS = 30       # never read further back than this
 _WANTED = journal_files.event_pattern(
-    "Commander", "LoadGame", "Docked", colonisation.EVENT_DEPOT, colonisation.EVENT_CONTRIBUTION)
+    "Commander", "LoadGame", "Docked", colonisation.EVENT_DEPOT, colonisation.EVENT_CONTRIBUTION, *colonisation.CLAIM_EVENTS)
 
 Event = Tuple[str, Dict[str, Any]]   # (commander name, journal entry)
-_CONTRIBUTION_MARK = b"ColonisationContribution"
-_WANTED_HISTORY = journal_files.event_pattern("Commander", "LoadGame", colonisation.EVENT_CONTRIBUTION)
+_HISTORY_MARKS = (b"ColonisationContribution", b"ColonisationSystemClaim", b"ColonisationBeaconDeployed")
+_WANTED_HISTORY = journal_files.event_pattern("Commander", "LoadGame", colonisation.EVENT_CONTRIBUTION, *colonisation.CLAIM_EVENTS)
 logger = logging.getLogger(__name__)
 
 
@@ -61,6 +61,10 @@ def apply_events(repository: SiteRepository, events: Iterable[Event], ledger: Op
     for cmdr, entry in events:
         kind = entry.get("event")
         market_id = entry.get("MarketID")
+        if kind in colonisation.CLAIM_EVENTS:
+            if ledger is not None:
+                ledger.apply_event(cmdr, entry)    # counted in the history only; a claim names no depot
+            continue
         if kind == "Docked":
             if isinstance(market_id, int) and entry.get("StationName"):
                 docked[market_id] = (str(entry["StationName"]), str(entry.get("StarSystem") or ""))
@@ -122,18 +126,19 @@ def known_commanders(repository: SiteRepository) -> List[str]:
     return list(repository._by_cmdr)   # noqa: SLF001 - same package; the repository keeps no public listing
 
 
-def _file_has_contributions(path: str) -> bool:
-    """A quick look for the event's name before the file is parsed line by line: most journals have no deliveries at all."""
+def _file_has_history_events(path: str) -> bool:
+    """A quick look for the events' names before the file is parsed line by line: most journals have none of them."""
     try:
         with open(path, "rb") as handle:
-            return _CONTRIBUTION_MARK in handle.read()
+            data = handle.read()
     except OSError:
         return False
+    return any(mark in data for mark in _HISTORY_MARKS)
 
 
-def read_all_contributions(cmdr: str, folder: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Every `ColonisationContribution` `cmdr` has in the journal folder (no date limit), oldest first, for the one-time
-    history rebuild. A file says whose events follow in its `Commander` / `LoadGame` lines, and one file can hold more than
+def read_all_events(cmdr: str, folder: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Every delivery, system claim, release and beacon `cmdr` has in the journal folder (no date limit), oldest first, for the
+    one-time history rebuild. A file says whose events follow in its `Commander` / `LoadGame` lines, and one file can hold more than
     one commander. Real I/O over years of journals, so callers run it off the Tk thread."""
     location = journal_files.journal_folder() if folder is None else folder
     if not location or not os.path.isdir(location):
@@ -143,7 +148,7 @@ def read_all_contributions(cmdr: str, folder: Optional[str] = None) -> List[Dict
     found: List[Dict[str, Any]] = []
     files = journal_files.files_modified_since(0.0, location)
     for path in files:
-        if not _file_has_contributions(path):
+        if not _file_has_history_events(path):
             continue
         current = ""
         for entry in journal_files.read_events(path, _WANTED_HISTORY):
@@ -152,8 +157,8 @@ def read_all_contributions(cmdr: str, folder: Optional[str] = None) -> List[Dict
                 current = commander_data.key_for(entry["Name"])
             elif kind == "LoadGame" and entry.get("Commander"):
                 current = commander_data.key_for(entry["Commander"])
-            elif kind == colonisation.EVENT_CONTRIBUTION and current == wanted:
+            elif (kind == colonisation.EVENT_CONTRIBUTION or kind in colonisation.CLAIM_EVENTS) and current == wanted:
                 found.append(entry)
     found.sort(key=lambda e: str(e.get("timestamp") or ""))
-    logger.info("Colonization history: read %d journal file(s) for %s, found %d delivery event(s)", len(files), cmdr, len(found))
+    logger.info("Colonization history: read %d journal file(s) for %s, found %d history event(s)", len(files), cmdr, len(found))
     return found

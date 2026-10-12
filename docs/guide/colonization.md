@@ -38,6 +38,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Last 14 days | A row of blocks, one a day (oldest first), as tall as that day's tons against your busiest of the 14; a dot is a day with nothing delivered. The peak is named beside it |
 | Best day | Your biggest single day |
 | Busiest site | The site you delivered the most tons to, with the tons |
+| Claims | How many systems you have claimed (`ColonisationSystemClaim`), how many of those you released, and how many colonisation beacons you deployed. Counts only: the game does not say when a claim ends, so WNTB does not list which systems are still yours |
 | Most delivered | Your top three commodities |
 | Average build | Days from the first time WNTB saw a site to the day the depot reported it complete, over the sites for which both are known |
 | Note | "Counted since [date]": the first delivery WNTB has counted |

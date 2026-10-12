@@ -12,6 +12,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   the cycle rolls over. They come from the same per-commander ledger as the Sessions window's Systems tab.
 
 ### Added
+- **Colonization History: a Claims line.** How many systems you have claimed, how many you released and how many colonisation beacons
+  you deployed, counted from the game's `ColonisationSystemClaim`, `ColonisationSystemClaimRelease` and `ColonisationBeaconDeployed`
+  events (the history rebuild runs once more after updating so it can find the older ones).
 - **Trade: lifetime totals.** The Session page now ends with the game's own career totals for the commander (trading, mining, exobiology
   and, with a fleet carrier, the carrier), from the `Statistics` event the game writes at login. They are labelled with that login's
   date and kept apart from the session.

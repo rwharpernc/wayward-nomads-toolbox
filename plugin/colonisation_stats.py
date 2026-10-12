@@ -130,6 +130,9 @@ class History:
     tracked_delivered: int   # tons delivered to them by anyone
     daily: Tuple[int, ...] = ()   # tons delivered on each of the last CHART_DAYS days, oldest first
     top_site: Optional[Tuple[str, int]] = None   # the site this commander delivered most to: (name, tons)
+    claims_made: int = 0
+    claims_released: int = 0
+    beacons: int = 0
 
 
 def history_for(sites: Sequence[Site], record: Mapping[str, Any], today: Optional[date] = None) -> History:
@@ -163,7 +166,25 @@ def history_for(sites: Sequence[Site], record: Mapping[str, Any], today: Optiona
         since=first[:10], average_days=sum(spans) / len(spans) if spans else None,
         tracked_required=sum(r.required for s in sites for r in s.resources),
         tracked_delivered=sum(r.provided for s in sites for r in s.resources),
-        daily=daily, top_site=top_site if top_site and top_site[1] > 0 else None)
+        daily=daily, top_site=top_site if top_site and top_site[1] > 0 else None,
+        claims_made=_count((record.get("claims") or {}).get("made")), claims_released=_count((record.get("claims") or {}).get("released")),
+        beacons=_count((record.get("claims") or {}).get("beacons")))
+
+
+def _count(value: Any) -> int:
+    return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else 0
+
+
+def claims_text(history: History) -> str:
+    """'53 claimed · 4 released · 53 beacons' (empty when nothing was ever claimed)."""
+    if not (history.claims_made or history.beacons):
+        return ""
+    parts = [f"{history.claims_made:,} {_plural(history.claims_made, 'system')} claimed"]
+    if history.claims_released:
+        parts.append(f"{history.claims_released:,} released")
+    if history.beacons:
+        parts.append(f"{history.beacons:,} {_plural(history.beacons, 'beacon')}")
+    return " · ".join(parts)
 
 
 def chart_text(daily: Sequence[int]) -> str:

@@ -34,6 +34,11 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 EVENT_DEPOT = "ColonisationConstructionDepot"
 EVENT_CONTRIBUTION = "ColonisationContribution"
+EVENT_CLAIM = "ColonisationSystemClaim"
+EVENT_RELEASE = "ColonisationSystemClaimRelease"
+EVENT_BEACON = "ColonisationBeaconDeployed"
+CLAIM_EVENTS = frozenset({EVENT_CLAIM, EVENT_RELEASE, EVENT_BEACON})
+"""System claims made and released and colonisation beacons deployed: counted in the history, not construction sites."""
 
 _NAME_KEY = re.compile(r"^\$?(.*?)(?:_name)?;?$", re.IGNORECASE)
 

@@ -223,6 +223,20 @@ class HistoryTests(unittest.TestCase):
         history = S.history_for([], ledger.record("A"), today=date(2026, 10, 11))
         self.assertEqual(history.top_site, ("Construction site 12345", 30))
 
+    def test_claims_are_shown_when_there_are_any(self):
+        record = {"claims": {"made": 53, "released": 4, "beacons": 53, "at": "x"}}
+        history = S.history_for([], record)
+        self.assertEqual((history.claims_made, history.claims_released, history.beacons), (53, 4, 53))
+        self.assertEqual(S.claims_text(history), "53 systems claimed · 4 released · 53 beacons")
+        one = S.history_for([], {"claims": {"made": 1, "released": 0, "beacons": 1}})
+        self.assertEqual(S.claims_text(one), "1 system claimed · 1 beacon")
+
+    def test_no_claims_means_no_line_and_odd_values_are_ignored(self):
+        self.assertEqual(S.claims_text(S.history_for([], {})), "")
+        self.assertEqual(S.claims_text(S.history_for([], {"claims": {"made": 0, "released": 3, "beacons": 0}})), "")
+        odd = S.history_for([], {"claims": {"made": "many", "released": True, "beacons": -2}})
+        self.assertEqual((odd.claims_made, odd.claims_released, odd.beacons), (0, 0, 0))
+
     def test_nothing_yet(self):
         history = S.history_for([], {})
         self.assertEqual((history.daily, history.top_site), ((0,) * S.CHART_DAYS, None))

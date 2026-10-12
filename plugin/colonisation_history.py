@@ -9,7 +9,8 @@ A delivery is an addition, so counting one twice would be wrong. Each commander'
 the newest contribution folded in, and one is applied only if it is newer, which makes the start-up catch-up from the
 journals (colonisation_catchup.py) safe next to the live events. The catch-up reads at most 30 days back, so deliveries
 made before this file existed and more than that long ago are not in it; the figures say "since" the first one counted.
-`rebuild` fills that gap once per commander from the whole journal history (colonisation_catchup.read_all_contributions).
+`rebuild` fills that gap once per commander from the whole journal history (colonisation_catchup.read_all_events). System
+claims, releases and beacons are counted the same way, each kind of count with its own newest-only mark (`claims.at`).
 """
 from __future__ import annotations
 
@@ -29,14 +30,19 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 STATE_FILENAME = "colonisation_history.json"
+BACKFILL_VERSION = 2   # 1 rebuilt the deliveries; 2 also counts system claims and beacons, so a version 1 rebuild is done again
 DAYS_KEPT = 400   # by_day entries older than this are dropped (the totals keep them)
 
 Record = Dict[str, Any]
 
 
+def _empty_claims() -> Dict[str, Any]:
+    return {"made": 0, "released": 0, "beacons": 0, "at": ""}
+
+
 def _empty() -> Record:
     return {"journal_at": "", "first": "", "last": "", "deliveries": 0, "tonnes": 0,
-            "by_commodity": {}, "by_site": {}, "by_day": {}}
+            "by_commodity": {}, "by_site": {}, "by_day": {}, "claims": _empty_claims()}
 
 
 def _is_legacy(_raw: Any) -> bool:
@@ -82,14 +88,25 @@ class DeliveryLedger:
             return False
         return _fold(commander_data.payload_for(self._store, cmdr, _empty), entry)
 
+    def apply_event(self, cmdr: str, entry: Dict[str, Any]) -> bool:
+        """Fold in a `ColonisationContribution`, or a system claim, release or beacon. True if anything changed."""
+        if not commander_data.key_for(cmdr):
+            return False
+        return _fold_any(commander_data.payload_for(self._store, cmdr, _empty), entry)
+
     def backfilled(self, cmdr: str) -> bool:
-        """Whether this commander's record has already been rebuilt from the whole journal history."""
-        return bool(cmdr and commander_data.known(self._store, cmdr) and self.record(cmdr).get("backfilled"))
+        """Whether this commander's record has already been rebuilt from the whole journal history (by this version's rules)."""
+        if not (cmdr and commander_data.known(self._store, cmdr)):
+            return False
+        try:
+            return int(self.record(cmdr).get("backfilled") or 0) >= BACKFILL_VERSION
+        except (TypeError, ValueError):
+            return False
 
     def rebuild(self, cmdr: str, entries: Iterable[Dict[str, Any]], newer: Iterable[Dict[str, Any]] = ()) -> bool:
-        """Rebuild the commander's record from every `ColonisationContribution` they have in the journals (`entries`, in
-        any order), so deliveries from before this file existed are counted. `newer` are live events that arrived while the
-        journals were being read; the newest-only rule skips any the journals already held.
+        """Rebuild the commander's record from every `ColonisationContribution` and system claim, release and beacon they have in
+        the journals (`entries`, in any order), so what happened before this file existed is counted. `newer` are live events
+        that arrived while the journals were being read; the newest-only rule skips any the journals already held.
 
         The rebuilt figures replace the saved ones only if they are at least as large: a commander who has since deleted old
         journals keeps what was counted live. Either way the record is marked as backfilled so it is done once. Returns True if
@@ -98,16 +115,38 @@ class DeliveryLedger:
             return False
         fresh = _empty()
         for entry in sorted(entries, key=lambda e: str(e.get("timestamp") or "")):
-            _fold(fresh, entry)
+            _fold_any(fresh, entry)
         for entry in sorted(newer, key=lambda e: str(e.get("timestamp") or "")):
-            _fold(fresh, entry)
+            _fold_any(fresh, entry)
         current = commander_data.payload_for(self._store, cmdr, _empty)
-        replace = fresh["tonnes"] >= current["tonnes"] and fresh["deliveries"] >= current["deliveries"]
+        old_claims, new_claims = current.get("claims") or _empty_claims(), fresh["claims"]
+        replace = (fresh["tonnes"] >= current["tonnes"] and fresh["deliveries"] >= current["deliveries"]
+                   and new_claims["made"] >= old_claims.get("made", 0) and new_claims["beacons"] >= old_claims.get("beacons", 0))
         if replace:
             commander_data.put(self._store, cmdr, fresh)
             current = fresh
-        current["backfilled"] = True
+        current["backfilled"] = BACKFILL_VERSION
         return replace
+
+
+def _fold_any(record: Record, entry: Dict[str, Any]) -> bool:
+    """Fold one history event into `record`: a delivery, or a claim, release or beacon."""
+    if entry.get("event") in colonisation.CLAIM_EVENTS:
+        return _fold_claim(record, entry)
+    return _fold(record, entry)
+
+
+def _fold_claim(record: Record, entry: Dict[str, Any]) -> bool:
+    """Count a system claim, its release or a beacon deployed, unless it is not newer than the last one counted."""
+    claims = record.setdefault("claims", _empty_claims())
+    stamp = str(entry.get("timestamp") or "")
+    if stamp and claims.get("at") and stamp <= claims["at"]:
+        return False
+    key = {colonisation.EVENT_CLAIM: "made", colonisation.EVENT_RELEASE: "released", colonisation.EVENT_BEACON: "beacons"}[entry["event"]]
+    claims[key] = int(claims.get(key, 0)) + 1
+    if stamp:
+        claims["at"] = stamp
+    return True
 
 
 def _fold(record: Record, entry: Dict[str, Any]) -> bool:
