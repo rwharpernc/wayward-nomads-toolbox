@@ -114,6 +114,27 @@ The journal only records cargo you transfer to the carrier, so WNTB's carrier fi
   last 30 days of journals and drops any figure taken from Frontier, so it is a quick fix, not a replacement for the real hold. See
   [Rescan Carrier](colonization.md#rescan-carrier-when-a-load-did-not-register).
 
+### Raven Colonial doesn't update as I deliver
+
+WNTB sends nothing to Raven Colonial until you turn sharing on. It is **off by default**, and it is separate from the Raven features
+that only read (Planned Builds, Raven Progress and the quick links work without it). If your deliveries never reach Raven, this is
+almost always why.
+
+In **Settings → Colonization → Raven Colonial**:
+
+1. Tick **Allow WNTB to write to Raven Colonial (master switch)**. The options under it stay grayed out until you do.
+2. Tick **Report my construction progress and deliveries to Raven Colonial**.
+3. Tick **Also report cargo I move to and from my fleet carrier** if you want that too.
+4. Paste your key from [ravencolonial.com/user](https://ravencolonial.com/user) and press **Test key**. Raven answers with your name
+   for you when the key is accepted. With no key, nothing is sent.
+5. Press **OK** in Settings.
+
+Only deliveries made while sharing is on are sent. WNTB does not backfill earlier ones. The update reaches Raven when the depot's
+figures change and when you deliver, so dock at the site or open its market to send the current totals. If another tool such as
+SrvSurvey also reports your deliveries to Raven, turn one of them off, or Raven counts each delivery twice. The setting is saved per
+computer, so check it on each machine you play on. If it is on and Raven still does not update, the EDMC log shows the failed
+request; please [report it](../../README.md#getting-help) with those lines.
+
 ### Raven Progress says Raven has no project for my site
 
 Raven Colonial only records a site's market id once the build is finished, so WNTB finds a build in progress by its **name**. If you
