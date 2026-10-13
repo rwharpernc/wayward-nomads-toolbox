@@ -5,7 +5,9 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **1.9.0** was released on 2026-10-13 (tag `v1.9.0`, from `master` at `f7170d6`). It is the version being tested now. On Windows it
+- **1.9.1** was released on 2026-10-13 (tag `v1.9.1`, from `master`). It holds the fixes found while testing 1.9.0 on Linux and Windows
+  (see its section in `CHANGELOG.md`), both confirmed on Windows. The text below about 1.9.0 is how testing started.
+- **1.9.0** was released on 2026-10-13 (tag `v1.9.0`, from `master` at `f7170d6`). On Windows it
   was installed by the in-app updater; Linux testing starts from the same automatic install.
 - Everything listed under 1.9.0 in `CHANGELOG.md` is in it: the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list,
   overlay default spots that no longer overlap, and the Colonization improvements.
@@ -14,12 +16,12 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 | Branch | What it is for | State |
 |---|---|---|
-| `bugfix/1.9.1` | Fixes for bugs found while testing 1.9.0. Becomes release **1.9.1**. | 1.9.0 plus the documentation audit and the Linux checklist update. The version is still 1.9.0: it is bumped to 1.9.1 together with the first real fix. |
-| `master` | The released code. | Equal to `v1.9.0`. |
+| `bugfix/1.9.1` | Fixes for bugs found while testing 1.9.0. | Released as **1.9.1** and merged into `master`. Start any further fixes on a new `bugfix/1.9.2` branch cut from `master`. |
+| `master` | The released code. | Equal to `v1.9.1`. |
 | `feature/materials-engineering` | Planned **1.10.0**: engineering materials held, a blueprint browser with a wishlist and shopping list, engineers (including the four Colonia on-foot engineers, added by hand), and a material trader finder. | Built, with unit and window tests. **Not yet seen working in the game.** |
 | `feature/expedition-planner` | Planned **1.11.0**: named expeditions of stops with notes, progress from arrivals, import from the plotted route or a CSV. | Same: built and tested, **not yet seen in the game**. |
 
-The two feature branches were cut from `master` at 1.9.0 and do not contain each other. When they are merged, the engineering branch goes
+The two feature branches were cut from `master` at 1.9.0, do not contain each other, and have not yet had 1.9.1 merged in (do that first: `git merge master`). When they are merged, the engineering branch goes
 first; each adds entries under "Unreleased" in `CHANGELOG.md`, which has to be placed by hand under its own version heading.
 
 ## Testing
