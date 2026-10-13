@@ -122,7 +122,5 @@ class FuelWatcher:
             found.append(FuelAlert("low", f"Low fuel: {shown}" if percent is not None else f"Low fuel: {shown} (under 25%)"))
         if (unscoopable and percent is not None and self.target_class and not is_scoopable(self.target_class)
                 and percent <= unscoopable_percent):
-            where = f"{self.target_name} " if self.target_name else ""
-            found.append(FuelAlert("unscoopable", f"Next star {where}is a {star_description(self.target_class)} and cannot be scooped. "
-                                                  f"Fuel {shown}"))
+            found.append(FuelAlert("unscoopable", f"No scoop at next star ({star_description(self.target_class)}). Fuel {shown}"))
         return found

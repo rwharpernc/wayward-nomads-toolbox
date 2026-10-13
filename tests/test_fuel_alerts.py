@@ -82,7 +82,7 @@ class UnscoopableTests(unittest.TestCase):
     def test_an_unscoopable_target_with_a_half_tank_warns(self):
         alerts = watcher(fuel=16.0, target="N", name="Col 70 Sector").alerts()
         self.assertEqual([a.kind for a in alerts], ["unscoopable"])
-        self.assertEqual(alerts[0].text, "Next star Col 70 Sector is a neutron star and cannot be scooped. Fuel 50% (16.0 t)")
+        self.assertEqual(alerts[0].text, "No scoop at next star (neutron star). Fuel 50% (16.0 t)")
 
     def test_a_fuller_tank_does_not(self):
         self.assertEqual(watcher(fuel=17.0, target="N").alerts(), [])

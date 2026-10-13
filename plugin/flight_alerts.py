@@ -103,6 +103,11 @@ _BASE_PAD_X = 18
 _BASE_PAD_Y = 14
 _LINE_GAP = 6
 _SAMPLE_LINES = 3
+# The wire protocol has no text metrics, so a line's width is estimated from its characters, and the overlay font runs wider than the
+# plain estimate (capitals, digits). The box is measured this much wider, as the Colonization card does (colonisation_overlay.CHAR_SCALE),
+# and a line is cut off at MAX_LINE_CHARS so a long name cannot grow the card without limit.
+WIDTH_SAFETY = 1.3
+MAX_LINE_CHARS = 60
 
 GROUP_NAME = "wntb_flight"
 GROUP_PREFIX = "wntb_flight_"
@@ -111,14 +116,14 @@ _LINE_IDS = tuple(f"wntb_flight_line{i}" for i in range(MAX_LINES))
 
 SAMPLE_LINES: List[Line] = [
     ("Carrier jumps to Sol in 4:32", COLOR_AMBER),
-    ("Next star ZZZ Test is a neutron star and cannot be scooped. Fuel 38% (12.2 t)", COLOR_AMBER),
+    ("No scoop at next star (neutron star). Fuel 38% (12.2 t)", COLOR_AMBER),
     ("Low fuel: 18% (5.8 t)", COLOR_RED),
 ]
 
 
 def _card_size(look: Look, lines: List[Line]) -> Tuple[int, int]:
     pad_x, pad_y = look.pad_x(_BASE_PAD_X), look.pad_y(_BASE_PAD_Y)
-    widest = max([look.text_width(text, "normal") for text, _color in lines] + [_MIN_W - 2 * pad_x])
+    widest = max([int(look.text_width(text, "normal") * WIDTH_SAFETY) for text, _color in lines] + [_MIN_W - 2 * pad_x])
     height = 2 * pad_y + len(lines) * look.line_px("normal") + (len(lines) - 1) * _LINE_GAP
     return widest + 2 * pad_x, height
 
@@ -138,7 +143,7 @@ def placed_client(client: OverlayClient, look: Look = LEGACY) -> OverlayClient:
 def render(lines: List[Line], client: OverlayClient, look: Look = LEGACY) -> None:
     """Draws the card with `lines` (at most MAX_LINES), or clears it when there are none. Raises on an overlay failure, as the
     interdiction warning does; the live path swallows it and the Settings test reports it."""
-    lines = lines[:MAX_LINES]
+    lines = [(text if len(text) <= MAX_LINE_CHARS else text[:MAX_LINE_CHARS - 1].rstrip() + "…", color) for text, color in lines[:MAX_LINES]]
     if not lines:
         _clear(client)
         return

@@ -208,6 +208,19 @@ FA.render([], rec, look)
 check(rec.shapes[FA._CARD_ID][1:] == (0, 0) and all(rec.messages[i] == "" for i in FA._LINE_IDS), "no lines clears the card")
 check(len(FA.SAMPLE_LINES) <= FA.MAX_LINES, "the sample fits the card")
 
+# The box is measured wider than the plain estimate (the overlay font is wider than it), so real text stays inside it.
+for line_text, _color in FA.SAMPLE_LINES:
+    _l, _t, box_w, _h = FA.block_rect(look, [(line_text, FA.COLOR_AMBER)])
+    estimate = look.text_width(line_text, "normal")
+    check(box_w - 2 * look.pad_x(FA._BASE_PAD_X) >= estimate * 1.25, f"the box is wide enough for {line_text!r}: {box_w} for ~{estimate}px of text")
+
+# A line is cut off at the limit, and the card does not grow past what that limit needs.
+rec = Rec()
+FA.render([("W" * 200, FA.COLOR_AMBER)], rec, look)
+check(len(rec.messages[FA._LINE_IDS[0]]) == FA.MAX_LINE_CHARS, f"a very long line is cut off: {len(rec.messages[FA._LINE_IDS[0]])}")
+widest_box = FA.block_rect(look, [("W" * FA.MAX_LINE_CHARS, FA.COLOR_AMBER)])[2]
+check(rec.shapes[FA._CARD_ID][1] == widest_box, "a cut-off line gives the card its widest size, no more")
+
 # --- start-up: a jump planned before WNTB started is read back ------------------------------------------------------------------------------------
 w = World()
 with mock.patch.object(FA.jump_timer, "recover", side_effect=lambda timer, since, folder=None: timer.handle_event(

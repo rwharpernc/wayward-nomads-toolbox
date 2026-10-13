@@ -18,6 +18,8 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional
 EVENTS = ("CarrierJumpRequest", "CarrierJumpCancelled", "CarrierJump")
 
 ALERT_SECONDS = (600, 300, 60, 0)   # alerts fire as the time left falls to each of these
+MAX_SYSTEM_CHARS = 24               # a longer system or body name is clipped, so the display's line cannot grow without limit
+MAX_BODY_CHARS = 14
 AFTER_DEPARTURE_S = 90              # how long "departing" is shown past the departure time before the display clears
 STALE_S = AFTER_DEPARTURE_S         # a request whose departure is already this far past is old news (read back from an old journal)
 
@@ -41,6 +43,10 @@ def parse_departure(text: Any) -> Optional[float]:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.timestamp()
+
+
+def _clip(text: str, limit: int) -> str:
+    return text if len(text) <= limit else text[:max(0, limit - 1)].rstrip() + "…"
 
 
 def format_remaining(seconds: float) -> str:
@@ -115,7 +121,9 @@ class CarrierJumpTimer:
         if self.jump is None or not self.active():
             return None
         left = self.remaining() or 0
-        where = self.jump.system + (f" ({self.jump.body})" if self.jump.body and self.jump.body != self.jump.system else "")
+        where = _clip(self.jump.system, MAX_SYSTEM_CHARS)
+        if self.jump.body and self.jump.body != self.jump.system:
+            where += f" ({_clip(self.jump.body, MAX_BODY_CHARS)})"
         if left <= 0:
             return f"Carrier departing for {where}"
         return f"Carrier jumps to {where} in {format_remaining(left)}"

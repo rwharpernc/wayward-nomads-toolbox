@@ -61,6 +61,13 @@ class PlanTests(unittest.TestCase):
         self.timer.handle_event(request(15, system="Sol", body="Sol"))
         self.assertEqual(self.timer.line(), "Carrier jumps to Sol in 15:00")
 
+    def test_long_names_are_clipped_so_the_line_stays_short(self):
+        self.timer.handle_event(request(15, system="S" * 90, body="B" * 90))
+        line = self.timer.line()
+        self.assertLessEqual(len(line), 70)
+        self.assertIn("…", line)
+        self.assertTrue(line.endswith("in 15:00"))
+
     def test_requests_without_a_time_or_a_system_are_ignored(self):
         self.assertFalse(self.timer.handle_event({"event": "CarrierJumpRequest", "SystemName": "Sol"}))
         self.assertFalse(self.timer.handle_event({**request(15), "SystemName": ""}))

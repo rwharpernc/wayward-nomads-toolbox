@@ -43,7 +43,7 @@ One small card on your game screen with two jobs. It has no panel button, only S
   jump, or the jump itself, clears it. WNTB reads the request back from your newest journals when it starts, so restarting the
   game or EDMC during the countdown does not lose it.
 - **Fuel warnings.** `Low fuel: 22% (7.0 t)` when the tank is at or under the percentage you choose (the game's own cockpit
-  warning comes at 25%), and `Next star ... is a neutron star and cannot be scooped. Fuel 38% (12.2 t)` when the star you have
+  warning comes at 25%), and `No scoop at next star (neutron star). Fuel 38% (12.2 t)` when the star you have
   plotted to is one you cannot scoop (neutron stars, white dwarfs, black holes and the other non-main-sequence stars) and the
   tank is at or under a second percentage. That second warning is the one the game does not give you.
 
