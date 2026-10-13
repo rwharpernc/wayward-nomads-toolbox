@@ -87,6 +87,19 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `exploration_value.py` | Estimated scan payout for the last body scanned, the system's age and region, system scan progress and the last data sales |
 | `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog: downloads the full list once and finds the nearest point of interest locally (their own nearest endpoint does not use the position) |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
+| `materials_data.py` | Generated: the 137 engineering materials with type and grade, from FDevIDs `material.csv` |
+| `blueprints_data.py` | Generated: 1,172 engineering blueprints (type, name, grade, engineers, ingredients with counts, effects) and where 258 ingredients are found, trimmed from EDEngineer (MIT) |
+| `blueprints.py` | Blueprints as objects: browse by type, name and grade, search, ingredient kinds (ship material, Odyssey micro-resource, commodity) matched to the keys the counts use, and a check that every counted ingredient matches; no Tk |
+| `blueprint_wishlist.py` | The commander's blueprint wishlist (blueprints and a number of crafts each), kept per commander in `blueprint_wishlist.json`, with limits; no Tk |
+| `blueprint_needs.py` | What a blueprint or the whole wishlist needs against what is held (ship materials and the Odyssey ship locker), ready in list order, and the combined shopping list; no Tk |
+| `blueprints_extra.py` | Hand-added entries the blueprint table lacks: the four Colonia on-foot engineers (Baltanos, Eleanor Bresa, Rosa Dayette, Yi Shen) with their unlock steps, places and Yi Shen's three sets of items, each with its sources |
+| `engineers.py` | The commander's standing with each engineer (Known, Invited, Unlocked, rank), from the journal's `EngineerProgress`, kept per commander in `engineers.json`; matches the journal's names (with a nickname in quotes) to the table's; no Tk |
+| `blueprints_window.py` | The Engineering window: browse and search blueprints, see one craft's ingredients against what you hold and where each is found, add to the wishlist, the wishlist with a combined shopping list and who can do each entry, and an Engineers tab (standing, what they offer, what unlocking takes) |
+| `material_traders.py` | Finding a material trader: the closest Raw, Manufactured or Encoded traders to a system from Spansh's station search, with the pad filter, a two-minute cache and the place described; the search is passed in, so it is tested offline; no Tk |
+| `materials.py` | The commander's Raw, Manufactured and Encoded materials, kept per commander in `materials.json`: the login list, every event that changes a count, the grade limits (300 to 100), EDMC's totals for a mid-session start, and unknown materials; no Tk |
+| `materials_panel.py` | The Materials row in Field Ops mode: pieces held of each type, the last change, what is at the limit, and the button that opens the window |
+| `material_trader_window.py` | The Material trader window: pick a type, distance and pad, search from your system or another, see what you hold of that type by grade, and the closest traders from Spansh; the lookup runs on a worker thread |
+| `materials_window.py` | The Materials window: search, type and grade filters, "only at the limit", and a sortable table of held, limit and room |
 | `notes_data.py` | The commander's notes on a system or body, kept per commander in `notes.json`: validation and limits, search, and an add, change and delete that save at once; no Tk |
 | `notes_panel.py` | The Notes row in Exploration mode: how many notes the system you are in has and the newest, a one-line quick add, and the button that opens the window |
 | `notes_window.py` | The Notes window: search, a list of every note, and an editor with a Here button for the system and body you are at |

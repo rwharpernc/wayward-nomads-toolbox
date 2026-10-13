@@ -34,6 +34,7 @@ BODIES_SEARCH_URL = "https://spansh.co.uk/api/bodies/search"
 STATIONS_SEARCH_URL = "https://spansh.co.uk/api/stations/search"
 REQUEST_TIMEOUT_S = 20
 _USER_AGENT = http_identity.user_agent("mining-finder")
+_TRADER_AGENT = http_identity.user_agent("material-trader")
 
 KNOWN_RING_HOTSPOT_MATERIALS: tuple[str, ...] = tuple(sorted([
     "Alexandrite", "Bauxite", "Benitoite", "Bromellite", "Cobalt", "Coltan",
@@ -196,12 +197,12 @@ anyone updating their market), which would recommend a station that's
 since moved or stopped trading."""
 
 
-def _post_station_search(request_body: dict) -> dict:
+def _post_station_search(request_body: dict, agent: Optional[str] = None) -> dict:
     """POSTs one station search to Spansh and returns the parsed answer; raises on any network or parse failure."""
     request = urllib.request.Request(
         STATIONS_SEARCH_URL,
         data=json.dumps(request_body).encode("utf8"),
-        headers={"User-Agent": _USER_AGENT, "Content-Type": "application/json"},
+        headers={"User-Agent": agent or _USER_AGENT, "Content-Type": "application/json"},
         method="POST",
     )
     with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as response:
@@ -349,3 +350,52 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
             large_pads=_count(station.get("large_pads")),
         ))
     return results
+
+
+TRADER_TYPES = ("Raw", "Manufactured", "Encoded")
+
+
+@dataclass
+class MaterialTrader:
+    """One station Spansh lists with a material trader of `trader_type` (Raw, Manufactured or Encoded), closest first."""
+    station: str
+    system: str
+    station_type: str
+    distance_ly: float
+    distance_to_arrival_ls: float
+    is_planetary: bool
+    trader_type: str
+    small_pads: Optional[int] = None    # pad counts as Spansh reports them; None = not given
+    medium_pads: Optional[int] = None
+    large_pads: Optional[int] = None
+
+
+def search_material_traders(reference_system: str, trader_type: str, max_distance_ly: Optional[float], max_results: int = 10,
+                            required_pad: Optional[str] = None) -> list[MaterialTrader]:
+    """The closest stations with a material trader of `trader_type` to `reference_system`, within `max_distance_ly` (None = no limit).
+    Spansh's station search has a `material_trader` filter whose values are "Raw", "Manufactured" and "Encoded", and every station it returns
+    carries the same field (checked live 2026-10-13: 373 Raw, 813 Manufactured and 444 Encoded traders; the closest Raw one to Sol was in 61 Cygni). `required_pad` is None, "medium" or
+    "large" (a small-pad ship fits anywhere). Raises on any network or parse failure, like the other searches here."""
+    if trader_type not in TRADER_TYPES:
+        raise ValueError("trader_type must be one of " + ", ".join(TRADER_TYPES))
+    if required_pad not in (None, "medium", "large"):
+        raise ValueError('required_pad must be None, "medium" or "large"')
+    filters: dict = {"material_trader": {"value": [trader_type]}}
+    if max_distance_ly is not None:
+        filters["distance"] = {"min": "0", "max": str(max_distance_ly)}
+    if required_pad:
+        filters[f"{required_pad}_pads"] = {"comparison": "<=>", "value": [1, 999]}
+    data = _post_station_search({"filters": filters, "sort": [{"distance": {"direction": "asc"}}], "size": max_results, "page": 0,
+                                 "reference_system": reference_system}, _TRADER_AGENT)
+    found: list[MaterialTrader] = []
+    for station in data.get("results", []):
+        if not isinstance(station, dict) or station.get("material_trader") != trader_type:
+            continue          # the filter should make this impossible; a result that does not carry the trader is not shown as one
+        found.append(MaterialTrader(
+            station=str(station.get("name") or "?"), system=str(station.get("system_name") or "?"),
+            station_type=str(station.get("type") or "?"), distance_ly=float(station.get("distance") or 0.0),
+            distance_to_arrival_ls=float(station.get("distance_to_arrival") or 0.0),
+            is_planetary=bool(station.get("is_planetary", False)), trader_type=trader_type,
+            small_pads=_count(station.get("small_pads")), medium_pads=_count(station.get("medium_pads")),
+            large_pads=_count(station.get("large_pads"))))
+    return found

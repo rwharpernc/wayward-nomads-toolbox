@@ -3,6 +3,29 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Material trader finder** (**Find a trader** in the Materials window). Finds the closest station with a Raw, Manufactured or Encoded material trader
+  to your system (or one you type), nearest first, with whether it is in space or on a surface, its distance from the star and its largest landing
+  pad; filter by distance and pad size, and double-click a row to copy its system name. It shows what you hold of that type by grade and how many
+  are at the game's limit. Pressing Find sends Spansh the system name and the type, nothing else.
+- **Engineering blueprints and a wishlist** (Field Ops, the **BLUEPRINTS** button on the Materials section opens the Engineering window). Browse
+  about 1,170 blueprints (ship modules, Guardian items, Technology Broker and engineer unlocks, synthesis, Odyssey suit and weapon upgrades) by
+  search and module type, see who offers each, its effects and what one craft takes against what you hold and where each ingredient is found. Add
+  blueprints to a wishlist with a number of crafts; it says which can be made now (worked out in list order) and gives one shopping list for the
+  whole wishlist. Ship materials are counted from the Materials counts and on-foot items from your ship locker; trade goods are shown but not
+  counted. An **Engineers** tab shows where you stand with each engineer (from the game's engineer list: Known, Invited, Unlocked with rank,
+  including rank-ups), what they offer and what unlocking them asks for, and the wishlist says who can do each entry. The four Colonia on-foot
+  engineers, which the recipe table lacks, are added by hand: their unlock steps, places (from one guide, unconfirmed) and the items Yi Shen needs. The recipes are a copy of EDEngineer's table (MIT, last changed March 2024), so newer game content may be missing. Kept on your
+  computer for each commander.
+- **Materials: what you hold of each engineering material** (Field Ops mode, a **Materials** section; **MATERIALS** opens the window). Raw,
+  Manufactured and Encoded materials with their grade, the most the game lets you hold (300, 250, 200, 150 or 100) and the room left. The
+  section shows the pieces of each type, the last pick-up or discard, and which materials are at the limit. The window has a search box, type and
+  grade filters, "only what is at the limit" and sortable columns. Counts follow the journal (the full list at login, then pick-ups, discards,
+  trades, synthesis, engineer crafts, the Technology Broker, engineer contributions and mission rewards) or, when WNTB starts mid-session,
+  EDMC's own totals. Kept on your computer for each commander and never sent anywhere. Engineers and blueprint needs are not here yet.
+
 ## 1.9.1 - 2026-10-13
 
 ### Fixed

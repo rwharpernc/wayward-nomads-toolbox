@@ -99,6 +99,21 @@ Already seen working on Linux, so a quick look is enough: the Settings panel, th
       on the left; on a planet surface the section shows the nearest hotspot with a distance; **MARK** makes a mark; **TARGET** steps through
       the marks here; **MARKS** opens the window (edit, **Here**, Delete twice); with the compass enabled the arrow follows the target as you
       move and turn, and clears when you lift off. Check the Mining settings tab no longer has the waypoint tick.
+- [ ] Materials (Field Ops mode, **Materials** section; added 2026-10-13): log in and the row shows the pieces of each type; collect or discard a
+      material and "Last: ..." follows; a material at its limit is named; **MATERIALS** opens the window; Search, Type, Grade and **Only what is at
+      the limit** narrow the table; headings sort; the window keeps its size and place; restart EDMC mid-session and the counts are right.
+- [ ] Material trader (Materials window, **Find a trader**; added 2026-10-14): the window opens with your system filled in and the type that has the
+      most at the limit; **Find** lists traders nearest first (check one against the galaxy map); the Type, Within and Pad drop-downs change the
+      search; **Here** refills the system; a typed system works; double-click copies the system name; with no network the status says Spansh
+      could not be reached and **Find** works again afterwards.
+- [ ] Engineering (Field Ops, **BLUEPRINTS** on the Materials section; added 2026-10-13): the window opens with **Blueprints** and **Wishlist** tabs;
+      Search (it waits a moment after typing) and the Module drop-down narrow the list; picking a row shows its ingredients, what you hold and
+      where each is found; **Add to wishlist** and a double-click add; the Wishlist tab shows each entry's crafts, whether it can be made and
+      the shopping list; **Set crafts**, **Remove** and **Clear list** ask twice; the Materials section shows the `Wishlist:` line and stays narrow;
+      the window keeps its size and place.
+      The **Engineers** tab lists engineers with where you stand (after a login), unlocked ones first; **Show their blueprints** switches to the
+      Blueprints tab searching for them; **Put their unlock on the wishlist** adds it; the wishlist's **Who can do it** column names an unlocked
+      engineer or "No engineer unlocked yet".
 - [ ] Notes (Exploration mode, **Notes** section): the quick-add box saves a line against the current system; **NOTES** opens the window;
       the editor's text box takes typing and paste; **Here** fills the system and body; **Delete** asks twice; the window keeps its size
       and place after closing and reopening.

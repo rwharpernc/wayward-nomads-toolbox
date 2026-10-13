@@ -350,7 +350,7 @@ several requests in flight, use the generation counter above instead.
   tallies, visited systems, ship builds. Examples: `sessions.json`, `boxel_state.json`,
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
-  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`, `trade_watch.json`, `surface_marks.json`,
+  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`, `materials.json`, `blueprint_wishlist.json`, `engineers.json`, `trade_watch.json`, `surface_marks.json`,
   `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
