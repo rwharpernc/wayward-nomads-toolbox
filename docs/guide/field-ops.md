@@ -1,11 +1,11 @@
 # Field Ops
 
-Field Ops holds the on-foot and housekeeping tools: screenshots, your inventory and saved ship builds.
+Field Ops holds the on-foot and housekeeping tools: screenshots, your inventory, your engineering materials and saved ship builds.
 (Colonization has its own mode, with its own page: [Colonization](colonization.md).)
 
 > **Where this comes from:** screenshots, your backpack and ship locker, and ship loadouts come from the journal (or from EDMC's own state, which it rebuilds from the journal). The journal doesn't give your backpack's capacity, so WNTB uses a built-in table, and the Carrier Locker isn't in the journal at all: it comes from Frontier's servers through a signed-in EDMC. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
-**On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Ship Builds](#ship-builds) ·
+**On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Materials](#materials) · [Ship Builds](#ship-builds) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 ## Screenshots
@@ -98,6 +98,24 @@ The overlay settings are on **Settings → Overlays → Inventory** and need an 
 
 On Linux, the pickup sound needs `canberra-gtk-play` or `paplay`; see [Windows and Linux](platforms.md).
 
+## Materials
+
+What you hold of each engineering material: **Raw** (mined and scanned), **Manufactured** and **Encoded**, with each one's grade (1 very common to 5
+very rare) and the most the game lets you hold of it. A collapsible **Materials** row shows the pieces held of each type, the last pick-up or
+discard ("Last: +3 Carbon (now 123)") and which materials are **at the limit**, so you know that collecting more is wasted. **MATERIALS** opens
+the window.
+
+**The window** lists every material you hold: its type, grade, how many, the limit and the room left. Type in **Search** (every word must be in
+the name), pick a **Type** or **Grade**, tick **Only what is at the limit**, and click a heading to sort.
+
+**Where the counts come from.** The game writes your whole list when you log in, and then one entry for every change: pick-ups, discards,
+material trades, synthesis, engineering crafts, the Technology Broker, materials handed to an engineer and mission rewards. WNTB follows
+those. If you start EDMC in the middle of a session, WNTB takes EDMC's own running totals once, so the counts are right straight away.
+The counts are kept on your computer for the commander they belong to, and nothing is sent anywhere.
+
+**The limits** are 300, 250, 200, 150 and 100 for grades 1 to 5. The names, types and grades are a built-in table of the game's 137 materials;
+a new material the table does not know is still counted, with no grade or limit shown, until WNTB is updated.
+
 ## Ship Builds
 
 A place to keep ship builds you've designed on sites like Coriolis, EDSY or Spansh, one list per commander. WNTB
@@ -132,5 +150,8 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | The Backpack to be known at login | If you log in already on foot, the game hasn't yet reported it (the tab says `Not yet synced this session`). | Loot, resupply or disembark to refresh it. |
 | The Carrier Locker to be live | It comes from **Frontier's servers**, not the journal. EDMC must be signed in to Frontier, and the data can **lag the game by 15 to 30 minutes**. | Sign EDMC in, and allow time after changes. The locker is hidden until real data arrives. |
 | The Rhino's cargo capacity | Not confirmed against a real journal entry, so the bar shows the count with no limit. | Read the tonnes, not a percentage. |
+| Your materials to be right as soon as EDMC starts | The game writes the full list only when you **log in**. Between logins WNTB follows each change, and after a restart it shows the counts from your last session until the next login list arrives (the window says so). | Log in to the game, or start EDMC before the game. |
+| Materials you were not able to carry to be counted | When you are at the limit, the game discards what you cannot carry. WNTB never counts above the limit. | Nothing; the login list corrects any difference. |
+| Which engineer or blueprint needs a material | Not shown yet. This page counts what you hold; it does not know what you need it for. | Use a site such as Inara or EDSY for what a blueprint takes. |
 | Ship Builds to be checked | WNTB only stores the link and name you give it. It doesn't read or check the build. | Keep your link current if the site changes. |
 

@@ -6,6 +6,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Materials: what you hold of each engineering material** (Field Ops mode, a **Materials** section; **MATERIALS** opens the window). Raw,
+  Manufactured and Encoded materials with their grade, the most the game lets you hold (300, 250, 200, 150 or 100) and the room left. The
+  section shows the pieces of each type, the last pick-up or discard, and which materials are at the limit. The window has a search box, type and
+  grade filters, "only what is at the limit" and sortable columns. Counts follow the journal (the full list at login, then pick-ups, discards,
+  trades, synthesis, engineer crafts, the Technology Broker, engineer contributions and mission rewards) or, when WNTB starts mid-session,
+  EDMC's own totals. Kept on your computer for each commander and never sent anywhere. Engineers and blueprint needs are not here yet.
 - **Trade: a Watch list of the commodities you care about** (a collapsible **Watch list** row in Trade mode; **WATCH** opens the window).
   Add commodities with the type-ahead box and see the best price to buy and to sell each. Prices come from the markets you open (read from the
   game's own market file, nothing sent anywhere) and, when you press **REFRESH** with Trade's lookups on, from Spansh near your system. The

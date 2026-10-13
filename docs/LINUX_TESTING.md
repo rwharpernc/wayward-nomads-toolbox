@@ -75,6 +75,9 @@ Where a step fails, copy the relevant lines from EDMC's log
       on the left; on a planet surface the section shows the nearest hotspot with a distance; **MARK** makes a mark; **TARGET** steps through
       the marks here; **MARKS** opens the window (edit, **Here**, Delete twice); with the compass enabled the arrow follows the target as you
       move and turn, and clears when you lift off. Check the Mining settings tab no longer has the waypoint tick.
+- [ ] Materials (Field Ops mode, **Materials** section; added 2026-10-13): log in and the row shows the pieces of each type; collect or discard a
+      material and "Last: ..." follows; a material at its limit is named; **MATERIALS** opens the window; Search, Type, Grade and **Only what is at
+      the limit** narrow the table; headings sort; the window keeps its size and place; restart EDMC mid-session and the counts are right.
 - [ ] Notes (Exploration mode, **Notes** section): the quick-add box saves a line against the current system; **NOTES** opens the window;
       the editor's text box takes typing and paste; **Here** fills the system and body; **Delete** asks twice; the window keeps its size
       and place after closing and reopening.

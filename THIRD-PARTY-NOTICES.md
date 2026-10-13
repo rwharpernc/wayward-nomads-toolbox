@@ -91,6 +91,11 @@ commodity) follows that project's shopping overlay.
 [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no licence. The names are Frontier's
 own.
 
+## Engineering material names, types and grades
+
+`plugin/materials_data.py` is generated from the `material.csv` published by [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no
+licence. The names are Frontier's own; the type (Raw, Manufactured, Encoded) and the grade (its `rarity` column, 1 to 5) are game facts.
+
 ## Commodity names (Trade)
 
 `plugin/trade_commodities_data.py` is generated from the `commodity.csv` published by

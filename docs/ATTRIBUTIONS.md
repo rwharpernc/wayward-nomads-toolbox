@@ -73,6 +73,11 @@ being listed doesn't mean a tool was the first or the only one.
 - **Landing pad guidance:** [LandingPad](https://github.com/bgol/LandingPad) and ED Recon.
 - **Screenshot conversion and renaming:** EDMC's own built-in screenshot handling and
   [EDMC-Screenshot](https://github.com/NoFoolLikeOne/EDMC-Screenshot).
+- **Engineering materials** (what you hold of each Raw, Manufactured and Encoded material, with its grade and limit):
+  [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper) (source MIT),
+  [EDEngineer](https://github.com/msarilar/EDEngineer) (MIT) and EDDiscovery. WNTB's is its own, built from the journal's events, and no
+  code or data was taken from any of them. Material names, types and grades come from
+  **[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs)** (`material.csv`; see Data below).
 - **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials
   Helper.
 - **Nearest neutron star and white dwarf lookups:** [Spansh](https://spansh.co.uk/) answers the N.S. and W.D.
@@ -110,7 +115,8 @@ tables, the pad layout, scan-value constants, mining depletion figures and micro
 from the community's published work and from the game itself. Where a source's licence asks for a
 notice, it is in `THIRD-PARTY-NOTICES.md`. Micro-resource and commodity names come from
 **[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs)**, and the landing-pad size of each ship (Trade mode) from
-**[EDCD/coriolis-data](https://github.com/EDCD/coriolis-data)**.
+**[EDCD/coriolis-data](https://github.com/EDCD/coriolis-data)**. Engineering material names, types and grades (Field Ops → Materials)
+come from FDevIDs' `material.csv` too.
 
 ## Services
 

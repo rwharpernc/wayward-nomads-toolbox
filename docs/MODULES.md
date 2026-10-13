@@ -87,6 +87,10 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `exploration_value.py` | Estimated scan payout for the last body scanned, the system's age and region, system scan progress and the last data sales |
 | `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog: downloads the full list once and finds the nearest point of interest locally (their own nearest endpoint does not use the position) |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
+| `materials_data.py` | Generated: the 137 engineering materials with type and grade, from FDevIDs `material.csv` |
+| `materials.py` | The commander's Raw, Manufactured and Encoded materials, kept per commander in `materials.json`: the login list, every event that changes a count, the grade limits (300 to 100), EDMC's totals for a mid-session start, and unknown materials; no Tk |
+| `materials_panel.py` | The Materials row in Field Ops mode: pieces held of each type, the last change, what is at the limit, and the button that opens the window |
+| `materials_window.py` | The Materials window: search, type and grade filters, "only at the limit", and a sortable table of held, limit and room |
 | `notes_data.py` | The commander's notes on a system or body, kept per commander in `notes.json`: validation and limits, search, and an add, change and delete that save at once; no Tk |
 | `notes_panel.py` | The Notes row in Exploration mode: how many notes the system you are in has and the newest, a one-line quick add, and the button that opens the window |
 | `notes_window.py` | The Notes window: search, a list of every note, and an editor with a Here button for the system and body you are at |
