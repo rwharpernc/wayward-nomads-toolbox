@@ -72,6 +72,7 @@ _OWN_DATA_FILES: set = {
     "materials.json",  # the commander's engineering materials (materials.py)
     "blueprint_wishlist.json",  # the commander's blueprint wishlist (blueprint_wishlist.py)
     "engineers.json",  # the commander's standing with each engineer (engineers.py)
+    "expeditions.json",  # the commander's expeditions and their progress (expedition.py)
     "trade_watch.json",  # the commander's market watch list and the prices seen (trade_watch_data.py)
     "colonisation_history.json",  # Colonization's record of what the commander delivered (colonisation_history.py)
     "trade_ledger.json",  # Trade mode's session ledger (trade_ledger.py)

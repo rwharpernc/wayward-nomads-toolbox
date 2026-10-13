@@ -38,7 +38,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, flight_alerts, gec_poi_panel, interdiction, inventory_panel, landing, materials_panel, mining_panel, missions,
-    notable, notes_panel, surface_compass, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
+    notable, notes_panel, expedition_panel, surface_compass, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
     game_mode, session_credits, session_merits, settings_scroll, trade_panel, trade_watch_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
@@ -56,7 +56,7 @@ FEATURES = (
     # Boxel Survey (the largest single feature here, collapsed by default),
     # and Auto-Honk/Discovery Alerts last, side by side - see
     # _SIDE_BY_SIDE_PAIRS below, which is why they must stay adjacent here.
-    exploration_value, organic_scan_panel, gec_poi_panel, canonn_poi_panel, notes_panel, surface_compass,
+    exploration_value, organic_scan_panel, gec_poi_panel, canonn_poi_panel, notes_panel, expedition_panel, surface_compass,
     codex_completionist_panel, boxel_survey, autohonk, discovery, notable,
     screenshots,
     inventory_panel, materials_panel, ship_builds_panel, colonisation_panel,

@@ -25,6 +25,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   grade filters, "only what is at the limit" and sortable columns. Counts follow the journal (the full list at login, then pick-ups, discards,
   trades, synthesis, engineer crafts, the Technology Broker, engineer contributions and mission rewards) or, when WNTB starts mid-session,
   EDMC's own totals. Kept on your computer for each commander and never sent anywhere. Engineers and blueprint needs are not here yet.
+- **Expedition planner** (Exploration mode, an **Expedition** section; **EXPEDITION** opens the window). Plan a trip as a named list of stops, each
+  with an optional body and a note, then press Start: arriving in a stop's system ticks it off, and the section shows how many stops are done, the
+  jumps, light-years and time so far, the next stop with its distance and note, and the stop you just reached. **COPY** (or **Copy on arrival**, off
+  until ticked) puts the next stop's name on the clipboard for the galaxy map. Add stops by hand, from the route plotted in the game or from a CSV;
+  reorder by nearest neighbor (the positions come from EDSM, the only online part, which sends only system names); share as a list or a CSV. Keep
+  several expeditions and run one at a time. Kept on your computer for each commander. Waypoints (Boxel Survey) is unchanged.
 
 ## 1.9.1 - 2026-10-13
 
