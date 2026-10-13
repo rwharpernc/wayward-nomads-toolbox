@@ -80,6 +80,17 @@ being listed doesn't mean a tool was the first or the only one.
 - **Nearby points of interest:** [Canonn](https://canonn.science/) and
   [edastro.com](https://edastro.com/) publish the lists WNTB looks up.
 
+## Ports, and reusing WNTB
+
+Some of WNTB's features were ported from projects written in other languages: C#, TypeScript, React and others. A port here means the
+rules, tables or layout were carried over into Python, not that the original's code runs inside WNTB. Where a port needed a licence
+notice, it is in `THIRD-PARTY-NOTICES.md`, which names each source, its licence and what was taken. Where a project is only an idea
+or a reference, the list above says so, and no code was taken.
+
+WNTB is GPL-3.0, so anyone may reuse its ports, and the rest of it, on GPL-3.0 terms. That means passing on the licence and keeping
+the original authors' notices in `THIRD-PARTY-NOTICES.md` with whatever you reuse. A nod to WNTB is welcome and not required. If you
+reuse a port, it also helps to pass on where the original came from, so credit reaches the people who wrote it first.
+
 ## Overlay
 
 WNTB draws on the game through the optional helper app
