@@ -615,10 +615,8 @@ _PLACEHOLDER_W = 200
 _PLACEHOLDER_H = 100
 _FALLBACK_TEXT_SIZE = "normal"
 _FALLBACK_LABEL_TEXT = "No actual diagram - it probably looks something like this."
-_FALLBACK_LABEL_GAP = 16
-_FALLBACK_LABEL_X = _DIAGRAM_CX + _PLACEHOLDER_W // 2 + _FALLBACK_LABEL_GAP
-_FALLBACK_LABEL_W = 180
-_FALLBACK_CARD_W = _FALLBACK_LABEL_X + _FALLBACK_LABEL_W + 10 - _CARD_X
+_FALLBACK_LABEL_GAP = 16      # box to caption
+_CAPTION_LINES = 3            # the caption is wrapped into at most this many lines, as narrow as that allows
 _FALLBACK_LINE_HEIGHT = 22
 _FALLBACK_MAX_LINES = 6
 _FALLBACK_LINE_IDS = tuple(f"wntb_landing_fallback{i}" for i in range(_FALLBACK_MAX_LINES))
@@ -653,6 +651,8 @@ class _Geometry:
     card_h: int
     shift_x: int          # how far the diagram is moved from its legacy position
     shift_y: int
+    box_x: int = 0        # the placeholder's box and its caption: left edges, absolute (the pair is centered in the card)
+    caption_x: int = 0
 
 
 def _geometry(look: Look, info: Optional[LandingDisplayInfo], placeholder: bool) -> _Geometry:
@@ -680,19 +680,31 @@ def _geometry(look: Look, info: Optional[LandingDisplayInfo], placeholder: bool)
                   (f"Pad {info.pad}" if info.pad is not None else "", "normal"), (denied, "normal")]
     widest = max(look.text_width(text, base) for text, base in lines)
     card_w = max(_CARD_W, widest + 2 * pad_x)
+    box_x = caption_x = 0
     if placeholder:
-        card_w = max(card_w, _FALLBACK_CARD_W)     # the placeholder's caption sits to the right of its box
+        # The box and its caption are one picture, centered as a pair in the card: the card is as wide as the pair needs (or as its
+        # text needs, if wider), with the same padding on both sides, instead of a fixed width with the caption left short of it.
+        caption_w = max(look.text_width(line, _FALLBACK_TEXT_SIZE) for line in _caption_lines(look)[0])
+        pair_w = _PLACEHOLDER_W + _FALLBACK_LABEL_GAP + caption_w
+        card_w = max(card_w, pair_w + 2 * pad_x)
+        box_x = _CARD_X + (card_w - pair_w) // 2
+        caption_x = box_x + _PLACEHOLDER_W + _FALLBACK_LABEL_GAP
     shift_x = 0 if placeholder else (card_w - _CARD_W) // 2
     return _Geometry(pad_x, _CARD_X + pad_x, y_title, y_status, y_station, y_pad, y_denied, card_w, card_h,
-                     shift_x, diagram_cy - _DIAGRAM_CY)
+                     shift_x, diagram_cy - _DIAGRAM_CY, box_x, caption_x)
 
 
 def _caption_lines(look: Look) -> Tuple[List[str], int]:
-    """The placeholder's caption wrapped for the look's text size, and its line height. It wraps into the fixed width beside the box, so a
-    larger text size means fewer characters per line and taller lines."""
+    """The placeholder's caption and its line height for the look. The caption is wrapped into `_CAPTION_LINES` lines at the narrowest
+    width that allows (so the lines are close to even rather than a long run and a short stub), at any text size: a larger size makes
+    the lines wider and the card grows to hold them, rather than the words reflowing into more lines."""
     line_height = _FALLBACK_LINE_HEIGHT + (look.line_px("normal") - LEGACY.line_px("normal"))
-    per_line = max(8, int(_FALLBACK_LABEL_W // (look.char_px("normal") + 1)))
-    return textwrap.wrap(_FALLBACK_LABEL_TEXT, width=per_line)[:_FALLBACK_MAX_LINES], line_height
+    text = _FALLBACK_LABEL_TEXT
+    for width in range(max(len(word) for word in text.split()), len(text) + 1):
+        lines = textwrap.wrap(text, width=width)
+        if len(lines) <= _CAPTION_LINES:
+            return lines[:_FALLBACK_MAX_LINES], line_height
+    return [text], line_height
 
 
 def _wants_placeholder(info: LandingDisplayInfo) -> bool:
@@ -753,7 +765,7 @@ def render(info: LandingDisplayInfo, carrier_type: CarrierType, client: OverlayC
         _clear_starport_diagram(client)
         _clear_fleetcarrier_diagram(client)
         if show_placeholder:
-            _render_placeholder(drawing, info.pad, look)
+            _render_placeholder(drawing, info.pad, look, geometry)
         else:
             _clear_placeholder(client)
 
@@ -774,20 +786,21 @@ def _send_or_clear(client: OverlayClient, msg_id: str, text: str, color: str, x:
         client.send_message(msg_id, "", "white", x, y, ttl=1)
 
 
-def _render_placeholder(client: OverlayClient, pad: int, look: Look = LEGACY) -> None:
+def _render_placeholder(client: OverlayClient, pad: int, look: Look, geometry: _Geometry) -> None:
     """No pad-diagram family exists for this station type (e.g. an
     outpost). Stands in for the missing diagram with a plain landscape
     rectangle roughly at the position a real diagram would occupy, the pad
     number large inside it, and a short word-wrapped caption to its right."""
-    box_x = _DIAGRAM_CX - _PLACEHOLDER_W // 2
+    box_x = geometry.box_x
     box_y = _DIAGRAM_CY - _PLACEHOLDER_H // 2
+    centre_x = box_x + _PLACEHOLDER_W // 2
     client.send_shape(
         _PLACEHOLDER_RECT_ID, "rect", look.color("border"), "", box_x, box_y, _PLACEHOLDER_W, _PLACEHOLDER_H,
         ttl=_TTL, thickness=2,
     )
 
     pad_text = str(pad)
-    pad_x = _DIAGRAM_CX - (14 if len(pad_text) > 1 else 8)
+    pad_x = centre_x - (14 if len(pad_text) > 1 else 8)
     client.send_message(_PLACEHOLDER_PAD_ID, pad_text, look.color("warn"), pad_x, _DIAGRAM_CY - 14, ttl=_TTL, size=look.size("large"))
 
     lines, line_height = _caption_lines(look)
@@ -796,7 +809,7 @@ def _render_placeholder(client: OverlayClient, pad: int, look: Look = LEGACY) ->
     for i, msg_id in enumerate(_FALLBACK_LINE_IDS):
         if i < len(lines):
             client.send_message(
-                msg_id, lines[i], look.color("header"), _FALLBACK_LABEL_X, start_y + i * line_height,
+                msg_id, lines[i], look.color("header"), geometry.caption_x, start_y + i * line_height,
                 ttl=_TTL, size=look.size(_FALLBACK_TEXT_SIZE),
             )
         else:

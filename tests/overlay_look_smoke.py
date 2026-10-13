@@ -195,6 +195,16 @@ for look in looks():
                 check(x >= left - 2 and x + w <= left + width + 2 and y >= top - 2 and y + h <= top + height + 2,
                       f"landing {label} {tag}: {shape_id} is outside the card")
 
+    # the placeholder's box and caption are centered in the card as a pair, the caption in at most three lines
+    geo = L._geometry(look, landing_placeholder, True)
+    caption, _h = L._caption_lines(look)
+    caption_w = max(look.text_width(c, "normal") for c in caption)
+    left_margin = geo.box_x - L._CARD_X
+    right_margin = geo.card_w - (geo.caption_x - L._CARD_X + caption_w)
+    check(abs(left_margin - right_margin) <= 1, f"landing placeholder {tag}: not centered ({left_margin} left, {right_margin} right)")
+    check(len(caption) <= 3 and " ".join(caption) == L._FALLBACK_LABEL_TEXT, f"landing placeholder {tag}: caption lines {caption}")
+    check(left_margin >= look.pad_x(L._BASE_PAD_X) - 1, f"landing placeholder {tag}: the pair is closer to the edge than the padding")
+
     # mining: the stats panel and the waypoint panel, with the arrow
     lines = ["Cargo: 123/784 t", "Mining rate: 12.3 t/min", "Limpets remaining: ~12 more than you would think"]
     rec = Rec()
