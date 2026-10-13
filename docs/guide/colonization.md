@@ -382,7 +382,9 @@ get after your ship and your carrier (0 once it is all stocked); **to haul** is 
 site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 trips to finish`, since one trip buys and delivers.
 
 - **When it shows:**
-  - In a **commodity market** at a station. It hides when you leave the screen, open another service such as
+  - In a **commodity market** at a station. WNTB goes by the journal's `Market` event and also by the game rewriting `Market.json` (which it
+    does the moment a market opens), because the journal event can reach EDMC several seconds late on some setups (seen on Linux under Proton).
+    It hides when you leave the screen, open another service such as
     outfitting or the shipyard, or undock. Backing out of the market to the station-services menu can't be detected, so
     the card stays until you leave that menu.
   - At **your own carrier**, in the station-services screens. The game writes nothing when you open a carrier's market,

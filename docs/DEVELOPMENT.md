@@ -180,6 +180,8 @@ that means you have no permission to.
 
 To release: bump the version in `plugin/__init__.py` and `package.json`, add a dated section to
 `CHANGELOG.md`, run `npm run package`, commit, tag `v<version>`, and publish `dist/WNTB.zip` as
-the asset of a GitHub release. Users download that zip, not the repository. Publish it as a normal release:
+the asset of a GitHub release. Then update `docs/STATUS.md` (the current release, which branches exist, what is still unreleased) and the version
+examples in `docs/guide/getting-started.md`, and move the changelog's "Unreleased" entries under the new version heading when they ship. A fix to a released
+version is made on a short `bugfix/<version>` branch cut from `master`, merged back with the release, and the branch is then deleted. Users download that zip, not the repository. Publish it as a normal release:
 the in-app updater (and the README's "latest release" link) only follow official (non-draft,
 non-pre-release) GitHub releases.

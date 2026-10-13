@@ -244,6 +244,14 @@ How that plays out:
   the history thumbnails and the preview popup, and hands them to
   `screenshot_convert.thumbnail_photo_data`. Bounding only one axis and letting the other follow the
   source's aspect ratio is exactly the failure this rule exists to prevent.
+- **Entry boxes and button rows** depend on the font: an Entry's `width` counts characters, so the same 26 asks for about 190 px in one font and
+  266 px in another, and a row of buttons gets wider with a wide font. `panelkit.fit_entry(entry, max_px)` lowers the character count until
+  the box asks for no more than the cap, and `panelkit.fit_button_row(buttons, max_px)` lowers the buttons' inner padding and then the font
+  (never below 7 pt) until the row fits. The Notes and Surface Compass quick-add rows use both, capped at 190 px.
+- **Trade pages** measure their number columns with the real font; when the figures would leave the title column under 110 px (a wide font)
+  the cells drop to the small font, and the title column never goes under 60 px (the title wraps instead of widening the window).
+- **Windows with tables** (the Trade History window) size their minimum width from the widest table (`_fit_width`), capped at the screen
+  width less 40 px, so a wide font does not clip the figures.
 - **Overlay-drawn or canvas content** uses fixed sizes decided in code, never derived from data (for
   example the Rhino coverage minimap is a fixed square).
 
@@ -351,7 +359,7 @@ several requests in flight, use the generation counter above instead.
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
   `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`, `materials.json`, `blueprint_wishlist.json`, `engineers.json`, `trade_watch.json`, `surface_marks.json`,
-  `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
+  `expeditions.json`, `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
 **Why files instead of `config`?** `config` is for settings, not structured or growing data. JSON
@@ -488,6 +496,20 @@ characters, body names 100). The overlay card (an arrow vector, a backing panel 
 waypoint's enabled flag, placement and hidden flag are copied across once (`wntb_compass_migrated_v1`). The panel row's summary label wraps at 200 px
 and the quick-name box is fixed at 26 characters, so nothing the commander or the game supplies can widen EDMC's window.
 
+Materials and Engineering (`materials.py`, `materials_panel.py`, `materials_window.py`, `blueprints*.py`, `engineers.py`, `material_traders.py`)
+keep the commander's Raw, Manufactured and Encoded counts in `materials.json` (`MaterialBook`, per commander): the login `Materials` list sets
+them, then each journal event that changes a count moves it, within the grade limits (300 to 100), and EDMC's own totals fill in a mid-session
+start. The blueprint table (`blueprints_data.py`, trimmed from EDEngineer, MIT) and the hand-added Colonia engineers (`blueprints_extra.py`)
+are static; `blueprint_wishlist.py` (`blueprint_wishlist.json`) and `engineers.py` (`engineers.json`, from `EngineerProgress`) are per
+commander, and `blueprint_needs.py` works out what a blueprint or the wishlist needs against what is held (ship materials, and the Odyssey
+ship locker). The material trader finder is the only online part: it passes the system and the trader type to Spansh's station search on a
+worker thread when **Find** is pressed, with a two-minute cache, and nothing else is sent.
+
+The Expedition planner (`expedition.py`, `expedition_window.py`, `expedition_panel.py`) keeps named expeditions of ordered stops in
+`expeditions.json` (`ExpeditionBook`, per commander), one active at a time. The panel feeds arrivals from the journal and ticks the stop whose
+system matches, counting jumps and distance. The only online part is the optional **Locate and reorder (EDSM)** button, which sends system
+names to EDSM for their positions and orders the stops by nearest neighbor.
+
 Flight Alerts (`flight_alerts.py`, over the pure `carrier_jump_timer.py` and `fuel_alerts.py`) draws one overlay card. The carrier
 countdown comes from `CarrierJumpRequest` (`SystemName`, `Body`, `DepartureTime`, parsed as UTC), cleared by `CarrierJumpCancelled` or
 `CarrierJump`; a request whose departure is already more than 90 s past is ignored (an old journal line), one alert is given as the time
@@ -573,7 +595,9 @@ Placement is therefore relative to the screen and aware of display size:
   an offset is one fixed number however wide the display's content is) and `overlay.set_group_offsets` sends the changed ones
   through the overlay's API, at start-up, when Settings is saved, when the screen is re-detected or changes, and (typed values,
   then the saved ones again) around the preview. Clearing is by id, so a clear needs no matching shift. Placement is applied at the call
-  sites (never inside a `render()`), so the render functions stay pure and testable.
+  sites (never inside a `render()`), so the render functions stay pure and testable. A saved exact position that would leave the display off
+  the canvas (`overlay_layout.on_canvas`: at least 40 x 20 canvas units must lie on it, so a leftover `x = 1280` fails) is ignored by
+  `placement_for`, which returns the slot's default and logs a warning once per slot; the saved text is not changed.
 - **The screen** (`overlay_placement.py`): the overlay's own log first (`parse_scaling_line`: the newest "Overlay scaling
   updated" line gives the real window, mode and display scaling = scale_x / base_scale; ignored if the game's
   `DisplaySettings.xml` is newer), then `DisplaySettings.xml` (`platform_support.elite_graphics_dir`, which also finds it
@@ -598,7 +622,10 @@ estimates, `CHAR_PX` (character width per size) and `LINE_PX` (line height per s
 geometry and colors and is the default argument of every pure layout function, which kept the earlier tests valid. Each display
 exposes `block_rect(..., look)` so placement sees the size the card really has, and `Placement`/`slot_size` scale a slot's nominal
 size by the look. `tests/overlay_look_smoke.py` draws every display at 144 looks (scheme x text size x padding x spacing) and checks
-every text lies inside its card and that `block_rect` equals what was drawn. Interdiction keeps fixed red alert colors.
+every text lies inside its card and that `block_rect` equals what was drawn. `text_width` pads every estimate by `WIDTH_PAD` (10%), because the
+overlay's own font sizing differs from one screen to the next and a box a little too wide looks fine where text past its edge does not. The text
+size is a setting again (`wntb_overlay_text_size`: Smaller, Default, Larger; it starts at Larger, the size the displays were fixed at on
+2026-10-12); the fourth step, Largest, was dropped because it is where text ran past its box. Interdiction keeps fixed red alert colors.
 
 ### Plugin Groups (EDMCModernOverlay)
 
@@ -982,7 +1009,8 @@ character counts, since the overlay has no text metrics. The controller redraws 
 or half the 3600 s time to live has passed, sends on a short-lived daemon thread, and clears synchronously in
 `plugin_stop`. The card is drawn only while `Visibility` says so, in one of three cases. (1) `Status.json` `GuiFocus` is Station
 Services (5, from `dashboard_entry`) and the service opened last was the market (`Market`, or `CarrierStats` /
-`CargoTransfer`), or the commander is docked at a carrier (the game writes no `Market` event for a carrier's market) and
+`CargoTransfer`, or `Market.json` being rewritten: the controller compares its modified time on every `Status.json` update and every 500 ms, because
+the journal's `Market` event can reach EDMC several seconds late, seen under Proton, and only counts while a station-services screen is open), or the commander is docked at a carrier (the game writes no `Market` event for a carrier's market) and
 the last service was not `Outfitting` / `Shipyard`; `Outfitting`, `Shipyard`, `StoreCargo`, `Docked`, `Undocked`, `LoadGame` and `StartUp` clear that, and
 so does `GuiFocus` leaving 5. (2) The commander is docked at a `FleetCarrier` / `SquadronCarrier` and `GuiFocus` is 1,
 the right-hand cockpit panel where the cargo transfer to the carrier is done (the game writes no event for opening it,

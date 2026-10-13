@@ -122,6 +122,9 @@ is never changed.
 12 seconds, using the values currently typed (even before you press OK). **Reset all to defaults** puts everything back, and
 **Detect screen again** re-reads the overlay's log and the game's files.
 
+An **Exact position** that would leave a display off the overlay's canvas (for example a leftover `x = 1280` on a 1280-wide screen) is ignored: the
+display uses its default spot instead, and the EDMC log says so. Your saved text is not changed.
+
 Positions you set in the older per-feature x/y boxes are carried over as **Exact position** the first time. Defaults for
 the displays that used to sit in fixed places (Landing, Interdiction, Mining, Screenshots) now follow your screen, so they
 may sit slightly differently than before.

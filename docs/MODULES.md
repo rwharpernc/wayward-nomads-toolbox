@@ -27,11 +27,11 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `load.py` | The EDMC entry point: `plugin_start3`, `plugin_app`, `journal_entry`, `dashboard_entry`, `plugin_stop`, the one-time overlay reset, and forwarding to every feature |
 | `notifier.py` | A tiny subscribe/notify helper for where one module's data changes and others must redraw |
 | `overlay.py` | The one shared overlay client (EDMCModernOverlay over a local TCP port), its Plugin Group registration and group offsets |
-| `overlay_layout.py` | Where overlay displays go, the same on any screen: how big a pixel is on the overlay's canvas (positions are screen fractions, sizes are pixels), nine anchor spots plus pixel offsets, the overlay's right-edge clamp, the overlay's clamp and the offset that carries a display past it, and a client wrapper that moves a display; pure, no Tk |
-| `overlay_style.py` | The shared overlay look: six color schemes (color roles), the four text sizes with per-size character width and line height estimates, padding and line spacing; cards are sized from these so larger text never wraps; pure, no Tk |
+| `overlay_layout.py` | Where overlay displays go, the same on any screen: how big a pixel is on the overlay's canvas (positions are screen fractions, sizes are pixels), nine anchor spots plus pixel offsets, the overlay's right-edge clamp, the overlay's clamp and the offset that carries a display past it, a client wrapper that moves a display, and `on_canvas`, which rejects an exact position that would leave a display off the canvas; pure, no Tk |
+| `overlay_style.py` | The shared overlay look: six color schemes (color roles), the text sizes with per-size character width and line height estimates (each width padded by 10%), padding and line spacing; cards are sized from these so larger text never wraps; pure, no Tk |
 | `overlay_appearance.py` | The saved color scheme and text size (Smaller, Default, Larger), the fixed padding and line spacing, `current_look()` which every overlay draws with, and the Overlays > Appearance Settings tab with its sample |
 | `overlay_placement.py` | Global overlay placement: reads the real window size, mode and display scaling from EDMCModernOverlay's log (falling back to Elite's `DisplaySettings.xml` and Windows' scaling), keeps every display's saved spot, and the Overlay Placement Settings tab with its preview |
-| `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming |
+| `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming, and `fit_entry` / `fit_button_row`, which cap an entry box and a row of buttons in pixels whatever the font |
 | `platform_support.py` | Windows/Linux differences in one place: Elite's folders, key presses (`xdotool`), host programs under Flatpak, "Works on" notes |
 | `restore.py` | Names the last commander from the newest journal and tells every feature when EDMC starts without the game running, so nothing waits for a login |
 | `settings_scroll.py` | Wraps each Settings page in a height-capped scrolling frame so a long page never pushes the OK button off the screen |
@@ -190,7 +190,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_lifetime.py` | The game's lifetime totals (the `Statistics` event) for Trade's Session page: parsing, the section's blocks, and finding each commander's newest event in the journals |
 | `trade_hold.py` | Mission and stolen tonnes in the ship's hold, from the `Cargo` inventory |
 | `trade_history.py` | Saved sessions, the `HistoryBook` and `trade_history.json` |
-| `trade_history_window.py` | The Trade History window |
+| `trade_history_window.py` | The Trade History window (it widens to fit its widest table) |
 | `trade_journal_scan.py` | Finds journal files not read yet (or grown) and applies them to the ledger, stock and carrier; `trade_journal_scan.json` |
 | `trade_ledger.py` | The per-commander session ledger, running costs, catch-up from journals and `trade_ledger.json` |
 | `trade_market.py` | Reads `Market.json` and values your cargo at the docked station |
@@ -203,7 +203,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_spansh_client.py` | Spansh trade-route planner client and the profit-per-hour estimate |
 | `trade_stats.py` | Every figure and table row shown for a saved session |
 | `trade_stock.py` | The stock book: cargo bought and not yet sold, and `trade_stock.json` |
-| `trade_view.py` | Draws Trade's page blocks with real layout |
+| `trade_view.py` | Draws Trade's page blocks with real layout (figures drop to the small font in a wide font, and the title wraps instead of widening the page) |
 | `trade_watch_data.py` | The market watch list: a commander's watched commodities and the prices seen for them at the markets they opened (`Market.json`), kept per commander in `trade_watch.json`, with the Spansh answers held in memory; best buy and sell across both; no Tk |
 | `trade_watch_lookup.py` | The watch list's Spansh refresh: the cheapest station to buy and the dearest to sell each watched commodity near a system, stations only, paused between requests and cancellable; the search is passed in, so it is tested offline |
 | `trade_watch_panel.py` | The Watch list row in Trade mode: a few short best-price lines, REFRESH (Spansh, on a worker thread; needs Trade's lookups on) and WATCH (the window); reads `Market.json` on the `Market` event |
@@ -237,7 +237,7 @@ Guide: [Colonization](guide/colonization.md)
 | `colonisation_catchup.py` | Folds the recent journals into the saved construction sites at start-up, never counting a delivery twice |
 | `colonisation_data.py` | JSON persistence for construction sites (each carries `journal_at`, the newest journal event folded in) |
 | `colonisation_history.py` | What the commander has delivered to construction sites (tonnes by commodity, site and day), kept per commander and caught up from the journals without double counting |
-| `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to get for the active site (pure formatting plus drawing) |
+| `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to get for the active site (pure formatting plus drawing); its visibility also follows the game rewriting `Market.json`, so the card shows when a market opens even if the journal's Market event is late |
 | `colonisation_panel.py` | The Colonization mode's page (current project and history), the overlay card's controller and the settings tabs |
 | `build_costs.py` | What each kind of building costs in tons (the bundled `colonisation_costs.json`, a copy of a community-compiled table): looked up by a site's layout name, with its biggest commodities |
 | `commodity_categories.py` | The market category of each colonization commodity, so the shopping list can be grouped as the in-game market groups it |

@@ -66,10 +66,10 @@ WNTB can also update itself. Turn on **Automatically download and install update
 **File → Settings → WNTB → General → Updates**. It is **off by default**, and it only looks at official published
 releases. The **Release notes** link on that tab opens the latest release's page in your browser.
 
-The first line under the mode buttons always says which version you are running (**Plugin: v1.9.0**). While an update is coming
-it says **Plugin: v1.9.0 (downloading v1.9.1...)**, and once the update is downloaded it turns bold black on **orange** and reads
-**v1.9.1 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
-After the restart the line shows **Plugin: v1.9.1 (updated)** in green for a short while. Clicking the line opens the release page.
+The first line under the mode buttons always says which version you are running (**Plugin: v1.9.1**). While an update is coming
+it says **Plugin: v1.9.1 (downloading v1.9.2...)**, and once the update is downloaded it turns bold black on **orange** and reads
+**v1.9.2 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
+After the restart the line shows **Plugin: v1.9.2 (updated)** in green for a short while. Clicking the line opens the release page.
 
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 
@@ -109,7 +109,7 @@ mining and flip to Trade to check a price, your mining stats keep counting.
 
 Just under the mode buttons, above the page itself, WNTB shows these lines, on every mode:
 
-- **Plugin**: the version you are running, for example `Plugin: v1.9.0` (see "Updating" for what it says during an update).
+- **Plugin**: the version you are running, for example `Plugin: v1.9.1` (see "Updating" for what it says during an update).
 - **Game mode**: For example *You are in Solo mode.*, *Open*, or *Private Group* with its name.
 - **Credits**: what you've earned or lost since you logged in, for example
   `+1,234,567 cr earned (+411,522 cr/hr)` or `-5,000 cr lost`. It is your balance now minus your balance at login.
@@ -210,7 +210,7 @@ unused. Switches exist for individual features:
 | | |
 |---|---|
 | **Have a switch** | Auto-Honk, Discovery Alerts, Notable Bodies, Organic Scanning, Codex Completionist, Exploration Value (and its two online extras), BGS (and its tick detection), Landing Assist, Interdiction Warning, Flight Alerts, the Surface Compass, the Trade and Mining online lookups, and every overlay |
-| **Have no switch** | The core of Powerplay, Missions, Mining and Trade tracking, screenshot conversion, Inventory tracking, Colonisation, Ship Builds, Boxel Survey, and the GEC and Canonn POI finders. Some of these (Boxel Survey, the POI finders) only fold away and do nothing until you press a button |
+| **Have no switch** | The core of Powerplay, Missions, Mining and Trade tracking, screenshot conversion, Inventory tracking, Materials and Engineering, the Expedition planner, Colonisation, Ship Builds, Boxel Survey, and the GEC and Canonn POI finders. Some of these (Boxel Survey, the POI finders) only fold away and do nothing until you press a button |
 
 Most online lookups are off until you switch them on, or only run when you press a button. The exceptions are listed
 in [what goes on the internet](internet-and-privacy.md).
@@ -232,9 +232,13 @@ Switch to the mode first, then use the button listed here.
 | BGS Report | BGS | **REPORT** button |
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
 | Notes | Exploration | **NOTES** button in the Notes section |
+| Expedition | Exploration | **EXPEDITION** button in the Expedition section |
 | Marks (for the Surface Compass) | Exploration | **MARKS** button in the Compass section |
 | Watch list | Trade | **WATCH** button in the Watch list section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there is no button) |
+| Materials | Field Ops | **MATERIALS** button in the Materials section |
+| Engineering (blueprints, wishlist, engineers) | Field Ops | **BLUEPRINTS** button in the Materials section |
+| Material trader | Field Ops | **Find a trader** button in the Materials window |
 | Ship Builds | Field Ops | **SHIPS** button |
 | Colonization Sites | Colonization | **DASHBOARD** button |
 | Mining Book | Mining | **BOOK** button, on both the Space Mining and Surface Mining pages |
@@ -277,10 +281,14 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **DET** | View details (Codex Completionist) | Exploration |
 | **ADD** | Save the line you typed as a note about the system you are in | Exploration (Notes section) |
 | **NOTES** | Open the Notes window | Exploration (Notes section) |
+| **EXPEDITION** | Open the Expedition window | Exploration (Expedition section) |
+| **COPY** | Copy the next expedition stop's system name to the clipboard, to paste into the galaxy map | Exploration (Expedition section) |
 | **MARK** | Save where you are as a mark for the Surface Compass | Exploration (Compass section) |
 | **TARGET** | Aim the compass at the next target: the nearest hotspot, each mark on this body, then none | Exploration (Compass section) |
 | **MARKS** | Open the Marks window | Exploration (Compass section) |
 | **BKF** | Backfill from journal history (Codex Completionist) | Exploration |
+| **MATERIALS** | Open the Materials window | Field Ops (Materials section) |
+| **BLUEPRINTS** | Open the Engineering window (blueprints, wishlist, engineers) | Field Ops (Materials section) |
 | **H.S.** | Find nearby hotspots | Mining |
 | **+H.S.** | Save hotspot here | Mining |
 | **PRICE** | Find best price | Mining |

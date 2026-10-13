@@ -13,29 +13,32 @@ that differs can be checked against it.
 Where a step fails, copy the relevant lines from EDMC's log
 (`~/.local/share/EDMarketConnector/EDMarketConnector.log`) into your report.
 
-## Testing 1.9.0: start here
+## Testing: start here
 
-1.9.0 was tested on Windows first. This pass is the first one on Linux for what is new in it.
+**1.9.1 is the current release.** 1.9.0 was tested on Windows and then on Linux; 1.9.1 holds the fixes found in that pass. `master` is ahead of
+the release: it also holds the Materials, Engineering and Expedition work, which has not been seen working in the game on either OS.
 
 **Getting set up**
-1. Install the released **1.9.0** the normal way (the automatic update, or the zip from the
+1. Install the released **1.9.1** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
-   buttons should read `Plugin: v1.9.0`. Work through sections 0 and 1 below first.
-2. To get the checklist and the test suite, fetch the repository and use the bug fix branch (1.9.0 plus the documentation audit, and any
-   fixes made since): `git fetch --all --tags`, then `git switch bugfix/1.9.1`, then `git pull --rebase`. Once per machine:
+   buttons should read `Plugin: v1.9.1`. Work through sections 0 and 1 below first.
+2. To get the checklist and the test suite, fetch the repository and use `master`:
+   `git fetch --all --tags`, then `git switch master`, then `git pull --rebase`. Once per machine:
    `git config core.hooksPath .githooks`.
 3. Run the unit tests: `python3 -m unittest discover -s tests`. The window and panel smoke tests need a display; without one they are
    skipped, so run them from a desktop session.
-4. To try a fix build instead of 1.9.0, run `npm run deploy` in the repository. It finds EDMC's plugins folder (native or Flatpak) and copies the
-   build there; restart EDMC afterwards.
+4. To try the `master` build instead of the release, run `npm run deploy` in the repository. It finds EDMC's plugins folder (native or Flatpak) and copies the
+   build there; restart EDMC afterwards. `master` reports the same version as the release until the next one is cut.
 
-**What is new in 1.9.0, in the order to check it** (each item is in the section named):
-- **Section 5, Overlay:** the Surface Compass (and its Marks window), Notes, the Trade Watch list and Flight Alerts.
-- **Section 7f, Overlay Placement:** the default spots no longer overlapping, and the new Flight Alerts and Surface Compass rows.
-- **Section 7i:** Colonization **Find all** (fewer requests, the suggested route) and **Planned Builds**.
-- **Sections 7e, 7e-2 and 7e-4:** the Colonization Sites window and Raven Colonial, all Windows-tested only so far.
+**What changed in 1.9.1, in the order to check it** (each item is in the section named):
+- **Section 5, Overlay:** the Colonization card still showing when the game's Market event arrives late (the overlay now also watches `Market.json`).
+- **Section 7f, Overlay Placement:** an exact position that is off the overlay's canvas (such as a leftover `x = 1280`) falls back to the default spot.
+- **Section 7g, Overlay Appearance:** the Text size choice (Smaller, Default, Larger), and boxes holding their text at each size.
+- **Layout:** with a large font the Trade page and the Trade History window should not widen the EDMC window.
 
-Already seen working on Linux, so a quick look is enough: the Settings panel, the test overlays, and section 7d.
+**New on `master`, not yet in a release** (the checklists are in section 5 below):
+- **Materials, Engineering and the Material trader** (Field Ops mode).
+- **The Expedition planner** (Exploration mode).
 
 ## 0. Setup
 
@@ -408,11 +411,10 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 
 - [ ] **Settings -> Overlays -> Appearance** exists, with a Color scheme menu and a Text size menu (Smaller, Default, Larger; Larger is the starting value). Pick each size and press **Show sample**: no text may run past its box.
 - [ ] **Show sample** draws the Colonization card in the game in the picked scheme.
-- [ ] At **Largest** with **Roomy** padding, each display (Colonization, Discovery, Notable, Landing, Inventory, Mining,
+- [ ] At **Larger** (the starting size), each display (Colonization, Discovery, Notable, Landing, Inventory, Mining,
       Screenshots) keeps its text inside its border without wrapping. Note any that do not, with the font and Proton/Wine setup.
 - [ ] Changing the scheme recolors every display; Interdiction stays red.
-- [ ] After OK, the choices are still set when Settings is reopened. **Reset to defaults** restores Elite orange / Default /
-      Comfortable / Normal.
+- [ ] After OK, the choices are still set when Settings is reopened. **Reset appearance** restores Elite orange and Larger.
 
 ## 7h. Colonization mode (added 2026-10-11, Windows-tested only: check on Linux)
 

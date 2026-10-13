@@ -60,11 +60,11 @@ WNTB has one panel with eight **modes**. You click a button to switch between th
 | Mode | What it's for | Guide |
 |---|---|---|
 | **Powerplay** | Tracks the merits and Control Points you earn for your Power, and finds rare goods. | [Powerplay](docs/guide/powerplay.md) |
-| **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values and how far through a system you are, what your data sales actually paid, exobiology help, a lifetime tally of everything you've scanned, notes on systems and bodies, and a compass that points at a spot on the planet you are on. | [Exploration](docs/guide/exploration.md) |
+| **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values and how far through a system you are, what your data sales actually paid, exobiology help, a lifetime tally of everything you've scanned, notes on systems and bodies, an expedition planner (named trips of stops, ticked off as you arrive), and a compass that points at a spot on the planet you are on. | [Exploration](docs/guide/exploration.md) |
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalog of mining hotspots. | [Mining](docs/guide/mining.md) |
 | **Trade** | Your trading profit after fuel and repairs, what fills your ship hold (cargo, mission, stolen, limpets), your fleet carrier's cargo space, tritium, location and orders, saved sessions in a Trade History window, Spansh lookups for the best trade routes and the best place to buy or sell, and a watch list of the commodities you care about with the best buy and sell price. | [Trade](docs/guide/trade.md) |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions and collect / delivery progress for cargo missions. | [Missions](docs/guide/missions.md) |
-| **Field Ops** | Screenshots, your backpack/locker/cargo and saved ship builds. | [Field Ops](docs/guide/field-ops.md) |
+| **Field Ops** | Screenshots, your backpack/locker/cargo, the engineering materials you hold, a blueprint browser with a wishlist and shopping list, a finder for the closest material traders, and saved ship builds. | [Field Ops](docs/guide/field-ops.md) |
 | **Colonization** | The project you are building now, your colonization history, and a window with every site's shopping list, where to buy, and optional links and sharing with Raven Colonial. | [Colonization](docs/guide/colonization.md) |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. | [BGS](docs/guide/bgs.md) |
 
@@ -93,10 +93,11 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux is lightly tested for this release.** Colonization and the Overlays tab (Placement and Appearance) have had a first pass
-> on Linux. The newest parts (Flight Alerts, the Surface Compass, Notes and the Trade watch list) have been tried on Windows only
-> so far, and Linux checks are still to come, so a few small fixes for Linux are likely in a later update. If something looks off
-> there, please [report it](#getting-help).
+> **Linux is lightly tested.** Colonization and the Overlays tab (Placement and Appearance) have had a first pass on Linux, and the
+> 1.9.1 fixes came from it. The newer parts (Flight Alerts, the Surface Compass, Notes and the Trade watch list) have been tried on
+> Windows, and their Linux checks are still to be ticked off. The newest (Materials, the Engineering blueprints and wishlist, the material
+> trader finder and the Expedition planner, in the next release) have not yet been seen working in the game on either OS, so expect rough
+> edges and a few small fixes in a later update. If something looks off, please [report it](#getting-help).
 
 ## Planned and being researched
 

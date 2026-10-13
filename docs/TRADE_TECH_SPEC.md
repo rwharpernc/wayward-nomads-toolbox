@@ -121,7 +121,9 @@ flexible (titles and labels) and columns 1 to 3 hold numbers.
 real font (`font.measure`, plus the label's own padding) so this holds at any screen scaling. A label/value row puts its
 value in the same columns as a table's numbers, so those columns are sized for the wider of the two (`value_need`) and
 the title column gets what is left; getting this wrong made a stress page ask for 347 px of 330, which
-`tests/trade_view_smoke.py` now checks. When the available width changes the page is redrawn. Names are only
+`tests/trade_view_smoke.py` now checks. When the figures would leave the title column under 110 px (a wide font), the cells drop to the small font,
+and the title column never goes under 60 px, so a long title wraps instead of widening the page. The History window sets its minimum width
+from its widest table (`_fit_width`, never more than the screen allows less 40 px). When the available width changes the page is redrawn. Names are only
 bounded at 64 characters (`_NAME_MAX`), since the view wraps them. The suggestion list is a separate borderless
 window of at most eight rows.
 

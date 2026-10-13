@@ -5,38 +5,42 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **1.9.1** was released on 2026-10-13 (tag `v1.9.1`, from `master`). It holds the fixes found while testing 1.9.0 on Linux and Windows
-  (see its section in `CHANGELOG.md`), both confirmed on Windows. The text below about 1.9.0 is how testing started.
-- **1.9.0** was released on 2026-10-13 (tag `v1.9.0`, from `master` at `f7170d6`). On Windows it
-  was installed by the in-app updater; Linux testing starts from the same automatic install.
-- Everything listed under 1.9.0 in `CHANGELOG.md` is in it: the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list,
-  overlay default spots that no longer overlap, and the Colonization improvements.
+- **1.9.1** is the current release (2026-10-13, tag `v1.9.1`). It holds the fixes found while testing 1.9.0 on Windows and Linux: the
+  Colonization card watching `Market.json`, an off-canvas overlay position falling back to its default, the Text size choice, the
+  layout fixes for large fonts, and the troubleshooting additions. Both fixes that came from Linux were confirmed on Windows.
+- **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
+  spots that no longer overlap, and the Colonization improvements.
 
-## Branches (all pushed to origin)
+## Branches
 
-| Branch | What it is for | State |
-|---|---|---|
-| `bugfix/1.9.1` | Fixes for bugs found while testing 1.9.0. | Released as **1.9.1** and merged into `master`. Start any further fixes on a new `bugfix/1.9.2` branch cut from `master`. |
-| `master` | The released code. | Equal to `v1.9.1`. |
-| `feature/materials-engineering` | Planned **1.10.0**: engineering materials held, a blueprint browser with a wishlist and shopping list, engineers (including the four Colonia on-foot engineers, added by hand), and a material trader finder. | Built, with unit and window tests. **Not yet seen working in the game.** |
-| `feature/expedition-planner` | Planned **1.11.0**: named expeditions of stops with notes, progress from arrivals, import from the plotted route or a CSV. | Same: built and tested, **not yet seen in the game**. |
+There is one long-lived branch, `master`, and it is ahead of the 1.9.1 release. The feature branches and `bugfix/1.9.1` are merged and
+deleted. For a fix to a released version, cut a short branch from `master` (for example `bugfix/1.9.2`), and merge it back.
 
-The two feature branches were cut from `master` at 1.9.0, do not contain each other, and have not yet had 1.9.1 merged in (do that first: `git merge master`). When they are merged, the engineering branch goes
-first; each adds entries under "Unreleased" in `CHANGELOG.md`, which has to be placed by hand under its own version heading.
+`master` holds, under "Unreleased" in `CHANGELOG.md`, two pieces of work that no release has yet:
+
+- **Materials and Engineering** (Field Ops): the engineering materials you hold, a blueprint browser with a wishlist and shopping list,
+  engineers (including the four Colonia on-foot engineers, added by hand) and a material trader finder.
+- **The Expedition planner** (Exploration): named expeditions of stops with notes, progress from arrivals, import from the plotted route
+  or a CSV.
+
+Both are built, with unit and window tests, and neither has been seen working in the game on either OS. The next release will be a minor
+version (1.10.0) once they have been tried in the game; place the "Unreleased" entries under that heading at release time.
 
 ## Testing
 
-- **Windows:** being tested by the project owner now, against the installed 1.9.0. Bugs found go to `bugfix/1.9.1`.
-- **Linux:** next. The steps and the ordered list of what to check are at the top of `docs/LINUX_TESTING.md` ("Testing 1.9.0: start here").
-  When reporting, give the distro, desktop, X11 or Wayland, native or Flatpak EDMC, and the relevant lines of EDMC's log
+- **Windows:** being tested by the project owner, using the `master` build (`npm run deploy`). Bugs found are fixed on `master` or a short
+  bug fix branch.
+- **Linux:** the steps and the ordered list of what to check are at the top of `docs/LINUX_TESTING.md` ("Testing: start here"). When
+  reporting, give the distro, desktop, X11 or Wayland, native or Flatpak EDMC, and the relevant lines of EDMC's log
   (`~/.local/share/EDMarketConnector/EDMarketConnector.log`).
-- The in-game checks for the two feature branches are in `docs/TODO.md`, which Git ignores on purpose: it only exists on the machine
-  where it was written.
+- The in-game checks for Materials, Engineering and Expedition are in `docs/TODO.md`, which Git ignores on purpose: it only exists on the
+  machine where it was written. The Linux versions are in `docs/LINUX_TESTING.md`.
 
 ## Working rules for now
 
-- **While 1.9.0 is being tested, commit only on `bugfix/1.9.1`.** This project's hook runs `npm run deploy` after commits, which copies
-  the checked-out branch's build over the EDMC plugins folder. On a feature branch that would replace the 1.9.0 being tested.
+- This project's hook runs `npm run deploy` after commits, which copies the checked-out branch's build over the EDMC plugins folder. On
+  a branch that is not `master` that replaces the build being tested; the installed copy also does not move to a release until the
+  in-app updater or a deploy from `master` puts it there.
 - Ask before every commit, push, version bump, tag and release. Staging is fine without asking.
 - `git pull --rebase` before starting work, and push when done. Do not commit machine-specific paths or logs.
 - American English everywhere; no AI credit anywhere (see `CLAUDE.md`); everything saved about play is per commander
