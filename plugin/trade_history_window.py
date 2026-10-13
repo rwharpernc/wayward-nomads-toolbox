@@ -301,6 +301,18 @@ class _LookupsTab:
         self._searches.set_rows(stats.search_rows(record))
 
 
+_TABLE_SURROUND = 80   # the window's padding, the tab's padding and a scrollbar, around a table
+
+
+def _tables_in(widget: tk.Misc) -> List[DataTable]:
+    found: List[DataTable] = []
+    for child in widget.winfo_children():
+        if isinstance(child, DataTable):
+            found.append(child)
+        found += _tables_in(child)
+    return found
+
+
 class HistoryWindow:
     def __init__(self, parent: tk.Misc, book: HistoryBook, on_change: Callable[[], None], select: Optional[str],
                  cmdr: str = "") -> None:
@@ -440,6 +452,23 @@ class HistoryWindow:
             return
         self._drawn[index] = record.get("id")
         self._fillers[index].fill(record)
+        self._fit_width()
+
+    def _fit_width(self) -> None:
+        """Make the window at least as wide as its widest table asks for. Column widths follow the text, and a wide font makes the same
+        figures wider, so a fixed minimum would clip them on some computers. Never more than the screen allows."""
+        window = self._toplevel
+        try:
+            window.update_idletasks()
+            asked = max((t.winfo_reqwidth() for t in _tables_in(self._tabs)), default=0)
+            if not asked:
+                return
+            needed = min(max(MIN_WIDTH, asked + _TABLE_SURROUND), max(MIN_WIDTH, window.winfo_screenwidth() - 40))
+            window.minsize(needed, MIN_HEIGHT)
+            if window.winfo_width() < needed:
+                window.geometry(f"{needed}x{window.winfo_height()}")
+        except tk.TclError:
+            pass
 
     # --- actions -----------------------------------------------------------------------------------
 
