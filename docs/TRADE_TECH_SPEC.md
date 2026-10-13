@@ -72,6 +72,10 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `trade_spansh_client.py` | network | The route planner client (submit, poll, parse) and the profit-per-hour estimate |
 | `trade_roundtrip.py` | pure + network | The back-and-forth pair finder (one station search, then local pairing) |
 | `trade_commodity_entry.py` | UI | The type-ahead entry widget |
+| `trade_watch_data.py` | pure + file | The watch list: watched commodities, the prices seen at markets opened, the Spansh answers (memory only), best buy and sell; `trade_watch.json` |
+| `trade_watch_lookup.py` | pure + network | The Spansh refresh for the watch list (the search is injected) |
+| `trade_watch_panel.py` | UI + controller | The Watch list row (`PANEL_PLACEMENT = "trade"`), the `Market` event, the refresh worker |
+| `trade_watch_window.py` | UI | The Watch list window (uikit) |
 
 Reused from elsewhere: `mining_spansh_client.search_best_price_stations` (the station price search, shared
 with Mining's PRICE button), `mining_price_finder_dialog` (the **Price finder** button), `inventory_names`
@@ -548,9 +552,30 @@ Follows TECHNICAL.md section 11 ("Keeping API traffic low").
 - **Failure is quiet:** a failed or cancelled lookup shows a short message in the panel and logs the reason;
   it never interrupts journal handling.
 
+### 11a. Watch list (`trade_watch_*.py`)
+
+A separate feature module in Trade's panel (its own `PANEL_PLACEMENT = "trade"` entry in `ui.FEATURES`, after `trade_panel`), so the Trade
+page code does not change. It reads Trade's two settings, `wntb_trade_lookups_enabled` and `wntb_trade_near_radius_ly`, and has none of its own;
+the row's fold state is `wntb_trade_watch_collapsed` and the window's geometry `wntb_trade_watch_window_geometry`.
+
+- **Seen prices.** On the `Market` event the panel reads `Market.json` (`trade_market.read_market_file`) and `WatchBook.record_market` keeps, for
+  each watched commodity the market trades with a buy or sell price above 0, one `Sighting` per station (matched by station and system,
+  case-folded), the newest 12 per commodity. Saved in `trade_watch.json` through `commander_data.py` (one list per commander, as Notes).
+- **Spansh.** `trade_watch_lookup.refresh` makes a Buy and a Sell `search_best_price_stations` call per commodity, stations only
+  (`trade_prices.station_types()`; no fleet carriers), `market_days_old=7`, 5 results asked and the first kept. 0.4 s between requests, a
+  cancel `Event` checked between commodities, and a failure on one commodity is reported without losing the rest. It runs on a daemon thread
+  and the answer comes back through a `queue.Queue` polled with `after(500)`, so no widget is touched off-thread. Answers live in memory only.
+- **Best price.** `best_buy` is the lowest price among seen sightings with stock above 0 and the Spansh buy quote; `best_sell` the highest among
+  sightings with demand above 0 and the Spansh sell quote. Ties go to the newer.
+- **Sizing.** The row is a hard-wrapped label (200 px), at most 5 lines of at most 16 characters of name, and the status is clipped to 160
+  characters; `tests/trade_watch_smoke.py` fails if the open row asks for more than the main panel's default width.
+- **Not verified in game:** reading `Market.json` on the `Market` event with a real market (the same file `trade_panel` already reads for cargo
+  value), and a real Spansh answer for a refresh (the call is the one the Market page makes).
+
 ## 12. Testing
 
-`python -m unittest discover -s tests`. Trade's suites are `tests/test_trade.py` (ledger, market parsing,
+`python -m unittest discover -s tests`. The watch list's are `tests/test_trade_watch_data.py`, `tests/test_trade_watch_lookup.py` and the
+window and row smoke test `tests/test_trade_watch_smoke.py` (needs a display, skipped without one). Trade's suites are `tests/test_trade.py` (ledger, market parsing,
 Spansh client parsing) and `tests/test_trade_search.py` (commodity names, ship pads, offer ranking, carrier
 space, the tracker's attribution rules, the per-commander choice and the journal backfill) and
 `tests/test_trade_stock.py` (average-cost stock, apply-once rules, the backfill, and file ordering) and

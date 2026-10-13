@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
     exploration_value, flight_alerts, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel, notes_panel, surface_compass,
-    missions, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, session_merits, ship_builds_panel, trade_panel, ui,
+    missions, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, session_merits, ship_builds_panel, trade_panel, trade_watch_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -51,7 +51,7 @@ if not logger.hasHandlers():
 _FEATURES = (
     powerplay, missions, autohonk, interdiction, flight_alerts, landing, discovery, notable, boxel_survey, exploration_value,
     organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, notes_panel, surface_compass, ship_builds_panel, colonisation_panel, screenshots,
-    inventory_panel, mining_panel, trade_panel, bgs_panel, game_mode, session_credits, session_merits,
+    inventory_panel, mining_panel, trade_panel, trade_watch_panel, bgs_panel, game_mode, session_credits, session_merits,
 )
 
 _ui_frame: Optional[tk.Frame] = None
@@ -109,6 +109,7 @@ def plugin_start3(plugin_dir: str) -> str:
     inventory_panel.start(plugin_dir)
     mining_panel.start(plugin_dir)
     trade_panel.start(plugin_dir)
+    trade_watch_panel.start(plugin_dir)
     flight_alerts.start(plugin_dir)
     notes_panel.start(plugin_dir)
     surface_compass.start(plugin_dir)
@@ -184,6 +185,7 @@ def plugin_stop() -> None:
     trade_panel.stop()
     flight_alerts.stop()
     notes_panel.stop()
+    trade_watch_panel.stop()
     surface_compass.stop()
     powerplay_window.close()
     rare_goods_window.close()

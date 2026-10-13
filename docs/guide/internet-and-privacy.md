@@ -28,6 +28,7 @@ The table says exactly when.
 | Colonization: Test key (Settings → Colonization → Raven Colonial) | Raven Colonial (ravencolonial.com) | Only when you press **Test key**. One read (`GET /api/Cmdr/_`) carrying your key in a header and nothing else; it changes nothing on Raven |
 | Colonization: Report Complete to Raven (Raven Colonial menu in the Colonization Sites window) | Raven Colonial (ravencolonial.com) | Only when you press **Report Complete to Raven** on a site your journal shows complete and confirm. Sends your Raven Colonial key and that one project's id (an empty request to its `complete` address), after first reading the system's plan to find the project. No deliveries, cargo or journal data |
 | Colonization: Where to buy (**Find nearest**, **Find all**) | Spansh | Only when you press the button. Sends the commodity name and the system you search around, one request per commodity for **Find all**, plus one that sends the names of all of them together to find a station that sells the whole list (and, when the route still leaves two or more uncovered, one more with just those names). A commodity a single station can supply in full is not searched on its own. Identical searches are answered from memory for 2 minutes |
+| Trade: Watch list REFRESH (Trade row, or Refresh from Spansh in its window) | Spansh | **Off** until you turn Trade lookups on in Settings, and then only when you press it. Two requests per watched commodity (cheapest to buy, dearest to sell), about 0.4 seconds apart. Sends the commodity name and the system you search around, nothing about you. The prices WNTB keeps from the markets you open come from the game's own file and are not sent anywhere |
 | Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. See below for how often |
 | BGS tick detection | A community tick-time service (`tick.infomancer.uk`) | **On** by default. Every 60 seconds while BGS is on. Can be turned off in Settings → BGS. The service has no HTTPS, so this one request is **unencrypted**; it asks only for the time of the last tick and sends nothing about you but WNTB's name and version |
 | Automatic updates | GitHub | **Off** by default |
@@ -49,7 +50,7 @@ Only when you press a button:
 Everything else makes **no internet connection at all**: Powerplay tracking, Missions, Inventory, Screenshots,
 Colonisation tracking, history and the shopping list overlay (Where to buy and Planned Builds are the only parts that go online,
 above), Organic Scanning, Ship Builds, Landing Assist, Interdiction Warning, and Trade's session profit,
-stock, carrier cargo and History.
+stock, carrier cargo and History, and the Watch list's prices from the markets you open.
 
 ## How WNTB keeps its traffic low
 

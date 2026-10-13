@@ -19,7 +19,7 @@ under the page arrows.
 
 **On this page:** [How a trading session works](#how-a-trading-session-works) ·
 [The Session page](#the-session-page) · [Trade History](#trade-history-saving-sessions) · [Routes](#routes) ·
-[Market](#market) · [Fleet and squadron carriers](#your-fleet-carrier-and-squadron-carrier) ·
+[Market](#market) · [Watch list](#watch-list) · [Fleet and squadron carriers](#your-fleet-carrier-and-squadron-carrier) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it) ·
 [Using Trade on two computers](#using-trade-on-two-computers) · [Settings](#trade-settings)
 
@@ -253,6 +253,28 @@ box.
 > **Prices are only as fresh as the last player who docked there.** Markets older than 30 days are ignored. Check the
 > market when you arrive.
 
+## Watch list
+
+A short list of the commodities you care about, with the best price to buy and to sell each at a glance. It is a collapsible **Watch list**
+row in Trade mode, under the page. Press **WATCH** to open the window.
+
+- **Add a commodity** in the window: click the box, start typing and pick from the suggestions (the same names the Market page uses), then
+  **Add**. Up to 30. **Remove** takes one off and forgets its prices; press it twice.
+- **Where the prices come from.** Every time you open a station's commodity market in the game, WNTB reads it and keeps the buy price
+  (what the station charges), the sell price (what it pays), the stock and the demand of each commodity you watch, for the newest 12
+  stations. This needs nothing turned on and sends nothing anywhere. Pick a commodity in the window to see every market it was seen at.
+- **Refresh from Spansh.** **REFRESH** on the row (or **Refresh from Spansh** in the window) asks Spansh for the cheapest station to buy and
+  the dearest to sell each watched commodity, within your "Near me" radius of the system you are in. It needs *Enable Spansh trade lookups*
+  in Settings, and it sends only the commodity names and your system name, never your commander name. Fleet carriers are left out, because
+  they move. The answer is kept until you close EDMC.
+- **The price shown is the best of both**: the cheapest to buy and the dearest to sell among the markets you opened and Spansh's answer. The
+  window says where each price is from and how old it is. The row shows only the prices; open the window for the place.
+
+> **A price is only true when it was seen.** A market you opened last week may have changed, and Spansh's data is only as fresh as the last
+> player who docked there (this refresh ignores markets older than 7 days). Check the age, and the market when you arrive.
+
+The list is kept on your computer for the commander who made it. Another commander on the same install has their own.
+
 ## Your fleet carrier and squadron carrier
 
 Not every commander has a carrier, and some have a fleet carrier, a squadron carrier or both. Under
@@ -356,6 +378,15 @@ it goes away.
 - **Commodity names must match the game exactly** ("Void Opal", not "Void Opals"). Pick from the suggestion list.
 - **The landing pad size is worked out from your ship** and can be wrong for unusual ships. Override it in Settings.
 - **Spansh can be slow or refuse a search.** Cancel and try again later; the page shows its reason.
+
+### Watch list
+
+- **A seen price is a snapshot.** The game only writes a market when you open it, so a watched commodity has no price until you have
+  visited a station that trades it (or pressed REFRESH). It never updates by itself.
+- **Stock and demand are from that moment too.** A station that showed 5,000 t last week may be empty now.
+- **Fleet carriers are not in the Spansh refresh**, so a carrier that sells a commodity cheaply only shows up if you opened its market.
+- **The Spansh refresh makes two requests per commodity** (buy, then sell), a little under half a second apart, so thirty commodities take
+  about half a minute. It runs in the background; the row says when it is done.
 
 ### Gaps we have not been able to confirm
 
