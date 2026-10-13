@@ -24,9 +24,11 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_SCHEME = "wntb_overlay_scheme"
-# Fixed on 2026-10-12: one text size, padding and line spacing for every display. Earlier versions saved choices under
-# wntb_overlay_text_level, wntb_overlay_padding and wntb_overlay_line_spacing; they are no longer read.
-LOCKED_TEXT_LEVEL = 1      # "Larger"
+CFG_TEXT_SIZE = "wntb_overlay_text_size"     # -1 Smaller, 0 Default, 1 Larger
+# One padding and line spacing for every display. Earlier versions saved choices under wntb_overlay_text_level,
+# wntb_overlay_padding and wntb_overlay_line_spacing; they are no longer read. The text size is a new setting (CFG_TEXT_SIZE) that
+# starts at "Larger", the size the displays were fixed at on 2026-10-12, so nobody's overlay changes until they choose.
+DEFAULT_TEXT_SIZE = 1
 LOCKED_PADDING = style.DEFAULT_PADDING
 LOCKED_SPACING = style.DEFAULT_SPACING
 
@@ -41,15 +43,22 @@ def _int(key: str, default: int) -> int:
         return default
 
 
+def saved_text_size() -> int:
+    levels = [value for _label, value in style.TEXT_CHOICES]
+    return max(min(levels), min(max(levels), _int(CFG_TEXT_SIZE, DEFAULT_TEXT_SIZE)))
+
+
 def current_look() -> style.Look:
-    """The look every display should draw with right now: the saved color scheme (or the default) at the fixed size and spacing."""
+    """The look every display should draw with right now: the saved color scheme and text size (or the defaults) at the fixed
+    padding and spacing."""
     return style.look_from_choices(
-        config.get_str(CFG_SCHEME) or style.DEFAULT_SCHEME, LOCKED_TEXT_LEVEL, LOCKED_PADDING, LOCKED_SPACING)
+        config.get_str(CFG_SCHEME) or style.DEFAULT_SCHEME, saved_text_size(), LOCKED_PADDING, LOCKED_SPACING)
 
 
 # --- Settings tab --------------------------------------------------------------------------------------------------
 
 _scheme_var: Optional[tk.StringVar] = None
+_size_var: Optional[tk.StringVar] = None
 _result_var: Optional[tk.StringVar] = None
 _frame: Optional[tk.Misc] = None
 _chips: dict = {}
@@ -62,7 +71,8 @@ def typed_look() -> style.Look:
     """The look as currently chosen on the tab (not yet saved), or the saved one when the tab isn't built."""
     if _scheme_var is None:
         return current_look()
-    return style.look_from_choices(_scheme_var.get(), LOCKED_TEXT_LEVEL, LOCKED_PADDING, LOCKED_SPACING)
+    size = style.value_for(style.TEXT_CHOICES, _size_var.get() if _size_var is not None else "", saved_text_size())
+    return style.look_from_choices(_scheme_var.get(), size, LOCKED_PADDING, LOCKED_SPACING)
 
 
 def _refresh_chips(*_args) -> None:
@@ -75,7 +85,7 @@ def _refresh_chips(*_args) -> None:
 
 
 def build_settings(notebook: tk.Misc) -> None:
-    global _scheme_var, _result_var, _frame
+    global _scheme_var, _size_var, _result_var, _frame
 
     frame = nb.Frame(notebook)
     _frame = frame
@@ -85,18 +95,20 @@ def build_settings(notebook: tk.Misc) -> None:
     nb.Label(
         frame,
         text=("How every WNTB overlay display looks, together: Colonization, Discovery, Notable Bodies, Interdiction, Landing, "
-              "Inventory, Mining and the Screenshot message. Text size and spacing are fixed, so the columns "
-              "stay aligned. The Interdiction warning keeps its red alert "
-              "colors whatever the scheme."),
+              "Inventory, Mining and the Screenshot message. Spacing is fixed so the columns stay aligned; "
+              "the text size is yours to choose, and every box is sized from it. The Interdiction warning keeps its red "
+              "alert colors whatever the scheme."),
         wraplength=460, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 8))
 
     look = current_look()
     _scheme_var = tk.StringVar(value=look.palette.name)
+    _size_var = tk.StringVar(value=style.label_for(style.TEXT_CHOICES, saved_text_size()))
 
     grid = tk.Frame(frame)
     grid.grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
-    for row, (label, var, values) in enumerate((("Color scheme", _scheme_var, list(style.SCHEMES)),)):
+    for row, (label, var, values) in enumerate((("Color scheme", _scheme_var, list(style.SCHEMES)),
+                                                ("Text size", _size_var, [label for label, _v in style.TEXT_CHOICES]))):
         nb.Label(grid, text=label + ":").grid(row=row, column=0, sticky=tk.W, padx=(0, 10), pady=2)
         tk.OptionMenu(grid, var, *values, command=_refresh_chips).grid(row=row, column=1, sticky=tk.W, pady=2)
 
@@ -114,7 +126,7 @@ def build_settings(notebook: tk.Misc) -> None:
     buttons = tk.Frame(frame)
     buttons.grid(row=3, column=0, sticky=tk.W, padx=10, pady=(8, 2))
     tk.Button(buttons, text="Show sample", command=_show_sample).pack(side=tk.LEFT)
-    tk.Button(buttons, text="Reset scheme", command=_reset).pack(side=tk.LEFT, padx=(8, 0))
+    tk.Button(buttons, text="Reset appearance", command=_reset).pack(side=tk.LEFT, padx=(8, 0))
     _result_var = tk.StringVar(value="")
     nb.Label(frame, textvariable=_result_var, wraplength=460, justify=tk.LEFT).grid(
         row=4, column=0, sticky=tk.W, padx=10, pady=(2, 10))
@@ -125,15 +137,18 @@ def save_settings() -> None:
         return
     look = typed_look()
     config.set(CFG_SCHEME, look.palette.name)
+    config.set(CFG_TEXT_SIZE, str(look.text_level))
 
 
 def _reset() -> None:
     if _scheme_var is None:
         return
     _scheme_var.set(style.DEFAULT.palette.name)
+    if _size_var is not None:
+        _size_var.set(style.label_for(style.TEXT_CHOICES, DEFAULT_TEXT_SIZE))
     _refresh_chips()
     if _result_var is not None:
-        _result_var.set("The default scheme is shown. Press OK in Settings to keep it.")
+        _result_var.set("The default scheme and size are shown. Press OK in Settings to keep it.")
 
 
 def _say(message: str) -> None:

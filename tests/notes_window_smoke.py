@@ -143,7 +143,8 @@ text, _suffix = panel.summary()
 check(len(text) <= 140, f"the summary line stays short: {len(text)} characters")
 check("S" * 50 not in text, "a very long system name is clipped in the panel")
 entry = widgets(host, tk.Entry)[0]
-check(int(entry.cget("width")) == notes_panel._ENTRY_WIDTH, "the quick-add box has a fixed width")
+check(int(entry.cget("width")) <= notes_panel._ENTRY_WIDTH and entry.winfo_reqwidth() <= notes_panel._ENTRY_MAX_PX,
+      f"the quick-add box has a fixed width, no wider than {notes_panel._ENTRY_MAX_PX} px in any font: {entry.winfo_reqwidth()}")
 # EDMC sizes its window to the widest row of every plugin: with a very long system name and a note at the limit shown, the Notes
 # section must still be no wider than the main panel is by default (216 px at the default fonts).
 check(host.winfo_reqwidth() <= 216, f"the open Notes section asks for {host.winfo_reqwidth()} px, wider than the main panel")

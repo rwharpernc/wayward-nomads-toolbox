@@ -22,7 +22,7 @@ threading, persistence), see [TECHNICAL.md](TECHNICAL.md).
 8. [Routes (Spansh trade planner)](#8-routes-spansh-trade-planner)
 9. [Market: commodity search and ranking](#9-market-commodity-search-and-ranking)
 10. [Settings, config keys and files](#10-settings-config-keys-and-files)
-11. [Limits and network behaviour](#11-limits-and-network-behaviour)
+11. [Limits and network behavior](#11-limits-and-network-behavior)
 12. [Testing](#12-testing)
 13. [Verified, assumed and known gaps](#13-verified-assumed-and-known-gaps)
 14. [Platform notes](#14-platform-notes)
@@ -89,7 +89,7 @@ free tonnes, then `used/capacity (free)`, what the docked market would pay, up t
 block (`trade_carrier.cargo_blocks`: "Carrier cargo used" and "Carrier cargo free", the crew and pack space, "Carrier
 reserved for orders", then the running-the-carrier rows from `trade_carrier_ops.ops_blocks`; `cargo_lines` is the
 plain-text twin). Buttons: **Reset** (starts the tally again; offers to save an unsaved session first),
-**Save session** (greyed out until there is something to save) and **History**, with **Rebuild** on a second row (see 5.2). Save does not end or restart the
+**Save session** (grayed out until there is something to save) and **History**, with **Rebuild** on a second row (see 5.2). Save does not end or restart the
 session: tracking is always on, the label never changes, and only **Reset** begins a new session.
 
 **Routes.** Idle text shows the start station, ship, cargo size, jump range and budget the search will use.
@@ -99,14 +99,14 @@ and **Round trip** (section 8.2).
 **Market.** A commodity box (type-ahead), a **Sell** / **Buy** toggle, then **Near me**, **Galaxy** and
 **Price finder**. The box and toggle are shown only on this page and only when lookups are enabled. The toggle
 is two buttons using the same on/off look as the mode buttons (`panelkit.apply_toggle_button_state`), not radio
-buttons, which EDMC's theme doesn't colour reliably. Every button carries its full label (an earlier "Price…"
+buttons, which EDMC's theme doesn't color reliably. Every button carries its full label (an earlier "Price…"
 was an abbreviation of the finder's name). Selling with an empty box = the commodity you carry most of; buying
 needs a typed commodity.
 
 **How a page is drawn.** Each page builds a list of typed blocks (`trade_blocks.py`) rather than lines of text:
-`Heading` (a section title; accent-coloured, with a rule above), `Pair` (label left, value right), `Columns` and `Item`
+`Heading` (a section title; accent-colored, with a rule above), `Pair` (label left, value right), `Columns` and `Item`
 (a table row: a title, up to three right-aligned number cells, and a detail line beneath, with an optional warning in
-the accent colour) and `Note` (a wrapped paragraph). The builders (`ledger.summary_blocks`, 
+the accent color) and `Note` (a wrapped paragraph). The builders (`ledger.summary_blocks`, 
 `trade_carrier.cargo_blocks`, and the panel's `_hold_blocks`, `_routes_blocks`, `_market_blocks`,
 `_price_result_blocks`) stay free of widgets and can be tested; `to_text` renders any list as plain lines, and the
 older `*_lines` functions are thin wrappers over it. `BlockView.show(blocks)` draws them and skips the redraw when
@@ -125,9 +125,9 @@ the title column gets what is left; getting this wrong made a stress page ask fo
 bounded at 64 characters (`_NAME_MAX`), since the view wraps them. The suggestion list is a separate borderless
 window of at most eight rows.
 
-**Theming.** EDMC's theme only auto-colours a widget that had no colour when it was first registered, and leaves a
-Frame's background alone (see `missions_ui.py`). So the accent colour and fonts are set at creation, the view takes its
-parent's background, the rules are coloured after the theme pass (`panelkit.separator_colour`), and the widgets are
+**Theming.** EDMC's theme only auto-colors a widget that had no color when it was first registered, and leaves a
+Frame's background alone (see `missions_ui.py`). So the accent color and fonts are set at creation, the view takes its
+parent's background, the rules are colored after the theme pass (`panelkit.separator_colour`), and the widgets are
 themed with `panelkit.apply_theme_deep`. The shared wrapping-label registry (`panelkit.wrap_label`) is deliberately not
 used here: it never forgets a label, and these are rebuilt.
 
@@ -146,7 +146,7 @@ Journal events and EDMC state read by `trade_panel.handle_event` (every handler 
 | `LoadGame`, `StartUp`, `Commander` | Session boundaries; which commander the events belong to |
 | `CarrierStats`, `CarrierBuy`, `CargoTransfer` | Carrier cargo space |
 | `CarrierDepositFuel`, `CarrierLocation`, `CarrierJumpRequest`, `CarrierJumpCancelled`, `CarrierTradeOrder`, `CarrierFinance` (and `FuelLevel`, `Finance` and `PendingDecommission` on `CarrierStats`) | Running the carrier: tritium, location, planned jump, orders, balance (`trade_carrier_ops.py`) |
-| `Statistics` | The commander's lifetime totals (`Trading`, `Mining`, `Exobiology`, `FLEETCARRIER`): kept in memory per commander and shown as the Session page's last section, labelled with the event's date. The game writes it at login only. At start-up a worker thread reads the newest one per commander from the newest 40 journal files (`trade_lifetime.latest_in_journals`), and a live one is never replaced by an older one found there |
+| `Statistics` | The commander's lifetime totals (`Trading`, `Mining`, `Exobiology`, `FLEETCARRIER`): kept in memory per commander and shown as the Session page's last section, labeled with the event's date. The game writes it at login only. At start-up a worker thread reads the newest one per commander from the newest 40 journal files (`trade_lifetime.latest_in_journals`), and a live one is never replaced by an older one found there |
 | `Cargo` (its `Inventory`, else `Cargo.json` in the journal folder) | Mission and stolen tonnes in the hold (`trade_hold.py`) |
 | `state["Cargo"]`, `["CargoCapacity"]`, `["Credits"]`, `["ShipType"]` | Hold, capacity, route budget, ship fallback |
 
@@ -200,7 +200,7 @@ stays tied up until the cargo is sold, whenever that is. So the stock book follo
 Because there is one list, nothing needs reconciling between "route" and "carrier" tracking, and no purchase
 is counted twice. The book is an estimate (see Limits), so it is **not shown on the Session page**, which shows only
 exact figures: the ship hold from `state["Cargo"]` and the carrier's cargo from `CarrierStats`. The book is snapshotted into
-each saved session (`stock`) and shown on Trade History's Stock & carrier tab, labelled as a journal estimate.
+each saved session (`stock`) and shown on Trade History's Stock & carrier tab, labeled as a journal estimate.
 
 Rules: average cost per commodity; a sale never takes stock below zero; a sale of cargo the book never saw is
 ignored. The ledger's profit still uses the game's own `AvgPricePaid`, so the two can differ slightly when
@@ -304,7 +304,7 @@ copied between machines. `trade_journal_scan.py` makes new journals take effect 
 
 ## 6. Hold, ship and landing pads
 
-**Ship hold.** (labelled "Ship hold" on the panel, to keep it apart from the carrier's "Carrier cargo ..." lines) `used/capacity (free)` from EDMC's `state["Cargo"]` and `["CargoCapacity"]`. Above it, **Hold space** splits the used tonnes: cargo, limpets (`drones`, which the game counts as cargo) and free. The cargo figure also names the mission tonnes (inventory entries with a `MissionID`) and stolen tonnes (`Stolen`), which EDMC's merged `state["Cargo"]` cannot give, so they come from the `Cargo` event's `Inventory` or, at start-up, `Cargo.json` (`trade_hold.py`; field names checked against a real journal). Display names come
+**Ship hold.** (labeled "Ship hold" on the panel, to keep it apart from the carrier's "Carrier cargo ..." lines) `used/capacity (free)` from EDMC's `state["Cargo"]` and `["CargoCapacity"]`. Above it, **Hold space** splits the used tonnes: cargo, limpets (`drones`, which the game counts as cargo) and free. The cargo figure also names the mission tonnes (inventory entries with a `MissionID`) and stolen tonnes (`Stolen`), which EDMC's merged `state["Cargo"]` cannot give, so they come from the `Cargo` event's `Inventory` or, at start-up, `Cargo.json` (`trade_hold.py`; field names checked against a real journal). Display names come
 from names learned off market events, then `trade_commodities.resolve`, then `inventory_names.display_name`.
 
 **Ship to pad size** (`trade_ship.py`). Pad class per ship (1 small, 2 medium, 3 large) is a table from the
@@ -456,8 +456,8 @@ The panel shows the top three (`RESULTS_KEPT`) with what to carry each way, reme
 "Liquid Oxygen" finds none, and the journal's plural "Void Opals" finds none where "Void Opal" works (all
 checked 2026-10-09). Everything therefore goes through `trade_commodities.resolve`, which accepts typed text,
 journal names, internal symbols (`lowtemperaturediamond`) and a plural/singular slip, and returns the exact
-name. The table (`trade_commodities_data.py`) is generated from FDevIDs' `commodity.csv` (270 rows; Limpets
-dropped). `SUGGESTIBLE` (173 names) leaves out the Salvage category, which is sellable but rarely searched; it
+name. The table (`trade_commodities_data.py`) is generated from FDevIDs' `commodity.csv` (269 rows once Limpets
+are dropped). `SUGGESTIBLE` (173 names) leaves out the Salvage category, which is sellable but rarely searched; it
 still resolves if typed or carried. An unresolved typed name is searched as typed, and a zero-result answer
 says to check the spelling.
 
@@ -526,7 +526,7 @@ Files in the plugin folder (all are commander data and must survive updates; see
 single-ledger file of an earlier build is read as the current commander's). `trade_carrier.json` was a flat
 `{commander: record}` map in an earlier build; `load_all` reads that as a fleet carrier.
 
-## 11. Limits and network behaviour
+## 11. Limits and network behavior
 
 Follows TECHNICAL.md section 11 ("Keeping API traffic low").
 

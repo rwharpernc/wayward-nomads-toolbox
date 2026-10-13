@@ -131,7 +131,7 @@ for index in range(7):
     for table in tables(window._tabs):
         if table.winfo_ismapped():
             # The table sits inside the window's padding, the tab's padding and a scrollbar: allow for them.
-            room = width - 80
+            room = top.winfo_width() - 80    # the window widens itself to fit a wide font, so read its width now
             check(table.winfo_reqwidth() <= room,
                   f"tab {index}: a table asks for {table.winfo_reqwidth()}px where only {room}px is free")
 

@@ -29,7 +29,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `overlay.py` | The one shared overlay client (EDMCModernOverlay over a local TCP port), its Plugin Group registration and group offsets |
 | `overlay_layout.py` | Where overlay displays go, the same on any screen: how big a pixel is on the overlay's canvas (positions are screen fractions, sizes are pixels), nine anchor spots plus pixel offsets, the overlay's right-edge clamp, the overlay's clamp and the offset that carries a display past it, and a client wrapper that moves a display; pure, no Tk |
 | `overlay_style.py` | The shared overlay look: six color schemes (color roles), the four text sizes with per-size character width and line height estimates, padding and line spacing; cards are sized from these so larger text never wraps; pure, no Tk |
-| `overlay_appearance.py` | The saved color scheme and the fixed text size, padding and line spacing, `current_look()` which every overlay draws with, and the Overlays > Appearance Settings tab with its sample |
+| `overlay_appearance.py` | The saved color scheme and text size (Smaller, Default, Larger), the fixed padding and line spacing, `current_look()` which every overlay draws with, and the Overlays > Appearance Settings tab with its sample |
 | `overlay_placement.py` | Global overlay placement: reads the real window size, mode and display scaling from EDMCModernOverlay's log (falling back to Elite's `DisplaySettings.xml` and Windows' scaling), keeps every display's saved spot, and the Overlay Placement Settings tab with its preview |
 | `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming |
 | `platform_support.py` | Windows/Linux differences in one place: Elite's folders, key presses (`xdotool`), host programs under Flatpak, "Works on" notes |
@@ -76,7 +76,7 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `canonn_poi_data.py` | Canonn's published Thargoid and Guardian site lists, fetched on demand |
 | `canonn_poi_panel.py` | The Canonn Nearby POI section: nearest Thargoid or Guardian site |
 | `codex_backfill.py` | Journal readers for Codex Completionist, per commander: the full-history scan behind the BKF button and the one-time rebuild, and `scan_since` for the start-up catch-up |
-| `codex_catalog.py` | The catalogue of every codex entry, for the "Not found" tab |
+| `codex_catalog.py` | The catalog of every codex entry, for the "Not found" tab |
 | `codex_completionist.py` | Pure logic for the lifetime tally of everything scanned, with the `last_event_at` watermark |
 | `codex_completionist_panel.py` | The Codex Completionist section of Exploration |
 | `codex_completionist_state.py` | JSON persistence for the tally, one per commander (the old shared tally is kept untouched, then tidied away) |
@@ -253,7 +253,7 @@ Spec: [SCREENSHOTS_AND_INPUT_TECH_SPEC.md](SCREENSHOTS_AND_INPUT_TECH_SPEC.md), 
 | `screenshot_gui_focus.py` | GUI-focus detection and per-panel crop rectangles |
 | `screenshot_naming.py` | Output file names for captured screenshots |
 | `screenshots.py` | The Screenshots section of Field Ops: capture, conversion, thumbnails, overlay message |
-| `ship_builds_data.py` | Per-commander catalogue of ship-build links |
+| `ship_builds_data.py` | Per-commander catalog of ship-build links |
 | `ship_builds_dialog.py` | The Add/Edit Ship Build dialog |
 | `ship_builds_panel.py` | The Ship Builds section of Field Ops |
 | `ship_builds_window.py` | The Ship Builds window |
@@ -293,7 +293,7 @@ Spec: [WINDOW_FRAMEWORK_SPEC.md](WINDOW_FRAMEWORK_SPEC.md). Pure tkinter; nothin
 |---|---|
 | `uikit/__init__.py` | Package marker for the shared window kit |
 | `uikit/mapview.py` | Canvas map widget (coverage, hotspots, position, zoom) |
-| `uikit/palette.py` | Colour and font tokens for WNTB's own window look |
+| `uikit/palette.py` | Color and font tokens for WNTB's own window look |
 | `uikit/shell.py` | The window shell: header, body, status footer, saved geometry |
 | `uikit/style.py` | Fonts and per-window skinning |
 | `uikit/table.py` | `DataTable`, the replacement for `ttk.Treeview` |

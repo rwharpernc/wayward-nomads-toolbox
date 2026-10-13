@@ -138,7 +138,7 @@ class LookTests(unittest.TestCase):
     def test_choices_are_clamped_so_damaged_settings_never_break_drawing(self):
         look = S.look_from_choices("Nope", 99, -5, 500)
         self.assertEqual(look.palette.name, S.DEFAULT_SCHEME)
-        self.assertEqual((look.text_level, look.pad_extra, look.line_extra), (2, 0, 20))
+        self.assertEqual((look.text_level, look.pad_extra, look.line_extra), (1, 0, 20))   # the largest offered size is Larger
         self.assertEqual(S.look_from_choices("Ice blue", -9, 99, -1).text_level, -1)
 
     def test_menu_labels_round_trip_and_unknown_values_use_the_nearest(self):
@@ -158,18 +158,29 @@ class SavedChoicesTests(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_nothing_saved_gives_the_default_scheme_at_the_fixed_size(self):
+    def test_nothing_saved_gives_the_default_scheme_at_the_size_the_displays_have_had(self):
         look = A.current_look()
         self.assertEqual((look.palette, look.text_level, look.pad_extra, look.line_extra),
-                         (S.DEFAULT.palette, A.LOCKED_TEXT_LEVEL, A.LOCKED_PADDING, A.LOCKED_SPACING))
+                         (S.DEFAULT.palette, A.DEFAULT_TEXT_SIZE, A.LOCKED_PADDING, A.LOCKED_SPACING))
+        self.assertEqual(A.DEFAULT_TEXT_SIZE, 1)     # "Larger": nobody's overlay changes until they pick a size
 
-    def test_only_the_scheme_is_read_back_and_size_and_spacing_cannot_be_changed(self):
-        # Choices saved by earlier versions are ignored.
-        STORE.update({A.CFG_SCHEME: "High contrast", "wntb_overlay_text_level": "2", "wntb_overlay_padding": "14",
-                      "wntb_overlay_line_spacing": "7"})
+    def test_the_scheme_and_text_size_are_read_back_and_spacing_cannot_be_changed(self):
+        # Choices saved by earlier versions (text level, padding, spacing) are ignored.
+        STORE.update({A.CFG_SCHEME: "High contrast", A.CFG_TEXT_SIZE: "-1", "wntb_overlay_text_level": "2",
+                      "wntb_overlay_padding": "14", "wntb_overlay_line_spacing": "7"})
         look = A.current_look()
         self.assertEqual((look.palette.name, look.text_level, look.pad_extra, look.line_extra),
-                         ("High contrast", A.LOCKED_TEXT_LEVEL, A.LOCKED_PADDING, A.LOCKED_SPACING))
+                         ("High contrast", -1, A.LOCKED_PADDING, A.LOCKED_SPACING))
+
+    def test_a_damaged_or_out_of_range_text_size_is_kept_in_range(self):
+        for saved, expected in (("9", 1), ("-9", -1), ("nonsense", 1)):
+            STORE[A.CFG_TEXT_SIZE] = saved
+            self.assertEqual(A.current_look().text_level, expected, saved)
+
+    def test_widths_are_padded_so_a_box_holds_its_text(self):
+        look = S.Look()
+        self.assertEqual(look.text_width("x" * 10, "normal"), round(10 * S.CHAR_PX["normal"] * S.WIDTH_PAD))
+        self.assertGreater(look.text_width("x" * 10, "normal"), round(10 * S.CHAR_PX["normal"]))
 
     def test_a_damaged_scheme_falls_back_instead_of_failing(self):
         STORE.update({A.CFG_SCHEME: "???"})

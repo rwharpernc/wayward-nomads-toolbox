@@ -297,6 +297,25 @@ class VisibilityTests(unittest.TestCase):
         self.v.feed({"event": "Market"})
         self.assertTrue(self.v.visible)
 
+    def test_market_file_rewrite_shows_the_card_before_the_journal_event(self) -> None:
+        self.v.feed({"event": "Docked"})
+        self.v.set_focus(5)
+        self.assertFalse(self.v.visible)
+        self.v.market_file_changed()
+        self.assertTrue(self.v.visible)
+
+    def test_market_file_rewrite_outside_station_services_is_ignored(self) -> None:
+        self.v.set_focus(0)
+        self.v.market_file_changed()
+        self.v.set_focus(5)
+        self.assertFalse(self.v.visible)
+
+    def test_market_file_rewrite_does_not_override_outfitting(self) -> None:
+        self.v.set_focus(5)
+        self.v.feed({"event": "Outfitting"})
+        self.v.market_file_changed()
+        self.assertFalse(self.v.visible)
+
     def test_carrier_inventory_counts(self) -> None:
         self.v.set_focus(5)
         self.v.feed({"event": "CarrierStats"})

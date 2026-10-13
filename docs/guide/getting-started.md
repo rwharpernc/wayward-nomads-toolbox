@@ -66,10 +66,10 @@ WNTB can also update itself. Turn on **Automatically download and install update
 **File → Settings → WNTB → General → Updates**. It is **off by default**, and it only looks at official published
 releases. The **Release notes** link on that tab opens the latest release's page in your browser.
 
-The first line under the mode buttons always says which version you are running (**Plugin: v1.8.0**). While an update is coming
-it says **Plugin: v1.8.0 (downloading v1.8.1...)**, and once the update is downloaded it turns bold black on **orange** and reads
-**v1.8.1 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
-After the restart the line shows **Plugin: v1.8.1 (updated)** in green for a short while. Clicking the line opens the release page.
+The first line under the mode buttons always says which version you are running (**Plugin: v1.9.0**). While an update is coming
+it says **Plugin: v1.9.0 (downloading v1.9.1...)**, and once the update is downloaded it turns bold black on **orange** and reads
+**v1.9.1 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
+After the restart the line shows **Plugin: v1.9.1 (updated)** in green for a short while. Clicking the line opens the release page.
 
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 
@@ -91,7 +91,7 @@ You don't have to configure anything to get value out of WNTB, but this short to
 
 **Why WNTB sometimes can't tell you something.** WNTB, like every third-party tool, only knows what the game writes to its journal
 files, and not everything is logged. It fills some gaps from Frontier's servers (through a signed-in EDMC) and from data players and
-communities report (Spansh, EDSM, Canonn, edastro, Raven Colonial), and works around the rest with labelled estimates and small steps
+communities report (Spansh, EDSM, Canonn, edastro, Raven Colonial), and works around the rest with labeled estimates and small steps
 you take. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 ## Finding your way around
@@ -109,7 +109,7 @@ mining and flip to Trade to check a price, your mining stats keep counting.
 
 Just under the mode buttons, above the page itself, WNTB shows these lines, on every mode:
 
-- **Plugin**: the version you are running, for example `Plugin: v1.8.1` (see "Updating" for what it says during an update).
+- **Plugin**: the version you are running, for example `Plugin: v1.9.0` (see "Updating" for what it says during an update).
 - **Game mode**: For example *You are in Solo mode.*, *Open*, or *Private Group* with its name.
 - **Credits**: what you've earned or lost since you logged in, for example
   `+1,234,567 cr earned (+411,522 cr/hr)` or `-5,000 cr lost`. It is your balance now minus your balance at login.
@@ -146,7 +146,7 @@ Missions, Mining hotspots and the ground your Rhino has driven, the Boxel Survey
 Colonisation sites, Ship Builds, Organic Scanning and Powerplay history. Names are matched ignoring case, so
 `BOCHEAUX` in the journal and `Bocheaux` in EDMC are the same commander.
 
-The few things that are not about a commander are the same for everyone: your Settings, the downloaded Codex catalogue
+The few things that are not about a commander are the same for everyone: your Settings, the downloaded Codex catalog
 and the record of which journal files Trade has read.
 
 **After updating from a version before this** (1.5.x or earlier), some data was one shared pile:
@@ -233,6 +233,7 @@ Switch to the mode first, then use the button listed here.
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
 | Notes | Exploration | **NOTES** button in the Notes section |
 | Marks (for the Surface Compass) | Exploration | **MARKS** button in the Compass section |
+| Watch list | Trade | **WATCH** button in the Watch list section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there is no button) |
 | Ship Builds | Field Ops | **SHIPS** button |
 | Colonization Sites | Colonization | **DASHBOARD** button |
@@ -274,6 +275,11 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **FIND** | Find nearest POI (GEC and Canonn) | Exploration |
 | **REF** | Refresh POI data (Canonn) | Exploration |
 | **DET** | View details (Codex Completionist) | Exploration |
+| **ADD** | Save the line you typed as a note about the system you are in | Exploration (Notes section) |
+| **NOTES** | Open the Notes window | Exploration (Notes section) |
+| **MARK** | Save where you are as a mark for the Surface Compass | Exploration (Compass section) |
+| **TARGET** | Aim the compass at the next target: the nearest hotspot, each mark on this body, then none | Exploration (Compass section) |
+| **MARKS** | Open the Marks window | Exploration (Compass section) |
 | **BKF** | Backfill from journal history (Codex Completionist) | Exploration |
 | **H.S.** | Find nearby hotspots | Mining |
 | **+H.S.** | Save hotspot here | Mining |
@@ -292,6 +298,8 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **Sell** / **Buy** | Choose whether the search is for selling or buying | Trade (Market page) |
 | **Near me** / **Galaxy** | Best place to sell or buy, near you / anywhere | Trade (Market page) |
 | **Price finder** | The Mining PRICE finder, for any commodity | Trade (Market page) |
+| **REFRESH** | Ask Spansh for the best buy and sell price of each watched commodity near you (needs Trade lookups on) | Trade (Watch list section) |
+| **WATCH** | Open the Watch list window | Trade (Watch list section) |
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **SHIPS** | Manage ship builds | Field Ops |
 | **DASHBOARD** | Colonization sites | Colonization |
