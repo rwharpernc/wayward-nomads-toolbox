@@ -8,7 +8,7 @@ click a section's title (▸ / ▾) to open it. WNTB remembers which ones you le
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
 [Organic Scanning](#organic-scanning) · [Codex Completionist](#codex-completionist) ·
-[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) ·
+[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 Anything that draws on your game screen needs an overlay. See [Getting started](getting-started.md#what-you-need)
@@ -355,12 +355,35 @@ The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **FIND
 - By default it skips sites you've already logged in Codex Completionist, so it points you somewhere new. You can
   turn that off in the same place.
 
+## Notes
+
+*(Starts minimized.)*
+
+Your own notes on a system or a body: "come back for the rings", "ELW with a moon, scan the other side". The journal has no place
+for a commander's own words, so these are kept by WNTB, on your computer, **for the commander who wrote them** (another commander on
+the same install does not see them). Nothing is sent anywhere.
+
+The section says how many notes the system you are in has, and shows the newest, so a note you wrote on an earlier visit is in front of
+you when you arrive. With the section folded, the title says `- 2 here`.
+
+- **Quick note:** type a line in the box and press **ADD** (or Enter). It is saved against the system you are in, and the body too
+  when you are near one (the game's `Status.json` names it).
+- **NOTES** opens the Notes window: a **Search** box (every word you type must appear in the system, body or note), a list of every
+  note, newest change first, and an editor underneath. Select a note to change it, press **New note** to write another. **Here**
+  beside the System and Body boxes fills in where you are now. Tick **Only the system I am in** to see just this system's notes.
+- **Delete** asks you to press it a second time, because a note cannot be got back.
+- A note can be up to 2,000 characters, a system or body name up to 100, and you can keep 2,000 notes. Past a limit WNTB tells you
+  rather than cutting the note short.
+
+Notes are matched to a system by its name (ignoring capitals and spaces at the ends), so a note about `Sol` shows when you are in Sol.
+
 ## What the game does and doesn't tell us, and how to work around it
 
 WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what EDSM, Spansh, Canonn and edastro report and works around the rest. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|
+| A note to know which body you are at | The body comes from `Status.json` (`BodyName`), which the game writes only while you are near a body, and not in supercruise between bodies. | Press **Here** in the Notes window beside Body, or type the name. A note can be about the system alone. |
 | Auto-Honk to press any control | It can only press **keyboard** keys, so your fire button must be bound to one. On Linux it needs `xdotool`; Wayland without XWayland is unsupported. | Bind a keyboard key to your fire button and use **Rescan** after changing bindings. |
 | Boxel Survey to know where a system is | It works with **names**, not coordinates. It counts through the trailing number to make the next name and does not know whether that system exists. | The galaxy map is the judge. Press **Next >** to skip a name that won't plot. |
 | The game to tell WNTB a candidate failed to plot | Nothing is written to the journal when the galaxy map can't find a name. | After 3 skips WNTB asks EDSM for a real nearby system. Press **Set** to move there. |

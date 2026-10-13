@@ -87,6 +87,9 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `exploration_value.py` | Estimated scan payout for the last body scanned, the system's age and region, system scan progress and the last data sales |
 | `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog: downloads the full list once and finds the nearest point of interest locally (their own nearest endpoint does not use the position) |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
+| `notes_data.py` | The commander's notes on a system or body, kept per commander in `notes.json`: validation and limits, search, and an add, change and delete that save at once; no Tk |
+| `notes_panel.py` | The Notes row in Exploration mode: how many notes the system you are in has and the newest, a one-line quick add, and the button that opens the window |
+| `notes_window.py` | The Notes window: search, a list of every note, and an editor with a Here button for the system and body you are at |
 | `neutron_finder.py` | Spansh search for the nearest neutron-star or white-dwarf primary |
 | `notable.py` | Notable Bodies: the overlay banners, queueing and Settings page |
 | `notable_rules.py` | The 15 rules deciding which scanned bodies are worth an alert |
@@ -270,6 +273,9 @@ Spec: [TECHNICAL.md](TECHNICAL.md) section 12
 | Module | What it is |
 |---|---|
 | `interdiction.py` | Interdiction Warning overlay and detection |
+| `carrier_jump_timer.py` | Fleet carrier jump countdown, the pure part: the planned jump from `CarrierJumpRequest` (cleared by a cancel or the jump), time left, one alert at 10, 5 and 1 minute and at departure, and reading a request back from recent journals |
+| `fuel_alerts.py` | Fuel warnings, the pure part: low fuel at a chosen percentage, and a plotted star that cannot be scooped (`FSDTarget`) with a tank at or under a second percentage; tank size from `Loadout`, fuel from `Status.json` |
+| `flight_alerts.py` | Flight Alerts: one overlay card for the carrier jump countdown and the fuel warnings, with its Settings tab, optional sound and a one-second tick while a jump is planned |
 | `landing.py` | Landing Assist: assigned pad, diagram on the overlay and in the panel; one render worker that retries until the overlay is up |
 
 ## Shared window kit (`plugin/uikit/`)

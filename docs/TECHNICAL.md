@@ -350,7 +350,7 @@ several requests in flight, use the generation counter above instead.
   tallies, visited systems, ship builds. Examples: `sessions.json`, `boxel_state.json`,
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
-  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`,
+  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`,
   `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
@@ -476,6 +476,17 @@ signals (Status.json flag, NPC `ReceiveText` taunts restricted to `Channel == "n
 authoritative `Interdicted`/`EscapeInterdiction` events) because they arrive via independent
 callbacks with no ordering guarantee. The channel gate exists because squadron and system chat are
 other commanders casually typing words like "pirate" with no interdiction happening.
+
+Flight Alerts (`flight_alerts.py`, over the pure `carrier_jump_timer.py` and `fuel_alerts.py`) draws one overlay card. The carrier
+countdown comes from `CarrierJumpRequest` (`SystemName`, `Body`, `DepartureTime`, parsed as UTC), cleared by `CarrierJumpCancelled` or
+`CarrierJump`; a request whose departure is already more than 90 s past is ignored (an old journal line), one alert is given as the time
+left falls to 600, 300, 60 and 0 s (only the nearest when several are crossed at once), and on `LoadGame`, `StartUp` or WNTB's restore
+event the journals modified in the last 3 hours are read once for a request still in the future. Fuel comes from `Status.json` (`Fuel.FuelMain`, via
+EDMC's `dashboard_entry`), the tank size from `Loadout.FuelCapacity.Main`, the plotted star from `FSDTarget.StarClass` (scoopable
+means exactly one of O, B, A, F, G, K, M, so `MS`, `AeBe` and the white-dwarf `D*` classes are not), and the flags `InMainShip` (1<<24), `Docked`,
+`Landed` and `ScoopingFuel` decide when a warning applies. The journal gives no per-jump fuel cost, so the warnings are percentage thresholds. A
+one-second ticker thread runs only while a jump is planned; each draw lasts 4 s on the overlay so a stalled WNTB cannot leave the card up, an unchanged
+card is redrawn every 3 s, and the card's placement uses a fixed three-line block so its top does not move as lines come and go.
 
 ## 10. The overlay
 

@@ -71,6 +71,13 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 - [ ] Landing Assist, Interdiction Warning (**Test Warning**), Discovery (**Test Discovery**) and
       Notable Bodies (**Test Notable**, after ticking Enable) all draw over the game.
+- [ ] Notes (Exploration mode, **Notes** section): the quick-add box saves a line against the current system; **NOTES** opens the window;
+      the editor's text box takes typing and paste; **Here** fills the system and body; **Delete** asks twice; the window keeps its size
+      and place after closing and reopening.
+- [ ] Flight Alerts (Settings → Overlays → Flight Alerts): **Test Card** draws a card on the right, in the middle; with a carrier jump
+      scheduled the countdown ticks every second and turns red in the last minute; a plotted neutron star with the tank at or under 50%
+      shows the unscoopable-star line; the sound box is available only when `canberra-gtk-play` or `paplay` is installed, and a sound plays
+      when an alert starts.
 - [ ] Notable Bodies: scan a terraformable or an Earth-like, water or ammonia world and a violet banner
       appears; the same body does not alert twice.
 - [ ] Landing Assist when the overlay starts late: request docking right after starting EDMC and the game, before the

@@ -37,8 +37,8 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
-    exploration_value, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
-    notable, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
+    exploration_value, flight_alerts, gec_poi_panel, interdiction, inventory_panel, landing, mining_panel, missions,
+    notable, notes_panel, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
     game_mode, session_credits, session_merits, settings_scroll, trade_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
@@ -56,14 +56,14 @@ FEATURES = (
     # Boxel Survey (the largest single feature here, collapsed by default),
     # and Auto-Honk/Discovery Alerts last, side by side - see
     # _SIDE_BY_SIDE_PAIRS below, which is why they must stay adjacent here.
-    exploration_value, organic_scan_panel, gec_poi_panel, canonn_poi_panel,
+    exploration_value, organic_scan_panel, gec_poi_panel, canonn_poi_panel, notes_panel,
     codex_completionist_panel, boxel_survey, autohonk, discovery, notable,
     screenshots,
     inventory_panel, ship_builds_panel, colonisation_panel,
     mining_panel,
     trade_panel,
     bgs_panel,
-    interdiction, landing,
+    interdiction, flight_alerts, landing,
 )
 
 # Feature pairs built into a single shared row (side by side) instead of
@@ -574,7 +574,7 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         colonisation_panel.build_overlay_settings,
         *settings_of(discovery),
         inventory_panel.build_overlay_settings,
-        *settings_of(interdiction, landing),
+        *settings_of(interdiction, flight_alerts, landing),
         mining_panel.build_overlay_settings,
         *settings_of(notable),
         screenshots.build_overlay_settings,

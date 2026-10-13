@@ -5,6 +5,17 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ## Unreleased
 
+### Added
+- **Notes on a system or body** (Exploration mode, a **Notes** section; a **NOTES** button opens the window). Write a line about the system you
+  are in, and the section shows how many notes it has and the newest when you arrive. The window has a search box, a list of every note
+  and an editor, with **Here** to fill in where you are. Notes are kept on your computer for the commander who wrote them, are never
+  sent anywhere, and Delete asks twice.
+- **Flight Alerts: a fleet carrier jump countdown and fuel warnings on one small overlay card** (Settings → Overlays → Flight Alerts, off
+  until ticked). The countdown follows a scheduled jump to its departure time, turns red in the last minute and is read back from your
+  journals if the game or EDMC is restarted. The fuel warnings say when the tank is low (at a percentage you choose) and, the one the game
+  does not give, when the star you have plotted to cannot be scooped and the tank is at or under a second percentage. An optional sound plays
+  when an alert starts. The journal gives no per-jump fuel cost, so the fuel warnings compare percentages of the tank, and the guide says so.
+
 ### Changed
 - **Overlay: the Mining waypoint's default spot moved up 40 px** so it no longer overlaps the Colonization shopping list on a 1920 x 1080
   screen. A position you set yourself is unchanged. A test now stops new default-spot overlaps on 16:9 screens.

@@ -198,7 +198,7 @@ Trade, BGS, Colonization, Field Ops and Overlays. Some have a row of tabs of the
 | **General** | Window, Updates |
 | **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Auto-Honk |
 | **Field Ops** | Screenshots, Inventory, Ship Builds |
-| **Overlays** | Overlay Connection, Overlay Placement, Appearance (color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Landing, Mining, Notable Bodies, Screenshots |
+| **Overlays** | Overlay Connection, Overlay Placement, Appearance (color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Flight Alerts, Landing, Mining, Notable Bodies, Screenshots |
 
 This is where you switch things on and off and adjust how they behave.
 
@@ -209,7 +209,7 @@ unused. Switches exist for individual features:
 
 | | |
 |---|---|
-| **Have a switch** | Auto-Honk, Discovery Alerts, Notable Bodies, Organic Scanning, Codex Completionist, Exploration Value (and its two online extras), BGS (and its tick detection), Landing Assist, Interdiction Warning, the Trade and Mining online lookups, and every overlay |
+| **Have a switch** | Auto-Honk, Discovery Alerts, Notable Bodies, Organic Scanning, Codex Completionist, Exploration Value (and its two online extras), BGS (and its tick detection), Landing Assist, Interdiction Warning, Flight Alerts, the Trade and Mining online lookups, and every overlay |
 | **Have no switch** | The core of Powerplay, Missions, Mining and Trade tracking, screenshot conversion, Inventory tracking, Colonisation, Ship Builds, Boxel Survey, and the GEC and Canonn POI finders. Some of these (Boxel Survey, the POI finders) only fold away and do nothing until you press a button |
 
 Most online lookups are off until you switch them on, or only run when you press a button. The exceptions are listed
@@ -231,6 +231,7 @@ Switch to the mode first, then use the button listed here.
 | Rare Goods Finder | Powerplay | **RARES** button, next to SES |
 | BGS Report | BGS | **REPORT** button |
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
+| Notes | Exploration | **NOTES** button in the Notes section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there is no button) |
 | Ship Builds | Field Ops | **SHIPS** button |
 | Colonization Sites | Colonization | **DASHBOARD** button |

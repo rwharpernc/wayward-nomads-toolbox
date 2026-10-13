@@ -25,7 +25,7 @@ from config import appname, config
 
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
-    exploration_value, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel,
+    exploration_value, flight_alerts, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, mining_overlay, mining_panel, notes_panel,
     missions, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, powerplay_window, rare_goods_window, restore, screenshots, session_credits, session_merits, ship_builds_panel, trade_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
@@ -49,8 +49,8 @@ if not logger.hasHandlers():
 # Every feature module that consumes journal events. Order doesn't matter -
 # each one only ever reads `entry`/`state`, never mutates them.
 _FEATURES = (
-    powerplay, missions, autohonk, interdiction, landing, discovery, notable, boxel_survey, exploration_value,
-    organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, ship_builds_panel, colonisation_panel, screenshots,
+    powerplay, missions, autohonk, interdiction, flight_alerts, landing, discovery, notable, boxel_survey, exploration_value,
+    organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, notes_panel, ship_builds_panel, colonisation_panel, screenshots,
     inventory_panel, mining_panel, trade_panel, bgs_panel, game_mode, session_credits, session_merits,
 )
 
@@ -109,7 +109,10 @@ def plugin_start3(plugin_dir: str) -> str:
     inventory_panel.start(plugin_dir)
     mining_panel.start(plugin_dir)
     trade_panel.start(plugin_dir)
+    flight_alerts.start(plugin_dir)
+    notes_panel.start(plugin_dir)
     interdiction.set_overlay_client(_overlay)
+    flight_alerts.set_overlay_client(_overlay)
     landing.set_overlay_client(_overlay)
     discovery.set_overlay_client(_overlay)
     notable.set_overlay_client(_overlay)
@@ -128,6 +131,7 @@ def plugin_start3(plugin_dir: str) -> str:
         (discovery.GROUP_NAME, discovery.GROUP_PREFIX),
         (notable.GROUP_NAME, notable.GROUP_PREFIX),
         (interdiction.GROUP_NAME, interdiction.GROUP_PREFIX),
+        (flight_alerts.GROUP_NAME, flight_alerts.GROUP_PREFIX),
         (mining_overlay.GROUP_NAME, mining_overlay.GROUP_PREFIX),
         (screenshots.GROUP_NAME, screenshots.GROUP_PREFIX),
         (colonisation_overlay.GROUP_NAME, colonisation_overlay.GROUP_PREFIX),
@@ -175,6 +179,8 @@ def plugin_stop() -> None:
     colonisation_panel.stop()
     mining_panel.stop()
     trade_panel.stop()
+    flight_alerts.stop()
+    notes_panel.stop()
     powerplay_window.close()
     rare_goods_window.close()
     _overlay.close()
@@ -251,6 +257,8 @@ def dashboard_entry(cmdr: str, is_beta: bool, entry: Dict[str, Any]) -> None:
     flags = entry.get("Flags")
     if isinstance(flags, int):
         interdiction.handle_dashboard_flags(flags)
+    flight_alerts.dashboard_status(entry)
+    notes_panel.dashboard_status(entry)
     mining_panel.dashboard_status(entry)
     colonisation_panel.dashboard_status(entry)
     organic_scan_panel.dashboard_status(entry)

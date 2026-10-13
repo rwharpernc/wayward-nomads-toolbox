@@ -35,6 +35,7 @@ PER_COMMANDER = {
     "colonisation_sites.json": "keyed by commander (colonisation_data.py)",
     "colonisation_carrier.json": "one record per commander (commander_data.py, colonisation_carrier.py)",
     "rcc_keys.json": "one key per commander (commander_data.py, rcc_keys.py)",
+    "notes.json": "one list per commander (commander_data.py, notes_data.NoteBook)",
     "colonisation_history.json": "one record per commander (commander_data.py, colonisation_history.py)",
     "trade_ledger.json": "one session per commander (trade_ledger.LedgerBook)",
     "trade_carrier.json": "keyed by commander (trade_carrier.py)",
