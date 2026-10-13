@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from . import trade_prices
-from .mining_spansh_client import StationPrice, search_best_price_stations
+from .mining_spansh_client import StationPrice, search_best_price_stations, search_stations_selling_all
 
 PAD_ANY = "any"
 PAD_MEDIUM = "medium"
@@ -34,11 +34,13 @@ CARRIER_RESULTS = 10
 
 WHOLE_LIST_STATIONS = 5     # stations shown per commodity when the whole list is searched at once
 WHOLE_LIST_CARRIERS = 2     # fleet carriers shown per commodity then (only when carriers were asked for)
+ONE_STOP_RESULTS = 5        # stations asked for that sell the whole list in one place
 WHOLE_LIST_PAUSE = 0.4      # seconds between two requests to Spansh, so a long list is not sent as a burst
 
 CACHE_SECONDS = 120   # the same search asked again within this long is answered from memory, not Spansh
 
 SearchFn = Callable[..., List[StationPrice]]
+OneStopFn = Callable[..., List[Tuple[StationPrice, Dict[str, Tuple[int, int]]]]]
 _cache: Dict[tuple, Tuple[float, "SearchResult"]] = {}
 
 
@@ -164,11 +166,14 @@ def find_whole_list(reference_system: str, commodities: Sequence[str], *, radius
                     search: SearchFn = search_best_price_stations, now: Callable[[], float] = time.monotonic,
                     sleep: Callable[[float], None] = time.sleep, pause: float = WHOLE_LIST_PAUSE,
                     progress: Optional[Callable[[int, int, str], None]] = None,
-                    cancelled: Optional[Callable[[], bool]] = None) -> WholeListResult:
+                    cancelled: Optional[Callable[[], bool]] = None, one_stop: Optional[OneStopFn] = None) -> WholeListResult:
     """`find` for each commodity in turn, one request each (Spansh has no multi-commodity search), pausing between
     requests that really went out. A commodity whose search fails is recorded and the rest carry on, so one bad answer
     does not lose the others; a blank system is refused outright. `progress(done, total, label)` is called before each
-    commodity, and `cancelled()` is checked between them."""
+    commodity, and `cancelled()` is checked between them. With `one_stop` (Spansh's "has all of these" search) one more request
+    asks for stations that sell every commodity in the list; any it finds are added to each commodity's sources, so the
+    route can use a station that is not among the nearest few for any one commodity. That request is a bonus: if it fails,
+    nothing is lost."""
     if not reference_system.strip():
         raise ValueError("Enter a system to search around.")
     out = WholeListResult()
@@ -189,7 +194,34 @@ def find_whole_list(reference_system: str, commodities: Sequence[str], *, radius
         except Exception as exc:   # a network or parse failure for this commodity only
             out.failed.append((label, str(exc) or exc.__class__.__name__))
             sent_any = True
+    if one_stop is not None and not out.stopped and len(out.found) >= 2 and not out.failed:
+        try:
+            _add_one_stop(out, reference_system, one_stop, radius_ly, pad, include_carriers, sort)
+        except Exception:   # an extra; the per-commodity answers stand without it
+            pass
     return out
+
+
+def _add_one_stop(out: WholeListResult, reference_system: str, one_stop: OneStopFn, radius_ly: Optional[float],
+                  pad: str, include_carriers: bool, sort: str) -> None:
+    """Add the stations that sell every commodity searched to each commodity's sources (see `find_whole_list`)."""
+    labels = [label for label, _ in out.found]
+    types = trade_prices.station_types(True) + (trade_prices.CARRIER_TYPES if include_carriers else [])
+    hits = one_stop(reference_system.strip(), labels, radius_ly, max_results=ONE_STOP_RESULTS, market_days_old=MAX_AGE_DAYS,
+                    station_types=types, required_pad=None if pad == PAD_ANY else pad)
+    for index, (label, result) in enumerate(out.found):
+        have = {(s.station, s.system) for s in [*result.stations, *result.carriers]}
+        stations, carriers = list(result.stations), list(result.carriers)
+        for item, offers in hits:
+            if (item.station, item.system) in have or label not in offers or not _fits(item, pad):
+                continue
+            price, supply = offers[label]
+            source = to_source(StationPrice(
+                station=item.station, system=item.system, station_type=item.station_type, distance_ly=item.distance_ly,
+                distance_to_arrival_ls=item.distance_to_arrival_ls, is_planetary=item.is_planetary, price=price,
+                quantity=supply, small_pads=item.small_pads, medium_pads=item.medium_pads, large_pads=item.large_pads))
+            (carriers if source.is_carrier else stations).append(source)
+        out.found[index] = (label, SearchResult(stations=order(stations, sort), carriers=order(carriers, sort)))
 
 
 # --- a shopping route from the whole-list answer ----------------------------------------------------------------------

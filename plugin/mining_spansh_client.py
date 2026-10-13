@@ -196,6 +196,64 @@ anyone updating their market), which would recommend a station that's
 since moved or stopped trading."""
 
 
+def _post_station_search(request_body: dict) -> dict:
+    """POSTs one station search to Spansh and returns the parsed answer; raises on any network or parse failure."""
+    request = urllib.request.Request(
+        STATIONS_SEARCH_URL,
+        data=json.dumps(request_body).encode("utf8"),
+        headers={"User-Agent": _USER_AGENT, "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def search_stations_selling_all(reference_system: str, commodities: Sequence[str], max_distance_ly: Optional[float],
+                                max_results: int = 10, market_days_old: int = _MARKET_DAYS_OLD_DEFAULT,
+                                station_types: Optional[Sequence[str]] = None, required_pad: Optional[str] = None,
+                                ) -> list[tuple[StationPrice, dict[str, tuple[int, int]]]]:
+    """One query for the closest stations that have EVERY one of `commodities` in stock (Spansh ANDs several `market`
+    filters, and a station's whole market comes back with it; checked live 2026-10-13, 16 filters accepted). Each result is
+    the station (its `price`/`quantity` are those of the first commodity) with `{commodity: (price, supply)}` for all of
+    them, keyed by the names as passed in. Usually empty for a long list: it is a "can I do this in one stop" check."""
+    if required_pad not in (None, "medium", "large"):
+        raise ValueError('required_pad must be None, "medium" or "large"')
+    wanted = [(name, _normalize_commodity_name(name)) for name in commodities]
+    if not wanted:
+        return []
+    filters: dict = {
+        "market_updated_at": {"comparison": "<=>", "value": [f"now-{market_days_old}d", "now"]},
+        "market": [{"name": spansh, "supply": {"value": ["1", "999999999"], "comparison": "<=>"}} for _, spansh in wanted],
+    }
+    if max_distance_ly is not None:
+        filters["distance"] = {"min": "0", "max": str(max_distance_ly)}
+    if required_pad:
+        filters[f"{required_pad}_pads"] = {"comparison": "<=>", "value": [1, 999]}
+    if station_types:
+        filters["type"] = {"value": list(station_types)}
+    data = _post_station_search({"filters": filters, "sort": [{"distance": {"direction": "asc"}}], "size": max_results,
+                                 "page": 0, "reference_system": reference_system})
+    out: list[tuple[StationPrice, dict[str, tuple[int, int]]]] = []
+    for station in data.get("results", []):
+        market = {str(c.get("commodity", "")).casefold(): c for c in station.get("market") or []}
+        offers: dict[str, tuple[int, int]] = {}
+        for name, spansh in wanted:
+            entry = market.get(spansh.casefold())
+            if entry is None or entry.get("buy_price", 0) <= 0 or entry.get("supply", 0) <= 0:
+                break
+            offers[name] = (entry["buy_price"], entry["supply"])
+        else:
+            first = offers[wanted[0][0]]
+            out.append((StationPrice(
+                station=station.get("name", "?"), system=station.get("system_name", "?"),
+                station_type=station.get("type") or "?", distance_ly=station.get("distance", 0.0),
+                distance_to_arrival_ls=station.get("distance_to_arrival", 0.0),
+                is_planetary=bool(station.get("is_planetary", False)), price=first[0], quantity=first[1],
+                small_pads=_count(station.get("small_pads")), medium_pads=_count(station.get("medium_pads")),
+                large_pads=_count(station.get("large_pads"))), offers))
+    return out
+
+
 def search_best_price_stations(reference_system: str, commodity: str, transaction: str,
                                max_distance_ly: Optional[float], max_results: int = 10,
                                market_days_old: int = _MARKET_DAYS_OLD_DEFAULT,
@@ -253,14 +311,7 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
         "page": 0,
         "reference_system": reference_system,
     }
-    request = urllib.request.Request(
-        STATIONS_SEARCH_URL,
-        data=json.dumps(request_body).encode("utf8"),
-        headers={"User-Agent": _USER_AGENT, "Content-Type": "application/json"},
-        method="POST",
-    )
-    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as response:
-        data = json.loads(response.read().decode("utf-8"))
+    data = _post_station_search(request_body)
 
     results: list[StationPrice] = []
     for station in data.get("results", []):

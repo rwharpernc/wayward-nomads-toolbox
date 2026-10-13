@@ -23,6 +23,7 @@ from . import colonisation, colonisation_builds_window, colonisation_carrier, co
 from .colonisation_carrier import CarrierCargo
 from .colonisation import Site
 from .colonisation_data import SiteRepository
+from .mining_spansh_client import search_stations_selling_all
 from .uikit import palette as P, style
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
@@ -611,7 +612,7 @@ class ColonisationWindow:
                 job["result"] = sources.find_whole_list(
                     system, labels, radius_ly=radius, pad=pad, include_carriers=carriers, sort=order,
                     progress=lambda done, total, label: job.__setitem__("progress", (done, total, label)),
-                    cancelled=lambda: job["cancel"])
+                    cancelled=lambda: job["cancel"], one_stop=search_stations_selling_all)
             except Exception as exc:   # bad input or an unexpected failure: shown, not raised into the main thread
                 logger.exception("Colonization whole-list search failed")
                 job["error"] = str(exc) or exc.__class__.__name__

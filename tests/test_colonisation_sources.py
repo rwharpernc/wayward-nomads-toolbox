@@ -285,5 +285,61 @@ class PrefsTests(unittest.TestCase):
         self.assertEqual(src.load_prefs('{"radius": true}').radius_ly, src.DEFAULT_RADIUS_LY)
 
 
+class OneStopTests(unittest.TestCase):
+    """The extra "stations that sell every commodity" request merged into a whole-list search."""
+
+    def setUp(self):
+        src.clear_cache()
+        self.calls = []
+
+    def one_stop(self, hits):
+        def fake(system, labels, radius, **kwargs):
+            self.calls.append((system, list(labels), radius, kwargs))
+            return hits
+        return fake
+
+    def run_list(self, one_stop, labels=("Steel", "Water"), **kwargs):
+        return src.find_whole_list("Sol", list(labels), search=FakeSpansh([item("Near", 5)]), sleep=lambda s: None,
+                                   one_stop=one_stop, **kwargs)
+
+    def test_a_station_selling_everything_is_added_to_each_commodity_with_its_own_price(self):
+        far = item("Hub", 80)
+        result = self.run_list(self.one_stop([(far, {"Steel": (120, 900), "Water": (30, 400)})]))
+        steel, water = (r for _, r in result.found)
+        self.assertEqual([(s.station, s.price, s.supply) for s in steel.stations], [("Near", 400, 1000), ("Hub", 120, 900)])
+        self.assertEqual([(s.station, s.price, s.supply) for s in water.stations], [("Near", 400, 1000), ("Hub", 30, 400)])
+        self.assertEqual(len(self.calls), 1)
+        self.assertEqual(self.calls[0][1], ["Steel", "Water"])
+
+    def test_a_station_already_listed_is_not_added_twice(self):
+        result = self.run_list(self.one_stop([(item("Near", 5), {"Steel": (1, 1), "Water": (1, 1)})]))
+        self.assertTrue(all(len(r.stations) == 1 for _, r in result.found))
+
+    def test_the_route_can_use_the_added_station(self):
+        result = self.run_list(self.one_stop([(item("Hub", 80), {"Steel": (120, 900), "Water": (30, 400)})]))
+        plan = src.plan_route(result.found, {"Steel": 1800, "Water": 1200})   # more than "Near" alone has in stock
+        self.assertEqual(sorted(stop.station for stop in plan.stops), ["Hub", "Near"])
+        self.assertEqual(plan.uncovered, ())
+
+    def test_pad_size_is_respected(self):
+        small_only = item("Hub", 80, pads=(2, 0, 0))
+        result = self.run_list(self.one_stop([(small_only, {"Steel": (1, 9), "Water": (1, 9)})]), pad=src.PAD_LARGE)
+        self.assertTrue(all(len(r.stations) == 1 for _, r in result.found))
+
+    def test_a_failing_extra_request_loses_nothing(self):
+        def broken(*args, **kwargs):
+            raise RuntimeError("busy")
+        result = self.run_list(broken)
+        self.assertEqual([label for label, _ in result.found], ["Steel", "Water"])
+
+    def test_a_single_commodity_or_a_failed_one_skips_the_extra_request(self):
+        self.run_list(self.one_stop([]), labels=["Steel"])
+        self.assertEqual(self.calls, [])
+
+    def test_it_is_off_unless_given(self):
+        result = src.find_whole_list("Sol", ["Steel", "Water"], search=FakeSpansh([item("Near", 5)]), sleep=lambda s: None)
+        self.assertTrue(all(len(r.stations) == 1 for _, r in result.found))
+
+
 if __name__ == "__main__":
     unittest.main()

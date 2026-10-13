@@ -6,6 +6,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Colonization, Find all: finds stations that sell the whole list.** Find all now makes one extra Spansh request for the nearest
+  stations (and carriers, if asked) that have every commodity in stock, and adds any it finds under each commodity. The shopping route
+  can then use a station that is not among the nearest few for any single commodity. Spansh seldom has one station for a long list,
+  so for most lists nothing is added; if the request fails, Find all carries on without it.
+- **Colonization: click a search result to copy its system.** Clicking a row in the where-to-buy results (a station, or a stop in the
+  suggested route) copies its system name, ready to paste into the galaxy map search. Copy System still works.
 - **A Show checkbox for every display on the Overlay Placement tab.** Unticking it hides that display whatever its own settings say; its
   spot and offsets are kept for when you tick it again. Reset all to defaults shows everything.
 - **Share your colonization progress with Raven Colonial (opt-in, off by default).** Settings → Colonization → Raven Colonial, behind a
