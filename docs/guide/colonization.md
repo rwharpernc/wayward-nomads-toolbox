@@ -27,6 +27,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Trips left | **Without a carrier:** the loads of your current ship it takes to finish (one trip buys and delivers). **With a carrier:** trips to buy what is missing and trips to haul everything to the site |
 | Biggest gaps | The four commodities with the most still to get |
 | Next | One sentence on what to do now |
+| Others | `+N more active sites` when you have more than the one shown (the line is left out when you have none) |
 
 **History** is yours alone (everything is per commander):
 
@@ -72,8 +73,9 @@ construction depot or open its market, and a `ColonisationContribution` event ea
 summary line shows your sites straight away instead of `waiting for commander login`. After you log in as someone
 else it follows them.
 
-**The site name** is taken from the most recent time you docked at that depot's market. If WNTB hasn't seen you dock
-there, the site is called `Construction site <number>`.
+**The site name** is the one the game gives the depot's market when you dock there. If WNTB hasn't seen you dock
+there, the site is called `Construction site <number>`. Dock again after you **rename** a site in the game and WNTB takes the new
+name (and the system, if that changed). Raven Colonial is a separate list: rename it there too, or WNTB cannot match the two by name.
 
 **Keeping it right.** Each time you dock or open the depot market again, WNTB replaces its figures with the game's
 own. Between visits it adds what you deliver, as reported in the journal. Everything is kept **per commander**.
@@ -87,7 +89,8 @@ for is ignored, since there is nothing to add it to.
 
 Sites are listed on the left (name, tons left, and its progress as a percentage, or `complete` or `failed`);
 finished ones are grayed out. The subtitle reads `<commander> — N active of M sites`. Click a site to see it on the right:
-its name, system, a progress bar, six totals, two filters and a table with one row per commodity **still
+its name, system, a progress bar, six totals, a **Filter** box with three tick boxes (**Hide rows already covered**,
+**Only what this station sells** and **Group by category**) and a table with one row per commodity **still
 outstanding**. The first active site is picked when the window opens.
 
 The totals are always for the whole site, whatever the filters hide:
@@ -248,13 +251,16 @@ Things worth knowing:
 - If Spansh is busy or unreachable, the panel says the search failed; try again shortly. Nothing else in WNTB is affected.
 - The search looks for stock that is **for sale**. It does not know what a station's market will have tomorrow.
 
-**Buttons.** They act on the site picked on the left:
+**Buttons.** The header of the window, top right. All of them act on the site picked on the left:
 
 - **Copy Shopping List** copies that site's list to the clipboard, as lines like `1,200 t  Steel`, biggest first.
   The amounts are the **t still to get** figures, so what is on your ship and on your carrier is taken off. If nothing is needed it says
   so.
-- **Remove Site** (in the **Manage Sites** menu, top right) stops tracking that site.
-- **Remove Finished** (same menu) deletes every complete or failed site.
+- **Rescan Carrier** rebuilds the fleet carrier tally from your journals; see [Rescan Carrier](#rescan-carrier-when-a-load-did-not-register).
+- **Raven Colonial** (a menu): **Planned Builds**, **Raven Progress**, **Open Selected Build on Raven**, **Open This System on Raven**,
+  **Raven Colonial Website** and **Report Complete to Raven**. See [Planned builds](#planned-builds) and
+  [Sharing your progress with Raven Colonial](#sharing-your-progress-with-raven-colonial).
+- **Manage Sites** (a menu): **Remove Site** stops tracking that site, and **Remove Finished** deletes every complete or failed site.
 
 ## Planned builds
 
@@ -335,8 +341,9 @@ project complete there. It never does this by itself: it asks you to confirm eac
 
 ## The shopping list on the overlay
 
-Optional, and **off by default**. It needs an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md). Turn
-it on in **Settings → Overlays → Colonization**: **Show the shopping list on the in-game overlay**.
+Optional, and **off until you ask for it**. It needs an overlay running; see [Setting up the overlay](../OVERLAY_SETUP.md). Press
+**OVERLAY** on the COL page to put it up whatever screen you are on, or tick **Also show the shopping list automatically** in
+**Settings → Overlays → Colonization** so it appears by itself in the places listed below.
 
 It draws a table, with the site name as its title and the columns **Commodity**, **Required**, **Remaining**,
 **FC**, **Cargo** and **To buy**:
@@ -385,7 +392,7 @@ site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 t
     default; tick it in the Colonization settings.
 
   **Prefer to switch it yourself?** Leave the automatic option unticked and use the **OVERLAY** button beside REPORT on the COL page: it
-  turns the card on or off, whatever screen you are on (the button lights up while the card is on and then reads **HIDE**). The button
+  turns the card on or off, whatever screen you are on (the button lights up while the card is on; its name does not change). The button
   works whether or not the automatic option is ticked, and it **stays as you left it, even after you restart EDMC**.
 
   Most of these rely on the game's `Status.json` reporting which screen is open.
@@ -403,6 +410,6 @@ site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 t
 |---|---|---|
 | Everything on your carrier to count | The journal only records cargo you **transfer** to or from the carrier. Stock that arrived any other way is invisible to it. Frontier's carrier data lists the real hold, but only when EDMC is signed in, and it is fetched when you open Carrier Management (or about every 15 minutes) and can lag. | Sign EDMC in to Frontier, then open Carrier Management once; the Covered line and the Carrier row then follow the real hold. |
 | Colonization sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB has never seen a depot snapshot for is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. Deliveries made with EDMC closed are caught up from the last 14 to 30 days of journals at start-up. |
-| A site to have its real name | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. | Dock at the market once to pick up the name. |
+| A site to have its real name, or a renamed site to follow | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. The game does not announce a rename; it shows in the name the market has the next time you dock. | Dock at the market once to pick up the name, and again after a rename. |
 | A full history of everything you ever delivered | The journal records each delivery as it happens. WNTB rebuilds your history once from every journal file you still have, so deliveries from journals you deleted are missing. | The history counts from the first delivery it found (shown on the page) and keeps growing. |
 | Your teammates' work on the same project | The depot reports only the project's totals, not who delivered what. | Today the page shows your deliveries and the project's overall progress. Team support is planned. |
