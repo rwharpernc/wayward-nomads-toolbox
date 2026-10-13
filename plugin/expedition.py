@@ -489,6 +489,27 @@ class ExpeditionBook:
             self._changed()
         return added
 
+    def add_rows(self, expedition_id: str, rows: Iterable[Tuple[str, str, str]]) -> Tuple[int, int]:
+        """Append stops from (system, body, note) rows (a CSV), saving once. Returns (added, skipped): a row that is empty, too long or past the
+        500-stop limit is skipped, never trimmed."""
+        e = self._need(expedition_id)
+        added = skipped = 0
+        for system, body, note in rows:
+            try:
+                system, body, note = self._checked(system, body, note)
+            except ExpeditionError:
+                skipped += 1
+                continue
+            if len(e.stops) >= MAX_STOPS:
+                skipped += 1
+                continue
+            e.stops.append(Stop(self._new_id(), system, body, note))
+            added += 1
+        if added:
+            self._save()
+            self._changed()
+        return added, skipped
+
     def reorder_nearest_neighbor(self, expedition_id: str, start: XYZ) -> int:
         """Reorder the unvisited stops that have a position by always going to the nearest next from `start`. Visited stops stay at the front and
         stops without a position keep their order at the end. Returns how many were reordered."""

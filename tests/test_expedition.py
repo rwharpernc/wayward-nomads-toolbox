@@ -182,6 +182,17 @@ class StopTests(Base):
         self.assertEqual([s.system for s in e.stops], ["A", "B", "A"])
         self.assertEqual(e.stops[0].xyz, (1.0, 2.0, 3.0))
 
+    def test_rows_are_added_in_one_go_and_bad_ones_are_skipped_not_trimmed(self):
+        e = self.book.create("Rows")
+        rows = [("Sol", "Earth", "hi"), ("", "", ""), ("x" * 101, "", ""), ("Colonia", "", "n" * 501), ("Alpha", "", "")]
+        self.assertEqual(self.book.add_rows(e.id, rows), (2, 3))
+        self.assertEqual([(s.system, s.body, s.note) for s in e.stops], [("Sol", "Earth", "hi"), ("Alpha", "", "")])
+        self.assertEqual(self.book.add_rows(e.id, []), (0, 0))
+
+    def test_rows_stop_at_the_limit(self):
+        e = self.book.create("Big")
+        self.assertEqual(self.book.add_rows(e.id, ((f"S{n}", "", "") for n in range(X.MAX_STOPS + 5))), (X.MAX_STOPS, 5))
+
     def test_set_coords_only_fills_stops_without_a_position(self):
         e = self.trip(systems=("A", "B"))
         e.stops[0].xyz = (9.0, 9.0, 9.0)

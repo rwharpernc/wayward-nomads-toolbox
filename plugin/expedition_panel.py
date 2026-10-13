@@ -15,7 +15,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 from config import appname, config
 
-from . import expedition, panelkit
+from . import expedition, expedition_window, panelkit
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -81,6 +81,7 @@ class ExpeditionController:
 
     def stop(self) -> None:
         book.flush()
+        expedition_window.close()
 
     def handle_event(self, entry: Mapping[str, Any], cmdr: str, system: Optional[str], station: Optional[str],
                      state: Dict[str, Any]) -> None:
@@ -140,11 +141,26 @@ class ExpeditionController:
         tick = tk.Checkbutton(body, text="Copy on arrival", variable=self._autocopy_var, command=self._save_autocopy)
         tick.grid(row=2, column=1, sticky=tk.W, padx=(6, 0), pady=(4, 0))
         panelkit.add_tooltip(tick, "Copy the next stop's system name to the clipboard every time you arrive anywhere")
+        window = tk.Button(body, text="EXPEDITION", command=self._open_window)
+        window.grid(row=3, column=0, sticky=tk.W, pady=(4, 0))
+        panelkit.add_tooltip(window, "Open the Expedition window: plan, start and review expeditions")
         self._update_summary()
 
     def _save_autocopy(self) -> None:
         if self._autocopy_var is not None:
             config.set(_CFG_AUTOCOPY, self._autocopy_var.get())
+
+    def system(self) -> str:
+        """The system the commander is in, or an empty string when it is not known yet."""
+        return self._system
+
+    def position(self) -> Optional[expedition.XYZ]:
+        """The galactic position the game last gave, or None."""
+        return self._position
+
+    def _open_window(self) -> None:
+        if self._parent is not None:
+            expedition_window.show(self._parent, book, self)
 
     def next_system(self) -> str:
         e = book.active()
