@@ -78,7 +78,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Notes (Exploration mode, **Notes** section): the quick-add box saves a line against the current system; **NOTES** opens the window;
       the editor's text box takes typing and paste; **Here** fills the system and body; **Delete** asks twice; the window keeps its size
       and place after closing and reopening.
-- [ ] Flight Alerts (Settings → Overlays → Flight Alerts): **Test Card** draws a card on the right, in the middle; with a carrier jump
+- [ ] Flight Alerts (Settings → Overlays → Flight Alerts): **Test Card** draws a card on the right, below where the Inventory display sits; with a carrier jump
       scheduled the countdown ticks every second and turns red in the last minute; a plotted neutron star with the tank at or under 50%
       shows the unscoopable-star line; the sound box is available only when `canberra-gtk-play` or `paplay` is installed, and a sound plays
       when an alert starts.

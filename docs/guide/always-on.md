@@ -61,7 +61,7 @@ One small card on your game screen with two jobs. It has no panel button, only S
 
 The card is always the same width and wraps what it says onto more lines (at the end of a sentence first), growing downward, so nothing
 runs off the screen however long a system name is. Fuel warnings show only while you are flying your main ship, not docked, landed or scooping. Where the card sits is set on
-**Overlay Placement** ("Flight alerts"); by default it is on the right, in the middle of the screen.
+**Overlay Placement** ("Flight alerts"); by default it is on the right, below the Inventory display.
 
 ## Overlay connection
 
@@ -77,7 +77,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | Landing Assist to show which way the pad faces | The journal gives only a **pad number** and the station type, with no orientation. | Use the diagram for which pad is yours; line up by the pad numbers in the game. |
-| A diagram for every kind of facility | Some facilities have no diagram today. Own layouts are planned. | Use the pad number and follow the game's own docking guidance. |
+| A diagram for every kind of facility | Some facilities have no diagram, and the journal does not say enough (which layout, which way it faces) to draw one. | Use the pad number and follow the game's own docking guidance. |
 | Interdiction Warning to fire before the game confirms | It combines three early signals, then the game's own `Interdicted` and `EscapeInterdiction` events, because they arrive separately. | Treat the alert as a prompt. The in-game screen is the final word. |
 | A fuel warning that says whether you can make the next jump | The journal does not say what a jump costs in fuel. | WNTB compares **percentages** of the tank, so choose the percentages that suit your ship. |
 | A fuel percentage the moment EDMC starts | The tank size comes from the game's `Loadout` event, written at login and when you change ship or a module. Until then WNTB has fuel in tonnes, but no percentage. | Only the game's own low-fuel flag is used until then. Log in again, or change a module or ship, to make the game write it. |

@@ -412,11 +412,11 @@ class PreviewTests(unittest.TestCase):
 
 
 class DefaultSpotTests(unittest.TestCase):
-    """The default spots, at the slots' nominal (worst-case) sizes, on a 16:9 screen."""
+    """The default spots, at the slots' nominal (worst-case) sizes, on a 16:9 screen of 1920 x 1080 or larger. The displays are sized in
+    pixels, so on a smaller screen they take up more of it and can overlap; Overlay Placement is where to move them then."""
 
-    # Pairs that still overlap by design and are rarely shown together: the notable-find card sits under the discovery card, and the
-    # Colonization list's worst-case width reaches under it; the interdiction warning is drawn over the discovery alerts.
-    KNOWN = {frozenset(("colonisation", "notable")), frozenset(("discovery", "interdiction"))}
+    # Pairs that overlap by design. None: every default spot is clear of every other.
+    KNOWN: set = set()
 
     @staticmethod
     def rects(width, height):
@@ -439,10 +439,24 @@ class DefaultSpotTests(unittest.TestCase):
                     found.add(frozenset((first, second)))
         return found
 
-    def test_no_new_overlaps_on_common_16_9_screens(self):
+    def test_no_default_spots_overlap_on_common_16_9_screens(self):
         for width, height in ((1920, 1080), (2560, 1440), (3840, 2160)):
             with self.subTest(screen=(width, height)):
                 self.assertEqual(self.overlaps(width, height) - self.KNOWN, set())
+
+    def test_the_alerts_that_can_show_at_once_are_stacked_not_overlaid(self):
+        rects = self.rects(1920, 1080)
+        interdiction, discovery = rects["interdiction"], rects["discovery"]
+        self.assertLessEqual(interdiction[3], discovery[1])            # the warning sits above the discovery alerts
+        notable, inventory, flight = rects["notable"], rects["inventory"], rects["flight_alerts"]
+        self.assertLessEqual(notable[3], inventory[1])                  # the notable-find card is above the inventory display, top right
+        self.assertLessEqual(inventory[3], flight[1])                   # and the flight card is below it
+        self.assertGreaterEqual(notable[0], rects["colonisation"][2])   # clear of the Colonization list's widest case
+
+    def test_flight_alerts_clear_the_inventory_display_on_a_short_screen_too(self):
+        for height in (720, 900, 1080):
+            rects = self.rects(1920, height)
+            self.assertLessEqual(rects["inventory"][3], rects["flight_alerts"][1], height)
 
     def test_the_surface_compass_clears_the_colonization_list_and_the_mining_stats(self):
         rects = self.rects(1920, 1080)

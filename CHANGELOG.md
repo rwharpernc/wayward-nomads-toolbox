@@ -23,10 +23,14 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   when an alert starts. The journal gives no per-jump fuel cost, so the fuel warnings compare percentages of the tank, and the guide says so.
 
 ### Changed
+- **Overlay default spots no longer overlap, on a 1920 x 1080 screen or larger.** The Interdiction warning moved up (above the Discovery
+  alerts, which moved down a little), the Notable find card moved to the top right (above the Inventory display, clear of the
+  Colonization list), and the Flight alerts card is anchored from the top so it stays below the Inventory display on any screen height. This
+  changes where a display sits only if you have not placed it yourself; a position you chose on Overlay Placement is unchanged. A test now
+  fails if any two defaults overlap. On a smaller screen the displays, which are sized in pixels, take up more of it and can overlap: use
+  Overlay Placement there.
 - **The Mining tab's *Enable Surface Waypoint Overlay* tick is gone**: that arrow is now the Surface Compass. If you had it on, the compass is on
   and keeps the position you gave it (and whether you had hidden it). The overlay placement row is now called "Surface compass".
-- **Overlay: the Mining waypoint's default spot moved up 40 px** so it no longer overlaps the Colonization shopping list on a 1920 x 1080
-  screen. A position you set yourself is unchanged. A test now stops new default-spot overlaps on 16:9 screens.
 - **The COL page's REPORT button is now DASHBOARD.** It still opens the Colonization Sites window; only the name changed (button, tooltip
   text, guide and testing notes).
 - **Colonization, Find all: fewer requests and better coverage from the "sells everything" search.** That search now runs first. A
