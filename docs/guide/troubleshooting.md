@@ -144,6 +144,23 @@ restart EDMC. You can confirm the overlay window is running with:
 ps -eo args | grep overlay_client
 ```
 
+### One display never shows, though Test and the overlay window both work
+
+Its saved position may be off the edge of the screen. This can happen with a position carried over from an older version, such
+as a Colonization shopping list saved at x = 1280 on a screen that is 1280 wide. WNTB sends the display and nothing is wrong
+with the connection, but it is drawn where you cannot see it. Versions after 1.9.0 notice a saved exact position that is off the
+overlay's canvas and use the display's default placement instead (the EDMC log says so), so this fix is only needed on 1.9.0.
+
+To confirm, look in the overlay's log (for a Flatpak EDMC,
+`~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/logs/EDMCModernOverlay/overlay_client.log`) for lines such as:
+
+```
+Payload 'wntb_colonisation_s14_1' from plugin 'WNTB' rendered completely outside the overlay window (bounds=(2536.0, 420.0)-(2569.0, 446.0), window=2048x1280)
+```
+
+To fix it, open **Settings → Overlays → Overlay Placement**, pick the display, and reset it to its default or choose an anchor
+(for example left, middle). **Reset all to defaults** puts every spot back. Then restart EDMC.
+
 ### Auto-Honk or the screenshot timer say `xdotool` is not installed
 
 Install `xdotool` on your system (Step 1). If EDMC is a Flatpak, also grant the "run host programs" permission
