@@ -6,7 +6,7 @@
 
 The standing reference for Powerplay mode: how merits are attributed to an activity, how Control Points
 are estimated, how sessions work, and how the Rare Goods Finder fits in. For how to use it, see the
-[README](guide/powerplay.md). For how the code is organised in general, see
+[README](guide/powerplay.md). For how the code is organized in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 > **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).

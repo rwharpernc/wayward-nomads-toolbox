@@ -153,6 +153,43 @@ TOOLTIP_DELAY_MS = 500
 TOOLTIP_WRAP = 280
 
 
+def fit_entry(entry: tk.Entry, max_px: int, min_chars: int = 8) -> tk.Entry:
+    """Make an Entry no wider than `max_px` pixels whatever the font is. An Entry's `width` counts characters of its font, so a fixed
+    count is narrow in one font and wide in another (the same 26 characters ask for about 190 px in one and 266 px in another), and
+    EDMC sizes its whole window to the widest row. The count is lowered until the box asks for no more than `max_px`."""
+    chars = int(entry.cget("width"))
+    entry.update_idletasks()
+    while chars > min_chars and entry.winfo_reqwidth() > max_px:
+        chars -= 1
+        entry.configure(width=chars)
+        entry.update_idletasks()
+    return entry
+
+
+def fit_button_row(buttons: List[tk.Button], max_px: int, gap: int = 4) -> None:
+    """Narrow a row of buttons until the row asks for no more than `max_px` pixels, whatever the font. A button's width is its text plus
+    its inner padding, so a wide font makes the same row several pixels wider, and EDMC sizes its whole window to the widest row. The inner
+    padding is lowered first, then the font a point at a time (never below 7)."""
+    if not buttons:
+        return
+
+    def row_width() -> int:
+        buttons[0].update_idletasks()
+        return sum(b.winfo_reqwidth() for b in buttons) + gap * (len(buttons) - 1)
+
+    padx = int(float(buttons[0].cget("padx") or 0)) if str(buttons[0].cget("padx")).replace(".", "").isdigit() else 8
+    while row_width() > max_px and padx > 1:
+        padx -= 2
+        for b in buttons:
+            b.configure(padx=max(1, padx))
+    font = tkfont.Font(font=buttons[0].cget("font"))
+    size = abs(int(font.actual("size")))
+    while row_width() > max_px and size > 7:
+        size -= 1
+        for b in buttons:
+            b.configure(font=(font.actual("family"), size))
+
+
 def add_tooltip(widget: tk.Widget, text: str) -> None:
     """Shows `text` in a small popup next to `widget` after the pointer rests on
     it for TOOLTIP_DELAY_MS, and hides it on leave/click. The popup is its own

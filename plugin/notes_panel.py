@@ -23,6 +23,7 @@ PANEL_PLACEMENT = "exploration"
 _LOCATION_EVENTS = ("FSDJump", "Location", "CarrierJump")
 _NAME_SHOWN = 40       # characters of a system name shown in the panel
 _PREVIEW_SHOWN = 60    # characters of the newest note shown in the panel
+_ENTRY_MAX_PX = 190   # the box is lowered from _ENTRY_WIDTH characters until it is no wider than this, in any font
 _ENTRY_WIDTH = 26      # the quick-add box has a fixed width, whatever is typed in it (about 190 px: inside the panel's own width)
 _WRAP_PX = 200         # the summary wraps here: what it shows comes from the commander and the game, and must not widen EDMC's window
 
@@ -105,7 +106,7 @@ class NotesController:
         # note would then make this the widest row in the panel (and so widen the whole EDMC window).
         tk.Label(body, textvariable=self._summary_var, anchor="w", justify=tk.LEFT, wraplength=_WRAP_PX).grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
-        entry = tk.Entry(body, textvariable=self._entry_var, width=_ENTRY_WIDTH)
+        entry = panelkit.fit_entry(tk.Entry(body, textvariable=self._entry_var, width=_ENTRY_WIDTH), _ENTRY_MAX_PX)
         entry.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))
         entry.bind("<Return>", lambda _e: self._add_quick())
         add = tk.Button(body, text="ADD", command=self._add_quick)
@@ -114,6 +115,7 @@ class NotesController:
         notes = tk.Button(body, text="NOTES", command=self._open_window)
         notes.grid(row=3, column=1, sticky=tk.W, padx=(4, 0), pady=(4, 0))
         panelkit.add_tooltip(notes, "Open the Notes window: read, search, change or delete every note")
+        panelkit.fit_button_row([add, notes], _ENTRY_MAX_PX)
         self._update_summary()
 
     def _add_quick(self) -> None:

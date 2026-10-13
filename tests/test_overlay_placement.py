@@ -175,6 +175,17 @@ class SavedPlacementTests(unittest.TestCase):
         STORE["wntb_discovery_x"], STORE["wntb_discovery_y"] = "900", "40"
         self.assertEqual(P.placement_for("discovery"), L.custom_placement(900, 40))
 
+    def test_an_exact_position_off_the_canvas_gives_the_default(self):
+        STORE[L.setting_key("colonisation")] = "custom,1280,0"
+        self.assertEqual(P.placement_for("colonisation"), P.SLOTS["colonisation"].default)
+        STORE.clear()
+        STORE["wntb_colonisation_overlay_x"], STORE["wntb_colonisation_overlay_y"] = "1280", "0"
+        self.assertEqual(P.placement_for("colonisation"), P.SLOTS["colonisation"].default)
+
+    def test_an_exact_position_on_the_canvas_is_kept(self):
+        STORE[L.setting_key("colonisation")] = "custom,1200,900"
+        self.assertEqual(P.placement_for("colonisation"), L.custom_placement(1200, 900))
+
     def test_an_old_untouched_default_gives_the_new_default(self):
         STORE["wntb_discovery_x"], STORE["wntb_discovery_y"] = "700", "60"
         self.assertEqual(P.placement_for("discovery"), P.SLOTS["discovery"].default)

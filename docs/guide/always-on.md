@@ -55,7 +55,7 @@ One small card on your game screen with two jobs. It has no panel button, only S
 2. Tick **Enable Flight Alerts**. It is **off by default**. The countdown and the fuel warnings are two ticks under it (both on),
    with a percentage for each fuel warning (25% for low fuel, 50% for the unscoopable star).
 3. Optionally tick **Play a sound when an alert starts**: it plays when a fuel alert starts and at 10 minutes, 5 minutes, 1 minute
-   and departure for a carrier jump. The box is greyed out where WNTB cannot play a sound (on Linux it needs `canberra-gtk-play`
+   and departure for a carrier jump. The box is grayed out where WNTB cannot play a sound (on Linux it needs `canberra-gtk-play`
    or `paplay`).
 4. Press **Test Card** to see it. The test works even while the feature is off, and reports whether an overlay could be reached.
 

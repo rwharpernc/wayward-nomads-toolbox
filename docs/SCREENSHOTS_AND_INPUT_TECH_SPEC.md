@@ -6,7 +6,7 @@
 Two WNTB features press keys in the game for you: **Auto-Honk** and **timed or automatic screenshot
 capture**. This document explains exactly what they do and don't do, how Screenshots converts and crops
 pictures, and how it all differs on Linux. For how to use them, see the
-[README](guide/field-ops.md). For how the code is organised in general, see
+[README](guide/field-ops.md). For how the code is organized in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 > **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
@@ -81,8 +81,8 @@ leading system name so a mask using both doesn't repeat it.
 The game doesn't say which panel you had open in the screenshot event, so WNTB reads **`GuiFocus`** from
 `Status.json` (the game's live status file) at that moment. For the **Target**, **Comms**, **Role** and
 **Systems** panels it makes a second, cropped picture of just that panel. The crop rectangles are defined
-on a 1920×1080 reference frame and scaled **uniformly** (by the smaller axis ratio) and centred, because
-the HUD panels keep their proportions and sit centred on ultrawide and multi-monitor setups. Scaling the
+on a 1920×1080 reference frame and scaled **uniformly** (by the smaller axis ratio) and centered, because
+the HUD panels keep their proportions and sit centered on ultrawide and multi-monitor setups. Scaling the
 two axes separately would stretch the crop. Hi-res captures are not cropped.
 
 A **Thargoid** capture crops the bottom-left quarter of the screen instead (see §6).
@@ -115,7 +115,7 @@ window, because synthetic per-window key events are ignored by most games. Auto-
 on X11 and on XWayland. Everything is returned as "not found" rather than raising when something is
 missing.
 
-## 6. The one automatic behaviour: Thargoid captures
+## 6. The one automatic behavior: Thargoid captures
 
 **On by default**, a setting called *Thargoid capture*: when you collect Thargoid ship flight data or an
 unknown ship signature (`MaterialCollected`), WNTB presses the screenshot key once and crops the result.

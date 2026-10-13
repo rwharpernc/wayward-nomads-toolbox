@@ -5,7 +5,7 @@
 
 The standing reference for Organic Scanning (exobiology): what it predicts, the rules behind the
 prediction, how scan progress is tracked, and where its answers can be wrong. For how to use it, see the
-[README](guide/exploration.md#organic-scanning). For how the code is organised in general, see
+[README](guide/exploration.md#organic-scanning). For how the code is organized in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 > **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
@@ -14,7 +14,7 @@ prediction, how scan progress is tracked, and where its answers can be wrong. Fo
 
 - Given the biological signals on a planet, say which **species** each is likely to be, from the planet's
   conditions.
-- Track your **Log → Sample → Analyse** progress for each organism, and tell you when you've moved far
+- Track your **Log → Sample → Analyze** progress for each organism, and tell you when you've moved far
   enough from the last sample for the next one to count.
 - Show the **credit value** of each species.
 - Remember a body's biology across a relog or an EDMC restart.
@@ -48,7 +48,7 @@ organic_region_data.py  Generated reference data: the galactic region grid and t
 | `Scan` (a body) | Planet class, atmosphere type and its trace gases, surface gravity, temperature, pressure, volcanism, landable status |
 | `Scan` (stars) and the arrival system | The system's main star type |
 | `FSSBodySignals`, `SAASignalsFound` | Which genera are present on a body |
-| `ScanOrganic` | The genus and species named at each stage (Log, Sample, Analyse) |
+| `ScanOrganic` | The genus and species named at each stage (Log, Sample, Analyze) |
 | `FSDJump`, `Location` | The system's own position (`StarPos`, in light years), for the region lookup |
 | `Status.json` | Your surface latitude and longitude, for the sample-distance check |
 
@@ -91,7 +91,7 @@ orbiting a secondary star in a multi-star system, that can be wrong.
 ## 6. Scan progress and distance
 
 A scan runs through three stages: **Log** (first sample), **Sample** (second, far enough from the first)
-and **Analyse** (third, far enough from the second), and the third is the one that pays out. A
+and **Analyze** (third, far enough from the second), and the third is the one that pays out. A
 `ScanOrganic` event confirms the exact species (replacing the candidate list), sets its value, and moves
 the stage on. Each genus has a **minimum distance** between samples (it varies by genus), and WNTB
 measures your distance from the last sample using great-circle distance on the body's radius and tells you

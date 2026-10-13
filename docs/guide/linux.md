@@ -125,7 +125,9 @@ button, it reports "only bound to a joystick/HOTAS button".
 2. Open **Settings → WNTB → Overlays → Overlay Connection** and press **Check connection**.
 3. Press a **Test** button, such as **Test Discovery** or **Test Notable** under **Settings → Overlays**.
 
-Cards should appear over the game. If they don't, see the Linux items in [Troubleshooting](troubleshooting.md).
+Cards should appear over the game. If they don't, see the Linux items in [Troubleshooting](troubleshooting.md). One display
+missing while the others show usually means its saved position is off the screen; the fix is
+[there too](troubleshooting.md#one-display-never-shows-though-test-and-the-overlay-window-both-work).
 The general overlay guide is [Setting up the on-screen overlay](../OVERLAY_SETUP.md).
 
 ## Step 6: Trade (nothing extra to install)

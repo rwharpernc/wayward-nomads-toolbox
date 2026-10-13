@@ -3,10 +3,11 @@
 This repo is developed on two machines, one Windows and one Linux, and tested natively on each. Git is the
 only link between them.
 
+- Read `docs/STATUS.md` first: which branch is which, what is being tested, and the working rules for now.
 - Check the session's `Platform` before assuming which machine you are on.
 - Say which platform a result came from. A pass on one OS says nothing about the other.
 - Keep OS-specific code behind the existing platform helpers; don't add OS-only calls elsewhere.
-- After a change that touches platform behaviour, note what still needs checking on the other OS.
+- After a change that touches platform behavior, note what still needs checking on the other OS.
 - `git pull --rebase` before starting and push when done. Don't commit machine-specific paths or logs.
 - Setup and testing notes live in `docs/`.
 - Files are LF on both OSes (`.gitattributes`, `.editorconfig`, `tests/test_line_endings.py`). Write LF; if Git prints a

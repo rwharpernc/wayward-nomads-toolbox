@@ -129,6 +129,13 @@ class Visibility:
         """Docked at a construction depot (where the list is alphabetical; elsewhere it is grouped by market category)."""
         return self._at_depot
 
+    def market_file_changed(self) -> None:
+        """`Market.json` was rewritten, which the game does the moment a commodity market opens. The journal's `Market` event
+        can reach EDMC several seconds later (seen on Linux under Proton), by which time the screen may be closed, so the file is
+        the faster signal. Counts only while a station-services screen is open."""
+        if self._focus == GUI_FOCUS_STATION_SERVICES and self._service != "other":
+            self._service = "market"
+
     def set_focus(self, focus: object) -> None:
         self._focus = focus if isinstance(focus, int) else 0
         if self._focus != GUI_FOCUS_STATION_SERVICES:
