@@ -82,10 +82,13 @@ class DataTable(tk.Frame):
                  on_activate: Optional[Callable[[str], None]] = None,
                  on_select: Optional[Callable[[str], None]] = None,
                  sortable: bool = True, empty_text: str = "", visible_rows: Optional[int] = None,
-                 on_header: Optional[Callable[[str], None]] = None) -> None:
+                 on_header: Optional[Callable[[str], None]] = None, select_groups: bool = False) -> None:
         """`visible_rows`: fit the table to its content up to this many rows
-        (then scroll), instead of expanding to fill the space available."""
+        (then scroll), instead of expanding to fill the space available.
+        `select_groups`: a click on a group row also selects it (and calls
+        `on_select`) as well as opening/closing it."""
         super().__init__(parent, bg=P.PANE)
+        self._select_groups = select_groups
         self._columns = list(columns)
         self._on_activate = on_activate
         self._on_select = on_select
@@ -238,6 +241,11 @@ class DataTable(tk.Frame):
             text = INDENT + text   # tk.Label can't take an asymmetric padx, so indent with spaces
         return clip(text, self._columns[index].max_chars)
 
+    def _click_group(self, row: _TableRow) -> None:
+        self.toggle(row.iid)
+        if self._select_groups:
+            self.select(row.iid, notify=True)
+
     def _build_cells(self, row: _TableRow) -> None:
         for index, column in enumerate(self._columns):
             cell = tk.Label(self._scroll.body, text=self._cell_text(row, index), anchor=column.anchor,
@@ -248,7 +256,7 @@ class DataTable(tk.Frame):
             cell.bind("<Enter>", lambda _e, r=row: self._hover(r, True))
             cell.bind("<Leave>", lambda _e, r=row: self._hover(r, False))
             if row.group:
-                cell.bind("<Button-1>", lambda _e, r=row: self.toggle(r.iid))
+                cell.bind("<Button-1>", lambda _e, r=row: self._click_group(r))
             else:
                 cell.bind("<Button-1>", lambda _e, r=row: self.select(r.iid, notify=True))
                 cell.bind("<Double-1>", lambda _e, r=row: self._activate(r))

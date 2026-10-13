@@ -315,7 +315,7 @@ class ColonisationWindow:
         self._sources_note.pack(fill="x")
         host.bind("<Configure>", lambda e: self._sources_note.configure(wraplength=max(e.width - 2 * P.PAD, 100)))
         self._source_table = DataTable(host, _SOURCE_COLUMNS, sortable=False, on_header=self._on_source_sort,
-                                       empty_text="No search yet.")
+                                       on_select=self._on_source_pick, select_groups=True, empty_text="No search yet.")
         self._source_table.tag_configure("carrier", foreground=P.INFO)
         self._source_table.pack(fill="both", expand=True)
 
@@ -756,6 +756,12 @@ class ColonisationWindow:
         text = "\n".join(_clip(line, 240) for line in plan.lines())
         if panelkit.copy_to_clipboard(self._toplevel, text):
             self._sources_note.configure(text=f"Copied the {len(plan.stops)}-stop shopping route to the clipboard.")
+
+    def _on_source_pick(self, iid: str) -> None:
+        """Clicking a result row copies its system, ready to paste into the galaxy map's search. Rows with no system (the
+        commodity headings and the route's buy lines) copy nothing."""
+        if self._source_rows.get(iid):
+            self._on_copy_system()
 
     def _on_copy_system(self) -> None:
         selection = self._source_table.selection()
