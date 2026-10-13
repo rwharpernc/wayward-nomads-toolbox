@@ -2,7 +2,40 @@
 
 Find your symptom below. Most problems are a missing setting or a missing permission.
 
-**Jump to:** [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Trade](#trade) · [Still stuck?](#still-stuck)
+**Jump to:** [Nothing happens (settings that start off)](#nothing-happens-settings-that-start-off) · [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Trade](#trade) · [Still stuck?](#still-stuck)
+
+## Nothing happens (settings that start off)
+
+Before anything else, check whether the feature is simply **switched off**. WNTB starts conservative: every on-screen display, every
+online lookup and every write to another site is **off until you tick it** in Settings (**File → Settings → WNTB**). A feature that is
+off does not show an error. It just does nothing, which looks exactly like a bug.
+
+| If this does nothing... | ...tick this | Where |
+|---|---|---|
+| Any card on your game screen | The feature's own **Enable** box, below, and the overlay itself must be running ([setup](../OVERLAY_SETUP.md)) | Settings → Overlays |
+| Landing Assist diagram | **Enable Landing**, then **Show on Overlay** (the diagram on the game screen is a separate tick, also off) | Settings → Overlays → Landing |
+| Interdiction warning | **Enable Interdiction Warning** | Settings → Overlays → Interdiction Warning |
+| Carrier jump and fuel alerts | **Enable Flight Alerts** | Settings → Overlays → Flight Alerts |
+| Discovery alerts | **Enable Discovery Alerts**, or the **D.A.** button | Settings → Overlays → Discovery |
+| Notable find banners | **Enable Notable Bodies alerts**, then pick the rules you want | Settings → Overlays → Notable Bodies |
+| The arrow to a mark or hotspot on a planet | **Enable Surface Compass** | Settings → Overlays → Surface Compass |
+| Inventory pickups and bars | The inventory bars you want, one tick per bar | Settings → Overlays → Inventory |
+| Mining stats on the game screen | **Enable HUD Overlay** | Settings → Mining |
+| "Screenshot saved" message on the game screen | The overlay message option for screenshots | Settings → Field Ops → Screenshots |
+| The Colonization shopping list appears by itself at markets | **Also show the shopping list automatically**. Otherwise only the **OVERLAY** button on the COL page shows it | Settings → Overlays → Colonization |
+| Auto-Honk | **Enable Auto-Honk** or the **A.H.** button | Settings → Exploration → Auto-Honk |
+| Routes and Market on the Trade page | **Enable Spansh trade lookups** ([details](#the-lookup-buttons-are-grayed-out-or-there-is-no-commodity-box)) | Settings → WNTB → Trade |
+| The **H.S.**, **PRICE** or **RES** buttons in Mining | **Enable Spansh Nearby Hotspot Finder**, **Enable Spansh Best Price Finder**, **Enable EDSM Ring Reserve Lookup** (each separately) | Settings → Mining |
+| ELW rarity or EDSM upload status in Exploration | The two options under Exploration Value | Settings → Exploration → Exploration Value |
+| Fleet carriers missing from "where to buy" results | **Include fleet carriers** in the Colonization sites window | Colonization sites window |
+| Raven Colonial not updating | The master switch and the two options under it ([steps](#raven-colonial-doesnt-update-as-i-deliver)) | Settings → Colonization → Raven Colonial |
+| WNTB never updates itself | **Automatically download and install updates** | Settings → WNTB → General → Updates |
+
+Notes:
+- **Test buttons work even when a feature is off.** A passing **Test** shows the overlay is reachable; it does not mean the live feature is on.
+- **Settings are per computer.** A tick on one machine does not carry to another, so check each one you play on.
+- **Press OK** in Settings to keep a change.
+- Anything that contacts the internet is listed, with what it sends, on [what goes on the internet](internet-and-privacy.md).
 
 ## General
 
@@ -113,6 +146,27 @@ The journal only records cargo you transfer to the carrier, so WNTB's carrier fi
 - **For a transfer that did not register:** press **Rescan Carrier** in the Colonization Sites window. It rebuilds the tally from the
   last 30 days of journals and drops any figure taken from Frontier, so it is a quick fix, not a replacement for the real hold. See
   [Rescan Carrier](colonization.md#rescan-carrier-when-a-load-did-not-register).
+
+### Raven Colonial doesn't update as I deliver
+
+WNTB sends nothing to Raven Colonial until you turn sharing on. It is **off by default**, and it is separate from the Raven features
+that only read (Planned Builds, Raven Progress and the quick links work without it). If your deliveries never reach Raven, this is
+almost always why.
+
+In **Settings → Colonization → Raven Colonial**:
+
+1. Tick **Allow WNTB to write to Raven Colonial (master switch)**. The options under it stay grayed out until you do.
+2. Tick **Report my construction progress and deliveries to Raven Colonial**.
+3. Tick **Also report cargo I move to and from my fleet carrier** if you want that too.
+4. Paste your key from [ravencolonial.com/user](https://ravencolonial.com/user) and press **Test key**. Raven answers with your name
+   for you when the key is accepted. With no key, nothing is sent.
+5. Press **OK** in Settings.
+
+Only deliveries made while sharing is on are sent. WNTB does not backfill earlier ones. The update reaches Raven when the depot's
+figures change and when you deliver, so dock at the site or open its market to send the current totals. If another tool such as
+SrvSurvey also reports your deliveries to Raven, turn one of them off, or Raven counts each delivery twice. The setting is saved per
+computer, so check it on each machine you play on. If it is on and Raven still does not update, the EDMC log shows the failed
+request; please [report it](../../README.md#getting-help) with those lines.
 
 ### Raven Progress says Raven has no project for my site
 
