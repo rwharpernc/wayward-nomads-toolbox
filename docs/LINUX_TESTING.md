@@ -13,6 +13,30 @@ that differs can be checked against it.
 Where a step fails, copy the relevant lines from EDMC's log
 (`~/.local/share/EDMarketConnector/EDMarketConnector.log`) into your report.
 
+## Testing 1.9.0: start here
+
+1.9.0 was tested on Windows first. This pass is the first one on Linux for what is new in it.
+
+**Getting set up**
+1. Install the released **1.9.0** the normal way (the automatic update, or the zip from the
+   [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
+   buttons should read `Plugin: v1.9.0`. Work through sections 0 and 1 below first.
+2. To get the checklist and the test suite, fetch the repository and use the bug fix branch (1.9.0 plus the documentation audit, and any
+   fixes made since): `git fetch --all --tags`, then `git switch bugfix/1.9.1`, then `git pull --rebase`. Once per machine:
+   `git config core.hooksPath .githooks`.
+3. Run the unit tests: `python3 -m unittest discover -s tests`. The window and panel smoke tests need a display; without one they are
+   skipped, so run them from a desktop session.
+4. To try a fix build instead of 1.9.0, run `npm run deploy` in the repository. It finds EDMC's plugins folder (native or Flatpak) and copies the
+   build there; restart EDMC afterwards.
+
+**What is new in 1.9.0, in the order to check it** (each item is in the section named):
+- **Section 5, Overlay:** the Surface Compass (and its Marks window), Notes, the Trade Watch list and Flight Alerts.
+- **Section 7f, Overlay Placement:** the default spots no longer overlapping, and the new Flight Alerts and Surface Compass rows.
+- **Section 7i:** Colonization **Find all** (fewer requests, the suggested route) and **Planned Builds**.
+- **Sections 7e, 7e-2 and 7e-4:** the Colonization Sites window and Raven Colonial, all Windows-tested only so far.
+
+Already seen working on Linux, so a quick look is enough: the Settings panel, the test overlays, and section 7d.
+
 ## 0. Setup
 
 - [ ] `xdotool` is installed (`xdotool version` works in a terminal).
@@ -338,8 +362,12 @@ Written on Windows against a 3840 x 2160 screen in EDMCModernOverlay's fill mode
 reading the screen size from inside the Proton prefix (and the overlay's log), the display scaling under XWayland, and how the
 overlay maps its canvas and sizes there, have not been seen on Linux.
 
-- [ ] **Settings -> Overlays** has the tabs Overlay Connection, Overlay Placement, Colonization, Discovery, Inventory,
-      Interdiction Warning, Landing, Mining, Notable Bodies and Screenshots; General no longer has an overlay tab.
+- [ ] **Settings -> Overlays** has the tabs Overlay Connection, Overlay Placement, Overlay Appearance, Colonization, Discovery,
+      Inventory, Interdiction Warning, Flight Alerts, Landing, Surface Compass, Mining, Notable Bodies and Screenshots; General no
+      longer has an overlay tab.
+- [ ] **Default spots (1.9.0):** with every box ticked, **Show placement preview** on a screen of 1920 x 1080 or more draws the boxes
+      without any two overlapping (Interdiction at the top, Discovery below it, Notable find at the top right above Inventory, Flight
+      alerts on the right below Inventory). On a smaller screen some may overlap; that is expected, and moving them on the tab fixes it.
 - [ ] The Overlay Placement tab's info line shows your real screen size and display scaling, from the EDMCModernOverlay log or
       `DisplaySettings.xml` (if it says "game files not found", note the Wine/Proton prefix path and report it). Under
       XWayland or Wayland scaling the overlay's log is the best source; check its numbers match what you see.
