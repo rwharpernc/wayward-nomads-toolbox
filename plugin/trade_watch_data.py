@@ -20,7 +20,7 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 from . import commander_data, trade_commodities
 from .trade_market import MarketItem, canonical_name
@@ -72,11 +72,20 @@ class Sighting:
 
 @dataclass(frozen=True)
 class Lookup:
-    """The best prices Spansh knew near `reference` when asked; either side may be None (nothing in stock / wanted)."""
-    buy: Optional[Quote]
-    sell: Optional[Quote]
+    """What Spansh knew near `reference` when asked: the stations to buy at (cheapest first) and to sell at (dearest first), each side
+    possibly empty (nothing in stock / wanted). Several are kept so a station that runs short of stock has others beside it."""
+    buys: Tuple[Quote, ...]
+    sells: Tuple[Quote, ...]
     reference: str
     when: str
+
+    @property
+    def buy(self) -> Optional[Quote]:
+        return self.buys[0] if self.buys else None
+
+    @property
+    def sell(self) -> Optional[Quote]:
+        return self.sells[0] if self.sells else None
 
 
 def _now() -> str:
@@ -239,8 +248,8 @@ class WatchBook:
         quotes = [Quote(s.buy_price, s.stock, s.station, s.system, SEEN, s.seen)
                   for s in self._sightings if s.commodity == commodity and s.buy_price > 0 and s.stock > 0]
         found = self.lookup(commodity)
-        if found is not None and found.buy is not None:
-            quotes.append(found.buy)
+        if found is not None:
+            quotes.extend(found.buys)
         return min(quotes, key=lambda q: (q.price, -_epoch_or_zero(q.when)), default=None)
 
     def best_sell(self, commodity: str) -> Optional[Quote]:
@@ -248,8 +257,8 @@ class WatchBook:
         quotes = [Quote(s.sell_price, s.demand, s.station, s.system, SEEN, s.seen)
                   for s in self._sightings if s.commodity == commodity and s.sell_price > 0 and s.demand > 0]
         found = self.lookup(commodity)
-        if found is not None and found.sell is not None:
-            quotes.append(found.sell)
+        if found is not None:
+            quotes.extend(found.sells)
         return max(quotes, key=lambda q: (q.price, _epoch_or_zero(q.when)), default=None)
 
     # --- changing --------------------------------------------------------------------------------------------------

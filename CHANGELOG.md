@@ -9,7 +9,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Trade: a Watch list of the commodities you care about** (a collapsible **Watch list** row in Trade mode; **WATCH** opens the window).
   Add commodities with the type-ahead box and see the best price to buy and to sell each. Prices come from the markets you open (read from the
   game's own market file, nothing sent anywhere) and, when you press **REFRESH** with Trade's lookups on, from Spansh near your system. The
-  window shows where each price is from and how old it is, and every market a commodity was seen at. Kept on your computer, per commander.
+  window shows where each price is, how much stock or demand it has, where it is from and how old it is, every market a commodity was seen
+  at, and Spansh's five best stations for each side. Kept on your computer, per commander.
 - **Surface Compass, with marks: the Mining waypoint arrow, grown up.** An arrow, a name and a distance on your game screen pointing at a spot on
   the planet you are on, from any mode (not only while Mining's Surface page is open). It points at the nearest hotspot you have recorded, as the
   old arrow did, or at a **mark** you made, or at nothing. A new **Compass** section in Exploration mode has **MARK** (save where you are, with a

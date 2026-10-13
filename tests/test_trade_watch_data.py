@@ -135,17 +135,24 @@ class MarketTests(unittest.TestCase):
 
     def test_a_spansh_answer_competes_with_what_was_seen(self):
         self.book.record_market("A", "S", self.market(gold=dict(buy=9500, stock=10, sell=9000, demand=5)))
-        self.book.set_lookups({"Gold": W.Lookup(quote(9200), quote(9900), "Sol", "2026-10-13T13:00:00Z")})
+        self.book.set_lookups({"Gold": W.Lookup((quote(9200),), (quote(9900),), "Sol", "2026-10-13T13:00:00Z")})
         self.assertEqual(self.book.best_buy("Gold").source, W.SPANSH)
         self.assertEqual(self.book.best_sell("Gold").price, 9900)
 
+    def test_every_spansh_station_competes_not_only_the_first(self):
+        self.book.set_lookups({"Gold": W.Lookup((quote(9300, "First"), quote(9100, "Second")), (quote(9500, "A"), quote(9800, "B")), "Sol",
+                                                "2026-10-13T13:00:00Z")})
+        self.assertEqual(self.book.best_buy("Gold").station, "Second")
+        self.assertEqual(self.book.best_sell("Gold").station, "B")
+        self.assertEqual(len(self.book.lookup("Gold").buys), 2)
+
     def test_a_lookup_for_a_commodity_not_watched_is_ignored(self):
-        self.book.set_lookups({"Silver": W.Lookup(quote(5), None, "Sol", "2026-10-13T13:00:00Z")})
+        self.book.set_lookups({"Silver": W.Lookup((quote(5),), (), "Sol", "2026-10-13T13:00:00Z")})
         self.assertIsNone(self.book.best_buy("Silver"))
 
     def test_removing_forgets_prices_and_lookups(self):
         self.book.record_market("A", "S", self.market(gold=dict(buy=9500, stock=10)))
-        self.book.set_lookups({"Gold": W.Lookup(quote(9200), None, "Sol", "2026-10-13T13:00:00Z")})
+        self.book.set_lookups({"Gold": W.Lookup((quote(9200),), (), "Sol", "2026-10-13T13:00:00Z")})
         self.assertTrue(self.book.remove("Gold"))
         self.assertEqual(self.book.sightings("Gold"), [])
         self.assertIsNone(self.book.lookup("Gold"))
@@ -188,7 +195,7 @@ class SavingTests(unittest.TestCase):
     def test_spansh_answers_are_not_saved(self):
         book = make(self.tmp.name)
         book.add("Gold")
-        book.set_lookups({"Gold": W.Lookup(quote(9000), None, "Sol", "2026-10-13T13:00:00Z")})
+        book.set_lookups({"Gold": W.Lookup((quote(9000),), (), "Sol", "2026-10-13T13:00:00Z")})
         self.assertIsNone(make(self.tmp.name).best_buy("Gold"))
 
     def test_commanders_do_not_see_each_others_lists(self):

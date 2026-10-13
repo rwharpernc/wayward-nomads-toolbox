@@ -148,7 +148,7 @@ asked = []
 def fake_refresh(names, reference, radius, **kwargs):
     asked.append((list(names), reference, radius))
     quote = lambda price: data.Quote(price, 300, "Far Away Port", "Sag A*", data.SPANSH, "2026-10-13T12:00:00Z", 55.0)   # noqa: E731
-    return {name: data.Lookup(quote(8800), quote(9900), reference, "2026-10-13T12:00:00Z") for name in names}, []
+    return {name: data.Lookup((quote(8800), quote(8900)), (quote(9900),), reference, "2026-10-13T12:00:00Z") for name in names}, []
 
 
 with mock.patch.object(trade_watch_lookup, "refresh", fake_refresh):
@@ -206,7 +206,8 @@ win._add()
 check("already" in win._shell._status.cget("text"), "a repeat is refused")
 
 win._table.select("Gold", notify=True)
-check(win._picked == "Gold" and len(win._seen) == 1, f"selecting shows the markets seen: {len(win._seen)}")
+check(win._picked == "Gold" and len(win._seen) == 4,
+      f"selecting shows the market seen and all three Spansh stations: {len(win._seen)}")
 win._remove()
 check("Gold" in book.watched() and "again" in win._shell._status.cget("text"), "the first press of Remove only asks")
 win._remove()

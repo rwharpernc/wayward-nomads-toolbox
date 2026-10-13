@@ -268,7 +268,10 @@ row in Trade mode, under the page. Press **WATCH** to open the window.
   in Settings, and it sends only the commodity names and your system name, never your commander name. Fleet carriers are left out, because
   they move. The answer is kept until you close EDMC.
 - **The price shown is the best of both**: the cheapest to buy and the dearest to sell among the markets you opened and Spansh's answer. The
-  window says where each price is from and how old it is. The row shows only the prices; open the window for the place.
+  window says where each price is, how many tonnes the station has to sell you (or still wants from you), where the price is from and how
+  old it is. The row shows only the prices; open the window for the place.
+- **Spansh's five best stations for each side** are kept, not just the best one, and listed under the commodity you pick, with their stock or
+  demand and their distance in light years, so you have others to go to when one runs short.
 
 > **A price is only true when it was seen.** A market you opened last week may have changed, and Spansh's data is only as fresh as the last
 > player who docked there (this refresh ignores markets older than 7 days). Check the age, and the market when you arrive.

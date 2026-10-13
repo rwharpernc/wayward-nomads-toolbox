@@ -49,8 +49,17 @@ class RefreshTests(unittest.TestCase):
         self.assertEqual((lookup.sell.station, lookup.sell.price, lookup.sell.quantity), ("C", 11000, 40))
         self.assertEqual(lookup.reference, "Sol")
 
-    def test_a_side_nobody_has_is_none(self):
+    def test_every_station_asked_for_is_kept_in_the_order_given(self):
+        search = Search({("Gold", "Buy"): [station(n, 9000 + i, 10 * i) for i, n in enumerate("ABCDEFG")],
+                         ("Gold", "Sell"): [station("S", 11000), station("T", 10900)]})
+        found, _, _ = self.run_refresh(["Gold"], search)
+        self.assertEqual([q.station for q in found["Gold"].buys], list("ABCDE"))   # at most RESULTS, cheapest first as Spansh sorted
+        self.assertEqual([q.station for q in found["Gold"].sells], ["S", "T"])
+        self.assertEqual(search.calls[0][4]["max_results"], L.RESULTS)
+
+    def test_a_side_nobody_has_is_empty(self):
         found, _, _ = self.run_refresh(["Gold"], Search({("Gold", "Buy"): [station("A", 9000)]}))
+        self.assertEqual(found["Gold"].sells, ())
         self.assertIsNone(found["Gold"].sell)
 
     def test_only_the_names_and_the_system_are_sent_and_fleet_carriers_are_left_out(self):

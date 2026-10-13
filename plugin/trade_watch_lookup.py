@@ -1,4 +1,4 @@
-"""The watch list's Spansh refresh: for each watched commodity, the cheapest station to buy it at and the dearest to sell it at, near
+"""The watch list's Spansh refresh: for each watched commodity, the cheapest stations to buy it at and the dearest to sell it at (up to five of each), near
 a system. Nothing here touches Tk, and the search is passed in, so the shaping is tested without a connection.
 
 What is sent to Spansh: the commodity names and the system name the search is measured from (the same station search the Trade
@@ -18,7 +18,7 @@ from .trade_watch_data import SPANSH, Lookup, Quote
 
 DEFAULT_RADIUS_LY = 100
 PAUSE_S = 0.4          # between two requests to Spansh
-RESULTS = 5            # stations asked for per search: the first usable one is kept
+RESULTS = 5            # stations asked for per search, and kept: if one runs short of stock there are others beside it
 MAX_AGE_DAYS = 7       # a market Spansh last heard of longer ago than this is probably out of date
 
 SearchFn = Callable[..., List[StationPrice]]
@@ -45,7 +45,7 @@ def refresh(commodities: Sequence[str], reference: str, radius_ly: Optional[floa
     for name in commodities:
         if cancel is not None and cancel.is_set():
             break
-        sides: Dict[str, Optional[Quote]] = {}
+        sides: Dict[str, Tuple[Quote, ...]] = {}
         failed = False
         for transaction in ("Buy", "Sell"):
             if not first:
@@ -59,7 +59,7 @@ def refresh(commodities: Sequence[str], reference: str, radius_ly: Optional[floa
                 failed = True
                 break
             stamp = now()
-            sides[transaction] = _quote(results[0], stamp) if results else None
+            sides[transaction] = tuple(_quote(item, stamp) for item in results[:RESULTS])
         if not failed:
-            found[name] = Lookup(sides.get("Buy"), sides.get("Sell"), reference, now())
+            found[name] = Lookup(sides.get("Buy", ()), sides.get("Sell", ()), reference, now())
     return found, problems

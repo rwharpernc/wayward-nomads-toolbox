@@ -36,14 +36,16 @@ _WATCH_COLUMNS = (
     Column("sell", "Sell (cr/t)", 90, anchor="e"),
     Column("sell_where", "Sell at", 230, stretch=True, max_chars=60),
 )
-_SEEN_COLUMNS = (
-    Column("station", "Station", 180, stretch=True, max_chars=40),
-    Column("system", "System", 150, max_chars=32),
-    Column("buy", "Buy (cr/t)", 90, anchor="e"),
-    Column("stock", "Stock", 80, anchor="e"),
-    Column("sell", "Sell (cr/t)", 90, anchor="e"),
-    Column("demand", "Demand", 80, anchor="e"),
-    Column("seen", "Seen", 80, anchor="e"),
+_PRICE_COLUMNS = (
+    Column("source", "From", 100, max_chars=20),
+    Column("station", "Station", 170, stretch=True, max_chars=40),
+    Column("system", "System", 140, max_chars=32),
+    Column("buy", "Buy (cr/t)", 85, anchor="e"),
+    Column("stock", "Stock", 70, anchor="e"),
+    Column("sell", "Sell (cr/t)", 85, anchor="e"),
+    Column("demand", "Demand", 70, anchor="e"),
+    Column("distance", "ly", 60, anchor="e"),
+    Column("age", "Age", 70, anchor="e"),
 )
 
 
@@ -68,13 +70,37 @@ def close() -> None:
 
 
 def where(quote: Optional[data.Quote], now: Optional[str] = None) -> str:
-    """`Station, System (5 min, Spansh)`: where a price is from and how old it is."""
+    """`Station, System, 1,200 t (5 min, Spansh)`: where a price is, how many tonnes are in stock (to buy) or wanted (to sell), and where
+    it is from and how old it is."""
     if quote is None:
         return ""
     how = quote.source if quote.source == data.SPANSH else "seen"
     when = data.age(quote.when, now)
     note = f"{when}, {how}" if when else how
-    return f"{data.clip(quote.station, 28)}, {data.clip(quote.system, 24)} ({note})"
+    tonnes = f", {quote.quantity:,} t" if quote.quantity > 0 else ""
+    return f"{data.clip(quote.station, 28)}, {data.clip(quote.system, 24)}{tonnes} ({note})"
+
+
+def _num(value: int) -> str:
+    return f"{value:,}" if value else "-"
+
+
+def price_rows(book: data.WatchBook, commodity: str, now: Optional[str] = None) -> List[tuple]:
+    """Every price held for `commodity` as table rows: the markets you opened (newest first), then Spansh's stations to buy at (cheapest
+    first) and to sell at (dearest first). Stock is what a station has to sell you, demand what it still wants from you."""
+    rows: List[tuple] = []
+    for s in book.sightings(commodity):
+        rows.append(("Seen", s.station, s.system, _num(s.buy_price), _num(s.stock), _num(s.sell_price), _num(s.demand), "",
+                     data.age(s.seen, now)))
+    found = book.lookup(commodity)
+    if found is not None:
+        for q in found.buys:
+            rows.append(("Spansh: buy", q.station, q.system, _num(q.price), _num(q.quantity), "-", "-", f"{q.distance_ly:,.0f}",
+                         data.age(q.when, now)))
+        for q in found.sells:
+            rows.append(("Spansh: sell", q.station, q.system, "-", "-", _num(q.price), _num(q.quantity), f"{q.distance_ly:,.0f}",
+                         data.age(q.when, now)))
+    return rows
 
 
 def price(quote: Optional[data.Quote]) -> str:
@@ -112,8 +138,8 @@ class WatchWindow:
 
         self._seen_title = tk.Label(self._shell.body, text="", fg=P.MUTED, bg=P.BG, anchor="w")
         self._seen_title.pack(fill="x")
-        self._seen = DataTable(self._shell.body, _SEEN_COLUMNS, sortable=False, visible_rows=6,
-                               empty_text="Select a commodity to see the markets it was seen at.")
+        self._seen = DataTable(self._shell.body, _PRICE_COLUMNS, sortable=False, visible_rows=8,
+                               empty_text="Select a commodity to see where it was seen and what Spansh found.")
         self._seen.pack(fill="x", pady=(0, P.PAD_SM))
 
         book.add_listener(self._on_book_changed)
@@ -174,11 +200,9 @@ class WatchWindow:
         if self._picked is None:
             self._seen_title.configure(text="")
             return
-        sightings = self._book.sightings(self._picked)
-        self._seen_title.configure(text=f"{self._picked}: markets you opened")
-        for s in sightings:
-            self._seen.append((s.station, s.system, f"{s.buy_price:,}" if s.buy_price else "-", f"{s.stock:,}" if s.stock else "-",
-                               f"{s.sell_price:,}" if s.sell_price else "-", f"{s.demand:,}" if s.demand else "-", data.age(s.seen)))
+        self._seen_title.configure(text=f"{self._picked}: markets you opened, then Spansh's stations to buy at and to sell at")
+        for row in price_rows(self._book, self._picked):
+            self._seen.append(row)
 
     # --- the buttons --------------------------------------------------------------------------------------------------
 
