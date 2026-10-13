@@ -38,12 +38,14 @@ Puts an alert on your game screen the moment an interdiction starts. It has no p
 
 One small card on your game screen with two jobs. It has no panel button, only Settings.
 
-- **Fleet carrier jump countdown.** When you schedule a jump, the card counts down to the departure time the game gave, on two short lines:
-  `Carrier jump in 14:32` and `Destination: Sol (Earth)`. It turns red for the last minute, and says `Carrier departing now` at the time. A cancelled
+- **Fleet carrier jump countdown.** When you schedule a jump, the card counts down to the departure time the game gave, on short lines:
+  `Carrier jump in 14:32`, then `To: Eorld Byoi XX-X d1-23` (the system, on a line of its own), then `Body: A 2` when the jump is to a
+  particular body (just the part of the body's name after the system's, not the whole name again). It turns red for the last minute, and
+  says `Carrier departing now` at the time. A cancelled
   jump, or the jump itself, clears it. WNTB reads the request back from your newest journals when it starts, so restarting the
   game or EDMC during the countdown does not lose it.
-- **Fuel warnings.** `Low fuel: 22% (7.0 t)` when the tank is at or under the percentage you choose (the game's own cockpit
-  warning comes at 25%), and `No scoop at next star (neutron star). Fuel 38% (12.2 t)` when the star you have
+- **Fuel warnings.** `Low fuel` with `Tank 22% (7.0 t)` under it when the tank is at or under the percentage you choose (the game's own
+  cockpit warning comes at 25%), and `No scoop at next star`, `(neutron star)`, `Fuel 38% (12.2 t)` when the star you have
   plotted to is one you cannot scoop (neutron stars, white dwarfs, black holes and the other non-main-sequence stars) and the
   tank is at or under a second percentage. That second warning is the one the game does not give you.
 

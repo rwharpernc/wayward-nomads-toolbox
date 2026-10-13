@@ -97,7 +97,7 @@ class World:
 # --- the card says what the watchers say ------------------------------------------------------------------------------------------------
 w = World()
 w.request(15)
-check(w.drawn and w.drawn[-1] == [("Carrier jump in 15:00", FA.COLOR_AMBER), ("Destination: Sol (Earth)", FA.COLOR_AMBER)],
+check(w.drawn and w.drawn[-1] == [("Carrier jump in 15:00", FA.COLOR_AMBER), ("To: Sol", FA.COLOR_AMBER), ("Body: Earth", FA.COLOR_AMBER)],
       f"countdown lines: {w.drawn}")
 w.at = NOW + 15 * 60 - 45
 w.alerts.refresh()
@@ -112,9 +112,9 @@ w.loadout()
 w.status(8.0)
 w.alerts.handle_event({"event": "FSDTarget", "Name": "Col 70 Sector", "StarClass": "N"})
 texts = [t for t, _c in w.drawn[-1]]
-check(len(texts) == 2 and texts[0].startswith("Low fuel: 25%") and "neutron star" in texts[1], f"fuel lines: {texts}")
+check(texts == ["Low fuel", "Tank 25% (8.0 t)", "No scoop at next star", "(neutron star)", "Fuel 25% (8.0 t)"], f"fuel lines: {texts}")
 colors = [c for _t, c in w.drawn[-1]]
-check(colors == [FA.COLOR_RED, FA.COLOR_AMBER], f"fuel colors: {colors}")
+check(colors == [FA.COLOR_RED, FA.COLOR_RED, FA.COLOR_AMBER, FA.COLOR_AMBER, FA.COLOR_AMBER], f"fuel colors: {colors}")
 
 # --- off means off; the options pick what shows ------------------------------------------------------------------------------------------
 w = World()

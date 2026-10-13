@@ -15,7 +15,7 @@ overlay."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Mapping, Optional
+from typing import Any, List, Mapping, Optional, Tuple
 
 SCOOPABLE_CLASSES = frozenset("OBAFGKM")
 
@@ -39,8 +39,12 @@ SEVERITY_UNSCOOPABLE = "unscoopable"  # shown in amber
 
 @dataclass(frozen=True)
 class FuelAlert:
-    kind: str       # "low" or "unscoopable"
-    text: str
+    kind: str                  # "low" or "unscoopable"
+    lines: Tuple[str, ...]     # short lines for the display, none longer than a card line
+
+    @property
+    def text(self) -> str:
+        return " ".join(self.lines)
 
 
 def is_scoopable(star_class: Optional[str]) -> bool:
@@ -119,8 +123,8 @@ class FuelWatcher:
         found: List[FuelAlert] = []
         shown = f"{percent:.0f}% ({self.fuel:.1f} t)" if percent is not None else f"{self.fuel:.1f} t"
         if low and ((percent is not None and percent <= low_percent) or (percent is None and self.flags & FLAG_LOW_FUEL)):
-            found.append(FuelAlert("low", f"Low fuel: {shown}" if percent is not None else f"Low fuel: {shown} (under 25%)"))
+            found.append(FuelAlert("low", ("Low fuel", f"Tank {shown}" if percent is not None else f"Tank {shown}, under 25%")))
         if (unscoopable and percent is not None and self.target_class and not is_scoopable(self.target_class)
                 and percent <= unscoopable_percent):
-            found.append(FuelAlert("unscoopable", f"No scoop at next star ({star_description(self.target_class)}). Fuel {shown}"))
+            found.append(FuelAlert("unscoopable", ("No scoop at next star", f"({star_description(self.target_class)})", f"Fuel {shown}")))
         return found

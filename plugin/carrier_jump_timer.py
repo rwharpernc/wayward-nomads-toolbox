@@ -18,8 +18,8 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional
 EVENTS = ("CarrierJumpRequest", "CarrierJumpCancelled", "CarrierJump")
 
 ALERT_SECONDS = (600, 300, 60, 0)   # alerts fire as the time left falls to each of these
-MAX_SYSTEM_CHARS = 24               # a longer system or body name is clipped, so the display's line cannot grow without limit
-MAX_BODY_CHARS = 14
+MAX_SYSTEM_CHARS = 40               # a longer system or body name is clipped, so the display cannot grow without limit (a card line wraps
+MAX_BODY_CHARS = 20                 # at 30 characters, so a long name takes two lines rather than being cut off)
 AFTER_DEPARTURE_S = 90              # how long "departing" is shown past the departure time before the display clears
 STALE_S = AFTER_DEPARTURE_S         # a request whose departure is already this far past is old news (read back from an old journal)
 
@@ -47,6 +47,17 @@ def parse_departure(text: Any) -> Optional[float]:
 
 def _clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:max(0, limit - 1)].rstrip() + "…"
+
+
+def short_body(system: str, body: str) -> str:
+    """The body's name without the system's name in front of it: `Colonia 3 a` in Colonia is `3 a`. Empty when the jump is to the system
+    itself (no body, or a body named the same as the system). A body whose name does not start with the system's is given whole."""
+    system, body = system.strip(), body.strip()
+    if not body or body.casefold() == system.casefold():
+        return ""
+    if system and body.casefold().startswith(system.casefold()) and body[len(system)] in " -:,":   # the whole system name, not a longer word
+        return body[len(system):].strip(" -:,") or ""
+    return body
 
 
 def format_remaining(seconds: float) -> str:
@@ -117,26 +128,17 @@ class CarrierJumpTimer:
         return min(crossed)
 
     def lines(self) -> List[str]:
-        """The display as short lines (empty when nothing is planned): the time left, then where to."""
+        """The display as short lines (empty when nothing is planned): the time left, then `To: <system>` on a line of its own, then
+        `Body: <body>` when the jump is to a particular body (the part after the system's name, so it is not said twice)."""
         if self.jump is None or not self.active():
             return []
         left = self.remaining() or 0
-        where = _clip(self.jump.system, MAX_SYSTEM_CHARS)
-        if self.jump.body and self.jump.body != self.jump.system:
-            where += f" ({_clip(self.jump.body, MAX_BODY_CHARS)})"
-        return [f"Carrier jump in {format_remaining(left)}" if left > 0 else "Carrier departing now", f"Destination: {where}"]
-
-    def line(self) -> Optional[str]:
-        """The text for the display, or None when nothing is planned."""
-        if self.jump is None or not self.active():
-            return None
-        left = self.remaining() or 0
-        where = _clip(self.jump.system, MAX_SYSTEM_CHARS)
-        if self.jump.body and self.jump.body != self.jump.system:
-            where += f" ({_clip(self.jump.body, MAX_BODY_CHARS)})"
-        if left <= 0:
-            return f"Carrier departing for {where}"
-        return f"Carrier jumps to {where} in {format_remaining(left)}"
+        found = [f"Carrier jump in {format_remaining(left)}" if left > 0 else "Carrier departing now",
+                 f"To: {_clip(self.jump.system, MAX_SYSTEM_CHARS)}"]
+        body = short_body(self.jump.system, self.jump.body)
+        if body:
+            found.append(f"Body: {_clip(body, MAX_BODY_CHARS)}")
+        return found
 
 
 def alert_text(threshold: int) -> str:

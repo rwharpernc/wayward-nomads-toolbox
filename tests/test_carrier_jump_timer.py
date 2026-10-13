@@ -55,29 +55,43 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(self.timer.handle_event(request(15)))
         self.assertEqual(self.timer.jump.system, "Sol")
         self.assertEqual(self.timer.remaining(), 900)
-        self.assertEqual(self.timer.line(), "Carrier jumps to Sol (Earth) in 15:00")
+        self.assertEqual(self.timer.lines(), ["Carrier jump in 15:00", "To: Sol", "Body: Earth"])
 
-    def test_the_display_is_two_short_lines(self):
+    def test_the_system_has_its_own_line_and_a_body_is_said_without_the_system_in_front(self):
+        self.timer.handle_event(request(15, system="Eorld Byoi XX-X d1-23", body="Eorld Byoi XX-X d1-23 A 2"))
+        self.assertEqual(self.timer.lines(), ["Carrier jump in 15:00", "To: Eorld Byoi XX-X d1-23", "Body: A 2"])
+
+    def test_departing_then_clearing_the_lines(self):
         self.timer.handle_event(request(15))
-        self.assertEqual(self.timer.lines(), ["Carrier jump in 15:00", "Destination: Sol (Earth)"])
         self.clock.at = NOW + 15 * 60
-        self.assertEqual(self.timer.lines(), ["Carrier departing now", "Destination: Sol (Earth)"])
+        self.assertEqual(self.timer.lines(), ["Carrier departing now", "To: Sol", "Body: Earth"])
         self.clock.at = NOW + 15 * 60 + T.AFTER_DEPARTURE_S + 1
         self.assertEqual(self.timer.lines(), [])
+
+    def test_a_body_is_shortened_by_taking_the_system_off_the_front(self):
+        for system, body, expected in (
+                ("Colonia", "Colonia 3 a", "3 a"), ("colonia", "COLONIA 3 a", "3 a"), ("Colonia", "Colonia", ""), ("Colonia", "", ""),
+                ("Colonia", "  ", ""), ("Colonia", "Other Place B 1", "Other Place B 1"), ("Colonia", "Colonia - 3 a", "3 a"),
+                ("Sol", "Solar Flare 2", "Solar Flare 2"), ("Sol", "Sol 3", "3")):
+            with self.subTest(system=system, body=body):
+                self.assertEqual(T.short_body(system, body), expected)
 
     def test_no_jump_no_lines(self):
         self.assertEqual(self.timer.lines(), [])
 
-    def test_a_body_that_repeats_the_system_is_not_shown_twice(self):
+    def test_a_jump_to_the_system_itself_has_no_body_line(self):
         self.timer.handle_event(request(15, system="Sol", body="Sol"))
-        self.assertEqual(self.timer.line(), "Carrier jumps to Sol in 15:00")
+        self.assertEqual(self.timer.lines(), ["Carrier jump in 15:00", "To: Sol"])
+        self.timer.handle_event(request(16, system="Sol", body=""))
+        self.assertEqual(self.timer.lines(), ["Carrier jump in 16:00", "To: Sol"])
 
-    def test_long_names_are_clipped_so_the_line_stays_short(self):
-        self.timer.handle_event(request(15, system="S" * 90, body="B" * 90))
-        line = self.timer.line()
-        self.assertLessEqual(len(line), 70)
-        self.assertIn("…", line)
-        self.assertTrue(line.endswith("in 15:00"))
+    def test_long_names_are_clipped_so_the_lines_stay_short(self):
+        self.timer.handle_event(request(15, system="S" * 90, body="S" * 90 + " " + "B" * 90))
+        lines = self.timer.lines()
+        self.assertEqual(len(lines), 3)
+        self.assertTrue(all(len(line) <= 50 for line in lines), lines)
+        self.assertIn("…", lines[1])
+        self.assertIn("…", lines[2])
 
     def test_requests_without_a_time_or_a_system_are_ignored(self):
         self.assertFalse(self.timer.handle_event({"event": "CarrierJumpRequest", "SystemName": "Sol"}))
@@ -93,7 +107,7 @@ class PlanTests(unittest.TestCase):
             self.timer.handle_event(request(15))
             self.assertTrue(self.timer.handle_event({"event": event}))
             self.assertIsNone(self.timer.jump)
-            self.assertIsNone(self.timer.line())
+            self.assertEqual(self.timer.lines(), [])
 
     def test_a_cancel_with_nothing_planned_changes_nothing(self):
         self.assertFalse(self.timer.handle_event({"event": "CarrierJumpCancelled"}))
@@ -114,11 +128,11 @@ class PlanTests(unittest.TestCase):
     def test_departing_then_clearing(self):
         self.timer.handle_event(request(1))
         self.clock.at = NOW + 60
-        self.assertEqual(self.timer.line(), "Carrier departing for Sol (Earth)")
+        self.assertEqual(self.timer.lines()[0], "Carrier departing now")
         self.assertTrue(self.timer.active())
         self.clock.at = NOW + 60 + T.AFTER_DEPARTURE_S + 1
         self.assertFalse(self.timer.active())
-        self.assertIsNone(self.timer.line())
+        self.assertEqual(self.timer.lines(), [])
         self.assertTrue(self.timer.expire())
         self.assertIsNone(self.timer.jump)
         self.assertFalse(self.timer.expire())

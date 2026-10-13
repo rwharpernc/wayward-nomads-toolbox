@@ -49,7 +49,7 @@ class LowFuelTests(unittest.TestCase):
     def test_a_tank_at_the_threshold_warns(self):
         alerts = watcher(fuel=8.0).alerts()           # exactly 25 %
         self.assertEqual([a.kind for a in alerts], ["low"])
-        self.assertEqual(alerts[0].text, "Low fuel: 25% (8.0 t)")
+        self.assertEqual(alerts[0].lines, ("Low fuel", "Tank 25% (8.0 t)"))
 
     def test_a_fuller_tank_does_not(self):
         self.assertEqual(watcher(fuel=8.4).alerts(), [])
@@ -64,7 +64,7 @@ class LowFuelTests(unittest.TestCase):
     def test_without_the_tank_size_the_games_own_flag_is_used(self):
         w = watcher(capacity=None, fuel=6.0, flags=FLYING | F.FLAG_LOW_FUEL)
         self.assertIsNone(w.percent())
-        self.assertEqual(w.alerts()[0].text, "Low fuel: 6.0 t (under 25%)")
+        self.assertEqual(w.alerts()[0].lines, ("Low fuel", "Tank 6.0 t, under 25%"))
         self.assertEqual(watcher(capacity=None, fuel=6.0).alerts(), [])
 
     def test_no_warning_when_docked_landed_scooping_or_not_in_the_main_ship(self):
@@ -82,7 +82,14 @@ class UnscoopableTests(unittest.TestCase):
     def test_an_unscoopable_target_with_a_half_tank_warns(self):
         alerts = watcher(fuel=16.0, target="N", name="Col 70 Sector").alerts()
         self.assertEqual([a.kind for a in alerts], ["unscoopable"])
-        self.assertEqual(alerts[0].text, "No scoop at next star (neutron star). Fuel 50% (16.0 t)")
+        self.assertEqual(alerts[0].lines, ("No scoop at next star", "(neutron star)", "Fuel 50% (16.0 t)"))
+        self.assertEqual(alerts[0].text, "No scoop at next star (neutron star) Fuel 50% (16.0 t)")
+
+    def test_no_line_is_longer_than_a_card_line(self):
+        for star in ("N", "H", "DAB", "WC", "TTS", "MS", "X", "AeBe"):
+            for alert in watcher(fuel=2.0, target=star).alerts():
+                for line in alert.lines:
+                    self.assertLessEqual(len(line), 30, line)
 
     def test_a_fuller_tank_does_not(self):
         self.assertEqual(watcher(fuel=17.0, target="N").alerts(), [])

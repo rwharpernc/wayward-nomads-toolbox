@@ -101,17 +101,17 @@ Line = Tuple[str, str]   # (text, color)
 # the card or off the screen. It grows downward as lines are added; its top and its width are fixed, so where it sits (anchored to the
 # right edge by Overlay Placement) never changes with what it says.
 MAX_LINES = 10          # card lines; a message that would need more is cut off with an ellipsis
-WRAP_CHARS = 34         # characters in a card line
+WRAP_CHARS = 30         # characters in a card line
 _X = 650
 _Y = 100
 _BASE_PAD_X = 18
 _BASE_PAD_Y = 14
 _LINE_GAP = 6
-_SAMPLE_LINES = 4       # the card's height as placement sees it: this many card lines
+_SAMPLE_LINES = 5       # the card's height as placement sees it: this many card lines
 # The wire protocol has no text metrics, so a line's width is estimated from its characters, and the overlay font runs wider than the
-# plain estimate (capitals, digits). The card is measured this much wider than WRAP_CHARS plain characters, as the Colonization card
-# does (colonisation_overlay.CHAR_SCALE), so a full line always sits inside it.
-WIDTH_SAFETY = 1.3
+# plain estimate (capitals, digits: a line of them was still being cut off at 1.3). The card is measured this much wider than WRAP_CHARS
+# plain characters, so a full line always sits inside it.
+WIDTH_SAFETY = 1.6
 
 GROUP_NAME = "wntb_flight"
 GROUP_PREFIX = "wntb_flight_"
@@ -120,9 +120,13 @@ _LINE_IDS = tuple(f"wntb_flight_line{i}" for i in range(MAX_LINES))
 
 SAMPLE_LINES: List[Line] = [
     ("Carrier jump in 4:32", COLOR_AMBER),
-    ("Destination: Sol (Earth)", COLOR_AMBER),
-    ("No scoop at next star (neutron star). Fuel 38% (12.2 t)", COLOR_AMBER),
-    ("Low fuel: 18% (5.8 t)", COLOR_RED),
+    ("To: Eorld Byoi XX-X d1-23", COLOR_AMBER),
+    ("Body: A 2", COLOR_AMBER),
+    ("No scoop at next star", COLOR_AMBER),
+    ("(neutron star)", COLOR_AMBER),
+    ("Fuel 38% (12.2 t)", COLOR_AMBER),
+    ("Low fuel", COLOR_RED),
+    ("Tank 18% (5.8 t)", COLOR_RED),
 ]
 
 
@@ -240,7 +244,7 @@ class FlightAlerts:
                 found.extend((text, COLOR_RED if left <= 60 else COLOR_AMBER) for text in self.timer.lines())
             if cfg.fuel:
                 for alert in self.fuel.alerts(cfg.low_percent, cfg.unscoopable_percent):
-                    found.append((alert.text, COLOR_RED if alert.kind == "low" else COLOR_AMBER))
+                    found.extend((text, COLOR_RED if alert.kind == "low" else COLOR_AMBER) for text in alert.lines)
         return found
 
     def _sound_keys(self) -> set:
