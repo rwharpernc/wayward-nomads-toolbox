@@ -125,7 +125,7 @@ MATERIAL_ROWS: Tuple[Tuple[str, str, str, int], ...] = (
     ('TG_CompositionData', 'Thargoid Material Composition Data', 'Encoded', 3),
     ('UnknownShipSignature', 'Thargoid Ship Signature', 'Encoded', 3),
     ('EmissionData', 'Unexpected Emission Data', 'Encoded', 3),
-    ('ShieldDensityReports', 'Untypical Shield Scans ', 'Encoded', 3),
+    ('ShieldDensityReports', 'Untypical Shield Scans', 'Encoded', 3),
     ('ShieldPatternAnalysis', 'Aberrant Shield Pattern Analysis', 'Encoded', 4),
     ('EncryptionArchives', 'Atypical Encryption Archives', 'Encoded', 4),
     ('DecodedEmissionData', 'Decoded Emission Data', 'Encoded', 4),

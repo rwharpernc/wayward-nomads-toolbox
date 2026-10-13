@@ -91,6 +91,38 @@ commodity) follows that project's shopping overlay.
 [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no licence. The names are Frontier's
 own.
 
+## Engineering blueprints: recipes and where ingredients are found (MIT)
+
+`plugin/blueprints_data.py` is generated from `EDEngineer/Resources/Data/blueprints.json` and `entryData.json` in
+[msarilar/EDEngineer](https://github.com/msarilar/EDEngineer) (last changed there 2024-03-07, commit e4bd0e0). It carries each blueprint's module
+type, name, grade, engineers, ingredients with counts and effects, and where each ingredient is found, trimmed to what WNTB shows and put in WNTB's
+order. The recipes are the game's, as that project's contributors compiled them, and can be out of date: the project is archived and newer game
+content may be missing. The code that reads them (`plugin/blueprints.py`) is WNTB's own. The project's licence follows:
+
+```
+MIT License
+
+Copyright (c) 2016 Max
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## Engineering material names, types and grades
 
 `plugin/materials_data.py` is generated from the `material.csv` published by [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no
