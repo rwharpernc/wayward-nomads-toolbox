@@ -132,8 +132,8 @@ where each ingredient is found, with what is short at the top. Each entry also s
 or a vendor or the synthesis panel (which need no unlocking), or "No engineer unlocked yet". Select an entry to change its crafts, **Remove** it
 or **Clear list** (each asks twice). The Materials row shows a line such as `Wishlist: 3 blueprints, 2 can be made, 14 pieces short`.
 
-**Engineers.** Every engineer the table or your journal knows, with where you stand (Known, Invited, or Unlocked with their rank), how many
-blueprints they offer and what unlocking them asks for, with how much of it you hold; unlocked engineers first. **Show their blueprints** lists
+**Engineers.** Every engineer the table or your journal knows (and the four Colonia on-foot engineers, whose steps are added by hand), with where you stand (Known, Invited, or Unlocked with their rank), how many
+blueprints they offer and what unlocking them asks for, with how much of it you hold (for the Colonia engineers: the steps in words, and for Yi Shen the three sets of items, which can go on the wishlist); unlocked engineers first. **Show their blueprints** lists
 what they offer, and **Put their unlock on the wishlist** adds what unlocking them takes. Your standings come from the game's engineer list, sent
 at login and whenever one changes (including a rank-up), and are kept on your computer for each commander.
 
@@ -190,7 +190,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Materials you were not able to carry to be counted | When you are at the limit, the game discards what you cannot carry. WNTB never counts above the limit. | Nothing; the login list corrects any difference. |
 | Which engineer or blueprint needs a material | Not shown yet. This page counts what you hold; it does not know what you need it for. | Use a site such as Inara or EDSY for what a blueprint takes. |
 | The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. | Check the in-game recipe before you spend rare materials, and report a difference. |
-| Every engineer to appear with their blueprints | The blueprint table is from March 2024. Three engineers your journal lists (Baltanos, Eleanor Bresa and Rosa Dayette) are not in it, so they show with your standing and no blueprints or unlock needs. | Use a site such as Inara for those engineers. |
+| Every engineer to appear with their blueprints | The blueprint table is from March 2024 and lacks the four **Colonia on-foot engineers** (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen). WNTB adds their unlock steps and Yi Shen's items by hand from community sources, with their places (one guide, unconfirmed). It does **not** know which suit or weapon modification each offers: the sources disagree. | For what each Colonia engineer offers, use the game's Engineers panel or a site such as Inara. |
 | What unlocking an engineer takes to be complete | The table lists the **materials or goods** an engineer asks for. An invitation can ask for more (a rank, a visit, a referral), which it does not list. | Check the engineer's requirements in the game's Engineers panel. |
 | Your materials to match the game after every pick-up | The journal reports almost every gain, but not all of them: replaying about 6,400 login lists, WNTB's counts matched the game's next list 93% of the time, and most of the misses were counts that were higher in the game with no event in between. | The next login list corrects the counts. |
 | The Engineering window to know how many crafts you need | The game rolls the result of each craft; nothing in the journal says how many it will take. | Set the number of crafts you expect. |

@@ -76,12 +76,16 @@ being listed doesn't mean a tool was the first or the only one.
 - **Engineering materials** (what you hold of each Raw, Manufactured and Encoded material, with its grade and limit):
   [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper) (source MIT),
   [EDEngineer](https://github.com/msarilar/EDEngineer) (MIT) and EDDiscovery. WNTB's is its own, built from the journal's events, and no
-  code was taken from any of them. Material names, types and grades come from
+  code was taken from any of them. (The one exception to "nothing taken" is the Colonia engineers' unlock steps, below.) Material names, types and grades come from
   **[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs)** (`material.csv`; see Data below).
 - **Engineering blueprints** (what each blueprint takes and where its ingredients are found): the recipes and the "where found" text are a
   trimmed copy of [EDEngineer](https://github.com/msarilar/EDEngineer)'s `blueprints.json` and `entryData.json` (MIT; notice in
   `THIRD-PARTY-NOTICES.md`), compiled by its contributors from the game. That project is archived, its data last changed in March 2024, and newer
   game content may be missing. [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper) shaped the idea.
+  The four Colonia on-foot engineers (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen), whom that table lacks, are added by hand in
+  `plugin/blueprints_extra.py`: their unlock steps and the items for Yi Shen are game facts as stated in the Materials Helper's English text
+  (MIT) and in the engineering checklist on [edblackbox.com](https://edblackbox.com/guides/engineering/engineering-manuals/checklist.html),
+  which also gives their places (unconfirmed there); a Frontier forum thread agrees on the steps. No code was taken, and none of it is from Frontier.
 - **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials
   Helper.
 - **Nearest neutron star and white dwarf lookups:** [Spansh](https://spansh.co.uk/) answers the N.S. and W.D.

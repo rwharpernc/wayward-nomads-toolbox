@@ -15,8 +15,11 @@ from plugin.materials import CATALOG  # noqa: E402
 
 class DataTests(unittest.TestCase):
     def test_the_whole_table_is_there(self):
-        self.assertEqual(len(B.ALL), 1172)
-        self.assertEqual(len({b.id for b in B.ALL}), 1172)    # no two blueprints share an id
+        from plugin.blueprints_data import BLUEPRINT_ROWS
+        from plugin.blueprints_extra import EXTRA_ROWS
+        self.assertEqual(len(BLUEPRINT_ROWS), 1172)
+        self.assertEqual(len(B.ALL), 1172 + len(EXTRA_ROWS))
+        self.assertEqual(len({b.id for b in B.ALL}), len(B.ALL))    # no two blueprints share an id
 
     def test_every_blueprint_has_ingredients_with_counts(self):
         for b in B.ALL:

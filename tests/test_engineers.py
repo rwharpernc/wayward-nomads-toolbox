@@ -179,6 +179,18 @@ class TableHelperTests(unittest.TestCase):
                 self.assertNotIn(name, B.STAND_IN_NAMES)
             self.assertFalse(any(e.startswith("@") for e in blueprint.engineers), blueprint.id)
 
+    def test_the_colonia_engineers_the_table_lacked(self):
+        from plugin.blueprints_extra import NOTES
+        self.assertEqual(set(NOTES), {"baltanos", "eleanor bresa", "rosa dayette", "yi shen"})
+        unlock = B.unlock_for("Yi Shen")
+        self.assertEqual([(i.name, i.count, i.kind, i.key) for i in unlock.ingredients],
+                         [("Faction Associates", 10, B.ODYSSEY, "factionassociates"), ("Digital Designs", 10, B.ODYSSEY, "digitaldesigns"),
+                          ("Manufacturing Instructions", 10, B.ODYSSEY, "manufacturinginstructions")])
+        self.assertEqual(B.unresolved(), [])
+        for name in ("Baltanos", "Eleanor Bresa", "Rosa Dayette"):
+            self.assertIsNone(B.unlock_for(name))       # their unlocks are actions, not items
+            self.assertIn(E.name_key(name), NOTES)
+
     def test_an_engineers_unlock_row(self):
         unlock = B.unlock_for("Bill Turner")
         self.assertEqual([(i.name, i.count) for i in unlock.ingredients], [("Bromellite", 50)])

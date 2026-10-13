@@ -12,7 +12,8 @@ Broker", "Bartender" and "Merchant". They need no unlocking, so they always coun
 
 Each ingredient has a kind, because the counts live in different places: `SHIP` (Raw, Manufactured and Encoded materials, key as in
 `materials.py`), `ODYSSEY` (micro-resources, key as in the Inventory) and `COMMODITY` (a Technology Broker unlock needs trade goods; not
-counted). The data is older than the game: blueprints or materials added since March 2024 may be missing, and the guide says so."""
+counted). The data is older than the game: blueprints or materials added since March 2024 may be missing, and the guide says so. The few entries
+added by hand (the Colonia engineers, `blueprints_extra.py`) are marked there with their sources."""
 from __future__ import annotations
 
 import re
@@ -20,6 +21,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from .blueprints_data import BLUEPRINT_ROWS, INGREDIENT_ROWS
+from .blueprints_extra import EXTRA_INGREDIENTS, EXTRA_ROWS
 from .materials import CATALOG
 
 SHIP = "ship"
@@ -87,7 +89,7 @@ def ship_key(name: str) -> Optional[str]:
 
 def _build_sources() -> Dict[str, Tuple[str, Optional[str], str, Tuple[str, ...]]]:
     out: Dict[str, Tuple[str, Optional[str], str, Tuple[str, ...]]] = {}
-    for name, kind, formatted, group, origins in INGREDIENT_ROWS:
+    for name, kind, formatted, group, origins in (*INGREDIENT_ROWS, *EXTRA_INGREDIENTS):
         if kind in _SHIP_KINDS:
             out[name] = (SHIP, ship_key(name), group, tuple(origins))
         elif kind == "OdysseyIngredient":
@@ -102,7 +104,7 @@ _SOURCES = _build_sources()
 
 def _build() -> Tuple[Blueprint, ...]:
     out: List[Blueprint] = []
-    for kind, name, grade, engineers, ingredients, effects in BLUEPRINT_ROWS:
+    for kind, name, grade, engineers, ingredients, effects in (*BLUEPRINT_ROWS, *EXTRA_ROWS):
         made = []
         for ingredient, count in ingredients:
             what, key, group, found = _SOURCES.get(ingredient, (COMMODITY, None, "", ()))

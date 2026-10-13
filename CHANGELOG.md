@@ -12,7 +12,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   blueprints to a wishlist with a number of crafts; it says which can be made now (worked out in list order) and gives one shopping list for the
   whole wishlist. Ship materials are counted from the Materials counts and on-foot items from your ship locker; trade goods are shown but not
   counted. An **Engineers** tab shows where you stand with each engineer (from the game's engineer list: Known, Invited, Unlocked with rank,
-  including rank-ups), what they offer and what unlocking them asks for, and the wishlist says who can do each entry. The recipes are a copy of EDEngineer's table (MIT, last changed March 2024), so newer game content may be missing. Kept on your
+  including rank-ups), what they offer and what unlocking them asks for, and the wishlist says who can do each entry. The four Colonia on-foot
+  engineers, which the recipe table lacks, are added by hand: their unlock steps, places (from one guide, unconfirmed) and the items Yi Shen needs. The recipes are a copy of EDEngineer's table (MIT, last changed March 2024), so newer game content may be missing. Kept on your
   computer for each commander.
 - **Materials: what you hold of each engineering material** (Field Ops mode, a **Materials** section; **MATERIALS** opens the window). Raw,
   Manufactured and Encoded materials with their grade, the most the game lets you hold (300, 250, 200, 150 or 100) and the room left. The

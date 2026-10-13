@@ -256,7 +256,22 @@ rows = bwin._engineer_rows()
 names = [r[0] for r in rows]
 check(names[0] == "Felicity Farseer", f"unlocked engineers come first: {names[:3]}")
 check("Eleanor Bresa" in names, "an engineer the journal knows but the table does not is listed")
-check(dict(rows)["Eleanor Bresa"][3] == "not in the table", f"and says so: {dict(rows)['Eleanor Bresa']}")
+check(dict(rows)["Eleanor Bresa"][2] == "suit, weapon" and "5 settlements" in dict(rows)["Eleanor Bresa"][3],
+      f"a Colonia engineer comes from the hand-added notes: {dict(rows)['Eleanor Bresa']}")
+check("Baltanos" in names and "Yi Shen" in names, "the other Colonia engineers are listed even before the game names them")
+check("10 x Faction Associates (have 0)" in dict(rows)["Yi Shen"][3], f"Yi Shen's items are counted: {dict(rows)['Yi Shen'][3]!r}")
+check(dict(rows)["Yi Shen"][1] == "not known yet", f"and an unknown standing says so: {dict(rows)['Yi Shen'][1]!r}")
+bwin._engineer_table.select("Baltanos", notify=True)
+check("Deriso" in bwin._engineer_note.cget("text") and "not confirmed" in bwin._engineer_note.cget("text"),
+      f"selecting one shows where and the caveat: {bwin._engineer_note.cget('text')!r}")
+bwin._add_unlock()
+check("an action" in bwin._shell._status.cget("text"), f"an action-only unlock cannot go on the wishlist: {bwin._shell._status.cget('text')!r}")
+bwin._engineer_table.select("Yi Shen", notify=True)
+bwin._add_unlock()
+check(wish.get("Unlock|Yi Shen|0") is not None, "Yi Shen's items go on the wishlist")
+wish.clear()
+bwin._picked_engineer = None                      # nothing selected for the check below
+check("Colonia" in blueprints_window.who_can(suit, eng), f"an on-foot entry nobody listed can do hints at Colonia: {blueprints_window.who_can(suit, eng)!r}")
 check(dict(rows)["Felicity Farseer"][3] == "-", "an unlocked engineer needs nothing")
 check("x Gold" in dict(rows)["Lei Cheung"][3] and "not counted" in dict(rows)["Lei Cheung"][3], f"a commodity unlock is shown, not counted: {dict(rows)['Lei Cheung'][3]!r}")
 check(len(bwin._engineer_table) == len(rows), "the table lists every row")
