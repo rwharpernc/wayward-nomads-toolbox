@@ -172,6 +172,13 @@ class InventoryTracker:
                 for _ in self._apply_change_item(item, delta_sign=-1, pillage=False):
                     pass
 
+    def on_hand(self, internal_name: str) -> int:
+        """Pieces of a micro-resource in the backpack and the ship locker, whatever its category: what can be crafted from. The fleet carrier's
+        locker is left out, because an upgrade cannot be made from it."""
+        key = canonicalise(internal_name)
+        return sum(store.get(category, {}).get(key, 0)
+                   for store in (self._backpack, self._ship_locker) for category in store)
+
     def get_combined_total(self, internal_name: str, category: str) -> int:
         key = canonicalise(internal_name)
         backpack = self._backpack.get(category, {}).get(key, 0)

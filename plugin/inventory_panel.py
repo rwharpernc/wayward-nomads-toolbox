@@ -1175,6 +1175,11 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
     controller.handle_event(entry, cmdr, system, station, state)
 
 
+def micro_resource_count(name: str) -> int:
+    """Pieces of a micro-resource in the backpack and ship locker (for the blueprint wishlist), 0 when none or not known yet."""
+    return controller._tracker.on_hand(name)
+
+
 def capi_fleetcarrier(data: Any) -> None:
     controller.capi_fleetcarrier(data)
 
