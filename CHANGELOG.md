@@ -6,6 +6,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Changed
+- **Overlay: the Mining waypoint's default spot moved up 40 px** so it no longer overlaps the Colonization shopping list on a 1920 x 1080
+  screen. A position you set yourself is unchanged. A test now stops new default-spot overlaps on 16:9 screens.
 - **The COL page's REPORT button is now DASHBOARD.** It still opens the Colonization Sites window; only the name changed (button, tooltip
   text, guide and testing notes).
 - **Colonization, Find all: fewer requests and better coverage from the "sells everything" search.** That search now runs first. A

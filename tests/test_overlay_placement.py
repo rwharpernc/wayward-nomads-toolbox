@@ -411,5 +411,45 @@ class PreviewTests(unittest.TestCase):
         self.assertLessEqual(item["y"] + item["h"], 960)
 
 
+class DefaultSpotTests(unittest.TestCase):
+    """The default spots, at the slots' nominal (worst-case) sizes, on a 16:9 screen."""
+
+    # Pairs that still overlap by design and are rarely shown together: the notable-find card sits under the discovery card, and the
+    # Colonization list's worst-case width reaches under it; the interdiction warning is drawn over the discovery alerts.
+    KNOWN = {frozenset(("colonisation", "notable")), frozenset(("discovery", "interdiction"))}
+
+    @staticmethod
+    def rects(width, height):
+        out = {}
+        for key, slot in P.SLOTS.items():
+            w, h = slot.size
+            place = slot.default
+            x = {"left": place.dx, "right": width - w - place.dx}.get(place.h, (width - w) / 2 + place.dx)
+            y = {"top": place.dy, "bottom": height - h - place.dy}.get(place.v, (height - h) / 2 + place.dy)
+            out[key] = (x, y, x + w, y + h)
+        return out
+
+    def overlaps(self, width, height):
+        rects, found = self.rects(width, height), set()
+        keys = list(rects)
+        for i, first in enumerate(keys):
+            for second in keys[i + 1:]:
+                a, b = rects[first], rects[second]
+                if min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1]):
+                    found.add(frozenset((first, second)))
+        return found
+
+    def test_no_new_overlaps_on_common_16_9_screens(self):
+        for width, height in ((1920, 1080), (2560, 1440), (3840, 2160)):
+            with self.subTest(screen=(width, height)):
+                self.assertEqual(self.overlaps(width, height) - self.KNOWN, set())
+
+    def test_the_mining_waypoint_clears_the_colonization_list_and_the_mining_stats(self):
+        rects = self.rects(1920, 1080)
+        waypoint, stats, shopping = rects["mining_waypoint"], rects["mining_stats"], rects["colonisation"]
+        self.assertLessEqual(stats[3], waypoint[1])
+        self.assertLessEqual(waypoint[3], shopping[1])
+
+
 if __name__ == "__main__":
     unittest.main()

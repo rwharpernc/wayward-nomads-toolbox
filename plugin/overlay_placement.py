@@ -76,7 +76,7 @@ SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
     _slot("inventory", "Inventory pickups and bars", "right", "top", 40, 200, (420, 226),
           "wntb_inventory_overlay_x", "wntb_inventory_overlay_y", (900, 120), "wntb_inventory", "wntb_inventory_"),
     _slot("mining_stats", "Mining stats", "left", "top", 40, 160, (400, 100)),
-    _slot("mining_waypoint", "Mining waypoint", "left", "top", 40, 340, (400, 70)),
+    _slot("mining_waypoint", "Mining waypoint", "left", "top", 40, 300, (400, 70)),
     _slot("screenshots", "Screenshot messages", "right", "bottom", 40, 40, (420, 78),
           group="wntb_screenshot", group_prefix="wntb_screenshot_"),
 )}
