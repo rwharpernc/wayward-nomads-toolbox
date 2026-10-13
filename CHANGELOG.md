@@ -6,6 +6,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Changed
+- **The COL page's REPORT button is now DASHBOARD.** It still opens the Colonization Sites window; only the name changed (button, tooltip
+  text, guide and testing notes).
 - **Colonization, Find all: fewer requests and better coverage from the "sells everything" search.** That search now runs first. A
   commodity one of its stations can supply in full is not searched on its own, and when the route still leaves two or more commodities
   uncovered, one more request finds stations that sell all of them, using each returned whole market to cover any other listed commodity

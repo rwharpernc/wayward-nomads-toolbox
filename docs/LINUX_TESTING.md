@@ -86,7 +86,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Codex **BKF** (backfill from journal history) finds your journals.
 - [ ] Codex details window: the Entry and Times found headings sort both ways, the **Not found** tab fills in
       (needs network the first time), and double-clicking an entry opens its Canonn search in your browser.
-- [ ] COL mode → **REPORT** (colonization sites): after docking at a construction depot, the site appears with its
+- [ ] COL mode → **DASHBOARD** (colonization sites): after docking at a construction depot, the site appears with its
       outstanding commodities, In Cargo matches your hold, and **Copy Shopping List** pastes elsewhere.
 - [ ] Mining: journal backfill works, and in an SRV the surface bearing arrow and coverage map work.
 - [ ] Copy buttons (Powerplay, BGS, Boxel **RND**): pasting into another app works.
@@ -353,7 +353,7 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 ## 7h. Colonization mode (added 2026-10-11, Windows-tested only: check on Linux)
 
 - [ ] The button row has a **COL** button (eight buttons); the panel is not noticeably wider than before.
-- [ ] COL shows **Current project** for your newest active site and a **History** block; REPORT opens the sites window, and
+- [ ] COL shows **Current project** for your newest active site and a **History** block; DASHBOARD opens the sites window, and
       OVERLAY toggles the overlay card (lit while on).
 - [ ] Without a fleet carrier there is no Carrier row, Trips left reads like "3 loads of 400 t", and the sites window has a single
       Trips column. With one, Carrier is shown and Trips left reads "N to buy · N to haul".

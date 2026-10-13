@@ -4,7 +4,7 @@ aboard so a hauler can see what's left to get.
 
 Its own mode (PANEL_PLACEMENT = "colonisation", the COL button). The page shows the current project (progress, what is
 delivered, what the ship and the fleet carrier cover, the trips left) and the commander's colonization history (sites
-finished, tonnes delivered, recent activity); the full list is in a popup window (REPORT). What is shown and how it is
+finished, tonnes delivered, recent activity); the full list is in a popup window (DASHBOARD). What is shown and how it is
 worded is in colonisation_stats.py, which adapts to a commander with or without a fleet carrier. A short fixed set of
 rows, each clipped, so the main panel stays narrow however many sites or commodities there are.
 """
@@ -566,7 +566,7 @@ class ColonisationController:
 
         buttons = tk.Frame(parent)
         buttons.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
-        manage_button = tk.Button(buttons, text="REPORT", command=self._on_manage_clicked)
+        manage_button = tk.Button(buttons, text="DASHBOARD", command=self._on_manage_clicked)
         manage_button.pack(side=tk.LEFT)
         panelkit.add_tooltip(manage_button, "Colonization Sites - open your colonization sites")
         self._show_button = tk.Button(buttons, text="OVERLAY", command=self._on_show_clicked)
@@ -611,7 +611,7 @@ class ColonisationController:
             text=(
                 "Tracks what each colonization construction site still needs delivered. Dock at a "
                 "construction depot (or open its market) once to register it; deliveries are then "
-                "tallied from your journal. Press REPORT in the COL mode to "
+                "tallied from your journal. Press DASHBOARD in the COL mode to "
                 "open the sites window and see each site's outstanding commodities against the cargo you're carrying, and to "
                 "copy a shopping list."
             ),

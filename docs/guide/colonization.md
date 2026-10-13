@@ -1,7 +1,7 @@
 # Colonization
 
 Colonization has its own mode: press the **COL** button. The page has two parts, the project you are building now and
-your history, and a **REPORT** button that opens the full sites window. It works the same for a commander with a fleet
+your history, and a **DASHBOARD** button that opens the full sites window. It works the same for a commander with a fleet
 carrier and for one without; the wording changes to match, and the carrier lines are left out when you have none.
 
 > **Work in progress.** Co-op building (several commanders on one project) and colony tracking are planned, through a separate
@@ -69,7 +69,7 @@ construction depot or open its market, and a `ColonisationContribution` event ea
 1. Dock at the construction depot, or open its market, **once**. There is nothing to type in.
 2. The **COL** page shows that site under **Current project** (see below). It is your most recently updated active
    site, with a line `+N more active sites` if you have others. With none it says `No active construction site`.
-3. Press **REPORT** to open the **Colonization Sites** window.
+3. Press **DASHBOARD** to open the **Colonization Sites** window.
 
 **Who is playing.** At start-up WNTB takes the commander from the newest journal (the last login in it), so the
 summary line shows your sites straight away instead of `waiting for commander login`. After you log in as someone
@@ -398,7 +398,7 @@ site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 t
   - Optionally, **whenever the right-hand cockpit panel is open, anywhere** (even in flight). Off by
     default; tick it in the Colonization settings.
 
-  **Prefer to switch it yourself?** Leave the automatic option unticked and use the **OVERLAY** button beside REPORT on the COL page: it
+  **Prefer to switch it yourself?** Leave the automatic option unticked and use the **OVERLAY** button beside DASHBOARD on the COL page: it
   turns the card on or off, whatever screen you are on (the button lights up while the card is on; its name does not change). The button
   works whether or not the automatic option is ticked, and it **stays as you left it, even after you restart EDMC**.
 

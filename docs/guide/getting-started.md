@@ -233,7 +233,7 @@ Switch to the mode first, then use the button listed here.
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there is no button) |
 | Ship Builds | Field Ops | **SHIPS** button |
-| Colonization Sites | Colonization | **REPORT** button |
+| Colonization Sites | Colonization | **DASHBOARD** button |
 | Mining Book | Mining | **BOOK** button, on both the Space Mining and Surface Mining pages |
 | Trade History (tabs: Overview, Commodities, Stations, Route, Trades, Stock & carrier, Lookups) | Trade | **History** button on the Session page |
 
@@ -292,7 +292,7 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **Price finder** | The Mining PRICE finder, for any commodity | Trade (Market page) |
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **SHIPS** | Manage ship builds | Field Ops |
-| **REPORT** | Colonization sites | Colonization |
+| **DASHBOARD** | Colonization sites | Colonization |
 | **OVERLAY** | Force the colonization shopping list onto the overlay (lit while on), press again to let go | Colonization |
 
 ---
