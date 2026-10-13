@@ -167,6 +167,8 @@ overlay was found, and the on-screen extras simply don't appear.
    [Linux guide](guide/linux.md). If EDMC is a **Flatpak** and
    **Check connection** succeeds but nothing is drawn, the Flatpak needs permission to start the overlay
    window; the Linux guide gives the one-line `flatpak override` command.
+8. **Does only one display never show?** Its saved position may be off the screen. Reset it on the Overlay Placement tab; see
+   [Troubleshooting](guide/troubleshooting.md#one-display-never-shows-though-test-and-the-overlay-window-both-work).
 
 ## A note for the curious
 

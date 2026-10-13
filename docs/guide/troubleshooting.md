@@ -85,6 +85,9 @@ rules are on to start with, so tick the ones you want. A banner needs the overla
 
 ### Overlay displays are in the wrong place, cut off, or stop short of the right edge
 
+(A display that is not there at all, though the overlay works, is covered under
+[Linux](#one-display-never-shows-though-test-and-the-overlay-window-both-work).)
+
 Open **Settings → Overlays → Overlay Placement**. Press **Show placement preview** to see a box for every display at its real
 size, then **Detect screen again** if the screen size or scaling line looks wrong. **Reset all to defaults** puts every spot back.
 Displays on the right use an offset to reach the screen edge; if that misbehaves, untick **Carry displays on the right to the
@@ -160,6 +163,10 @@ Payload 'wntb_colonisation_s14_1' from plugin 'WNTB' rendered completely outside
 
 To fix it, open **Settings → Overlays → Overlay Placement**, pick the display, and reset it to its default or choose an anchor
 (for example left, middle). **Reset all to defaults** puts every spot back. Then restart EDMC.
+
+**Workaround:** on the Overlay Placement tab, choose a named spot such as Top left, which fits any screen, and save. If you type an **Exact position**, keep x between 0 and 1240 and y between 0 and 940 (the overlay's
+canvas is 1280 x 960),. Placements are saved per computer in
+EDMC's own settings, so a fix on one machine does not carry to another; repeat it there, or update WNTB so it does this itself.
 
 ### Auto-Honk or the screenshot timer say `xdotool` is not installed
 
