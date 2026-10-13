@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.9.0 - 2026-10-13
 
 ### Added
 - **Trade: a Watch list of the commodities you care about** (a collapsible **Watch list** row in Trade mode; **WATCH** opens the window).
