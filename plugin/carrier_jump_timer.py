@@ -116,6 +116,16 @@ class CarrierJumpTimer:
         self._fired.update(t for t in ALERT_SECONDS if left <= t)
         return min(crossed)
 
+    def lines(self) -> List[str]:
+        """The display as short lines (empty when nothing is planned): the time left, then where to."""
+        if self.jump is None or not self.active():
+            return []
+        left = self.remaining() or 0
+        where = _clip(self.jump.system, MAX_SYSTEM_CHARS)
+        if self.jump.body and self.jump.body != self.jump.system:
+            where += f" ({_clip(self.jump.body, MAX_BODY_CHARS)})"
+        return [f"Carrier jump in {format_remaining(left)}" if left > 0 else "Carrier departing now", f"Destination: {where}"]
+
     def line(self) -> Optional[str]:
         """The text for the display, or None when nothing is planned."""
         if self.jump is None or not self.active():

@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import logging
 import os
+import re
+import textwrap
 import threading
 import time
 from dataclasses import dataclass
@@ -95,19 +97,21 @@ FILL = "#f2200a0a"
 
 Line = Tuple[str, str]   # (text, color)
 
-MAX_LINES = 4
+# The card has one fixed width, and every message is wrapped to fit it (at sentence ends first, then at spaces), so nothing can run past
+# the card or off the screen. It grows downward as lines are added; its top and its width are fixed, so where it sits (anchored to the
+# right edge by Overlay Placement) never changes with what it says.
+MAX_LINES = 10          # card lines; a message that would need more is cut off with an ellipsis
+WRAP_CHARS = 34         # characters in a card line
 _X = 650
 _Y = 100
-_MIN_W = 380
 _BASE_PAD_X = 18
 _BASE_PAD_Y = 14
 _LINE_GAP = 6
-_SAMPLE_LINES = 3
+_SAMPLE_LINES = 4       # the card's height as placement sees it: this many card lines
 # The wire protocol has no text metrics, so a line's width is estimated from its characters, and the overlay font runs wider than the
-# plain estimate (capitals, digits). The box is measured this much wider, as the Colonization card does (colonisation_overlay.CHAR_SCALE),
-# and a line is cut off at MAX_LINE_CHARS so a long name cannot grow the card without limit.
+# plain estimate (capitals, digits). The card is measured this much wider than WRAP_CHARS plain characters, as the Colonization card
+# does (colonisation_overlay.CHAR_SCALE), so a full line always sits inside it.
 WIDTH_SAFETY = 1.3
-MAX_LINE_CHARS = 60
 
 GROUP_NAME = "wntb_flight"
 GROUP_PREFIX = "wntb_flight_"
@@ -115,24 +119,40 @@ _CARD_ID = "wntb_flight_card"
 _LINE_IDS = tuple(f"wntb_flight_line{i}" for i in range(MAX_LINES))
 
 SAMPLE_LINES: List[Line] = [
-    ("Carrier jumps to Sol in 4:32", COLOR_AMBER),
+    ("Carrier jump in 4:32", COLOR_AMBER),
+    ("Destination: Sol (Earth)", COLOR_AMBER),
     ("No scoop at next star (neutron star). Fuel 38% (12.2 t)", COLOR_AMBER),
     ("Low fuel: 18% (5.8 t)", COLOR_RED),
 ]
 
 
-def _card_size(look: Look, lines: List[Line]) -> Tuple[int, int]:
+def wrap(lines: List[Line]) -> List[Line]:
+    """Every message split into card lines of at most WRAP_CHARS characters: at the end of a sentence first, then at spaces (a word
+    longer than a card line is broken). More than MAX_LINES card lines are cut off, the last with an ellipsis."""
+    out: List[Line] = []
+    for text, color in lines:
+        for sentence in re.split(r"(?<=[.!?])\s+", text.strip()):
+            for piece in textwrap.wrap(sentence, WRAP_CHARS, break_long_words=True, break_on_hyphens=False):
+                out.append((piece, color))
+    if len(out) > MAX_LINES:
+        out = out[:MAX_LINES]
+        last, color = out[-1]
+        out[-1] = (last[:WRAP_CHARS - 1].rstrip() + "…", color)
+    return out
+
+
+def _card_size(look: Look, card_lines: int) -> Tuple[int, int]:
+    """(width, height) of the card: the width never changes, the height is for `card_lines` lines."""
     pad_x, pad_y = look.pad_x(_BASE_PAD_X), look.pad_y(_BASE_PAD_Y)
-    widest = max([int(look.text_width(text, "normal") * WIDTH_SAFETY) for text, _color in lines] + [_MIN_W - 2 * pad_x])
-    height = 2 * pad_y + len(lines) * look.line_px("normal") + (len(lines) - 1) * _LINE_GAP
-    return widest + 2 * pad_x, height
+    width = int(look.text_width("x" * WRAP_CHARS, "normal") * WIDTH_SAFETY) + 2 * pad_x
+    height = 2 * pad_y + card_lines * look.line_px("normal") + max(0, card_lines - 1) * _LINE_GAP
+    return width, height
 
 
 def block_rect(look: Look = LEGACY, lines: Optional[List[Line]] = None) -> tuple:
-    """(left, top, width, height) of the card as `render` draws it. Placement always uses a card of three sample lines, so the
-    card's top does not move as the number of lines changes."""
-    sample = lines if lines is not None else SAMPLE_LINES[:_SAMPLE_LINES]
-    width, height = _card_size(look, sample)
+    """(left, top, width, height) of the card as `render` draws it. Placement always uses a card of `_SAMPLE_LINES` lines (its width
+    is the same whatever it says), so the card's top and its right edge do not move as lines come and go."""
+    width, height = _card_size(look, len(wrap(lines)) if lines is not None else _SAMPLE_LINES)
     return _X - look.pad_x(_BASE_PAD_X), _Y - look.pad_y(_BASE_PAD_Y), width, height
 
 
@@ -141,20 +161,20 @@ def placed_client(client: OverlayClient, look: Look = LEGACY) -> OverlayClient:
 
 
 def render(lines: List[Line], client: OverlayClient, look: Look = LEGACY) -> None:
-    """Draws the card with `lines` (at most MAX_LINES), or clears it when there are none. Raises on an overlay failure, as the
+    """Draws the card with `lines` wrapped to fit it, or clears it when there are none. Raises on an overlay failure, as the
     interdiction warning does; the live path swallows it and the Settings test reports it."""
-    lines = [(text if len(text) <= MAX_LINE_CHARS else text[:MAX_LINE_CHARS - 1].rstrip() + "…", color) for text, color in lines[:MAX_LINES]]
-    if not lines:
+    card_lines = wrap(lines)
+    if not card_lines:
         _clear(client)
         return
-    width, height = _card_size(look, lines)
+    width, height = _card_size(look, len(card_lines))
     left, top = _X - look.pad_x(_BASE_PAD_X), _Y - look.pad_y(_BASE_PAD_Y)
-    red = any(color == COLOR_RED for _text, color in lines)
+    red = any(color == COLOR_RED for _text, color in card_lines)
     client.send_shape(_CARD_ID, "rect", BORDER_RED if red else BORDER_AMBER, FILL, left, top, width, height, ttl=OVERLAY_TTL, thickness=2)
     step = look.line_px("normal") + _LINE_GAP
     for index, msg_id in enumerate(_LINE_IDS):
-        if index < len(lines):
-            text, color = lines[index]
+        if index < len(card_lines):
+            text, color = card_lines[index]
             client.send_message(msg_id, text, color, _X, _Y + index * step, ttl=OVERLAY_TTL, size=look.size("normal"))
         else:
             client.send_message(msg_id, "", "white", _X, _Y, ttl=1)
@@ -216,10 +236,8 @@ class FlightAlerts:
         with self._lock:
             if cfg.carrier:
                 self.timer.expire()
-                text = self.timer.line()
-                if text:
-                    left = self.timer.remaining() or 0
-                    found.append((text, COLOR_RED if left <= 60 else COLOR_AMBER))
+                left = self.timer.remaining() or 0
+                found.extend((text, COLOR_RED if left <= 60 else COLOR_AMBER) for text in self.timer.lines())
             if cfg.fuel:
                 for alert in self.fuel.alerts(cfg.low_percent, cfg.unscoopable_percent):
                     found.append((alert.text, COLOR_RED if alert.kind == "low" else COLOR_AMBER))

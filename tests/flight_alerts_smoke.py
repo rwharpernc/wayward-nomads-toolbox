@@ -97,10 +97,11 @@ class World:
 # --- the card says what the watchers say ------------------------------------------------------------------------------------------------
 w = World()
 w.request(15)
-check(w.drawn and w.drawn[-1] == [("Carrier jumps to Sol (Earth) in 15:00", FA.COLOR_AMBER)], f"countdown line: {w.drawn}")
+check(w.drawn and w.drawn[-1] == [("Carrier jump in 15:00", FA.COLOR_AMBER), ("Destination: Sol (Earth)", FA.COLOR_AMBER)],
+      f"countdown lines: {w.drawn}")
 w.at = NOW + 15 * 60 - 45
 w.alerts.refresh()
-check(w.drawn[-1][0][1] == FA.COLOR_RED and "0:45" in w.drawn[-1][0][0], f"the last minute is red: {w.drawn[-1]}")
+check(all(c == FA.COLOR_RED for _t, c in w.drawn[-1]) and "0:45" in w.drawn[-1][0][0], f"the last minute is red: {w.drawn[-1]}")
 check(w.alerts.ticking(), "a planned jump is ticking")
 w.alerts.handle_event({"event": "CarrierJumpCancelled"})
 check(w.drawn[-1] == [], f"a cancel clears the card: {w.drawn[-1]}")
@@ -174,13 +175,13 @@ w.at = NOW + 200
 w.alerts.refresh()
 check(w.beeps == 0, "no sound when sound is off")
 
-# --- the card is sized from its text and its top does not move as lines change ------------------------------------------------------------------
+# --- the card has one width, wraps what it says, and its top and right edge do not move --------------------------------------------------------------
 look = S.LEGACY
-one = FA.block_rect(look, FA.SAMPLE_LINES[:1])
-three = FA.block_rect(look, FA.SAMPLE_LINES[:3])
-check(one[:2] == three[:2], "the card's top left is the same whatever the number of lines")
-check(three[3] > one[3], "more lines make a taller card")
-check(FA.block_rect(look)[:2] == three[:2] and FA.block_rect(look)[2:] == three[2:], "placement uses a three-line card")
+few = FA.block_rect(look, FA.SAMPLE_LINES[:1])
+many = FA.block_rect(look, FA.SAMPLE_LINES)
+check(few[:3] == many[:3], "the card's top, left and width are the same whatever it says")
+check(many[3] > few[3], "more lines make a taller card")
+check(FA.block_rect(look) == FA.block_rect(look, [("x", FA.COLOR_AMBER)] * FA._SAMPLE_LINES), "placement uses a card of the sample number of lines")
 check("flight_alerts" in P.SLOTS and P.SLOTS["flight_alerts"].group == FA.GROUP_NAME, "the slot is registered with the card's group")
 
 
@@ -195,31 +196,53 @@ class Rec:
         self.shapes[shape_id] = (color, w, h)
 
 
+def shown(rec):
+    return [rec.messages[i] for i in FA._LINE_IDS if rec.messages.get(i)]
+
+
 rec = Rec()
 FA.render(FA.SAMPLE_LINES[:2], rec, look)
 check(rec.shapes[FA._CARD_ID][0] == FA.BORDER_AMBER, "no red line: amber border")
-check([rec.messages[i] for i in FA._LINE_IDS[:2]] == [t for t, _c in FA.SAMPLE_LINES[:2]], f"two lines drawn: {rec.messages}")
-check(rec.messages[FA._LINE_IDS[2]] == "" and rec.messages[FA._LINE_IDS[3]] == "", "unused lines are blanked")
+check(shown(rec) == [t for t, _c in FA.SAMPLE_LINES[:2]], f"two short lines are drawn as they are: {shown(rec)}")
+check(rec.messages[FA._LINE_IDS[2]] == "" and rec.messages[FA._LINE_IDS[-1]] == "", "unused lines are blanked")
 rec = Rec()
 FA.render(FA.SAMPLE_LINES, rec, look)
 check(rec.shapes[FA._CARD_ID][0] == FA.BORDER_RED, "a red line makes the border red")
 rec = Rec()
 FA.render([], rec, look)
 check(rec.shapes[FA._CARD_ID][1:] == (0, 0) and all(rec.messages[i] == "" for i in FA._LINE_IDS), "no lines clears the card")
-check(len(FA.SAMPLE_LINES) <= FA.MAX_LINES, "the sample fits the card")
 
-# The box is measured wider than the plain estimate (the overlay font is wider than it), so real text stays inside it.
-for line_text, _color in FA.SAMPLE_LINES:
-    _l, _t, box_w, _h = FA.block_rect(look, [(line_text, FA.COLOR_AMBER)])
-    estimate = look.text_width(line_text, "normal")
-    check(box_w - 2 * look.pad_x(FA._BASE_PAD_X) >= estimate * 1.25, f"the box is wide enough for {line_text!r}: {box_w} for ~{estimate}px of text")
+# Wrapping: at the end of a sentence first, then at spaces; no card line is longer than the card takes.
+wrapped = FA.wrap([("No scoop at next star (neutron star). Fuel 38% (12.2 t)", FA.COLOR_AMBER)])
+check(len(wrapped) >= 2, f"a long message is split: {wrapped}")
+check(wrapped[-1][0] == "Fuel 38% (12.2 t)", f"the second sentence starts its own line: {wrapped}")
+check(FA.wrap([("Short", FA.COLOR_RED)]) == [("Short", FA.COLOR_RED)], "a short line is left alone")
+check(FA.wrap([("", FA.COLOR_RED), ("   ", FA.COLOR_RED)]) == [], "blank lines give nothing")
+for text in ("W" * 300, "word " * 120, "A sentence. " * 40, "x" * 34, "x" * 35, "Colonia (Earth Moon of a very long name indeed) is where"):
+    lines = FA.wrap([(text, FA.COLOR_AMBER)])
+    check(all(len(t) <= FA.WRAP_CHARS for t, _c in lines), f"no card line is longer than {FA.WRAP_CHARS}: {text[:20]!r}")
+    check(len(lines) <= FA.MAX_LINES, f"never more than {FA.MAX_LINES} card lines: {text[:20]!r}")
+check(FA.wrap([("W" * 3000, FA.COLOR_AMBER)])[-1][0].endswith("…"), "text cut off at the line limit ends in an ellipsis")
 
-# A line is cut off at the limit, and the card does not grow past what that limit needs.
-rec = Rec()
-FA.render([("W" * 200, FA.COLOR_AMBER)], rec, look)
-check(len(rec.messages[FA._LINE_IDS[0]]) == FA.MAX_LINE_CHARS, f"a very long line is cut off: {len(rec.messages[FA._LINE_IDS[0]])}")
-widest_box = FA.block_rect(look, [("W" * FA.MAX_LINE_CHARS, FA.COLOR_AMBER)])[2]
-check(rec.shapes[FA._CARD_ID][1] == widest_box, "a cut-off line gives the card its widest size, no more")
+# The card is wide enough for a full card line, measured wider than the plain estimate, and no line is ever drawn wider than that.
+width = FA.block_rect(look)[2]
+full = look.text_width("x" * FA.WRAP_CHARS, "normal")
+check(width - 2 * look.pad_x(FA._BASE_PAD_X) >= full * 1.25, f"the card ({width}) is wide enough for {FA.WRAP_CHARS} characters (~{full}px)")
+for lines_in in (FA.SAMPLE_LINES, [("W" * 500, FA.COLOR_RED)], [("one", FA.COLOR_AMBER)] * 30):
+    rec = Rec()
+    FA.render(lines_in, rec, look)
+    check(rec.shapes[FA._CARD_ID][1] == width, "the card is always the same width")
+    for text in shown(rec):
+        check(look.text_width(text, "normal") * 1.25 <= width - 2 * look.pad_x(FA._BASE_PAD_X), f"{text!r} sits inside the card")
+check(len(shown(rec)) == FA.MAX_LINES, f"thirty lines are cut to {FA.MAX_LINES}: {len(shown(rec))}")
+
+# On a 1920 x 1080 screen the card, anchored to the right edge as placed, stays on the screen at its tallest.
+slot = P.SLOTS["flight_alerts"]
+card_w, card_h = FA._card_size(look, FA.MAX_LINES)
+screen = (1920, 1080)
+right_edge = screen[0] - slot.default.dx
+check(card_w <= screen[0] - 2 * slot.default.dx and card_h <= screen[1] // 2, f"the card is {card_w} x {card_h}: it fits the screen at its tallest")
+check(right_edge - card_w >= 0, "its left edge is on the screen when its right edge is at the placement offset")
 
 # --- start-up: a jump planned before WNTB started is read back ------------------------------------------------------------------------------------
 w = World()
@@ -228,7 +251,7 @@ with mock.patch.object(FA.jump_timer, "recover", side_effect=lambda timer, since
     w.alerts.handle_event({"event": "LoadGame"})
     w.alerts.handle_event({"event": "LoadGame"})
 check(recover.call_count == 1, f"the journals are read once per session: {recover.call_count}")
-check(w.drawn and "Colonia" in w.drawn[-1][0][0], f"the recovered jump shows: {w.drawn[-1:]}")
+check(w.drawn and any("Colonia" in t for t, _c in w.drawn[-1]), f"the recovered jump shows: {w.drawn[-1:]}")
 
 if problems:
     print("PROBLEMS:", len(problems))

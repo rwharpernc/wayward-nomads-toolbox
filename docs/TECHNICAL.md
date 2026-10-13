@@ -486,7 +486,8 @@ EDMC's `dashboard_entry`), the tank size from `Loadout.FuelCapacity.Main`, the p
 means exactly one of O, B, A, F, G, K, M, so `MS`, `AeBe` and the white-dwarf `D*` classes are not), and the flags `InMainShip` (1<<24), `Docked`,
 `Landed` and `ScoopingFuel` decide when a warning applies. The journal gives no per-jump fuel cost, so the warnings are percentage thresholds. A
 one-second ticker thread runs only while a jump is planned; each draw lasts 4 s on the overlay so a stalled WNTB cannot leave the card up, an unchanged
-card is redrawn every 3 s, and the card's placement uses a fixed three-line block so its top does not move as lines come and go.
+card is redrawn every 3 s, and the card has one fixed width (34 characters at 1.3 times the overlay font estimate), wraps every message to it (at sentence ends, then spaces, at most
+10 card lines) and grows downward, so its top and right edge, which Overlay Placement anchors, never move with what it says.
 
 ## 10. The overlay
 

@@ -57,6 +57,17 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(self.timer.remaining(), 900)
         self.assertEqual(self.timer.line(), "Carrier jumps to Sol (Earth) in 15:00")
 
+    def test_the_display_is_two_short_lines(self):
+        self.timer.handle_event(request(15))
+        self.assertEqual(self.timer.lines(), ["Carrier jump in 15:00", "Destination: Sol (Earth)"])
+        self.clock.at = NOW + 15 * 60
+        self.assertEqual(self.timer.lines(), ["Carrier departing now", "Destination: Sol (Earth)"])
+        self.clock.at = NOW + 15 * 60 + T.AFTER_DEPARTURE_S + 1
+        self.assertEqual(self.timer.lines(), [])
+
+    def test_no_jump_no_lines(self):
+        self.assertEqual(self.timer.lines(), [])
+
     def test_a_body_that_repeats_the_system_is_not_shown_twice(self):
         self.timer.handle_event(request(15, system="Sol", body="Sol"))
         self.assertEqual(self.timer.line(), "Carrier jumps to Sol in 15:00")

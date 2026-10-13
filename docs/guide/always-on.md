@@ -38,8 +38,8 @@ Puts an alert on your game screen the moment an interdiction starts. It has no p
 
 One small card on your game screen with two jobs. It has no panel button, only Settings.
 
-- **Fleet carrier jump countdown.** When you schedule a jump, the card counts down to the departure time the game gave:
-  `Carrier jumps to Sol (Earth) in 14:32`. It turns red for the last minute, and says `Carrier departing` at the time. A cancelled
+- **Fleet carrier jump countdown.** When you schedule a jump, the card counts down to the departure time the game gave, on two short lines:
+  `Carrier jump in 14:32` and `Destination: Sol (Earth)`. It turns red for the last minute, and says `Carrier departing now` at the time. A cancelled
   jump, or the jump itself, clears it. WNTB reads the request back from your newest journals when it starts, so restarting the
   game or EDMC during the countdown does not lose it.
 - **Fuel warnings.** `Low fuel: 22% (7.0 t)` when the tank is at or under the percentage you choose (the game's own cockpit
@@ -57,7 +57,8 @@ One small card on your game screen with two jobs. It has no panel button, only S
    or `paplay`).
 4. Press **Test Card** to see it. The test works even while the feature is off, and reports whether an overlay could be reached.
 
-Fuel warnings show only while you are flying your main ship, not docked, landed or scooping. Where the card sits is set on
+The card is always the same width and wraps what it says onto more lines (at the end of a sentence first), growing downward, so nothing
+runs off the screen however long a system name is. Fuel warnings show only while you are flying your main ship, not docked, landed or scooping. Where the card sits is set on
 **Overlay Placement** ("Flight alerts"); by default it is on the right, in the middle of the screen.
 
 ## Overlay connection
