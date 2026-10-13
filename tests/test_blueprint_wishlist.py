@@ -1,5 +1,5 @@
 """The blueprint wishlist (blueprint_wishlist.py) and the shopping math (blueprint_needs.py): adding and limits, saving per commander, a damaged
-file, ready in list order, the combined list, ingredients that cannot be counted, and the Inventory's on-hand count."""
+file, ready in list order, the combined list, ingredients that cannot be counted, and the Inventory's ship locker count."""
 from __future__ import annotations
 
 import json
@@ -255,16 +255,16 @@ class ShoppingTests(unittest.TestCase):
         self.assertTrue(all(n.have == 0 for n in shopping.needs))
 
 
-class OnHandTests(unittest.TestCase):
-    def test_backpack_and_ship_locker_count_but_the_carrier_does_not(self):
+class ShipLockerTests(unittest.TestCase):
+    def test_only_the_ship_locker_counts(self):
         tracker = InventoryTracker()
         tracker._backpack["Component"]["circuitboard"] = 2
         tracker._ship_locker["Component"]["circuitboard"] = 3
         tracker._ship_locker["Item"]["circuitboard"] = 1          # the same name in another category still counts
         tracker._fleet_carrier_locker["Component"]["circuitboard"] = 50
-        self.assertEqual(tracker.on_hand("Circuit Board"), 6)
-        self.assertEqual(tracker.on_hand("circuitboard"), 6)
-        self.assertEqual(tracker.on_hand("Unknown Thing"), 0)
+        self.assertEqual(tracker.in_ship_locker("Circuit Board"), 4)
+        self.assertEqual(tracker.in_ship_locker("circuitboard"), 4)
+        self.assertEqual(tracker.in_ship_locker("Unknown Thing"), 0)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 """What a blueprint, or the whole wishlist, needs against what the commander holds. Pure (no Tk): the counts are passed in as a `Holdings`, so
 this is tested without a game.
 
-Counts: ship materials (Raw, Manufactured, Encoded) come from `materials.py`; Odyssey micro-resources from the Inventory's backpack and ship
-locker (not the fleet carrier's locker, which cannot be crafted from). Commodities (a Technology Broker unlock takes trade goods) and anything the
+Counts: ship materials (Raw, Manufactured, Encoded) come from `materials.py`; Odyssey micro-resources from the Inventory's ship locker (not the
+backpack, and not the fleet carrier's locker: Elite Dangerous Odyssey Materials Helper counts the ship locker as available and shows a carrier's
+stock apart). Commodities (a Technology Broker unlock takes trade goods) and anything the
 tables could not match are NOT counted: they show as needed with no holding, and an entry that needs one says so instead of claiming to be
 ready or not.
 
@@ -21,7 +22,7 @@ from .blueprint_wishlist import WishItem
 @dataclass(frozen=True)
 class Holdings:
     ship: Callable[[str], int]       # a ship material's key -> pieces held
-    odyssey: Callable[[str], int]    # a micro-resource's key -> pieces in the backpack and ship locker
+    odyssey: Callable[[str], int]    # a micro-resource's key -> pieces in the ship locker
 
     def of(self, ingredient: blueprints.Ingredient) -> Optional[int]:
         """Pieces held of an ingredient; None when the ingredient is not counted."""

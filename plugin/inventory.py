@@ -172,12 +172,12 @@ class InventoryTracker:
                 for _ in self._apply_change_item(item, delta_sign=-1, pillage=False):
                     pass
 
-    def on_hand(self, internal_name: str) -> int:
-        """Pieces of a micro-resource in the backpack and the ship locker, whatever its category: what can be crafted from. The fleet carrier's
-        locker is left out, because an upgrade cannot be made from it."""
+    def in_ship_locker(self, internal_name: str) -> int:
+        """Pieces of a micro-resource in the ship locker, whatever its category: what an upgrade is counted against. The backpack and the
+        fleet carrier's locker are left out (Elite Dangerous Odyssey Materials Helper's wishlist counts the ship locker as available too and
+        shows a carrier's stock apart; nothing from Frontier says otherwise, and the guide says so)."""
         key = canonicalise(internal_name)
-        return sum(store.get(category, {}).get(key, 0)
-                   for store in (self._backpack, self._ship_locker) for category in store)
+        return sum(items.get(key, 0) for items in self._ship_locker.values())
 
     def get_combined_total(self, internal_name: str, category: str) -> int:
         key = canonicalise(internal_name)

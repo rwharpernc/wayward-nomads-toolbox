@@ -78,6 +78,11 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Materials (Field Ops mode, **Materials** section; added 2026-10-13): log in and the row shows the pieces of each type; collect or discard a
       material and "Last: ..." follows; a material at its limit is named; **MATERIALS** opens the window; Search, Type, Grade and **Only what is at
       the limit** narrow the table; headings sort; the window keeps its size and place; restart EDMC mid-session and the counts are right.
+- [ ] Engineering (Field Ops, **BLUEPRINTS** on the Materials section; added 2026-10-13): the window opens with **Blueprints** and **Wishlist** tabs;
+      Search (it waits a moment after typing) and the Module drop-down narrow the list; picking a row shows its ingredients, what you hold and
+      where each is found; **Add to wishlist** and a double-click add; the Wishlist tab shows each entry's crafts, whether it can be made and
+      the shopping list; **Set crafts**, **Remove** and **Clear list** ask twice; the Materials section shows the `Wishlist:` line and stays narrow;
+      the window keeps its size and place.
 - [ ] Notes (Exploration mode, **Notes** section): the quick-add box saves a line against the current system; **NOTES** opens the window;
       the editor's text box takes typing and paste; **Here** fills the system and body; **Delete** asks twice; the window keeps its size
       and place after closing and reopening.

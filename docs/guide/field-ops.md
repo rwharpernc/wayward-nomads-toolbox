@@ -5,7 +5,7 @@ Field Ops holds the on-foot and housekeeping tools: screenshots, your inventory,
 
 > **Where this comes from:** screenshots, your backpack and ship locker, and ship loadouts come from the journal (or from EDMC's own state, which it rebuilds from the journal). The journal doesn't give your backpack's capacity, so WNTB uses a built-in table, and the Carrier Locker isn't in the journal at all: it comes from Frontier's servers through a signed-in EDMC. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
-**On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Materials](#materials) · [Ship Builds](#ship-builds) ·
+**On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Materials](#materials) · [Engineering](#engineering-blueprints-and-a-wishlist) · [Ship Builds](#ship-builds) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 ## Screenshots
@@ -116,6 +116,36 @@ The counts are kept on your computer for the commander they belong to, and nothi
 **The limits** are 300, 250, 200, 150 and 100 for grades 1 to 5. The names, types and grades are a built-in table of the game's 137 materials;
 a new material the table does not know is still counted, with no grade or limit shown, until WNTB is updated.
 
+## Engineering: blueprints and a wishlist
+
+**BLUEPRINTS** on the Materials row opens the Engineering window. It has two tabs.
+
+**Blueprints.** Every engineering blueprint in the table (about 1,170: ship modules, Guardian items, Technology Broker unlocks, engineer
+unlocks, synthesis recipes, and Odyssey suit and weapon upgrades). **Search** matches the module, blueprint name, engineer, effect or an
+ingredient (every word you type must match), and **Module** narrows to one type. Pick a blueprint to see who offers it, its effects, and what
+**one craft** takes: each ingredient with how many you need, how many you hold, and where it is found. Set **Crafts** and press **Add to
+wishlist** (or double-click a row to add one craft).
+
+**Wishlist.** Your list of blueprints, with a number of crafts each, kept on your computer for the commander who made it. For each entry it says
+whether it **can be made now** and how many pieces it is **short**. Below is one **shopping list** for the whole wishlist: need, have, short and
+where each ingredient is found, with what is short at the top. Select an entry to change its crafts, **Remove** it or **Clear list** (each
+asks twice). The Materials row shows a line such as `Wishlist: 3 blueprints, 2 can be made, 14 pieces short`.
+
+**How "can be made now" works.** Entries are weighed in list order, as you would craft them: an entry that can be made takes what it needs, and the
+ones below it only see what is left. An entry that cannot be made takes nothing, so it does not use up materials a later entry could use.
+
+**Crafts are up to you.** A blueprint's ingredients are what one craft takes. How many crafts it takes to reach the result you want depends on the
+game's rolls, which no tool can know; set the number you expect.
+
+**What is counted:**
+- **Ship materials** (Raw, Manufactured, Encoded): from the Materials counts above.
+- **On-foot items** (Odyssey components, goods and data): from your **ship locker**, as the Inventory tracks it. The backpack and a fleet carrier's
+  locker are not counted: move what you want to use into the ship locker. This follows the Elite Dangerous Odyssey Materials Helper, whose
+  wishlist counts the ship locker as available and shows a carrier's stock apart; Frontier does not say, so it is on the list to confirm in
+  the game.
+- **Trade goods** (a Technology Broker unlock takes commodities): shown as needed but **not counted**, and an entry that needs them says "Yes, not
+  counting ..." rather than guessing.
+
 ## Ship Builds
 
 A place to keep ship builds you've designed on sites like Coriolis, EDSY or Spansh, one list per commander. WNTB
@@ -153,5 +183,8 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Your materials to be right as soon as EDMC starts | The game writes the full list only when you **log in**. Between logins WNTB follows each change, and after a restart it shows the counts from your last session until the next login list arrives (the window says so). | Log in to the game, or start EDMC before the game. |
 | Materials you were not able to carry to be counted | When you are at the limit, the game discards what you cannot carry. WNTB never counts above the limit. | Nothing; the login list corrects any difference. |
 | Which engineer or blueprint needs a material | Not shown yet. This page counts what you hold; it does not know what you need it for. | Use a site such as Inara or EDSY for what a blueprint takes. |
+| The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. | Check the in-game recipe before you spend rare materials, and report a difference. |
+| The Engineering window to know how many crafts you need | The game rolls the result of each craft; nothing in the journal says how many it will take. | Set the number of crafts you expect. |
+| On-foot upgrades to count your backpack | The wishlist counts the **ship locker** only. Whether the game also draws on the backpack is not confirmed. | Stow what you carry into the ship locker (or just check the count in the game). |
 | Ship Builds to be checked | WNTB only stores the link and name you give it. It doesn't read or check the build. | Keep your link current if the site changes. |
 

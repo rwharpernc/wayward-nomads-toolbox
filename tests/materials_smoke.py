@@ -67,7 +67,7 @@ except tk.TclError:
     sys.exit(77)
 root.withdraw()
 
-from plugin import materials, materials_panel, materials_window  # noqa: E402
+from plugin import blueprints, blueprints_window, materials, materials_panel, materials_window  # noqa: E402
 
 problems = []
 
@@ -86,6 +86,7 @@ folder = tempfile.mkdtemp()
 panel = materials_panel.MaterialsController()      # a fresh controller; it listens to the shared book
 book = materials_panel.book
 book.load(folder)
+materials_panel.wishlist.load(folder)
 
 saved["wntb_materials_collapsed"] = False          # open, so its widgets count towards the panel's width
 host = tk.Frame(root)
@@ -162,8 +163,81 @@ pump()
 check(materials_window._window.alive and materials_window._window is not win, "it can be opened again")
 materials_window.close()
 
+
+# --- the wishlist line and the Engineering window ----------------------------------------------------------------------------------------
+panel.handle_event({"event": "LoadGame"}, "Bocheaux", "Sol", None, {})
+wish = materials_panel.wishlist
+book.apply_event(login)
+check("Wishlist" not in panel.summary()[0], "no wishlist line while the wishlist is empty")
+
+fsd5 = next(b for b in blueprints.grades_for("Frame Shift Drive", "Increased FSD Range") if b.grade == 5)
+wish.add(fsd5.id, 2)
+need = sum(i.count for i in fsd5.ingredients) * 2
+check(f"Wishlist: 1 blueprint, 0 can be made, {need:,} pieces short" in panel.summary()[0], f"the line counts what is short: {panel.summary()[0]!r}")
+book.apply_event({"event": "Materials", "Raw": [], "Manufactured": [], "Encoded": [
+    {"Name": i.key, "Count": i.count * 2} for i in fsd5.ingredients]})
+check("Wishlist: 1 blueprint, 1 can be made" in panel.summary()[0] and "short" not in panel.summary()[0].splitlines()[-1],
+      f"covered, the line says it can be made: {panel.summary()[0]!r}")
+check(host.winfo_reqwidth() <= 216, f"with the wishlist line and both buttons the section asks for {host.winfo_reqwidth()} px")
+book.apply_event(login)
+
+blueprints_window.show(root, wish, materials_panel.holdings)
+bwin = blueprints_window._window
+pump()
+check(bwin is not None and bwin.alive, "the Engineering window opens")
+check(1 <= len(bwin._table) <= blueprints_window.SHOWN, f"blueprints are listed, capped: {len(bwin._table)}")
+bwin._query.set("increased fsd range")
+bwin._fill_blueprints()
+check(len(bwin._table) == 5, f"search narrows to the five grades: {len(bwin._table)}")
+bwin._type.set("Suit")
+bwin._query.set("")
+bwin._fill_blueprints()
+check(len(bwin._table) > 0 and all(b.type == "Suit" for b in blueprints.search("", "Suit", limit=500)), "the module filter")
+bwin._type.set(blueprints_window.ALL)
+bwin._query.set("increased fsd range")
+bwin._fill_blueprints()
+
+bwin._pick(fsd5.id)
+check(len(bwin._ingredients) == len(fsd5.ingredients), f"the detail lists the ingredients: {len(bwin._ingredients)}")
+check("Increased FSD Range" in bwin._title.cget("text"), "the detail names the blueprint")
+before = wish.count()
+bwin._crafts.set("3")
+bwin._add()
+check(wish.get(fsd5.id).crafts == 5, f"adding again adds crafts: {wish.get(fsd5.id).crafts}")
+bwin._crafts.set("abc")
+bwin._add()
+check(wish.get(fsd5.id).crafts == 6, "a crafts box that is not a number counts as one")
+bwin._add_one(blueprints.grades_for("Frame Shift Drive", "Increased FSD Range")[0].id)
+check(wish.count() == before + 1, "double-clicking a row adds one craft")
+
+bwin._tabs.select(1)
+pump()
+check(len(bwin._wish_table) == wish.count(), f"the Wishlist tab lists the entries: {len(bwin._wish_table)}")
+check(len(bwin._shopping_table) > 0 and "pieces short" in bwin._shopping_title.cget("text"), f"and a shopping list: {bwin._shopping_title.cget('text')!r}")
+bwin._pick_wish(fsd5.id)
+check(bwin._wish_crafts.get() == "6", "selecting an entry shows its crafts")
+bwin._wish_crafts.set("2")
+bwin._set_crafts()
+check(wish.get(fsd5.id).crafts == 2, "Set crafts")
+bwin._wish_crafts.set("0")
+bwin._set_crafts()
+check(wish.get(fsd5.id).crafts == 2 and "from 1 to" in bwin._shell._status.cget("text"), "a bad crafts number is refused with a reason")
+bwin._remove()
+check(wish.get(fsd5.id) is not None and "again" in bwin._shell._status.cget("text"), "the first press of Remove only asks")
+bwin._remove()
+check(wish.get(fsd5.id) is None, "the second press removes it")
+bwin._clear()
+check(wish.count() == 1, "the first press of Clear list only asks")
+bwin._clear()
+check(wish.count() == 0 and len(bwin._wish_table) == 0, "the second press empties the list")
+
+listeners = len(wish._listeners)
+blueprints_window.close()
+pump()
+check(not bwin.alive and len(wish._listeners) == listeners - 1, "closing the Engineering window removes its listener")
+check(sorted(os.listdir(folder)) == sorted([materials.STATE_FILENAME, "blueprint_wishlist.json"]), f"two data files, no commander name in a file name: {os.listdir(folder)}")
+
 panel.stop()
-check(sorted(os.listdir(folder)) == [materials.STATE_FILENAME], f"one data file, no commander name in a file name: {os.listdir(folder)}")
 
 if problems:
     print("PROBLEMS:", len(problems))

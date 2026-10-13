@@ -6,6 +6,13 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Engineering blueprints and a wishlist** (Field Ops, the **BLUEPRINTS** button on the Materials section opens the Engineering window). Browse
+  about 1,170 blueprints (ship modules, Guardian items, Technology Broker and engineer unlocks, synthesis, Odyssey suit and weapon upgrades) by
+  search and module type, see who offers each, its effects and what one craft takes against what you hold and where each ingredient is found. Add
+  blueprints to a wishlist with a number of crafts; it says which can be made now (worked out in list order) and gives one shopping list for the
+  whole wishlist. Ship materials are counted from the Materials counts and on-foot items from your ship locker; trade goods are shown but not
+  counted. The recipes are a copy of EDEngineer's table (MIT, last changed March 2024), so newer game content may be missing. Kept on your
+  computer for each commander.
 - **Materials: what you hold of each engineering material** (Field Ops mode, a **Materials** section; **MATERIALS** opens the window). Raw,
   Manufactured and Encoded materials with their grade, the most the game lets you hold (300, 250, 200, 150 or 100) and the room left. The
   section shows the pieces of each type, the last pick-up or discard, and which materials are at the limit. The window has a search box, type and

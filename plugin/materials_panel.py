@@ -13,7 +13,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 from config import appname
 
-from . import materials, materials_window, panelkit
+from . import blueprint_needs, blueprint_wishlist, blueprints_window, inventory_panel, materials, materials_window, panelkit
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -22,9 +22,27 @@ PANEL_PLACEMENT = "fieldops"
 
 _FULL_SHOWN = 3        # names listed on the "at the limit" line; the rest are counted
 _NAME_SHOWN = 22       # characters of a material name shown in the panel
+_HOLDING_EVENTS = ("ShipLocker", "Backpack", "BackpackChange", "Resupply", "TransferMicroResources", "BuyMicroResources", "SellMicroResources",
+                   "UseConsumable", "CollectItems", "DropItems", "Embark", "Disembark", "LoadGame")
 _WRAP_PX = 200         # the summary wraps here: what it shows comes from the game, and must not widen EDMC's window
 
 book = materials.MaterialBook()
+wishlist = blueprint_wishlist.WishBook()
+
+
+def holdings() -> blueprint_needs.Holdings:
+    """What the wishlist is weighed against: ship materials from the journal, on-foot items from the Inventory's ship locker."""
+    return blueprint_needs.Holdings(book.count_of, inventory_panel.micro_resource_count)
+
+
+def wishlist_line(wishbook: blueprint_wishlist.WishBook) -> str:
+    """`Wishlist: 3 blueprints, 2 can be made, 14 pieces short`; empty when nothing is on it."""
+    if not wishbook.count():
+        return ""
+    shopping = blueprint_needs.shopping_list(wishbook.items(), holdings())
+    n = len(shopping.entries)
+    line = f"Wishlist: {n} blueprint{'s' if n != 1 else ''}, {shopping.ready_count} can be made"
+    return line + (f", {shopping.short_pieces:,} pieces short" if shopping.short_pieces else "")
 
 
 def summary_lines(book_: materials.MaterialBook) -> Tuple[str, str]:
@@ -49,6 +67,9 @@ def summary_lines(book_: materials.MaterialBook) -> Tuple[str, str]:
         lines.append(f"At the limit: {names}{more}")
     if not book_.has_counts:
         lines.append("As of your last session.")
+    wish = wishlist_line(wishlist)
+    if wish:
+        lines.append(wish)
     return "\n".join(lines), f"- {sum(totals.values()):,} held"
 
 
@@ -62,20 +83,27 @@ class MaterialsController:
         self._section: Optional[tk.Frame] = None
         self._parent: Optional[tk.Frame] = None
         book.add_listener(self._update_summary)
+        wishlist.add_listener(self._update_summary)
 
     # --- what the game tells us -----------------------------------------------------------------------------------------
 
     def start(self, plugin_dir: str) -> None:
         book.load(plugin_dir)
+        wishlist.load(plugin_dir)
 
     def stop(self) -> None:
         book.flush()
         materials_window.close()
+        blueprints_window.close()
 
     def handle_event(self, entry: Mapping[str, Any], cmdr: str, system: Optional[str], station: Optional[str],
                      state: Dict[str, Any]) -> None:
         book.set_commander(cmdr)       # a new commander tells the book's listeners (this row, an open window) itself
+        wishlist.set_commander(cmdr)
         book.apply_event(entry, state)
+        if wishlist.count() and entry.get("event") in _HOLDING_EVENTS:
+            self._update_summary()              # the Inventory (which runs first) may have changed what the wishlist is weighed against
+            blueprints_window.refresh()
 
     # --- the panel row ---------------------------------------------------------------------------------------------------
 
@@ -105,11 +133,18 @@ class MaterialsController:
         button = tk.Button(body, text="MATERIALS", command=self._open_window)
         button.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
         panelkit.add_tooltip(button, "Open the Materials window: search and filter every material with its grade and limit")
+        engineering = tk.Button(body, text="BLUEPRINTS", command=self._open_blueprints)
+        engineering.grid(row=2, column=1, sticky=tk.W, padx=(4, 0), pady=(4, 0))
+        panelkit.add_tooltip(engineering, "Open the Engineering window: browse blueprints, keep a wishlist and see what you still need")
         self._update_summary()
 
     def _open_window(self) -> None:
         if self._parent is not None:
             materials_window.show(self._parent, book)
+
+    def _open_blueprints(self) -> None:
+        if self._parent is not None:
+            blueprints_window.show(self._parent, wishlist, holdings)
 
 
 controller = MaterialsController()
