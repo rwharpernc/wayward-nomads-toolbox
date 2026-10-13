@@ -6,6 +6,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Surface Compass, with marks: the Mining waypoint arrow, grown up.** An arrow, a name and a distance on your game screen pointing at a spot on
+  the planet you are on, from any mode (not only while Mining's Surface page is open). It points at the nearest hotspot you have recorded, as the
+  old arrow did, or at a **mark** you made, or at nothing. A new **Compass** section in Exploration mode has **MARK** (save where you are, with a
+  name you type or `Mark 1`, `Mark 2`...), **TARGET** (step through the hotspot, the marks on this body, and nothing) and **MARKS**, a window to
+  see every mark with its distance from you, change a name, body or position (typing one is fine) and delete. Marks are kept on your computer,
+  for the commander who made them, and never sent anywhere. Off until ticked (Settings → Overlays → Surface Compass, with **Test Compass**).
 - **Notes on a system or body** (Exploration mode, a **Notes** section; a **NOTES** button opens the window). Write a line about the system you
   are in, and the section shows how many notes it has and the newest when you arrive. The window has a search box, a list of every note
   and an editor, with **Here** to fill in where you are. Notes are kept on your computer for the commander who wrote them, are never
@@ -17,6 +23,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   when an alert starts. The journal gives no per-jump fuel cost, so the fuel warnings compare percentages of the tank, and the guide says so.
 
 ### Changed
+- **The Mining tab's *Enable Surface Waypoint Overlay* tick is gone**: that arrow is now the Surface Compass. If you had it on, the compass is on
+  and keeps the position you gave it (and whether you had hidden it). The overlay placement row is now called "Surface compass".
 - **Overlay: the Mining waypoint's default spot moved up 40 px** so it no longer overlaps the Colonization shopping list on a 1920 x 1080
   screen. A position you set yourself is unchanged. A test now stops new default-spot overlaps on 16:9 screens.
 - **The COL page's REPORT button is now DASHBOARD.** It still opens the Colonization Sites window; only the name changed (button, tooltip

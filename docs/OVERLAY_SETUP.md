@@ -57,7 +57,8 @@ makes sense, a test button:
 | **Inventory** | Pickup notifications and the inventory bars | |
 | **Interdiction Warning** | The warning when you are interdicted | **Test Warning** |
 | **Landing** | The assigned pad and diagram | **Test Overlay** |
-| **Mining** | The mining stats and the surface waypoint arrow | |
+| **Mining** | The mining stats | |
+| **Surface Compass** | The arrow, name and distance pointing at a hotspot or a mark on the planet you are on | **Test Compass** |
 | **Notable Bodies** | Alerts for bodies worth a look | **Test Notable** |
 | **Screenshots** | The "screenshot saved" message | **Test Overlay** |
 

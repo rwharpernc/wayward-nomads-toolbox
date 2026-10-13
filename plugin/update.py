@@ -67,6 +67,7 @@ _OWN_DATA_FILES: set = {
     "colonisation_sites.json",  # Colonisation construction sites (colonisation_data.py)
     "colonisation_carrier.json",  # Colonization's tonnes transferred to the fleet carrier (colonisation_carrier.py)
     "rcc_keys.json",  # each commander's Raven Colonial key (rcc_keys.py)
+    "surface_marks.json",  # the commander's surface marks and compass target (surface_marks.py)
     "notes.json",  # the commander's notes on systems and bodies (notes_data.py)
     "colonisation_history.json",  # Colonization's record of what the commander delivered (colonisation_history.py)
     "trade_ledger.json",  # Trade mode's session ledger (trade_ledger.py)

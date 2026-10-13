@@ -444,11 +444,11 @@ class DefaultSpotTests(unittest.TestCase):
             with self.subTest(screen=(width, height)):
                 self.assertEqual(self.overlaps(width, height) - self.KNOWN, set())
 
-    def test_the_mining_waypoint_clears_the_colonization_list_and_the_mining_stats(self):
+    def test_the_surface_compass_clears_the_colonization_list_and_the_mining_stats(self):
         rects = self.rects(1920, 1080)
-        waypoint, stats, shopping = rects["mining_waypoint"], rects["mining_stats"], rects["colonisation"]
-        self.assertLessEqual(stats[3], waypoint[1])
-        self.assertLessEqual(waypoint[3], shopping[1])
+        compass, stats, shopping = rects["surface_compass"], rects["mining_stats"], rects["colonisation"]
+        self.assertLessEqual(stats[3], compass[1])
+        self.assertLessEqual(compass[3], shopping[1])
 
 
 if __name__ == "__main__":

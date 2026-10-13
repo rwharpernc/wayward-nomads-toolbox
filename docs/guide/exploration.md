@@ -8,7 +8,7 @@ click a section's title (▸ / ▾) to open it. WNTB remembers which ones you le
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
 [Organic Scanning](#organic-scanning) · [Codex Completionist](#codex-completionist) ·
-[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) ·
+[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Compass](#compass) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 Anything that draws on your game screen needs an overlay. See [Getting started](getting-started.md#what-you-need)
@@ -377,6 +377,38 @@ you when you arrive. With the section folded, the title says `- 2 here`.
 
 Notes are matched to a system by its name (ignoring capitals and spaces at the ends), so a note about `Sol` shows when you are in Sol.
 
+## Compass
+
+*(Starts minimized.)*
+
+Points you at a spot on the planet you are on, from wherever you are on its surface (on foot, or in a vehicle), in any mode. It replaces
+Mining's Surface Waypoint arrow, which could only point at the nearest hotspot and only while Mining's Surface page was open.
+
+What it can point at:
+
+- **The nearest hotspot** you have recorded on this body (the default, and what the old arrow did). Hotspots with no position yet are
+  skipped.
+- **One of your marks**: a name, a body and a latitude and longitude, kept for you alone (another commander on the same install does
+  not see them) and never sent anywhere.
+- **Nothing.**
+
+The section shows what it is aiming at and how far (`↗ Ship - 340m NE`) and has three buttons and a box:
+
+- **MARK** saves where you are now as a mark, named with what you typed in the box (or `Mark 1`, `Mark 2` ... if it is empty). The body
+  comes from the game's `Status.json`.
+- **TARGET** steps through what to aim at: the nearest hotspot, then each mark on this body, then nothing, then round again.
+- **MARKS** opens the Marks window: every mark with how far it is from you now (when it is on your body), an editor to change a mark's
+  name, body, latitude and longitude (**Here** fills in where you are), **Delete** (press twice), and buttons to aim at the nearest
+  hotspot, at the selected mark, or at nothing. You can type a position, for example one from a guide or a screenshot.
+
+To see the arrow on your game screen, tick **Settings → Overlays → Surface Compass → Enable Surface Compass** (**off by default**) and
+press **Test Compass**. Where it sits is set on **Overlay Placement** ("Surface compass"). If you had the old Mining waypoint arrow on,
+the compass is on and keeps its position.
+
+The distance and direction are great-circle on a sphere the size of the body (from the body's radius in `Status.json`), good for "which
+way and how far", not for the last few metres. The compass only points at things on the body you are on, and shows nothing until you
+have a surface position.
+
 ## What the game does and doesn't tell us, and how to work around it
 
 WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what EDSM, Spansh, Canonn and edastro report and works around the rest. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
@@ -384,6 +416,8 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | A note to know which body you are at | The body comes from `Status.json` (`BodyName`), which the game writes only while you are near a body, and not in supercruise between bodies. | Press **Here** in the Notes window beside Body, or type the name. A note can be about the system alone. |
+| The compass to work in space or in a ship above the ground | The game gives a latitude and longitude only on a landable surface (on foot or in a vehicle). | Land, or get out, and it appears. |
+| A mark to know which body it is on | The body comes from `Status.json` (`BodyName`), which the game writes only near a body. Marks are matched by body name. | Use **Here** while standing there, or type the body's full name as the game shows it. |
 | Auto-Honk to press any control | It can only press **keyboard** keys, so your fire button must be bound to one. On Linux it needs `xdotool`; Wayland without XWayland is unsupported. | Bind a keyboard key to your fire button and use **Rescan** after changing bindings. |
 | Boxel Survey to know where a system is | It works with **names**, not coordinates. It counts through the trailing number to make the next name and does not know whether that system exists. | The galaxy map is the judge. Press **Next >** to skip a name that won't plot. |
 | The game to tell WNTB a candidate failed to plot | Nothing is written to the journal when the galaxy map can't find a name. | After 3 skips WNTB asks EDSM for a real nearby system. Press **Set** to move there. |

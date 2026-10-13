@@ -50,6 +50,9 @@ being listed doesn't mean a tool was the first or the only one.
   arrows): [EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter),
   [Rhino Surface Mapper](https://github.com/pbgaspar/rhino-surface-mapper), EDSMT, EliteMining and
   [EDPlanetNavigator](https://github.com/mcjohnso/EDPlanetNavigator).
+- **Surface compass and marks** (an arrow and distance to a chosen latitude and longitude, with saved spots):
+  [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s target tracking and [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s
+  compass and bookmarks. WNTB's is its own: it grew out of Mining's own hotspot arrow, and no code was taken from either.
 - **Colonisation tracking:** Architect Tracker, [Raven Colonial](https://ravencolonial.com/),
   ED Colonization Helper, EDColony and BGS-Tally. The shopping-list overlay card follows
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s layout. Raven Colonial publishes its API as OpenAPI, which SrvSurvey and

@@ -80,7 +80,8 @@ The checkboxes (the first three are on by default; the rest are off):
 - *Display Session Totals*, *Display Cargo Bar*, *Display Prospector Hints* (on by default),
 - the three online lookups above,
 - *Enable HUD Overlay*: sends live stats to the overlay,
-- *Enable Surface Waypoint Overlay*: an arrow and distance to the nearest known hotspot on the current body,
+- The arrow to the nearest known hotspot is now the **Surface Compass** (Settings → Overlays → Surface Compass, and the Compass section
+  in [Exploration](exploration.md#compass)). It still points at the nearest hotspot by default, and also works from any mode;
 - *Show Coverage Minimap* (Surface Mining page): a small map of ground the Rhino has driven over on the current
   body,
 - *Archive Completed Mining Runs*: writes a JSON file per run.

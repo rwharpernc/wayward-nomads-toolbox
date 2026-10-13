@@ -196,7 +196,7 @@ def render_ring_caution(content: tk.Frame, wrap: int, row: int, enabled: bool) -
     at, if any. Silently renders nothing while unknown (no ring tracked
     yet, EDSM has no data for it, or the lookup hasn't completed) rather
     than showing stale/wrong data - same principle as the surface
-    waypoint overlay's "show nothing until known" rule."""
+    surface compass's "show nothing until known" rule."""
     if not enabled:
         return row
     caution = space_mining.space_mining_repository.ring_caution()

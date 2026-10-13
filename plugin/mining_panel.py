@@ -61,7 +61,6 @@ _CFG_SPANSH_HOTSPOT_FINDER_ENABLED = "wntb_mining_spansh_hotspot_finder_enabled"
 _CFG_SPANSH_PRICE_FINDER_ENABLED = "wntb_mining_spansh_price_finder_enabled"
 _CFG_EDSM_RESERVE_LOOKUP_ENABLED = "wntb_mining_edsm_reserve_lookup_enabled"
 _CFG_OVERLAY_ENABLED = "wntb_mining_overlay_enabled"
-_CFG_WAYPOINT_OVERLAY_ENABLED = "wntb_mining_waypoint_overlay_enabled"
 _CFG_DISPLAY_COVERAGE_MINIMAP = "wntb_mining_display_coverage_minimap"
 _CFG_ARCHIVE_SESSIONS = "wntb_mining_archive_sessions"
 _CFG_CURRENT_PAGE = "wntb_mining_current_page"
@@ -137,7 +136,6 @@ class MiningPanelController:
         self._spansh_price_finder_var: Optional[tk.BooleanVar] = None
         self._edsm_reserve_lookup_var: Optional[tk.BooleanVar] = None
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
-        self._waypoint_overlay_enabled_var: Optional[tk.BooleanVar] = None
         self._display_coverage_minimap_var: Optional[tk.BooleanVar] = None
         self._archive_sessions_var: Optional[tk.BooleanVar] = None
 
@@ -340,8 +338,6 @@ class MiningPanelController:
                 display_session_totals=settings.display_session_totals,
                 display_prospector_hints=settings.display_prospector_hints,
             )
-        if self._current_page == mining_pages.SURFACE_MINING and _cfg_bool(_CFG_WAYPOINT_OVERLAY_ENABLED, False):
-            mining_overlay.push_waypoint_overlay()
 
         panelkit.apply_theme_deep(self._content)
         self._canvas.configure(background=frame_bg)
@@ -636,7 +632,7 @@ class MiningPanelController:
                         "edsm.net every time you drop into a ring, plus manual search)"),
             variable=self._edsm_reserve_lookup_var,
         ).grid(row=6, column=0, sticky=tk.W, padx=10)
-        nb.Label(frame, text="The in-game HUD overlay and surface waypoint arrow are set up on the Overlays tab.").grid(
+        nb.Label(frame, text="The in-game HUD overlay is set up on the Overlays tab (the surface compass is its own tab there).").grid(
             row=7, column=0, sticky=tk.W, padx=10, pady=(6, 0))
         nb.Checkbutton(
             frame, text=("Show Coverage Minimap (Surface Mining page - a small map of ground the "
@@ -652,27 +648,22 @@ class MiningPanelController:
         mining_hotspot_settings.build(frame, start_row=11)
 
     def build_overlay_settings(self, notebook: nb.Notebook) -> None:
-        """The mining stats HUD and the surface waypoint arrow, on the Overlays tab."""
+        """The mining stats HUD, on the Overlays tab."""
         frame = nb.Frame(notebook)
         frame.columnconfigure(0, weight=1)
         notebook.add(frame, text="Mining")
 
         self._overlay_enabled_var = tk.BooleanVar(value=_cfg_bool(_CFG_OVERLAY_ENABLED, False))
-        self._waypoint_overlay_enabled_var = tk.BooleanVar(value=_cfg_bool(_CFG_WAYPOINT_OVERLAY_ENABLED, False))
         nb.Checkbutton(
             frame, text="Enable HUD Overlay (sends live stats to the overlay - see the Overlay Connection tab)",
             variable=self._overlay_enabled_var,
         ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 0))
-        nb.Checkbutton(
-            frame, text=("Enable Surface Waypoint Overlay (arrow + distance to the nearest known "
-                        "hotspot on the current body)"),
-            variable=self._waypoint_overlay_enabled_var,
-        ).grid(row=1, column=0, sticky=tk.W, padx=10)
         nb.Label(
             frame,
-            text="Where each one sits on the screen is set on the Overlay Placement tab (Mining stats, Mining waypoint).",
+            text=("Where it sits on the screen is set on the Overlay Placement tab (Mining stats). The arrow that points at the nearest "
+                  "hotspot is now the Surface Compass, on its own tab here."),
             wraplength=440, justify=tk.LEFT,
-        ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(8, 10))
+        ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(8, 10))
 
     def save_settings(self) -> None:
         if self._display_session_totals_var is None:
@@ -685,8 +676,6 @@ class MiningPanelController:
         config.set(_CFG_EDSM_RESERVE_LOOKUP_ENABLED, bool(self._edsm_reserve_lookup_var.get()))
         if self._overlay_enabled_var is not None:
             config.set(_CFG_OVERLAY_ENABLED, bool(self._overlay_enabled_var.get()))
-        if self._waypoint_overlay_enabled_var is not None:
-            config.set(_CFG_WAYPOINT_OVERLAY_ENABLED, bool(self._waypoint_overlay_enabled_var.get()))
         config.set(_CFG_DISPLAY_COVERAGE_MINIMAP, bool(self._display_coverage_minimap_var.get()))
         config.set(_CFG_ARCHIVE_SESSIONS, bool(self._archive_sessions_var.get()))
         self._redraw_if_alive()

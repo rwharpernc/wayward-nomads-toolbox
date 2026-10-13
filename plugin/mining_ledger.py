@@ -9,9 +9,8 @@ saved geometry). It lists what this session's journal scan has shown for
 the current system plus every saved hotspot, anywhere; the data shaping is in
 mining_ledger_data.py (tested), this file is only widgets.
 
-No "Guide me there" button: the waypoint overlay always points at the
-nearest saved hotspot on the current body (mining_overlay.py), there is no
-per-hotspot target to set.
+No "Guide me there" button: the Surface Compass (surface_compass.py) points at the nearest saved hotspot on the current body by
+default, or at a mark of the commander's own; there is no per-hotspot target to set.
 """
 from __future__ import annotations
 

@@ -90,6 +90,9 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `notes_data.py` | The commander's notes on a system or body, kept per commander in `notes.json`: validation and limits, search, and an add, change and delete that save at once; no Tk |
 | `notes_panel.py` | The Notes row in Exploration mode: how many notes the system you are in has and the newest, a one-line quick add, and the button that opens the window |
 | `notes_window.py` | The Notes window: search, a list of every note, and an editor with a Here button for the system and body you are at |
+| `surface_marks.py` | The commander's named surface marks (body, latitude, longitude) and compass target, kept per commander in `surface_marks.json`: validation and limits, lookup by body, add, change, delete; no Tk |
+| `surface_compass.py` | Surface Compass: points an overlay arrow, name and distance at the nearest hotspot or a chosen mark on the body you are on; the Compass section in Exploration mode (MARK, TARGET, MARKS), its Settings tab, and the one-time carry-over of the old Mining waypoint settings |
+| `surface_marks_window.py` | The Marks window: every mark with its distance from here, the compass target, and an editor with a Here button |
 | `neutron_finder.py` | Spansh search for the nearest neutron-star or white-dwarf primary |
 | `notable.py` | Notable Bodies: the overlay banners, queueing and Settings page |
 | `notable_rules.py` | The 15 rules deciding which scanned bodies are worth an alert |
@@ -127,7 +130,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 
 | Module | What it is |
 |---|---|
-| `mining_bearing.py` | Great-circle distance and bearing to a saved hotspot, for the waypoint arrow |
+| `mining_bearing.py` | Great-circle distance, bearing and arrow maths, for the Surface Compass and the coverage map |
 | `mining_body_survey.py` | The landable bodies in the current system, for the System Bodies overview |
 | `mining_coverage.py` | Where the SRV's scanner has driven, per body, one map per commander |
 | `mining_coverage_render.py` | Draws that coverage as a small map (PIL, no Tk) |
@@ -144,7 +147,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 | `mining_live_position.py` | Live surface position and heading from `Status.json` |
 | `mining_location.py` | The current system name for Mining |
 | `mining_methods.py` | Which mining method suits each commodity |
-| `mining_overlay.py` | The mining stats overlay and waypoint arrow |
+| `mining_overlay.py` | The mining stats overlay |
 | `mining_pages.py` | Mining's page order |
 | `mining_panel.py` | Mining mode's entry point: page chrome, Settings tab, event dispatch |
 | `mining_price_finder_dialog.py` | The Find Best Price dialog (Spansh), also opened from Trade's Price finder |

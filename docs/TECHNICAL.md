@@ -350,7 +350,7 @@ several requests in flight, use the generation counter above instead.
   tallies, visited systems, ship builds. Examples: `sessions.json`, `boxel_state.json`,
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
-  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`,
+  `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`, `surface_marks.json`,
   `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
@@ -477,6 +477,17 @@ authoritative `Interdicted`/`EscapeInterdiction` events) because they arrive via
 callbacks with no ordering guarantee. The channel gate exists because squadron and system chat are
 other commanders casually typing words like "pirate" with no interdiction happening.
 
+The Surface Compass (`surface_compass.py`, `surface_marks.py`, `surface_marks_window.py`) takes the live position (`Latitude`, `Longitude`,
+`Heading`, `PlanetRadius`, `BodyName`, `Flags` bit 21 `HasLatLong`) from `Status.json` through EDMC's `dashboard_entry`, in `load.py` after Mining has
+refreshed `mining_live_position` from the same entry, and works out great-circle distance and initial bearing with `mining_bearing.py` on a sphere of
+the body's radius (the body's `Scan` radius when `Status.json` has none). The target is the book's choice: `auto` (the nearest recorded hotspot with a
+position for the journal's current system and body), `none`, or a mark's id; a mark is pointed at only when its body name, trimmed and case-folded,
+matches the body the commander is on. Marks and the choice are per commander in `surface_marks.json` (`commander_data.py`; 500 marks, names 60
+characters, body names 100). The overlay card (an arrow vector, a backing panel and one line of text, group `wntb_compass`, placement slot
+`surface_compass`) is drawn on every `Status.json` update while enabled and cleared once when there is no reading. On first start the Mining
+waypoint's enabled flag, placement and hidden flag are copied across once (`wntb_compass_migrated_v1`). The panel row's summary label wraps at 200 px
+and the quick-name box is fixed at 26 characters, so nothing the commander or the game supplies can widen EDMC's window.
+
 Flight Alerts (`flight_alerts.py`, over the pure `carrier_jump_timer.py` and `fuel_alerts.py`) draws one overlay card. The carrier
 countdown comes from `CarrierJumpRequest` (`SystemName`, `Body`, `DepartureTime`, parsed as UTC), cleared by `CarrierJumpCancelled` or
 `CarrierJump`; a request whose departure is already more than 90 s past is ignored (an old journal line), one alert is given as the time
@@ -486,7 +497,7 @@ EDMC's `dashboard_entry`), the tank size from `Loadout.FuelCapacity.Main`, the p
 means exactly one of O, B, A, F, G, K, M, so `MS`, `AeBe` and the white-dwarf `D*` classes are not), and the flags `InMainShip` (1<<24), `Docked`,
 `Landed` and `ScoopingFuel` decide when a warning applies. The journal gives no per-jump fuel cost, so the warnings are percentage thresholds. A
 one-second ticker thread runs only while a jump is planned; each draw lasts 4 s on the overlay so a stalled WNTB cannot leave the card up, an unchanged
-card is redrawn every 3 s, and the card has one fixed width (34 characters at 1.3 times the overlay font estimate), wraps every message to it (at sentence ends, then spaces, at most
+card is redrawn every 3 s, and the card has one fixed width (30 characters at 1.6 times the overlay font estimate, 1.3 was seen cutting text off), wraps every message to it (at sentence ends, then spaces, at most
 10 card lines) and grows downward, so its top and right edge, which Overlay Placement anchors, never move with what it says.
 
 ## 10. The overlay

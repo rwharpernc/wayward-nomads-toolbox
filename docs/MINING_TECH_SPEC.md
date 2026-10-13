@@ -51,7 +51,7 @@ mining_ledger.py         The Mining Book window.   mining_ledger_data.py: its da
 mining_coverage.py       The driven-ground record.  mining_coverage_render.py: draws the minimap (PIL).
 mining_live_position.py  The live surface position from Status.json.
 mining_bearing.py        Distance and bearing between two surface points.
-mining_overlay.py        The optional on-screen stats panel and waypoint arrow.
+mining_overlay.py        The optional on-screen stats panel.
 mining_session_archive.py Optional JSON archive of finished runs.
 mining_journal_backfill.py Replays today's journal on a mid-session EDMC start.
 mining_location.py       The commander's current system.
@@ -162,10 +162,12 @@ dot for live, a hollow grey ring for depleted, so shape carries the meaning for 
 your position. Without a Rhino deployed it only shows below 2 km altitude. It uses a flat-earth
 projection, accurate enough at this scale.
 
-### 7.3 The waypoint arrow
-The overlay's arrow points to the **nearest saved hotspot with a position on the current body**, using
-great-circle distance and initial bearing between your live position and the hotspot. There is no
-per-hotspot target to pick.
+### 7.3 The waypoint arrow (now the Surface Compass)
+The arrow moved out of Mining into the **Surface Compass** (`surface_compass.py`; see [TECHNICAL.md](TECHNICAL.md) and the
+[Exploration guide](guide/exploration.md#compass)). It still points to the **nearest saved hotspot with a position on the current body**
+by default, using great-circle distance and initial bearing between your live position and the hotspot (`mining_bearing.py`,
+`mining_live_position.py`), and can instead point at a mark the commander made or at nothing. It no longer needs the Surface Mining page
+to be open, and the old *Enable Surface Waypoint Overlay* setting, placement and hidden flag are carried over once.
 
 ## 8. Optional lookups
 
@@ -193,8 +195,7 @@ shared `panelkit.nav_arrow`.
 
 ## 9. Optional extras
 
-- **On-screen stats panel and waypoint arrow** (overlay; two separate switches). Both register an
-  EDMCModernOverlay Plugin Group so their backgrounds draw.
+- **On-screen stats panel** (overlay). It registers an EDMCModernOverlay Plugin Group so its background draws.
 - **Archive completed runs.** Off by default. When a run that has data ends, a JSON file is written to
   `mining_sessions/` for analysis outside WNTB. Empty trips write nothing.
 

@@ -59,6 +59,7 @@ sys.modules["config"] = cfgmod
 
 from plugin import colonisation, colonisation_overlay as C, discovery as D, interdiction as I, landing as L  # noqa: E402
 from plugin import flight_alerts as FA  # noqa: E402
+from plugin import surface_compass as CO  # noqa: E402
 from plugin import mining_overlay as M, notable as N, overlay_style as S, screenshots as SC  # noqa: E402
 
 problems = []
@@ -129,7 +130,8 @@ check((interdiction.width, interdiction.height, interdiction.y_who, interdiction
 landing = L._geometry(S.LEGACY, None, False)
 check((landing.card_w, landing.card_h, landing.y_title, landing.y_status, landing.y_station, landing.y_pad, landing.y_denied,
        landing.shift_x, landing.shift_y) == (320, 324, 650, 675, 698, 721, 744, 0, 0), f"landing legacy geometry: {landing}")
-check(M._stat_pitch(S.LEGACY) == 22 and M._waypoint_geometry(S.LEGACY) == (26, 290, 32), "mining legacy geometry")
+check(M._stat_pitch(S.LEGACY) == 22, "mining legacy geometry")
+check(CO._geometry(S.LEGACY) == (26, 290, 32), "surface compass legacy geometry (the old waypoint arrow's)")
 
 # --- a sample of everything each display can show ---------------------------------------------------------------------------------
 site = colonisation.apply_depot_event({"MarketID": 7, "ConstructionProgress": 0.4, "ResourcesRequired": [
@@ -226,14 +228,24 @@ for look in looks():
         size = look.size("normal")
         check(20 + len(text) * S.CHAR_PX[size] <= left + width + 2, f"mining stats {tag}: line {index} runs past the panel")
         check(100 + index * pitch + S.LINE_PX[size] <= top + height + 2, f"mining stats {tag}: line {index} runs past the panel's bottom")
-    line, center_y, extra_h = M._waypoint_geometry(look)
+    # the surface compass: the panel, its text and the arrow, for a reading with and without a heading, and a very long mark name
+    for label, relative in (("with heading", 45.0), ("no heading", None), ("behind", 180.0)):
+        reading = CO.Reading(CO.Target("A mark with a very very long name indeed, longer than fits", 1.0, 2.0, "mark"), 12345.0, 22.5, "NNE",
+                             relative)
+        rec = Rec()
+        CO.render(reading, rec, look)
+        fits(rec, CO._BG_ID, f"surface compass {label} {tag}")
+        left, top, width, height, _c, _f = rec.shapes[CO._BG_ID]
+        _line, center_y, _extra = CO._geometry(look)
+        if relative is not None:
+            check(CO._ARROW_ID in rec.vectors, f"surface compass {label} {tag}: no arrow drawn")
+            check(center_y + CO._ARROW_SIZE <= top + height + 2, f"surface compass {label} {tag}: the arrow is below the panel")
+            check(CO._Y + _line <= center_y - CO._ARROW_SIZE + 2 + 14, f"surface compass {label} {tag}: the arrow overlaps the text")
+        else:
+            check(CO._ARROW_ID not in rec.vectors, f"surface compass {label} {tag}: an arrow with no heading")
     rec = Rec()
-    text = "↑ Platinum - 12.3 km NNE of here"
-    M._send_overlay_panel(rec, "wp", 20, M._WAYPOINT_OVERLAY_Y, [text], look, "large", extra_h, line)
-    left, top, width, height, _c, _f = rec.shapes["wp"]
-    check(20 + len(text) * S.CHAR_PX[look.size("large")] <= left + width + 2, f"mining waypoint {tag}: the text runs past the panel")
-    check(center_y + M._WAYPOINT_ARROW_SIZE <= top + height + 2, f"mining waypoint {tag}: the arrow is below the panel")
-    check(M._WAYPOINT_OVERLAY_Y + line <= center_y - M._WAYPOINT_ARROW_SIZE + 2 + 14, f"mining waypoint {tag}: the arrow overlaps the text")
+    CO.render(None, rec, look)
+    check(not rec.shapes and not rec.messages and not rec.vectors, f"surface compass {tag}: no reading leaves something on the screen")
 
     # screenshots: the panel against its lines
     texts = ["Screenshot saved: Some Rather Long Screenshot Name 2026-10-11.png", "Screenshot saved: b.png"]

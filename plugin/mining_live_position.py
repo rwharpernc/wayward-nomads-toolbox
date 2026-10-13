@@ -37,7 +37,7 @@ class LivePosition:
     """Meters, from Status.json's own `PlanetRadius` field when present.
     None on a game/EDMC version that doesn't populate it - callers should
     fall back to mining_surface.py's Scan-derived radius rather than
-    skip the waypoint overlay entirely."""
+    skip the surface compass entirely."""
     altitude: Optional[float] = None
     """Meters above the surface, from Status.json's `Altitude` (present
     alongside Latitude/Longitude). None when absent - the in-ship
