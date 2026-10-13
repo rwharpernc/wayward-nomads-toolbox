@@ -100,7 +100,7 @@ change while you play; they never feed the session figures above. Nothing is sen
 ### Buttons
 
 - **Reset**: starts the tally again (asks whether to save first if there are unsaved trades).
-- **Save session**: keeps the session in Trade History. Greyed out until there is something to save.
+- **Save session**: keeps the session in Trade History. Grayed out until there is something to save.
 - **History**: opens the Trade History window.
 - **Rebuild**: recounts the session from the journals starting at a time you give, in UTC, as
   `YYYY-MM-DD` or `YYYY-MM-DD HH:MM`, and replaces the tally. Use it when the session began on another computer.

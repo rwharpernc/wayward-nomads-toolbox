@@ -136,6 +136,7 @@ class ColonisationController:
         self._overlay_look = None    # the look it was last drawn with, so a change of appearance redraws it
         self._visibility = card.Visibility()
         self._last_focus: Any = None
+        self._market_stamp: Optional[int] = None   # Market.json's modified time when last looked at
         self._last_reason = ""
         self._overlay_lock = threading.Lock()
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
@@ -355,7 +356,28 @@ class ColonisationController:
             self._last_focus = focus
             logger.debug("Colonization overlay: Status GuiFocus is now %r", focus)
         self._visibility.set_focus(focus)
+        self._check_market_file()
         self._update_overlay()
+
+    def _check_market_file(self) -> None:
+        """Note a rewrite of Market.json (the game's signal that a market opened) without waiting for the journal event."""
+        try:
+            stamp = os.stat(os.path.join(_journal_dir(), "Market.json")).st_mtime_ns
+        except OSError:
+            return
+        previous, self._market_stamp = self._market_stamp, stamp
+        if previous is not None and stamp != previous:
+            self._visibility.market_file_changed()
+
+    def _poll_market_file(self) -> None:
+        """Status.json may not change while a market is open, so look at Market.json on a timer as well."""
+        if self._parent is None:
+            return
+        before = self._visibility.describe()
+        self._check_market_file()
+        if self._visibility.describe() != before:
+            self._update_overlay()
+        self._parent.after(500, self._poll_market_file)
 
     def _current_card(self) -> Optional[card.Card]:
         self._visibility.right_panel_anywhere = overlay_right_panel()
@@ -581,6 +603,7 @@ class ColonisationController:
             self._update_overlay()
         self._refresh_summary()
         parent.after(500, self._poll_history_backfill)
+        parent.after(500, self._poll_market_file)
 
     def _on_show_clicked(self) -> None:
         """Manual override of the automatic screens: force the shopping list on the overlay, or let go again."""

@@ -2,7 +2,40 @@
 
 Find your symptom below. Most problems are a missing setting or a missing permission.
 
-**Jump to:** [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Trade](#trade) · [Still stuck?](#still-stuck)
+**Jump to:** [Nothing happens (settings that start off)](#nothing-happens-settings-that-start-off) · [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Trade](#trade) · [Still stuck?](#still-stuck)
+
+## Nothing happens (settings that start off)
+
+Before anything else, check whether the feature is simply **switched off**. WNTB starts conservative: every on-screen display, every
+online lookup and every write to another site is **off until you tick it** in Settings (**File → Settings → WNTB**). A feature that is
+off does not show an error. It just does nothing, which looks exactly like a bug.
+
+| If this does nothing... | ...tick this | Where |
+|---|---|---|
+| Any card on your game screen | The feature's own **Enable** box, below, and the overlay itself must be running ([setup](../OVERLAY_SETUP.md)) | Settings → Overlays |
+| Landing Assist diagram | **Enable Landing**, then **Show on Overlay** (the diagram on the game screen is a separate tick, also off) | Settings → Overlays → Landing |
+| Interdiction warning | **Enable Interdiction Warning** | Settings → Overlays → Interdiction Warning |
+| Carrier jump and fuel alerts | **Enable Flight Alerts** | Settings → Overlays → Flight Alerts |
+| Discovery alerts | **Enable Discovery Alerts**, or the **D.A.** button | Settings → Overlays → Discovery |
+| Notable find banners | **Enable Notable Bodies alerts**, then pick the rules you want | Settings → Overlays → Notable Bodies |
+| The arrow to a mark or hotspot on a planet | **Enable Surface Compass** | Settings → Overlays → Surface Compass |
+| Inventory pickups and bars | The inventory bars you want, one tick per bar | Settings → Overlays → Inventory |
+| Mining stats on the game screen | **Enable HUD Overlay** | Settings → Mining |
+| "Screenshot saved" message on the game screen | The overlay message option for screenshots | Settings → Field Ops → Screenshots |
+| The Colonization shopping list appears by itself at markets | **Also show the shopping list automatically**. Otherwise only the **OVERLAY** button on the COL page shows it | Settings → Overlays → Colonization |
+| Auto-Honk | **Enable Auto-Honk** or the **A.H.** button | Settings → Exploration → Auto-Honk |
+| Routes and Market on the Trade page | **Enable Spansh trade lookups** ([details](#the-lookup-buttons-are-grayed-out-or-there-is-no-commodity-box)) | Settings → WNTB → Trade |
+| The **H.S.**, **PRICE** or **RES** buttons in Mining | **Enable Spansh Nearby Hotspot Finder**, **Enable Spansh Best Price Finder**, **Enable EDSM Ring Reserve Lookup** (each separately) | Settings → Mining |
+| ELW rarity or EDSM upload status in Exploration | The two options under Exploration Value | Settings → Exploration → Exploration Value |
+| Fleet carriers missing from "where to buy" results | **Include fleet carriers** in the Colonization sites window | Colonization sites window |
+| Raven Colonial not updating | The master switch and the two options under it ([steps](#raven-colonial-doesnt-update-as-i-deliver)) | Settings → Colonization → Raven Colonial |
+| WNTB never updates itself | **Automatically download and install updates** | Settings → WNTB → General → Updates |
+
+Notes:
+- **Test buttons work even when a feature is off.** A passing **Test** shows the overlay is reachable; it does not mean the live feature is on.
+- **Settings are per computer.** A tick on one machine does not carry to another, so check each one you play on.
+- **Press OK** in Settings to keep a change.
+- Anything that contacts the internet is listed, with what it sends, on [what goes on the internet](internet-and-privacy.md).
 
 ## General
 
@@ -85,6 +118,9 @@ rules are on to start with, so tick the ones you want. A banner needs the overla
 
 ### Overlay displays are in the wrong place, cut off, or stop short of the right edge
 
+(A display that is not there at all, though the overlay works, is covered under
+[Linux](#one-display-never-shows-though-test-and-the-overlay-window-both-work).)
+
 Open **Settings → Overlays → Overlay Placement**. Press **Show placement preview** to see a box for every display at its real
 size, then **Detect screen again** if the screen size or scaling line looks wrong. **Reset all to defaults** puts every spot back.
 Displays on the right use an offset to reach the screen edge; if that misbehaves, untick **Carry displays on the right to the
@@ -93,7 +129,7 @@ screen edge**. The details are in [Setting up the overlay](../OVERLAY_SETUP.md).
 ### Overlay text wraps, or a card is too small or too big
 
 Open **Settings → Overlays → Appearance** and press **Show sample**. Cards are sized from an estimate of the text at the
-fixed size, so it can be tight on a small screen; the size cannot be changed.
+chosen size and given 10% extra width, so a card may still be tight on a small screen. Try a smaller **Text size** on the same tab.
 
 ## Colonization
 
@@ -110,6 +146,27 @@ The journal only records cargo you transfer to the carrier, so WNTB's carrier fi
 - **For a transfer that did not register:** press **Rescan Carrier** in the Colonization Sites window. It rebuilds the tally from the
   last 30 days of journals and drops any figure taken from Frontier, so it is a quick fix, not a replacement for the real hold. See
   [Rescan Carrier](colonization.md#rescan-carrier-when-a-load-did-not-register).
+
+### Raven Colonial doesn't update as I deliver
+
+WNTB sends nothing to Raven Colonial until you turn sharing on. It is **off by default**, and it is separate from the Raven features
+that only read (Planned Builds, Raven Progress and the quick links work without it). If your deliveries never reach Raven, this is
+almost always why.
+
+In **Settings → Colonization → Raven Colonial**:
+
+1. Tick **Allow WNTB to write to Raven Colonial (master switch)**. The options under it stay grayed out until you do.
+2. Tick **Report my construction progress and deliveries to Raven Colonial**.
+3. Tick **Also report cargo I move to and from my fleet carrier** if you want that too.
+4. Paste your key from [ravencolonial.com/user](https://ravencolonial.com/user) and press **Test key**. Raven answers with your name
+   for you when the key is accepted. With no key, nothing is sent.
+5. Press **OK** in Settings.
+
+Only deliveries made while sharing is on are sent. WNTB does not backfill earlier ones. The update reaches Raven when the depot's
+figures change and when you deliver, so dock at the site or open its market to send the current totals. If another tool such as
+SrvSurvey also reports your deliveries to Raven, turn one of them off, or Raven counts each delivery twice. The setting is saved per
+computer, so check it on each machine you play on. If it is on and Raven still does not update, the EDMC log shows the failed
+request; please [report it](../../README.md#getting-help) with those lines.
 
 ### Raven Progress says Raven has no project for my site
 
@@ -144,6 +201,27 @@ restart EDMC. You can confirm the overlay window is running with:
 ps -eo args | grep overlay_client
 ```
 
+### One display never shows, though Test and the overlay window both work
+
+Its saved position may be off the edge of the screen. This can happen with a position carried over from an older version, such
+as a Colonization shopping list saved at x = 1280 on a screen that is 1280 wide. WNTB sends the display and nothing is wrong
+with the connection, but it is drawn where you cannot see it. Versions after 1.9.0 notice a saved exact position that is off the
+overlay's canvas and use the display's default placement instead (the EDMC log says so), so this fix is only needed on 1.9.0.
+
+To confirm, look in the overlay's log (for a Flatpak EDMC,
+`~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/logs/EDMCModernOverlay/overlay_client.log`) for lines such as:
+
+```
+Payload 'wntb_colonisation_s14_1' from plugin 'WNTB' rendered completely outside the overlay window (bounds=(2536.0, 420.0)-(2569.0, 446.0), window=2048x1280)
+```
+
+To fix it, open **Settings → Overlays → Overlay Placement**, pick the display, and reset it to its default or choose an anchor
+(for example left, middle). **Reset all to defaults** puts every spot back. Then restart EDMC.
+
+**Workaround:** on the Overlay Placement tab, choose a named spot such as Top left, which fits any screen, and save. If you type an **Exact position**, keep x between 0 and 1240 and y between 0 and 940 (the overlay's
+canvas is 1280 x 960),. Placements are saved per computer in
+EDMC's own settings, so a fix on one machine does not carry to another; repeat it there, or update WNTB so it does this itself.
+
 ### Auto-Honk or the screenshot timer say `xdotool` is not installed
 
 Install `xdotool` on your system (Step 1). If EDMC is a Flatpak, also grant the "run host programs" permission
@@ -170,7 +248,7 @@ EDMC's **Journal directory** isn't set, or points at the wrong place. See
 
 ## Trade
 
-### The lookup buttons are greyed out, or there is no Commodity box
+### The lookup buttons are grayed out, or there is no Commodity box
 
 The Spansh lookups are off until you tick **Enable Spansh trade lookups** under **Settings → WNTB → Trade**. The
 Commodity box only appears on the Market page, and only once lookups are on.
@@ -196,7 +274,7 @@ EDMC next sees you. So check:
 - On Linux, that EDMC's **Journal directory** is set. Without it the catch-up can't read the journals.
 - Trades made before WNTB first ran aren't counted.
 
-### Save session is greyed out, or the History window is empty
+### Save session is grayed out, or the History window is empty
 
 **Save session** needs at least one trade or running cost in the session. The History window only lists sessions you
 saved, so press **Save session** first.

@@ -262,12 +262,24 @@ def _legacy_int(key: str) -> Optional[int]:
         return None
 
 
+_warned_off_canvas: set = set()
+
+
 def placement_for(slot_key: str) -> layout.Placement:
     """Where `slot_key`'s display goes: its saved placement, else the old x/y it used to have, else its default."""
     slot = SLOTS[slot_key]
     default = layout.migrated_placement(slot, _legacy_int(slot.legacy_x), _legacy_int(slot.legacy_y))
     raw = config.get_str(layout.setting_key(slot_key))
-    return layout.parse_placement(raw, default) if raw else default
+    placement = layout.parse_placement(raw, default) if raw else default
+    if not layout.on_canvas(placement):
+        # A saved exact position off the canvas (an old setting, or one made for another screen) would hide the display; use the
+        # default instead, and leave the saved text alone.
+        if slot_key not in _warned_off_canvas:
+            _warned_off_canvas.add(slot_key)
+            logger.warning("Saved overlay position %s for %s is off the overlay's canvas; using the default placement",
+                           layout.format_placement(placement), slot_key)
+        return slot.default
+    return placement
 
 
 def save_placement(slot_key: str, placement: layout.Placement) -> None:

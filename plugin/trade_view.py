@@ -24,6 +24,8 @@ ACCENT = "#ff8c0d"           # Elite orange: section headings and things to watc
 _MIN_WIDTH = 260             # never lay out narrower than this
 _FALLBACK_WIDTH = 300        # before the first real width is known
 _NUMERIC_COLUMNS = 3         # columns 1..3 hold table numbers; column 0 is the title
+_MIN_TITLE = 110             # the narrowest the title column is meant to wrap to; below this the figures use the small font
+_FLOOR_TITLE = 60            # and never narrower than this, whatever the figures need
 _GAP = 12                    # pixels between columns
 _PAD = 4                     # a label's own internal padding, on top of its text
 _INDENT = 14                 # pixels per indent level
@@ -78,14 +80,23 @@ class BlockView(tk.Frame):
         self._width = reported
         total = max(_MIN_WIDTH, reported if reported > 1 else _FALLBACK_WIDTH)
 
-        # Number columns: as wide as their widest cell or heading, measured with the real font.
-        widths = [0] * _NUMERIC_COLUMNS
-        for block in self._blocks or []:
-            cells = block.cells if isinstance(block, Item) else block.labels if isinstance(block, Columns) else ()
-            for position, text in enumerate(cells[-_NUMERIC_COLUMNS:]):
-                column = _NUMERIC_COLUMNS - len(cells[-_NUMERIC_COLUMNS:]) + position
-                font = fonts["small_bold"] if isinstance(block, Columns) else fonts["normal"]
-                widths[column] = max(widths[column], font.measure(text) + _PAD)
+        # Number columns: as wide as their widest cell or heading, measured with the real font. In a wide font the figures can leave the
+        # title column less than _MIN_TITLE, which would push the page past its width; the cells then drop to the small font.
+        def measure_columns(cell_font: str) -> List[int]:
+            found = [0] * _NUMERIC_COLUMNS
+            for block in self._blocks or []:
+                cells = block.cells if isinstance(block, Item) else block.labels if isinstance(block, Columns) else ()
+                for position, text in enumerate(cells[-_NUMERIC_COLUMNS:]):
+                    column = _NUMERIC_COLUMNS - len(cells[-_NUMERIC_COLUMNS:]) + position
+                    font = fonts["small_bold"] if isinstance(block, Columns) else fonts[cell_font]
+                    found[column] = max(found[column], font.measure(text) + _PAD)
+            return found
+
+        cell_font = "normal"
+        widths = measure_columns(cell_font)
+        if total - sum(w + _GAP for w in widths if w) - 6 < _MIN_TITLE:
+            cell_font = "small"
+            widths = measure_columns(cell_font)
         for column, width in enumerate(widths, start=1):
             self.columnconfigure(column, weight=0, minsize=width + (_GAP if width else 0))
         # A label/value row puts its value in the same columns as the table's numbers, so those columns must be
@@ -96,7 +107,7 @@ class BlockView(tk.Frame):
                 font = fonts["bold"] if block.bold else fonts["normal"]
                 value_need = max(value_need, min(font.measure(block.value) + _PAD, int(total * _VALUE_SHARE)) + _GAP)
         numeric_need = max(sum(w + _GAP for w in widths if w), value_need)
-        title_wrap = max(110, total - numeric_need - 6)
+        title_wrap = max(_FLOOR_TITLE, total - numeric_need - 6)   # narrower than _MIN_TITLE only when the figures leave no more; it wraps instead
         span = _NUMERIC_COLUMNS + 1
 
         accents: List[tk.Misc] = []
@@ -139,7 +150,7 @@ class BlockView(tk.Frame):
                 cells = block.cells[-_NUMERIC_COLUMNS:]
                 for position, text in enumerate(cells):
                     column = 1 + _NUMERIC_COLUMNS - len(cells) + position
-                    tk.Label(self, text=text, anchor="e", font=fonts["normal"]).grid(
+                    tk.Label(self, text=text, anchor="e", font=fonts[cell_font]).grid(
                         row=row, column=column, sticky="ne", padx=(_GAP, 0), pady=(3, 0))
                 row += 1
                 if block.detail:

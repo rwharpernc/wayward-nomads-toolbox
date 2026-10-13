@@ -47,6 +47,7 @@ _OLD_HIDDEN = "wntb_overlay_hidden_mining_waypoint"
 SLOT = "surface_compass"
 NAME_SHOWN = 28        # characters of a name drawn on the overlay or shown in the panel
 _PANEL_WRAP_PX = 200   # the panel's line wraps here: what it shows comes from the commander and the game, and must not widen EDMC's window
+_ENTRY_MAX_PX = 190   # the box is lowered from _ENTRY_WIDTH characters until it is no wider than this, in any font
 _ENTRY_WIDTH = 26
 
 
@@ -362,16 +363,19 @@ class CompassController:
         # commander and the game, and must not make this the widest row in the panel and so widen the whole EDMC window.
         tk.Label(body, textvariable=self._summary_var, anchor="w", justify=tk.LEFT, wraplength=_PANEL_WRAP_PX).grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
-        entry = tk.Entry(body, textvariable=self._entry_var, width=_ENTRY_WIDTH)
+        entry = panelkit.fit_entry(tk.Entry(body, textvariable=self._entry_var, width=_ENTRY_WIDTH), _ENTRY_MAX_PX)
         entry.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))
         entry.bind("<Return>", lambda _e: self._on_mark())
         buttons = (("MARK", self._on_mark, "Save where you are as a mark, named with what is typed above (or Mark 1, Mark 2, ...)"),
                    ("TARGET", self.cycle_target, "Aim at the next target: the nearest hotspot, each mark on this body, then none"),
                    ("MARKS", self._open_window, "Open the Marks window: every mark, edit, delete, choose the target"))
+        made = []
         for column, (text, command, tip) in enumerate(buttons):
             button = tk.Button(body, text=text, command=command)
             button.grid(row=3, column=column, sticky=tk.W, padx=(0 if column == 0 else 4, 0), pady=(4, 0))
             panelkit.add_tooltip(button, tip)
+            made.append(button)
+        panelkit.fit_button_row(made, _ENTRY_MAX_PX)
         self._update_summary()
 
     def _on_mark(self) -> None:

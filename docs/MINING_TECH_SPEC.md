@@ -5,7 +5,7 @@
 
 The standing reference for Mining mode: what it tracks, the rules and numbers behind its estimates, the
 files it keeps, and the outside lookups it can make. For how to use it, see the
-[README](guide/mining.md). For how the code is organised in general, see
+[README](guide/mining.md). For how the code is organized in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 > **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
@@ -14,9 +14,9 @@ files it keeps, and the outside lookups it can make. For how to use it, see the
 
 - Track **Space Mining** (any ship) and **Surface Mining** (the Rhino SRV) runs live: what you've
   refined, how fast, and what's in the hold.
-- Keep the commander's **own catalogue of surface hotspots**, with an estimate of the tons left in
+- Keep the commander's **own catalog of surface hotspots**, with an estimate of the tons left in
   each, and let it be found again later in the **Mining Book**.
-- Help on the ground: a "where have I driven" minimap and an arrow to the nearest saved hotspot.
+- Help on the ground: a "where have I driven" minimap. (The arrow to the nearest saved hotspot is now the Surface Compass.)
 - Offer optional lookups (nearby ring hotspots, best prices, ring reserve levels) that are off until
   switched on.
 
@@ -158,7 +158,7 @@ While a Rhino is deployed and a radius is known, a point is recorded as you driv
 from the last one), and the map paints a **2,000 m** disc at each. This records where the Rhino has
 *driven*, because nothing in the journal or `Status.json` says a scan happened, so it can't claim real
 scan coverage. The map is a fixed 220 px square, 12 km across, north up, with hotspots (a pale filled
-dot for live, a hollow grey ring for depleted, so shape carries the meaning for colour-blind players) and
+dot for live, a hollow gray ring for depleted, so shape carries the meaning for color-blind players) and
 your position. Without a Rhino deployed it only shows below 2 km altitude. It uses a flat-earth
 projection, accurate enough at this scale.
 

@@ -21,7 +21,7 @@ window and follow its theme.
 
 ttk themes and stock styles (`TButton`, `Treeview` and so on) are application-wide, so changing them
 would recolour EDMC's main window and every other plugin. The kit therefore uses classic tk widgets plus
-its own `FlatButton`, `Combobox`, `SlimScrollbar` and `tk.PanedWindow`, and `style.skin(window)` colours
+its own `FlatButton`, `Combobox`, `SlimScrollbar` and `tk.PanedWindow`, and `style.skin(window)` colors
 a window's classic widgets through Tk's option database, scoped by that window's own name.
 `tests/test_ui_kit.py` fails if the kit touches the ttk theme or styles.
 
@@ -31,7 +31,7 @@ stay native on Windows, so table-heavy windows use the kit's own table instead.
 ## 3. Building blocks
 
 - **Palette and tokens** (`palette.py`): background layers, text, accent, and success, warning and danger
-  colours, plus a colour-blind-safe set for status. Shape or a label carries the state, never colour
+  colors, plus a color-blind-safe set for status. Shape or a label carries the state, never color
   alone (the minimap markers work the same way).
 - **Style** (`style.py`): applies the look to a window's classic widgets. Fonts derive from
   `TkDefaultFont` so Linux and high-DPI displays behave.

@@ -207,6 +207,17 @@ def custom_placement(x: int, y: int) -> Placement:
     return Placement(h=CUSTOM, v=CUSTOM, x=int(x), y=int(y))
 
 
+MIN_VISIBLE = (40, 20)   # canvas units of a display that must lie on the canvas for an exact position to be believed
+
+
+def on_canvas(placement: Placement) -> bool:
+    """False for an exact position that would leave the display off the overlay's canvas (for example x = 1280, the right edge), so
+    nothing could be seen. Anchored placements are always on the canvas, whatever the screen."""
+    if not placement.custom:
+        return True
+    return 0 <= placement.x <= BASE_WIDTH - MIN_VISIBLE[0] and 0 <= placement.y <= BASE_HEIGHT - MIN_VISIBLE[1]
+
+
 def format_placement(placement: Placement) -> str:
     """The text saved in settings: 'right,bottom,20,40' or 'custom,700,60'."""
     if placement.custom:

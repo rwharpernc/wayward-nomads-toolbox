@@ -3,7 +3,7 @@
 Exploration mode is one scrolling panel with several sections stacked top to bottom. Some sections start folded:
 click a section's title (▸ / ▾) to open it. WNTB remembers which ones you left open.
 
-> **Where this comes from:** your scans, jumps, honks and Codex finds come from the journal, so everything about *your* exploring is exact. What the journal can't say (which systems exist or are unvisited, a gas giant's colour, which species a planet hosts before you sample it) is filled from what EDSM, Spansh, Canonn and edastro report, or worked out and labelled as a lead to check. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+> **Where this comes from:** your scans, jumps, honks and Codex finds come from the journal, so everything about *your* exploring is exact. What the journal can't say (which systems exist or are unvisited, a gas giant's color, which species a planet hosts before you sample it) is filled from what EDSM, Spansh, Canonn and edastro report, or worked out and labeled as a lead to check. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
@@ -77,7 +77,7 @@ It has no button on the main panel.
 - **Good FSD injection** (5 or 6 of the premium boost materials on a landable)
 - **Colliding binary**
 - **Green gas giant**: from the Codex, or a gas giant whose surface temperature matches a confirmed green one. The
-  game never records a planet's colour, so treat this as a lead, not a fact.
+  game never records a planet's color, so treat this as a lead, not a fact.
 
 **Off to start with** (because they're common): large landable, landable with rings, close orbit, close binary, high
 eccentricity, fast orbit, fast rotation and wide ring.
@@ -128,7 +128,7 @@ Current** and **Set**, a **Find Nearby (EDSM)** button, a line of survey counts 
 **To start a survey:**
 
 1. Type a procedural system name into **Seed system** (or press **Use Current** to fill in the system you are in).
-   A grey hint under it says whether the name looks like a boxel name.
+   A gray hint under it says whether the name looks like a boxel name.
 2. Press **Set**. The seed becomes the first target.
 3. Paste the target into the galaxy map (**Copy** puts it on your clipboard) and jump.
 4. When you arrive at the target, WNTB marks it visited and moves to the next candidate. With *Auto-copy next
@@ -312,15 +312,15 @@ and two tabs:
 - **Found**: your entries grouped by category, with the columns **Entry**, **Times found** and **First found in**.
   A ⭐ means that at least one of your sightings was reported by the game as a new entry (a first discovery). Click
   a column heading to sort; click again to reverse. (**Times found** sorts highest first on the first click.)
-- **Not found**: Canonn's catalogue of **biological, civilisation and stellar-body** entries, minus the ones you
+- **Not found**: Canonn's catalog of **biological, civilisation and stellar-body** entries, minus the ones you
   have found. Columns: **Entry**, **Type**, **Platform** (Odyssey or Legacy). It sorts the same way. Canonn's
-  catalogue has no geological or anomaly entries, so those never appear here.
+  catalog has no geological or anomaly entries, so those never appear here.
 
 **Buttons:** **Open Reference** and **Refresh Catalog**. Double-click a row, or select it and press **Open
 Reference**. This opens a **search** on canonn.science for that entry's name in your browser, not a fixed page for
 the entry.
 
-**The catalogue** is downloaded from Canonn the first time you open the window and whenever the saved copy is
+**The catalog** is downloaded from Canonn the first time you open the window and whenever the saved copy is
 more than 14 days old, and **Refresh Catalog** fetches it again on demand. It is saved in the plugin folder, so
 after the first download it opens instantly and works offline. If the download fails, the tab says so, and shows
 the saved copy if there is one.
@@ -332,7 +332,7 @@ Codex Completionist has no specification page of its own. The code is `codex_com
 
 *(Starts minimized.)*
 
-Finds the nearest point of interest from edastro.com's exploration catalogue (the GEC). Click **FIND**. It only looks
+Finds the nearest point of interest from edastro.com's exploration catalog (the GEC). Click **FIND**. It only looks
 something up when you ask, and it shows the point of interest, its category, **the system to look for in the galaxy
 map**, how far away it is, its region and rating, with a link to its page. The system name is also copied to your
 clipboard so you can paste it into the galaxy map.
@@ -423,13 +423,13 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | The game to tell WNTB a candidate failed to plot | Nothing is written to the journal when the galaxy map can't find a name. | After 3 skips WNTB asks EDSM for a real nearby system. Press **Set** to move there. |
 | "Not in EDSM" to mean undiscovered or real | It means nobody has uploaded it. It is not a guarantee the system exists or is unvisited. | Treat RND results as leads and confirm in the galaxy map. |
 | A cube's real system count | WNTB only knows what EDSM, Spansh and your own visits revealed, so "complete" means every system **known** is done, or you marked it **Empty**. | Use **Mark Empty** when you have judged a cube done. |
-| The colour of a gas giant | The game never records it. The Green gas giant rule uses the Codex or matches the surface temperature of a confirmed green one. | Treat it as a lead and check the body in the system map. |
+| The color of a gas giant | The game never records it. The Green gas giant rule uses the Codex or matches the surface temperature of a confirmed green one. | Treat it as a lead and check the body in the system map. |
 | Notable Bodies to be certain | A match comes from scan data, using its default limits. | Check the body before you plan around it. |
 | Organic Scanning to name the species | Until a sample names it, the result is a **list of candidates** worked out from the planet's conditions. The main star is assumed to be the illuminating one, which can be wrong near a secondary star. A species with no usable rules can't be predicted, and new species need a WNTB update. | Take a first sample, which replaces the list with the exact species. The in-game exobiology tools are the final word. |
 | Systems visited with EDMC closed to be known | The journals record every jump, so each start reads the last 14 days of journals for your arrivals and adds them to the visited list that **Skip systems already visited** and **RND** use. | Nothing needed for the last 14 days. Older jumps made with EDMC closed are not found. |
 | Bodies-scanned count to be right after a restart | The honk (`FSSDiscoveryScan`) gives the body count and each scan counts one. If EDMC started after the honk, WNTB replays the current journal file for them. | If it still says to honk, honk again. A system's scans made in another journal file are not included. |
 | The sale line to include sales before the current journal file | It is read from the current journal file when EDMC starts, then kept up to date live. | It resets to "none yet" when you restart EDMC after a new game session. |
-| Codex Completionist to cover everything | Canonn's catalogue has no geological or anomaly entries, so those never appear under **Not found**. The tally is per commander; after updating from a version where it was shared, each commander's is rebuilt from their own journals once (the old mixed tally can't be split). | Use the game's Codex for those. Press **Refresh Catalog** if the saved copy is old. |
+| Codex Completionist to cover everything | Canonn's catalog has no geological or anomaly entries, so those never appear under **Not found**. The tally is per commander; after updating from a version where it was shared, each commander's is rebuilt from their own journals once (the old mixed tally can't be split). | Use the game's Codex for those. Press **Refresh Catalog** if the saved copy is old. |
 | POI lists to be current | They are snapshots from Canonn and edastro, and are fetched only when you ask. | Press **FIND** or **REF** to refresh. |
 | edastro's own "nearest" lookup to work | It does not use your position: a check on 2026-10-10 got "The Solar System" for every coordinate and name tried. WNTB downloads the full list and finds the nearest itself. | None needed. If FIND says the lookup failed, edastro's list could not be downloaded; try again later. |
 

@@ -1,6 +1,6 @@
 # Mining
 
-Mining mode tracks two kinds of mining, plus your own catalogue of known hotspots:
+Mining mode tracks two kinds of mining, plus your own catalog of known hotspots:
 
 - **Space Mining**, in your ship.
 - **Surface Mining**, in the Rhino SRV.
@@ -8,7 +8,7 @@ Mining mode tracks two kinds of mining, plus your own catalogue of known hotspot
 Use the **◀** and **▶** buttons at the top of the panel to switch between the two pages. Each page shows live stats
 for your current run.
 
-> **Where this comes from:** the journal records what you prospect, refine and collect, but not a ring's deposit amounts or density, which you type in. The hotspot catalogue is your own, and ring reserve and hotspot lookups use what players have uploaded to EDSM and Spansh. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+> **Where this comes from:** the journal records what you prospect, refine and collect, but not a ring's deposit amounts or density, which you type in. The hotspot catalog is your own, and ring reserve and hotspot lookups use what players have uploaded to EDSM and Spansh. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 ## The buttons
 
@@ -17,7 +17,7 @@ Settings. Hover for the full name.
 
 | Button | What it does | Shown when |
 |---|---|---|
-| **BOOK** (Mining Book) | Opens your catalogue (see below). | Always |
+| **BOOK** (Mining Book) | Opens your catalog (see below). | Always |
 | **+H.S.** (save hotspot here) | Saves the current ring as a hotspot. | On the pages that offer it |
 | **H.S.** (find nearby hotspots) | Finds rings with a confirmed hotspot for a commodity, using Spansh. | Space Mining page, once *Enable Spansh Nearby Hotspot Finder* is ticked |
 | **PRICE** (find best price) | Finds the best-paying station for a commodity, using Spansh. | Once *Enable Spansh Best Price Finder* is ticked |

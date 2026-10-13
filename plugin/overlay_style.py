@@ -34,7 +34,12 @@ SIZES = ("small", "normal", "large", "huge")
 CHAR_PX: Dict[str, float] = {"small": 6.0, "normal": 8.0, "large": 12.5, "huge": 16.5}
 LINE_PX: Dict[str, int] = {"small": 16, "normal": 20, "large": 26, "huge": 34}
 
-TEXT_CHOICES: Tuple[Tuple[str, int], ...] = (("Smaller", -1), ("Default", 0), ("Larger", 1), ("Largest", 2))
+# Text widths are estimates, so every one is padded by this much on top: the overlay's own font sizing depends on the window and on
+# its font limits, which differ from one screen to the next, and a box a little too wide looks fine where text past its edge does not.
+WIDTH_PAD = 1.10
+
+# The sizes the Appearance tab offers. A fourth step ("Largest") was dropped: it is where text used to run past its box.
+TEXT_CHOICES: Tuple[Tuple[str, int], ...] = (("Smaller", -1), ("Default", 0), ("Larger", 1))
 PADDING_CHOICES: Tuple[Tuple[str, int], ...] = (("Compact", 0), ("Comfortable", 6), ("Roomy", 14))
 SPACING_CHOICES: Tuple[Tuple[str, int], ...] = (("Tight", 0), ("Normal", 3), ("Loose", 7))
 
@@ -152,8 +157,8 @@ class Look:
         return LINE_PX[self.size(base)] + self.line_extra
 
     def text_width(self, text: str, base: str = "normal") -> int:
-        """Estimated width in pixels of `text` at that size (erring wide)."""
-        return int(round(len(text) * self.char_px(base)))
+        """Estimated width in pixels of `text` at that size, padded by WIDTH_PAD so a box sized from it holds the text."""
+        return int(round(len(text) * self.char_px(base) * WIDTH_PAD))
 
     def pad_x(self, base_pad: int) -> int:
         """A card's side padding: its own base padding plus the chosen extra."""

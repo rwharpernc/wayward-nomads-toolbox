@@ -5,7 +5,7 @@ community of tool authors, and many of WNTB's features were shaped by what they'
 credits the projects and people whose ideas, and in some cases published data and services, helped.
 
 Author: R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS). Licensed under the GNU GPL v3.0; see `LICENSE`.
-Notices that a licence requires are in `THIRD-PARTY-NOTICES.md`.
+Notices that a license requires are in `THIRD-PARTY-NOTICES.md`.
 
 ## Ideas that belong to the community
 
@@ -98,11 +98,11 @@ being listed doesn't mean a tool was the first or the only one.
 ## Ports, and reusing WNTB
 
 Some of WNTB's features were ported from projects written in other languages: C#, TypeScript, React and others. A port here means the
-rules, tables or layout were carried over into Python, not that the original's code runs inside WNTB. Where a port needed a licence
-notice, it is in `THIRD-PARTY-NOTICES.md`, which names each source, its licence and what was taken. Where a project is only an idea
+rules, tables or layout were carried over into Python, not that the original's code runs inside WNTB. Where a port needed a license
+notice, it is in `THIRD-PARTY-NOTICES.md`, which names each source, its license and what was taken. Where a project is only an idea
 or a reference, the list above says so, and no code was taken.
 
-WNTB is GPL-3.0, so anyone may reuse its ports, and the rest of it, on GPL-3.0 terms. That means passing on the licence and keeping
+WNTB is GPL-3.0, so anyone may reuse its ports, and the rest of it, on GPL-3.0 terms. That means passing on the license and keeping
 the original authors' notices in `THIRD-PARTY-NOTICES.md` with whatever you reuse. A nod to WNTB is welcome and not required. If you
 reuse a port, it also helps to pass on where the original came from, so credit reaches the people who wrote it first.
 
@@ -122,7 +122,7 @@ and imports its `config`, `theme` and `myNotebook` modules at runtime.
 
 Game facts such as thresholds, names, coordinates and measured values (the exobiology and region
 tables, the pad layout, scan-value constants, mining depletion figures and micro-resource names) come
-from the community's published work and from the game itself. Where a source's licence asks for a
+from the community's published work and from the game itself. Where a source's license asks for a
 notice, it is in `THIRD-PARTY-NOTICES.md`. Micro-resource and commodity names come from
 **[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs)**, and the landing-pad size of each ship (Trade mode) from
 **[EDCD/coriolis-data](https://github.com/EDCD/coriolis-data)**. Engineering material names, types and grades (Field Ops → Materials)

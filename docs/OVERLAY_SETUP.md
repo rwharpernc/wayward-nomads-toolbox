@@ -15,8 +15,10 @@ on-screen extras.
 | **Notable Bodies** | A banner when a body you scan matches a rule you chose (terraformable, high-value world, shepherd moon and more) |
 | **Landing Assist** | The pad you've been assigned, with a diagram of the station or carrier |
 | **Interdiction Warning** | An alert the moment an interdiction starts |
+| **Flight Alerts** | A small card with the fleet carrier jump countdown and the low-fuel and unscoopable-star warnings |
 | **Inventory** | Capacity bars and pickup messages |
-| **Mining** | Live stats, and an arrow pointing to your nearest saved hotspot |
+| **Mining** | Live stats |
+| **Surface Compass** | An arrow, a name and a distance pointing at a hotspot or a mark on the planet you are on |
 | **Screenshots** | A short "Screenshot saved" message |
 
 ## Step 1: Choose an overlay
@@ -56,6 +58,7 @@ makes sense, a test button:
 | **Discovery** | New system and body discovery alerts | **Test Discovery** |
 | **Inventory** | Pickup notifications and the inventory bars | |
 | **Interdiction Warning** | The warning when you are interdicted | **Test Warning** |
+| **Flight Alerts** | The carrier jump countdown and fuel warnings card | **Test Card** |
 | **Landing** | The assigned pad and diagram | **Test Overlay** |
 | **Mining** | The mining stats | |
 | **Surface Compass** | The arrow, name and distance pointing at a hotspot or a mark on the planet you are on | **Test Compass** |
@@ -90,8 +93,8 @@ overlay-canvas x and y instead.
 
 **Hiding a display.** Each row has a **Show** checkbox. Untick it and that display is never drawn, whatever its own settings say, and
 what is already on screen goes the next time it would redraw. The spot and offsets are kept, so ticking it again puts it back where it
-was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Interdiction, Landing, Inventory, Mining,
-Screenshot messages). **Reset all to defaults** shows them all again.
+was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Flight alerts, Interdiction, Landing, Inventory, Mining
+stats, Surface compass, Screenshot messages). **Reset all to defaults** shows them all again.
 
 **How WNTB knows your screen.** It reads what the overlay itself is using: the window size, fit or fill mode and display
 scaling from EDMCModernOverlay's own log (its newest "Overlay scaling updated" line). If that isn't there it falls back to
@@ -111,6 +114,10 @@ short of the edge. The Overlay Placement tab has a switch, **Carry displays on t
 (and clears the offsets) if displays end up in the wrong place. The bottom edge needs none of this. The two Mining displays share one overlay group, so they stop at the limit
 rather than being offset.
 
+**Default spots.** On a 1920 x 1080 screen or larger the default spots do not overlap each other. The displays are sized in pixels, so on a
+smaller screen they take up more of it and some can overlap: use **Show placement preview** and move them. A position you chose yourself
+is never changed.
+
 **Check it on your real screen.** **Show placement preview** draws a labeled box for every display, at its real size, for
 12 seconds, using the values currently typed (even before you press OK). **Reset all to defaults** puts everything back, and
 **Detect screen again** re-reads the overlay's log and the game's files.
@@ -119,18 +126,20 @@ Positions you set in the older per-feature x/y boxes are carried over as **Exact
 the displays that used to sit in fixed places (Landing, Interdiction, Mining, Screenshots) now follow your screen, so they
 may sit slightly differently than before.
 
-### Appearance: colors (text size and spacing are fixed)
+### Appearance: colors and text size
 
 **Settings → WNTB → Overlays → Appearance** sets how every WNTB overlay looks, all at once:
 
 - **Color scheme**: Elite orange (the default), Ice blue, Phosphor green, Amber mono, High contrast, or Color-blind safe
   (Okabe-Ito colors, so good, short and warning never rest on red against green). The chips show each color's role.
-- **Show sample** draws the Colonization card with the scheme currently picked (before you press OK); **Reset scheme**
-  puts the default back.
+- **Text size**: Smaller, Default or Larger. It starts at **Larger**, the size the displays have had since 1.9.0, so nothing
+  changes until you choose. If the overlays look too big on a small or high-resolution screen, try Default or Smaller.
+- **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
+  puts the defaults back.
 
-The text size, padding and line spacing are **fixed** (one size up from EDMCModernOverlay's normal text, with the default padding and
-spacing) and cannot be changed, so columns stay lined up. EDMCModernOverlay cannot measure text for a plugin, so each card's width
-and height are worked out from the character count at that size, generously, so text sits inside the border.
+Padding and line spacing are **fixed**, so columns stay lined up. EDMCModernOverlay cannot measure text for a plugin, so each card's
+width and height are worked out from the character count at the chosen size, with a further 10% added to every width, so text sits
+inside the border. The overlay's own font limits (EDMCModernOverlay's `min_font_point` and `max_font_point`) still apply on top.
 Placement accounts for the new size too (a display anchored to the bottom or right keeps its edge). The Interdiction warning
 keeps its fixed red alert colors whatever scheme is chosen. The default look is slightly roomier than older versions.
 
@@ -160,6 +169,8 @@ overlay was found, and the on-screen extras simply don't appear.
    [Linux guide](guide/linux.md). If EDMC is a **Flatpak** and
    **Check connection** succeeds but nothing is drawn, the Flatpak needs permission to start the overlay
    window; the Linux guide gives the one-line `flatpak override` command.
+8. **Does only one display never show?** Its saved position may be off the screen. Reset it on the Overlay Placement tab; see
+   [Troubleshooting](guide/troubleshooting.md#one-display-never-shows-though-test-and-the-overlay-window-both-work).
 
 ## A note for the curious
 

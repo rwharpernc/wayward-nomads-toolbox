@@ -14,7 +14,7 @@ Three layers, in the order WNTB prefers them:
 2. **Other places that know more**: Frontier's servers (through a signed-in EDMC) and the data players and communities report. WNTB
    uses these to fill gaps the journal leaves, never to overrule it, and the [internet page](internet-and-privacy.md) lists every one.
 3. **Workarounds, marked as such**: WNTB's own bookkeeping (for example, tallying what you transfer to a fleet carrier), estimates
-   labelled as estimates, and steps you can take (such as opening Carrier Management) to make the game write what it normally doesn't.
+   labeled as estimates, and steps you can take (such as opening Carrier Management) to make the game write what it normally doesn't.
 
 **Every mode guide ends with a section called "What the game does and doesn't tell us, and how to work around it"** listing each gap we
 know of, how it looks on screen, and what to do. Where a figure is an estimate, WNTB marks it as one.
@@ -34,9 +34,9 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | Mode | Guide |
 |---|---|
 | **Powerplay** | [Powerplay](powerplay.md): merits, cycles, sessions, rare goods |
-| **Exploration** | [Exploration](exploration.md): Auto-Honk, alerts, Boxel Survey, exobiology, Codex |
+| **Exploration** | [Exploration](exploration.md): Auto-Honk, alerts, Boxel Survey, exobiology, Codex, Notes, Compass |
 | **Mining** | [Mining](mining.md): space and surface mining, the Mining Book |
-| **Trade** | [Trade](trade.md): profit, routes, prices, carrier cargo, History |
+| **Trade** | [Trade](trade.md): profit, routes, prices, Watch list, carrier cargo, History |
 | **Missions** | [Missions](missions.md): every mission in one view |
 | **Field Ops** | [Field Ops](field-ops.md): screenshots, inventory, ship builds |
 | **Colonization** | [Colonization](colonization.md): your current project, your history, the sites window, where to buy |

@@ -3,7 +3,25 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.9.1 - 2026-10-13
+
+### Fixed
+- **Colonization overlay: the card shows when the journal's Market event reaches EDMC late.** The overlay now also watches the game's
+  `Market.json`, so the card appears even when the Market event arrives late (seen on Linux under Proton).
+- **Overlay placement: a position that is off the overlay's canvas no longer hides the display.** An exact position outside the canvas
+  (such as a leftover `x = 1280`) now falls back to the display's default spot.
+- **Layout fits any font.** Quick-add boxes and button rows are capped in pixels, the Trade page's figures drop to the small font and its
+  title wraps instead of widening the window, and the Trade History window widens to fit its tables.
+
+### Changed
+- **Overlay appearance: a Text size choice is back** (Smaller, Default, Larger; it starts at Larger), and every text-width estimate is
+  padded by 10% so overlay boxes hold their text.
+
+### Documentation
+- Troubleshooting: a workaround for a display saved off the screen, an entry for Raven Colonial not updating (sharing is off until the
+  master switch is ticked), and a list of the settings that start off and need ticking when a feature seems to do nothing.
+
+## 1.9.0 - 2026-10-13
 
 ### Added
 - **Material trader finder** (**Find a trader** in the Materials window). Finds the closest station with a Raw, Manufactured or Encoded material trader
