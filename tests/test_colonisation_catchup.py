@@ -88,6 +88,33 @@ class ApplyEventsTests(unittest.TestCase):
         self.assertEqual((provided(repo, "Alice"), provided(repo, "Bob")), (10, 20))
 
 
+class RenameTests(unittest.TestCase):
+    def renamed(self, name: str, system: str = "Sol") -> dict:
+        return dict(docked("2026-10-02T10:00:00Z"), StationName=name, StarSystem=system)
+
+    def test_docking_again_after_a_rename_takes_the_new_name(self) -> None:
+        repo = SiteRepository()
+        catchup.apply_events(repo, [("Alice", e) for e in (docked("2026-10-01T10:00:00Z"), depot("2026-10-01T10:01:00Z", 100))])
+        changed = catchup.apply_events(repo, [("Alice", self.renamed("Orbital Construction Site: Wayward Station"))])
+        site = repo.get("Alice", MARKET)
+        self.assertEqual(site.name, "Orbital Construction Site: Wayward Station")
+        self.assertEqual(changed, 1)
+        self.assertEqual(provided(repo), 100)             # nothing else about the site moved
+
+    def test_docking_with_an_unchanged_name_changes_nothing_and_an_unknown_site_is_not_created(self) -> None:
+        repo = SiteRepository()
+        catchup.apply_events(repo, [("Alice", e) for e in (docked("2026-10-01T10:00:00Z"), depot("2026-10-01T10:01:00Z"))])
+        self.assertEqual(catchup.apply_events(repo, [("Alice", docked("2026-10-02T10:00:00Z"))]), 0)
+        self.assertEqual(catchup.apply_events(repo, [("Bob", self.renamed("Somewhere"))]), 0)
+        self.assertIsNone(repo.get("Bob", MARKET))
+
+    def test_apply_dock_name_replaces_a_name_and_system_but_ignores_blanks(self) -> None:
+        site = colonisation.Site(market_id=MARKET, name="Old", system="Sol")
+        self.assertFalse(colonisation.apply_dock_name(site, "", ""))
+        self.assertTrue(colonisation.apply_dock_name(site, "New", "Alpha Centauri"))
+        self.assertEqual((site.name, site.system), ("New", "Alpha Centauri"))
+
+
 class ReadJournalsTests(unittest.TestCase):
     def write(self, folder: str, name: str, events: list, age_hours: float = 0) -> None:
         path = os.path.join(folder, name)

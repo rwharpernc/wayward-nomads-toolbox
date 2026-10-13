@@ -171,6 +171,18 @@ def is_newer(site: Site, entry: Mapping[str, Any], inclusive: bool) -> bool:
     return when >= mark if inclusive else when > mark
 
 
+def apply_dock_name(site: Site, name: str, system: str = "") -> bool:
+    """A `Docked` at a site we already track names it, and that name is the game's own for that market id, so unlike the guess
+    `apply_depot_event` makes it replaces the stored one: this is how a rename in game (or a finished site taking its real
+    name) reaches WNTB. Returns whether anything changed."""
+    changed = False
+    if name and site.name != name:
+        site.name, changed = name, True
+    if system and site.system != system:
+        site.system, changed = system, True
+    return changed
+
+
 def apply_depot_event(entry: Mapping[str, Any], existing: Optional[Site],
                       name: str = "", system: str = "") -> Optional[Site]:
     """Build/refresh a Site from a `ColonisationConstructionDepot` entry

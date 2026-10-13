@@ -68,6 +68,12 @@ def apply_events(repository: SiteRepository, events: Iterable[Event], ledger: Op
         if kind == "Docked":
             if isinstance(market_id, int) and entry.get("StationName"):
                 docked[market_id] = (str(entry["StationName"]), str(entry.get("StarSystem") or ""))
+                known = repository.get(cmdr, market_id)
+                if known is not None:
+                    renamed = colonisation.Site.from_dict(known.to_dict())
+                    if colonisation.apply_dock_name(renamed, *docked[market_id]):
+                        repository.upsert(cmdr, renamed)
+                        changed += 1
             continue
         if not isinstance(market_id, int):
             continue

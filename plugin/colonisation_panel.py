@@ -276,7 +276,13 @@ class ColonisationController:
         if event == "Docked":
             market_id = entry.get("MarketID")
             if isinstance(market_id, int) and entry.get("StationName"):
-                self._docked[market_id] = (str(entry["StationName"]), str(entry.get("StarSystem") or system or ""))
+                docked_name, docked_in = str(entry["StationName"]), str(entry.get("StarSystem") or system or "")
+                self._docked[market_id] = (docked_name, docked_in)
+                known = self._repository.get(self._cmdr, market_id)
+                if known is not None:   # a site we track: take the name the game gives it now (it may have been renamed)
+                    renamed = Site.from_dict(known.to_dict())
+                    if colonisation.apply_dock_name(renamed, docked_name, docked_in):
+                        self._repository.upsert(self._cmdr, renamed)
         elif event == colonisation.EVENT_DEPOT:
             market_id = entry.get("MarketID")
             existing = self._repository.get(self._cmdr, market_id) if isinstance(market_id, int) else None

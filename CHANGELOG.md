@@ -30,6 +30,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   your first Powerplay merit of the session and shows on every mode.
 
 ### Fixed
+- **Colonization: a renamed site takes its new name.** WNTB kept the name it first saw for a site. Docking at a site you already track
+  now updates its name (and system) to what the game calls it, both live and when WNTB catches up from the journals at start-up. Raven
+  Progress and the Raven sharing find the project by that name for a build in progress, so they follow a rename too. WNTB does not
+  rename anything on Raven Colonial; rename it there yourself, as you did.
 - **Raven Progress (and sharing to Raven) said there was no project for a build in progress.** Raven Colonial only records a site's
   market id once the build is finished, so matching on the market id found nothing for a site still being built. The match now falls
   back to the station's name (a build in progress first). This also fixes sharing depot progress and deliveries, and Report Complete,
