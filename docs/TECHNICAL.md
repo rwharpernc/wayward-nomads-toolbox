@@ -8,7 +8,7 @@ specifications: [Missions](MISSIONS_TECH_SPEC.md), [Mining](MINING_TECH_SPEC.md)
 [Organic Scanning](ORGANIC_SCANNING_TECH_SPEC.md), [Powerplay](POWERPLAY_TECH_SPEC.md) and
 [Screenshots and input automation](SCREENSHOTS_AND_INPUT_TECH_SPEC.md). For setting up on-screen
 overlays, see [OVERLAY_SETUP.md](OVERLAY_SETUP.md). For acknowledgements, see
-[ATTRIBUTIONS.md](ATTRIBUTIONS.md); for licence notices, see
+[ATTRIBUTIONS.md](ATTRIBUTIONS.md); for license notices, see
 [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md).
 
 **Contents**
@@ -39,7 +39,7 @@ journal files (and the small, live `Status.json`), and not everything is logged.
 starts from the events the game does write. Where the journal is silent it adds, in this order, Frontier's own data when EDMC is
 signed in (CAPI: a carrier's cargo, the Carrier Locker), data that players and communities report (Spansh, EDSM, Canonn, edastro,
 Raven Colonial; section 11), and finally its own bookkeeping, estimates and user steps (such as opening Carrier Management so the game
-writes `CarrierStats`), each labelled as what it is. Until Frontier expands the journal or offers a broader API, those workarounds are
+writes `CarrierStats`), each labeled as what it is. Until Frontier expands the journal or offers a broader API, those workarounds are
 the design, not exceptions to it, and each one is recorded as a gap and a workaround in the matching user guide (the "What the game
 does and doesn't tell us" table) and, where it shapes the code, in the notes below.
 
@@ -265,10 +265,10 @@ one:
   the window passes `load_geometry`/`save_geometry` callables. Windows are built hidden and shown
   once, after their content is laid out (`_present`), so they never flash at a default size. Windows keep the module-level
   `show`/`refresh`/`close` singleton convention.
-- **Skinning.** `ui.style.skin(window)` colours the classic widgets created inside a Toplevel via
+- **Skinning.** `ui.style.skin(window)` colors the classic widgets created inside a Toplevel via
   Tk's option database, scoped by the window's own *name* (option patterns match names, not full
   paths). Call it right after creating the Toplevel, before adding widgets. Explicit `fg=`/`bg=`
-  still win, which is how status colours work. Don't also call `theme.update()` on these windows.
+  still win, which is how status colors work. Don't also call `theme.update()` on these windows.
 - **Tables.** `DataTable` mirrors the small part of Treeview the windows used (`insert`, `append`,
   `set`, `exists`, `clear`, `selection`, double-click) and adds sorting, `group=True` collapsible
   headings, and `visible_rows` (fit to content up to N rows). A bare `tk.Canvas` requests 7 cm of
@@ -513,7 +513,7 @@ start after that change `load._reset_overlays_once` sets every switch in `_OVERL
 
 **Protocol.** Connect, send one JSON object plus a newline per graphic, for example
 `{"id": "x", "text": "hi", "color": "red", "x": 200, "y": 100, "ttl": 4}`. Nothing is read back; sends
-are fire-and-forget. WNTB's protocol notes come from observed behaviour.
+are fire-and-forget. WNTB's protocol notes come from observed behavior.
 
 ### One shared, persistent connection
 
@@ -615,7 +615,7 @@ wrong.) The general point: when overlay rendering seems wrong, check ModernOverl
 debug log before assuming a rule is right, and don't turn one observation into a permanent blanket rule.
 
 **Clearing a vector.** EDMCModernOverlay discards a `vect` payload with fewer than one point ("insufficient points"), so an
-empty list cannot clear one. Landing clears a diagram with a one-point, marker-less vector at the diagram centre and
+empty list cannot clear one. Landing clears a diagram with a one-point, marker-less vector at the diagram center and
 `ttl=1`.
 
 **Retrying a draw (Landing).** `LandingController._render_overlay_async` keeps only the newest request and one worker
@@ -672,14 +672,14 @@ for as little as it can. These are the measures that are in the code today.
   Mining lookups, the Exploration Value extras (Spansh and EDSM), the Boxel Survey skip checks and
   alias confirmation, Region Sweep's auto-discover, and the update check.
 - The exceptions: the BGS tick poll, one small request a minute to the tick service while BGS is on
-  (it can be switched off); the Codex Completionist catalogue, downloaded when you open its details
+  (it can be switched off); the Codex Completionist catalog, downloaded when you open its details
   window and the saved copy is missing or over 14 days old; and the Rare Goods window, which looks up
   each origin system the first time you open it (see below).
 
 **Remember answers instead of asking again.**
 - Rare Goods: a system's controlling Power is cached for the whole EDMC session, and failed lookups
   are cached too, so a dead network isn't hit on every redraw. Lookups run at most 5 at a time.
-- Canonn site lists are downloaded once per session. The Codex catalogue is saved on disk
+- Canonn site lists are downloaded once per session. The Codex catalog is saved on disk
   (`codex_catalog.json`) and reused for 14 days.
 - The automatic ring-reserve check (opt-in) is remembered per ring for the session, and is never run
   while the journal is being replayed at start-up.
@@ -836,7 +836,7 @@ the window. `tests/test_neutron_finder.py` covers the result-picking against can
 ### Organic Scanning (`organic_scan*.py`, `organic_*_data.py`)
 
 Predicts species per body from atmosphere, gravity, temperature, pressure, region and other rules,
-and tracks the Log, Sample, Analyse progression plus how far you must walk between samples. It
+and tracks the Log, Sample, Analyze progression plus how far you must walk between samples. It
 shows estimated credits (a flat per-species value; there is no first-discovery bonus for
 exobiology). It is local and read-only and submits nothing.
 
@@ -870,7 +870,7 @@ game's 42 region boundaries as a coordinate grid indexed from an origin offset. 
   is in the current system's survey; older or imported ones count via the survey while their body is
   scanned, and are skipped otherwise. Only recorded deposits count, so treat it as "what I have found
   so far", not what a body holds. The Mining Book hides the section until something is recorded.
-- **Minimap markers** are colour-blind-safe: pale filled dot = live hotspot, hollow grey ring =
+- **Minimap markers** are color-blind-safe: pale filled dot = live hotspot, hollow gray ring =
   depleted, blue outlined dot = you. In the ship (no Rhino out) the map shows only under 2 km
   altitude, from Status.json's `Altitude`.
 - **Coverage** (`mining_coverage.py`) paints a fixed-radius disc at each recorded point. It records
@@ -1126,7 +1126,7 @@ unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every 
 7. Prefix config keys `wntb_<feature>_`.
 8. Add the module to `FEATURES` (`ui.py`) and `_FEATURES` (`load.py`); call `start`/`stop` from
    `load.py` if it has them.
-9. If it uses another project's code, assets or data, check the licence and update
+9. If it uses another project's code, assets or data, check the license and update
    `THIRD-PARTY-NOTICES.md` (and `ATTRIBUTIONS.md` for ideas) *in the same change*, before it ships.
 10. If it must not miss play with EDMC closed, give it a start-up catch-up built on `journal_files.py` with a rule
     that never counts an event twice (a timestamp watermark, per-fact timestamps or an idempotent merge; see "Catching
@@ -1150,7 +1150,7 @@ unit-test stand-ins had no spacer; `tests/test_prefs_smoke.py` now builds every 
 - **Inventory's start-up sync relies on EDMC rebuilding its state** (backpack, ship locker) from the journal before it
   sends `StartUp`. That was not checked against every EDMC version.
 - **Powerplay hand-in windows are a heuristic.** `PowerplayDeliver` precedes the merits it earns but does not link to
-  them, so the first merit event within 10 minutes and any within 10 seconds of the last are labelled Delivery; a merit
+  them, so the first merit event within 10 minutes and any within 10 seconds of the last are labeled Delivery; a merit
   from another activity inside that window can be mislabelled.
 - **`FactionKillBond` has no ship type**, so an on-foot combat-zone kill counts as a ship kill for mission progress.
 - **Boxel Survey's survey log is not caught up** after a restart (its counter is not idempotent).
@@ -1176,7 +1176,7 @@ isolated in `platform_support.py` (plus the Windows branches in `autohonk.py` an
 | Notification sound | `winsound.MessageBeep` | `canberra-gtk-play`, else `paplay` with the freedesktop theme file |
 | Overlay | EDMCModernOverlay | EDMCModernOverlay; same TCP protocol |
 | Modal dialogs | `grab_set` works at once | `ui.style.grab_when_visible`: X11 refuses a grab until the window is mapped, so it retries briefly |
-| Plain `tk.Listbox` colours | `SystemWindow` / `SystemWindowText` | `white` / `black` (those names are Windows-only Tk colours) |
+| Plain `tk.Listbox` colors | `SystemWindow` / `SystemWindowText` | `white` / `black` (those names are Windows-only Tk colors) |
 | Text symbols in the UI | Any | Only symbols every font has (`×`, `★`, `→`); `✕` was replaced because some Linux fonts lack it |
 | Settings notes | "This system: Windows - supported" | "This system: Linux, xdotool found / NOT found" (`platform_support.input_support_note`, `sound_support_note`) |
 
@@ -1237,8 +1237,8 @@ spelling.
 Folder Access" error text and the shell Pictures lookup are gated on Windows, so Linux users don't
 see irrelevant advice.
 
-**Settings labelling.** Any feature that depends on the operating system shows a **Works on:** line in
-its Settings tab, coloured green when this machine can run it and orange when it cannot (and why):
+**Settings labeling.** Any feature that depends on the operating system shows a **Works on:** line in
+its Settings tab, colored green when this machine can run it and orange when it cannot (and why):
 Auto-Honk, the Screenshots auto-timer and Thargoid capture, the Inventory pickup sound, and the Overlay
 Connection tab. The BGS tab shows the Linux journal
 folder hint. Wording lives in one place, `platform_support.py`, and is unit-tested.
@@ -1289,7 +1289,7 @@ Linux-only assumptions, in three passes:
 
 1. **Mechanical scan of every module** (AST + text) for platform signals: Win32 and `ctypes` use,
    `subprocess`, `winsound`, `os.startfile`, `sys.platform` branches, `.exe`/PowerShell/`xdotool`
-   strings, Windows-only Tk colour names, Windows paths and environment variables, `open()` without an
+   strings, Windows-only Tk color names, Windows paths and environment variables, `open()` without an
    explicit encoding, `strftime` directives that differ by platform, and file-name case. 89 modules had
    no platform signal at all (pure logic or plain Tk) and were covered by the scan and the
    cross-cutting checks below; the other 37 had their platform-relevant code read directly
@@ -1306,7 +1306,7 @@ Linux-only assumptions, in three passes:
 3. **Fixes that came out of it:**
    - Screenshot `Filename` values are Windows-style even under Proton, and `os.path.basename` doesn't
      split on a backslash on Linux, so the source file was not found and hi-res shots were not
-     recognised. Fixed with `screenshot_naming.journal_basename` (tested).
+     recognized. Fixed with `screenshot_naming.journal_basename` (tested).
    - Seven modal dialogs called `grab_set()` straight after creating the window, which X11 can refuse.
      They now use `ui.style.grab_when_visible`.
    - The self-updater now refuses a zip entry that would be written outside the plugin folder
@@ -1317,5 +1317,5 @@ Linux-only assumptions, in three passes:
      Screenshots tab wrongly said auto-capture "requires Windows" when Linux with `xdotool` also works.
 
 Not verifiable from a Windows development machine, and so covered only by `docs/LINUX_TESTING.md`:
-real `xdotool` behaviour, Tk popup stacking and focus under each Linux window manager, Proton prefix
+real `xdotool` behavior, Tk popup stacking and focus under each Linux window manager, Proton prefix
 layouts other than Steam's, and sound players.

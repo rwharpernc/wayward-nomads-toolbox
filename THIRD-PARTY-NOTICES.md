@@ -1,7 +1,7 @@
 # Third-party notices
 
 WNTB is licensed under the GNU General Public License v3.0 (see `LICENSE`). This file holds the
-notices that third-party licences ask for, covering data and constants WNTB carries.
+notices that third-party licenses ask for, covering data and constants WNTB carries.
 `docs/ATTRIBUTIONS.md` is the wider list of acknowledgements.
 
 ## Screenshots: crop rectangles and filename masks (GPL-3.0)
@@ -10,14 +10,14 @@ The HUD-panel crop rectangles, the Thargoid-scan crop and the filename mask sche
 `CMDR`, `DATE`, `NNNNN` tokens and sequence numbering) in `plugin/screenshot_gui_focus.py` and
 `plugin/screenshot_naming.py` follow
 [NoFoolLikeOne/EDMC-Screenshot](https://github.com/NoFoolLikeOne/EDMC-Screenshot), licensed GPL-3.0,
-the same licence as WNTB. That project carries the standard GPL-3.0 text and no separate copyright
+the same license as WNTB. That project carries the standard GPL-3.0 text and no separate copyright
 line, so this repository's `LICENSE` applies. Credit for the original plugin belongs to NoFoolLikeOne.
 
 ## Mining: deposit depletion figures (GPL-3.0)
 
 The depletion figures in `plugin/mining_deposit.py` (125-175 t per rig position, the Density factors
 and the Amount bands) are measurements published by
-[Fumlop/EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter), licensed GPL-3.0, the same licence
+[Fumlop/EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter), licensed GPL-3.0, the same license
 as WNTB.
 
 ## Exobiology species and region data (GPL-2.0 or later, MIT)
@@ -29,7 +29,7 @@ as WNTB.
 later, which allows use under the GPL-3.0 that WNTB carries. The region grid
 originates in
 [klightspeed/EliteDangerousRegionMap](https://github.com/klightspeed/EliteDangerousRegionMap), whose
-licence follows:
+license follows:
 
 ```
 MIT License
@@ -59,7 +59,7 @@ SOFTWARE.
 
 The per-planet-class base values and the mass exponent in `plugin/exploration_value.py` are the
 community's figures for Frontier's exploration payout, as published in
-[Faber38/CMDRHelper](https://github.com/Faber38/CMDRHelper), licensed GPL-3.0, the same licence as WNTB.
+[Faber38/CMDRHelper](https://github.com/Faber38/CMDRHelper), licensed GPL-3.0, the same license as WNTB.
 
 ## Landing Assist: pad layouts (GPL-2.0 or later)
 
@@ -73,7 +73,7 @@ colonisation ship market ids. The code that draws them is WNTB's own.
 
 `plugin/colonisation_costs.json` is a copy, unchanged, of `SrvSurvey/colonization-costs2.json` from
 [njthomson/SrvSurvey](https://github.com/njthomson/SrvSurvey) (last changed there 2026-03-20, commit c5cb2db), licensed GPL-3.0,
-the same licence as WNTB. It lists the tons of each commodity every kind of building needs, which the Planned Builds window uses
+the same license as WNTB. It lists the tons of each commodity every kind of building needs, which the Planned Builds window uses
 to size a plan before any depot has been visited (`plugin/build_costs.py` reads it; that code is WNTB's own). The costs are the
 game's, as that project's author compiled them, and can go out of date when the game changes them.
 
@@ -81,20 +81,20 @@ game's, as that project's author compiled them, and can go out of date when the 
 
 `plugin/commodity_categories.py` lists the market category of each colonization commodity, which the overlay shopping list uses to group
 its rows as the in-game market does. The grouping is taken from `ColonyData.mapCargoType` in
-[njthomson/SrvSurvey](https://github.com/njthomson/SrvSurvey), licensed GPL-3.0, the same licence as WNTB; the code that uses it is
+[njthomson/SrvSurvey](https://github.com/njthomson/SrvSurvey), licensed GPL-3.0, the same license as WNTB; the code that uses it is
 WNTB's own. The order of the list (alphabetical at a construction site, grouped elsewhere, dimmed when the market does not sell a
 commodity) follows that project's shopping overlay.
 
 ## Micro-resource names
 
 `plugin/inventory_names_fdevids.py` is generated from the `microresources.csv` published by
-[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no licence. The names are Frontier's
+[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no license. The names are Frontier's
 own.
 
 ## Commodity names (Trade)
 
 `plugin/trade_commodities_data.py` is generated from the `commodity.csv` published by
-[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no licence. The names are Frontier's own, and
+[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no license. The names are Frontier's own, and
 Spansh's market search needs them exactly.
 
 ## Ship landing-pad sizes (Trade)
@@ -109,9 +109,9 @@ The rules and numeric limits in `plugin/notable_rules.py` (landable above 29.4 m
 18,000 km, rotation or orbit under 8 hours, eccentricity above 0.9, 5 of the 6 premium FSD materials, wide
 ring, close orbit, shepherd moon, close and colliding binary) follow the default criteria in
 `ObservatoryExplorer/DefaultCriteria.cs` of [Elite Observatory](https://github.com/Xjph/ObservatoryCore),
-Copyright (c) 2021 Jonathan Miller, MIT licence. The implementation is WNTB's own.
+Copyright (c) 2021 Jonathan Miller, MIT license. The implementation is WNTB's own.
 
 The list of confirmed green gas giant surface temperatures comes from CMDR Arcanic's research
 ([ed-ggg.github.io/edggg](https://ed-ggg.github.io/edggg/)), as compiled by DaftMav into the community
 "Custom Criteria for Everyone" file maintained by CMDR Julian Ford. They are measured values from the game;
-that file states no licence, so only the numbers are used, with credit.
+that file states no license, so only the numbers are used, with credit.

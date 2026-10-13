@@ -170,7 +170,7 @@ EDMC's **Journal directory** isn't set, or points at the wrong place. See
 
 ## Trade
 
-### The lookup buttons are greyed out, or there is no Commodity box
+### The lookup buttons are grayed out, or there is no Commodity box
 
 The Spansh lookups are off until you tick **Enable Spansh trade lookups** under **Settings → WNTB → Trade**. The
 Commodity box only appears on the Market page, and only once lookups are on.
@@ -196,7 +196,7 @@ EDMC next sees you. So check:
 - On Linux, that EDMC's **Journal directory** is set. Without it the catch-up can't read the journals.
 - Trades made before WNTB first ran aren't counted.
 
-### Save session is greyed out, or the History window is empty
+### Save session is grayed out, or the History window is empty
 
 **Save session** needs at least one trade or running cost in the session. The History window only lists sessions you
 saved, so press **Save session** first.

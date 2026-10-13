@@ -1,7 +1,7 @@
 # Development guide
 
 How to set up, build, test and try out changes to WNTB. If you just want to *use* the plugin, the
-[README](../README.md) is what you want. For how the code is organised and why, read
+[README](../README.md) is what you want. For how the code is organized and why, read
 [TECHNICAL.md](TECHNICAL.md) next.
 
 ## What you need
@@ -96,7 +96,7 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
 
 **Keep code portable**
 
-- Don't use Windows-only Tk values such as `SystemWindow` colour names, and don't call `powershell.exe`
+- Don't use Windows-only Tk values such as `SystemWindow` color names, and don't call `powershell.exe`
   or Win32 APIs outside the existing `IS_WINDOWS` branches. Use `platform_support` helpers.
 - Keep the Windows and Linux code paths behind `platform_support` (`IS_WINDOWS`, `IS_LINUX`) and say so in
   the feature's Settings tab with a **Works on:** note (see `platform_support.input_support_note`).
@@ -114,7 +114,7 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
 - Settings pages scroll: `ui` hands each feature's `build_settings` a `settings_scroll.ScrollContent` instead of a
   notebook, so a page taller than the screen allows (`settings_scroll.height_cap`) gets a scrollbar and the OK button
   stays visible. Nothing changes for a feature: keep calling `notebook.add(frame, text=...)`. Plain `tk.Frame` rows
-  on a Settings page are recoloured to the page colour (`ui._match_page_background`), so they don't show as grey bands.
+  on a Settings page are recoloured to the page color (`ui._match_page_background`), so they don't show as gray bands.
 - Where a new feature's Settings go: `ui._build_settings_tabs` lays the tabs out (General, Powerplay, Missions,
   Exploration, Mining, Trade, BGS, Field Ops, Overlays). Add the feature to the right group there, and anything it draws on the
   overlay goes in the Overlays group (a `build_overlay_settings`, or the whole tab if it is an overlay feature), with its
@@ -162,7 +162,7 @@ feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and is
    timeout, and identified through `http_identity.user_agent()`.
 5. **Journal first.** A third-party tool only knows what the game writes to its journal, and not everything is logged, so start a
    feature from the journal events the game does write. When it falls short, add data from Frontier (signed-in EDMC) or from a
-   community service, or work around it with a labelled estimate or a step the user takes, and record the gap and its workaround in
+   community service, or work around it with a labeled estimate or a step the user takes, and record the gap and its workaround in
    the matching guide's "What the game does and doesn't tell us" table. See the design principle at the top of
    [TECHNICAL.md](TECHNICAL.md).
 6. Update the README and the user guides in `docs/guide/`, the changelog and any affected docs in the same change, including a row in
@@ -171,9 +171,9 @@ feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and is
 ### Using other people's work
 
 Write code fresh, in your own way. Before using any code, asset or data from another project, check its
-licence. WNTB is GPL-3.0, so anything added must be compatible with that. If a licence asks for a
+license. WNTB is GPL-3.0, so anything added must be compatible with that. If a license asks for a
 notice, add it to [../THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md). Credit for ideas goes in
-[ATTRIBUTIONS.md](ATTRIBUTIONS.md). Please don't copy code from a project that has no licence, since
+[ATTRIBUTIONS.md](ATTRIBUTIONS.md). Please don't copy code from a project that has no license, since
 that means you have no permission to.
 
 ## Releasing

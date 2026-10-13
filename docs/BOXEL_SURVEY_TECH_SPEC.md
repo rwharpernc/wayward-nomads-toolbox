@@ -182,15 +182,15 @@ id64 math, which a string increment structurally cannot provide.
 
 Since a string increment can't find a real neighbouring boxel (§4.3), WNTB asks EDSM which real systems
 exist near the commander's actual position instead: its public
-`https://www.edsm.net/api-v1/cube-systems?x=...&y=...&z=...&size=...` endpoint, centred on the `StarPos`
+`https://www.edsm.net/api-v1/cube-systems?x=...&y=...&z=...&size=...` endpoint, centered on the `StarPos`
 from the journal. No id64/coordinate-decode math is involved. `edsm_client.nearby_systems()` + the "Find
 Nearby (EDSM)" button query a 100 ly cube (`DEFAULT_CUBE_SIZE`) around the live `StarPos`, filter to
 procedural-shaped names in a different `cube_id` than the current seed, and offer the nearest match.
 
 ### 4.4.1 The "Random" button (RND)
 
-Labelled **RND** (tooltip "Random"). It no longer sits inside the Boxel Survey panel: `ui.py` adds it to the
-Exploration button row (A.H., D.A., N.S., W.D., RND) via `build_random_button()`, with its grey status line
+Labeled **RND** (tooltip "Random"). It no longer sits inside the Boxel Survey panel: `ui.py` adds it to the
+Exploration button row (A.H., D.A., N.S., W.D., RND) via `build_random_button()`, with its gray status line
 below that row, so it is visible even when Boxel Survey is collapsed and independent of which of the three
 sub-modes is selected — it never touches `BoxelWalker`. One click: run the same
 `edsm_client.nearby_systems()` cube-systems lookup as "Find Nearby" against the commander's live

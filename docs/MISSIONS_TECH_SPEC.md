@@ -5,7 +5,7 @@
 
 The standing reference for Missions mode: what it reads, the rules it applies, and what its numbers can
 and can't tell you. For how to use it, see the [README](guide/missions.md). For how the code is
-organised in general, see [TECHNICAL.md](TECHNICAL.md).
+organized in general, see [TECHNICAL.md](TECHNICAL.md).
 
 > **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
 
@@ -83,7 +83,7 @@ learned to read. `mission_types.classify()` buckets a `MissionAccepted` event li
 
 - **Massacre-shaped** means the event has both a `KillCount` and a `TargetFaction` (the mission's
   *shape*), or the name contains `massacre`, `onslaught` or `raid`. Using the shape first means a
-  kill mission with an unfamiliar name is still recognised.
+  kill mission with an unfamiliar name is still recognized.
 - **On foot / ground** means `OnFoot` in the name, or a `DestinationSettlement` on the event.
 - **Illegal** means `illegal` or `smuggle` in the name; the card shows a "⚠ Illegal" badge.
 - **Mining missions** need `mining` in the name. This is deliberately narrower than "has a Commodity
@@ -180,7 +180,7 @@ missing folder, the derived active set, combat bonds, cargo progress) and `missi
 
 ## 11. Known gaps
 
-- Mission names the rules don't recognise land in **Other**; the hint lists need upkeep.
+- Mission names the rules don't recognize land in **Other**; the hint lists need upkeep.
 - Kill counts for wing and on-foot missions are estimates and can lag.
 - Nothing older than two weeks is read at start-up.
 - Without a login `Missions` event (EDMC restarted mid-game), the active set is derived from the journals: newest

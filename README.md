@@ -30,7 +30,7 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS).
 - [Tips, quirks and workarounds](#tips-quirks-and-workarounds)
 - [Guides](#guides)
 - [Getting help](#getting-help)
-- [For developers, credits and licence](#for-developers-credits-and-licence)
+- [For developers, credits and license](#for-developers-credits-and-license)
 
 ---
 
@@ -47,7 +47,7 @@ In practice, three layers:
    These are used to fill in what the journal lacks, never to replace it, and each one is listed on the
    [internet page](docs/guide/internet-and-privacy.md).
 3. **Workarounds, marked as such.** WNTB's own bookkeeping (for example, tallying what you transfer to a fleet carrier), estimates
-   that are labelled as estimates, and steps you can take (such as opening Carrier Management) to make the game write what the
+   that are labeled as estimates, and steps you can take (such as opening Carrier Management) to make the game write what the
    journal normally leaves out.
 
 Each guide ends with a table of what the game does and doesn't tell us, and how to work around it. If a number looks wrong, that
@@ -60,16 +60,16 @@ WNTB has one panel with eight **modes**. You click a button to switch between th
 | Mode | What it's for | Guide |
 |---|---|---|
 | **Powerplay** | Tracks the merits and Control Points you earn for your Power, and finds rare goods. | [Powerplay](docs/guide/powerplay.md) |
-| **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values and how far through a system you are, what your data sales actually paid, exobiology help, and a lifetime tally of everything you've scanned. | [Exploration](docs/guide/exploration.md) |
-| **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalogue of mining hotspots. | [Mining](docs/guide/mining.md) |
-| **Trade** | Your trading profit after fuel and repairs, what fills your ship hold (cargo, mission, stolen, limpets), your fleet carrier's cargo space, tritium, location and orders, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. | [Trade](docs/guide/trade.md) |
+| **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values and how far through a system you are, what your data sales actually paid, exobiology help, a lifetime tally of everything you've scanned, notes on systems and bodies, and a compass that points at a spot on the planet you are on. | [Exploration](docs/guide/exploration.md) |
+| **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalog of mining hotspots. | [Mining](docs/guide/mining.md) |
+| **Trade** | Your trading profit after fuel and repairs, what fills your ship hold (cargo, mission, stolen, limpets), your fleet carrier's cargo space, tritium, location and orders, saved sessions in a Trade History window, Spansh lookups for the best trade routes and the best place to buy or sell, and a watch list of the commodities you care about with the best buy and sell price. | [Trade](docs/guide/trade.md) |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions and collect / delivery progress for cargo missions. | [Missions](docs/guide/missions.md) |
 | **Field Ops** | Screenshots, your backpack/locker/cargo and saved ship builds. | [Field Ops](docs/guide/field-ops.md) |
 | **Colonization** | The project you are building now, your colonization history, and a window with every site's shopping list, where to buy, and optional links and sharing with Raven Colonial. | [Colonization](docs/guide/colonization.md) |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. | [BGS](docs/guide/bgs.md) |
 
-Two more tools are always on and don't belong to a mode: **Landing Assist** and **Interdiction Warning**
-([guide](docs/guide/always-on.md)).
+Three more tools are always on and don't belong to a mode: **Landing Assist**, **Interdiction Warning** and **Flight Alerts**
+(a fleet carrier jump countdown and fuel warnings) ([guide](docs/guide/always-on.md)).
 
 Most individual features have their own on/off switch in Settings, and the alerts and overlays are off until you turn
 them on. The eight mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC
@@ -93,9 +93,10 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux is lightly tested for this release.** The newest parts (Colonization, and the Overlays tab with Placement and
-> Appearance) have had a first pass on Linux and look fine, but a few small fixes for Linux are expected in a later
-> update. If something looks off there, please [report it](#getting-help).
+> **Linux is lightly tested for this release.** Colonization and the Overlays tab (Placement and Appearance) have had a first pass
+> on Linux. The newest parts (Flight Alerts, the Surface Compass, Notes and the Trade watch list) have been tried on Windows only
+> so far, and Linux checks are still to come, so a few small fixes for Linux are likely in a later update. If something looks off
+> there, please [report it](#getting-help).
 
 ## Planned and being researched
 
@@ -104,10 +105,8 @@ can change, and some of it may turn out not to be possible. If one of these matt
 
 **Colonization**
 - **Raven Colonial:** sharing your progress, deliveries and carrier cargo is built, strictly **opt-in and off by default**, and the
-  internet page lists exactly what is sent and when. Not done: creating or linking a Raven project from WNTB, and reading other
-  people's progress on a project.
-- **Where to buy, improved on WNTB's own terms:** one shopping route and a "stations that sell the whole list" search are in. Still
-  to do: fewer requests for a long list, and using each station's whole market to fill gaps.
+  internet page lists exactly what is sent and when. **Raven Progress** reads Raven's own figures for a site when you press it. Not
+  done: creating or linking a Raven project from WNTB, and reading Raven's progress automatically instead of on a button press.
 - **Team projects:** several commanders on one project, with a "what the team still needs" line. Everything today is per commander and
   would stay that way until you choose to share.
 - **Co-op building and colony tracking** through a separate app that is in development; WNTB is to connect to it when it is ready.
@@ -122,8 +121,8 @@ can change, and some of it may turn out not to be possible. If one of these matt
 - **Round trip:** a Powerplay bonus filter (that depends on what the price service can tell me).
 
 **Overlays**
-- **Tidier default spots,** where a few displays overlap on some screen shapes (for example Colonization, Landing and the Mining
-  waypoint on the left of a 16:9 screen). They rarely show together, so this is low priority.
+- **A better fit for small screens.** The default spots no longer overlap on a 1920 x 1080 screen or larger. The displays are sized in
+  pixels, so on a smaller screen some can overlap until you move them on Overlay Placement.
 
 **Everywhere**
 - **More checking in the game on both Windows and Linux.** Several newer parts have had a first pass only, and each guide ends with
@@ -145,7 +144,8 @@ everything else works without one.
 
 On **Linux**, one more step is needed so WNTB can read your game's journals. See [WNTB on Linux](docs/guide/linux.md).
 
-To update, extract the new ZIP over the old `WNTB` folder (don't delete it first: your saved data lives there).
+To update, extract the new ZIP over the old `WNTB` folder (don't delete it first: your saved data lives there), or turn on
+**Automatically download and install updates** under **File → Settings → WNTB → General → Updates** (off by default).
 
 ## Tips, quirks and workarounds
 
@@ -221,7 +221,7 @@ Found a bug, or have an idea? Please open an issue on the project's
 squadron. Say what you were doing, what you expected, and what happened. Including EDMC's log (EDMC's Help menu can
 open its log folder) helps a lot. The squadron website is [waywardnomads.org](https://waywardnomads.org/).
 
-## For developers, credits and licence
+## For developers, credits and license
 
 - **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: setting up to build, test and change WNTB.
 - **[docs/TECHNICAL.md](docs/TECHNICAL.md)**: how WNTB works and why it's built that way.

@@ -15,8 +15,10 @@ on-screen extras.
 | **Notable Bodies** | A banner when a body you scan matches a rule you chose (terraformable, high-value world, shepherd moon and more) |
 | **Landing Assist** | The pad you've been assigned, with a diagram of the station or carrier |
 | **Interdiction Warning** | An alert the moment an interdiction starts |
+| **Flight Alerts** | A small card with the fleet carrier jump countdown and the low-fuel and unscoopable-star warnings |
 | **Inventory** | Capacity bars and pickup messages |
-| **Mining** | Live stats, and an arrow pointing to your nearest saved hotspot |
+| **Mining** | Live stats |
+| **Surface Compass** | An arrow, a name and a distance pointing at a hotspot or a mark on the planet you are on |
 | **Screenshots** | A short "Screenshot saved" message |
 
 ## Step 1: Choose an overlay
@@ -56,6 +58,7 @@ makes sense, a test button:
 | **Discovery** | New system and body discovery alerts | **Test Discovery** |
 | **Inventory** | Pickup notifications and the inventory bars | |
 | **Interdiction Warning** | The warning when you are interdicted | **Test Warning** |
+| **Flight Alerts** | The carrier jump countdown and fuel warnings card | **Test Card** |
 | **Landing** | The assigned pad and diagram | **Test Overlay** |
 | **Mining** | The mining stats | |
 | **Surface Compass** | The arrow, name and distance pointing at a hotspot or a mark on the planet you are on | **Test Compass** |
@@ -90,8 +93,8 @@ overlay-canvas x and y instead.
 
 **Hiding a display.** Each row has a **Show** checkbox. Untick it and that display is never drawn, whatever its own settings say, and
 what is already on screen goes the next time it would redraw. The spot and offsets are kept, so ticking it again puts it back where it
-was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Interdiction, Landing, Inventory, Mining,
-Screenshot messages). **Reset all to defaults** shows them all again.
+was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Flight alerts, Interdiction, Landing, Inventory, Mining
+stats, Surface compass, Screenshot messages). **Reset all to defaults** shows them all again.
 
 **How WNTB knows your screen.** It reads what the overlay itself is using: the window size, fit or fill mode and display
 scaling from EDMCModernOverlay's own log (its newest "Overlay scaling updated" line). If that isn't there it falls back to
@@ -110,6 +113,10 @@ This needs EDMCModernOverlay; without it (or if the call fails) a display on the
 short of the edge. The Overlay Placement tab has a switch, **Carry displays on the right to the screen edge**, that turns this off
 (and clears the offsets) if displays end up in the wrong place. The bottom edge needs none of this. The two Mining displays share one overlay group, so they stop at the limit
 rather than being offset.
+
+**Default spots.** On a 1920 x 1080 screen or larger the default spots do not overlap each other. The displays are sized in pixels, so on a
+smaller screen they take up more of it and some can overlap: use **Show placement preview** and move them. A position you chose yourself
+is never changed.
 
 **Check it on your real screen.** **Show placement preview** draws a labeled box for every display, at its real size, for
 12 seconds, using the values currently typed (even before you press OK). **Reset all to defaults** puts everything back, and

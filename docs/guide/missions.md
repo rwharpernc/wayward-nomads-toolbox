@@ -32,7 +32,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Cargo mission progress to be exact | The game reports it (`CargoDepot`: collected, delivered and total) when you collect or hand in cargo, and when a wing-mate does. Progress made before WNTB's two-week window, or with no event since, isn't known. | The card shows it once the game has reported any; otherwise check the game's mission screen. |
 | Missions accepted a while ago to appear | WNTB reads only the **last two weeks** of journals at start-up. A mission still active but accepted earlier is not found and not shown. | Keep EDMC running while you hold long missions, and check the game's own mission board for older ones. |
 | Kills made while EDMC was closed | Counted only if they are in the last two weeks of journal files. | Run EDMC whenever you play. |
-| Every mission to land in the right category | Names WNTB does not recognise go to **Other**. | Click the card for details. If a type is always in Other, open an issue so it can be added. |
+| Every mission to land in the right category | Names WNTB does not recognize go to **Other**. | Click the card for details. If a type is always in Other, open an issue so it can be added. |
 | A Community Goal's payout to be remembered for long | The game writes the payout (`CommunityGoalReward`) once. WNTB lists the latest three under **Paid out** on the Community Goals page, found in the last two weeks of journals at start-up. | Note a big payout elsewhere if you want to keep it. |
 | A Community Goal to disappear when it ends | The game gives no "gone" signal, so the panel relies on each goal's expiry date. | Ignore a goal past its expiry; it clears itself. |
 

@@ -62,7 +62,7 @@ hold you are using (ship or SRV).
 - The subtitle shows your current suit.
 - A note on the Backpack tab says `Not yet synced this session` if the game hasn't yet reported your backpack
   (for example if you logged in already on foot). Loot, resupply or disembark to refresh it.
-- Capacity colours change as a category fills: amber near the limit, red when full. The ship locker warning level
+- Capacity colors change as a category fills: amber near the limit, red when full. The ship locker warning level
   is **90%** of 1,000 for a category.
 
 ### Things worth knowing

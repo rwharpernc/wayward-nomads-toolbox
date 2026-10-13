@@ -76,7 +76,7 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `canonn_poi_data.py` | Canonn's published Thargoid and Guardian site lists, fetched on demand |
 | `canonn_poi_panel.py` | The Canonn Nearby POI section: nearest Thargoid or Guardian site |
 | `codex_backfill.py` | Journal readers for Codex Completionist, per commander: the full-history scan behind the BKF button and the one-time rebuild, and `scan_since` for the start-up catch-up |
-| `codex_catalog.py` | The catalogue of every codex entry, for the "Not found" tab |
+| `codex_catalog.py` | The catalog of every codex entry, for the "Not found" tab |
 | `codex_completionist.py` | Pure logic for the lifetime tally of everything scanned, with the `last_event_at` watermark |
 | `codex_completionist_panel.py` | The Codex Completionist section of Exploration |
 | `codex_completionist_state.py` | JSON persistence for the tally, one per commander (the old shared tally is kept untouched, then tidied away) |
@@ -253,7 +253,7 @@ Spec: [SCREENSHOTS_AND_INPUT_TECH_SPEC.md](SCREENSHOTS_AND_INPUT_TECH_SPEC.md), 
 | `screenshot_gui_focus.py` | GUI-focus detection and per-panel crop rectangles |
 | `screenshot_naming.py` | Output file names for captured screenshots |
 | `screenshots.py` | The Screenshots section of Field Ops: capture, conversion, thumbnails, overlay message |
-| `ship_builds_data.py` | Per-commander catalogue of ship-build links |
+| `ship_builds_data.py` | Per-commander catalog of ship-build links |
 | `ship_builds_dialog.py` | The Add/Edit Ship Build dialog |
 | `ship_builds_panel.py` | The Ship Builds section of Field Ops |
 | `ship_builds_window.py` | The Ship Builds window |
@@ -293,7 +293,7 @@ Spec: [WINDOW_FRAMEWORK_SPEC.md](WINDOW_FRAMEWORK_SPEC.md). Pure tkinter; nothin
 |---|---|
 | `uikit/__init__.py` | Package marker for the shared window kit |
 | `uikit/mapview.py` | Canvas map widget (coverage, hotspots, position, zoom) |
-| `uikit/palette.py` | Colour and font tokens for WNTB's own window look |
+| `uikit/palette.py` | Color and font tokens for WNTB's own window look |
 | `uikit/shell.py` | The window shell: header, body, status footer, saved geometry |
 | `uikit/style.py` | Fonts and per-window skinning |
 | `uikit/table.py` | `DataTable`, the replacement for `ttk.Treeview` |

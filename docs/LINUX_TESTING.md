@@ -203,7 +203,7 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
 
 ## 7. BGS (rebuilt in 1.1.0)
 
-- [ ] The BGS panel's grey line shows "Last tick: ..." within a few seconds (network call works).
+- [ ] The BGS panel's gray line shows "Last tick: ..." within a few seconds (network call works).
 - [ ] With the Journal directory set, the log has "BGS journal replay done for [CMDR]" and the totals
       cover the whole tick. With it cleared, the log says the replay was skipped and why.
 - [ ] **REPORT** (view BGS report) opens; the tick drop-down, the tabs (full system names, wrapping onto a second row
@@ -281,7 +281,7 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 
 ## 7e-2. Raven Colonial sharing (needs a Raven project for a site; Windows-tested only: check on Linux)
 
-- [ ] **Settings → Colonization → Raven Colonial** has a master switch and two checkboxes (all off, the two greyed out until the master is ticked) and a masked key field. With the master off, Report Complete to Raven refuses.
+- [ ] **Settings → Colonization → Raven Colonial** has a master switch and two checkboxes (all off, the two grayed out until the master is ticked) and a masked key field. With the master off, Report Complete to Raven refuses.
 - [ ] With the first on, a delivery at a construction site Raven has a project for appears on Raven; with it off, nothing is sent.
 - [ ] **Raven Progress** shows Raven's remaining need beside WNTB's for the selected site, including one still being built.
 - [ ] **Test key** (beside the key box) says the key is accepted, with Raven's name for you, or that it was not accepted.
@@ -328,7 +328,7 @@ Windows. Needs a commander with at least one registered construction site and an
 - [ ] **Suggested route (added 2026-10-12):** after Find all, a "Suggested route" group comes first with numbered stops and the commodities to buy under each; **Copy Route** puts plain lines on the clipboard.
 - [x] **Remembered choices**: change Within, Sort, Landing pad and Include fleet carriers, run a search, close and reopen
       the window: the same choices are back.
-- [x] **Only what [station] sells**: greyed out until you open a station's commodity market; then it names the station and
+- [x] **Only what [station] sells**: grayed out until you open a station's commodity market; then it names the station and
       narrows the list to what that market has for sale (in stock, with a buy price); it unticks itself when you undock.
       (`Market.json` lives in the journal folder: check EDMC's journal path on Linux/Proton.) Checked on Linux 2026-10-12 (reported by the developer).
 
