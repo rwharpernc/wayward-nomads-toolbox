@@ -30,6 +30,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   your first Powerplay merit of the session and shows on every mode.
 
 ### Fixed
+- **Raven Progress (and sharing to Raven) said there was no project for a build in progress.** Raven Colonial only records a site's
+  market id once the build is finished, so matching on the market id found nothing for a site still being built. The match now falls
+  back to the station's name (a build in progress first). This also fixes sharing depot progress and deliveries, and Report Complete,
+  for those sites.
 - **Powerplay: the pledge rank (and merit total) was the one from login after restarting EDMC mid-game.** WNTB recovered the
   pledge from the login `Powerplay` event only, so a rank that had climbed since (for example 15 at login, 32 now) showed the old
   number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.

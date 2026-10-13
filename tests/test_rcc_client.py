@@ -203,6 +203,24 @@ class CompleteProjectTests(unittest.TestCase):
         self.assertEqual(R.find_build_id(sites, 999), "")
         self.assertEqual(R.find_build_id(sites, 4347887107), "")      # a site with no build id gives nothing
 
+    def test_a_build_in_progress_is_found_by_name_because_raven_has_no_market_id_for_it_yet(self) -> None:
+        sites = R.parse_sites([
+            {"name": "Grinning Station", "status": "build", "buildId": "live-id", "marketId": None},
+            {"name": "Grinning Station", "status": "plan"},
+            {"name": "Other", "status": "build", "buildId": "other-id"}])
+        self.assertEqual(R.find_build_id(sites, 3954718210, "Orbital Construction Site: Grinning Station"), "live-id")
+        self.assertEqual(R.find_build_id(sites, 3954718210, "Grinning Station"), "live-id")
+        self.assertEqual(R.find_build_id(sites, 3954718210, "Orbital Construction Site: Nowhere"), "")
+        self.assertEqual(R.find_build_id(sites, 3954718210), "")                     # no name, no market id match: nothing
+
+    def test_the_market_id_wins_over_the_name_and_a_building_site_wins_over_a_finished_one(self) -> None:
+        sites = R.parse_sites([
+            {"name": "Twin", "status": "complete", "buildId": "done"},
+            {"name": "Twin", "status": "build", "buildId": "building"},
+            {"name": "Elsewhere", "status": "complete", "buildId": "by-market", "marketId": 5}])
+        self.assertEqual(R.find_build_id(sites, 5, "Twin"), "by-market")
+        self.assertEqual(R.find_build_id(sites, 6, "Twin"), "building")
+
     def test_sends_an_empty_post_with_only_the_key(self) -> None:
         seen = []
 

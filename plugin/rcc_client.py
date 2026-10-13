@@ -191,11 +191,27 @@ def fetch_system(system: str, opener: Callable[..., Any] = urllib.request.urlope
     return result
 
 
-def find_build_id(sites: List[RccSite], market_id: int) -> str:
-    """Raven Colonial's build id for the site with this market id, or "" when it has none (or none we can match)."""
+def station_part(name: str) -> str:
+    """The station's own name from the game's construction-site name: 'Orbital Construction Site: Grinning Station' ->
+    'Grinning Station'. A name without a colon is returned as it is."""
+    return (name or "").rpartition(":")[2].strip()
+
+
+def find_build_id(sites: List[RccSite], market_id: int, name: str = "") -> str:
+    """Raven Colonial's build id for the site with this market id, or "" when it has none (or none we can match).
+
+    Raven only learns a site's market id once it is finished, so a build in progress carries a build id and no market id (checked
+    live 2026-10-13). The match then falls back to the station's name (`name` may be the game's full construction-site name), taking
+    one that is being built before any other."""
     for site in sites:
         if site.market_id == market_id and site.build_id:
             return site.build_id
+    wanted = station_part(name).casefold()
+    if wanted:
+        named = [s for s in sites if s.build_id and s.name.casefold() == wanted]
+        named.sort(key=lambda s: s.status != STATUS_BUILDING)
+        if named:
+            return named[0].build_id
     return ""
 
 

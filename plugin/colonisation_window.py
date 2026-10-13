@@ -824,7 +824,7 @@ class ColonisationWindow:
 
         def work() -> None:
             try:
-                build_id = rcc_client.find_build_id(rcc_client.fetch_system(site.system).sites, site.market_id)
+                build_id = rcc_client.find_build_id(rcc_client.fetch_system(site.system).sites, site.market_id, site.name)
                 job["project"] = rcc_client.fetch_project(build_id)
             except rcc_client.RccError as err:
                 job["error"] = str(err)
@@ -918,13 +918,13 @@ class ColonisationWindow:
                 f"Tell Raven Colonial that {site.display_name()} in {site.system} is complete?\n\nOnly your Raven key and this "
                 "one project's id are sent; none of your deliveries or cargo.", parent=self._toplevel):
             return
-        market_id, system, cmdr = site.market_id, site.system, self._cmdr
+        market_id, system, cmdr, site_name = site.market_id, site.system, self._cmdr, site.name
         job: Dict[str, Any] = {"done": False, "error": ""}
         self._shell.set_status("Reporting to Raven Colonial…")
 
         def work() -> None:
             try:
-                build_id = rcc_client.find_build_id(rcc_client.fetch_system(system).sites, market_id)
+                build_id = rcc_client.find_build_id(rcc_client.fetch_system(system).sites, market_id, site_name)
                 rcc_client.complete_project(build_id, key)
                 rcc_keys.keys.set(cmdr, key)     # saved once it has worked, so a wrong key is not kept
             except rcc_client.RccError as err:

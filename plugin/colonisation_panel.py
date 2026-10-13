@@ -288,7 +288,7 @@ class ColonisationController:
             site = colonisation.apply_depot_event(entry, working, name=name, system=docked_system)
             if site is not None:
                 self._repository.upsert(self._cmdr, site)
-                self._rcc.on_depot(self._cmdr, entry, site.system or docked_system)
+                self._rcc.on_depot(self._cmdr, entry, site.system or docked_system, site.name)
         elif event in colonisation.CLAIM_EVENTS:
             if commander_data.key_for(self._cmdr) in self._history_pending:
                 self._history_live.append((self._cmdr, entry))
@@ -307,7 +307,8 @@ class ColonisationController:
                     self._repository.upsert(self._cmdr, working)
             if isinstance(market_id, int):
                 known = self._repository.get(self._cmdr, market_id)
-                self._rcc.on_contribution(self._cmdr, entry, (known.system if known else "") or self._system or "")
+                self._rcc.on_contribution(self._cmdr, entry, (known.system if known else "") or self._system or "",
+                                          known.name if known else "")
 
     def _track_market(self, event: Any, entry: Dict[str, Any], station: Optional[str]) -> None:
         """Remember what the station sells when its commodity market is opened, and forget it once the commander leaves

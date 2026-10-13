@@ -115,16 +115,16 @@ class RccSync:
         self.last_result = ""                              # the newest outcome, in words, for the window's status line
 
     # --- events from the journal (live only) ---------------------------------------------------------
-    def on_depot(self, cmdr: str, entry: Mapping[str, Any], system: str) -> None:
+    def on_depot(self, cmdr: str, entry: Mapping[str, Any], system: str, name: str = "") -> None:
         market_id = entry.get("MarketID")
         if not self._share_progress() or not cmdr or not isinstance(market_id, int):
             return
         marker = ("depot", self._stamp(entry))
         if self._already(cmdr, marker):
             return
-        self._submit(lambda: self._send_depot(cmdr, entry, market_id, system), "depot")
+        self._submit(lambda: self._send_depot(cmdr, entry, market_id, system, name), "depot")
 
-    def on_contribution(self, cmdr: str, entry: Mapping[str, Any], system: str) -> None:
+    def on_contribution(self, cmdr: str, entry: Mapping[str, Any], system: str, name: str = "") -> None:
         market_id = entry.get("MarketID")
         if not self._share_progress() or not cmdr or not isinstance(market_id, int):
             return
@@ -132,7 +132,7 @@ class RccSync:
             return
         delivered = contribution_body(entry)
         if delivered:
-            self._submit(lambda: self._send_contribution(cmdr, market_id, system, delivered), "delivery")
+            self._submit(lambda: self._send_contribution(cmdr, market_id, system, delivered, name), "delivery")
 
     def on_carrier_transfer(self, cmdr: str, carrier_market_id: Optional[int], entry: Mapping[str, Any]) -> None:
         if not self._share_carrier() or not cmdr or not isinstance(carrier_market_id, int):
@@ -184,14 +184,14 @@ class RccSync:
             finally:
                 self._queue.task_done()
 
-    def _build_id(self, market_id: int, system: str) -> str:
+    def _build_id(self, market_id: int, system: str, name: str = "") -> str:
         if market_id in self._builds:
             return self._builds[market_id]
         missed = self._missing.get(market_id)
         if missed is not None and self._now() - missed < NEGATIVE_SECONDS:
             return ""
         try:
-            build_id = rcc_client.find_build_id(self._find_sites(system).sites, market_id) if system else ""
+            build_id = rcc_client.find_build_id(self._find_sites(system).sites, market_id, name) if system else ""
         except rcc_client.RccError as err:
             self.last_result = str(err)
             return ""
@@ -219,8 +219,8 @@ class RccSync:
         if self._send("PUT", f"/api/project/{urllib.parse.quote(build_id, safe='')}/link/{_cmdr_path(cmdr)}", None, key, "commander link"):
             self._linked.add(token)
 
-    def _send_depot(self, cmdr: str, entry: Mapping[str, Any], market_id: int, system: str) -> None:
-        build_id = self._build_id(market_id, system)
+    def _send_depot(self, cmdr: str, entry: Mapping[str, Any], market_id: int, system: str, name: str = "") -> None:
+        build_id = self._build_id(market_id, system, name)
         if not build_id:
             return
         body = depot_body(build_id, entry)
@@ -235,8 +235,8 @@ class RccSync:
         if self._send("PATCH", f"/api/project/{urllib.parse.quote(build_id, safe='')}", body, key, "progress"):
             self._last_depot[marker] = snapshot
 
-    def _send_contribution(self, cmdr: str, market_id: int, system: str, delivered: Dict[str, int]) -> None:
-        build_id = self._build_id(market_id, system)
+    def _send_contribution(self, cmdr: str, market_id: int, system: str, delivered: Dict[str, int], name: str = "") -> None:
+        build_id = self._build_id(market_id, system, name)
         if not build_id:
             return
         key = self._key_for(cmdr)
