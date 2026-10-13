@@ -278,9 +278,14 @@ construction site **as it happens**, in the way Raven Colonial's own documentati
 | Setting | What WNTB sends, and when |
 |---|---|
 | **Allow WNTB to send anything to Raven Colonial** (master switch) | Nothing by itself. Off by default. The three options below only work while it is ticked, and are greyed out while it is not. |
-| **Report my construction progress and deliveries** | When the depot's figures change (the game's `ColonisationConstructionDepot` event): the depot's numbers and how much of each commodity is still needed, which is what moves *Remaining* on Raven Colonial. When you deliver cargo (`ColonisationContribution`): the commodities and tons, which credits your commander name in Raven's history. Once per project, it also links your commander to the project. |
+| **Report my construction progress and deliveries** | Needs the key below; with none, nothing is looked up or sent. When the depot's figures change (the game's `ColonisationConstructionDepot` event): the depot's numbers and how much of each commodity is still needed, which is what moves *Remaining* on Raven Colonial. When you deliver cargo (`ColonisationContribution`): the commodities and tons, which credits your commander name in Raven's history. Once per project, it also links your commander to the project. |
 | **Also report cargo I move to and from my fleet carrier** | When you transfer cargo at your own fleet carrier: the tons moved, to the carrier as plus and back to the ship as minus. It adds to Raven's carrier record; it never replaces it, because WNTB's own tally is only what it saw you move. Needs the key below. |
-| **Raven Colonial key** | Optional for progress and deliveries; needed for carrier cargo and for **Report Complete to Raven**. Saved per commander on your computer, shown masked, and sent only to Raven Colonial. |
+| **Raven Colonial key** | Needed for every write: progress, deliveries, carrier cargo and **Report Complete to Raven**. With no key WNTB sends nothing (Raven's published API description does not say which writes work without one, so none is tried). Saved per commander on your computer, shown masked, and sent only to Raven Colonial. |
+
+**What works with no key and no switch:** **Planned Builds** and **Raven Progress** only *read* from Raven Colonial, so they need neither. Each
+runs when you press its button and sends only the system's name (and, for Raven Progress, the project's id). If another tool such as
+SrvSurvey already reports your builds to Raven, leave the master switch off: WNTB then sends nothing, and Raven Progress is a way to
+check that Raven's figures match WNTB's.
 
 - **Only live events.** What you did while EDMC was closed, and anything the start-up catch-up reads, is never sent.
 - **Raven must already have a project for the site** (Raven matches it on the site's market id in its plan for the system). If it has none,
@@ -299,7 +304,8 @@ WNTB's own tracking stays the source of truth for your site; Raven's figures nev
 ### Reporting a finished build to Raven Colonial
 
 Select a site your journal has reported **complete** and press **Report Complete to Raven** (top right of the Colonization Sites
-window). WNTB looks the site up in Raven Colonial's plan for its system (matching on the site's market id), then marks that
+window). WNTB looks the site up in Raven Colonial's plan for its system (matching on the site's market id, or on its name for a
+build still in progress, which Raven has no market id for yet), then marks that
 project complete there. It never does this by itself: it asks you to confirm each time.
 
 - It needs your **Raven Colonial key**. The first time, WNTB asks you to paste it; it is saved for that commander only (in

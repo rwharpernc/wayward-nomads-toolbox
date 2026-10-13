@@ -131,6 +131,15 @@ class SendTests(unittest.TestCase):
         on.settle()
         self.assertEqual(on.writes, [("PATCH", "/api/FC/3700/cargo", {"steel": 100, "copper": -30}, "k")])
 
+    def test_progress_and_deliveries_without_a_key_look_up_and_send_nothing(self) -> None:
+        h = Harness(key="  ")
+        h.sync.on_depot("Alice", DEPOT, "Sol")
+        h.sync.on_contribution("Alice", CONTRIBUTION, "Sol")
+        h.settle()
+        self.assertEqual(h.writes, [])
+        self.assertEqual(h.lookups, [])                       # not even a read of Raven's plan
+        self.assertIn("No Raven Colonial key", h.sync.last_result)
+
     def test_a_failed_send_is_remembered_in_words_and_does_not_raise(self) -> None:
         h = Harness()
 

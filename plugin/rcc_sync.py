@@ -219,7 +219,17 @@ class RccSync:
         if self._send("PUT", f"/api/project/{urllib.parse.quote(build_id, safe='')}/link/{_cmdr_path(cmdr)}", None, key, "commander link"):
             self._linked.add(token)
 
+    def _has_key(self, cmdr: str) -> bool:
+        """Every write needs the commander's key; without one nothing is looked up or sent (Raven's API spec says nothing about
+        which writes work keyless, so none is tried)."""
+        if self._key_for(cmdr).strip():
+            return True
+        self.last_result = "No Raven Colonial key is saved for this commander, so nothing was sent."
+        return False
+
     def _send_depot(self, cmdr: str, entry: Mapping[str, Any], market_id: int, system: str, name: str = "") -> None:
+        if not self._has_key(cmdr):
+            return
         build_id = self._build_id(market_id, system, name)
         if not build_id:
             return
@@ -236,6 +246,8 @@ class RccSync:
             self._last_depot[marker] = snapshot
 
     def _send_contribution(self, cmdr: str, market_id: int, system: str, delivered: Dict[str, int], name: str = "") -> None:
+        if not self._has_key(cmdr):
+            return
         build_id = self._build_id(market_id, system, name)
         if not build_id:
             return

@@ -30,6 +30,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   your first Powerplay merit of the session and shows on every mode.
 
 ### Fixed
+- **Raven sharing sends nothing without a key.** Progress and deliveries used to be sent with no key at all. Raven's published API
+  description does not say whether it accepts that, so WNTB now looks up and sends nothing until a key is saved for the commander, and
+  says so in the status line. The Settings text and the guide now list what each option needs; Raven Progress and Planned Builds only
+  read, and need no key or switch.
 - **Colonization: a renamed site takes its new name.** WNTB kept the name it first saw for a site. Docking at a site you already track
   now updates its name (and system) to what the game calls it, both live and when WNTB catches up from the journals at start-up. Raven
   Progress and the Raven sharing find the project by that name for a build in progress, so they follow a rename too. WNTB does not

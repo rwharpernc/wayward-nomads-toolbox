@@ -635,7 +635,7 @@ class ColonisationController:
                        variable=self._rcc_enabled_var, command=self._rcc_sync_state).grid(
             row=5, column=0, sticky=tk.W, padx=10, pady=(0, 2))
         self._rcc_progress_var = tk.BooleanVar(value=config.get_bool(_CFG_RCC_PROGRESS, default=False))
-        self._rcc_progress_box = nb.Checkbutton(frame, text="Report my construction progress and deliveries to Raven Colonial",
+        self._rcc_progress_box = nb.Checkbutton(frame, text="Report my construction progress and deliveries to Raven Colonial (needs the key below)",
                                                 variable=self._rcc_progress_var)
         self._rcc_progress_box.grid(row=6, column=0, sticky=tk.W, padx=(30, 10), pady=(0, 2))
         self._rcc_carrier_var = tk.BooleanVar(value=config.get_bool(_CFG_RCC_CARRIER, default=False))
@@ -650,7 +650,8 @@ class ColonisationController:
         nb.Label(
             frame,
             text=(f"Saved for {self._cmdr or 'the current commander'} only, on this computer, and sent only to Raven Colonial. "
-                  "Also used by Report Complete to Raven. Leave it empty if you have none; progress and deliveries need no key."),
+                  "Every write needs it: progress, deliveries, carrier cargo and Report Complete to Raven. With no key WNTB "
+                  "sends nothing. Raven Progress and Planned Builds only read, and need no key or switch."),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=9, column=0, sticky=tk.W, padx=10, pady=(0, 10))
         self._rcc_sync_state()
