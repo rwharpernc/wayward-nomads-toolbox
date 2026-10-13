@@ -17,6 +17,7 @@ is remembered for a minute so pressing the button again does not ask again.
 """
 from __future__ import annotations
 
+import base64
 import json
 import time
 import urllib.error
@@ -34,6 +35,8 @@ MAX_BYTES = 2_000_000           # a system's answer is a few tens of kilobytes; 
 CACHE_SECONDS = 60              # the same system asked again within this long is answered from memory
 MAX_SITES = 500                 # sites kept from one answer
 BUILD_ID_MAX = 64                # a build id is a short token; anything longer is clipped
+CMDR_HEADER = "rcc-cmdr0"       # the commander the key belongs to, as base64 of its UTF-8 name: Raven's own web app sends it with every call
+WEB_URL = "https://ravencolonial.com"
 KEY_HEADER = "rcc-key"          # the per-commander key Raven Colonial wants on writes (not in its OpenAPI spec; confirm against the live API)
 COMPLETE_PATH = "/api/project/{build}/complete"
 NAME_MAX = 60                   # a site's name is clipped to this (it is text from outside)
@@ -191,6 +194,41 @@ def fetch_system(system: str, opener: Callable[..., Any] = urllib.request.urlope
     return result
 
 
+def cmdr_header(cmdr: str) -> str:
+    """The commander's name as Raven Colonial wants it in `rcc-cmdr0`: base64 of the UTF-8 bytes (what its web app does)."""
+    return base64.b64encode((cmdr or "").strip().encode("utf-8")).decode("ascii")
+
+
+def auth_headers(key: str, cmdr: str = "") -> Dict[str, str]:
+    """The headers that carry a commander's key: `rcc-key`, plus `rcc-cmdr0` when the commander is known. Nothing for no key."""
+    headers: Dict[str, str] = {}
+    if (key or "").strip():
+        headers[KEY_HEADER] = key.strip()
+        if (cmdr or "").strip():
+            headers[CMDR_HEADER] = cmdr_header(cmdr)
+    return headers
+
+
+# --- addresses of Raven Colonial's own pages (opened in the commander's browser; WNTB sends nothing) ----------------
+
+
+def home_page_url() -> str:
+    return WEB_URL + "/"
+
+
+def key_page_url() -> str:
+    """The account page where a commander signs in and finds their key."""
+    return WEB_URL + "/user"
+
+
+def system_page_url(system: str) -> str:
+    return f"{WEB_URL}/#sys={urllib.parse.quote((system or '').strip(), safe='')}"
+
+
+def build_page_url(build_id: str) -> str:
+    return f"{WEB_URL}/#build={urllib.parse.quote((build_id or '').strip(), safe='')}"
+
+
 def station_part(name: str) -> str:
     """The station's own name from the game's construction-site name: 'Orbital Construction Site: Grinning Station' ->
     'Grinning Station'. A name without a colon is returned as it is."""
@@ -219,7 +257,7 @@ def complete_url(build_id: str) -> str:
     return BASE_URL + COMPLETE_PATH.format(build=urllib.parse.quote(build_id.strip(), safe=""))
 
 
-def complete_project(build_id: str, key: str, opener: Callable[..., Any] = urllib.request.urlopen) -> None:
+def complete_project(build_id: str, key: str, opener: Callable[..., Any] = urllib.request.urlopen, cmdr: str = "") -> None:
     """Tell Raven Colonial the project `build_id` is finished. Sends nothing but the key; raises RccError with a message to show."""
     build_id, key = (build_id or "").strip(), (key or "").strip()
     if not build_id:
@@ -227,7 +265,7 @@ def complete_project(build_id: str, key: str, opener: Callable[..., Any] = urlli
     if not key:
         raise RccError("No Raven Colonial key is saved for this commander.")
     try:
-        send_write("POST", COMPLETE_PATH.format(build=urllib.parse.quote(build_id, safe="")), None, key, opener)
+        send_write("POST", COMPLETE_PATH.format(build=urllib.parse.quote(build_id, safe="")), None, key, opener, cmdr=cmdr)
     except RccError as err:
         if "error (404)" in str(err):
             raise RccError("Raven Colonial does not know this project.") from err
@@ -282,14 +320,43 @@ def fetch_project(build_id: str, opener: Callable[..., Any] = urllib.request.url
         raise RccError("Raven Colonial sent something WNTB could not read.") from err
 
 
+KEY_CHECK_PATH = "/api/Cmdr/_"   # Raven's "who am I" read: 401 without a valid key (checked live 2026-10-13); it changes nothing
+
+
+def check_key(key: str, opener: Callable[..., Any] = urllib.request.urlopen, cmdr: str = "") -> str:
+    """Ask Raven Colonial whether `key` is accepted, with a read that changes nothing (`GET /api/Cmdr/_`, which answers 401 without a
+    valid key). Returns the commander name Raven gives for it ("" when the answer names none); raises RccError with a message to
+    show, which never contains the key. A key Raven rejects, or a header name it does not recognise, both read as "did not accept"."""
+    key = (key or "").strip()
+    if not key:
+        raise RccError("Enter a key first.")
+    request = urllib.request.Request(BASE_URL + KEY_CHECK_PATH, method="GET", headers={
+        "User-Agent": http_identity.user_agent("rcc-key-check"), **auth_headers(key, cmdr)})
+    try:
+        with opener(request, timeout=TIMEOUT_S) as response:
+            body = response.read(MAX_BYTES + 1)
+    except urllib.error.HTTPError as err:
+        if err.code in (401, 403):
+            raise RccError("Raven Colonial did not accept the key.") from err
+        raise RccError(f"Raven Colonial answered with an error ({err.code}). Try again later.") from err
+    except (urllib.error.URLError, OSError, TimeoutError) as err:
+        raise RccError("Could not reach Raven Colonial. Check your connection and try again.") from err
+    try:
+        data = json.loads(body[:MAX_BYTES].decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return ""
+    return str(data.get("displayName") or data.get("name") or "").strip()[:NAME_MAX] if isinstance(data, dict) else ""
+
+
 RETRY_CODES = (429, 503)
 RETRY_WAIT_S = 2.0
 RETRY_WAIT_MAX_S = 10.0
 
 
 def send_write(method: str, path: str, body: Optional[Any], key: str = "", opener: Callable[..., Any] = urllib.request.urlopen,
-               sleep: Callable[[float], None] = time.sleep) -> None:
-    """One write to Raven Colonial: `method` `path` with `body` as JSON (none for an empty body), the key in `rcc-key` when there is one.
+               sleep: Callable[[float], None] = time.sleep, cmdr: str = "") -> None:
+    """One write to Raven Colonial: `method` `path` with `body` as JSON (none for an empty body), the key in `rcc-key` when there is one
+    (with the commander in `rcc-cmdr0`, as Raven's web app does).
     Retried once after a short wait if it says 429 or 503 (it honors a short Retry-After). Raises RccError with a message that never
     contains the key."""
     headers = {"User-Agent": http_identity.user_agent("rcc-write")}
@@ -299,8 +366,7 @@ def send_write(method: str, path: str, body: Optional[Any], key: str = "", opene
         headers["Content-Type"] = "application/json"
     elif method in ("POST", "PUT", "PATCH"):
         data = b""
-    if key.strip():
-        headers[KEY_HEADER] = key.strip()
+    headers.update(auth_headers(key, cmdr))
     for attempt in (1, 2):
         request = urllib.request.Request(BASE_URL + path, data=data, method=method, headers=headers)
         try:

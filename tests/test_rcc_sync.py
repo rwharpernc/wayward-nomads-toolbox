@@ -40,8 +40,11 @@ class Harness:
         self.done = threading.Event()
         self.sites = sites if sites is not None else plan()
 
-        def writer(method, path, body, key_=""):
+        self.cmdrs = []
+
+        def writer(method, path, body, key_="", cmdr=""):
             self.writes.append((method, path, body, key_))
+            self.cmdrs.append(cmdr)
 
         def find(system):
             self.lookups.append(system)
@@ -140,10 +143,20 @@ class SendTests(unittest.TestCase):
         self.assertEqual(h.lookups, [])                       # not even a read of Raven's plan
         self.assertIn("No Raven Colonial key", h.sync.last_result)
 
+    def test_every_write_names_the_commander_it_is_for(self) -> None:
+        h = Harness(carrier=True)
+        h.sync.on_depot("Alice", DEPOT, "Sol")
+        h.sync.on_contribution("Alice", CONTRIBUTION, "Sol")
+        h.sync.on_carrier_transfer("Alice", 3700, TRANSFER)
+        h.settle()
+        self.assertEqual(len(h.cmdrs), len(h.writes))
+        self.assertGreaterEqual(len(h.writes), 4)             # link, progress, delivery, carrier cargo
+        self.assertEqual(set(h.cmdrs), {"Alice"})
+
     def test_a_failed_send_is_remembered_in_words_and_does_not_raise(self) -> None:
         h = Harness()
 
-        def failing(method, path, body, key=""):
+        def failing(method, path, body, key="", cmdr=""):
             raise rcc_client.RccError("Could not reach Raven Colonial.")
         h.sync._write = failing
         h.sync.on_contribution("Alice", CONTRIBUTION, "Sol")

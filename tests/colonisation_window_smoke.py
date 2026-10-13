@@ -312,6 +312,29 @@ window._on_copy_route()
 check("Press Find all first" in window._sources_note.cget("text"), "Copy Route with no route says what to do")
 W.sources.find_whole_list = S_whole
 
+# The header: related actions sit under a heading each, as drop-down menus.
+from plugin.uikit.widgets import FlatButton, MenuButton
+header = [w for w in window._shell.actions.winfo_children() if isinstance(w, FlatButton)]
+check([w.cget("text") for w in header] == ["Copy Shopping List", "Rescan Carrier", "Raven Colonial ▾", "Remove ▾"],
+      f"the header buttons: {[w.cget('text') for w in header]}")
+menus = {w.cget("text").split(" ")[0]: w for w in header if isinstance(w, MenuButton)}
+check(menus["Raven"].entries() == ["Planned Builds", "Raven Progress", "Open Selected Build on Raven", "Open This System on Raven",
+                                   "Raven Colonial Website", "Report Complete to Raven"],
+      f"Raven Colonial menu: {menus['Raven'].entries()}")
+check(menus["Remove"].entries() == ["Remove Site", "Remove Finished"], f"Remove menu: {menus['Remove'].entries()}")
+
+# Opening Raven's pages: the project's own page when it is found, the system's page when it is not; the browser is stood in for.
+opened = []
+real_open = W.webbrowser.open
+W.webbrowser.open = lambda url, *a, **k: opened.append(url) or True
+from plugin.colonisation import Site as _Site
+page_site = _Site(market_id=1, name="Orbital Construction Site: X", system="Sol")
+window._poll_open_build({"done": True, "build_id": "abc-123", "error": ""}, page_site)
+window._poll_open_build({"done": True, "build_id": "", "error": ""}, page_site)
+window._poll_open_build({"done": True, "build_id": "", "error": "Could not reach Raven Colonial."}, page_site)
+W.webbrowser.open = real_open
+check(opened == ["https://ravencolonial.com/#build=abc-123", "https://ravencolonial.com/#sys=Sol"], f"pages opened: {opened}")
+
 # Planned Builds: what Raven Colonial has for the site's system, in its own window; nothing is asked until the button is pressed.
 from plugin import colonisation_builds_window as B, rcc_client
 asked_rcc = []

@@ -17,7 +17,7 @@ start-up. What goes out, and when:
 The Raven project for a site is found by reading the system's plan (one lookup, remembered; a site Raven has no project for is not
 asked about again for ten minutes). Requests are made one at a time on a worker thread through a bounded queue (a full queue drops the
 newest), each retried once on 429 / 503, and a failure is only logged: it never reaches the commander's play. The key goes in the
-`rcc-key` header and nowhere else. The commander's name is only ever part of a URL.
+`rcc-key` header (with the commander in `rcc-cmdr0`, as Raven's own web app sends them) and nowhere else. The commander's name is only ever part of a URL.
 
 Keeping each live event to one request means two tools reporting the same deliveries (another plugin, SrvSurvey) would make Raven
 count them twice; the docs say so.
@@ -142,7 +142,7 @@ class RccSync:
         moved = carrier_body(entry)
         key = self._key_for(cmdr)
         if moved and key:
-            self._submit(lambda: self._send("PATCH", f"/api/FC/{carrier_market_id}/cargo", moved, key, "carrier cargo"), "carrier cargo")
+            self._submit(lambda: self._send("PATCH", f"/api/FC/{carrier_market_id}/cargo", moved, key, "carrier cargo", cmdr), "carrier cargo")
 
     # --- one send at a time --------------------------------------------------------------------------
     @staticmethod
@@ -202,9 +202,9 @@ class RccSync:
             self.last_result = "Raven Colonial has no project linked to this site, so nothing was sent."
         return build_id
 
-    def _send(self, method: str, path: str, body: Optional[Any], key: str, what: str) -> bool:
+    def _send(self, method: str, path: str, body: Optional[Any], key: str, what: str, cmdr: str = "") -> bool:
         try:
-            self._write(method, path, body, key)
+            self._write(method, path, body, key, cmdr=cmdr)
         except rcc_client.RccError as err:
             self.last_result = f"Raven Colonial {what}: {err}"
             logger.debug("Raven Colonial %s not sent: %s", what, err)
@@ -216,7 +216,7 @@ class RccSync:
         token = (cmdr.casefold(), build_id)
         if token in self._linked:
             return
-        if self._send("PUT", f"/api/project/{urllib.parse.quote(build_id, safe='')}/link/{_cmdr_path(cmdr)}", None, key, "commander link"):
+        if self._send("PUT", f"/api/project/{urllib.parse.quote(build_id, safe='')}/link/{_cmdr_path(cmdr)}", None, key, "commander link", cmdr):
             self._linked.add(token)
 
     def _has_key(self, cmdr: str) -> bool:
@@ -242,7 +242,7 @@ class RccSync:
             return                                  # the needed amounts have not changed since the last one sent
         key = self._key_for(cmdr)
         self._link(cmdr, build_id, key)
-        if self._send("PATCH", f"/api/project/{urllib.parse.quote(build_id, safe='')}", body, key, "progress"):
+        if self._send("PATCH", f"/api/project/{urllib.parse.quote(build_id, safe='')}", body, key, "progress", cmdr):
             self._last_depot[marker] = snapshot
 
     def _send_contribution(self, cmdr: str, market_id: int, system: str, delivered: Dict[str, int], name: str = "") -> None:
@@ -254,4 +254,4 @@ class RccSync:
         key = self._key_for(cmdr)
         self._link(cmdr, build_id, key)
         self._send("POST", f"/api/project/{urllib.parse.quote(build_id, safe='')}/contribute/{_cmdr_path(cmdr)}", delivered, key,
-                   "delivery")
+                   "delivery", cmdr)

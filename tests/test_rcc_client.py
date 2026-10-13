@@ -196,6 +196,63 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class HeaderAndAddressTests(unittest.TestCase):
+    def test_the_commander_goes_in_base64_beside_the_key_as_ravens_own_web_app_sends_it(self) -> None:
+        self.assertEqual(R.cmdr_header("Bocheaux"), "Qm9jaGVhdXg=")
+        self.assertEqual(R.cmdr_header("Zoë"), "Wm/Dqw==")                        # UTF-8 bytes, not the code points
+        self.assertEqual(R.auth_headers(" k ", "Bocheaux"), {"rcc-key": "k", "rcc-cmdr0": "Qm9jaGVhdXg="})
+        self.assertEqual(R.auth_headers("k"), {"rcc-key": "k"})
+        self.assertEqual(R.auth_headers("", "Bocheaux"), {})                        # no key, nothing sent
+
+    def test_writes_and_the_key_check_carry_both_headers(self) -> None:
+        seen = []
+
+        def opener(request, timeout=None):
+            seen.append(request)
+            return FakeResponse(b"{}")
+
+        R.send_write("POST", "/api/project/x/complete", None, "secret", opener, cmdr="Bocheaux")
+        R.check_key("secret", opener, cmdr="Bocheaux")
+        for request in seen:
+            self.assertEqual(request.get_header("Rcc-key"), "secret")
+            self.assertEqual(request.get_header("Rcc-cmdr0"), "Qm9jaGVhdXg=")
+
+    def test_page_addresses(self) -> None:
+        self.assertEqual(R.home_page_url(), "https://ravencolonial.com/")
+        self.assertEqual(R.key_page_url(), "https://ravencolonial.com/user")
+        self.assertEqual(R.system_page_url("Hyades Sector DB-W b2-6"), "https://ravencolonial.com/#sys=Hyades%20Sector%20DB-W%20b2-6")
+        self.assertEqual(R.build_page_url("015582c9-d4fb"), "https://ravencolonial.com/#build=015582c9-d4fb")
+
+
+class CheckKeyTests(unittest.TestCase):
+    def test_an_accepted_key_is_a_read_with_only_the_key_header_and_returns_the_name(self) -> None:
+        opener = Opener({"displayName": "bocheaux"})
+        self.assertEqual(R.check_key("  secret-key ", opener), "bocheaux")
+        request, _ = opener.requests[0]
+        self.assertEqual((request.get_method(), request.full_url, request.data), ("GET", R.BASE_URL + "/api/Cmdr/_", None))
+        self.assertEqual(request.get_header("Rcc-key"), "secret-key")
+
+    def test_an_answer_with_no_name_is_still_accepted(self) -> None:
+        self.assertEqual(R.check_key("k", Opener(b"not json")), "")
+        self.assertEqual(R.check_key("k", Opener([1, 2])), "")
+
+    def test_a_rejected_key_a_server_error_and_no_network_each_say_so_without_the_key(self) -> None:
+        for error, words in ((urllib.error.HTTPError("u", 401, "x", {}, io.BytesIO(b"")), "did not accept"),
+                             (urllib.error.HTTPError("u", 403, "x", {}, io.BytesIO(b"")), "did not accept"),
+                             (urllib.error.HTTPError("u", 500, "x", {}, io.BytesIO(b"")), "error (500)"),
+                             (urllib.error.URLError("down"), "Could not reach")):
+            with self.assertRaises(R.RccError) as caught:
+                R.check_key("super-secret", Opener(error))
+            self.assertIn(words, str(caught.exception))
+            self.assertNotIn("super-secret", str(caught.exception))
+
+    def test_an_empty_key_is_refused_before_any_request(self) -> None:
+        opener = Opener()
+        with self.assertRaises(R.RccError):
+            R.check_key("   ", opener)
+        self.assertEqual(opener.requests, [])
+
+
 class CompleteProjectTests(unittest.TestCase):
     def test_build_id_is_read_and_found_by_market_id(self) -> None:
         sites = R.parse_sites(LIVE)

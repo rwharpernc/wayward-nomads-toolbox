@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import re
 import tkinter as tk
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 
 from . import palette as P
 from . import style
-from .widgets import FlatButton
+from .widgets import FlatButton, MenuButton
 
 _GEOMETRY = re.compile(r"^(\d+)x(\d+)([+-]-?\d+[+-]-?\d+)?$")
 
@@ -84,6 +84,12 @@ class WindowShell:
 
     def add_action(self, text: str, command: Callable[[], None], accent: bool = False) -> FlatButton:
         button = FlatButton(self.actions, text, command, kind="accent" if accent else "normal")
+        button.pack(side="left", padx=(6, 0))
+        return button
+
+    def add_menu(self, text: str, items: Sequence[Optional[tuple]]) -> MenuButton:
+        """A header button that opens a menu of related actions (see `MenuButton`)."""
+        button = MenuButton(self.actions, text, items)
         button.pack(side="left", padx=(6, 0))
         return button
 

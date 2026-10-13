@@ -268,6 +268,37 @@ class FlatButton(tk.Label):
                        cursor="hand2" if enabled else "")
 
 
+class MenuButton(FlatButton):
+    """A button that drops a menu of related actions under itself, so several buttons can sit under one heading. `items` are
+    `(label, command)` pairs, or `(label, command, "danger")` for a destructive one, with `None` for a divider. The caption gets a
+    small arrow so it reads as a menu."""
+
+    def __init__(self, parent: tk.Misc, text: str, items: Sequence[Optional[tuple]], **kwargs) -> None:
+        super().__init__(parent, f"{text} ▾", self._popup, **kwargs)
+        self._menu = tk.Menu(self, tearoff=0, bg=P.BUTTON, fg=P.TEXT, activebackground=P.HOVER, activeforeground=P.TEXT,
+                             bd=0, relief="flat", font=style.font(P.FONT_BODY))
+        for item in items:
+            if item is None:
+                self._menu.add_separator()
+                continue
+            label, command = item[0], item[1]
+            options = {"foreground": P.DANGER, "activeforeground": P.DANGER} if len(item) > 2 and item[2] == "danger" else {}
+            self._menu.add_command(label=label, command=command, **options)
+
+    def _popup(self) -> None:
+        try:
+            self._menu.tk_popup(self.winfo_rootx(), self.winfo_rooty() + self.winfo_height())
+        finally:
+            self._menu.grab_release()
+
+    def entries(self) -> list[str]:
+        """The labels in the menu, in order (dividers left out)."""
+        last = self._menu.index("end")
+        if last is None:
+            return []
+        return [self._menu.entrycget(i, "label") for i in range(last + 1) if self._menu.type(i) == "command"]
+
+
 class SlimScrollbar(tk.Canvas):
     """A thin dark vertical scrollbar - same `set`/`command` protocol as
     tk.Scrollbar, which on Windows can't be recoloured."""

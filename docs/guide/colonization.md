@@ -249,13 +249,13 @@ Things worth knowing:
 - **Copy Shopping List** copies that site's list to the clipboard, as lines like `1,200 t  Steel`, biggest first.
   The amounts are the **t still to get** figures, so what is on your ship and on your carrier is taken off. If nothing is needed it says
   so.
-- **Remove Site** stops tracking that site.
-- **Remove Finished** deletes every complete or failed site.
+- **Remove Site** (in the **Remove** menu, top right) stops tracking that site.
+- **Remove Finished** (same menu) deletes every complete or failed site.
 
 ## Planned builds
 
 The journal only reports a construction site once you have docked at it, so a build you have only **planned** never appears
-in WNTB. Press **Planned Builds** (top right of the Colonization Sites window) to see what [Raven Colonial](https://ravencolonial.com),
+in WNTB. Press **Planned Builds** (in the **Raven Colonial** menu, top right of the Colonization Sites window) to see what [Raven Colonial](https://ravencolonial.com),
 the community planning site, has for the selected site's system: every site there with its status (**Building**, **Planned**,
 **Complete**), its type and the body it is on, building first. The top of the window also names the system's **architect** (the
 commander who planned it there) and whether Raven Colonial has it **open** or **locked**, as Raven Colonial reports them. A site you have docked at and WNTB tracks is marked **yes** under
@@ -270,6 +270,16 @@ building the table does not know shows no cost.
 It asks Raven Colonial once, when the window opens or you press **Refresh**, and sends only the system's name. The answer is remembered for a minute. It shows what *other people* have entered there, so a
 system nobody has planned on that site shows nothing. See [what goes on the internet](internet-and-privacy.md).
 
+### Quick links to Raven Colonial
+
+The **Raven Colonial** menu in the Colonization Sites window also opens Raven's own pages in your browser (WNTB sends nothing to Raven
+for these; your browser does the asking):
+
+- **Open Selected Build on Raven** goes straight to the selected site's project page. WNTB finds the project the way Raven Progress
+  does (one read of the system's plan); a site Raven has no project for opens its system page instead.
+- **Open This System on Raven** opens the selected site's system.
+- **Raven Colonial Website** opens the home page.
+
 ### Sharing your progress with Raven Colonial
 
 Optional and **off by default**: nothing is sent to Raven Colonial until you tick the **master switch** in **Settings → Colonization → Raven Colonial**, and unticking it stops every write at once (progress, deliveries, carrier cargo and Report Complete), keeping your other choices for when you turn it back on. With the switch on, WNTB shares what happens at a
@@ -281,6 +291,10 @@ construction site **as it happens**, in the way Raven Colonial's own documentati
 | **Report my construction progress and deliveries** | Needs the key below; with none, nothing is looked up or sent. When the depot's figures change (the game's `ColonisationConstructionDepot` event): the depot's numbers and how much of each commodity is still needed, which is what moves *Remaining* on Raven Colonial. When you deliver cargo (`ColonisationContribution`): the commodities and tons, which credits your commander name in Raven's history. Once per project, it also links your commander to the project. |
 | **Also report cargo I move to and from my fleet carrier** | When you transfer cargo at your own fleet carrier: the tons moved, to the carrier as plus and back to the ship as minus. It adds to Raven's carrier record; it never replaces it, because WNTB's own tally is only what it saw you move. Needs the key below. |
 | **Raven Colonial key** | Needed for every write: progress, deliveries, carrier cargo and **Report Complete to Raven**. With no key WNTB sends nothing (Raven's published API description does not say which writes work without one, so none is tried). Saved per commander on your computer, shown masked, and sent only to Raven Colonial. |
+
+**Where to get the key:** the settings page has a link to [ravencolonial.com/user](https://ravencolonial.com/user), where you sign in and Raven shows your key (it is also the page that can reset it). WNTB does not fetch it for you.
+
+**Test key** (beside the key box in Settings) asks Raven Colonial whether the key you typed is accepted for your commander, using a read that changes nothing, and shows Raven's name for you when it is. It checks the box as typed, so you can use it before closing Settings.
 
 **What works with no key and no switch:** **Planned Builds** and **Raven Progress** only *read* from Raven Colonial, so they need neither. Each
 runs when you press its button and sends only the system's name (and, for Raven Progress, the project's id). If another tool such as
@@ -296,14 +310,14 @@ check that Raven's figures match WNTB's.
   would reduce what is needed twice.
 - **Do not run two tools that report to Raven.** If another tool (the Raven Colonial EDMC plugin, SrvSurvey) also reports your
   deliveries, Raven counts them twice. Turn one of them off.
-- **Raven Progress** (a button in the Colonization Sites window) reads Raven's own figures for the selected site and sets them beside
+- **Raven Progress** (in the **Raven Colonial** menu of the Colonization Sites window) reads Raven's own figures for the selected site and sets them beside
   WNTB's (*Raven says 12,345 t still needed; WNTB says 12,345 t*). It sends only the project's id.
 
 WNTB's own tracking stays the source of truth for your site; Raven's figures never overwrite it.
 
 ### Reporting a finished build to Raven Colonial
 
-Select a site your journal has reported **complete** and press **Report Complete to Raven** (top right of the Colonization Sites
+Select a site your journal has reported **complete** and press **Report Complete to Raven** (in the **Raven Colonial** menu, top right of the Colonization Sites
 window). WNTB looks the site up in Raven Colonial's plan for its system (matching on the site's market id, or on its name for a
 build still in progress, which Raven has no market id for yet), then marks that
 project complete there. It never does this by itself: it asks you to confirm each time.

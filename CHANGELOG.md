@@ -6,6 +6,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Links to Raven Colonial.** Settings → Colonization → Raven Colonial has a link to the page where you get your key
+  (ravencolonial.com/user). The Raven Colonial menu in the Colonization Sites window can open the selected site's own project page,
+  its system, or the Raven Colonial home page in your browser.
+- **Settings → Colonization → Raven Colonial: a Test key button.** It asks Raven whether the key in the box is accepted, with a read
+  that changes nothing, and shows the name Raven gives you. The settings text is corrected too: the master switch is about writing to
+  Raven (the two lookups in the sites window never needed it), and the key is saved when Settings closes.
 - **Colonization, Find all: finds stations that sell the whole list.** Find all now makes one extra Spansh request for the nearest
   stations (and carriers, if asked) that have every commodity in stock, and adds any it finds under each commodity. The shopping route
   can then use a station that is not among the nearest few for any single commodity. Spansh seldom has one station for a long list,
@@ -30,6 +36,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   your first Powerplay merit of the session and shows on every mode.
 
 ### Fixed
+- **Writes to Raven Colonial now name the commander as well as the key.** Raven Colonial's own web page sends both with every call
+  (`rcc-key` and the commander's name in `rcc-cmdr0`); WNTB sent only the key, so Raven may have turned its writes away. Report
+  Complete, progress, deliveries, carrier cargo and Test key now send both. Not yet seen to work against a real key: use Test key.
 - **Raven sharing sends nothing without a key.** Progress and deliveries used to be sent with no key at all. Raven's published API
   description does not say whether it accepts that, so WNTB now looks up and sends nothing until a key is saved for the commander, and
   says so in the status line. The Settings text and the guide now list what each option needs; Raven Progress and Planned Builds only
@@ -47,6 +56,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   number. It now also reads the newest `PowerplayRank` and `PowerplayMerits` events for your Power from the same journal.
 
 ### Changed
+- **Colonization Sites window: tidier header.** Planned Builds, Raven Progress and Report Complete to Raven now sit under one
+  **Raven Colonial** menu, and Remove Site and Remove Finished under a **Remove** menu. Copy Shopping List and Rescan Carrier stay as
+  buttons. Nothing else about them changed.
 - **Shopping list overlay: the OVERLAY button is the switch.** It now turns the card on or off and stays as you left it, even after a restart.
   The Settings option is renamed "Also show the shopping list automatically" and explains that leaving it unticked means only the button
   controls the overlay.

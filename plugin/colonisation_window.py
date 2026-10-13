@@ -14,6 +14,7 @@ import logging
 import os
 import threading
 import tkinter as tk
+import webbrowser
 from tkinter import messagebox, simpledialog
 from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
@@ -163,12 +164,20 @@ class ColonisationWindow:
         self._toplevel = self._shell.window
 
         self._shell.add_action("Copy Shopping List", self._on_copy, accent=True)
-        self._shell.add_action("Planned Builds", self._on_builds)
         self._shell.add_action("Rescan Carrier", self._on_rescan_carrier)
-        self._shell.add_action("Raven Progress", self._on_raven_progress)
-        self._shell.add_action("Report Complete to Raven", self._on_report_rcc)
-        self._shell.add_action("Remove Site", self._on_remove)
-        self._shell.add_action("Remove Finished", self._on_remove_finished)
+        # Raven Colonial's three actions under one heading: the first two only read, the last writes (it asks first).
+        self._shell.add_menu("Raven Colonial", [
+            ("Planned Builds", self._on_builds),
+            ("Raven Progress", self._on_raven_progress),
+            None,
+            ("Open Selected Build on Raven", self._on_open_build_page),
+            ("Open This System on Raven", self._on_open_system_page),
+            ("Raven Colonial Website", lambda: webbrowser.open(rcc_client.home_page_url())),
+            None,
+            ("Report Complete to Raven", self._on_report_rcc)])
+        self._shell.add_menu("Remove", [
+            ("Remove Site", self._on_remove, "danger"),
+            ("Remove Finished", self._on_remove_finished, "danger")])
 
         self._hide_covered = tk.BooleanVar(master=self._toplevel, value=False)
         self._filter_text = tk.StringVar(master=self._toplevel, value="")
@@ -809,6 +818,56 @@ class ColonisationWindow:
             self._toplevel, site.system,
             lambda: frozenset(s.market_id for s in self._repository.for_cmdr(self._cmdr)))
 
+    def _on_open_system_page(self) -> None:
+        """Open Raven Colonial's page for the selected site's system in the browser (nothing is asked of Raven by WNTB)."""
+        site = self._selected_site()
+        if site is None or not site.system:
+            self._shell.set_status("Select a site with a known system on the left first.")
+            return
+        webbrowser.open(rcc_client.system_page_url(site.system))
+        self._shell.set_status(f"Opened {site.system} on Raven Colonial in your browser.")
+
+    def _on_open_build_page(self) -> None:
+        """Open Raven Colonial's page for the selected site's own project. The project is found the way Raven Progress finds it (one
+        read of the system's plan); a site Raven has no project for opens its system page instead."""
+        site = self._selected_site()
+        if site is None:
+            self._shell.set_status("Select a site on the left first.")
+            return
+        if not site.system:
+            self._shell.set_status("This site has no system name yet; dock at it once so WNTB knows where it is.")
+            return
+        job: Dict[str, Any] = {"done": False, "build_id": "", "error": ""}
+        self._shell.set_status("Looking up the project on Raven Colonial…")
+
+        def work() -> None:
+            try:
+                job["build_id"] = rcc_client.find_build_id(rcc_client.fetch_system(site.system).sites, site.market_id, site.name)
+            except rcc_client.RccError as err:
+                job["error"] = str(err)
+            except Exception:
+                logger.exception("Raven Colonial project lookup failed")
+                job["error"] = "The lookup failed unexpectedly; see the EDMC log."
+            job["done"] = True
+
+        threading.Thread(target=work, daemon=True, name="WNTB-rcc-open-build").start()
+        self._poll_open_build(job, site)
+
+    def _poll_open_build(self, job: Dict[str, Any], site: Site) -> None:
+        if not self._shell.alive:
+            return
+        if not job["done"]:
+            self._toplevel.after(150, self._poll_open_build, job, site)
+            return
+        if job["error"]:
+            self._shell.set_status(job["error"])
+        elif job["build_id"]:
+            webbrowser.open(rcc_client.build_page_url(job["build_id"]))
+            self._shell.set_status(f"Opened {site.display_name()} on Raven Colonial in your browser.")
+        else:
+            webbrowser.open(rcc_client.system_page_url(site.system))
+            self._shell.set_status("Raven Colonial has no project linked to this site, so its system page was opened instead.")
+
     def _on_raven_progress(self) -> None:
         """Read Raven Colonial's own figures for the selected site and set them beside WNTB's (a read; nothing is sent but the project's
         id). The site is matched on its market id in Raven's plan for the system."""
@@ -925,7 +984,7 @@ class ColonisationWindow:
         def work() -> None:
             try:
                 build_id = rcc_client.find_build_id(rcc_client.fetch_system(system).sites, market_id, site_name)
-                rcc_client.complete_project(build_id, key)
+                rcc_client.complete_project(build_id, key, cmdr=cmdr)
                 rcc_keys.keys.set(cmdr, key)     # saved once it has worked, so a wrong key is not kept
             except rcc_client.RccError as err:
                 job["error"] = str(err)

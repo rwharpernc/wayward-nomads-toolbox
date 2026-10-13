@@ -16,6 +16,7 @@ import os
 import queue
 import threading
 import time
+import webbrowser
 from typing import Any, Dict, FrozenSet, Optional, Tuple
 
 import tkinter as tk
@@ -23,7 +24,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card, rcc_keys, rcc_sync,
+from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card, rcc_client, rcc_keys, rcc_sync,
                colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_market, trade_panel)
 from .colonisation import Site
 from . import commander_data
@@ -144,6 +145,7 @@ class ColonisationController:
         self._rcc_progress_var: Optional[tk.BooleanVar] = None
         self._rcc_carrier_var: Optional[tk.BooleanVar] = None
         self._rcc_key_var: Optional[tk.StringVar] = None
+        self._rcc_key_result: Optional[tk.Label] = None
         self._right_panel_var: Optional[tk.BooleanVar] = None
         self._show_button: Optional[tk.Button] = None
         self._show_off_colors = ("", "")
@@ -624,14 +626,16 @@ class ColonisationController:
             row=3, column=0, sticky=tk.W, padx=10, pady=(0, 4))
         nb.Label(
             frame,
-            text=("Optional, and everything here is off until you tick the master switch. Shares your construction progress with Raven Colonial (ravencolonial.com), a community "
-                  "planning site, as it happens: the site's depot figures and the deliveries you make. It only sends live events, "
-                  "needs Raven to already have a project linked to the site, and uses your commander name. If another tool also "
-                  "reports your deliveries to Raven, turn one of them off or they are counted twice."),
+            text=("Optional, and nothing is written to Raven Colonial (ravencolonial.com), a community planning site, until you tick the "
+                  "master switch. Then WNTB can share your construction progress as it happens: the site's depot figures and the "
+                  "deliveries you make. It needs your Raven key (below), only sends live events, needs Raven to already have a project "
+                  "linked to the site, and uses your commander name. If another tool also reports your deliveries to Raven, turn one "
+                  "of them off or they are counted twice. Planned Builds and Raven Progress in the Colonization Sites window only "
+                  "read from Raven; they need neither the switch nor a key."),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 4))
         self._rcc_enabled_var = tk.BooleanVar(value=rcc_keys.enabled())
-        nb.Checkbutton(frame, text="Allow WNTB to send anything to Raven Colonial (master switch)",
+        nb.Checkbutton(frame, text="Allow WNTB to write to Raven Colonial (master switch)",
                        variable=self._rcc_enabled_var, command=self._rcc_sync_state).grid(
             row=5, column=0, sticky=tk.W, padx=10, pady=(0, 2))
         self._rcc_progress_var = tk.BooleanVar(value=config.get_bool(_CFG_RCC_PROGRESS, default=False))
@@ -647,14 +651,47 @@ class ColonisationController:
         nb.Label(key_row, text="Raven Colonial key:").pack(side=tk.LEFT)
         self._rcc_key_var = tk.StringVar(value=rcc_keys.keys.get(self._cmdr or ""))
         nb.EntryMenu(key_row, textvariable=self._rcc_key_var, width=34, show="*").pack(side=tk.LEFT, padx=(4, 0))
+        tk.Button(key_row, text="Test key", command=self._on_test_rcc_key).pack(side=tk.LEFT, padx=(6, 0))
+        self._rcc_key_result = nb.Label(key_row, text="", wraplength=260, justify=tk.LEFT)
+        self._rcc_key_result.pack(side=tk.LEFT, padx=(6, 0))
+        link = tk.Label(frame, text=f"Get your key: sign in at {rcc_client.key_page_url().split('//', 1)[1]} (opens your browser)",
+                        fg="#1a6fd1", cursor="hand2", font=("TkDefaultFont", 9, "underline"))
+        link.grid(row=9, column=0, sticky=tk.W, padx=10, pady=(0, 2))
+        link.bind("<Button-1>", lambda _e: webbrowser.open(rcc_client.key_page_url()))
         nb.Label(
             frame,
-            text=(f"Saved for {self._cmdr or 'the current commander'} only, on this computer, and sent only to Raven Colonial. "
-                  "Every write needs it: progress, deliveries, carrier cargo and Report Complete to Raven. With no key WNTB "
-                  "sends nothing. Raven Progress and Planned Builds only read, and need no key or switch."),
+            text=(f"Saved for {self._cmdr or 'the current commander'} only, on this computer, when you close Settings, and sent only to "
+                  "Raven Colonial. Every write needs it: progress, deliveries, carrier cargo and Report Complete to Raven. With no "
+                  "key WNTB sends nothing. Test key asks Raven whether the key in the box is accepted (a read that changes "
+                  "nothing); it works before you save."),
             wraplength=440, justify=tk.LEFT,
-        ).grid(row=9, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        ).grid(row=10, column=0, sticky=tk.W, padx=10, pady=(0, 10))
         self._rcc_sync_state()
+
+    def _on_test_rcc_key(self) -> None:
+        """Ask Raven Colonial whether the key in the box is accepted (a read that changes nothing). It tests what is typed, so it
+        works before the settings are saved; the answer is shown beside the box."""
+        label, var = self._rcc_key_result, self._rcc_key_var
+        if label is None or var is None:
+            return
+        key, cmdr = var.get(), self._cmdr or ""
+        label.configure(text="Asking Raven Colonial…", foreground="")
+
+        def worker() -> None:
+            try:
+                name = rcc_client.check_key(key, cmdr=cmdr)
+                outcome, color = (f"Accepted (Raven knows you as {name})." if name else "Accepted."), "#2e7d32"
+            except rcc_client.RccError as err:
+                outcome, color = str(err), "#c07000"
+            except Exception:
+                logger.exception("Raven Colonial key check failed")
+                outcome, color = "The check failed unexpectedly; see the EDMC log.", "#c07000"
+            try:
+                label.after(0, lambda: label.configure(text=outcome, foreground=color))
+            except tk.TclError:
+                pass
+
+        threading.Thread(target=worker, name="WNTB-rcc-key-check", daemon=True).start()
 
     def _rcc_sync_state(self) -> None:
         """Grey out the two Raven options while the master switch is off (their choices are kept)."""
