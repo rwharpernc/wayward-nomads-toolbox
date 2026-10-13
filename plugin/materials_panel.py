@@ -13,7 +13,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 from config import appname
 
-from . import blueprint_needs, blueprint_wishlist, blueprints_window, inventory_panel, materials, materials_window, panelkit
+from . import blueprint_needs, blueprint_wishlist, blueprints_window, engineers, inventory_panel, materials, materials_window, panelkit
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -28,6 +28,7 @@ _WRAP_PX = 200         # the summary wraps here: what it shows comes from the ga
 
 book = materials.MaterialBook()
 wishlist = blueprint_wishlist.WishBook()
+engineer_book = engineers.EngineerBook()
 
 
 def holdings() -> blueprint_needs.Holdings:
@@ -90,6 +91,7 @@ class MaterialsController:
     def start(self, plugin_dir: str) -> None:
         book.load(plugin_dir)
         wishlist.load(plugin_dir)
+        engineer_book.load(plugin_dir)
 
     def stop(self) -> None:
         book.flush()
@@ -100,6 +102,8 @@ class MaterialsController:
                      state: Dict[str, Any]) -> None:
         book.set_commander(cmdr)       # a new commander tells the book's listeners (this row, an open window) itself
         wishlist.set_commander(cmdr)
+        engineer_book.set_commander(cmdr)
+        engineer_book.apply_event(entry)
         book.apply_event(entry, state)
         if wishlist.count() and entry.get("event") in _HOLDING_EVENTS:
             self._update_summary()              # the Inventory (which runs first) may have changed what the wishlist is weighed against
@@ -144,7 +148,7 @@ class MaterialsController:
 
     def _open_blueprints(self) -> None:
         if self._parent is not None:
-            blueprints_window.show(self._parent, wishlist, holdings)
+            blueprints_window.show(self._parent, wishlist, holdings, engineer_book)
 
 
 controller = MaterialsController()

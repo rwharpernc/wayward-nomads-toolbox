@@ -87,6 +87,7 @@ panel = materials_panel.MaterialsController()      # a fresh controller; it list
 book = materials_panel.book
 book.load(folder)
 materials_panel.wishlist.load(folder)
+materials_panel.engineer_book.load(folder)
 
 saved["wntb_materials_collapsed"] = False          # open, so its widgets count towards the panel's width
 host = tk.Frame(root)
@@ -181,7 +182,7 @@ check("Wishlist: 1 blueprint, 1 can be made" in panel.summary()[0] and "short" n
 check(host.winfo_reqwidth() <= 216, f"with the wishlist line and both buttons the section asks for {host.winfo_reqwidth()} px")
 book.apply_event(login)
 
-blueprints_window.show(root, wish, materials_panel.holdings)
+blueprints_window.show(root, wish, materials_panel.holdings, materials_panel.engineer_book)
 bwin = blueprints_window._window
 pump()
 check(bwin is not None and bwin.alive, "the Engineering window opens")
@@ -231,11 +232,51 @@ check(wish.count() == 1, "the first press of Clear list only asks")
 bwin._clear()
 check(wish.count() == 0 and len(bwin._wish_table) == 0, "the second press empties the list")
 
+
+# --- engineers ----------------------------------------------------------------------------------------------------------------------------
+eng = materials_panel.engineer_book
+check(not eng.has_data and blueprints_window.who_can(fsd5, eng).startswith("Offered by"), f"before the game lists engineers it says who offers: {blueprints_window.who_can(fsd5, eng)!r}")
+panel.handle_event({"event": "EngineerProgress", "Engineers": [
+    {"Engineer": "Felicity Farseer", "EngineerID": 300100, "Progress": "Unlocked", "RankProgress": 40, "Rank": 3},
+    {"Engineer": "Lei Cheung", "EngineerID": 300120, "Progress": "Invited"},
+    {"Engineer": "Eleanor Bresa", "EngineerID": 400011, "Progress": "Known"}]}, "Bocheaux", "Sol", None, {})
+check(eng.has_data and eng.standing("Felicity Farseer").rank == 3, "the panel feeds EngineerProgress to the engineer book")
+check("Felicity Farseer" in blueprints_window.who_can(fsd5, eng), f"an unlocked engineer who offers it: {blueprints_window.who_can(fsd5, eng)!r}")
+suit = next(b for b in blueprints.ALL if b.type == "Suit")
+check(blueprints_window.who_can(suit, eng) != "", f"a suit upgrade: {blueprints_window.who_can(suit, eng)!r}")
+lonely = next(b for b in blueprints.ALL if blueprints.real_engineers(b) and not any(e in blueprints.STAND_IN_NAMES for e in b.engineers)
+              and not any((eng.standing(e) is not None and eng.standing(e).unlocked) for e in blueprints.real_engineers(b)))
+check(blueprints_window.who_can(lonely, eng) == "No engineer unlocked yet", f"nobody unlocked offers it: {blueprints_window.who_can(lonely, eng)!r}")
+check("(unlocked, rank 3" in blueprints_window.engineers_text(fsd5, eng), f"standings beside the names: {blueprints_window.engineers_text(fsd5, eng)!r}")
+
+blueprints_window.show(root, wish, materials_panel.holdings, eng)
+bwin = blueprints_window._window
+pump()
+rows = bwin._engineer_rows()
+names = [r[0] for r in rows]
+check(names[0] == "Felicity Farseer", f"unlocked engineers come first: {names[:3]}")
+check("Eleanor Bresa" in names, "an engineer the journal knows but the table does not is listed")
+check(dict(rows)["Eleanor Bresa"][3] == "not in the table", f"and says so: {dict(rows)['Eleanor Bresa']}")
+check(dict(rows)["Felicity Farseer"][3] == "-", "an unlocked engineer needs nothing")
+check("x Gold" in dict(rows)["Lei Cheung"][3] and "not counted" in dict(rows)["Lei Cheung"][3], f"a commodity unlock is shown, not counted: {dict(rows)['Lei Cheung'][3]!r}")
+check(len(bwin._engineer_table) == len(rows), "the table lists every row")
+bwin._add_unlock()
+check("Select an engineer" in bwin._shell._status.cget("text"), "Put their unlock on the wishlist needs a selection")
+bwin._engineer_table.select("Lei Cheung", notify=True)
+bwin._add_unlock()
+check(wish.get("Unlock|Lei Cheung|0") is not None, f"the unlock goes on the wishlist: {[i.blueprint_id for i in wish.items()]}")
+bwin._show_engineer_blueprints()
+pump()
+check(bwin._query.get() == "Lei Cheung" and len(bwin._table) > 0, f"Show their blueprints searches for them: {len(bwin._table)}")
+wish.clear()
+eng.apply_event({"event": "EngineerProgress", "Engineer": "Lei Cheung", "EngineerID": 300120, "Progress": "Unlocked", "Rank": 1, "RankProgress": 0})
+pump()
+check(dict(bwin._engineer_rows())["Lei Cheung"][1] == "Unlocked, rank 1", "a change from the journal shows in the open window")
 listeners = len(wish._listeners)
 blueprints_window.close()
 pump()
 check(not bwin.alive and len(wish._listeners) == listeners - 1, "closing the Engineering window removes its listener")
-check(sorted(os.listdir(folder)) == sorted([materials.STATE_FILENAME, "blueprint_wishlist.json"]), f"two data files, no commander name in a file name: {os.listdir(folder)}")
+check(sorted(os.listdir(folder)) == sorted([materials.STATE_FILENAME, "blueprint_wishlist.json", "engineers.json"]), f"three data files, no commander name in a file name: {os.listdir(folder)}")
 
 panel.stop()
 

@@ -118,7 +118,7 @@ a new material the table does not know is still counted, with no grade or limit 
 
 ## Engineering: blueprints and a wishlist
 
-**BLUEPRINTS** on the Materials row opens the Engineering window. It has two tabs.
+**BLUEPRINTS** on the Materials row opens the Engineering window. It has three tabs.
 
 **Blueprints.** Every engineering blueprint in the table (about 1,170: ship modules, Guardian items, Technology Broker unlocks, engineer
 unlocks, synthesis recipes, and Odyssey suit and weapon upgrades). **Search** matches the module, blueprint name, engineer, effect or an
@@ -128,8 +128,14 @@ wishlist** (or double-click a row to add one craft).
 
 **Wishlist.** Your list of blueprints, with a number of crafts each, kept on your computer for the commander who made it. For each entry it says
 whether it **can be made now** and how many pieces it is **short**. Below is one **shopping list** for the whole wishlist: need, have, short and
-where each ingredient is found, with what is short at the top. Select an entry to change its crafts, **Remove** it or **Clear list** (each
-asks twice). The Materials row shows a line such as `Wishlist: 3 blueprints, 2 can be made, 14 pieces short`.
+where each ingredient is found, with what is short at the top. Each entry also says **who can do it**: an engineer you have unlocked,
+or a vendor or the synthesis panel (which need no unlocking), or "No engineer unlocked yet". Select an entry to change its crafts, **Remove** it
+or **Clear list** (each asks twice). The Materials row shows a line such as `Wishlist: 3 blueprints, 2 can be made, 14 pieces short`.
+
+**Engineers.** Every engineer the table or your journal knows, with where you stand (Known, Invited, or Unlocked with their rank), how many
+blueprints they offer and what unlocking them asks for, with how much of it you hold; unlocked engineers first. **Show their blueprints** lists
+what they offer, and **Put their unlock on the wishlist** adds what unlocking them takes. Your standings come from the game's engineer list, sent
+at login and whenever one changes (including a rank-up), and are kept on your computer for each commander.
 
 **How "can be made now" works.** Entries are weighed in list order, as you would craft them: an entry that can be made takes what it needs, and the
 ones below it only see what is left. An entry that cannot be made takes nothing, so it does not use up materials a later entry could use.
@@ -184,6 +190,9 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Materials you were not able to carry to be counted | When you are at the limit, the game discards what you cannot carry. WNTB never counts above the limit. | Nothing; the login list corrects any difference. |
 | Which engineer or blueprint needs a material | Not shown yet. This page counts what you hold; it does not know what you need it for. | Use a site such as Inara or EDSY for what a blueprint takes. |
 | The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. | Check the in-game recipe before you spend rare materials, and report a difference. |
+| Every engineer to appear with their blueprints | The blueprint table is from March 2024. Three engineers your journal lists (Baltanos, Eleanor Bresa and Rosa Dayette) are not in it, so they show with your standing and no blueprints or unlock needs. | Use a site such as Inara for those engineers. |
+| What unlocking an engineer takes to be complete | The table lists the **materials or goods** an engineer asks for. An invitation can ask for more (a rank, a visit, a referral), which it does not list. | Check the engineer's requirements in the game's Engineers panel. |
+| Your materials to match the game after every pick-up | The journal reports almost every gain, but not all of them: replaying about 6,400 login lists, WNTB's counts matched the game's next list 93% of the time, and most of the misses were counts that were higher in the game with no event in between. | The next login list corrects the counts. |
 | The Engineering window to know how many crafts you need | The game rolls the result of each craft; nothing in the journal says how many it will take. | Set the number of crafts you expect. |
 | On-foot upgrades to count your backpack | The wishlist counts the **ship locker** only. Whether the game also draws on the backpack is not confirmed. | Stow what you carry into the ship locker (or just check the count in the game). |
 | Ship Builds to be checked | WNTB only stores the link and name you give it. It doesn't read or check the build. | Keep your link current if the site changes. |

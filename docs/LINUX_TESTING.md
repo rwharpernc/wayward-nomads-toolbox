@@ -83,6 +83,9 @@ Where a step fails, copy the relevant lines from EDMC's log
       where each is found; **Add to wishlist** and a double-click add; the Wishlist tab shows each entry's crafts, whether it can be made and
       the shopping list; **Set crafts**, **Remove** and **Clear list** ask twice; the Materials section shows the `Wishlist:` line and stays narrow;
       the window keeps its size and place.
+      The **Engineers** tab lists engineers with where you stand (after a login), unlocked ones first; **Show their blueprints** switches to the
+      Blueprints tab searching for them; **Put their unlock on the wishlist** adds it; the wishlist's **Who can do it** column names an unlocked
+      engineer or "No engineer unlocked yet".
 - [ ] Notes (Exploration mode, **Notes** section): the quick-add box saves a line against the current system; **NOTES** opens the window;
       the editor's text box takes typing and paste; **Here** fills the system and body; **Delete** asks twice; the window keeps its size
       and place after closing and reopening.

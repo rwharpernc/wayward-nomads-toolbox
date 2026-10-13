@@ -3,7 +3,10 @@
 **Blueprints** tab: search and pick a module type; pick a blueprint to see who offers it, its effects and what ONE craft takes against what you
 hold and where each ingredient is found; set a number of crafts and add it to the wishlist (or double-click a row to add one craft).
 **Wishlist** tab: each entry with its crafts, whether it can be made now (worked out in list order, so an entry only sees what the ones above it
-leave) and how many pieces it is short, then one shopping list for the whole wishlist: need, have, short and where to find each ingredient.
+leave), how many pieces it is short and who can do it (an engineer you have unlocked, or a vendor that needs none), then one shopping list for the
+whole wishlist: need, have, short and where to find each ingredient.
+**Engineers** tab: where you stand with each engineer (from the journal's `EngineerProgress`), what they offer and what unlocking them takes, with
+buttons to list their blueprints or put their unlock on the wishlist.
 
 Built on the shared window kit (plugin/uikit); the lists are `blueprints.py` and `blueprint_wishlist.WishBook`, the arithmetic is
 `blueprint_needs.py`, and the counts come in as a `Holdings` from the panel (`materials_panel.py`). Module-level show/refresh/close and saved
@@ -19,7 +22,7 @@ from config import appname, config
 
 from . import blueprint_needs as needs_mod
 from . import blueprint_wishlist as wishlist_mod
-from . import blueprints
+from . import blueprints, engineers
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -58,8 +61,15 @@ _INGREDIENT_COLUMNS = (
 _WISH_COLUMNS = (
     Column("blueprint", "Blueprint", 330, stretch=True, max_chars=64),
     Column("crafts", "Crafts", 60, anchor="e"),
-    Column("ready", "Can be made now", 200, max_chars=44),
-    Column("short", "Short", 70, anchor="e"),
+    Column("ready", "Can be made now", 170, max_chars=44),
+    Column("short", "Short", 60, anchor="e"),
+    Column("who", "Who can do it", 230, max_chars=48),
+)
+_ENGINEER_COLUMNS = (
+    Column("engineer", "Engineer", 190, max_chars=34),
+    Column("standing", "You are", 150, max_chars=30),
+    Column("offers", "Offers", 90, anchor="e"),
+    Column("unlock", "To unlock", 480, stretch=True, max_chars=90),
 )
 _SHOPPING_COLUMNS = (
     Column("ingredient", "Ingredient", 230, stretch=True, max_chars=44),
@@ -73,14 +83,14 @@ _SHOPPING_COLUMNS = (
 Counts = Callable[[], needs_mod.Holdings]
 
 
-def show(parent: tk.Misc, wishbook: wishlist_mod.WishBook, holdings: Counts) -> None:
+def show(parent: tk.Misc, wishbook: wishlist_mod.WishBook, holdings: Counts, engineer_book: engineers.EngineerBook) -> None:
     """Open the Engineering window, or raise it if it is already open."""
     global _window
     if _window is not None and _window.alive:
         _window.refresh()
         _window.lift()
         return
-    _window = BlueprintsWindow(parent, wishbook, holdings)
+    _window = BlueprintsWindow(parent, wishbook, holdings, engineer_book)
 
 
 def refresh() -> None:
@@ -93,8 +103,27 @@ def close() -> None:
         _window.close()
 
 
-def engineers_text(blueprint: blueprints.Blueprint) -> str:
-    return ", ".join(blueprint.engineers) if blueprint.engineers else "-"
+def engineers_text(blueprint: blueprints.Blueprint, book: Optional[engineers.EngineerBook] = None) -> str:
+    """Who offers a blueprint; with the commander's standings, each engineer is followed by where they stand with them."""
+    if not blueprint.engineers:
+        return "-"
+    parts = []
+    for name in blueprint.engineers:
+        standing = book.standing(name) if book is not None and name not in blueprints.STAND_IN_NAMES else None
+        parts.append(f"{name} ({standing.describe().lower()})" if standing is not None else name)
+    return ", ".join(parts)
+
+
+def who_can(blueprint: blueprints.Blueprint, book: Optional[engineers.EngineerBook]) -> str:
+    """Who can do a blueprint for the commander now: a vendor or the synthesis panel (nothing to unlock) and any engineer who is unlocked. When
+    the journal has not told WNTB about the engineers yet, it says who offers it instead of guessing."""
+    free = [e for e in blueprint.engineers if e in blueprints.STAND_IN_NAMES]
+    if book is None or not book.has_data:
+        return clip("Offered by " + ", ".join(blueprint.engineers), 48) if blueprint.engineers else "-"
+    unlocked = [e for e in blueprints.real_engineers(blueprint) if (s := book.standing(e)) is not None and s.unlocked]
+    if free or unlocked:
+        return clip(", ".join(free + unlocked), 48)
+    return clip("No engineer unlocked yet", 48)
 
 
 def effects_text(blueprint: blueprints.Blueprint) -> str:
@@ -130,8 +159,9 @@ def shopping_rows(shopping: needs_mod.Shopping) -> List[tuple]:
 
 
 class BlueprintsWindow:
-    def __init__(self, parent: tk.Misc, wishbook: wishlist_mod.WishBook, holdings: Counts) -> None:
+    def __init__(self, parent: tk.Misc, wishbook: wishlist_mod.WishBook, holdings: Counts, engineer_book: engineers.EngineerBook) -> None:
         self._wishbook = wishbook
+        self._engineers = engineer_book
         self._holdings = holdings
         self._picked: Optional[str] = None         # the blueprint shown in the detail pane
         self._picked_wish: Optional[str] = None    # the wishlist entry selected
@@ -149,9 +179,11 @@ class BlueprintsWindow:
         self._tabs.pack(fill="both", expand=True)
         self._build_browse(self._tabs.add("Blueprints"))
         self._build_wishlist(self._tabs.add("Wishlist"))
+        self._build_engineers(self._tabs.add("Engineers"))
         self._tabs.select(0)
 
         wishbook.add_listener(self._on_changed)
+        engineer_book.add_listener(self._on_changed)
         self._fill_blueprints()
         self.refresh()
 
@@ -215,7 +247,7 @@ class BlueprintsWindow:
         shown = found[:SHOWN]
         self._table.clear()
         for b in shown:
-            self._table.insert(b.id, (b.type, b.name, b.grade or "-", clip(engineers_text(b), 60)))
+            self._table.insert(b.id, (b.type, b.name, b.grade or "-", clip(engineers_text(b), 60)))   # statuses are in the detail below
         if self._picked and any(b.id == self._picked for b in shown):
             self._table.select(self._picked)
         self._count_label.configure(text=f"{len(shown)} shown" + (f", more match: narrow the search" if len(found) > SHOWN else ""))
@@ -241,7 +273,7 @@ class BlueprintsWindow:
             self._facts.configure(text="")
             return
         self._title.configure(text=f"{blueprint.type}: {blueprint.title}")
-        self._facts.configure(text=clip(f"Offered by: {engineers_text(blueprint)}.   Effects: {effects_text(blueprint)}.", 400))
+        self._facts.configure(text=clip(f"Offered by: {engineers_text(blueprint, self._engineers)}.   Effects: {effects_text(blueprint)}.", 400))
         for row in ingredient_rows(blueprint, self._crafts_value(), self._holdings()):
             self._ingredients.append(row)
 
@@ -347,7 +379,8 @@ class BlueprintsWindow:
         self._wish_table.clear()
         for entry in shopping.entries:
             self._wish_table.insert(entry.item.blueprint_id, (clip(f"{entry.blueprint.type}: {entry.blueprint.title}", 64), entry.item.crafts,
-                                                              entry_ready_text(entry), f"{entry_short(entry):,}"))
+                                                              entry_ready_text(entry), f"{entry_short(entry):,}",
+                                                              who_can(entry.blueprint, self._engineers)))
         if keep and self._wishbook.get(keep) is not None:
             self._wish_table.select(keep)
         else:
@@ -358,6 +391,89 @@ class BlueprintsWindow:
         else:
             self._shopping_title.configure(
                 text=f"Shopping list: {shopping.ready_count} of {len(shopping.entries)} can be made now, {shopping.short_pieces:,} pieces short")
+
+    # --- the Engineers tab ---------------------------------------------------------------------------------------------
+
+    def _build_engineers(self, tab: tk.Frame) -> None:
+        pad = tk.Frame(tab, bg=P.PANE)
+        pad.pack(fill="both", expand=True, padx=P.PAD, pady=P.PAD)
+        self._engineer_table = DataTable(pad, _ENGINEER_COLUMNS, on_select=self._pick_engineer, visible_rows=14,
+                                         empty_text="No engineers yet. They appear when the game lists them (at login).")
+        self._engineer_table.pack(fill="x", pady=(0, P.PAD_SM))
+        controls = tk.Frame(pad, bg=P.PANE)
+        controls.pack(fill="x")
+        FlatButton(controls, "Show their blueprints", self._show_engineer_blueprints).pack(side="left")
+        FlatButton(controls, "Put their unlock on the wishlist", self._add_unlock).pack(side="left", padx=(P.PAD, 0))
+        self._engineer_note = tk.Label(pad, text="", fg=P.MUTED, bg=P.PANE, anchor="w", justify="left", wraplength=980)
+        self._engineer_note.pack(fill="x", pady=(P.PAD_SM, 0))
+        self._picked_engineer: Optional[str] = None
+
+    def _engineer_rows(self) -> List[tuple]:
+        """(name, row values) for every engineer the table or the journal knows, unlocked ones first, then A to Z."""
+        names: dict = {}
+        for name in blueprints.engineer_names():
+            names[engineers.name_key(name)] = name
+        for standing in self._engineers.all():
+            names.setdefault(engineers.name_key(standing.name), standing.name)
+        offers: dict = {}
+        for b in blueprints.ALL:
+            for e in blueprints.real_engineers(b):
+                offers[engineers.name_key(e)] = offers.get(engineers.name_key(e), 0) + 1
+        known = self._engineers.has_data
+        rows = []
+        for key, name in names.items():
+            standing = self._engineers.standing(name)
+            unlock = blueprints.unlock_for(name, key=engineers.name_key)
+            if standing is not None and standing.unlocked:
+                text = "-"
+            elif unlock is not None:
+                text = clip("; ".join(self._unlock_part(n) for n in needs_mod.needs_for(unlock, 1, self._holdings())), 90)
+            else:
+                text = "not in the table"
+            rows.append((standing is not None and standing.unlocked, name, (name, standing.describe() if standing is not None
+                         else ("not known yet" if known else "?"), offers.get(key, 0) or "-", text)))
+        rows.sort(key=lambda r: (not r[0], r[1].casefold()))
+        return [(name, values) for _unlocked, name, values in rows]
+
+    @staticmethod
+    def _unlock_part(need: needs_mod.Need) -> str:
+        have = "" if need.have is None else f" (have {need.have:,})"
+        return f"{need.need:,} x {need.ingredient.name}{have if need.have is not None else ' (not counted)'}"
+
+    def _fill_engineers(self) -> None:
+        keep = self._picked_engineer
+        self._engineer_table.clear()
+        for name, values in self._engineer_rows():
+            self._engineer_table.insert(name, values)
+        if keep and self._engineer_table.exists(keep):
+            self._engineer_table.select(keep)
+        if self._engineers.has_data:
+            self._engineer_note.configure(text="Standings come from the journal's engineer list, sent at login and when one changes. Unlock needs are from "
+                                               "the blueprint table (March 2024): an invitation may also need something the table does not list.")
+        else:
+            self._engineer_note.configure(text="The game has not listed your engineers yet. Log in to the game and they appear here.")
+
+    def _pick_engineer(self, name: str) -> None:
+        self._picked_engineer = name
+
+    def _show_engineer_blueprints(self) -> None:
+        if self._picked_engineer is None:
+            self._shell.set_status("Select an engineer first.")
+            return
+        self._type.set(ALL)
+        self._query.set(self._picked_engineer)
+        self._fill_blueprints()
+        self._tabs.select(0)
+
+    def _add_unlock(self) -> None:
+        if self._picked_engineer is None:
+            self._shell.set_status("Select an engineer first.")
+            return
+        unlock = blueprints.unlock_for(self._picked_engineer, key=engineers.name_key)
+        if unlock is None:
+            self._shell.set_status("The table has no unlock for that engineer.")
+            return
+        self._add_blueprint(unlock.id, 1)
 
     # --- the window ----------------------------------------------------------------------------------------------------
 
@@ -371,6 +487,7 @@ class BlueprintsWindow:
 
     def close(self) -> None:
         self._wishbook.remove_listener(self._on_changed)
+        self._engineers.remove_listener(self._on_changed)
         self._shell.close()
 
     def _on_changed(self) -> None:
@@ -389,6 +506,7 @@ class BlueprintsWindow:
                                  else "Waiting for a commander (log in)")
         self._fill_detail()
         self._fill_wishlist()
+        self._fill_engineers()
         if not self._shell._status.cget("text"):
             self._shell.set_status("Counts: ship materials come from your journal, on-foot items from your ship locker only (not the backpack or a "
                                    "carrier's locker). Trade goods are not counted.")
