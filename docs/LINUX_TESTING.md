@@ -78,6 +78,10 @@ Where a step fails, copy the relevant lines from EDMC's log
 - [ ] Materials (Field Ops mode, **Materials** section; added 2026-10-13): log in and the row shows the pieces of each type; collect or discard a
       material and "Last: ..." follows; a material at its limit is named; **MATERIALS** opens the window; Search, Type, Grade and **Only what is at
       the limit** narrow the table; headings sort; the window keeps its size and place; restart EDMC mid-session and the counts are right.
+- [ ] Material trader (Materials window, **Find a trader**; added 2026-10-14): the window opens with your system filled in and the type that has the
+      most at the limit; **Find** lists traders nearest first (check one against the galaxy map); the Type, Within and Pad drop-downs change the
+      search; **Here** refills the system; a typed system works; double-click copies the system name; with no network the status says Spansh
+      could not be reached and **Find** works again afterwards.
 - [ ] Engineering (Field Ops, **BLUEPRINTS** on the Materials section; added 2026-10-13): the window opens with **Blueprints** and **Wishlist** tabs;
       Search (it waits a moment after typing) and the Module drop-down narrow the list; picking a row shows its ingredients, what you hold and
       where each is found; **Add to wishlist** and a double-click add; the Wishlist tab shows each entry's crafts, whether it can be made and

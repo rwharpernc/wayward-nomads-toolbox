@@ -6,6 +6,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **Material trader finder** (**Find a trader** in the Materials window). Finds the closest station with a Raw, Manufactured or Encoded material trader
+  to your system (or one you type), nearest first, with whether it is in space or on a surface, its distance from the star and its largest landing
+  pad; filter by distance and pad size, and double-click a row to copy its system name. It shows what you hold of that type by grade and how many
+  are at the game's limit. Pressing Find sends Spansh the system name and the type, nothing else.
 - **Engineering blueprints and a wishlist** (Field Ops, the **BLUEPRINTS** button on the Materials section opens the Engineering window). Browse
   about 1,170 blueprints (ship modules, Guardian items, Technology Broker and engineer unlocks, synthesis, Odyssey suit and weapon upgrades) by
   search and module type, see who offers each, its effects and what one craft takes against what you hold and where each ingredient is found. Add

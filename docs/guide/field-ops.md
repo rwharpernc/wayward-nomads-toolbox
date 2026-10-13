@@ -116,6 +116,14 @@ The counts are kept on your computer for the commander they belong to, and nothi
 **The limits** are 300, 250, 200, 150 and 100 for grades 1 to 5. The names, types and grades are a built-in table of the game's 137 materials;
 a new material the table does not know is still counted, with no grade or limit shown, until WNTB is updated.
 
+**Find a trader.** A material trader swaps materials within one category (a Raw trader trades Raw materials, and so on). **Find a trader** in the
+Materials window opens a window to look for the closest one: pick the **Type**, how far to look (**Within**, 50 ly up to any distance) and the
+smallest landing **Pad** you need, check the system to **Search from** (it starts as the one you are in; type another to plan ahead, or press
+**Here**) and press **Find**. The results list the closest first, each with whether the station is in space or on a surface, its distance from the
+arrival star and its largest pad; double-click a row to copy its system name for the galaxy map. Above the results, what you hold of that type by
+grade, with how many materials are at the game's limit, so you can see what is worth swapping. Pressing **Find** is the only thing that goes online:
+it sends Spansh the system name and the type. The same search within two minutes is answered from memory.
+
 ## Engineering: blueprints and a wishlist
 
 **BLUEPRINTS** on the Materials row opens the Engineering window. It has three tabs.
@@ -195,5 +203,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Your materials to match the game after every pick-up | The journal reports almost every gain, but not all of them: replaying about 6,400 login lists, WNTB's counts matched the game's next list 93% of the time, and most of the misses were counts that were higher in the game with no event in between. | The next login list corrects the counts. |
 | The Engineering window to know how many crafts you need | The game rolls the result of each craft; nothing in the journal says how many it will take. | Set the number of crafts you expect. |
 | On-foot upgrades to count your backpack | The wishlist counts the **ship locker** only. Whether the game also draws on the backpack is not confirmed. | Stow what you carry into the ship locker (or just check the count in the game). |
+| The trader finder to say what a trade would give you | It finds the stations. The rates a trader offers are not in the journal or in Spansh's data, so WNTB does not show or work out a rate. | Check the rate at the trader before you swap. |
+| The trader finder to be current | The list is Spansh's, from what players have reported: a station can have lost its trader or be closed to you (a permit, a faction state). | Check the station when you arrive; the `Pad` column is the largest pad Spansh knows. |
 | Ship Builds to be checked | WNTB only stores the link and name you give it. It doesn't read or check the build. | Keep your link current if the site changes. |
 

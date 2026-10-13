@@ -86,6 +86,8 @@ being listed doesn't mean a tool was the first or the only one.
   `plugin/blueprints_extra.py`: their unlock steps and the items for Yi Shen are game facts as stated in the Materials Helper's English text
   (MIT) and in the engineering checklist on [edblackbox.com](https://edblackbox.com/guides/engineering/engineering-manuals/checklist.html),
   which also gives their places (unconfirmed there); a Frontier forum thread agrees on the steps. No code was taken, and none of it is from Frontier.
+- **Material trader finder:** [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s material trader finder shaped the idea. WNTB's is its own,
+  and no code was taken. The stations are [Spansh](https://spansh.co.uk/)'s station search, filtered by its material trader field.
 - **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials
   Helper.
 - **Nearest neutron star and white dwarf lookups:** [Spansh](https://spansh.co.uk/) answers the N.S. and W.D.
