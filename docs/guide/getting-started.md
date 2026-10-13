@@ -89,6 +89,11 @@ You don't have to configure anything to get value out of WNTB, but this short to
    game never records (for example, a fleet carrier's cargo is only exact after you open Carrier Management) and
    how to work around it.
 
+**Why WNTB sometimes can't tell you something.** WNTB, like every third-party tool, only knows what the game writes to its journal
+files, and not everything is logged. It fills some gaps from Frontier's servers (through a signed-in EDMC) and from data players and
+communities report (Spansh, EDSM, Canonn, edastro, Raven Colonial), and works around the rest with labelled estimates and small steps
+you take. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 ## Finding your way around
 
 ### The mode buttons

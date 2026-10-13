@@ -5,6 +5,8 @@ reads, and what has and hasn't been verified. For what it does for the user, see
 [README](guide/trade.md). For the plugin-wide rules it follows (feature contract, main-window sizing,
 threading, persistence), see [TECHNICAL.md](TECHNICAL.md).
 
+> **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
+
 **Contents**
 
 1. [What it is](#1-what-it-is)

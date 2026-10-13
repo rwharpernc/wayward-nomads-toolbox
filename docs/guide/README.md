@@ -3,12 +3,21 @@
 Plain-language guides for using the Wayward Nomads Toolbox. New here? Start with
 [Getting started](getting-started.md).
 
-## Full disclosure
+## How WNTB knows what it knows
 
-WNTB can only show what Elite Dangerous writes to its journal files and what services such as Spansh, EDSM and
-Canonn publish. Some things the game never records, records late or records in part. **Every mode guide ends with a
-section called "What the game does and doesn't tell us, and how to work around it"** listing each gap we know of, how
-it looks on screen, and what to do. Where a figure is an estimate, WNTB marks it as one.
+Like every third-party tool for Elite Dangerous, WNTB only knows what the game writes to its journal files. Much of what makes play easier starts there, and not everything is logged. Where the journal is silent, WNTB adds what it can from other places: figures Frontier's own servers give a signed-in EDMC (such as a fleet carrier's cargo), and data that players and community services report (Spansh, EDSM, Canonn, edastro, Raven Colonial and others). Where none of that exists, WNTB works around the gap with an estimate that it marks as one, or with a step you take (such as opening Carrier Management so the game reports the figure). Until Frontier expands the journal or offers a broader API, these workarounds are part of how WNTB works, and every guide lists the gaps it knows of.
+
+Three layers, in the order WNTB prefers them:
+
+1. **The journal** is the source for everything about *you*: your trades, scans, missions, deliveries, merits and so on. If the game
+   doesn't write it down, WNTB can't see it, and no setting changes that.
+2. **Other places that know more**: Frontier's servers (through a signed-in EDMC) and the data players and communities report. WNTB
+   uses these to fill gaps the journal leaves, never to overrule it, and the [internet page](internet-and-privacy.md) lists every one.
+3. **Workarounds, marked as such**: WNTB's own bookkeeping (for example, tallying what you transfer to a fleet carrier), estimates
+   labelled as estimates, and steps you can take (such as opening Carrier Management) to make the game write what it normally doesn't.
+
+**Every mode guide ends with a section called "What the game does and doesn't tell us, and how to work around it"** listing each gap we
+know of, how it looks on screen, and what to do. Where a figure is an estimate, WNTB marks it as one.
 
 ## Setting up
 

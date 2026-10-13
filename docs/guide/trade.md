@@ -23,6 +23,8 @@ under the page arrows.
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it) ·
 [Using Trade on two computers](#using-trade-on-two-computers) · [Settings](#trade-settings)
 
+> **Where this comes from:** your trades, costs and cargo come from the journal. Where it falls short WNTB works around it: a carrier's space is only written when you open Carrier Management, its bay contents are not listed at all (WNTB shows the carrier's orders, and an estimate marked `~`), and routes and prices come from Spansh, a community database. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 ## How a trading session works
 
 **A session is your running tally, and it belongs to a commander.** It starts the first time WNTB sees you and lasts
@@ -296,9 +298,10 @@ orders name only the commodities on order), so there is no other way to read it.
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes into its journal files (and what Spansh, a community database,
-publishes). Some things the game never records, or records late or only in part. Rather than guess quietly, WNTB shows
-the figure it has and says how sure it is. Here is every gap we know about, what it looks like on screen, and what to do.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what Spansh, a community
+database, reports, and what Frontier's servers give a signed-in EDMC (a carrier's real cargo), and works around the rest. Some
+things the game never records, or records late or only in part. Rather than guess quietly, WNTB shows the figure it has and says
+how sure it is. Here is every gap we know about, what it looks like on screen, and what to do. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 ### Your fleet carrier
 

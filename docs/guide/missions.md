@@ -2,6 +2,8 @@
 
 One view of every mission on your board, sorted by type, plus Community Goals and what they paid you.
 
+> **Where this comes from:** everything here comes from the journal alone, and the journal is thin in places: wing and on-foot kills are often missing until a mission completes, active missions are only listed at login, and a Community Goal never announces its end. Where WNTB has to work something out, it marks it (a `~`). See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 ## Using it
 
 The panel shows one category at a time, with a line like `◀  Combat (3)  ▶  All`. Click the **◀** or **▶** arrow to
@@ -21,7 +23,7 @@ The "All" window is titled *WNTB - All Active Missions*.
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (none are needed for missions) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It needs no outside service for missions, so the journal is the whole story, and it works around the gaps below. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

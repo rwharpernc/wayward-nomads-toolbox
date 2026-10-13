@@ -8,6 +8,8 @@ files it keeps, and the outside lookups it can make. For how to use it, see the
 [README](guide/mining.md). For how the code is organised in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
+> **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
+
 ## 1. Goals
 
 - Track **Space Mining** (any ship) and **Surface Mining** (the Rhino SRV) runs live: what you've

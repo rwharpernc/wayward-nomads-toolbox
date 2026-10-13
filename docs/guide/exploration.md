@@ -3,6 +3,8 @@
 Exploration mode is one scrolling panel with several sections stacked top to bottom. Some sections start folded:
 click a section's title (▸ / ▾) to open it. WNTB remembers which ones you left open.
 
+> **Where this comes from:** your scans, jumps, honks and Codex finds come from the journal, so everything about *your* exploring is exact. What the journal can't say (which systems exist or are unvisited, a gas giant's colour, which species a planet hosts before you sample it) is filled from what EDSM, Spansh, Canonn and edastro report, or worked out and labelled as a lead to check. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
 [Organic Scanning](#organic-scanning) · [Codex Completionist](#codex-completionist) ·
@@ -355,7 +357,7 @@ The same idea, using Canonn's lists of Thargoid and Guardian sites. Click **FIND
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (EDSM, Spansh, Canonn and edastro) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what EDSM, Spansh, Canonn and edastro report and works around the rest. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

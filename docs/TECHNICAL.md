@@ -34,6 +34,15 @@ overlays, see [OVERLAY_SETUP.md](OVERLAY_SETUP.md). For acknowledgements, see
 
 ---
 
+**The design principle behind everything below.** A third-party tool for Elite Dangerous only knows what the game writes to its
+journal files (and the small, live `Status.json`), and not everything is logged. So WNTB is built journal-first: every feature
+starts from the events the game does write. Where the journal is silent it adds, in this order, Frontier's own data when EDMC is
+signed in (CAPI: a carrier's cargo, the Carrier Locker), data that players and communities report (Spansh, EDSM, Canonn, edastro,
+Raven Colonial; section 11), and finally its own bookkeeping, estimates and user steps (such as opening Carrier Management so the game
+writes `CarrierStats`), each labelled as what it is. Until Frontier expands the journal or offers a broader API, those workarounds are
+the design, not exceptions to it, and each one is recorded as a gap and a workaround in the matching user guide (the "What the game
+does and doesn't tell us" table) and, where it shapes the code, in the notes below.
+
 ## 1. Where WNTB runs
 
 WNTB is not a program. It is a plugin loaded into **EDMC** (Elite Dangerous Market Connector), a
@@ -392,7 +401,9 @@ correcting a ratio retroactively fixes old sessions' estimates.
 
 ## 9. Journal, Status.json and CAPI
 
-Three different data sources reach WNTB through three different hooks.
+Three different data sources reach WNTB through three different hooks. They are the "first layer" of the design principle at the top
+of this guide: the journal is the only source that carries your play, so what it leaves out has to be filled in or worked around
+elsewhere (sections 11 and 17).
 
 - **Journal events** (`journal_entry`): discrete things the game logs, such as `FSDJump`, `Scan`,
   `Docked`, `MissionCompleted`. Most features run on these.
@@ -592,6 +603,9 @@ a minute or more to start on Linux), the worker calls `OverlayClient.retry_now()
 Overlay message IDs use `wntb_<feature>_*` so a group's prefix matches exactly its own shapes.
 
 ## 11. External services
+
+These are the "second layer" of the design principle at the top of this guide: community and Frontier-side data that adds to what the
+journal cannot say. They never overrule the journal, and none is needed for the journal-driven core of a mode to work.
 
 | Service | Used for | Trigger |
 |---|---|---|

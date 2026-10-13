@@ -7,6 +7,8 @@ carrier and for one without; the wording changes to match, and the carrier lines
 > **Work in progress.** Co-op building (several commanders on one project) and colony tracking are planned, through a separate
 > app that is in development. For now this page is about your own deliveries, ship and carrier, and details may change.
 
+> **Where this comes from:** the journal reports a construction site's totals when you dock or open its market, and each delivery you make, but not who delivered what, and it only records cargo you *transfer* to or from your carrier. WNTB adds the carrier's real hold from Frontier's servers (through a signed-in EDMC), nearby stock from Spansh, plans that players enter on Raven Colonial, and a bundled table of building costs, and works around the rest by tallying transfers itself. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 **On this page:** [The COL page](#the-col-page) · [Tracking a site](#tracking-a-site) ·
 [The Colonization Sites window](#the-colonization-sites-window) · [Where to buy](#where-to-buy) · [Planned builds](#planned-builds) ·
 [The shopping list on the overlay](#the-shopping-list-on-the-overlay) ·
@@ -405,6 +407,8 @@ site. **Without a carrier** there is one figure, `► 32,769 remaining  ► 33 t
 - It is cleared when EDMC closes. If the overlay program isn't running, nothing is drawn and nothing breaks.
 
 ## What the game does and doesn't tell us, and how to work around it
+
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what Frontier's servers give a signed-in EDMC (the carrier's real cargo), what Spansh reports (where to buy), what players enter on Raven Colonial (plans and progress) and a bundled table of building costs, and works around the rest by keeping its own tallies. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

@@ -3,6 +3,8 @@
 Field Ops holds the on-foot and housekeeping tools: screenshots, your inventory and saved ship builds.
 (Colonization has its own mode, with its own page: [Colonization](colonization.md).)
 
+> **Where this comes from:** screenshots, your backpack and ship locker, and ship loadouts come from the journal (or from EDMC's own state, which it rebuilds from the journal). The journal doesn't give your backpack's capacity, so WNTB uses a built-in table, and the Carrier Locker isn't in the journal at all: it comes from Frontier's servers through a signed-in EDMC. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 **On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Ship Builds](#ship-builds) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
@@ -118,7 +120,7 @@ the address. **Edit** and **Delete** work the same way.
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (Frontier's servers for the Carrier Locker) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what Frontier's servers give a signed-in EDMC (for the Carrier Locker) and works around the rest. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

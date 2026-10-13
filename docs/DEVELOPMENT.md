@@ -160,7 +160,12 @@ feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and is
    Any new network call must follow the API-usage rules in
    [TECHNICAL.md](TECHNICAL.md#keeping-api-traffic-low): opt-in or user-triggered, cached, capped, with a
    timeout, and identified through `http_identity.user_agent()`.
-5. Update the README and the user guides in `docs/guide/`, the changelog and any affected docs in the same change, including a row in
+5. **Journal first.** A third-party tool only knows what the game writes to its journal, and not everything is logged, so start a
+   feature from the journal events the game does write. When it falls short, add data from Frontier (signed-in EDMC) or from a
+   community service, or work around it with a labelled estimate or a step the user takes, and record the gap and its workaround in
+   the matching guide's "What the game does and doesn't tell us" table. See the design principle at the top of
+   [TECHNICAL.md](TECHNICAL.md).
+6. Update the README and the user guides in `docs/guide/`, the changelog and any affected docs in the same change, including a row in
    [MODULES.md](MODULES.md) for any new module.
 
 ### Using other people's work

@@ -4,6 +4,8 @@
 **Last updated:** 2026-10-03 (see `CHANGELOG.md`)
 **Status:** work in progress. Feedback, bug reports and suggestions are welcome: [open an issue](https://github.com/rwharpernc/wayward-nomads-toolbox/issues) or find me in the Wayward Nomads squadron.
 
+> **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
+
 ## 1. Goals
 
 A WNTB mode that shows what the commander is doing to the Background Simulation (BGS), scoped to *only*

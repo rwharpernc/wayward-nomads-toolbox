@@ -219,13 +219,15 @@ estimate; it shows only your ship hold and the carrier's cargo figures.
 
 ## A number looks wrong or missing
 
-Often it is a limit of what the game records, not a fault. Each mode guide ends with "What the game does and doesn't
+Often it is a limit of what the game records, not a fault: WNTB, like every third-party tool, only knows what the game writes to its
+journal files (see [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows)). Each mode guide ends with "What the game does and doesn't
 tell us, and how to work around it": [Powerplay](powerplay.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
 [Exploration](exploration.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
 [Mining](mining.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
 [Trade](trade.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
 [Missions](missions.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
 [Field Ops](field-ops.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
+[Colonization](colonization.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it),
 [BGS](bgs.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it) and
 [Landing and Interdiction](always-on.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it).
 

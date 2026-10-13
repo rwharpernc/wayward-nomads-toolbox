@@ -8,6 +8,8 @@ The standing reference for Boxel Survey across all three sub-modes (Sequence, Re
 Route): what's true about the system right now, why, and what's still unknown. Release history is in
 `CHANGELOG.md`.
 
+> **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
+
 ## 1. Goals
 
 Help an explorer systematically survey a procedurally-generated boxel (subsector) without requiring a

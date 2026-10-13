@@ -5,6 +5,8 @@ your game screen, so it needs an overlay running. Landing Assist can show in the
 diagram on the game screen needs an overlay. See [Getting started](getting-started.md#what-you-need) and
 [Setting up the overlay](../OVERLAY_SETUP.md).
 
+> **Where this comes from:** both tools run on journal events alone. The journal gives Landing Assist a pad number and the station type, with no orientation, and Interdiction Warning combines the game's early signals with its own `Interdicted` and `EscapeInterdiction` events. Nothing is looked up online. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 ## Landing Assist
 
 Shows which landing pad you've been assigned while docking, in the EDMC panel and/or as a diagram on your game
@@ -41,7 +43,7 @@ whether an overlay is listening.
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (none are needed here) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It needs no outside service here, so the journal is the whole story. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

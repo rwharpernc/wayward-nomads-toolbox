@@ -23,6 +23,7 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS).
 
 ## Contents
 
+- [How WNTB knows what it knows](#how-wntb-knows-what-it-knows)
 - [What's in the toolbox](#whats-in-the-toolbox)
 - [Planned and being researched](#planned-and-being-researched)
 - [Quick start](#quick-start)
@@ -32,6 +33,25 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS).
 - [For developers, credits and licence](#for-developers-credits-and-licence)
 
 ---
+
+## How WNTB knows what it knows
+
+Like every third-party tool for Elite Dangerous, WNTB only knows what the game writes to its journal files. Much of what makes play easier starts there, and not everything is logged. Where the journal is silent, WNTB adds what it can from other places: figures Frontier's own servers give a signed-in EDMC (such as a fleet carrier's cargo), and data that players and community services report (Spansh, EDSM, Canonn, edastro, Raven Colonial and others). Where none of that exists, WNTB works around the gap with an estimate that it marks as one, or with a step you take (such as opening Carrier Management so the game reports the figure). Until Frontier expands the journal or offers a broader API, these workarounds are part of how WNTB works, and every guide lists the gaps it knows of.
+
+In practice, three layers:
+
+1. **The journal.** The files Elite Dangerous writes as you play. Everything WNTB shows about *you* starts here: your trades, scans,
+   missions, deliveries, merits and so on. If the game doesn't write it down, WNTB can't see it.
+2. **Other places that know more.** Frontier's servers (through a signed-in EDMC), and the data players and communities share:
+   [Spansh](https://spansh.co.uk), [EDSM](https://www.edsm.net), Canonn, edastro, [Raven Colonial](https://ravencolonial.com).
+   These are used to fill in what the journal lacks, never to replace it, and each one is listed on the
+   [internet page](docs/guide/internet-and-privacy.md).
+3. **Workarounds, marked as such.** WNTB's own bookkeeping (for example, tallying what you transfer to a fleet carrier), estimates
+   that are labelled as estimates, and steps you can take (such as opening Carrier Management) to make the game write what the
+   journal normally leaves out.
+
+Each guide ends with a table of what the game does and doesn't tell us, and how to work around it. If a number looks wrong, that
+table is the first place to look.
 
 ## What's in the toolbox
 
@@ -62,10 +82,10 @@ to the commander you are playing; nothing is shared between commanders.
 missed (trades, missions, colonisation deliveries, Codex finds, merits and more), counting nothing twice. Getting
 started has a table of what each feature catches up on and how far back.
 
-**Full disclosure.** WNTB can only show what the game writes to its journal files and what services such as Spansh
-and EDSM publish. Some things the game never records, or records late or in part (for example, a fleet carrier's
-cargo is only exact after you open Carrier Management). Each mode guide ends with a section, "What the game does and
-doesn't tell us, and how to work around it", listing every gap we know of and what to do about it. Estimates are
+**Full disclosure.** WNTB works from the game's journal files plus the other sources described in
+[How WNTB knows what it knows](#how-wntb-knows-what-it-knows), and some things the game never records, or records late or in part
+(for example, a fleet carrier's cargo is only exact after you open Carrier Management). Each mode guide ends with a section, "What
+the game does and doesn't tell us, and how to work around it", listing every gap we know of and what to do about it. Estimates are
 marked as estimates on screen.
 
 > **Colonization is a work in progress.** The COL page, the Colonization Sites window and the overlay shopping list work
@@ -141,7 +161,8 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 **EDMC, the journal and catching up**
 - **Run EDMC** while you play. If you forget, WNTB catches up from your recent journals when EDMC starts (up to about 14 to 30
   days for most features), counting nothing twice. It cannot catch up on things the game never writes down.
-- WNTB only knows what the game writes to its journal. Where it can't be sure, it says so. Each guide lists these gaps and
+- WNTB, like every third-party tool, only knows what the game writes to its journal, plus what it can add from Frontier's servers and
+  community services. Where it can't be sure, it says so. Each guide lists these gaps and
   the workaround in "What the game does and doesn't tell us".
 - Everything is kept **per commander**. Switching commanders in EDMC switches the data.
 - **Linux:** EDMC's **Journal directory** must point at Elite's journal folder inside the Proton/Wine folder, or most

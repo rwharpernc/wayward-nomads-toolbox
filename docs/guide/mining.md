@@ -8,6 +8,8 @@ Mining mode tracks two kinds of mining, plus your own catalogue of known hotspot
 Use the **◀** and **▶** buttons at the top of the panel to switch between the two pages. Each page shows live stats
 for your current run.
 
+> **Where this comes from:** the journal records what you prospect, refine and collect, but not a ring's deposit amounts or density, which you type in. The hotspot catalogue is your own, and ring reserve and hotspot lookups use what players have uploaded to EDSM and Spansh. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 ## The buttons
 
 The buttons sit side by side in one row, in this order. Which ones you see depends on the page and on your
@@ -58,7 +60,7 @@ you save hotspots. It describes your own finds, not what a body actually holds.
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (Spansh and EDSM) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what Spansh and EDSM report and works around the rest. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

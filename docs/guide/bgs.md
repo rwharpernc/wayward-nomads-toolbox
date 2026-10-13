@@ -13,6 +13,8 @@ There is nothing to set up: it records wherever you act.
 [The BGS Report window](#the-bgs-report-window) · [Resets and history](#resets-and-history) ·
 [Tick detection](#tick-detection-and-the-internet) · [Settings](#settings)
 
+> **Where this comes from:** the journal records what *you* do (missions, bounties and bonds, trade, exploration data, crimes) but not what any of it did to a faction's influence, so the effects BGS shows are WNTB's own bookkeeping of your activity (trade, for example, is an approximation). The one outside source is a community tick-time service for when the tick happens. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 ## The panel
 
 The panel shows **only the system you're in**:
@@ -73,7 +75,7 @@ the tick was.
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (a community tick-time service) publish. Where it can't be sure, WNTB says so rather than guess quietly.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds the BGS tick time from a community tick-time service and works around the rest. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

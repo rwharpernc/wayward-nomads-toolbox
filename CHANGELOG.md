@@ -3,6 +3,17 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Documentation
+- **One common thread through the documentation: WNTB works from what the game writes to its journal.** A third-party tool only knows
+  what Elite Dangerous journals, and not everything is logged. A new section, "How WNTB knows what it knows", in the README and the
+  guide index sets out the three layers (the journal; Frontier's data through a signed-in EDMC and what players and community services
+  report; and labelled workarounds), and the theme is now carried through every mode guide (an opening note on where that mode's
+  information comes from, and a rewritten "What the game does and doesn't tell us" introduction), Getting started, the internet page,
+  Troubleshooting, the technical guide and its mode specifications, and the development guide. Until Frontier expands the journal or
+  offers a broader API, the workarounds are part of how WNTB works.
+
 ## 1.8.1 - 2026-10-13
 
 ### Fixed

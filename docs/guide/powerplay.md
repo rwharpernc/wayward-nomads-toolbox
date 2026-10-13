@@ -14,6 +14,8 @@ own numbers.
 [The Systems tab](#the-systems-tab) · [Catching up from your journals](#catching-up-from-your-journals) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it) · [Rare Goods Finder](#rare-goods-finder) · [Settings](#settings)
 
+> **Where this comes from:** merits come straight from the journal and are exact. The journal doesn't say which activity earned a merit and doesn't report Control Points at all, so WNTB infers the activity from the state of the system and estimates CP from ratios you can edit; whole-system figures are only as fresh as your last visit, and Spansh supplies the Rare Goods Power column. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
+
 ## Using it
 
 Just play. The panel shows:
@@ -97,7 +99,7 @@ It can't read journals you've deleted, and your own totals are never replaced by
 
 ## What the game does and doesn't tell us, and how to work around it
 
-WNTB can only show what Elite Dangerous writes to its journal files and what the online services it asks (Spansh for the Rare Goods Power column) publish. Where it can't be sure, WNTB says so rather than guess quietly. Your merit totals always come straight from the journal and are exact.
+WNTB, like every third-party tool, only knows what Elite Dangerous writes to its journal files. It adds what Spansh reports (for the Rare Goods Power column) and works around the rest. Where it can't be sure, WNTB says so rather than guess quietly. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows). Your merit totals always come straight from the journal and are exact.
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|

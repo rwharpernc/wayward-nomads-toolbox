@@ -8,6 +8,8 @@ prediction, how scan progress is tracked, and where its answers can be wrong. Fo
 [README](guide/exploration.md#organic-scanning). For how the code is organised in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
+> **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
+
 ## 1. Goals
 
 - Given the biological signals on a planet, say which **species** each is likely to be, from the planet's

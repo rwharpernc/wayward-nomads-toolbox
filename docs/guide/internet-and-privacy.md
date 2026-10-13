@@ -1,7 +1,10 @@
 # What goes on the internet
 
-Most of WNTB works entirely on your own computer, reading the game's journal files. This page lists **every**
-feature that contacts an outside site, so you can decide what you're comfortable with.
+Most of WNTB works entirely on your own computer, reading the game's journal files. The journal is all a third-party tool is given
+about your play, and not everything is logged, so a few features add to it from outside: data the community reports (Spansh, EDSM,
+Canonn, edastro, Raven Colonial) and figures Frontier's servers give a signed-in EDMC. This page lists **every** feature that
+contacts an outside site, so you can decide what you're comfortable with. See
+[How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
 **The short version:** most lookups only run when you click a button or after you switch them on in Settings. The
 exceptions are **BGS tick detection**, which is on by default (turn it off in Settings → BGS), and the **Rare Goods

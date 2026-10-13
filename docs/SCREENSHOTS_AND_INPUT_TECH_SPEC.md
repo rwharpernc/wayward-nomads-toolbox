@@ -9,6 +9,8 @@ pictures, and how it all differs on Linux. For how to use them, see the
 [README](guide/field-ops.md). For how the code is organised in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
+> **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
+
 ## 1. Input automation: what it is, and isn't
 
 **What WNTB does.** It asks the operating system to press a key, exactly as if you pressed it on your
