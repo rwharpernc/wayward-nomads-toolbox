@@ -88,6 +88,7 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `gec_poi_edastro.py` | edastro.com's Galactic Exploration Catalog: downloads the full list once and finds the nearest point of interest locally (their own nearest endpoint does not use the position) |
 | `gec_poi_panel.py` | The GEC Nearby POI section |
 | `expedition.py` | Expedition planner, the pure part: named expeditions of ordered stops with notes, one active at a time, stops ticked off from arrivals with jump and distance totals, nearest-neighbor ordering, CSV and text export, kept per commander in `expeditions.json`; no Tk |
+| `expedition_panel.py` | The Expedition row in Exploration mode: the tracked expedition's stops done, jumps, light-years and time, the next stop with its distance and note, the stop just reached, COPY and copy-on-arrival; feeds the planner from the journal |
 | `notes_data.py` | The commander's notes on a system or body, kept per commander in `notes.json`: validation and limits, search, and an add, change and delete that save at once; no Tk |
 | `notes_panel.py` | The Notes row in Exploration mode: how many notes the system you are in has and the newest, a one-line quick add, and the button that opens the window |
 | `notes_window.py` | The Notes window: search, a list of every note, and an editor with a Here button for the system and body you are at |

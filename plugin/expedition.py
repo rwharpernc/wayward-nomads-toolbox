@@ -150,6 +150,10 @@ def _xyz(raw: Any) -> Optional[XYZ]:
     return None
 
 
+parse_xyz = _xyz
+"""A position from the journal's `StarPos` (three finite numbers), or None."""
+
+
 def _empty() -> Dict[str, Any]:
     return {"expeditions": []}
 
