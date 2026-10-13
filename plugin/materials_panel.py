@@ -13,7 +13,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 from config import appname
 
-from . import blueprint_needs, blueprint_wishlist, blueprints_window, engineers, inventory_panel, materials, materials_window, panelkit
+from . import blueprint_needs, blueprint_wishlist, blueprints_window, engineers, inventory_panel, material_trader_window, materials, materials_window, panelkit
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -24,6 +24,7 @@ _FULL_SHOWN = 3        # names listed on the "at the limit" line; the rest are c
 _NAME_SHOWN = 22       # characters of a material name shown in the panel
 _HOLDING_EVENTS = ("ShipLocker", "Backpack", "BackpackChange", "Resupply", "TransferMicroResources", "BuyMicroResources", "SellMicroResources",
                    "UseConsumable", "CollectItems", "DropItems", "Embark", "Disembark", "LoadGame")
+_ARRIVAL_EVENTS = ("FSDJump", "CarrierJump", "Location")
 _WRAP_PX = 200         # the summary wraps here: what it shows comes from the game, and must not widen EDMC's window
 
 book = materials.MaterialBook()
@@ -80,6 +81,7 @@ def _clip(text: str) -> str:
 
 class MaterialsController:
     def __init__(self) -> None:
+        self._system = ""
         self._summary_var: Optional[tk.StringVar] = None
         self._section: Optional[tk.Frame] = None
         self._parent: Optional[tk.Frame] = None
@@ -97,10 +99,15 @@ class MaterialsController:
         book.flush()
         materials_window.close()
         blueprints_window.close()
+        material_trader_window.close()
 
     def handle_event(self, entry: Mapping[str, Any], cmdr: str, system: Optional[str], station: Optional[str],
                      state: Dict[str, Any]) -> None:
         book.set_commander(cmdr)       # a new commander tells the book's listeners (this row, an open window) itself
+        if entry.get("event") in _ARRIVAL_EVENTS and isinstance(entry.get("StarSystem"), str) and entry["StarSystem"].strip():
+            self._system = " ".join(entry["StarSystem"].split())
+        elif not self._system and system:
+            self._system = system.strip()
         wishlist.set_commander(cmdr)
         engineer_book.set_commander(cmdr)
         engineer_book.apply_event(entry)
@@ -142,9 +149,13 @@ class MaterialsController:
         panelkit.add_tooltip(engineering, "Open the Engineering window: browse blueprints, keep a wishlist and see what you still need")
         self._update_summary()
 
+    def system(self) -> str:
+        """The system the commander is in, or an empty string when it is not known yet."""
+        return self._system
+
     def _open_window(self) -> None:
         if self._parent is not None:
-            materials_window.show(self._parent, book)
+            materials_window.show(self._parent, book, self)
 
     def _open_blueprints(self) -> None:
         if self._parent is not None:

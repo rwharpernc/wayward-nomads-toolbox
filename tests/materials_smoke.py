@@ -5,6 +5,7 @@ everything holds, 1 if not, 77 if Tk is unavailable."""
 import os
 import sys
 import tempfile
+import time
 import types
 from unittest import mock
 
@@ -67,7 +68,7 @@ except tk.TclError:
     sys.exit(77)
 root.withdraw()
 
-from plugin import blueprints, blueprints_window, materials, materials_panel, materials_window  # noqa: E402
+from plugin import blueprints, blueprints_window, material_trader_window, material_traders, materials, materials_panel, materials_window  # noqa: E402
 
 problems = []
 
@@ -75,6 +76,17 @@ problems = []
 def check(condition, message):
     if not condition:
         problems.append(message)
+
+
+def wait_for(condition, seconds=5.0):
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        root.update_idletasks()
+        root.update()
+        if condition():
+            return True
+        time.sleep(0.02)
+    return False
 
 
 def pump():
@@ -292,6 +304,88 @@ blueprints_window.close()
 pump()
 check(not bwin.alive and len(wish._listeners) == listeners - 1, "closing the Engineering window removes its listener")
 check(sorted(os.listdir(folder)) == sorted([materials.STATE_FILENAME, "blueprint_wishlist.json", "engineers.json"]), f"three data files, no commander name in a file name: {os.listdir(folder)}")
+
+
+# --- the material trader window -------------------------------------------------------------------------------------------------------------
+panel.handle_event({"event": "LoadGame"}, "Bocheaux", "Sol", None, {})
+panel.handle_event({"event": "FSDJump", "StarSystem": "Sol", "StarPos": [0, 0, 0]}, "Bocheaux", "Sol", None, {})
+book.apply_event(login)
+check(panel.system() == "Sol", f"the Materials row tracks the system: {panel.system()!r}")
+asked = []
+outcome = {"mode": "ok"}
+
+
+def fake_find(origin, kind, radius, pad):
+    asked.append((origin, kind, radius, pad))
+    if outcome["mode"] == "fail":
+        raise OSError("no network")
+    if outcome["mode"] == "refuse":
+        raise ValueError("Pick Raw, Manufactured or Encoded.")
+    traders = () if outcome["mode"] == "empty" else (
+        material_traders.Trader("Near", "Sol", "Coriolis Starport", False, 5.2, 300.0, "Large"),
+        material_traders.Trader("Far", "Alpha", "Planetary Outpost", True, 40.0, 2500.0, "Medium"))
+    return material_traders.Result(origin, kind, radius, traders)
+
+
+material_trader_window.find_traders = fake_find
+materials_window.show(root, book, panel)
+mwin = materials_window._window
+pump()
+mwin._find_trader()
+pump()
+tw = material_trader_window._window
+check(tw is not None and tw.alive, "Find a trader opens the Material trader window")
+check(tw._origin.get() == "Sol", f"it starts from the system you are in: {tw._origin.get()!r}")
+check(tw._kind.get() == "Raw", f"the type with the most at the limit comes first: {tw._kind.get()!r}")
+check("Grade 1:" in tw._holdings.cget("text") and "at the limit" in tw._holdings.cget("text"), f"what you hold by grade: {tw._holdings.cget('text')!r}")
+tw._kind.set("Encoded")
+tw._show_holdings()
+check("Grade 1: 7 pieces in 1 material" in tw._holdings.cget("text"), f"the holdings follow the type: {tw._holdings.cget('text')!r}")
+tw._kind.set("Raw")
+
+tw._find()
+check(wait_for(lambda: not tw._busy), "the lookup finishes")
+pump()
+check(asked == [("Sol", "Raw", 100.0, "any")], f"it searched from the system, the type and the defaults: {asked}")
+check(len(tw._table) == 2, f"the traders are listed: {len(tw._table)}")
+check("Raw material traders within 100 ly of Sol" in tw._heading.cget("text"), f"the heading says what was asked: {tw._heading.cget('text')!r}")
+check("2 found" in tw._shell._status.cget("text"), f"and the status: {tw._shell._status.cget('text')!r}")
+tw._copy_system("t0")
+check(root.clipboard_get() == "Sol", f"double-click copies the system name: {root.clipboard_get()!r}")
+
+tw._radius.set(material_trader_window.ANY_DISTANCE)
+tw._pad.set("Large only")
+tw._kind.set("Encoded")
+tw._find()
+check(wait_for(lambda: not tw._busy), "a second lookup finishes")
+check(asked[-1] == ("Sol", "Encoded", None, "large"), f"any distance and the pad choice are passed on: {asked[-1]}")
+check("at any distance" in tw._heading.cget("text"), "and the heading says so")
+
+outcome["mode"] = "empty"
+tw._find()
+check(wait_for(lambda: not tw._busy), "an empty answer finishes")
+check("No Encoded material trader" in tw._shell._status.cget("text") and len(tw._table) == 0, f"an empty answer says so: {tw._shell._status.cget('text')!r}")
+outcome["mode"] = "fail"
+tw._find()
+check(wait_for(lambda: not tw._busy), "a failure finishes")
+check("could not be reached" in tw._shell._status.cget("text"), f"a failure is explained: {tw._shell._status.cget('text')!r}")
+outcome["mode"] = "refuse"
+tw._find()
+check(wait_for(lambda: not tw._busy) and "Pick Raw" in tw._shell._status.cget("text"), "a refusal shows its message")
+outcome["mode"] = "ok"
+tw._origin.set("   ")
+before = len(asked)
+tw._find()
+check(len(asked) == before and "Type the system" in tw._shell._status.cget("text"), "an empty system sends nothing")
+tw._fill_here()
+check(tw._origin.get() == "Sol", "Here fills in the system you are in")
+
+listeners = len(book._listeners)
+material_trader_window.close()
+pump()
+check(not tw.alive and len(book._listeners) == listeners - 1, "closing the trader window removes its listener")
+materials_window.close()
+pump()
 
 panel.stop()
 

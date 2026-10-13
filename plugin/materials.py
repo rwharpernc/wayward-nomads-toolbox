@@ -71,6 +71,15 @@ class Held:
 
 
 @dataclass(frozen=True)
+class GradeLine:
+    """What is held of one type at one grade: pieces, how many different materials, how many of them are at the limit."""
+    grade: int
+    pieces: int
+    materials: int
+    at_limit: int
+
+
+@dataclass(frozen=True)
 class Change:
     """The last single-material change the journal reported, for the panel row."""
     name: str
@@ -269,6 +278,16 @@ class MaterialBook:
         out = {kind: 0 for kind in TYPES}
         for held in self.held():
             out[held.material.type] = out.get(held.material.type, 0) + held.count
+        return out
+
+    def grade_summary(self, kind: str) -> List[GradeLine]:
+        """What is held of `kind` (Raw, Manufactured or Encoded) at grades 1 to 5, a line for each grade that has anything, lowest first. Materials
+        with no known grade are left out."""
+        out = []
+        for grade in sorted(CAPS):
+            mine = [h for h in self.held() if h.material.type == kind and h.material.grade == grade]
+            if mine:
+                out.append(GradeLine(grade, sum(h.count for h in mine), len(mine), sum(1 for h in mine if h.is_full)))
         return out
 
     def full(self) -> List[Held]:

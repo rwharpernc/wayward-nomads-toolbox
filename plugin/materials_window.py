@@ -7,11 +7,11 @@ from __future__ import annotations
 import logging
 import os
 import tkinter as tk
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from config import appname, config
 
-from . import materials
+from . import material_trader_window, materials
 from .uikit import palette as P
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
@@ -37,14 +37,15 @@ _COLUMNS = (
 )
 
 
-def show(parent: tk.Misc, book: materials.MaterialBook) -> None:
-    """Open the Materials window, or raise it if it is already open."""
+def show(parent: tk.Misc, book: materials.MaterialBook, ctx: Any = None) -> None:
+    """Open the Materials window, or raise it if it is already open. `ctx.system()` (the system the commander is in) lets the **Find a trader**
+    button start its search from there; without a `ctx` the button is left out."""
     global _window
     if _window is not None and _window.alive:
         _window.refresh()
         _window.lift()
         return
-    _window = MaterialsWindow(parent, book)
+    _window = MaterialsWindow(parent, book, ctx)
 
 
 def refresh() -> None:
@@ -76,13 +77,16 @@ def rows_for(book: materials.MaterialBook, query: str = "", kind: str = ALL, gra
 
 
 class MaterialsWindow:
-    def __init__(self, parent: tk.Misc, book: materials.MaterialBook) -> None:
+    def __init__(self, parent: tk.Misc, book: materials.MaterialBook, ctx: Any = None) -> None:
         self._book = book
+        self._ctx = ctx
         self._shell = WindowShell(
             parent, "Materials", "", size=DEFAULT_SIZE, min_size=MIN_SIZE,
             load_geometry=lambda: config.get_str(CONFIG_GEOMETRY) or "",
             save_geometry=lambda geometry: config.set(CONFIG_GEOMETRY, geometry))
         self._shell.window.protocol("WM_DELETE_WINDOW", self.close)
+        if ctx is not None:
+            self._shell.add_action("Find a trader", self._find_trader)
 
         filters = tk.Frame(self._shell.body, bg=P.BG)
         filters.pack(fill="x", pady=(0, P.PAD_SM))
@@ -121,6 +125,9 @@ class MaterialsWindow:
     def close(self) -> None:
         self._book.remove_listener(self._on_book_changed)
         self._shell.close()
+
+    def _find_trader(self) -> None:
+        material_trader_window.show(self._shell.window, self._book, self._ctx)
 
     def refresh(self) -> None:
         if not self.alive:
