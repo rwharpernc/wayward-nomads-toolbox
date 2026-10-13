@@ -8,7 +8,7 @@ click a section's title (▸ / ▾) to open it. WNTB remembers which ones you le
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
 [Organic Scanning](#organic-scanning) · [Codex Completionist](#codex-completionist) ·
-[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Compass](#compass) ·
+[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Expedition](#expedition) · [Compass](#compass) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 Anything that draws on your game screen needs an overlay. See [Getting started](getting-started.md#what-you-need)
@@ -377,6 +377,35 @@ you when you arrive. With the section folded, the title says `- 2 here`.
 
 Notes are matched to a system by its name (ignoring capitals and spaces at the ends), so a note about `Sol` shows when you are in Sol.
 
+## Expedition
+
+A planner for a trip. An **expedition** is a named list of **stops** (systems, each with an optional body and note). Start it and WNTB ticks stops
+off as you arrive and keeps the totals; you can keep several expeditions and run one at a time.
+
+**The Expedition row** (a collapsible section in Exploration mode) shows the one running: its name, `7 of 20 stops`, the jumps and light-years
+flown and the time since you started, the next stop with its distance (and its note), and the stop you have just reached. **COPY** puts the next
+stop's system name on the clipboard to paste into the galaxy map, and **Copy on arrival** does it for you every time you arrive anywhere (off until
+ticked). **EXPEDITION** opens the window.
+
+**The window**
+1. Type a name and press **New**. Pick an expedition from the list at the top; **Rename**, **Reset** and **Delete** act on it (Reset forgets the
+   progress and keeps the stops; Reset and Delete ask twice).
+2. Add stops: type the system (or press **Here** for the one you are in), an optional body and note, and press **Add stop**. Select a stop to
+   change it (**Save changes**), move it (**Up**, **Down**), tick it off yourself (**Mark visited**) or **Remove** it (asks twice).
+3. Or add many at once: **From plotted route** adds the systems of the route you plotted in the game (the one you are in is left out; they come with
+   their positions), and **Import CSV** reads a file with the columns system, body and note (a one-column list of systems works too).
+4. **Locate and reorder (EDSM)** asks EDSM for the positions of the unvisited stops that have none, then puts the unvisited stops in order,
+   always going to the nearest next, starting from where you are. This is the only part of the Expedition planner that goes online, and it sends
+   only system names. A stop EDSM cannot place keeps its place at the end.
+5. Press **Start**. From then on, arriving in a stop's system (a jump, a carrier jump, or logging in there) ticks off the first unvisited stop of that
+   name, wherever it is in the list, and each jump adds to the totals. **Pause** stops counting and keeps the progress; starting another expedition
+   pauses this one. When the last stop is ticked the expedition stays running until you press **Finish**.
+6. Share it: **Copy list** puts a text list on the clipboard, **Export CSV** saves the stops (it can be imported again), **Copy next** copies the
+   next stop's name.
+
+The expeditions are kept on your computer for each commander, and nothing is sent anywhere except the EDSM lookup above. It does not replace
+**Waypoints** (Boxel Survey), which stays a single quick list; **From plotted route** and the CSV import work the same way in both.
+
 ## Compass
 
 *(Starts minimized.)*
@@ -415,6 +444,10 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|
+| The planner to know a stop was visited when you were not in the game | It counts arrivals the journal reports while the expedition is **running** (Start). A system you reached while it was paused, or before you started, is not ticked. | Use **Mark visited** for those. |
+| The distance to the next stop on every stop | A distance needs a position for both ends. The game gives yours on every jump; a stop has one only if it came from a plotted route or EDSM. | Press **Locate and reorder (EDSM)**. A stop EDSM does not know shows `-`. |
+| The jump total to include carrier jumps | A fleet carrier jump is not your ship's jump, so it ticks stops but does not add to the jump count or the light-years. | Nothing needed. |
+| The light-years to be the whole route | It adds each jump's own distance as the game reports it, so it is the distance you flew, not the straight line between stops. | Nothing needed. |
 | A note to know which body you are at | The body comes from `Status.json` (`BodyName`), which the game writes only while you are near a body, and not in supercruise between bodies. | Press **Here** in the Notes window beside Body, or type the name. A note can be about the system alone. |
 | The compass to work in space or in a ship above the ground | The game gives a latitude and longitude only on a landable surface (on foot or in a vehicle). | Land, or get out, and it appears. |
 | A mark to know which body it is on | The body comes from `Status.json` (`BodyName`), which the game writes only near a body. Marks are matched by body name. | Use **Here** while standing there, or type the body's full name as the game shows it. |

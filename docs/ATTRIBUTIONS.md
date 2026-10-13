@@ -50,6 +50,7 @@ being listed doesn't mean a tool was the first or the only one.
   arrows): [EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter),
   [Rhino Surface Mapper](https://github.com/pbgaspar/rhino-surface-mapper), EDSMT, EliteMining and
   [EDPlanetNavigator](https://github.com/mcjohnso/EDPlanetNavigator).
+- **Expeditions** (a named trip as an ordered list of stops with notes and progress): [EDDiscovery](https://github.com/EDDiscovery/EDDiscovery)'s expeditions and Boxel Survey's own Waypoint Route. WNTB's is its own, and no code was taken. System positions come from [EDSM](https://www.edsm.net/) when you ask.
 - **Surface compass and marks** (an arrow and distance to a chosen latitude and longitude, with saved spots):
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s target tracking and [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s
   compass and bookmarks. WNTB's is its own: it grew out of Mining's own hotspot arrow, and no code was taken from either.

@@ -75,6 +75,12 @@ Where a step fails, copy the relevant lines from EDMC's log
       on the left; on a planet surface the section shows the nearest hotspot with a distance; **MARK** makes a mark; **TARGET** steps through
       the marks here; **MARKS** opens the window (edit, **Here**, Delete twice); with the compass enabled the arrow follows the target as you
       move and turn, and clears when you lift off. Check the Mining settings tab no longer has the waypoint tick.
+- [ ] Expedition (Exploration mode, **Expedition** section; added 2026-10-14): **EXPEDITION** opens the window; **New** makes an expedition; **Add stop**
+      (and **Here**) add stops; **From plotted route** (after plotting a route in the game) and **Import CSV** add many; **Start**, then jump to a
+      stop: the section ticks it, counts the jump and shows the next stop with its distance; **COPY** and **Copy on arrival** put the next stop's
+      name on the clipboard (check it pastes into the galaxy map's search box); **Locate and reorder (EDSM)** orders the unvisited stops;
+      **Export CSV** saves a file and **Import CSV** reads it back; **Reset** and **Delete** ask twice; the section stays narrow with a long name; the
+      window keeps its size and place.
 - [ ] Notes (Exploration mode, **Notes** section): the quick-add box saves a line against the current system; **NOTES** opens the window;
       the editor's text box takes typing and paste; **Here** fills the system and body; **Delete** asks twice; the window keeps its size
       and place after closing and reopening.

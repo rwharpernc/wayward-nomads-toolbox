@@ -19,6 +19,7 @@ The table says exactly when.
 | GEC Nearby POI | edastro.com | Only when you click **FIND**: the first press of a session downloads their whole list (about 2 MB), then it is reused for six hours |
 | Canonn Nearby POI | Canonn's published site lists, which are hosted on Google Sheets and Google Drive, so Google also sees the request | Downloads the lists when you click **FIND** |
 | Boxel Survey lookups | EDSM (and Spansh for Region Sweep) | When you use its lookup buttons. Some automatic checks are optional in Settings |
+| Expedition: Locate and reorder (button in the Expedition window) | EDSM | Only when you press it. Sends the names of the unvisited stops that have no position yet, in one request, and nothing about you. The positions are kept with the expedition |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings. Once on, the ring reserve lookup also runs by itself each time you drop into a ring |
 | Colonization: Planned Builds (Raven Colonial menu in the Colonization Sites window) | Raven Colonial (ravencolonial.com) | Only when you press **Planned Builds** or **Refresh** in that window. Sends the name of the site's system and nothing else; answers are remembered for a minute. It only reads |
