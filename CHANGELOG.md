@@ -8,8 +8,9 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ### Fixed
 - **Landing overlay: the "no diagram" box and its caption are laid out as one centered picture.** The caption beside the placeholder
   box used a fixed-width area, which left a wide empty strip to its right and wrapped it unevenly. It now wraps into three even lines,
-  and the card is exactly as wide as the box and caption need, with the same padding either side. A longer station name still widens
-  the card, and the pair stays centered in it. At a larger text size the lines get wider rather than reflowing.
+  and the card is as wide as the box and caption need. The pair is centered in the card allowing for the fact that the overlay's text
+  runs narrower than WNTB's (deliberately wide) estimate, so it no longer sits to the left with a gap on the right. A longer station
+  name still widens the card, and the pair stays centered in it. At a larger text size the lines get wider rather than reflowing.
 - **Shopping list overlay: the title line is no longer cut short.** The title is the game's full site name ("Orbital Construction
   Site: Wayward Station"), and anything past 40 characters was cut off with "…". It now holds 64, and the card widens to fit it.
 

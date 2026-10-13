@@ -616,6 +616,9 @@ _PLACEHOLDER_H = 100
 _FALLBACK_TEXT_SIZE = "normal"
 _FALLBACK_LABEL_TEXT = "No actual diagram - it probably looks something like this."
 _FALLBACK_LABEL_GAP = 16      # box to caption
+_CAPTION_CENTRE = 0.85        # centre the pair as if the caption were this fraction of its estimated width: the estimate errs wide (it must,
+                              # so text never runs past a card), and seen on a real screen the caption was about 80% of it, which left
+                              # the pair sitting left of centre. The card's width still uses the full estimate, so nothing runs past it.
 _CAPTION_LINES = 3            # the caption is wrapped into at most this many lines, as narrow as that allows
 _FALLBACK_LINE_HEIGHT = 22
 _FALLBACK_MAX_LINES = 6
@@ -687,7 +690,10 @@ def _geometry(look: Look, info: Optional[LandingDisplayInfo], placeholder: bool)
         caption_w = max(look.text_width(line, _FALLBACK_TEXT_SIZE) for line in _caption_lines(look)[0])
         pair_w = _PLACEHOLDER_W + _FALLBACK_LABEL_GAP + caption_w
         card_w = max(card_w, pair_w + 2 * pad_x)
-        box_x = _CARD_X + (card_w - pair_w) // 2
+        centred_w = _PLACEHOLDER_W + _FALLBACK_LABEL_GAP + int(round(caption_w * _CAPTION_CENTRE))
+        # The estimated end of the caption stays at least half the padding from the right edge, whatever the estimate (the card always
+        # holds the full-width pair), so the centering can never push the caption against the border.
+        box_x = min(_CARD_X + (card_w - centred_w) // 2, _CARD_X + card_w - pad_x // 2 - pair_w)
         caption_x = box_x + _PLACEHOLDER_W + _FALLBACK_LABEL_GAP
     shift_x = 0 if placeholder else (card_w - _CARD_W) // 2
     return _Geometry(pad_x, _CARD_X + pad_x, y_title, y_status, y_station, y_pad, y_denied, card_w, card_h,

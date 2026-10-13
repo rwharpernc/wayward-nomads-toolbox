@@ -201,7 +201,12 @@ for look in looks():
     caption_w = max(look.text_width(c, "normal") for c in caption)
     left_margin = geo.box_x - L._CARD_X
     right_margin = geo.card_w - (geo.caption_x - L._CARD_X + caption_w)
-    check(abs(left_margin - right_margin) <= 1, f"landing placeholder {tag}: not centered ({left_margin} left, {right_margin} right)")
+    # centered as if the caption were L._CAPTION_CENTRE of its estimate (the estimate errs wide), and never off the card
+    expected_right = geo.card_w - (left_margin + L._PLACEHOLDER_W + L._FALLBACK_LABEL_GAP + round(caption_w * L._CAPTION_CENTRE))
+    check(abs(left_margin - expected_right) <= 1 or right_margin == look.pad_x(L._BASE_PAD_X) // 2,
+          f"landing placeholder {tag}: not centered ({left_margin} left, {expected_right} right)")
+    check(right_margin >= look.pad_x(L._BASE_PAD_X) // 2 - 1, f"landing placeholder {tag}: the caption's estimated end is {right_margin}px "
+          f"from the card's right edge, nearer than half the padding")
     check(len(caption) <= 3 and " ".join(caption) == L._FALLBACK_LABEL_TEXT, f"landing placeholder {tag}: caption lines {caption}")
     check(left_margin >= look.pad_x(L._BASE_PAD_X) - 1, f"landing placeholder {tag}: the pair is closer to the edge than the padding")
 
