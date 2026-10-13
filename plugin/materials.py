@@ -109,6 +109,16 @@ def _int(value: Any) -> int:
     return int(value) if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0 else 0
 
 
+_MICRO_CATEGORIES = ("item", "data", "component", "consumable")
+
+
+def _is_micro_resource(item: Mapping[str, Any]) -> bool:
+    """A reward entry whose category is one of the Odyssey micro-resource kinds that are not engineering materials. The journal writes the
+    category as `$MICRORESOURCE_CATEGORY_Item;`; Elements (Raw), Manufactured and Encoded are the engineering ones."""
+    category = str(item.get("Category") or "").lower().replace("$microresource_category_", "").strip(";").strip()
+    return category in _MICRO_CATEGORIES
+
+
 def _entries(entry: Mapping[str, Any]) -> List[Tuple[str, str, str, int]]:
     """What a journal event adds (+) or takes away (-): [(name, category, localised name, change)], in the order given. Empty for any
     event that does not change materials, and for entries that are damaged."""
@@ -145,7 +155,9 @@ def _entries(entry: Mapping[str, Any]) -> List[Tuple[str, str, str, int]]:
     elif event == "TechnologyBroker":
         listed(entry.get("Materials"), -1)
     elif event == "MissionCompleted":
-        listed(entry.get("MaterialsReward"), 1)
+        # A reward can also be on-foot items, data and components (WeaponSchematic, WeaponComponent, ManufacturingInstructions...). Those are
+        # Odyssey micro-resources that live in the ship locker, not engineering materials, and the login list never carries them.
+        listed([item for item in entry.get("MaterialsReward") or [] if isinstance(item, Mapping) and not _is_micro_resource(item)], 1)
     elif event == "EngineerContribution" and entry.get("Type") == "Material":
         add(entry.get("Material"), entry.get("Category"), entry.get("Material_Localised"), -_int(entry.get("Quantity")))
     return out

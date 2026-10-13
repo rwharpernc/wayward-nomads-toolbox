@@ -131,6 +131,19 @@ class ChangeTests(unittest.TestCase):
         self.book.apply_event({"event": "MissionCompleted", "MaterialsReward": [{"Name": "tin", "Category": "Raw", "Count": 3}]})
         self.assertEqual(self.book.count_of("tin"), 15)
 
+    def test_a_mission_reward_in_the_real_journal_shape_counts_materials_and_skips_on_foot_items(self):
+        # Real rewards write the category as $MICRORESOURCE_CATEGORY_<kind>; and can include Odyssey items, which are not engineering materials.
+        self.book.apply_event({"event": "MissionCompleted", "MaterialsReward": [
+            {"Name": "Polonium", "Category": "$MICRORESOURCE_CATEGORY_Elements;", "Count": 3},
+            {"Name": "FSDTelemetry", "Category": "$MICRORESOURCE_CATEGORY_Encoded;", "Count": 12},
+            {"Name": "WeaponSchematic", "Category": "$MICRORESOURCE_CATEGORY_Item;", "Count": 7},
+            {"Name": "WeaponComponent", "Category": "$MICRORESOURCE_CATEGORY_Component;", "Count": 12},
+            {"Name": "ManufacturingInstructions", "Category": "$MICRORESOURCE_CATEGORY_Data;", "Count": 13}]})
+        self.assertEqual(self.book.count_of("polonium"), 3)
+        self.assertEqual(self.book.count_of("fsdtelemetry"), 12)
+        for name in ("weaponschematic", "weaponcomponent", "manufacturinginstructions"):
+            self.assertEqual(self.book.count_of(name), 0)
+
     def test_handing_a_material_to_an_engineer_takes_it(self):
         self.book.apply_event({"event": "EngineerContribution", "Type": "Material", "Material": "iron", "Quantity": 10, "TotalQuantity": 10})
         self.assertEqual(self.book.count_of("iron"), 110)
