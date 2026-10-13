@@ -166,25 +166,47 @@ def find_whole_list(reference_system: str, commodities: Sequence[str], *, radius
                     search: SearchFn = search_best_price_stations, now: Callable[[], float] = time.monotonic,
                     sleep: Callable[[float], None] = time.sleep, pause: float = WHOLE_LIST_PAUSE,
                     progress: Optional[Callable[[int, int, str], None]] = None,
-                    cancelled: Optional[Callable[[], bool]] = None, one_stop: Optional[OneStopFn] = None) -> WholeListResult:
+                    cancelled: Optional[Callable[[], bool]] = None, one_stop: Optional[OneStopFn] = None,
+                    needs: Optional[Dict[str, int]] = None) -> WholeListResult:
     """`find` for each commodity in turn, one request each (Spansh has no multi-commodity search), pausing between
     requests that really went out. A commodity whose search fails is recorded and the rest carry on, so one bad answer
     does not lose the others; a blank system is refused outright. `progress(done, total, label)` is called before each
-    commodity, and `cancelled()` is checked between them. With `one_stop` (Spansh's "has all of these" search) one more request
-    asks for stations that sell every commodity in the list; any it finds are added to each commodity's sources, so the
-    route can use a station that is not among the nearest few for any one commodity. That request is a bonus: if it fails,
-    nothing is lost."""
+    commodity, and `cancelled()` is checked between them.
+
+    With `one_stop` (Spansh's "has all of these" search, which returns each station's whole market) one more request asks
+    for stations that sell every commodity in the list; any it finds are added to each commodity's sources, so the route can
+    use a station that is not among the nearest few for any one commodity. That request is a bonus: if it fails, nothing is
+    lost. Given `needs` as well (tons still to get, by label), it goes first, and a commodity that one of those stations
+    can supply in full is not searched on its own (fewer requests); then, if the route built from the answers still leaves
+    two or more commodities uncovered, one more request asks for stations that sell all of those, and their whole markets
+    (every listed commodity they have in stock) are added too."""
     if not reference_system.strip():
         raise ValueError("Enter a system to search around.")
     out = WholeListResult()
     options = dict(radius_ly=radius_ly, pad=pad, include_carriers=include_carriers, sort=sort, search=search, now=now)
     sent_any = False
+    pre_hits: List[Tuple[StationPrice, Dict[str, Tuple[int, int]]]] = []
+    satisfied: set = set()
+    if one_stop is not None and needs and len(commodities) >= 2 and not (cancelled is not None and cancelled()):
+        try:
+            pre_hits = _one_stop_hits(one_stop, reference_system, list(commodities), radius_ly, pad, include_carriers)
+        except Exception:   # an extra; the per-commodity searches then run for everything
+            pre_hits = []
+        sent_any = True
+        pre_hits = [(item, offers) for item, offers in pre_hits if _fits(item, pad)]
+        for label in commodities:
+            need = needs.get(label, 0)
+            if need > 0 and any(label in offers and offers[label][1] >= need for _item, offers in pre_hits):
+                satisfied.add(label)
     for index, label in enumerate(commodities):
         if cancelled is not None and cancelled():
             out.stopped = True
             break
         if progress is not None:
             progress(index, len(commodities), label)
+        if label in satisfied:
+            out.found.append((label, SearchResult(stations=[], carriers=[])))   # filled from the one-stop answer below
+            continue
         cached = is_cached(reference_system, label, **options)
         if sent_any and not cached and pause > 0:
             sleep(pause)
@@ -194,21 +216,31 @@ def find_whole_list(reference_system: str, commodities: Sequence[str], *, radius
         except Exception as exc:   # a network or parse failure for this commodity only
             out.failed.append((label, str(exc) or exc.__class__.__name__))
             sent_any = True
-    if one_stop is not None and not out.stopped and len(out.found) >= 2 and not out.failed:
+    if out.stopped:
+        return out
+    if pre_hits:
+        _merge_hits(out, pre_hits, pad, sort)
+    elif one_stop is not None and not needs and len(out.found) >= 2 and not out.failed:
         try:
-            _add_one_stop(out, reference_system, one_stop, radius_ly, pad, include_carriers, sort)
+            hits = _one_stop_hits(one_stop, reference_system, [label for label, _ in out.found], radius_ly, pad, include_carriers)
+            _merge_hits(out, hits, pad, sort)
         except Exception:   # an extra; the per-commodity answers stand without it
             pass
+    if one_stop is not None and needs and not out.failed:
+        _cover_leftovers(out, reference_system, one_stop, needs, radius_ly, pad, include_carriers, sort, sleep, pause)
     return out
 
 
-def _add_one_stop(out: WholeListResult, reference_system: str, one_stop: OneStopFn, radius_ly: Optional[float],
-                  pad: str, include_carriers: bool, sort: str) -> None:
-    """Add the stations that sell every commodity searched to each commodity's sources (see `find_whole_list`)."""
-    labels = [label for label, _ in out.found]
+def _one_stop_hits(one_stop: OneStopFn, reference_system: str, labels: Sequence[str], radius_ly: Optional[float], pad: str,
+                   include_carriers: bool, also: Sequence[str] = ()) -> List[Tuple[StationPrice, Dict[str, Tuple[int, int]]]]:
     types = trade_prices.station_types(True) + (trade_prices.CARRIER_TYPES if include_carriers else [])
-    hits = one_stop(reference_system.strip(), labels, radius_ly, max_results=ONE_STOP_RESULTS, market_days_old=MAX_AGE_DAYS,
-                    station_types=types, required_pad=None if pad == PAD_ANY else pad)
+    extra = {"also": list(also)} if also else {}
+    return one_stop(reference_system.strip(), list(labels), radius_ly, max_results=ONE_STOP_RESULTS, market_days_old=MAX_AGE_DAYS,
+                    station_types=types, required_pad=None if pad == PAD_ANY else pad, **extra)
+
+
+def _merge_hits(out: WholeListResult, hits: Sequence[Tuple[StationPrice, Dict[str, Tuple[int, int]]]], pad: str, sort: str) -> None:
+    """Add each hit station to the sources of every commodity it has in stock (see `find_whole_list`), unless already listed."""
     for index, (label, result) in enumerate(out.found):
         have = {(s.station, s.system) for s in [*result.stations, *result.carriers]}
         stations, carriers = list(result.stations), list(result.carriers)
@@ -222,6 +254,24 @@ def _add_one_stop(out: WholeListResult, reference_system: str, one_stop: OneStop
                 quantity=supply, small_pads=item.small_pads, medium_pads=item.medium_pads, large_pads=item.large_pads))
             (carriers if source.is_carrier else stations).append(source)
         out.found[index] = (label, SearchResult(stations=order(stations, sort), carriers=order(carriers, sort)))
+
+
+def _cover_leftovers(out: WholeListResult, reference_system: str, one_stop: OneStopFn, needs: Dict[str, int],
+                     radius_ly: Optional[float], pad: str, include_carriers: bool, sort: str,
+                     sleep: Callable[[float], None], pause: float) -> None:
+    """One more request for what the route built so far cannot supply: stations that sell all of the uncovered commodities
+    (their whole markets also cover any other listed commodity they stock). A bonus request: a failure loses nothing."""
+    left = [label for label, _tons in plan_route(out.found, needs).uncovered]
+    if len(left) < 2:
+        return
+    try:
+        if pause > 0:
+            sleep(pause)
+        hits = _one_stop_hits(one_stop, reference_system, left, radius_ly, pad, include_carriers,
+                              also=[label for label, _ in out.found if label not in left])
+        _merge_hits(out, hits, pad, sort)
+    except Exception:
+        pass
 
 
 # --- a shopping route from the whole-list answer ----------------------------------------------------------------------

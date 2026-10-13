@@ -621,7 +621,7 @@ class ColonisationWindow:
                 job["result"] = sources.find_whole_list(
                     system, labels, radius_ly=radius, pad=pad, include_carriers=carriers, sort=order,
                     progress=lambda done, total, label: job.__setitem__("progress", (done, total, label)),
-                    cancelled=lambda: job["cancel"], one_stop=search_stations_selling_all)
+                    cancelled=lambda: job["cancel"], one_stop=search_stations_selling_all, needs=to_get)
             except Exception as exc:   # bad input or an unexpected failure: shown, not raised into the main thread
                 logger.exception("Colonization whole-list search failed")
                 job["error"] = str(exc) or exc.__class__.__name__

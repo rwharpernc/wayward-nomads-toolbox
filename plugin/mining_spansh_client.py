@@ -211,11 +211,14 @@ def _post_station_search(request_body: dict) -> dict:
 def search_stations_selling_all(reference_system: str, commodities: Sequence[str], max_distance_ly: Optional[float],
                                 max_results: int = 10, market_days_old: int = _MARKET_DAYS_OLD_DEFAULT,
                                 station_types: Optional[Sequence[str]] = None, required_pad: Optional[str] = None,
+                                also: Sequence[str] = (),
                                 ) -> list[tuple[StationPrice, dict[str, tuple[int, int]]]]:
     """One query for the closest stations that have EVERY one of `commodities` in stock (Spansh ANDs several `market`
     filters, and a station's whole market comes back with it; checked live 2026-10-13, 16 filters accepted). Each result is
     the station (its `price`/`quantity` are those of the first commodity) with `{commodity: (price, supply)}` for all of
-    them, keyed by the names as passed in. Usually empty for a long list: it is a "can I do this in one stop" check."""
+    them, keyed by the names as passed in. Usually empty for a long list: it is a "can I do this in one stop" check.
+    `also` names more commodities that are not required: any of them the station has in stock are added to its offers,
+    from the same whole-market answer (no extra request)."""
     if required_pad not in (None, "medium", "large"):
         raise ValueError('required_pad must be None, "medium" or "large"')
     wanted = [(name, _normalize_commodity_name(name)) for name in commodities]
@@ -244,6 +247,10 @@ def search_stations_selling_all(reference_system: str, commodities: Sequence[str
             offers[name] = (entry["buy_price"], entry["supply"])
         else:
             first = offers[wanted[0][0]]
+            for name in also:
+                entry = market.get(_normalize_commodity_name(name).casefold())
+                if entry is not None and entry.get("buy_price", 0) > 0 and entry.get("supply", 0) > 0:
+                    offers.setdefault(name, (entry["buy_price"], entry["supply"]))
             out.append((StationPrice(
                 station=station.get("name", "?"), system=station.get("system_name", "?"),
                 station_type=station.get("type") or "?", distance_ly=station.get("distance", 0.0),

@@ -668,7 +668,10 @@ for as little as it can. These are the measures that are in the code today.
   checking for a Stop between commodities. With two or more commodities and no failure, one more request
   (`mining_spansh_client.search_stations_selling_all`: several `market` filters, which Spansh ANDs, checked live 2026-10-13 with 16
   filters) asks for the 5 nearest stations that have every one in stock; each is added to every commodity's sources unless already
-  listed, with that commodity's price and supply from the market Spansh returns. A failure of that request is ignored. The window keeps the closest 5 stations and 2 carriers of each. `plan_route` then builds a
+  listed, with that commodity's price and supply from the market Spansh returns. A failure of that request is ignored. When the window passes `needs` (tons still to get), that request goes first: a commodity that one
+  returned station can supply in full is skipped (no per-commodity search), and after the searches, if `plan_route` still leaves two or more
+  commodities uncovered, one more request (`also=` the other listed commodities) asks for stations selling all the uncovered ones, whose whole
+  markets are merged the same way. The window keeps the closest 5 stations and 2 carriers of each. `plan_route` then builds a
   shopping route from the full answers: greedy by tons a station can supply of what is still outstanding (a station selling several
   commodities counts for each), ties to the nearer then cheaper, at most 6 stops, shown nearest first; it reports what no returned
   station can supply and never guesses beyond the stations searched.

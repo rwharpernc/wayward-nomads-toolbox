@@ -229,6 +229,11 @@ commodity you are searching for in stock. Any it finds are added under each comm
 the route can use a station that is not among the nearest few for any one commodity. For a long list Spansh usually has no such
 station and nothing is added. If this request fails, Find all carries on without it.
 
+**Fewer requests.** That request goes first. A commodity that one of those stations can supply in full is not searched on its
+own (its answer comes from that station's market), so a list that one station can fill takes a single request. After the
+searches, if the route still leaves two or more commodities uncovered, one more request asks for stations that have all of
+those in stock; the whole market it returns also fills in any other commodity on your list those stations sell.
+
 **Suggested route.** Find all also works out a shopping route and puts it first in the results: the few stops (at most 6) that
 between them supply the most of what you still have to get. A station that sells several of your commodities counts for all of
 them, so it is taken first; ties go to the nearer, then the cheaper. Each stop shows what to buy there and the price, and the stops

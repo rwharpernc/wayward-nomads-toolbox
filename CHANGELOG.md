@@ -5,6 +5,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ## Unreleased
 
+### Changed
+- **Colonization, Find all: fewer requests and better coverage from the "sells everything" search.** That search now runs first. A
+  commodity one of its stations can supply in full is not searched on its own, and when the route still leaves two or more commodities
+  uncovered, one more request finds stations that sell all of them, using each returned whole market to cover any other listed commodity
+  the nearest-five searches missed.
+
 ### Documentation
 - **One common thread through the documentation: WNTB works from what the game writes to its journal.** A third-party tool only knows
   what Elite Dangerous journals, and not everything is logged. A new section, "How WNTB knows what it knows", in the README and the

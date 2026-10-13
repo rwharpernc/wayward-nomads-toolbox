@@ -341,5 +341,62 @@ class OneStopTests(unittest.TestCase):
         self.assertTrue(all(len(r.stations) == 1 for _, r in result.found))
 
 
+class NeedsAwareTests(unittest.TestCase):
+    """With `needs`: the one-stop request goes first, satisfied commodities skip their own search, leftovers get one more."""
+
+    def setUp(self):
+        src.clear_cache()
+        self.calls = []
+
+    def one_stop(self, *answers):
+        queue = list(answers)
+
+        def fake(system, labels, radius, **kwargs):
+            self.calls.append((list(labels), kwargs.get("also")))
+            return queue.pop(0) if queue else []
+        return fake
+
+    def run_list(self, fake_stop, search, needs, labels=("Steel", "Water")):
+        return src.find_whole_list("Sol", list(labels), search=search, sleep=lambda s: None, one_stop=fake_stop, needs=needs)
+
+    def test_a_commodity_one_stop_can_supply_in_full_is_not_searched(self):
+        search = FakeSpansh([item("Near", 5)])
+        hub = (item("Hub", 80), {"Steel": (120, 900), "Water": (30, 400)})
+        result = self.run_list(self.one_stop([hub]), search, {"Steel": 500, "Water": 1200})
+        self.assertEqual([call[1] for call in search.calls], ["Water"])   # Steel came from the hub alone
+        steel = dict(result.found)["Steel"]
+        self.assertEqual([s.station for s in steel.stations], ["Hub"])
+
+    def test_nothing_is_skipped_when_the_stock_falls_short(self):
+        search = FakeSpansh([item("Near", 5)])
+        hub = (item("Hub", 80), {"Steel": (120, 100), "Water": (30, 100)})
+        self.run_list(self.one_stop([hub]), search, {"Steel": 500, "Water": 500})
+        self.assertEqual(sorted(call[1] for call in search.calls), ["Steel", "Water"])
+
+    def test_leftover_commodities_get_one_more_whole_market_request(self):
+        search = FakeSpansh([item("Near", 5, qty=10)])   # too little of anything
+        market = (item("Depot", 40), {"Water": (30, 900), "Ore": (50, 900), "Steel": (110, 900)})
+        fake = self.one_stop([], [market])
+        result = self.run_list(fake, search, {"Water": 500, "Ore": 500, "Steel": 500}, labels=("Water", "Ore", "Steel"))
+        self.assertEqual(len(self.calls), 2)
+        self.assertEqual(sorted(self.calls[1][0]), ["Ore", "Steel", "Water"])   # all three still uncovered
+        plan = src.plan_route(result.found, {"Water": 500, "Ore": 500, "Steel": 500})
+        self.assertEqual([stop.station for stop in plan.stops][-1], "Depot")
+        self.assertEqual(plan.uncovered, ())
+
+    def test_no_leftover_request_when_the_route_covers_everything(self):
+        search = FakeSpansh([item("Near", 5)])
+        self.run_list(self.one_stop([]), search, {"Steel": 100, "Water": 100})
+        self.assertEqual(len(self.calls), 1)
+
+    def test_a_failing_first_request_still_searches_every_commodity(self):
+        def broken(*args, **kwargs):
+            raise RuntimeError("busy")
+        search = FakeSpansh([item("Near", 5)])
+        result = self.run_list(broken, search, {"Steel": 100, "Water": 100})
+        self.assertEqual(sorted(call[1] for call in search.calls), ["Steel", "Water"])
+        self.assertEqual(len(result.found), 2)
+
+
 if __name__ == "__main__":
     unittest.main()
