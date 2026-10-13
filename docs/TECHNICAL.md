@@ -589,9 +589,9 @@ Placement is therefore relative to the screen and aware of display size:
 
 ### Appearance (`overlay_style.py`, `overlay_appearance.py`)
 
-Every overlay draws with one `Look` (`overlay_appearance.current_look()`, read from `wntb_overlay_scheme`, `_text_level`,
-`_padding`, `_line_spacing`): a `Palette` of color roles (border, fill, title, header, text, muted, ok, warn, info, danger, three
-accents, four chart series), a text level (-1..2, which steps each display's text token along small / normal / large / huge and
+Every overlay draws with one `Look` (`overlay_appearance.current_look()`, read from `wntb_overlay_scheme` and `wntb_overlay_text_size`;
+padding and line spacing are fixed): a `Palette` of color roles (border, fill, title, header, text, muted, ok, warn, info, danger, three
+accents, four chart series), a text level (-1..1 as offered, which steps each display's text token along small / normal / large / huge and
 stops at the ends), and extra padding and line height. Because the overlay cannot measure text for a plugin, the look carries
 estimates, `CHAR_PX` (character width per size) and `LINE_PX` (line height per size), and each display builds its card from them
 (`look.text_width`, `pad_x`, `pad_y`, `line_px`), so text at any size sits inside its border. `LEGACY` reproduces the old

@@ -96,7 +96,7 @@ screen edge**. The details are in [Setting up the overlay](../OVERLAY_SETUP.md).
 ### Overlay text wraps, or a card is too small or too big
 
 Open **Settings → Overlays → Appearance** and press **Show sample**. Cards are sized from an estimate of the text at the
-fixed size, so it can be tight on a small screen; the size cannot be changed.
+chosen size and given 10% extra width, so a card may still be tight on a small screen. Try a smaller **Text size** on the same tab.
 
 ## Colonization
 
