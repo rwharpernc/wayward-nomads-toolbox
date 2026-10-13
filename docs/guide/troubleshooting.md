@@ -106,6 +106,18 @@ Dock at the construction depot, or open its market, **once**. The game writes th
 The journal only records cargo you transfer to the carrier. Sign EDMC in to Frontier and open **Carrier Management** once so
 WNTB can read the carrier's real cargo hold; it is refreshed about every 15 minutes at most and can lag the game.
 
+### Raven Progress says Raven has no project for my site
+
+Raven Colonial only records a site's market id once the build is finished, so WNTB finds a build in progress by its **name**. If you
+renamed the site in the game, dock at it once so WNTB takes the new name; if you renamed it on Raven, give both the same station name.
+A site that is only *planned* on Raven has no project yet. See the [guide](colonization.md#sharing-your-progress-with-raven-colonial).
+
+### Test key says Raven did not accept the key
+
+Check that you pasted the key from your account page ([ravencolonial.com/user](https://ravencolonial.com/user)) with no spaces, and
+that the commander you are playing is the one the key belongs to (keys are saved per commander). WNTB sends the key and your commander
+name together, as Raven's own website does. If a key you know is right is still refused, please [report it](../../README.md#getting-help).
+
 ### My history is smaller than what I delivered
 
 The game keeps no delivery history, but your journal files do. The first time WNTB sees a commander it reads all of that

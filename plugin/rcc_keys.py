@@ -52,7 +52,7 @@ keys = RccKeys()
 
 
 def enabled() -> bool:
-    """The master switch: whether WNTB may send anything to Raven Colonial at all (progress, deliveries, carrier cargo, Report Complete).
+    """The master switch: whether WNTB may write to Raven Colonial at all (progress, deliveries, carrier cargo, Report Complete).
     Off by default; turning it off stops every write at once and leaves the other choices as they were."""
     try:
         return bool(config is not None and config.get_bool(CFG_ENABLED, default=False))

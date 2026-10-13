@@ -287,7 +287,7 @@ construction site **as it happens**, in the way Raven Colonial's own documentati
 
 | Setting | What WNTB sends, and when |
 |---|---|
-| **Allow WNTB to send anything to Raven Colonial** (master switch) | Nothing by itself. Off by default. The three options below only work while it is ticked, and are greyed out while it is not. |
+| **Allow WNTB to write to Raven Colonial** (master switch) | Nothing by itself. Off by default. The three options below only work while it is ticked, and are greyed out while it is not. |
 | **Report my construction progress and deliveries** | Needs the key below; with none, nothing is looked up or sent. When the depot's figures change (the game's `ColonisationConstructionDepot` event): the depot's numbers and how much of each commodity is still needed, which is what moves *Remaining* on Raven Colonial. When you deliver cargo (`ColonisationContribution`): the commodities and tons, which credits your commander name in Raven's history. Once per project, it also links your commander to the project. |
 | **Also report cargo I move to and from my fleet carrier** | When you transfer cargo at your own fleet carrier: the tons moved, to the carrier as plus and back to the ship as minus. It adds to Raven's carrier record; it never replaces it, because WNTB's own tally is only what it saw you move. Needs the key below. |
 | **Raven Colonial key** | Needed for every write: progress, deliveries, carrier cargo and **Report Complete to Raven**. With no key WNTB sends nothing (Raven's published API description does not say which writes work without one, so none is tried). Saved per commander on your computer, shown masked, and sent only to Raven Colonial. |

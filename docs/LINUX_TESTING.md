@@ -268,7 +268,17 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 
 - [ ] **Settings → Colonization → Raven Colonial** has a master switch and two checkboxes (all off, the two greyed out until the master is ticked) and a masked key field. With the master off, Report Complete to Raven refuses.
 - [ ] With the first on, a delivery at a construction site Raven has a project for appears on Raven; with it off, nothing is sent.
-- [ ] **Raven Progress** shows Raven's remaining need beside WNTB's for the selected site.
+- [ ] **Raven Progress** shows Raven's remaining need beside WNTB's for the selected site, including one still being built.
+- [ ] **Test key** (beside the key box) says the key is accepted, with Raven's name for you, or that it was not accepted.
+- [ ] The link under the key box opens ravencolonial.com/user in your browser.
+
+## 7e-4. Colonization Sites window header (Windows-tested only: check on Linux)
+
+- [ ] The header has **Copy Shopping List**, **Rescan Carrier**, **Raven Colonial ▾** and **Remove ▾**. The two menus open under their buttons,
+      are readable (dark colors) and close when you click elsewhere or pick an item.
+- [ ] **Raven Colonial ▾** lists Planned Builds, Raven Progress, Open Selected Build on Raven, Open This System on Raven, Raven Colonial
+      Website and Report Complete to Raven; the three Open items open the right page in your browser.
+- [ ] A site you renamed in the game takes its new name after you dock at it again.
 
 ## 7e-1. Rescan Carrier (Windows-tested only: check on Linux)
 

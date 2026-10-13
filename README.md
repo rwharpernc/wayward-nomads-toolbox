@@ -45,7 +45,7 @@ WNTB has one panel with eight **modes**. You click a button to switch between th
 | **Trade** | Your trading profit after fuel and repairs, what fills your ship hold (cargo, mission, stolen, limpets), your fleet carrier's cargo space, tritium, location and orders, saved sessions in a Trade History window, and Spansh lookups for the best trade routes and the best place to buy or sell. | [Trade](docs/guide/trade.md) |
 | **Missions** | One view of every mission you have, with kill-progress bars for massacre missions and collect / delivery progress for cargo missions. | [Missions](docs/guide/missions.md) |
 | **Field Ops** | Screenshots, your backpack/locker/cargo and saved ship builds. | [Field Ops](docs/guide/field-ops.md) |
-| **Colonization** | The project you are building now, your colonization history, and a window with every site's shopping list and where to buy. | [Colonization](docs/guide/colonization.md) |
+| **Colonization** | The project you are building now, your colonization history, and a window with every site's shopping list, where to buy, and optional links and sharing with Raven Colonial. | [Colonization](docs/guide/colonization.md) |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. | [BGS](docs/guide/bgs.md) |
 
 Two more tools are always on and don't belong to a mode: **Landing Assist** and **Interdiction Warning**
@@ -83,10 +83,11 @@ Things I would like to add or am still looking into, by feature. This is a wish 
 can change, and some of it may turn out not to be possible. If one of these matters to you, tell me (see [Getting help](#getting-help)).
 
 **Colonization**
-- **Raven Colonial** is used as a read-only reference (the Planned Builds window reads a system's plan). Sending your own deliveries
-  there is not planned for now; if it ever happens it would be strictly **opt-in and off by default**, and the internet page would
-  list exactly what is sent and when before it exists.
-- **Where to buy, improved on WNTB's own terms:** searching for the whole list with fewer requests, from the sources WNTB already uses.
+- **Raven Colonial:** sharing your progress, deliveries and carrier cargo is built, strictly **opt-in and off by default**, and the
+  internet page lists exactly what is sent and when. Not done: creating or linking a Raven project from WNTB, and reading other
+  people's progress on a project.
+- **Where to buy, improved on WNTB's own terms:** one shopping route and a "stations that sell the whole list" search are in. Still
+  to do: fewer requests for a long list, and using each station's whole market to fill gaps.
 - **Team projects:** several commanders on one project, with a "what the team still needs" line. Everything today is per commander and
   would stay that way until you choose to share.
 - **Co-op building and colony tracking** through a separate app that is in development; WNTB is to connect to it when it is ready.
@@ -164,7 +165,11 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 - **Fleet carrier cargo:** the journal only records cargo you *transfer* to the carrier. For the real hold, sign EDMC in to
   Frontier and open **Carrier Management** once; WNTB then reads the carrier's actual cargo. It can lag behind the game.
 - Commanders **without** a carrier see simpler wording and one Trips column; the carrier lines appear only if you have one.
-- **Where to buy** needs the internet (Spansh) and caches a search for two minutes.
+- **Where to buy** needs the internet (Spansh) and caches a search for two minutes. Click a result row to copy its system, ready to
+  paste into the galaxy map search.
+- **Raven Colonial** (ravencolonial.com) is optional. Planned Builds, Raven Progress and the page links only read or open your browser;
+  sending anything to Raven is **off until you tick the master switch** in Settings and save your Raven key (the settings page links to
+  where you get it). **Test key** checks the key.
 - Shopping-list overlay: switch it on and off with the **OVERLAY** button (it stays as you leave it). Tick the automatic option in
   Settings if you want it to appear by itself at a market, in Carrier Management or at a construction site.
 

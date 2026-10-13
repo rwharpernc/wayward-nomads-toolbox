@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.8.0 - 2026-10-13
 
 ### Added
 - **Links to Raven Colonial.** Settings → Colonization → Raven Colonial has a link to the page where you get your key
@@ -77,6 +77,13 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   is remaining less the hold and the carrier. The card widens to fit.
 - **The lines under the mode buttons show on every mode.** The credits line is no longer hidden on Exploration and Trade, so the
   whole block (plugin version, game mode, credits) is the same everywhere.
+
+### Documentation
+- Documentation audit for this release: the README's Colonization notes and its planned list now describe the opt-in Raven Colonial
+  sharing, Test key and the page links; the Colonization guide lists the new menus, links, click-to-copy and what each Raven option
+  needs; the internet page covers every new request and link; two new Troubleshooting entries (Raven Progress finding no project, Test
+  key refused); the technical notes describe the Raven headers, key check, name matching and renames; Linux checklists cover the new
+  header menus, links and Test key; the version examples in Getting started follow 1.8.0.
 
 ## 1.7.1 - 2026-10-12
 
