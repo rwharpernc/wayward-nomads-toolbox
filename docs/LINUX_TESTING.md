@@ -274,7 +274,7 @@ of it has been run on Windows yet. Needs a commander with a fleet carrier and a 
 
 ## 7e-4. Colonization Sites window header (Windows-tested only: check on Linux)
 
-- [ ] The header has **Copy Shopping List**, **Rescan Carrier**, **Raven Colonial ▾** and **Remove ▾**. The two menus open under their buttons,
+- [ ] The header has **Copy Shopping List**, **Rescan Carrier**, **Raven Colonial ▾** and **Manage Sites ▾**. The two menus open under their buttons,
       are readable (dark colors) and close when you click elsewhere or pick an item.
 - [ ] **Raven Colonial ▾** lists Planned Builds, Raven Progress, Open Selected Build on Raven, Open This System on Raven, Raven Colonial
       Website and Report Complete to Raven; the three Open items open the right page in your browser.

@@ -249,7 +249,7 @@ Things worth knowing:
 - **Copy Shopping List** copies that site's list to the clipboard, as lines like `1,200 t  Steel`, biggest first.
   The amounts are the **t still to get** figures, so what is on your ship and on your carrier is taken off. If nothing is needed it says
   so.
-- **Remove Site** (in the **Remove** menu, top right) stops tracking that site.
+- **Remove Site** (in the **Manage Sites** menu, top right) stops tracking that site.
 - **Remove Finished** (same menu) deletes every complete or failed site.
 
 ## Planned builds

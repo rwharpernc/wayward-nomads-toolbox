@@ -3,6 +3,15 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Fixed
+- **Shopping list overlay: the title line is no longer cut short.** The title is the game's full site name ("Orbital Construction
+  Site: Wayward Station"), and anything past 40 characters was cut off with "…". It now holds 64, and the card widens to fit it.
+
+### Changed
+- **Colonization Sites window: the Remove menu is now called Manage Sites.** It still holds Remove Site and Remove Finished.
+
 ## 1.8.0 - 2026-10-13
 
 ### Added

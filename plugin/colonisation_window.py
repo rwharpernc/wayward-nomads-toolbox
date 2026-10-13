@@ -175,7 +175,7 @@ class ColonisationWindow:
             ("Raven Colonial Website", lambda: webbrowser.open(rcc_client.home_page_url())),
             None,
             ("Report Complete to Raven", self._on_report_rcc)])
-        self._shell.add_menu("Remove", [
+        self._shell.add_menu("Manage Sites", [
             ("Remove Site", self._on_remove, "danger"),
             ("Remove Finished", self._on_remove_finished, "danger")])
 

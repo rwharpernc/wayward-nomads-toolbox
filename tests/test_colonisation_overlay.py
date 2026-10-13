@@ -76,13 +76,32 @@ class AlignmentTests(unittest.TestCase):
         self.assertEqual(card.text_units("1,046"), 4.5)
 
 
+class TitleTests(unittest.TestCase):
+    def built(self, name: str):
+        entry = {"MarketID": 7, "ResourcesRequired": [{"Name": "$steel_name;", "Name_Localised": "Steel", "RequiredAmount": 500, "ProvidedAmount": 0}]}
+        return card.build_card(colonisation.apply_depot_event(entry, None, name=name, system="Sol"), {}, {}, show_fc=False)
+
+    def test_a_long_station_name_is_shown_in_full_and_the_card_widens_to_hold_it(self) -> None:
+        name = "Orbital Construction Site: Wayward Station Of The Long Haul"
+        self.assertLess(len(name), card.TITLE_CHARS)
+        built = self.built(name)
+        self.assertEqual(built.title, name)
+        short = self.built("Depot One")
+        self.assertGreater(card.block_rect(built)[2], card.block_rect(short)[2])
+
+    def test_only_an_absurd_name_is_cut_and_the_cut_is_marked(self) -> None:
+        built = self.built("N" * 200)
+        self.assertEqual(len(built.title), card.TITLE_CHARS)
+        self.assertTrue(built.title.endswith("…"))
+
+
 class PlacementSlotTests(unittest.TestCase):
     def test_the_placement_slot_is_wide_enough_for_the_widest_card(self) -> None:
         """Right-anchoring and the overlay group offset are worked out from the slot's size, so a card wider than it runs
         off the screen edge and the overlay's clamp squashes its last columns together."""
         from plugin import overlay_placement
         rows = tuple(card.Row("N" * 40, 999_999, 999_999, 999_999, 999_999) for _ in range(3))
-        widest = card.Card("T" * 40, rows, 0, 9_999_999, 9_999, True, 9_999)
+        widest = card.Card("T" * card.TITLE_CHARS, rows, 0, 9_999_999, 9_999, True, 9_999)
         slot_width = overlay_placement.SLOTS["colonisation"].size[0]
         self.assertLessEqual(card.block_rect(widest)[2], slot_width)
 

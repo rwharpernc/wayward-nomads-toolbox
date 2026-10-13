@@ -166,6 +166,7 @@ def _clip(text: str, limit: int) -> str:
 # carrier column once it covers the need), muted (the carrier column while it does not) and faint (a commodity the market does not sell).
 CHECK = "✓"
 NAME_CHARS = 30
+TITLE_CHARS = 64            # the title is the game's full site name ("Orbital Construction Site: ..."), so it needs room; this bounds the card's width
 NOT_SOLD = "  not available"    # beside a commodity the market here does not sell
 INDENT_CHARS = 2             # a commodity sits this far in from its category heading when the card is grouped
 # The wire protocol has no text metrics, so widths are estimated from character counts. Headings and numbers in the overlay font run
@@ -256,7 +257,7 @@ def build_card(site: Optional[Site], hold: Mapping[str, int], on_carrier: Mappin
     # (the same sum as the sites window's "trips to buy").
     to_get = sum(max(0, r.remaining - hold.get(r.key, 0) - on_carrier.get(r.key, 0)) for r in needed)
     buy_trips = math.ceil(to_get / capacity) if known and to_get > 0 else 0
-    return Card(_clip(site.display_name(), 40), rows, max(0, len(needed) - limit), remaining, trips, show_fc, buy_trips, grouped)
+    return Card(_clip(site.display_name(), TITLE_CHARS), rows, max(0, len(needed) - limit), remaining, trips, show_fc, buy_trips, grouped)
 
 
 def _name_text(row: Row) -> str:

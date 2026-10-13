@@ -315,13 +315,13 @@ W.sources.find_whole_list = S_whole
 # The header: related actions sit under a heading each, as drop-down menus.
 from plugin.uikit.widgets import FlatButton, MenuButton
 header = [w for w in window._shell.actions.winfo_children() if isinstance(w, FlatButton)]
-check([w.cget("text") for w in header] == ["Copy Shopping List", "Rescan Carrier", "Raven Colonial ▾", "Remove ▾"],
+check([w.cget("text") for w in header] == ["Copy Shopping List", "Rescan Carrier", "Raven Colonial ▾", "Manage Sites ▾"],
       f"the header buttons: {[w.cget('text') for w in header]}")
 menus = {w.cget("text").split(" ")[0]: w for w in header if isinstance(w, MenuButton)}
 check(menus["Raven"].entries() == ["Planned Builds", "Raven Progress", "Open Selected Build on Raven", "Open This System on Raven",
                                    "Raven Colonial Website", "Report Complete to Raven"],
       f"Raven Colonial menu: {menus['Raven'].entries()}")
-check(menus["Remove"].entries() == ["Remove Site", "Remove Finished"], f"Remove menu: {menus['Remove'].entries()}")
+check(menus["Manage"].entries() == ["Remove Site", "Remove Finished"], f"Manage Sites menu: {menus['Manage'].entries()}")
 
 # Opening Raven's pages: the project's own page when it is found, the system's page when it is not; the browser is stood in for.
 opened = []
