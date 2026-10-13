@@ -256,7 +256,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     # Each line is its own module (game_mode.py, session_credits.py, session_merits.py).
     session_strip = tk.Frame(_frame)
     session_strip.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
-    _version_label = panelkit.wrap_label(session_strip, anchor="w", cursor="hand2")   # "Plugin: v1.7.1" / "v1.8.0 download - Restart EDMC"
+    _version_label = panelkit.wrap_label(session_strip, anchor="w", cursor="hand2")   # "Plugin: v1.8.0" / "v1.8.1 download - Restart EDMC"
     _version_label.grid(row=0, column=0, columnspan=3, sticky=tk.W)
     _version_label.bind("<Button-1>", lambda _e: webbrowser.open(RELEASES_PAGE_URL))
     _show_version_state()          # an update may already have finished before the panel existed

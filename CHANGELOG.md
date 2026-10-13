@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.8.1 - 2026-10-13
 
 ### Fixed
 - **Landing overlay: the "no diagram" box and its caption are laid out as one centered picture.** The caption beside the placeholder
