@@ -163,7 +163,8 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 - The COL page and window show **your** deliveries and cargo. The depot's totals include everyone's deliveries.
 - Your **history is rebuilt once from all your journal files** and counts from the first delivery in them (the page says the date). Deleted journals can't be counted.
 - **Fleet carrier cargo:** the journal only records cargo you *transfer* to the carrier. For the real hold, sign EDMC in to
-  Frontier and open **Carrier Management** once; WNTB then reads the carrier's actual cargo. It can lag behind the game.
+  Frontier and open **Carrier Management** once; WNTB then reads the carrier's actual cargo. It can lag behind the game. If a transfer
+  never registered, **Rescan Carrier** (in the Colonization Sites window) rebuilds the tally from your last 30 days of journals.
 - Commanders **without** a carrier see simpler wording and one Trips column; the carrier lines appear only if you have one.
 - **Where to buy** needs the internet (Spansh) and caches a search for two minutes. Click a result row to copy its system, ready to
   paste into the galaxy map search.

@@ -157,6 +157,10 @@ Management, buying one, or docking at one). It is per commander. It does lower t
 
 ### Rescan Carrier: when a load did not register
 
+Two ways to correct the FC column, for different problems. **Opening Carrier Management** in the game (with EDMC signed in to Frontier)
+brings in the carrier's *real* hold from Frontier, which is the right fix after taking cargo *off* the carrier or when others have moved
+stock. **Rescan Carrier** rebuilds the tally from your own journals, which is the right fix when a transfer *you* made did not register.
+
 If the FC column is missing something you moved to the carrier, press **Rescan Carrier** (top right of the Colonization Sites
 window; it needs a commander with a fleet carrier).
 

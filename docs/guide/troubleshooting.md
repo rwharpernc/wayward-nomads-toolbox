@@ -103,8 +103,13 @@ Dock at the construction depot, or open its market, **once**. The game writes th
 
 ### "Covered" or the Carrier row looks wrong
 
-The journal only records cargo you transfer to the carrier. Sign EDMC in to Frontier and open **Carrier Management** once so
-WNTB can read the carrier's real cargo hold; it is refreshed about every 15 minutes at most and can lag the game.
+The journal only records cargo you transfer to the carrier, so WNTB's carrier figure is what it saw you move. Two ways to put it right:
+
+- **For the real hold:** sign EDMC in to Frontier and open **Carrier Management** in the game. WNTB then reads the carrier's actual
+  cargo (at most every 15 minutes, and Frontier's copy can lag the game by a little).
+- **For a transfer that did not register:** press **Rescan Carrier** in the Colonization Sites window. It rebuilds the tally from the
+  last 30 days of journals and drops any figure taken from Frontier, so it is a quick fix, not a replacement for the real hold. See
+  [Rescan Carrier](colonization.md#rescan-carrier-when-a-load-did-not-register).
 
 ### Raven Progress says Raven has no project for my site
 
