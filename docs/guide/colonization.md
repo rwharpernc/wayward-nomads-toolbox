@@ -209,22 +209,30 @@ search system is not: it starts as the site's system again.
 **Find all** searches every commodity you still have to buy, using the same options, and lists the closest 5 stations
 (and, if carriers are ticked, the closest 2 carriers) under a heading for each commodity. It follows the table as you
 have it filtered: rows already covered are left out, and so are rows the Filter box or **Only what [station] sells** hide.
-Spansh can only look up one commodity per request, so it sends one request per commodity, about half a second apart; a
+Spansh can only look up one commodity per request, so it sends one request per commodity, about half a second apart, plus
+one more asking for the nearest stations that have every commodity on the list in stock (see below); a
 list of 20 takes some seconds, and the note under the buttons shows how far it has got. Press **Stop** (the same button)
 to stop after the search in progress, keeping what it found. A commodity that fails is named and the others still
 show; press **Find all** again to retry. Commodities with no source in range are listed in the note.
+
+**A station that sells the whole list.** The extra request finds stations (and carriers, if ticked) that have *every*
+commodity you are searching for in stock. Any it finds are added under each commodity with that commodity's price and stock, so
+the route can use a station that is not among the nearest few for any one commodity. For a long list Spansh usually has no such
+station and nothing is added. If this request fails, Find all carries on without it.
 
 **Suggested route.** Find all also works out a shopping route and puts it first in the results: the few stops (at most 6) that
 between them supply the most of what you still have to get. A station that sells several of your commodities counts for all of
 them, so it is taken first; ties go to the nearer, then the cheaper. Each stop shows what to buy there and the price, and the stops
 are listed nearest first, which is the order to fly them. What no station in range can supply is named in the note. It only
-considers the stations Find all returned (the nearest 25 per commodity within your radius), and stock changes, so treat it as a plan
+considers the stations Find all returned (including any that sell the whole list) (the nearest 25 per commodity within your radius), and stock changes, so treat it as a plan
 to check on arrival. **Copy Route** copies it as plain lines to paste into a note or chat.
 
 Each result shows the station, system, type, whether it is **Planetary**, largest pad, distance in light years,
 distance from the arrival star, the price per ton and the stock. **Planetary: Yes** means a base on a planet's
 surface, so you have to descend to land (planetary ports and outposts, settlements); **No** means an orbital
-station, asteroid base, megaship or fleet carrier, which you dock at in space. Click the heading to sort by it. **Copy System** copies the selected row's system name, to paste into the galaxy map.
+station, asteroid base, megaship or fleet carrier, which you dock at in space. Click the heading to sort by it. **Click a result row** (a station, or a stop in the suggested route) to copy its system name, ready to paste into the galaxy
+map's search; the note under the buttons says what was copied. Headings and the "buy" lines under a route stop copy nothing.
+**Copy System** does the same for the row already selected.
 
 Things worth knowing:
 

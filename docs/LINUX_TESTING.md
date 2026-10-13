@@ -295,7 +295,7 @@ Windows. Needs a commander with at least one registered construction site and an
 - [ ] **Include fleet carriers** off lists no carriers; on adds a **Fleet carriers** group under the stations.
 - [ ] The **Planetary** column says Yes for planetary ports, outposts and settlements and No for orbital stations and
       carriers; the whole results table fits at the window's minimum width.
-- [ ] **Here** puts the system you are in (the last system EDMC saw) into Around. **Copy System** copies the selected row.
+- [ ] **Here** puts the system you are in (the last system EDMC saw) into Around. **Copy System** copies the selected row, and so does clicking a result row (a station or a route stop) at once.
 - [ ] With no network, the panel says the search failed and the button comes back.
 - [x] **Find all** (added 2026-10-12): lists a heading per commodity still to buy with up to 5 stations under each; the
       button reads **Stop** while it runs and stopping keeps what was found; the window stays responsive.
