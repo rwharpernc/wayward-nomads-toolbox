@@ -45,6 +45,12 @@ Check that the folder is named exactly `WNTB` and sits directly inside EDMC's pl
 `load.py` right inside it (not another folder inside it). So you want `plugins/WNTB/load.py`, not
 `plugins/WNTB/WNTB/load.py`. Then restart EDMC.
 
+### A name in the panel ends in "..."
+
+The panel wraps a long name onto the next line rather than cutting it, and only shortens one that is very long (past about 64
+characters for a station, system or site name, 40 for a commodity or material). A wrapped line uses the width EDMC's window
+already has; widening the window gives it more room.
+
 ### A button or section is missing
 
 Open **File → Settings → WNTB** and check the feature hasn't been switched off. The BGS and Codex Completionist

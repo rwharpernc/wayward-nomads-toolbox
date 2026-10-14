@@ -227,3 +227,41 @@ class RebuildTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SiteNameTests(unittest.TestCase):
+    """A delivery names only a MarketID; the history takes the site's name from the Docked at it."""
+
+    @staticmethod
+    def dock(ts, market=SITE_A, name="$EXT_PANEL_ColonisationShip; Froude Reach", system="Pegasi Sector GR-V b2-0"):
+        return {"timestamp": ts, "event": "Docked", "StationName": name, "StationType": "SurfaceStation",
+                "StarSystem": system, "MarketID": market}
+
+    def test_rebuild_names_the_busiest_site(self):
+        from plugin import colonisation_stats as stats
+        ledger = DeliveryLedger()
+        ledger.rebuild("Silas Kade", [self.dock("2025-10-16T10:00:00Z"), give("2025-10-17T10:00:00Z", 500)])
+        h = stats.history_for([], ledger.record("Silas Kade"))
+        self.assertEqual(h.top_site, ("Froude Reach (Pegasi Sector GR-V b2-0)", 500))
+
+    def test_unnamed_site_still_shows_its_number(self):
+        from plugin import colonisation_stats as stats
+        ledger = DeliveryLedger()
+        ledger.rebuild("Silas Kade", [give("2025-10-17T10:00:00Z", 500)])
+        self.assertEqual(stats.history_for([], ledger.record("Silas Kade")).top_site, (f"Construction site {SITE_A}", 500))
+
+    def test_ordinary_station_is_not_kept(self):
+        ledger = DeliveryLedger()
+        self.assertFalse(ledger.note_station("Silas Kade", {"event": "Docked", "StationName": "Port Trident",
+                                                             "StationType": "Coriolis", "MarketID": 1, "StarSystem": "Sol"}))
+
+    def test_read_all_events_finds_the_dock_for_the_right_commander_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            lines = [{"timestamp": "2025-10-16T09:00:00Z", "event": "Commander", "Name": "Silas Kade"},
+                     self.dock("2025-10-16T10:00:00Z"),
+                     {"timestamp": "2025-10-17T09:00:00Z", "event": "Commander", "Name": "Other"},
+                     self.dock("2025-10-17T10:00:00Z", market=SITE_B, name="Elsewhere Depot Construction Site")]
+            with open(os.path.join(folder, "Journal.2025-10-16T090000.01.log"), "w", encoding="utf-8") as handle:
+                handle.write("\n".join(json.dumps(line) for line in lines))
+            found = catchup.read_all_events("Silas Kade", folder)
+        self.assertEqual([e["MarketID"] for e in found], [SITE_A])

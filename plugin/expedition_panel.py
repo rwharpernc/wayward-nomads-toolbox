@@ -23,9 +23,9 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 PANEL_PLACEMENT = "exploration"
 
 _CFG_AUTOCOPY = "wntb_expedition_autocopy"
-_NAME_SHOWN = 28       # characters of an expedition name shown in the panel
-_SYSTEM_SHOWN = 30     # characters of a system name shown in the panel
-_NOTE_SHOWN = 110      # characters of a note shown in the panel
+_NAME_SHOWN = 60       # characters of an expedition name shown in the panel
+_SYSTEM_SHOWN = 64     # characters of a system name shown in the panel
+_NOTE_SHOWN = 160      # characters of a note shown in the panel
 _WRAP_PX = 200         # the lines wrap here: what they show comes from the commander and the game, and must not widen EDMC's window
 
 book = expedition.ExpeditionBook()
@@ -137,9 +137,9 @@ class ExpeditionController:
         self._autocopy_var = tk.BooleanVar(value=autocopy_enabled())
         body = panelkit.collapsible_section(parent, "Expedition", "wntb_expedition_collapsed")
         self._section = body
-        # A plain label with a hard wrap, not panelkit.wrap_label: that one never wraps narrower than 300 px, and a long system name or note
-        # would then make this the widest row in the panel (and so widen the whole EDMC window).
-        tk.Label(body, textvariable=self._summary_var, anchor="w", justify=tk.LEFT, wraplength=_WRAP_PX).grid(
+        # Wraps at the window's width but never below _WRAP_PX, so a long name wraps instead of being cut off and still can't widen
+        # EDMC's window past the width it already has.
+        panelkit.wrap_label(body, min_wrap=_WRAP_PX, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
         copy = tk.Button(body, text="COPY", command=self.copy_next)
         copy.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))

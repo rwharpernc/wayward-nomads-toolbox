@@ -21,7 +21,7 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 PANEL_PLACEMENT = "fieldops"
 
 _FULL_SHOWN = 3        # names listed on the "at the limit" line; the rest are counted
-_NAME_SHOWN = 22       # characters of a material name shown in the panel
+_NAME_SHOWN = 40       # characters of a material name shown in the panel
 _HOLDING_EVENTS = ("ShipLocker", "Backpack", "BackpackChange", "Resupply", "TransferMicroResources", "BuyMicroResources", "SellMicroResources",
                    "UseConsumable", "CollectItems", "DropItems", "Embark", "Disembark", "LoadGame")
 _ARRIVAL_EVENTS = ("FSDJump", "CarrierJump", "Location")
@@ -137,9 +137,9 @@ class MaterialsController:
         self._summary_var = tk.StringVar()
         body = panelkit.collapsible_section(parent, "Materials", "wntb_materials_collapsed")
         self._section = body
-        # A plain label with a hard wrap, not panelkit.wrap_label: that one never wraps narrower than 300 px, and long names would then make
-        # this the widest row in the panel (and so widen the whole EDMC window).
-        tk.Label(body, textvariable=self._summary_var, anchor="w", justify=tk.LEFT, wraplength=_WRAP_PX).grid(
+        # Wraps at the window's width but never below _WRAP_PX, so a long name wraps instead of being cut off and still can't widen
+        # EDMC's window past the width it already has.
+        panelkit.wrap_label(body, min_wrap=_WRAP_PX, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
         button = tk.Button(body, text="MATERIALS", command=self._open_window)
         button.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))

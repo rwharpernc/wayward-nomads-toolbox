@@ -154,7 +154,8 @@ def history_for(sites: Sequence[Site], record: Mapping[str, Any], today: Optiona
     first = str(record.get("first") or "")
     daily = tuple(int(by_day.get((today - timedelta(days=back)).isoformat(), 0) or 0) for back in range(CHART_DAYS - 1, -1, -1))
     names = {str(s.market_id): s.display_name() for s in sites}
-    by_site = [(names.get(str(key), f"Construction site {key}"), int(tons or 0)) for key, tons in (record.get("by_site") or {}).items()]
+    remembered = record.get("site_names") or {}   # from the `Docked` at each depot; a delivery names only a MarketID
+    by_site = [(names.get(str(key)) or remembered.get(str(key)) or f"Construction site {key}", int(tons or 0)) for key, tons in (record.get("by_site") or {}).items()]
     top_site = max(by_site, key=lambda kv: (kv[1], kv[0].casefold()), default=None)
     return History(
         sites=len(sites), completed=sum(1 for s in sites if s.complete), failed=sum(1 for s in sites if s.failed),

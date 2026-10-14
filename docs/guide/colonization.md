@@ -31,7 +31,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Next | One sentence on what to do now |
 | Others | `+N more active sites` when you have more than the one shown (the line is left out when you have none) |
 
-**History** is yours alone (everything is per commander):
+**History** is yours alone (everything is per commander). The heading names the commander it is for (`History - SILAS KADE`), so you can see at a glance whose figures these are:
 
 | Line | What it says |
 |---|---|
@@ -40,7 +40,7 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Recently | Tons in the last 7 and 30 days |
 | Last 14 days | A row of blocks, one a day (oldest first), as tall as that day's tons against your busiest of the 14; a dot is a day with nothing delivered. The peak is named beside it |
 | Best day | Your biggest single day |
-| Busiest site | The site you delivered the most tons to, with the tons |
+| Busiest site | The site you delivered the most tons to, with the tons. A delivery in the journal names the depot only by a number, so WNTB takes the name and system from the time you docked there (it reads your journals for this once, and remembers it afterwards). A depot you never docked at in a journal shows as `Construction site <number>` |
 | Claims | How many systems you have claimed (`ColonisationSystemClaim`), how many of those you released, and how many colonisation beacons you deployed. Counts only: the game does not say when a claim ends, so WNTB does not list which systems are still yours |
 | Most delivered | Your top three commodities |
 | Average build | Days from the first time WNTB saw a site to the day the depot reported it complete, over the sites for which both are known |

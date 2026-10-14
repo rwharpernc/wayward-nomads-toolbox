@@ -140,8 +140,8 @@ book.add("S" * 90, "", "x")
 panel.handle_event({"event": "Location", "StarSystem": "S" * 90}, "Bocheaux", "S" * 90, None, {})
 pump()
 text, _suffix = panel.summary()
-check(len(text) <= 140, f"the summary line stays short: {len(text)} characters")
-check("S" * 50 not in text, "a very long system name is clipped in the panel")
+check(len(text) <= 190, f"the summary line stays short: {len(text)} characters")
+check("S" * 70 not in text, "a very long system name is clipped in the panel")
 entry = widgets(host, tk.Entry)[0]
 check(int(entry.cget("width")) <= notes_panel._ENTRY_WIDTH and entry.winfo_reqwidth() <= notes_panel._ENTRY_MAX_PX,
       f"the quick-add box has a fixed width, no wider than {notes_panel._ENTRY_MAX_PX} px in any font: {entry.winfo_reqwidth()}")

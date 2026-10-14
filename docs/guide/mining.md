@@ -10,6 +10,31 @@ for your current run.
 
 > **Where this comes from:** the journal records what you prospect, refine and collect, but not a ring's deposit amounts or density, which you type in. The hotspot catalog is your own, and ring reserve and hotspot lookups use what players have uploaded to EDSM and Spansh. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
+## What each page shows
+
+Lines come and go with the settings listed at the end of this page.
+
+**Space Mining** (in your ship, from undocking):
+
+- your cargo, and the ring you are at with its reserve level (once *Enable EDSM Ring Reserve Lookup* is ticked and EDSM knows it);
+- **Asteroids prospected**, with how many of each content grade, and the **materials seen** in them;
+- **Asteroids cracked** (core mining);
+- **Limpets launched** by type, with an approximate count still on board (bought less launched);
+- **Refined**, by commodity (with the mining method that usually suits it, when prospector hints are on) and the **Refining rate** in refinements a
+  minute, worked out from the last 10 seconds;
+- a **Paused** note while you are in supercruise.
+
+**Surface Mining** (in the Rhino SRV):
+
+- whether the Rhino is deployed or stowed, its cargo and your ship's;
+- **Refined**, the **Refining rate**, what was **Transferred to ship** and the **Raw materials** picked up;
+- the **Last DSS scan**: how many mining locations the scan found on which body;
+- **Known hotspots here**: the ones you have saved on the body you are on;
+- the **coverage minimap** (if ticked in Settings): ground the Rhino has driven over, with your position and your saved hotspots. In your
+  ship it appears only close to the ground (under about 2 km).
+
+Both pages carry the buttons above, and the Mining Book and the coverage map are per commander.
+
 ## The buttons
 
 The buttons sit side by side in one row, in this order. Which ones you see depends on the page and on your

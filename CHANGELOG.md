@@ -3,6 +3,15 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.10.2 - 2026-10-14
+
+### Changed
+- **Long names in the main panel wrap instead of being cut off.** The Colonization page cut a site name at 30 characters (`Orbital Construction Site: Wa...`) and a project, system or commodity name at 22 to 40; those limits are now 64 and 40, and the text wraps at the window's width. The Expedition, Materials, Notes and Trade watch list lines used to wrap at a fixed 200 px even in a wide window; they now use the whole width of the window (never less than 200 px, so a narrow window is still never widened), and their name limits are higher (expedition name 60, system 64, note 160; material 40; Notes system 64 and note preview 120; watch list commodity 32).
+- **The Colonization panel's History heading names the commander** (`History - SILAS KADE`), so it is clear whose figures are shown.
+
+### Fixed
+- **Busiest site shows its name, not `Construction site <number>`**, for depots WNTB is not tracking. The journal's delivery event names a depot only by number, so WNTB now learns the name and system from the `Docked` at it (read once from your journals for each commander, and kept as you dock). A depot never docked at in the journals still shows its number.
+
 ## 1.10.1 - 2026-10-14
 
 ### Fixed

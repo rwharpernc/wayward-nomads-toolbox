@@ -5,7 +5,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **1.10.1** is the current release (2026-10-14, tag `v1.10.1`): the Expedition and Materials sections no longer widen the main panel on
+- **1.10.2** is the current release (2026-10-14, tag `v1.10.2`): long names in the main panel wrap instead of being cut off, the Colonization History heading names the commander, and the busiest site shows its name. Tested on Windows only; the Linux check is Materials and Expedition on a narrow window.
+- **1.10.1** (2026-10-14, tag `v1.10.1`): the Expedition and Materials sections no longer widen the main panel on
   Linux. Tested on Windows.
 - **1.10.0** (2026-10-14, tag `v1.10.0`) added Materials and Engineering (Field Ops), the Expedition planner
   (Exploration), the material trader finder, Spansh route buttons and system-name suggestions. Tested on Linux; see `docs/LINUX_TESTING.md`.
@@ -15,8 +16,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.10.1 release. For a fix to a released version, cut a short branch from
-`master` (for example `bugfix/1.10.2`), and merge it back.
+There is one long-lived branch, `master`, and it matches the 1.10.2 release. For a fix to a released version, cut a short branch from
+`master` (for example `bugfix/1.10.3`), and merge it back.
 
 ## Testing
 

@@ -237,8 +237,15 @@ How that plays out:
 
 - **Text from the game or journal** (station names, system names, faction names) is unbounded. Use
   `panelkit.wrap_label`, which creates a label whose `wraplength` tracks its container's width but
-  never drops below `MIN_WRAP` (300 px). A long name wraps instead of stretching the window. The
-  top-level frame's `<Configure>` event calls `panelkit.on_frame_configure` to update all of them.
+  never drops below its `min_wrap` (`MIN_WRAP`, 300 px, unless the caller passes less). A long name
+  wraps instead of stretching the window. The top-level frame's `<Configure>` event calls
+  `panelkit.on_frame_configure` to update all of them. A section that must not be the widest row in a
+  narrow window (Expedition, Materials, Notes, the Trade watch list) passes `min_wrap=200`: it wraps
+  at 200 px in a narrow window and at the full width of a wide one, so a long name is shown in full
+  instead of being cut short.
+- **Character limits are safety caps, not the way text is fitted.** A name is shortened with an
+  ellipsis only past a generous cap (64 characters for a station, system or site name, 40 for a
+  commodity or material), so the wrapping label, not a short clip, decides how much shows.
 - **Images** are resized into a fixed box, on both axes, before display. `screenshots.py` defines
   explicit max width and height constants for the inline thumbnail (a genuine two-dimensional box),
   the history thumbnails and the preview popup, and hands them to

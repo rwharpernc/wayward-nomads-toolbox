@@ -21,8 +21,8 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 PANEL_PLACEMENT = "exploration"
 
 _LOCATION_EVENTS = ("FSDJump", "Location", "CarrierJump")
-_NAME_SHOWN = 40       # characters of a system name shown in the panel
-_PREVIEW_SHOWN = 60    # characters of the newest note shown in the panel
+_NAME_SHOWN = 64       # characters of a system name shown in the panel
+_PREVIEW_SHOWN = 120    # characters of the newest note shown in the panel
 _ENTRY_MAX_PX = 190   # the box is lowered from _ENTRY_WIDTH characters until it is no wider than this, in any font
 _ENTRY_WIDTH = 26      # the quick-add box has a fixed width, whatever is typed in it (about 190 px: inside the panel's own width)
 _WRAP_PX = 200         # the summary wraps here: what it shows comes from the commander and the game, and must not widen EDMC's window
@@ -103,9 +103,9 @@ class NotesController:
 
         body = panelkit.collapsible_section(parent, "Notes", "wntb_notes_collapsed")
         self._section = body
-        # A plain label with a hard wrap, not panelkit.wrap_label: that one never wraps narrower than 300 px, and a long system name or
-        # note would then make this the widest row in the panel (and so widen the whole EDMC window).
-        tk.Label(body, textvariable=self._summary_var, anchor="w", justify=tk.LEFT, wraplength=_WRAP_PX).grid(
+        # Wraps at the window's width but never below _WRAP_PX, so a long name wraps instead of being cut off and still can't widen
+        # EDMC's window past the width it already has.
+        panelkit.wrap_label(body, min_wrap=_WRAP_PX, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
         entry = panelkit.fit_entry(tk.Entry(body, textvariable=self._entry_var, width=_ENTRY_WIDTH), _ENTRY_MAX_PX)
         entry.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))

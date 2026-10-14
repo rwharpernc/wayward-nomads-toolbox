@@ -23,6 +23,7 @@ import os
 
 from . import colonisation, commander_data, journal_files
 from .colonisation_data import SiteRepository
+from . import colonisation_history
 from .colonisation_history import DeliveryLedger
 
 DEFAULT_DAYS = 14   # how far back to read when no site says otherwise
@@ -31,8 +32,9 @@ _WANTED = journal_files.event_pattern(
     "Commander", "LoadGame", "Docked", colonisation.EVENT_DEPOT, colonisation.EVENT_CONTRIBUTION, *colonisation.CLAIM_EVENTS)
 
 Event = Tuple[str, Dict[str, Any]]   # (commander name, journal entry)
-_HISTORY_MARKS = (b"ColonisationContribution", b"ColonisationSystemClaim", b"ColonisationBeaconDeployed")
-_WANTED_HISTORY = journal_files.event_pattern("Commander", "LoadGame", colonisation.EVENT_CONTRIBUTION, *colonisation.CLAIM_EVENTS)
+_HISTORY_MARKS = (b"ColonisationContribution", b"ColonisationSystemClaim", b"ColonisationBeaconDeployed",
+                  b"ColonisationShip", b"Construction Site", b"ConstructionDepot")   # the last three: a Docked that names a depot
+_WANTED_HISTORY = journal_files.event_pattern("Commander", "LoadGame", "Docked", colonisation.EVENT_CONTRIBUTION, *colonisation.CLAIM_EVENTS)
 logger = logging.getLogger(__name__)
 
 
@@ -163,6 +165,9 @@ def read_all_events(cmdr: str, folder: Optional[str] = None) -> List[Dict[str, A
                 current = commander_data.key_for(entry["Name"])
             elif kind == "LoadGame" and entry.get("Commander"):
                 current = commander_data.key_for(entry["Commander"])
+            elif kind == "Docked":
+                if current == wanted and colonisation_history.is_depot_dock(entry):
+                    found.append(entry)
             elif (kind == colonisation.EVENT_CONTRIBUTION or kind in colonisation.CLAIM_EVENTS) and current == wanted:
                 found.append(entry)
     found.sort(key=lambda e: str(e.get("timestamp") or ""))
