@@ -145,7 +145,7 @@ class MaterialsController:
         button.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
         panelkit.add_tooltip(button, "Open the Materials window: search and filter every material with its grade and limit")
         engineering = tk.Button(body, text="BLUEPRINTS", command=self._open_blueprints)
-        engineering.grid(row=2, column=1, sticky=tk.W, padx=(4, 0), pady=(4, 0))
+        engineering.grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=(4, 0))   # under, not beside: two buttons side by side outgrow the panel
         panelkit.add_tooltip(engineering, "Open the Engineering window: browse blueprints, keep a wishlist and see what you still need")
         self._update_summary()
 

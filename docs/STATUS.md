@@ -5,6 +5,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
+- **1.10.1** is prepared on branch `bugfix/1.10.1` and not yet tagged or released: the Expedition and Materials sections no longer widen the
+  main panel on Linux. It waits for a check on Windows.
 - **1.10.0** is the current release (2026-10-14, tag `v1.10.0`). It adds Materials and Engineering (Field Ops), the Expedition planner
   (Exploration), the material trader finder, Spansh route buttons and system-name suggestions. Tested on Linux; see `docs/LINUX_TESTING.md`.
 - **1.9.1** (2026-10-13, tag `v1.9.1`) held the fixes found while testing 1.9.0 on Windows and Linux.
@@ -13,7 +15,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.10.0 release. For a fix to a released version, cut a short branch from
+There is one long-lived branch, `master`, and it matches the 1.10.0 release; `bugfix/1.10.1` is ahead of it. For a fix to a released version, cut a short branch from
 `master` (for example `bugfix/1.10.1`), and merge it back.
 
 ## Testing

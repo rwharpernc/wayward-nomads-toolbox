@@ -145,10 +145,10 @@ class ExpeditionController:
         copy.grid(row=2, column=0, sticky=tk.W, pady=(4, 0))
         panelkit.add_tooltip(copy, "Copy the next stop's system name to the clipboard, to paste into the galaxy map")
         tick = tk.Checkbutton(body, text="Copy on arrival", variable=self._autocopy_var, command=self._save_autocopy)
-        tick.grid(row=2, column=1, sticky=tk.W, padx=(6, 0), pady=(4, 0))
+        tick.grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
         panelkit.add_tooltip(tick, "Copy the next stop's system name to the clipboard every time you arrive anywhere")
         window = tk.Button(body, text="EXPEDITION", command=self._open_window)
-        window.grid(row=3, column=0, sticky=tk.W, pady=(4, 0))
+        window.grid(row=2, column=1, sticky=tk.W, padx=(6, 0), pady=(4, 0))
         panelkit.add_tooltip(window, "Open the Expedition window: plan, start and review expeditions")
         self._update_summary()
 
