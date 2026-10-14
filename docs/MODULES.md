@@ -31,7 +31,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `overlay_style.py` | The shared overlay look: six color schemes (color roles), the text sizes with per-size character width and line height estimates (each width padded by 10%), padding and line spacing; cards are sized from these so larger text never wraps; pure, no Tk |
 | `overlay_appearance.py` | The saved color scheme and text size (Smaller, Default, Larger), the fixed padding and line spacing, `current_look()` which every overlay draws with, and the Overlays > Appearance Settings tab with its sample |
 | `overlay_placement.py` | Global overlay placement: reads the real window size, mode and display scaling from EDMCModernOverlay's log (falling back to Elite's `DisplaySettings.xml` and Windows' scaling), keeps every display's saved spot, and the Overlay Placement Settings tab with its preview |
-| `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels, separators, toggles, tooltips, collapsible sections, page arrows, theming, and `fit_entry` / `fit_button_row`, which cap an entry box and a row of buttons in pixels whatever the font |
+| `panelkit.py` | Shared Tk helpers for the main panel and Settings: wrapping labels (a `min_wrap` per label, so a section can wrap at the window's width without ever widening a narrow one), separators, toggles, tooltips, collapsible sections, page arrows, theming, and `fit_entry` / `fit_button_row`, which cap an entry box and a row of buttons in pixels whatever the font |
 | `platform_support.py` | Windows/Linux differences in one place: Elite's folders, key presses (`xdotool`), host programs under Flatpak, "Works on" notes |
 | `restore.py` | Names the last commander from the newest journal and tells every feature when EDMC starts without the game running, so nothing waits for a login |
 | `settings_scroll.py` | Wraps each Settings page in a height-capped scrolling frame so a long page never pushes the OK button off the screen |
@@ -151,7 +151,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 | Module | What it is |
 |---|---|
 | `mining_bearing.py` | Great-circle distance, bearing and arrow maths, for the Surface Compass and the coverage map |
-| `mining_body_survey.py` | The landable bodies in the current system, for the System Bodies overview |
+| `mining_body_survey.py` | The landable bodies the journal has shown in the current system (scans and mining-location signals), which the Mining Book lists and the ground-type rates are worked from |
 | `mining_coverage.py` | Where the SRV's scanner has driven, per body, one map per commander |
 | `mining_coverage_render.py` | Draws that coverage as a small map (PIL, no Tk) |
 | `mining_deposit.py` | Estimates tonnes left in a recorded hotspot deposit |

@@ -16,7 +16,9 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 ## Branches
 
 There is one long-lived branch, `master`, and it matches the 1.10.1 release. For a fix to a released version, cut a short branch from
-`master` (for example `bugfix/1.10.2`), and merge it back.
+`master` (for example `bugfix/1.10.2`), and merge it back. `bugfix/1.10.2` is open now: it holds the Colonization History heading and
+busiest-site name, and long names in the main panel wrapping instead of being cut off (see "Unreleased" in `CHANGELOG.md`). The wrapping
+change has been run on Windows only; check Materials and Expedition on a narrow Linux window.
 
 ## Testing
 

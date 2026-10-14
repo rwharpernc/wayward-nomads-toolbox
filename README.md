@@ -105,7 +105,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 ### Across the whole toolbox
 
 - **Eight modes in one small panel**, switched with the buttons under the title ([Getting started](docs/guide/getting-started.md)).
-- **Game mode and credits lines** under the mode buttons, and the version you are running ([Getting started](docs/guide/getting-started.md)).
+- **Game mode, credits and merits lines** under the mode buttons (credits and merits this session, with a per-hour rate), and the version you are running ([Getting started](docs/guide/getting-started.md)).
 - **Everything is per commander**: nothing WNTB saves about play is shared between commanders ([Getting started](docs/guide/getting-started.md)).
 - **Catches up after EDMC was closed**: it reads the recent journals when EDMC starts, counting nothing twice ([Getting started](docs/guide/getting-started.md)).
 - **System-name suggestions** in every box that takes a system name: the systems you have been in, then ones WNTB holds, and, if you tick it, Spansh's search for any system ([Typing a system name](docs/guide/getting-started.md#typing-a-system-name)).
@@ -138,14 +138,15 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 
 ### Mining ([guide](docs/guide/mining.md))
 
-- **Space Mining** and **Surface Mining** pages with live stats for your run ([Mining](docs/guide/mining.md)).
+- **Space Mining** and **Surface Mining** pages with live stats for your run: asteroids prospected and cracked, limpets, what you refined and the refining rate, the Rhino's cargo, and a minimap of the ground it has driven over ([What each page shows](docs/guide/mining.md#what-each-page-shows)).
 - **Mining Book**: your own catalog of hotspots, with tons mined and an estimate of what is left ([The Mining Book](docs/guide/mining.md#the-mining-book)).
 - **+H.S.** to save a hotspot, and **I/E** to import or export them ([The buttons](docs/guide/mining.md#the-buttons)).
+- **Mining stats on the overlay**, optional, and an optional JSON archive of each completed run ([Settings](docs/guide/mining.md#settings)).
 - **Opt-in online lookups**: nearby hotspots and the best price (Spansh), and ring reserve level (EDSM) ([The buttons](docs/guide/mining.md#the-buttons)).
 
 ### Trade ([guide](docs/guide/trade.md))
 
-- **Session profit** after fuel, repairs and other running costs, with credits per hour, your ship's hold and your fleet carrier's space ([The Session page](docs/guide/trade.md#the-session-page)).
+- **Session profit** after fuel, repairs and other running costs, with credits per hour, your ship's hold, your fleet carrier's space, what was bought but not yet sold (an estimate) and the game's own lifetime trading totals ([The Session page](docs/guide/trade.md#the-session-page)).
 - **Trade History** window for saved sessions, with a CSV export ([Trade History](docs/guide/trade.md#trade-history-saving-sessions)).
 - **Routes**: the best trade routes from where you are, and a round trip, from Spansh ([Routes](docs/guide/trade.md#routes)).
 - **Market**: where to sell or buy a commodity ([Market](docs/guide/trade.md#market)).
