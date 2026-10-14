@@ -3,6 +3,11 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.10.1 - 2026-10-14
+
+### Fixed
+- **The Expedition and Materials sections no longer make the main panel wider** on Linux. In Expedition, "Copy on arrival" now sits on its own line under COPY and EXPEDITION; in Materials, BLUEPRINTS sits under MATERIALS instead of beside it.
+
 ## 1.10.0 - 2026-10-14
 
 ### Added

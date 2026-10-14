@@ -94,14 +94,13 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and the 1.9.1 fixes came from earlier testing there. The
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux, and 1.10.1 fixes a panel-width problem found in that pass. The
 > newest parts (Materials, the Engineering blueprints and wishlist, the material trader finder and the Expedition planner) have had less
 > time in the game than the rest, so expect a few small fixes in a later update. If something looks off, please [report it](#getting-help).
 
 ## Full feature list
 
-Every feature, by mode, with a link to its step-by-step section in the user guide. Anything marked *(not yet released)* is on
-`master` and will be in the next release. See [Planned and being researched](#planned-and-being-researched) for what is not built.
+Every feature, by mode, with a link to its step-by-step section in the user guide. See [Planned and being researched](#planned-and-being-researched) for what is not built.
 
 ### Across the whole toolbox
 
@@ -134,7 +133,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Codex Completionist**: a lifetime tally of your Codex finds, with a details window and a backfill from journal history ([Codex Completionist](docs/guide/exploration.md#codex-completionist)).
 - **GEC Nearby POI** and **Canonn Nearby POI**: the nearest point of interest from edastro's catalog or Canonn's Thargoid and Guardian site lists, only when you press FIND ([GEC](docs/guide/exploration.md#gec-nearby-poi), [Canonn](docs/guide/exploration.md#canonn-nearby-poi)).
 - **Notes**: your own notes on a system or a body, shown when you arrive, with a searchable window ([Notes](docs/guide/exploration.md#notes)).
-- **Expedition planner** *(not yet released)*: named trips of stops with notes, ticked off as you arrive, with jumps, light-years and time so far, the next stop's distance, COPY for the galaxy map, import from your plotted route or a CSV, and optional nearest-neighbor ordering through EDSM, and one-button expeditions from Spansh's **Road to Riches** and **Exomastery** planners ([Expedition](docs/guide/exploration.md#expedition)).
+- **Expedition planner**: named trips of stops with notes, ticked off as you arrive, with jumps, light-years and time so far, the next stop's distance, COPY for the galaxy map, import from your plotted route or a CSV, and optional nearest-neighbor ordering through EDSM, and one-button expeditions from Spansh's **Road to Riches** and **Exomastery** planners ([Expedition](docs/guide/exploration.md#expedition)).
 - **Compass** and **Marks**: an arrow, a name and a distance on your game screen pointing at the nearest recorded hotspot or a mark you saved on the planet you are on ([Compass](docs/guide/exploration.md#compass)).
 
 ### Mining ([guide](docs/guide/mining.md))
@@ -164,9 +163,9 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 
 - **Screenshots**: automatic PNG conversion with an optional crop to the HUD panel ([Screenshots](docs/guide/field-ops.md#screenshots)).
 - **Inventory**: your backpack, ship locker and cargo as bars, and the Carrier Locker, with a pick-up sound ([Inventory](docs/guide/field-ops.md#inventory)).
-- **Materials** *(not yet released)*: how many Raw, Manufactured and Encoded engineering materials you hold, each one's grade and limit, the last change, and what is at the limit, with a searchable window ([Materials](docs/guide/field-ops.md#materials)).
-- **Engineering** *(not yet released)*: about 1,170 blueprints with their ingredients against what you hold and where each is found, a wishlist with a combined shopping list, and an Engineers tab with where you stand and what unlocking each takes ([Engineering](docs/guide/field-ops.md#engineering-blueprints-and-a-wishlist)).
-- **Material trader finder** *(not yet released)*: the closest Raw, Manufactured or Encoded trader to a system, with distance and pad filters, from Spansh ([Find a trader](docs/guide/field-ops.md#materials)).
+- **Materials**: how many Raw, Manufactured and Encoded engineering materials you hold, each one's grade and limit, the last change, and what is at the limit, with a searchable window ([Materials](docs/guide/field-ops.md#materials)).
+- **Engineering**: about 1,170 blueprints with their ingredients against what you hold and where each is found, a wishlist with a combined shopping list, and an Engineers tab with where you stand and what unlocking each takes ([Engineering](docs/guide/field-ops.md#engineering-blueprints-and-a-wishlist)).
+- **Material trader finder**: the closest Raw, Manufactured or Encoded trader to a system, with distance and pad filters, from Spansh ([Find a trader](docs/guide/field-ops.md#materials)).
 - **Ship Builds**: a list of builds from Coriolis, EDSY or Spansh, kept by link ([Ship Builds](docs/guide/field-ops.md#ship-builds)).
 
 ### Colonization ([guide](docs/guide/colonization.md))

@@ -15,13 +15,14 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## Testing: start here
 
-**1.9.1 is the current release.** 1.9.0 was tested on Windows and then on Linux; 1.9.1 holds the fixes found in that pass. `master` is ahead of
-the release: it also holds the Materials, Engineering and Expedition work, which has not been seen working in the game on either OS.
+**1.10.1 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
+Linux; 1.10.1 stops the Expedition and Materials sections from widening the main panel, and was tested on Windows. The Linux check for 1.10.1 is
+the panel-width item below.
 
 **Getting set up**
-1. Install the released **1.9.1** the normal way (the automatic update, or the zip from the
+1. Install the released **1.10.1** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
-   buttons should read `Plugin: v1.9.1`. Work through sections 0 and 1 below first.
+   buttons should read `Plugin: v1.10.1`. Work through sections 0 and 1 below first.
 2. To get the checklist and the test suite, fetch the repository and use `master`:
    `git fetch --all --tags`, then `git switch master`, then `git pull --rebase`. Once per machine:
    `git config core.hooksPath .githooks`.
@@ -30,13 +31,17 @@ the release: it also holds the Materials, Engineering and Expedition work, which
 4. To try the `master` build instead of the release, run `npm run deploy` in the repository. It finds EDMC's plugins folder (native or Flatpak) and copies the
    build there; restart EDMC afterwards. `master` reports the same version as the release until the next one is cut.
 
+**What changed in 1.10.1, in the order to check it:**
+- **Layout:** with Expedition (Exploration mode) and Materials (Field Ops mode) open, the main EDMC window must not grow wider. In Expedition,
+  **Copy on arrival** sits on its own line under **COPY** and **EXPEDITION**; in Materials, **BLUEPRINTS** sits under **MATERIALS**, not beside it.
+
 **What changed in 1.9.1, in the order to check it** (each item is in the section named):
 - **Section 5, Overlay:** the Colonization card still showing when the game's Market event arrives late (the overlay now also watches `Market.json`).
 - **Section 7f, Overlay Placement:** an exact position that is off the overlay's canvas (such as a leftover `x = 1280`) falls back to the default spot.
 - **Section 7g, Overlay Appearance:** the Text size choice (Smaller, Default, Larger), and boxes holding their text at each size.
 - **Layout:** with a large font the Trade page and the Trade History window should not widen the EDMC window.
 
-**New on `master`, not yet in a release** (the checklists are in section 5 below):
+**New in 1.10.0** (the checklists are in section 5 below):
 - **Materials, Engineering and the Material trader** (Field Ops mode).
 - **The Expedition planner** (Exploration mode).
 
