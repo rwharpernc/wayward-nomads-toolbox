@@ -7,7 +7,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 - **1.10.1** is the current release (2026-10-14, tag `v1.10.1`): the Expedition and Materials sections no longer widen the main panel on
   Linux. Tested on Windows.
-- **1.10.0** (2026-10-14, tag `v1.10.0`) It adds Materials and Engineering (Field Ops), the Expedition planner
+- **1.10.0** (2026-10-14, tag `v1.10.0`) added Materials and Engineering (Field Ops), the Expedition planner
   (Exploration), the material trader finder, Spansh route buttons and system-name suggestions. Tested on Linux; see `docs/LINUX_TESTING.md`.
 - **1.9.1** (2026-10-13, tag `v1.9.1`) held the fixes found while testing 1.9.0 on Windows and Linux.
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
