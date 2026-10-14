@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.10.0 - 2026-10-14
 
 ### Added
 - **System-name suggestions in every box that takes a system name** (Expedition stops and planner, the trader finder, Colonization's *Around*, mining

@@ -1,30 +1,20 @@
 # Where things stand
 
 Read this first when picking the project up on a machine that has not seen the recent work (for example the Linux test machine). It is
-kept in Git because Git is the only thing shared between the Windows and Linux machines. Last updated 2026-10-13, on Windows.
+kept in Git because Git is the only thing shared between the Windows and Linux machines. Last updated 2026-10-14, on Linux.
 
 ## Releases
 
-- **1.9.1** is the current release (2026-10-13, tag `v1.9.1`). It holds the fixes found while testing 1.9.0 on Windows and Linux: the
-  Colonization card watching `Market.json`, an off-canvas overlay position falling back to its default, the Text size choice, the
-  layout fixes for large fonts, and the troubleshooting additions. Both fixes that came from Linux were confirmed on Windows.
+- **1.10.0** is the current release (2026-10-14, tag `v1.10.0`). It adds Materials and Engineering (Field Ops), the Expedition planner
+  (Exploration), the material trader finder, Spansh route buttons and system-name suggestions. Tested on Linux; see `docs/LINUX_TESTING.md`.
+- **1.9.1** (2026-10-13, tag `v1.9.1`) held the fixes found while testing 1.9.0 on Windows and Linux.
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
 
 ## Branches
 
-There is one long-lived branch, `master`, and it is ahead of the 1.9.1 release. The feature branches and `bugfix/1.9.1` are merged and
-deleted. For a fix to a released version, cut a short branch from `master` (for example `bugfix/1.9.2`), and merge it back.
-
-`master` holds, under "Unreleased" in `CHANGELOG.md`, two pieces of work that no release has yet:
-
-- **Materials and Engineering** (Field Ops): the engineering materials you hold, a blueprint browser with a wishlist and shopping list,
-  engineers (including the four Colonia on-foot engineers, added by hand) and a material trader finder.
-- **The Expedition planner** (Exploration): named expeditions of stops with notes, progress from arrivals, import from the plotted route
-  or a CSV.
-
-Both are built, with unit and window tests, and neither has been seen working in the game on either OS. The next release will be a minor
-version (1.10.0) once they have been tried in the game; place the "Unreleased" entries under that heading at release time.
+There is one long-lived branch, `master`, and it matches the 1.10.0 release. For a fix to a released version, cut a short branch from
+`master` (for example `bugfix/1.10.1`), and merge it back.
 
 ## Testing
 

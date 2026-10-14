@@ -94,11 +94,9 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux is lightly tested.** Colonization and the Overlays tab (Placement and Appearance) have had a first pass on Linux, and the
-> 1.9.1 fixes came from it. The newer parts (Flight Alerts, the Surface Compass, Notes and the Trade watch list) have been tried on
-> Windows, and their Linux checks are still to be ticked off. The newest (Materials, the Engineering blueprints and wishlist, the material
-> trader finder and the Expedition planner, in the next release) have not yet been seen working in the game on either OS, so expect rough
-> edges and a few small fixes in a later update. If something looks off, please [report it](#getting-help).
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and the 1.9.1 fixes came from earlier testing there. The
+> newest parts (Materials, the Engineering blueprints and wishlist, the material trader finder and the Expedition planner) have had less
+> time in the game than the rest, so expect a few small fixes in a later update. If something looks off, please [report it](#getting-help).
 
 ## Full feature list
 
