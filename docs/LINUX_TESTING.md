@@ -118,7 +118,7 @@ the release: it also holds the Materials, Engineering and Expedition work, which
       Blueprints tab searching for them; **Put their unlock on the wishlist** adds it; the wishlist's **Who can do it** column names an unlocked
       engineer or "No engineer unlocked yet".
 - [ ] Expedition (Exploration mode, **Expedition** section; added 2026-10-14): **EXPEDITION** opens the window; **New** makes an expedition; **Add stop**
-      (and **Here**) add stops; **From plotted route** (after plotting a route in the game) and **Import CSV** add many; **Start**, then jump to a
+      (and **Here**) add stops; **From plotted route** (after plotting a route in the game) and **Import CSV** add many; **Road to Riches** and **Exomastery** (Spansh; press **Plot**, wait, check the new expedition's stops, notes and order against Spansh's own page); **Start**, then jump to a
       stop: the section ticks it, counts the jump and shows the next stop with its distance; **COPY** and **Copy on arrival** put the next stop's
       name on the clipboard (check it pastes into the galaxy map's search box); **Locate and reorder (EDSM)** orders the unvisited stops;
       **Export CSV** saves a file and **Import CSV** reads it back; **Reset** and **Delete** ask twice; the section stays narrow with a long name; the

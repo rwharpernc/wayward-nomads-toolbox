@@ -67,6 +67,7 @@ class ExpeditionController:
     def __init__(self) -> None:
         self._system = ""
         self._position: Optional[expedition.XYZ] = None
+        self._jump_range: Optional[float] = None
         self._arrival = ""
         self._summary_var: Optional[tk.StringVar] = None
         self._autocopy_var: Optional[tk.BooleanVar] = None
@@ -87,6 +88,10 @@ class ExpeditionController:
                      state: Dict[str, Any]) -> None:
         changed = book.set_commander(cmdr)       # a new commander tells the book's listeners (this row) itself
         event = entry.get("event")
+        if event == "Loadout":
+            reach = entry.get("MaxJumpRange")
+            if isinstance(reach, (int, float)) and not isinstance(reach, bool) and reach > 0:
+                self._jump_range = float(reach)
         if changed:
             self._arrival = ""
         if event in expedition.ARRIVAL_EVENTS and isinstance(entry.get("StarSystem"), str) and entry["StarSystem"].strip():
@@ -157,6 +162,10 @@ class ExpeditionController:
     def position(self) -> Optional[expedition.XYZ]:
         """The galactic position the game last gave, or None."""
         return self._position
+
+    def jump_range(self) -> Optional[float]:
+        """The ship's maximum jump range in light-years from the last `Loadout` event, or None before one has been seen."""
+        return self._jump_range
 
     def _open_window(self) -> None:
         if self._parent is not None:

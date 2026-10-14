@@ -30,7 +30,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   jumps, light-years and time so far, the next stop with its distance and note, and the stop you just reached. **COPY** (or **Copy on arrival**, off
   until ticked) puts the next stop's name on the clipboard for the galaxy map. Add stops by hand, from the route plotted in the game or from a CSV;
   reorder by nearest neighbor (the positions come from EDSM, the only online part, which sends only system names); share as a list or a CSV. Keep
-  several expeditions and run one at a time. Kept on your computer for each commander. Waypoints (Boxel Survey) is unchanged.
+  several expeditions and run one at a time. **Road to Riches** and **Exomastery** buttons in the window ask Spansh's planners for the most valuable
+  bodies to scan, or the most valuable biological planets, near a route and turn the answer into a new expedition (only when you press **Plot**; it
+  sends Spansh the start system, the end if you give one, and the numbers you chose). Adding the first stop makes an expedition for you, and
+  **Rename** offers the current name to edit. Kept on your computer for each commander. Waypoints (Boxel Survey) is unchanged.
 
 ## 1.9.1 - 2026-10-13
 

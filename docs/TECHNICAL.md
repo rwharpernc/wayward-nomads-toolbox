@@ -507,8 +507,13 @@ worker thread when **Find** is pressed, with a two-minute cache, and nothing els
 
 The Expedition planner (`expedition.py`, `expedition_window.py`, `expedition_panel.py`) keeps named expeditions of ordered stops in
 `expeditions.json` (`ExpeditionBook`, per commander), one active at a time. The panel feeds arrivals from the journal and ticks the stop whose
-system matches, counting jumps and distance. The only online part is the optional **Locate and reorder (EDSM)** button, which sends system
-names to EDSM for their positions and orders the stops by nearest neighbor.
+system matches, counting jumps and distance. There are two online parts, both only on a button press. **Locate and reorder (EDSM)** sends system
+names to EDSM for their positions and orders the stops by nearest neighbor. **Road to Riches** and **Exomastery** (`spansh_planners.py`,
+`expedition_plan_dialog.py`) post the start system, the optional end and the chosen numbers to Spansh's `/api/riches/route` or
+`/api/exobiology/route`, poll `/api/results/<job>` on a worker thread (the answer takes seconds to a couple of minutes), and turn the systems of the
+answer into a new expedition: each stop is a system with its best body, a note of what the bodies are worth, and Spansh's position for it. The jump
+range offered is the last `Loadout`'s `MaxJumpRange`. The endpoints are undocumented; the request and result shapes were taken from Spansh's own page
+and a live answer (see the module's docstring).
 
 Flight Alerts (`flight_alerts.py`, over the pure `carrier_jump_timer.py` and `fuel_alerts.py`) draws one overlay card. The carrier
 countdown comes from `CarrierJumpRequest` (`SystemName`, `Body`, `DepartureTime`, parsed as UTC), cleared by `CarrierJumpCancelled` or

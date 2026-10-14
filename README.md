@@ -25,6 +25,7 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS).
 
 - [How WNTB knows what it knows](#how-wntb-knows-what-it-knows)
 - [What's in the toolbox](#whats-in-the-toolbox)
+- [Full feature list](#full-feature-list)
 - [Planned and being researched](#planned-and-being-researched)
 - [Quick start](#quick-start)
 - [Tips, quirks and workarounds](#tips-quirks-and-workarounds)
@@ -98,6 +99,97 @@ marked as estimates on screen.
 > Windows, and their Linux checks are still to be ticked off. The newest (Materials, the Engineering blueprints and wishlist, the material
 > trader finder and the Expedition planner, in the next release) have not yet been seen working in the game on either OS, so expect rough
 > edges and a few small fixes in a later update. If something looks off, please [report it](#getting-help).
+
+## Full feature list
+
+Every feature, by mode, with a link to its step-by-step section in the user guide. Anything marked *(not yet released)* is on
+`master` and will be in the next release. See [Planned and being researched](#planned-and-being-researched) for what is not built.
+
+### Across the whole toolbox
+
+- **Eight modes in one small panel**, switched with the buttons under the title ([Getting started](docs/guide/getting-started.md)).
+- **Game mode and credits lines** under the mode buttons, and the version you are running ([Getting started](docs/guide/getting-started.md)).
+- **Everything is per commander**: nothing WNTB saves about play is shared between commanders ([Getting started](docs/guide/getting-started.md)).
+- **Catches up after EDMC was closed**: it reads the recent journals when EDMC starts, counting nothing twice ([Getting started](docs/guide/getting-started.md)).
+- **Pop-out windows** with a dark look that remember their size and place ([Getting started](docs/guide/getting-started.md#opening-the-pop-out-windows)).
+- **Automatic updates** from GitHub releases, and a **Release notes** link ([Getting started](docs/guide/getting-started.md)).
+- **On-screen overlay displays** through EDMCModernOverlay, with a Placement tool, six color schemes and a text size ([Overlay setup](docs/OVERLAY_SETUP.md)).
+- **Windows and Linux** (native or Flatpak EDMC, Elite under Proton or Wine) ([Windows and Linux](docs/guide/platforms.md), [WNTB on Linux](docs/guide/linux.md)).
+- **Every online lookup is listed**, and each is either opt-in or runs only when you press a button ([What goes on the internet](docs/guide/internet-and-privacy.md)).
+
+### Powerplay ([guide](docs/guide/powerplay.md))
+
+- **Live merits and Control Points** for your pledged Power: this system, this session and the whole Powerplay cycle ([Using it](docs/guide/powerplay.md#using-it)).
+- **Sessions window** (SES) with tabs for the current session, systems, cycles, days and history ([The Sessions window](docs/guide/powerplay.md#the-sessions-window)).
+- **Catch-up from your journals**, so playing without EDMC running does not lose a cycle, and **RESCAN** to rebuild ([Catching up](docs/guide/powerplay.md#catching-up-from-your-journals)).
+- **Rare Goods Finder** (RARES): the rare commodities closest to you, with pad size and which Power controls the system ([Rare Goods Finder](docs/guide/powerplay.md#rare-goods-finder)).
+
+### Exploration ([guide](docs/guide/exploration.md))
+
+- **Auto-Honk**: fires your Discovery Scanner on every jump ([Auto-Honk](docs/guide/exploration.md#auto-honk)).
+- **Discovery Alerts**: a banner for an unscanned system or a first scan or map, plus the **N.S.** and **W.D.** buttons for the nearest neutron star and white dwarf ([Discovery Alerts](docs/guide/exploration.md#discovery-alerts)).
+- **Notable Bodies**: a banner when a body you scan is worth a second look ([Notable Bodies](docs/guide/exploration.md#notable-bodies)).
+- **Boxel Survey**: Sequence, Region Sweep and Waypoints for exploring by procedural system name, and **RND** to find an undiscovered system ([Boxel Survey](docs/guide/exploration.md#boxel-survey)).
+- **Exploration Value**: the estimated payout for the last body, system scan progress, the system's age and region, and what your data sales paid ([Exploration Value](docs/guide/exploration.md#exploration-value)).
+- **Organic Scanning**: help finding and identifying exobiology on a planet's surface ([Organic Scanning](docs/guide/exploration.md#organic-scanning)).
+- **Codex Completionist**: a lifetime tally of your Codex finds, with a details window and a backfill from journal history ([Codex Completionist](docs/guide/exploration.md#codex-completionist)).
+- **GEC Nearby POI** and **Canonn Nearby POI**: the nearest point of interest from edastro's catalog or Canonn's Thargoid and Guardian site lists, only when you press FIND ([GEC](docs/guide/exploration.md#gec-nearby-poi), [Canonn](docs/guide/exploration.md#canonn-nearby-poi)).
+- **Notes**: your own notes on a system or a body, shown when you arrive, with a searchable window ([Notes](docs/guide/exploration.md#notes)).
+- **Expedition planner** *(not yet released)*: named trips of stops with notes, ticked off as you arrive, with jumps, light-years and time so far, the next stop's distance, COPY for the galaxy map, import from your plotted route or a CSV, and optional nearest-neighbor ordering through EDSM, and one-button expeditions from Spansh's **Road to Riches** and **Exomastery** planners ([Expedition](docs/guide/exploration.md#expedition)).
+- **Compass** and **Marks**: an arrow, a name and a distance on your game screen pointing at the nearest recorded hotspot or a mark you saved on the planet you are on ([Compass](docs/guide/exploration.md#compass)).
+
+### Mining ([guide](docs/guide/mining.md))
+
+- **Space Mining** and **Surface Mining** pages with live stats for your run ([Mining](docs/guide/mining.md)).
+- **Mining Book**: your own catalog of hotspots, with tons mined and an estimate of what is left ([The Mining Book](docs/guide/mining.md#the-mining-book)).
+- **+H.S.** to save a hotspot, and **I/E** to import or export them ([The buttons](docs/guide/mining.md#the-buttons)).
+- **Opt-in online lookups**: nearby hotspots and the best price (Spansh), and ring reserve level (EDSM) ([The buttons](docs/guide/mining.md#the-buttons)).
+
+### Trade ([guide](docs/guide/trade.md))
+
+- **Session profit** after fuel, repairs and other running costs, with credits per hour, your ship's hold and your fleet carrier's space ([The Session page](docs/guide/trade.md#the-session-page)).
+- **Trade History** window for saved sessions, with a CSV export ([Trade History](docs/guide/trade.md#trade-history-saving-sessions)).
+- **Routes**: the best trade routes from where you are, and a round trip, from Spansh ([Routes](docs/guide/trade.md#routes)).
+- **Market**: where to sell or buy a commodity ([Market](docs/guide/trade.md#market)).
+- **Watch list**: the commodities you care about, with the best buy and sell price for each, where, how much stock or demand, and how old ([Watch list](docs/guide/trade.md#watch-list)).
+- **Fleet and squadron carrier cargo** and tritium, kept up to date from the journal ([Your fleet carrier](docs/guide/trade.md#your-fleet-carrier-and-squadron-carrier)).
+- **Two computers**: how Trade records behave when you play on Windows and Linux ([Using Trade on two computers](docs/guide/trade.md#using-trade-on-two-computers)).
+
+### Missions ([guide](docs/guide/missions.md))
+
+- **Every mission on one view**, in pages by type, with grouped kill-progress bars for massacre and settlement-raid missions and one card per mission otherwise ([Using it](docs/guide/missions.md#using-it)).
+- **All** window: one table of every active mission.
+- **Community Goals** and what they paid you.
+
+### Field Ops ([guide](docs/guide/field-ops.md))
+
+- **Screenshots**: automatic PNG conversion with an optional crop to the HUD panel ([Screenshots](docs/guide/field-ops.md#screenshots)).
+- **Inventory**: your backpack, ship locker and cargo as bars, and the Carrier Locker, with a pick-up sound ([Inventory](docs/guide/field-ops.md#inventory)).
+- **Materials** *(not yet released)*: how many Raw, Manufactured and Encoded engineering materials you hold, each one's grade and limit, the last change, and what is at the limit, with a searchable window ([Materials](docs/guide/field-ops.md#materials)).
+- **Engineering** *(not yet released)*: about 1,170 blueprints with their ingredients against what you hold and where each is found, a wishlist with a combined shopping list, and an Engineers tab with where you stand and what unlocking each takes ([Engineering](docs/guide/field-ops.md#engineering-blueprints-and-a-wishlist)).
+- **Material trader finder** *(not yet released)*: the closest Raw, Manufactured or Encoded trader to a system, with distance and pad filters, from Spansh ([Find a trader](docs/guide/field-ops.md#materials)).
+- **Ship Builds**: a list of builds from Coriolis, EDSY or Spansh, kept by link ([Ship Builds](docs/guide/field-ops.md#ship-builds)).
+
+### Colonization ([guide](docs/guide/colonization.md))
+
+- **The COL page**: your current project and your history ([The COL page](docs/guide/colonization.md#the-col-page)).
+- **Site tracking**: what each construction site still needs, after counting the cargo in your ship, readable from anywhere ([Tracking a site](docs/guide/colonization.md#tracking-a-site)).
+- **Colonization Sites window** (DASHBOARD): every site's shopping list, progress and totals, the carrier's contribution, and Rescan Carrier ([The Sites window](docs/guide/colonization.md#the-colonization-sites-window)).
+- **Where to buy**: the closest places to buy a commodity, and **Find all** for a whole list ([Where to buy](docs/guide/colonization.md#where-to-buy)).
+- **Planned Builds and Raven Colonial**: links, opt-in sharing of your progress and deliveries, and reporting a finished build ([Planned builds](docs/guide/colonization.md#planned-builds)).
+- **Shopping list on the overlay**: shown at the market, at your carrier or at a construction site ([The overlay](docs/guide/colonization.md#the-shopping-list-on-the-overlay)).
+
+### BGS ([guide](docs/guide/bgs.md))
+
+- **Faction states** for the system you are in, and what your missions, bounties, trade, exploration and crimes do to them ([The panel](docs/guide/bgs.md#the-panel), [What it counts](docs/guide/bgs.md#what-it-counts)).
+- **BGS Report** window with a tab per system, resetting at each tick ([The BGS Report window](docs/guide/bgs.md#the-bgs-report-window)).
+- **Tick detection** from a community service, optional ([Tick detection](docs/guide/bgs.md#tick-detection-and-the-internet)).
+
+### Always on, in any mode ([guide](docs/guide/always-on.md))
+
+- **Landing Assist**: your assigned landing pad, in the panel and/or as a diagram on your game screen ([Landing Assist](docs/guide/always-on.md#landing-assist)).
+- **Interdiction Warning**: an alert on your game screen the moment an interdiction starts ([Interdiction Warning](docs/guide/always-on.md#interdiction-warning)).
+- **Flight Alerts**: a fleet carrier jump countdown and fuel warnings, including when the star you plotted to cannot be scooped ([Flight Alerts](docs/guide/always-on.md#flight-alerts)).
 
 ## Planned and being researched
 

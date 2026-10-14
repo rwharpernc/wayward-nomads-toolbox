@@ -324,6 +324,104 @@ book.start(e.id)                                   # the first expedition runs a
 # another commander sees none; the first is back after
 panel.handle_event({"event": "LoadGame"}, "Other Cmdr", "Sol", None, {})
 check(panel.summary()[0] == "No expedition yet.", f"another commander has none: {panel.summary()}")
+# adding a stop with only a system, before any expedition exists, makes one rather than asking for a separate step
+expedition_window.show(root, book, panel)
+pump()
+fresh = expedition_window._window
+fresh._system.set("Colonia")
+fresh._add_stop()
+pump()
+made = book.expeditions()
+check(len(made) == 1 and made[0].name == "My expedition" and [x.system for x in made[0].stops] == ["Colonia"],
+      f"a system alone adds a stop, and makes the expedition: {[(x.name, [y.system for y in x.stops]) for x in made]}")
+check(fresh._picked == made[0].id and fresh._system.get() == "", "the new expedition is picked and the editor cleared")
+fresh._system.set("Sol")
+fresh._add_stop()
+check(len(book.expeditions()) == 1 and len(made[0].stops) == 2, "the second stop goes into the same expedition")
+fresh._rename()
+check(fresh._name.get() == "My expedition" and "Rename again" in fresh._shell._status.cget("text"), "Rename with an empty Name box offers the current name to edit")
+fresh._name.set("Colonia run")
+fresh._rename()
+check(made[0].name == "Colonia run" and fresh._name.get() == "", f"Rename changes it: {made[0].name!r}")
+check("Colonia run" in fresh._choice.get(), f"and the picker shows the new name: {fresh._choice.get()!r}")
+fresh._system.set("   ")
+fresh._add_stop()
+check("needs a system" in fresh._shell._status.cget("text") and len(made[0].stops) == 2, "an empty system is still refused, with a hint")
+expedition_window.close()
+pump()
+
+# the Spansh planners: the dialog's answer becomes a new expedition
+from plugin import expedition_plan_dialog, spansh_planners  # noqa: E402
+
+check(panel.jump_range() is None, "no jump range before a Loadout")
+panel.handle_event({"event": "Loadout", "MaxJumpRange": 41.25}, "Other Cmdr", "Sol", None, {})
+check(panel.jump_range() == 41.25, f"the Loadout's maximum jump range is kept: {panel.jump_range()}")
+asked = []
+
+
+def fake_plan(query, cancel=None, on_state=None):
+    asked.append(query)
+    on_state("Waiting in Spansh's queue.")
+    return [spansh_planners.PlannedStop("Eme", "Eme A 1", "Eme A 1 (Earth-like world, scan 270.0k cr)", (33.7, 26.2, 4.0)),
+            spansh_planners.PlannedStop("Jarnae", "Jarnae A 2", "note", None)] if query.kind == spansh_planners.RICHES else []
+
+
+expedition_plan_dialog.plan_route = fake_plan
+expedition_window.show(root, book, panel)
+pump()
+planner_window = expedition_window._window
+before = len(book.expeditions())
+planner_window._plan(spansh_planners.RICHES)
+pump()
+dialog = planner_window._planner
+check(dialog is not None and dialog.alive, "Road to Riches opens its dialog")
+check(dialog._vars["start"].get() == panel.system() and dialog._vars["jump_range"].get() == "41.25",
+      f"filled in with where you are and your jump range: {dialog._vars['start'].get()!r}, {dialog._vars['jump_range'].get()!r}")
+dialog._vars["jump_range"].set("abc")
+dialog._plot()
+check("should be a number" in dialog._shell._status.cget("text") and not asked, f"a bad number is refused before anything is sent: {dialog._shell._status.cget('text')!r}")
+dialog._vars["jump_range"].set("40")
+dialog._vars["destination"].set("Colonia")
+dialog._flags["use_mapping_value"].set(True)
+dialog._plot()
+for _ in range(60):
+    pump()
+    if not dialog.alive:
+        break
+    time.sleep(0.02)
+check(len(asked) == 1 and asked[0].kind == spansh_planners.RICHES and asked[0].jump_range == 40.0 and asked[0].destination == "Colonia"
+      and asked[0].use_mapping_value and asked[0].start == panel.system(), f"what was asked: {asked}")
+check(not dialog.alive, "the dialog closes when Spansh has answered")
+made = [x for x in book.expeditions() if x.name.startswith("Road to Riches from")]
+check(len(book.expeditions()) == before + 1 and len(made) == 1 and [x.system for x in made[0].stops] == ["Eme", "Jarnae"]
+      and made[0].stops[0].body == "Eme A 1" and made[0].stops[0].xyz == (33.7, 26.2, 4.0), f"a new expedition with the stops: {[(x.name, [y.system for y in x.stops]) for x in made]}")
+check(planner_window._picked == made[0].id and "2 stop" in planner_window._shell._status.cget("text"), "it is picked, and the window says what was made")
+planner_window._plan(spansh_planners.EXOBIOLOGY)
+pump()
+dialog = planner_window._planner
+dialog._plot()
+for _ in range(60):
+    pump()
+    if not dialog.alive:
+        break
+    time.sleep(0.02)
+check(len(book.expeditions()) == before + 1 and "nothing worth stopping for" in planner_window._shell._status.cget("text"),
+      f"no results makes no expedition and says so: {planner_window._shell._status.cget('text')!r}")
+planner_window._plan(spansh_planners.RICHES)
+pump()
+dialog = planner_window._planner
+expedition_plan_dialog.plan_route = lambda q, cancel=None, on_state=None: (_ for _ in ()).throw(spansh_planners.RouteSearchError("Spansh says: Could not find system."))
+dialog._plot()
+for _ in range(60):
+    pump()
+    if "Could not find system" in dialog._shell._status.cget("text"):
+        break
+    time.sleep(0.02)
+check(dialog.alive and "Could not find system" in dialog._shell._status.cget("text"), "a refusal stays in the dialog with Spansh's words")
+dialog.close()
+expedition_window.close()
+pump()
+
 panel.handle_event({"event": "LoadGame"}, "BOCHEAUX", "Sol", None, {})
 check(panel.summary()[0].startswith("EEEE"), f"the first commander's expedition is back: {panel.summary()[0]!r}")
 

@@ -388,19 +388,24 @@ stop's system name on the clipboard to paste into the galaxy map, and **Copy on 
 ticked). **EXPEDITION** opens the window.
 
 **The window**
-1. Type a name and press **New**. Pick an expedition from the list at the top; **Rename**, **Reset** and **Delete** act on it (Reset forgets the
+1. Type a name and press **New**. Pick an expedition from the list at the top; **Rename**, **Reset** and **Delete** act on it (to rename, press **Rename**: the current name appears in the Name box; change it and press **Rename** again. Reset forgets the
    progress and keeps the stops; Reset and Delete ask twice).
-2. Add stops: type the system (or press **Here** for the one you are in), an optional body and note, and press **Add stop**. Select a stop to
+2. Add stops: type the system (or press **Here** for the one you are in) and press **Add stop** or Enter. Only the system is needed: the body and the note are optional. If you have no expedition yet, the first stop makes one called "My expedition" (or the name you typed in the Name box), so you can start straight away. Select a stop to
    change it (**Save changes**), move it (**Up**, **Down**), tick it off yourself (**Mark visited**) or **Remove** it (asks twice).
-3. Or add many at once: **From plotted route** adds the systems of the route you plotted in the game (the one you are in is left out; they come with
+3. Or add many at once (these also make an expedition if you have none): **From plotted route** adds the systems of the route you plotted in the game (the one you are in is left out; they come with
    their positions), and **Import CSV** reads a file with the columns system, body and note (a one-column list of systems works too).
-4. **Locate and reorder (EDSM)** asks EDSM for the positions of the unvisited stops that have none, then puts the unvisited stops in order,
+4. **Make an expedition with Spansh.** **Road to Riches** and **Exomastery** (a row above the other tools) ask [Spansh](https://spansh.co.uk/)'s route planners for places worth visiting and turn the answer into a new expedition.
+   - **Road to Riches** picks the bodies worth the most credits to scan (tick *Count what mapping pays* to include mapping), near a route, in a good order. **Exomastery** (Spansh's Expressway to Exomastery) picks planets with the most valuable biological signals.
+   - A small window asks where to **start** (the system you are in is filled in), an optional place to **end**, your **jump range** (taken from your last loadout; change it), how far from the route to look, the most results (up to 100), how far from the arrival star, and the **least a body or planet is worth** (raise it for fewer, better places). **Avoid Thargoid systems** is ticked; **Come back to the start** is not.
+   - Press **Plot**. Spansh can take from a few seconds to a couple of minutes; the window says whether it is waiting in the queue or working, and **Cancel** stops waiting. When the answer arrives it becomes a new expedition (named, for example, *Road to Riches from Sol*) with a stop for each system: the best body, a note of what is worth scanning there and its position. Check the order, then press **Start**.
+   - This is online, and only when you press **Plot**. It sends Spansh the start system, the end system if you typed one, and the numbers above, nothing else (see [what goes on the internet](internet-and-privacy.md)). If Spansh cannot find a system, it says so in the window. If nothing worth stopping for is found, no expedition is made: lower the least worth or look further from the route.
+5. **Locate and reorder (EDSM)** asks EDSM for the positions of the unvisited stops that have none, then puts the unvisited stops in order,
    always going to the nearest next, starting from where you are. This is the only part of the Expedition planner that goes online, and it sends
    only system names. A stop EDSM cannot place keeps its place at the end.
-5. Press **Start**. From then on, arriving in a stop's system (a jump, a carrier jump, or logging in there) ticks off the first unvisited stop of that
+6. Press **Start**. From then on, arriving in a stop's system (a jump, a carrier jump, or logging in there) ticks off the first unvisited stop of that
    name, wherever it is in the list, and each jump adds to the totals. **Pause** stops counting and keeps the progress; starting another expedition
    pauses this one. When the last stop is ticked the expedition stays running until you press **Finish**.
-6. Share it: **Copy list** puts a text list on the clipboard, **Export CSV** saves the stops (it can be imported again), **Copy next** copies the
+7. Share it: **Copy list** puts a text list on the clipboard, **Export CSV** saves the stops (it can be imported again), **Copy next** copies the
    next stop's name.
 
 The expeditions are kept on your computer for each commander, and nothing is sent anywhere except the EDSM lookup above. It does not replace

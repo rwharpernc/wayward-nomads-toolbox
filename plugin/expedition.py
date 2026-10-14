@@ -489,6 +489,24 @@ class ExpeditionBook:
             self._changed()
         return added
 
+    def add_planned(self, expedition_id: str, stops: Iterable[Tuple[str, str, str, Optional[XYZ]]]) -> int:
+        """Append stops from a route planner: (system, body, note, position) in route order. A system the same as the stop before it is
+        skipped, and anything too long is cut to the limits. Returns how many stops were added."""
+        e = self._need(expedition_id)
+        added = 0
+        for system, body, note, xyz in stops:
+            system = " ".join(str(system or "").split())[:MAX_SYSTEM]
+            if not system or len(e.stops) >= MAX_STOPS:
+                continue
+            if e.stops and name_key(e.stops[-1].system) == name_key(system):
+                continue
+            e.stops.append(Stop(self._new_id(), system, " ".join(str(body or "").split())[:MAX_BODY], str(note or "").strip()[:MAX_NOTE], _xyz(xyz)))
+            added += 1
+        if added:
+            self._save()
+            self._changed()
+        return added
+
     def add_rows(self, expedition_id: str, rows: Iterable[Tuple[str, str, str]]) -> Tuple[int, int]:
         """Append stops from (system, body, note) rows (a CSV), saving once. Returns (added, skipped): a row that is empty, too long or past the
         500-stop limit is skipped, never trimmed."""

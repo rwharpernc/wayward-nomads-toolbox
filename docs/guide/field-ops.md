@@ -105,6 +105,12 @@ very rare) and the most the game lets you hold of it. A collapsible **Materials*
 discard ("Last: +3 Carbon (now 123)") and which materials are **at the limit**, so you know that collecting more is wasted. **MATERIALS** opens
 the window.
 
+**To use it:**
+1. Switch to Field Ops mode (**OPS**) and open the **Materials** row if it is folded. Log in to the game once, so WNTB has the full list.
+2. Read the row: pieces held of each type, the last change, and anything at the limit.
+3. Press **MATERIALS** to search, filter and sort. To find where to swap materials, press **Find a trader** inside that window (see below).
+4. To plan crafts, press **BLUEPRINTS** (see [Engineering](#engineering-blueprints-and-a-wishlist)).
+
 **The window** lists every material you hold: its type, grade, how many, the limit and the room left. Type in **Search** (every word must be in
 the name), pick a **Type** or **Grade**, tick **Only what is at the limit**, and click a heading to sort.
 
@@ -127,6 +133,13 @@ it sends Spansh the system name and the type. The same search within two minutes
 ## Engineering: blueprints and a wishlist
 
 **BLUEPRINTS** on the Materials row opens the Engineering window. It has three tabs.
+
+**To use it:**
+1. Press **BLUEPRINTS** on the Materials row. On the **Blueprints** tab, search for a module or an effect and pick a blueprint.
+2. Read its ingredients: how many one craft takes, how many you hold and where each is found. Set **Crafts** to the number you expect to need.
+3. Press **Add to wishlist**. Repeat for everything you plan to build.
+4. Open the **Wishlist** tab: it says which entries can be made now, what you are short of, and the shopping list for all of it.
+5. Open the **Engineers** tab to see who you have unlocked and what unlocking the others takes. **Put their unlock on the wishlist** adds it.
 
 **Blueprints.** Every engineering blueprint in the table (about 1,170: ship modules, Guardian items, Technology Broker unlocks, engineer
 unlocks, synthesis recipes, and Odyssey suit and weapon upgrades). **Search** matches the module, blueprint name, engineer, effect or an

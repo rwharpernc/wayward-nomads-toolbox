@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from config import appname, config
 
-from . import edsm_client, expedition, journal_files, panelkit
+from . import edsm_client, expedition, expedition_plan_dialog, journal_files, panelkit, spansh_planners
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -107,6 +107,7 @@ class ExpeditionWindow:
         self._confirming: Optional[str] = None
         self._results: "queue.Queue[Tuple[str, Dict[str, expedition.XYZ], int, expedition.XYZ]]" = queue.Queue()
         self._busy = False
+        self._planner: Optional[expedition_plan_dialog.PlanDialog] = None
 
         self._shell = WindowShell(
             parent, "Expedition", "", size=DEFAULT_SIZE, min_size=MIN_SIZE,
@@ -128,6 +129,7 @@ class ExpeditionWindow:
         tk.Label(picker, text="Name", fg=P.MUTED, bg=P.BG).pack(side="left")
         self._name = tk.StringVar()
         entry = tk.Entry(picker, textvariable=self._name, width=26)
+        self._name_entry = entry
         entry.pack(side="left", padx=(P.PAD_SM, P.PAD_SM))
         entry.bind("<Return>", lambda _e: self._new())
         FlatButton(picker, "New", self._new).pack(side="left")
@@ -147,11 +149,13 @@ class ExpeditionWindow:
         editor.columnconfigure(1, weight=1)
         self._system, self._body_var, self._note = tk.StringVar(), tk.StringVar(), tk.StringVar()
         tk.Label(editor, text="System", fg=P.MUTED, bg=P.PANE).grid(row=0, column=0, sticky="w", pady=2)
-        tk.Entry(editor, textvariable=self._system, width=40).grid(row=0, column=1, sticky="w", padx=P.PAD_SM, pady=2)
+        system_entry = tk.Entry(editor, textvariable=self._system, width=40)
+        system_entry.grid(row=0, column=1, sticky="w", padx=P.PAD_SM, pady=2)
+        system_entry.bind("<Return>", lambda _e: self._add_stop())
         FlatButton(editor, "Here", self._fill_here).grid(row=0, column=2, sticky="w", pady=2)
-        tk.Label(editor, text="Body", fg=P.MUTED, bg=P.PANE).grid(row=1, column=0, sticky="w", pady=2)
+        tk.Label(editor, text="Body (optional)", fg=P.MUTED, bg=P.PANE).grid(row=1, column=0, sticky="w", pady=2)
         tk.Entry(editor, textvariable=self._body_var, width=40).grid(row=1, column=1, sticky="w", padx=P.PAD_SM, pady=2)
-        tk.Label(editor, text="Note", fg=P.MUTED, bg=P.PANE).grid(row=2, column=0, sticky="w", pady=2)
+        tk.Label(editor, text="Note (optional)", fg=P.MUTED, bg=P.PANE).grid(row=2, column=0, sticky="w", pady=2)
         tk.Entry(editor, textvariable=self._note, width=80).grid(row=2, column=1, columnspan=2, sticky="w", padx=P.PAD_SM, pady=2)
         stop_buttons = tk.Frame(editor, bg=P.PANE)
         stop_buttons.grid(row=3, column=0, columnspan=3, sticky="w", pady=(P.PAD_SM, 0))
@@ -160,6 +164,11 @@ class ExpeditionWindow:
                                     ("Down", lambda: self._move(1), "normal"), ("Remove", self._remove_stop, "danger")):
             FlatButton(stop_buttons, text, command, kind=kind).pack(side="left", padx=(0, 6))
 
+        planners = tk.Frame(body, bg=P.BG)
+        planners.pack(fill="x", pady=(0, P.PAD_SM))
+        tk.Label(planners, text="Make an expedition with Spansh", fg=P.MUTED, bg=P.BG).pack(side="left", padx=(0, P.PAD))
+        for text, kind in (("Road to Riches", spansh_planners.RICHES), ("Exomastery", spansh_planners.EXOBIOLOGY)):
+            FlatButton(planners, text, lambda k=kind: self._plan(k)).pack(side="left", padx=(0, 6))
         tools = tk.Frame(body, bg=P.BG)
         tools.pack(fill="x")
         for text, command in (("From plotted route", self._from_route), ("Import CSV", self._import_csv),
@@ -254,6 +263,27 @@ class ExpeditionWindow:
             self._say("Pick or create an expedition first.")
         return e
 
+    def _expedition_to_add_to(self) -> Optional[expedition.Expedition]:
+        """The picked expedition, or a new one when there is none yet, so the first stop never needs a separate step. It is named from the Name box
+        if something is typed there, else "My expedition" (numbered if that name is taken)."""
+        e = self.current()
+        if e is not None:
+            return e
+        typed = " ".join(self._name.get().split())
+        taken = {x.name.casefold() for x in self._book.expeditions()}
+        name = typed
+        if not name:
+            name, number = "My expedition", 1
+            while name.casefold() in taken:
+                number += 1
+                name = f"My expedition {number}"
+        e = self._attempt(self._book.create, name)
+        if e is not None:
+            self._picked, self._stop_id = e.id, None
+            self._name.set("")
+            self.refresh()
+        return e
+
     def _attempt(self, action: Any, *args: Any) -> Any:
         """Run a change on the book; a refusal is shown as it is and None returned."""
         try:
@@ -279,9 +309,20 @@ class ExpeditionWindow:
             self._say(f"Created '{e.name}'. Add stops, then press Start.")
 
     def _rename(self) -> None:
+        """First press with an empty Name box puts the current name there to edit; a press with a name typed renames."""
         e = self._need_expedition()
-        if e is not None and self._attempt(self._book.rename, e.id, self._name.get()) is not None:
+        if e is None:
+            return
+        typed = " ".join(self._name.get().split())
+        if not typed or typed == e.name:
+            self._name.set(e.name)
+            self._name_entry.focus_set()
+            self._name_entry.icursor("end")
+            self._say(f"Change the name in the Name box, then press Rename again (now '{e.name}').")
+            return
+        if self._attempt(self._book.rename, e.id, typed) is not None:
             self._name.set("")
+            self.refresh()
             self._say("Renamed.")
 
     def _start(self) -> None:
@@ -330,7 +371,10 @@ class ExpeditionWindow:
         self._system.set(self._ctx.system())
 
     def _add_stop(self) -> None:
-        e = self._need_expedition()
+        if not self._system.get().strip():
+            self._say("A stop needs a system name: type one, or press Here for the system you are in. The body and the note are optional.")
+            return
+        e = self._expedition_to_add_to()
         if e is None:
             return
         stop = self._attempt(self._book.add_stop, e.id, self._system.get(), self._body_var.get(), self._note.get())
@@ -379,7 +423,7 @@ class ExpeditionWindow:
     # --- import, locate and share ------------------------------------------------------------------------------------------
 
     def _from_route(self) -> None:
-        e = self._need_expedition()
+        e = self._expedition_to_add_to()
         if e is None:
             return
         folder = journal_folder()
@@ -404,7 +448,7 @@ class ExpeditionWindow:
         self._say(f"Added {added} stop(s) from the plotted route ({len(systems)} systems).")
 
     def _import_csv(self) -> None:
-        e = self._need_expedition()
+        e = self._expedition_to_add_to()
         if e is None:
             return
         path = ask_open_path(filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
@@ -419,6 +463,34 @@ class ExpeditionWindow:
             return
         added, skipped = self._book.add_rows(e.id, rows)
         self._say(f"Added {added} stop(s) from {os.path.basename(path)}" + (f"; skipped {skipped} (empty, too long or over the limit)." if skipped else "."))
+
+    def _plan(self, kind: str) -> None:
+        """Open the Spansh planner for `kind`; its answer becomes a new expedition (see `_planned`)."""
+        if self._planner is not None and self._planner.alive:
+            self._planner.lift()
+            return
+        if not self._book.ready:
+            self._say("Expeditions are kept per commander and no commander is known yet. Log in first.")
+            return
+        reach = getattr(self._ctx, "jump_range", lambda: None)()
+        self._planner = expedition_plan_dialog.open_dialog(self._shell.window, kind, self._ctx.system(), reach, self._planned)
+
+    def _planned(self, query: spansh_planners.PlanQuery, stops: List[spansh_planners.PlannedStop]) -> None:
+        if not stops:
+            self._say(f"{spansh_planners.TITLES[query.kind]} found nothing worth stopping for. Lower the least worth, or look further from the route.")
+            return
+        name, taken, number = spansh_planners.default_name(query), {x.name.casefold() for x in self._book.expeditions()}, 1
+        base = name
+        while name.casefold() in taken:
+            number += 1
+            name = f"{base[:70]} ({number})"
+        made = self._attempt(self._book.create, name)
+        if made is None:
+            return
+        added = self._book.add_planned(made.id, [(s.system, s.body, s.note, s.xyz) for s in stops])
+        self._picked, self._stop_id = made.id, None
+        self.refresh()
+        self._say(f"Made '{made.name}' with {added} stop(s) from Spansh. Check the order, then press Start.")
 
     def _locate(self) -> None:
         e = self._need_expedition()
