@@ -68,8 +68,8 @@ releases. The **Release notes** link on that tab opens the latest release's page
 
 The first line under the mode buttons always says which version you are running (**Plugin: v1.10.1**). While an update is coming
 it says **Plugin: v1.10.1 (downloading v1.10.2...)**, and once the update is downloaded it turns bold black on **orange** and reads
-**v1.9.2 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
-After the restart the line shows **Plugin: v1.9.2 (updated)** in green for a short while. Clicking the line opens the release page.
+**v1.10.2 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
+After the restart the line shows **Plugin: v1.10.2 (updated)** in green for a short while. Clicking the line opens the release page.
 
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 
