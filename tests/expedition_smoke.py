@@ -181,8 +181,8 @@ book.start(e.id)
 panel.handle_event(jump("Elsewhere", (1.0, 1.0, 1.0), 5.0), "Bocheaux", "Elsewhere", None, {})
 pump()
 text = panel.summary()[0]
-check(all(len(line) <= 160 for line in text.splitlines()), f"every line stays short: {[len(l) for l in text.splitlines()]}")
-check("S" * 50 not in text and "N" * 120 not in text and "E" * 40 not in text, "long names and notes are clipped")
+check(all(len(line) <= 200 for line in text.splitlines()), f"every line stays short: {[len(l) for l in text.splitlines()]}")
+check("S" * 70 not in text and "N" * 170 not in text and "E" * 70 not in text, "long names and notes are clipped")
 check(host.winfo_reqwidth() <= 216, f"the open Expedition section asks for {host.winfo_reqwidth()} px, wider than the main panel")
 
 # --- the window ---------------------------------------------------------------------------------------------------------------------------

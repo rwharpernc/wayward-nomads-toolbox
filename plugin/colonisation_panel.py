@@ -90,7 +90,7 @@ def overlay_rows() -> int:
 
 
 _NO_CMDR_TEXT = "Waiting for commander login"
-_NAME_MAX = 40
+_NAME_MAX = 64   # a safety bound on a site or system name; the labels wrap anything long, so nothing is cut short of this
 _BAR_WIDTH, _BAR_HEIGHT = 220, 10   # fixed, so the progress bar can never widen EDMC's main window
 _BAR_FILL, _BAR_DONE = "#ff8c0d", "#2e7d32"
 _BAR_TRACK_DARK, _BAR_TRACK_LIGHT = "#3a3a3a", "#c8c8c8"
@@ -506,7 +506,7 @@ class ColonisationController:
             self._set("carrier", f"{p.on_carrier:,} t moved onto your carrier", show=p.has_carrier)
             self._set("to_get", f"{p.to_get:,} t")
             self._set("trips", stats.trips_text(p))
-            self._set("gaps", ", ".join(f"{_clip(label, 22)} {tons:,}" for label, tons in p.gaps) or "None", show=bool(p.gaps))
+            self._set("gaps", ", ".join(f"{_clip(label, 40)} {tons:,}" for label, tons in p.gaps) or "None", show=bool(p.gaps))
             self._set("next", stats.next_step(p))
             self._set("more", f"+{p.more_active} more active {'site' if p.more_active == 1 else 'sites'}", show=p.more_active > 0)
         self._refresh_history(stats.history_for(sites, self._ledger.record(self._cmdr)))
@@ -521,10 +521,10 @@ class ColonisationController:
         chart = stats.chart_text(h.daily)
         self._set("h_chart", f"{chart}  (peak {max(h.daily):,} t a day)" if chart else "", show=bool(chart))
         self._set("h_busiest", f"{h.busiest_day[1]:,} t on {h.busiest_day[0]}" if h.busiest_day else "", show=bool(h.busiest_day))
-        self._set("h_site", f"{_clip(h.top_site[0], 30)} ({h.top_site[1]:,} t)" if h.top_site else "", show=bool(h.top_site))
+        self._set("h_site", f"{_clip(h.top_site[0], _NAME_MAX)} ({h.top_site[1]:,} t)" if h.top_site else "", show=bool(h.top_site))
         claims = stats.claims_text(h)
         self._set("h_claims", claims, show=bool(claims))
-        self._set("h_top", ", ".join(f"{_clip(label, 22)} {tons:,}" for label, tons in h.top_commodities),
+        self._set("h_top", ", ".join(f"{_clip(label, 40)} {tons:,}" for label, tons in h.top_commodities),
                   show=bool(h.top_commodities))
         self._set("h_average", stats.average_text(h.average_days), show=h.average_days is not None)
         self._set("h_since", f"Counted since {h.since}", show=bool(h.since))

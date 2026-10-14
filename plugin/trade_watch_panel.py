@@ -28,7 +28,7 @@ _CFG_LOOKUPS = "wntb_trade_lookups_enabled"      # Trade's own switch for every 
 _CFG_RADIUS = "wntb_trade_near_radius_ly"        # how far Trade's Market page looks (trade_panel.py)
 _DEFAULT_RADIUS_LY = 100
 _LINES_SHOWN = 5       # watched commodities listed in the panel; the window shows them all
-_NAME_SHOWN = 16       # characters of a commodity name shown in a panel line
+_NAME_SHOWN = 32       # characters of a commodity name shown in a panel line
 _WRAP_PX = 200         # the summary wraps here: what it shows comes from the game and Spansh, and must not widen EDMC's window
 _POLL_MS = 500
 
@@ -137,11 +137,11 @@ class WatchController:
 
         body = panelkit.collapsible_section(parent, "Watch list", "wntb_trade_watch_collapsed")
         self._section = body
-        # A plain label with a hard wrap, not panelkit.wrap_label: that one never wraps narrower than 300 px, and long names would then
-        # make this the widest row in the panel (and so widen the whole EDMC window).
-        tk.Label(body, textvariable=self._summary_var, anchor="w", justify=tk.LEFT, wraplength=_WRAP_PX).grid(
+        # Wraps at the window's width but never below _WRAP_PX, so a long name wraps instead of being cut off and still can't widen
+        # EDMC's window past the width it already has.
+        panelkit.wrap_label(body, min_wrap=_WRAP_PX, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
-        tk.Label(body, textvariable=self._status_var, anchor="w", justify=tk.LEFT, wraplength=_WRAP_PX).grid(
+        panelkit.wrap_label(body, min_wrap=_WRAP_PX, textvariable=self._status_var, anchor="w").grid(
             row=2, column=0, columnspan=3, sticky=tk.W)
         self._refresh_button = tk.Button(body, text="REFRESH", command=self.refresh)
         self._refresh_button.grid(row=3, column=0, sticky=tk.W, pady=(4, 0))

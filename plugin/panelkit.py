@@ -39,25 +39,30 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 # instruction on bounding anything that can size the main window.
 MIN_WRAP = 300
 
-_wrap_labels: List[tk.Label] = []
+_wrap_labels: List[Tuple[tk.Label, int]] = []   # (label, the narrowest it may wrap)
 
 
-def wrap_label(parent: tk.Frame, **kwargs) -> tk.Label:
+def wrap_label(parent: tk.Frame, min_wrap: int = MIN_WRAP, **kwargs) -> tk.Label:
     """A `tk.Label` whose `wraplength` is kept in sync with its containing
     frame's width (see `on_frame_configure`) - use this for any label whose
     text comes from the game/journal rather than this plugin's own fixed
-    strings."""
-    label = tk.Label(parent, wraplength=MIN_WRAP, justify=tk.LEFT, **kwargs)
-    _wrap_labels.append(label)
+    strings. `min_wrap` is the width it wraps at until the frame is known to be
+    wider: a section that must not be the widest row in a narrow window passes a
+    smaller one, and still uses the whole width of a wide window instead of
+    wrapping short of it."""
+    label = tk.Label(parent, wraplength=min_wrap, justify=tk.LEFT, **kwargs)
+    _wrap_labels.append((label, min_wrap))
     return label
 
 
 def on_frame_configure(event: tk.Event) -> None:
     """Bind this to the top-level `plugin_app` frame's `<Configure>` -
-    widens every registered `wrap_label` to match, never below `MIN_WRAP`."""
-    wrap = max(MIN_WRAP, event.width)
-    for label in _wrap_labels:
-        label.configure(wraplength=wrap)
+    widens every registered `wrap_label` to match, never below its `min_wrap`."""
+    for label, floor in _wrap_labels:
+        try:
+            label.configure(wraplength=max(floor, event.width))
+        except tk.TclError:
+            pass   # the label's panel was torn down
 
 
 def bold_font(_widget: tk.Widget) -> tuple:
