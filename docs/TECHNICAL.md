@@ -507,7 +507,10 @@ worker thread when **Find** is pressed, with a two-minute cache, and nothing els
 
 The Expedition planner (`expedition.py`, `expedition_window.py`, `expedition_panel.py`) keeps named expeditions of ordered stops in
 `expeditions.json` (`ExpeditionBook`, per commander), one active at a time. The panel feeds arrivals from the journal and ticks the stop whose
-system matches, counting jumps and distance. There are two online parts, both only on a button press. **Locate and reorder (EDSM)** sends system
+system matches, counting jumps and distance. There are two online parts, both only on a button press. Adding or changing a stop respells it without a network call where it can (the system the commander is in, then any stop already spelled that way:
+`expedition_window._spelling`), and, while the box under the editor is ticked (`wntb_expedition_lookup_names`, on unless turned off), asks EDSM
+in the background for the names just added (`_look_up`, 50 to a request): `ExpeditionBook.canonical_names` takes EDSM's spelling for stops whose names
+match ignoring case and spacing, and `set_coords` gives them a position. **Locate and reorder (EDSM)** sends system
 names to EDSM for their positions and orders the stops by nearest neighbor. **Road to Riches** and **Exomastery** (`spansh_planners.py`,
 `expedition_plan_dialog.py`) post the start system, the optional end and the chosen numbers to Spansh's `/api/riches/route` or
 `/api/exobiology/route`, poll `/api/results/<job>` on a worker thread (the answer takes seconds to a couple of minutes), and turn the systems of the

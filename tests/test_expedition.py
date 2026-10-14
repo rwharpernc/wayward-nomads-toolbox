@@ -209,6 +209,24 @@ class StopTests(Base):
         self.assertEqual([s.system for s in e.stops], ["Done", "Near", "Mid", "Far", "Unknown"])
 
 
+class SpellingTests(Base):
+    def test_a_stop_takes_the_spelling_edsm_gives_whatever_case_it_was_typed_in(self):
+        e = self.trip(systems=("sol", "OUTOTZ LS-K D8-0", "Colonia"))
+        changed = self.book.canonical_names(e.id, ["Sol", "Outotz LS-K d8-0", "Sagittarius A*"])
+        self.assertEqual((changed, [s.system for s in e.stops]), (2, ["Sol", "Outotz LS-K d8-0", "Colonia"]))
+        self.assertEqual(self.book.canonical_names(e.id, ["Sol"]), 0)       # nothing left to change
+
+    def test_only_case_and_spacing_can_differ(self):
+        e = self.trip(systems=("Sol",))
+        self.assertEqual(self.book.canonical_names(e.id, ["Solana"]), 0)
+        self.assertEqual(e.stops[0].system, "Sol")
+
+    def test_a_system_already_in_any_expedition_gives_its_spelling_for_another_case(self):
+        self.trip(systems=("Outotz LS-K d8-0",))
+        self.assertEqual(self.book.known_spelling("  outotz ls-k D8-0 "), "Outotz LS-K d8-0")
+        self.assertEqual(self.book.known_spelling("Nowhere"), "")
+
+
 class ArrivalTests(Base):
     def test_nothing_happens_without_an_active_expedition(self):
         self.trip()

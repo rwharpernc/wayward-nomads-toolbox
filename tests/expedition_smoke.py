@@ -164,6 +164,7 @@ check(panel.next_system() == "Sol", f"the next system: {panel.next_system()!r}")
 check(panel.copy_next(), "COPY works")
 check(root.clipboard_get() == "Sol", f"the clipboard holds the next stop: {root.clipboard_get()!r}")
 saved["wntb_expedition_autocopy"] = True
+saved["wntb_expedition_lookup_names"] = False        # the EDSM name check is tested on its own below
 panel.handle_event(jump("Sol", (0.0, 0.0, 0.0), 5.0), "Bocheaux", "Sol", None, {})
 check(root.clipboard_get() == "Sagittarius A*", f"copy on arrival puts the next stop on the clipboard: {root.clipboard_get()!r}")
 saved["wntb_expedition_autocopy"] = False
@@ -350,6 +351,73 @@ check("needs a system" in fresh._shell._status.cget("text") and len(made[0].stop
 expedition_window.close()
 pump()
 
+# system names are normalized when a stop is added
+here = panel.system()
+saved["wntb_expedition_lookup_names"] = False
+expedition_window.show(root, book, panel)
+pump()
+names_window = expedition_window._window
+names_window._name.set("Names")
+names_window._new()
+names_window._system.set("  " + here.lower() + "  ")
+names_window._add_stop()
+named = book.get(names_window._picked)
+check(named.stops[-1].system == here, f"the system you are in is spelled the way the game spells it: {named.stops[-1].system!r} for {here!r}")
+names_window._system.set("gamma")
+names_window._add_stop()
+check(named.stops[-1].system == "gamma", "a name nothing knows is kept as typed when the EDSM check is off")
+names_window._system.set("GAMMA")
+names_window._add_stop()
+check(named.stops[-1].system == "gamma" or named.stops[-1].system == "GAMMA", "a repeat is not turned into a different system")
+expedition_window.close()
+pump()
+
+saved["wntb_expedition_lookup_names"] = True
+looked_up = []
+
+
+def edsm_names(names):
+    looked_up.append(list(names))
+    return {"Sesuang": (45.7, -3.2, 22.1)} if any(n.casefold() == "sesuang" for n in names) else {}
+
+
+expedition_window.lookup_coords = edsm_names
+expedition_window.show(root, book, panel)
+pump()
+names_window = expedition_window._window
+check(names_window._lookup_var.get(), "the EDSM name check is ticked unless turned off")
+names_window._name.set("Names two")
+names_window._new()
+names_window._system.set("sesuang")
+names_window._add_stop()
+for _ in range(60):
+    pump()
+    if book.get(names_window._picked).stops[-1].xyz is not None:
+        break
+    time.sleep(0.02)
+two = book.get(names_window._picked)
+check(two.stops[-1].system == "Sesuang" and two.stops[-1].xyz == (45.7, -3.2, 22.1) and looked_up == [["sesuang"]],
+      f"EDSM fixes the capitals and gives the position: {two.stops[-1].system!r} {two.stops[-1].xyz} {looked_up}")
+check("respelled 1" in names_window._shell._status.cget("text"), f"and says so: {names_window._shell._status.cget('text')!r}")
+names_window._system.set("nowhere zz-z a0")
+names_window._add_stop()
+for _ in range(60):
+    pump()
+    if "does not know" in names_window._shell._status.cget("text"):
+        break
+    time.sleep(0.02)
+check(two.stops[-1].system == "nowhere zz-z a0" and "does not know nowhere zz-z a0" in names_window._shell._status.cget("text"),
+      f"a system EDSM does not know is kept as typed, with a note: {names_window._shell._status.cget('text')!r}")
+names_window._lookup_var.set(False)
+names_window._system.set("kushen")
+names_window._add_stop()
+pump()
+check(looked_up[-1] != ["kushen"] and two.stops[-1].system == "kushen", "with the box unticked nothing is sent")
+expedition_window.lookup_coords = fake_lookup
+saved["wntb_expedition_lookup_names"] = False
+expedition_window.close()
+pump()
+
 # the Spansh planners: the dialog's answer becomes a new expedition
 from plugin import expedition_plan_dialog, spansh_planners  # noqa: E402
 
@@ -410,14 +478,33 @@ check(len(book.expeditions()) == before + 1 and "nothing worth stopping for" in 
 planner_window._plan(spansh_planners.RICHES)
 pump()
 dialog = planner_window._planner
-expedition_plan_dialog.plan_route = lambda q, cancel=None, on_state=None: (_ for _ in ()).throw(spansh_planners.RouteSearchError("Spansh says: Could not find system."))
+import threading as _threading
+release = _threading.Event()
+
+
+def slow_plan(q, cancel=None, on_state=None):
+    on_state("Spansh is calculating the route.")
+    release.wait(5)
+    raise spansh_planners.RouteSearchError("Spansh says: Could not find system.")
+
+
+expedition_plan_dialog.plan_route = slow_plan
 dialog._plot()
+for _ in range(15):
+    pump()
+    time.sleep(0.05)
+shown = dialog._activity.cget("text")
+check(dialog._busy and shown.startswith("Plotting") and "waited" in shown and "calculating the route" in shown, f"while Spansh works it says so, with the time: {shown!r}")
+check(dialog._plot_button.cget("text") == "Plotting..." and not dialog._plot_button._enabled, "the Plot button shows it is working and cannot be pressed again")
+check(len(dialog._bar.find_all()) == 1, "and a block moves along the bar")
+release.set()
 for _ in range(60):
     pump()
-    if "Could not find system" in dialog._shell._status.cget("text"):
+    if not dialog._busy:
         break
     time.sleep(0.02)
-check(dialog.alive and "Could not find system" in dialog._shell._status.cget("text"), "a refusal stays in the dialog with Spansh's words")
+check(dialog.alive and "Could not find system" in dialog._activity.cget("text"), f"a refusal stays in the dialog with Spansh's words: {dialog._activity.cget('text')!r}")
+check(dialog._plot_button.cget("text") == "Plot" and dialog._plot_button._enabled and not dialog._bar.find_all(), "and the button and bar are back to idle")
 dialog.close()
 expedition_window.close()
 pump()

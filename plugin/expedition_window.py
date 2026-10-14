@@ -36,6 +36,8 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CONFIG_GEOMETRY = "wntb_expedition_window_geometry"
+CONFIG_LOOKUP = "wntb_expedition_lookup_names"      # look system names up on EDSM when stops are added (on unless turned off)
+LOOKUP_CHUNK = 50      # names asked of EDSM in one request
 DEFAULT_SIZE = (1100, 760)
 MIN_SIZE = (900, 560)
 CONFIRM_MS = 5000     # how long a first press of Reset, Delete or Remove waits for the second
@@ -108,6 +110,8 @@ class ExpeditionWindow:
         self._results: "queue.Queue[Tuple[str, Dict[str, expedition.XYZ], int, expedition.XYZ]]" = queue.Queue()
         self._busy = False
         self._planner: Optional[expedition_plan_dialog.PlanDialog] = None
+        self._lookups: "queue.Queue[Tuple[str, List[str], Dict[str, expedition.XYZ]]]" = queue.Queue()
+        self._lookups_waiting = 0
 
         self._shell = WindowShell(
             parent, "Expedition", "", size=DEFAULT_SIZE, min_size=MIN_SIZE,
@@ -163,6 +167,10 @@ class ExpeditionWindow:
                                     ("Mark visited", self._toggle_visited, "normal"), ("Up", lambda: self._move(-1), "normal"),
                                     ("Down", lambda: self._move(1), "normal"), ("Remove", self._remove_stop, "danger")):
             FlatButton(stop_buttons, text, command, kind=kind).pack(side="left", padx=(0, 6))
+        self._lookup_var = tk.BooleanVar(value=config.get_bool(CONFIG_LOOKUP, default=True))
+        tk.Checkbutton(editor, text="Check system names on EDSM when adding (fixes capitals, finds the position)", variable=self._lookup_var,
+                       command=lambda: config.set(CONFIG_LOOKUP, self._lookup_var.get()), fg=P.TEXT, bg=P.PANE, selectcolor=P.BG,
+                       activebackground=P.PANE, activeforeground=P.TEXT, anchor="w").grid(row=4, column=0, columnspan=3, sticky="w", pady=(P.PAD_SM, 0))
 
         planners = tk.Frame(body, bg=P.BG)
         planners.pack(fill="x", pady=(0, P.PAD_SM))
@@ -377,13 +385,14 @@ class ExpeditionWindow:
         e = self._expedition_to_add_to()
         if e is None:
             return
-        stop = self._attempt(self._book.add_stop, e.id, self._system.get(), self._body_var.get(), self._note.get())
+        stop = self._attempt(self._book.add_stop, e.id, self._spelling(self._system.get()), self._body_var.get(), self._note.get())
         if stop is not None:
             self._stop_id = stop.id
             self._system.set("")
             self._body_var.set("")
             self._note.set("")
             self._say(f"Added {stop.system} as stop {len(e.stops)}.")
+            self._look_up(e.id, [stop.system])
 
     def _selected(self) -> Optional[Tuple[expedition.Expedition, expedition.Stop]]:
         e = self._need_expedition()
@@ -397,9 +406,12 @@ class ExpeditionWindow:
 
     def _save_stop(self) -> None:
         picked = self._selected()
-        if picked is not None and self._attempt(self._book.update_stop, picked[0].id, picked[1].id, self._system.get(), self._body_var.get(),
-                                                self._note.get()) is not None:
-            self._say("Saved.")
+        if picked is not None:
+            changed = self._attempt(self._book.update_stop, picked[0].id, picked[1].id, self._spelling(self._system.get()), self._body_var.get(),
+                                    self._note.get())
+            if changed is not None:
+                self._say("Saved.")
+                self._look_up(picked[0].id, [changed.system])
 
     def _remove_stop(self) -> None:
         picked = self._selected()
@@ -461,8 +473,67 @@ class ExpeditionWindow:
             logger.debug("Could not read %s: %s", path, exc)
             self._say(f"Could not read {os.path.basename(path)}: {exc}")
             return
+        before = len(e.stops)
         added, skipped = self._book.add_rows(e.id, rows)
+        self._look_up(e.id, [s.system for s in e.stops[before:] if s.xyz is None])
         self._say(f"Added {added} stop(s) from {os.path.basename(path)}" + (f"; skipped {skipped} (empty, too long or over the limit)." if skipped else "."))
+
+    # --- system names ---------------------------------------------------------------------------------------------------
+
+    def _spelling(self, typed: str) -> str:
+        """A system typed in any case, spelled as the game or another stop already spells it (the system you are in, then any stop); the
+        typed text, spaces tidied, when nothing here knows it. No network."""
+        typed = " ".join(str(typed or "").split())
+        here = self._ctx.system()
+        if typed and here and expedition.name_key(here) == expedition.name_key(typed):
+            return here
+        return self._book.known_spelling(typed) or typed
+
+    def _look_up(self, expedition_id: str, names: List[str]) -> None:
+        """Ask EDSM, in the background, how it spells these systems and where they are: it fixes the capitals and gives the stop a position.
+        Only when the box under the editor is ticked, and only the names go."""
+        names = [n for n in dict.fromkeys(names) if n]
+        if not names or not self._lookup_var.get():
+            return
+        self._lookups_waiting += 1
+        threading.Thread(target=self._look_up_worker, args=(expedition_id, names), daemon=True).start()
+        self._shell.window.after(POLL_MS, self._poll_lookups)
+
+    def _look_up_worker(self, expedition_id: str, names: List[str]) -> None:
+        """Runs off the main thread: it must not touch any Tk widget."""
+        found: Dict[str, expedition.XYZ] = {}
+        try:
+            for start in range(0, len(names), LOOKUP_CHUNK):
+                found.update(lookup_coords(names[start:start + LOOKUP_CHUNK]))
+        except Exception:
+            logger.exception("Expedition system name lookup failed")
+        self._lookups.put((expedition_id, names, found))
+
+    def _poll_lookups(self) -> None:
+        """Runs on the main thread via after(): safe to touch widgets."""
+        try:
+            expedition_id, names, found = self._lookups.get_nowait()
+        except queue.Empty:
+            if self.alive and self._lookups_waiting:
+                self._shell.window.after(POLL_MS, self._poll_lookups)
+            return
+        self._lookups_waiting = max(0, self._lookups_waiting - 1)
+        if not self.alive or self._book.get(expedition_id) is None:
+            return
+        respelled = self._book.canonical_names(expedition_id, found.keys())
+        self._book.set_coords(expedition_id, found)
+        known = {expedition.name_key(k) for k in found}
+        unknown = [n for n in names if expedition.name_key(n) not in known]
+        if not found and unknown:
+            what = unknown[0] if len(unknown) == 1 else f"{len(unknown)} of these systems"
+            self._say(f"EDSM could not be reached or does not know {what}. The name is kept as typed.")
+        elif unknown:
+            more = " and more" if len(unknown) > 3 else ""
+            self._say(f"EDSM knows {len(known)}; it does not know {', '.join(unknown[:3])}{more}. Those names are kept as typed.")
+        elif respelled:
+            self._say(f"EDSM respelled {respelled} system name(s), for example {next(iter(found))}.")
+        if self._lookups_waiting:
+            self._shell.window.after(POLL_MS, self._poll_lookups)
 
     def _plan(self, kind: str) -> None:
         """Open the Spansh planner for `kind`; its answer becomes a new expedition (see `_planned`)."""

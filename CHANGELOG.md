@@ -32,7 +32,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   reorder by nearest neighbor (the positions come from EDSM, the only online part, which sends only system names); share as a list or a CSV. Keep
   several expeditions and run one at a time. **Road to Riches** and **Exomastery** buttons in the window ask Spansh's planners for the most valuable
   bodies to scan, or the most valuable biological planets, near a route and turn the answer into a new expedition (only when you press **Plot**; it
-  sends Spansh the start system, the end if you give one, and the numbers you chose). Adding the first stop makes an expedition for you, and
+  sends Spansh the start system, the end if you give one, and the numbers you chose). A system typed in any case is spelled properly (`sol` becomes `Sol`) from the game's own spelling or from EDSM, which also supplies its position (a box under the editor turns that check off; it sends only the name). Adding the first stop makes an expedition for you, and
   **Rename** offers the current name to edit. Kept on your computer for each commander. Waypoints (Boxel Survey) is unchanged.
 
 ## 1.9.1 - 2026-10-13

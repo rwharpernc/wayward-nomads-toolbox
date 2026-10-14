@@ -13,6 +13,7 @@ import logging
 import os
 import queue
 import threading
+import time
 import tkinter as tk
 from typing import Any, Callable, List, Optional, Tuple
 
@@ -21,12 +22,16 @@ from config import appname
 from . import spansh_planners
 from .uikit import palette as P
 from .uikit.shell import WindowShell
+from .uikit import style
 from .uikit.widgets import FlatButton
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 POLL_MS = 300
+ANIMATE_MS = 60
+BAR_HEIGHT = 10
+BLOCK = 0.28       # the moving block's share of the bar's width
 SIZE = (700, 560)
 MIN_SIZE = (620, 500)
 
@@ -55,6 +60,9 @@ class PlanDialog:
         self._results: "queue.Queue[Tuple[Optional[spansh_planners.PlanQuery], Any]]" = queue.Queue()
         self._cancel: Optional[threading.Event] = None
         self._busy = False
+        self._started = 0.0
+        self._phase = 0.0
+        self._spansh_note = ""
         title = spansh_planners.TITLES[kind]
         self._shell = WindowShell(parent, title, "Plan a route of places worth visiting", size=SIZE, min_size=MIN_SIZE)
         self._shell.window.protocol("WM_DELETE_WINDOW", self.close)
@@ -103,6 +111,11 @@ class PlanDialog:
         tk.Label(body, text=("Pressing Plot sends Spansh the system names above and these numbers, nothing else. "
                              "The result becomes a new expedition you can edit, reorder and start."),
                  fg=P.MUTED, bg=P.BG, justify="left", anchor="w", wraplength=620).pack(fill="x", pady=(P.PAD, 0))
+        # Shown while Spansh works, which can take a couple of minutes: a moving bar and the time waited, so it never looks stuck.
+        self._activity = tk.Label(body, text="", fg=P.ACCENT, bg=P.BG, anchor="w", font=style.font(P.FONT_BOLD))
+        self._activity.pack(fill="x", pady=(P.PAD, 2))
+        self._bar = tk.Canvas(body, height=BAR_HEIGHT, bg=P.PANE, highlightthickness=0, bd=0)
+        self._bar.pack(fill="x")
         self._shell.set_status("Check the numbers and press Plot.")
         self._entries["start"].focus_set()
 
@@ -126,6 +139,7 @@ class PlanDialog:
     def _cancel_or_close(self) -> None:
         if self._busy and self._cancel is not None:
             self._cancel.set()
+            self._spansh_note = "Cancelling"
             self._say("Cancelling...")
         else:
             self.close()
@@ -173,10 +187,41 @@ class PlanDialog:
         if query is None:
             return
         self._busy = True
+        self._started, self._phase, self._spansh_note = time.monotonic(), 0.0, ""
         self._cancel = threading.Event()
-        self._say("Asking Spansh...")
+        self._plot_button.configure(text="Plotting...")
+        self._plot_button.set_enabled(False)
+        self._say("Sent to Spansh. It can take a minute or two. You can cancel at any time.")
+        self._animate()
         threading.Thread(target=self._worker, args=(query, self._cancel), daemon=True).start()
         self._shell.window.after(POLL_MS, self._poll)
+
+    def _animate(self) -> None:
+        """Runs on the main thread via after(): a block sliding along the bar, and the time waited, until the search ends."""
+        if not self.alive:
+            return
+        if not self._busy:
+            self._bar.delete("all")
+            return
+        seconds = int(time.monotonic() - self._started)
+        waited = f"{seconds // 60}:{seconds % 60:02d}"
+        dots = "." * (1 + int(self._phase * 10) % 3)
+        self._activity.configure(text=f"Plotting{dots}  {waited} waited" + (f"  ·  {self._spansh_note}" if self._spansh_note else ""), fg=P.ACCENT)
+        width = max(self._bar.winfo_width(), 1)
+        block = width * BLOCK
+        left = (width + block) * (self._phase % 1.0) - block
+        self._bar.delete("all")
+        self._bar.create_rectangle(max(left, 0), 0, min(left + block, width), BAR_HEIGHT, fill=P.ACCENT, outline="")
+        self._phase += ANIMATE_MS / 1600.0
+        self._shell.window.after(ANIMATE_MS, self._animate)
+
+    def _finished(self, message: str = "") -> None:
+        """Back to the idle look; `message` (an error or a refusal) is shown where the progress was."""
+        self._busy = False
+        self._plot_button.configure(text="Plot")
+        self._plot_button.set_enabled(True)
+        self._bar.delete("all")
+        self._activity.configure(text=message, fg=P.DANGER if message else P.ACCENT)
 
     def _worker(self, query: spansh_planners.PlanQuery, cancel: threading.Event) -> None:
         """Runs off the main thread: it must not touch any Tk widget. Progress goes through the queue."""
@@ -202,19 +247,21 @@ class PlanDialog:
             except queue.Empty:
                 break
             if query is None:
-                self._say(str(payload))      # a progress line
+                self._spansh_note = str(payload).rstrip(".")      # Spansh's queued/working word, shown beside the timer
             else:
                 done = (query, payload)
         if done is None:
             if self.alive and self._busy:
                 self._shell.window.after(POLL_MS, self._poll)
             return
-        self._busy = False
         if not self.alive:
+            self._busy = False
             return
         query, payload = done
         if isinstance(payload, str):
-            self._say(payload)
+            self._finished(payload)
+            self._say("Not plotted. Fix what it says, or try again.")
             return
+        self._finished()
         self._on_done(query, payload)
         self.close()

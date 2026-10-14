@@ -471,6 +471,31 @@ class ExpeditionBook:
             self._changed()
         return given
 
+    def canonical_names(self, expedition_id: str, names: Iterable[str]) -> int:
+        """Give stops the spelling EDSM uses for their system (`names` are EDSM's spellings): a stop typed as `sol` becomes `Sol`. Only the
+        capitals and spacing can differ, since the match ignores them. Returns how many stops were respelled."""
+        e = self._need(expedition_id)
+        by_key = {name_key(n): " ".join(str(n).split())[:MAX_SYSTEM] for n in names if n}
+        changed = 0
+        for stop in e.stops:
+            spelling = by_key.get(name_key(stop.system))
+            if spelling and spelling != stop.system:
+                stop.system = spelling
+                changed += 1
+        if changed:
+            self._save()
+            self._changed()
+        return changed
+
+    def known_spelling(self, name: Any) -> str:
+        """How a system is already spelled in any expedition, for a name typed in another case; empty when none uses it."""
+        key = name_key(name)
+        for e in self._expeditions:
+            for stop in e.stops:
+                if name_key(stop.system) == key:
+                    return stop.system
+        return ""
+
     def add_systems(self, expedition_id: str, systems: Iterable[Tuple[str, Optional[XYZ]]], skip_duplicates_of_last: bool = True) -> int:
         """Append stops for a list of systems, each with its position when the game gave one (a plotted route). A system that is the same as the
         stop before it is skipped. Returns how many stops were added; stops past the limit are not added and the caller is told by the count."""
