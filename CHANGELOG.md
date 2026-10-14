@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Changed
+- **The Colonization panel's History heading names the commander** (`History - SILAS KADE`), so it is clear whose figures are shown.
+
+### Fixed
+- **Busiest site shows its name, not `Construction site <number>`**, for depots WNTB is not tracking. The journal's delivery event names a depot only by number, so WNTB now learns the name and system from the `Docked` at it (read once from your journals for each commander, and kept as you dock). A depot never docked at in the journals still shows its number.
+
 ## 1.10.1 - 2026-10-14
 
 ### Fixed

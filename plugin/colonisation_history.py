@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
@@ -30,7 +31,8 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 STATE_FILENAME = "colonisation_history.json"
-BACKFILL_VERSION = 2   # 1 rebuilt the deliveries; 2 also counts system claims and beacons, so a version 1 rebuild is done again
+BACKFILL_VERSION = 3   # 1 rebuilt the deliveries; 2 also counts system claims and beacons; 3 also learns site names from `Docked`
+                       # (a delivery names only a MarketID), so each older rebuild is done again
 DAYS_KEPT = 400   # by_day entries older than this are dropped (the totals keep them)
 
 Record = Dict[str, Any]
@@ -42,7 +44,7 @@ def _empty_claims() -> Dict[str, Any]:
 
 def _empty() -> Record:
     return {"journal_at": "", "first": "", "last": "", "deliveries": 0, "tonnes": 0,
-            "by_commodity": {}, "by_site": {}, "by_day": {}, "claims": _empty_claims()}
+            "by_commodity": {}, "by_site": {}, "by_day": {}, "claims": _empty_claims(), "site_names": {}}
 
 
 def _is_legacy(_raw: Any) -> bool:
@@ -88,6 +90,12 @@ class DeliveryLedger:
             return False
         return _fold(commander_data.payload_for(self._store, cmdr, _empty), entry)
 
+    def note_station(self, cmdr: str, entry: Dict[str, Any]) -> bool:
+        """Remember the name of a construction site from a `Docked` at it (a delivery carries only a MarketID). True if it changed."""
+        if not commander_data.key_for(cmdr):
+            return False
+        return _fold_docked(commander_data.payload_for(self._store, cmdr, _empty), entry)
+
     def apply_event(self, cmdr: str, entry: Dict[str, Any]) -> bool:
         """Fold in a `ColonisationContribution`, or a system claim, release or beacon. True if anything changed."""
         if not commander_data.key_for(cmdr):
@@ -125,6 +133,8 @@ class DeliveryLedger:
         if replace:
             commander_data.put(self._store, cmdr, fresh)
             current = fresh
+        else:   # the figures stay, but the names the journals gave are still worth having
+            current.setdefault("site_names", {}).update(fresh["site_names"])
         current["backfilled"] = BACKFILL_VERSION
         return replace
 
@@ -133,7 +143,48 @@ def _fold_any(record: Record, entry: Dict[str, Any]) -> bool:
     """Fold one history event into `record`: a delivery, or a claim, release or beacon."""
     if entry.get("event") in colonisation.CLAIM_EVENTS:
         return _fold_claim(record, entry)
+    if entry.get("event") == "Docked":
+        return _fold_docked(record, entry)
     return _fold(record, entry)
+
+
+_DEPOT_STATION_TYPES = ("SpaceConstructionDepot", "PlanetaryConstructionDepot", "ColonisationShip")
+
+
+def is_depot_dock(entry: Dict[str, Any]) -> bool:
+    """A `Docked` at a construction depot (by its station type, or the name the game gives one)."""
+    name = str(entry.get("StationName") or "")
+    return (isinstance(entry.get("MarketID"), int) and bool(name)
+            and (entry.get("StationType") in _DEPOT_STATION_TYPES or "ColonisationShip" in name or "Construction Site" in name))
+
+
+def _display_name(entry: Dict[str, Any]) -> str:
+    """The readable station name: the game's own localized one, else `$EXT_PANEL_ColonisationShip; Name` reduced to `Name`."""
+    localised = entry.get("StationName_Localised")
+    if isinstance(localised, str) and localised.strip():
+        return localised.strip()
+    name = str(entry.get("StationName") or "").strip()
+    match = re.match(r"^\$EXT_PANEL_(?:Colonisation|Colonization)Ship[_;]*(.*)$", name, re.IGNORECASE)
+    if match:
+        name = match.group(1)
+    elif name.startswith("$"):
+        return re.sub(r"\s+", " ", re.sub(r"^\$EXT_PANEL_|;+$", "", name).replace("_", " ")).strip()
+    return re.sub(r"\s+", " ", name.replace("_", " ")).strip(" ;")
+
+
+def _fold_docked(record: Record, entry: Dict[str, Any]) -> bool:
+    """Keep the readable name (and system) of the construction depot docked at, by MarketID, for the history's busiest site."""
+    if not is_depot_dock(entry):
+        return False
+    name = _display_name(entry)
+    system = str(entry.get("StarSystem") or "")
+    text = f"{name} ({system})" if name and system else name
+    names = record.setdefault("site_names", {})
+    key = str(entry["MarketID"])
+    if not text or names.get(key) == text:
+        return False
+    names[key] = text
+    return True
 
 
 def _fold_claim(record: Record, entry: Dict[str, Any]) -> bool:

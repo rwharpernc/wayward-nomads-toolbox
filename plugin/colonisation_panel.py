@@ -281,6 +281,11 @@ class ColonisationController:
             if isinstance(market_id, int) and entry.get("StationName"):
                 docked_name, docked_in = str(entry["StationName"]), str(entry.get("StarSystem") or system or "")
                 self._docked[market_id] = (docked_name, docked_in)
+                if colonisation_history.is_depot_dock(entry):   # the history names its busiest site from this
+                    if commander_data.key_for(self._cmdr) in self._history_pending:
+                        self._history_live.append((self._cmdr, entry))
+                    if self._ledger.note_station(self._cmdr, entry):
+                        self._ledger.commit()
                 known = self._repository.get(self._cmdr, market_id)
                 if known is not None:   # a site we track: take the name the game gives it now (it may have been renamed)
                     renamed = Site.from_dict(known.to_dict())
@@ -507,6 +512,7 @@ class ColonisationController:
         self._refresh_history(stats.history_for(sites, self._ledger.record(self._cmdr)))
 
     def _refresh_history(self, h: "stats.History") -> None:
+        self._vars["h_head"].set(f"History - {_clip(self._cmdr, 24)}" if self._cmdr else "History")   # a heading, not a row
         self._set("h_sites", stats.sites_text(h))
         has = h.deliveries > 0
         self._set("h_tonnes", f"{h.tonnes:,} t in {h.deliveries:,} {'delivery' if h.deliveries == 1 else 'deliveries'}"
@@ -574,7 +580,9 @@ class ColonisationController:
         line("more", "Others")
 
         row = panelkit.add_separator(parent, row)
-        heading("History")
+        self._vars["h_head"] = tk.StringVar(value="History")
+        tk.Label(parent, textvariable=self._vars["h_head"], font=fonts["bold"]).grid(row=row, column=0, columnspan=3, sticky=tk.W)
+        row += 1
         line("h_sites", "Sites")
         line("h_tonnes", "You delivered")
         line("h_recent", "Recently")
