@@ -9,7 +9,7 @@ differ.
 import tkinter as tk
 from typing import Callable, Optional
 
-from . import mining_deposit
+from . import mining_deposit, system_autocomplete
 from .mining_hotspots import Hotspot, hotspot_repository
 from .uikit import palette
 from .uikit import style as ui_style
@@ -68,8 +68,10 @@ def open_hotspot_dialog(
     def _row(label: str, var: tk.StringVar, row: int) -> None:
         tk.Label(dialog, text=label, anchor=tk.W).grid(
             row=row, column=0, sticky="w", padx=8, pady=4)
-        tk.Entry(dialog, textvariable=var, width=_FIELD_WIDTH).grid(
-            row=row, column=1, sticky="ew", padx=8, pady=4)
+        box = tk.Entry(dialog, textvariable=var, width=_FIELD_WIDTH)
+        box.grid(row=row, column=1, sticky="ew", padx=8, pady=4)
+        if label.startswith("System"):
+            system_autocomplete.attach(box, var)
 
     def _dropdown_row(label: str, var: tk.StringVar, values: tuple[str, ...], row: int) -> None:
         tk.Label(dialog, text=label, anchor=tk.W).grid(

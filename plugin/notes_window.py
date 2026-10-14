@@ -11,7 +11,7 @@ from typing import Callable, List, Optional, Tuple
 
 from config import appname, config
 
-from . import notes_data
+from . import notes_data, system_autocomplete
 from .uikit import palette as P
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
@@ -101,7 +101,10 @@ class NotesWindow:
         self._body = tk.StringVar()
         for row, (label, variable) in enumerate((("System", self._system), ("Body", self._body))):
             tk.Label(editor, text=label, fg=P.MUTED, bg=P.PANE).grid(row=row, column=0, sticky="w", pady=2)
-            tk.Entry(editor, textvariable=variable, width=36).grid(row=row, column=1, sticky="w", padx=P.PAD_SM, pady=2)
+            box = tk.Entry(editor, textvariable=variable, width=36)
+            box.grid(row=row, column=1, sticky="w", padx=P.PAD_SM, pady=2)
+            if row == 0:
+                system_autocomplete.attach(box, variable)
             FlatButton(editor, "Here", lambda r=row: self._fill_here(r)).grid(row=row, column=2, sticky="w", pady=2)
         tk.Label(editor, text="Note", fg=P.MUTED, bg=P.PANE).grid(row=2, column=0, sticky="nw", pady=2)
         self._text = tk.Text(editor, height=6, wrap="word", bg=P.CARD, fg=P.TEXT, insertbackground=P.TEXT, relief="flat")

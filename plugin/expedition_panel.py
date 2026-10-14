@@ -15,7 +15,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 from config import appname, config
 
-from . import expedition, expedition_window, panelkit
+from . import expedition, expedition_window, panelkit, system_names
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -29,6 +29,7 @@ _NOTE_SHOWN = 110      # characters of a note shown in the panel
 _WRAP_PX = 200         # the lines wrap here: what they show comes from the commander and the game, and must not widen EDMC's window
 
 book = expedition.ExpeditionBook()
+system_names.add_source(lambda: [stop.system for trip in book.expeditions() for stop in trip.stops])
 
 
 def autocopy_enabled() -> bool:

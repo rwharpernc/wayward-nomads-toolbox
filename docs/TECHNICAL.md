@@ -518,6 +518,13 @@ answer into a new expedition: each stop is a system with its best body, a note o
 range offered is the last `Loadout`'s `MaxJumpRange`. The endpoints are undocumented; the request and result shapes were taken from Spansh's own page
 and a live answer (see the module's docstring).
 
+System-name boxes get type-ahead from `system_autocomplete.attach(entry, var)`, which puts its own bindtag ahead of the box's so Enter, Up, Down and Escape
+are seen first (taken with "break" only when a suggestion is highlighted or the list is open) and the box's own Enter handling still runs otherwise. The
+list is a borderless Toplevel under the box, coloured from the box itself so it fits both WNTB's dark windows and the themed EDMC panel. Suggestions
+are `system_names.local()` (the systems seen by `load.journal_entry`, then sources such as the expedition stops and notes registered with
+`add_source`) from two letters, plus Spansh's `/api/systems/field_values/system_names?q=` answers from three letters when
+`wntb_system_suggest_spansh` is on (off by default): the call is debounced 350 ms, runs on a worker thread, and is cached by typed start for the session.
+
 Flight Alerts (`flight_alerts.py`, over the pure `carrier_jump_timer.py` and `fuel_alerts.py`) draws one overlay card. The carrier
 countdown comes from `CarrierJumpRequest` (`SystemName`, `Body`, `DepartureTime`, parsed as UTC), cleared by `CarrierJumpCancelled` or
 `CarrierJump`; a request whose departure is already more than 90 s past is ignored (an old journal line), one alert is given as the time

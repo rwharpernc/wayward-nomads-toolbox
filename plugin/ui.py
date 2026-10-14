@@ -39,7 +39,7 @@ from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, flight_alerts, gec_poi_panel, interdiction, inventory_panel, landing, materials_panel, mining_panel, missions,
     notable, notes_panel, expedition_panel, surface_compass, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
-    game_mode, session_credits, session_merits, settings_scroll, trade_panel, trade_watch_panel,
+    game_mode, session_credits, session_merits, settings_scroll, system_names, trade_panel, trade_watch_panel,
 )
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
 
@@ -132,6 +132,7 @@ _toggle_off_colors: Tuple[str, str] = ("", "")
 
 _auto_update_var: Optional[tk.BooleanVar] = None
 _fit_height_var: Optional[tk.BooleanVar] = None
+_suggest_var: Optional[tk.BooleanVar] = None
 
 PLUGIN_DISPLAY_NAME = "Wayward Nomads Toolbox (WNTB)"
 
@@ -589,7 +590,7 @@ def _create_window_tab(notebook: nb.Notebook) -> None:
     """Window behaviour. Everything here is placed with `grid` (never `pack`) - an
     nb.Frame already holds a gridded child, and packing into it makes the whole
     WNTB Settings tab vanish (tests/test_settings_layout.py)."""
-    global _fit_height_var
+    global _fit_height_var, _suggest_var
 
     frame = nb.Frame(notebook)
     frame.columnconfigure(0, weight=1)
@@ -608,6 +609,20 @@ def _create_window_tab(notebook: nb.Notebook) -> None:
         ),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+
+    _suggest_var = tk.BooleanVar(value=config.get_bool(system_names.CFG_REMOTE, default=False))
+    nb.Checkbutton(
+        frame, text="Suggest system names from Spansh while typing", variable=_suggest_var,
+    ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(10, 2))
+    nb.Label(
+        frame,
+        text=(
+            "Boxes that take a system name (the Expedition window, the trader finder, Where to buy and others) always suggest the systems you "
+            "have been in and ones WNTB already holds. Ticking this also asks Spansh for matching systems as you type, from the third letter "
+            "and after a short pause. What you have typed so far goes to Spansh, nothing else. Off until you tick it."
+        ),
+        wraplength=440, justify=tk.LEFT,
+    ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _create_updates_tab(notebook: nb.Notebook) -> None:
@@ -634,6 +649,8 @@ def save_prefs() -> None:
             _schedule_window_fit()
     if _auto_update_var is not None:
         config.set(CONFIG_AUTO_UPDATE, bool(_auto_update_var.get()))
+    if _suggest_var is not None:
+        config.set(system_names.CFG_REMOTE, bool(_suggest_var.get()))
 
     overlay.save_settings()
     overlay_placement.save_settings()

@@ -20,7 +20,7 @@ from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tupl
 
 from config import appname, config
 
-from . import colonisation, colonisation_builds_window, colonisation_carrier, colonisation_sources as sources, colonisation_view as view, panelkit, rcc_client, rcc_keys
+from . import colonisation, colonisation_builds_window, colonisation_carrier, colonisation_sources as sources, colonisation_view as view, panelkit, rcc_client, rcc_keys, system_autocomplete
 from .colonisation_carrier import CarrierCargo
 from .colonisation import Site
 from .colonisation_data import SiteRepository
@@ -294,6 +294,7 @@ class ColonisationWindow:
         tk.Label(first, text="Around", fg=P.MUTED, bg=P.PANE).pack(side="left")
         entry = tk.Entry(first, textvariable=self._system_var, width=26)
         entry.pack(side="left", padx=(P.PAD_SM, P.PAD_SM))
+        system_autocomplete.attach(entry, self._system_var, on_pick=lambda: setattr(self, "_system_edited", True))
         entry.bind("<KeyRelease>", lambda _e: setattr(self, "_system_edited", True))
         FlatButton(first, "Here", self._on_here).pack(side="left", padx=(0, P.PAD))
         tk.Label(first, text="Within", fg=P.MUTED, bg=P.PANE).pack(side="left")

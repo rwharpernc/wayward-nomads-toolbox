@@ -19,7 +19,7 @@ from typing import Any, Callable, List, Optional, Tuple
 
 from config import appname
 
-from . import spansh_planners
+from . import spansh_planners, system_autocomplete
 from .uikit import palette as P
 from .uikit.shell import WindowShell
 from .uikit import style
@@ -94,6 +94,8 @@ class PlanDialog:
             tk.Label(form, text=label, fg=P.MUTED, bg=P.PANE, anchor="w").grid(row=row * 2, column=0, sticky="w", pady=(4, 0))
             entry = tk.Entry(form, textvariable=self._vars[key], width=36 if key in ("start", "destination") else 14)
             entry.grid(row=row * 2, column=1, sticky="w", padx=P.PAD_SM, pady=(4, 0))
+            if key in ("start", "destination"):
+                system_autocomplete.attach(entry, self._vars[key])
             entry.bind("<Return>", lambda _e: self._plot())
             self._entries[key] = entry
             tk.Label(form, text=hint, fg=P.MUTED, bg=P.PANE, anchor="w", wraplength=460, justify="left").grid(

@@ -91,6 +91,7 @@ being listed doesn't mean a tool was the first or the only one.
   and no code was taken. The stations are [Spansh](https://spansh.co.uk/)'s station search, filtered by its material trader field.
 - **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials
   Helper.
+- **System-name suggestions** (the optional list of matching systems while you type): [Spansh](https://spansh.co.uk/)'s system-name search, only when you tick the setting.
 - **Nearest neutron star and white dwarf lookups:** [Spansh](https://spansh.co.uk/) answers the N.S. and W.D.
   buttons.
 - **Nearby points of interest:** [Canonn](https://canonn.science/) and

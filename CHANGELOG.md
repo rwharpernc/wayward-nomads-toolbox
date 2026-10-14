@@ -6,6 +6,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **System-name suggestions in every box that takes a system name** (Expedition stops and planner, the trader finder, Colonization's *Around*, mining
+  hotspots and ring reserve, Notes, Waypoint Route and the Boxel Survey and Region Sweep seeds). From the second letter it suggests the systems you have
+  been in and ones WNTB already holds, and **Down**/**Up**, **Enter**, a click and **Escape** work as you would expect; **Enter** with nothing highlighted
+  still does what the box did. A new setting, **Suggest system names from Spansh while typing** (Settings → Window, off until ticked), also asks Spansh
+  for matching systems from the third letter, so systems you have never visited come up too; the letters typed so far are all that is sent.
 - **Material trader finder** (**Find a trader** in the Materials window). Finds the closest station with a Raw, Manufactured or Encoded material trader
   to your system (or one you type), nearest first, with whether it is in space or on a surface, its distance from the star and its largest landing
   pad; filter by distance and pad size, and double-click a row to copy its system name. It shows what you hold of that type by grade and how many

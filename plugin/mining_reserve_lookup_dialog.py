@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional
 
 from config import appname
 
-from . import edsm_client
+from . import edsm_client, system_autocomplete
 from . import mining_location as location
 from . import mining_space as space_mining
 from .uikit import palette
@@ -132,8 +132,9 @@ def open_reserve_lookup_dialog(parent: tk.Misc) -> None:
 
     tk.Label(dialog, text="System*", anchor=tk.W).grid(row=0, column=0, sticky="w", padx=8, pady=(8, 4))
     system_var = tk.StringVar(value=reference_system or "")
-    tk.Entry(dialog, textvariable=system_var, width=26).grid(
-        row=0, column=1, sticky="ew", padx=8, pady=(8, 4))
+    system_entry = tk.Entry(dialog, textvariable=system_var, width=26)
+    system_entry.grid(row=0, column=1, sticky="ew", padx=8, pady=(8, 4))
+    system_autocomplete.attach(system_entry, system_var)
 
     tk.Label(dialog, text="Body or ring name*", anchor=tk.W).grid(
         row=1, column=0, sticky="w", padx=8, pady=4)

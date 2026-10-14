@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from config import appname, config
 
-from . import edsm_client, expedition, expedition_plan_dialog, journal_files, panelkit, spansh_planners
+from . import edsm_client, expedition, expedition_plan_dialog, journal_files, panelkit, spansh_planners, system_autocomplete
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -155,6 +155,7 @@ class ExpeditionWindow:
         tk.Label(editor, text="System", fg=P.MUTED, bg=P.PANE).grid(row=0, column=0, sticky="w", pady=2)
         system_entry = tk.Entry(editor, textvariable=self._system, width=40)
         system_entry.grid(row=0, column=1, sticky="w", padx=P.PAD_SM, pady=2)
+        system_autocomplete.attach(system_entry, self._system)
         system_entry.bind("<Return>", lambda _e: self._add_stop())
         FlatButton(editor, "Here", self._fill_here).grid(row=0, column=2, sticky="w", pady=2)
         tk.Label(editor, text="Body (optional)", fg=P.MUTED, bg=P.PANE).grid(row=1, column=0, sticky="w", pady=2)

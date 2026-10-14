@@ -111,6 +111,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Game mode and credits lines** under the mode buttons, and the version you are running ([Getting started](docs/guide/getting-started.md)).
 - **Everything is per commander**: nothing WNTB saves about play is shared between commanders ([Getting started](docs/guide/getting-started.md)).
 - **Catches up after EDMC was closed**: it reads the recent journals when EDMC starts, counting nothing twice ([Getting started](docs/guide/getting-started.md)).
+- **System-name suggestions** in every box that takes a system name: the systems you have been in, then ones WNTB holds, and, if you tick it, Spansh's search for any system ([Typing a system name](docs/guide/getting-started.md#typing-a-system-name)).
 - **Pop-out windows** with a dark look that remember their size and place ([Getting started](docs/guide/getting-started.md#opening-the-pop-out-windows)).
 - **Automatic updates** from GitHub releases, and a **Release notes** link ([Getting started](docs/guide/getting-started.md)).
 - **On-screen overlay displays** through EDMCModernOverlay, with a Placement tool, six color schemes and a text size ([Overlay setup](docs/OVERLAY_SETUP.md)).

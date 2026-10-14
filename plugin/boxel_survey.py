@@ -47,7 +47,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import (
-    boxel, boxel_state, edsm_client, panelkit, region_sweep_panel, survey_catchup, survey_log, visited_systems, waypoint_route_panel,
+    boxel, boxel_state, edsm_client, panelkit, region_sweep_panel, survey_catchup, survey_log, system_autocomplete, visited_systems, waypoint_route_panel,
 )
 from .boxel_walker import BoxelWalker, WalkerSnapshot
 
@@ -684,7 +684,9 @@ class BoxelSurveyController:
         tk.Button(button_row, text="Copy", command=self._copy_current).pack(side=tk.LEFT, padx=(4, 0))
 
         tk.Label(parent, text="Seed system:").grid(row=5, column=0, sticky=tk.W)
-        tk.Entry(parent, textvariable=self._seed_var, width=28).grid(row=5, column=1, sticky=tk.W)
+        seed_box = tk.Entry(parent, textvariable=self._seed_var, width=28)
+        seed_box.grid(row=5, column=1, sticky=tk.W)
+        system_autocomplete.attach(seed_box, self._seed_var)
 
         seed_button_row = tk.Frame(parent)
         seed_button_row.grid(row=5, column=2, sticky=tk.W)

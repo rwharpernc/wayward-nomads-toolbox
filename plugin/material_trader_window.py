@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from config import appname, config
 
-from . import material_traders, materials, panelkit
+from . import material_traders, materials, panelkit, system_autocomplete
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -131,6 +131,7 @@ class MaterialTraderWindow:
         self._origin = tk.StringVar(value=ctx.system())
         entry = tk.Entry(origin, textvariable=self._origin, width=34)
         entry.pack(side="left", padx=(P.PAD_SM, P.PAD_SM))
+        system_autocomplete.attach(entry, self._origin)
         entry.bind("<Return>", lambda _e: self._find())
         FlatButton(origin, "Here", self._fill_here).pack(side="left")
         self._find_button = FlatButton(origin, "Find", self._find, kind="accent")

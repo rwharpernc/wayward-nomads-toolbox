@@ -30,7 +30,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import edsm_client, journal_files, panelkit, waypoint_route_state
+from . import edsm_client, journal_files, panelkit, system_autocomplete, waypoint_route_state
 from .waypoint_route import WaypointRoute
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -176,7 +176,9 @@ class WaypointRouteController:
         self._status_var = tk.StringVar(value="")
 
         tk.Label(parent, text="Add waypoint:").grid(row=0, column=0, sticky=tk.W)
-        tk.Entry(parent, textvariable=self._add_var, width=28).grid(row=0, column=1, sticky=tk.W)
+        add_box = tk.Entry(parent, textvariable=self._add_var, width=28)
+        add_box.grid(row=0, column=1, sticky=tk.W)
+        system_autocomplete.attach(add_box, self._add_var)
         add_button_row = tk.Frame(parent)
         add_button_row.grid(row=0, column=2, sticky=tk.W)
         tk.Button(add_button_row, text="Use Current", command=self._on_use_current).pack(side=tk.LEFT)

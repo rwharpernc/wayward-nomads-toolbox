@@ -117,6 +117,7 @@ the release: it also holds the Materials, Engineering and Expedition work, which
       The **Engineers** tab lists engineers with where you stand (after a login), unlocked ones first; **Show their blueprints** switches to the
       Blueprints tab searching for them; **Put their unlock on the wishlist** adds it; the wishlist's **Who can do it** column names an unlocked
       engineer or "No engineer unlocked yet".
+- [ ] System-name suggestions (added 2026-10-14; Settings → Window): in the Expedition window's System box type two letters of a system you have been in: a list appears under the box; **Down**, **Enter** take one; **Escape** closes it; **Enter** with nothing highlighted adds the stop. The list must appear in front of the window on your desktop and Wayland compositor and go away when the box loses focus. Tick *Suggest system names from Spansh while typing*, type `outot`: after a pause systems from Spansh appear.
 - [ ] Expedition (Exploration mode, **Expedition** section; added 2026-10-14): **EXPEDITION** opens the window; **New** makes an expedition; **Add stop**
       (and **Here**) add stops; **From plotted route** (after plotting a route in the game) and **Import CSV** add many; **Road to Riches** and **Exomastery** (Spansh; press **Plot**, wait, check the new expedition's stops, notes and order against Spansh's own page); **Start**, then jump to a
       stop: the section ticks it, counts the jump and shows the next stop with its distance; **COPY** and **Copy on arrival** put the next stop's

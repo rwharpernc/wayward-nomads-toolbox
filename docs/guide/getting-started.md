@@ -195,12 +195,16 @@ Trade, BGS, Colonization, Field Ops and Overlays. Some have a row of tabs of the
 
 | Tab | Inner tabs |
 |---|---|
-| **General** | Window, Updates |
+| **General** | Window (including *Suggest system names from Spansh while typing*), Updates |
 | **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Auto-Honk |
 | **Field Ops** | Screenshots, Inventory, Ship Builds |
 | **Overlays** | Overlay Connection, Overlay Placement, Appearance (color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Flight Alerts, Landing, Surface Compass, Mining, Notable Bodies, Screenshots |
 
 This is where you switch things on and off and adjust how they behave.
+
+### Typing a system name
+
+Every box that takes a system name (an expedition stop, the Expedition planner's start and end, the trader finder's *Search from*, Colonization's *Around*, a mining hotspot or ring reserve, a note, a waypoint or a Boxel Survey seed) suggests systems as you type, from the second letter: the systems you have been in this session first, then ones WNTB already holds (expedition stops, notes). **Down** and **Up** move through the list, **Enter** or a click takes the highlighted one, and **Escape** closes it; **Enter** with nothing highlighted does what the box always did (add the stop, run the search). To also get suggestions for systems you have never been to, tick **Suggest system names from Spansh while typing** under Settings → WNTB → General → Window. It is off until you tick it, and then the letters you have typed so far go to Spansh ([what goes on the internet](internet-and-privacy.md)).
 
 ### What you can and can't switch off
 

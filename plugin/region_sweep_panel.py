@@ -34,7 +34,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import boxel, edsm_client, panelkit, region_sweep_spansh, region_sweep_state
+from . import boxel, edsm_client, panelkit, region_sweep_spansh, region_sweep_state, system_autocomplete
 from .region_sweep_queue import CubeEntry, RegionSweepQueue, RegionSweepSnapshot
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -260,7 +260,9 @@ class RegionSweepController:
         self._stats_var = tk.StringVar(value="")
 
         tk.Label(parent, text="Add cube — seed system:").grid(row=0, column=0, sticky=tk.W)
-        tk.Entry(parent, textvariable=self._add_seed_var, width=28).grid(row=0, column=1, sticky=tk.W)
+        seed_box = tk.Entry(parent, textvariable=self._add_seed_var, width=28)
+        seed_box.grid(row=0, column=1, sticky=tk.W)
+        system_autocomplete.attach(seed_box, self._add_seed_var)
         add_button_row = tk.Frame(parent)
         add_button_row.grid(row=0, column=2, sticky=tk.W)
         tk.Button(add_button_row, text="Use Current", command=self._on_use_current).pack(side=tk.LEFT)

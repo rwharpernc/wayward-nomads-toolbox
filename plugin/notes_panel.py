@@ -13,7 +13,7 @@ from typing import Any, Dict, Mapping, Optional, Tuple
 
 from config import appname
 
-from . import notes_data, notes_window, panelkit
+from . import notes_data, notes_window, panelkit, system_names
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -28,6 +28,7 @@ _ENTRY_WIDTH = 26      # the quick-add box has a fixed width, whatever is typed 
 _WRAP_PX = 200         # the summary wraps here: what it shows comes from the commander and the game, and must not widen EDMC's window
 
 book = notes_data.NoteBook()
+system_names.add_source(lambda: [note.system for note in book.all()])
 
 
 class NotesController:
