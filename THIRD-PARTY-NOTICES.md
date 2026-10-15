@@ -344,6 +344,17 @@ is used. The changes follow the same ones the author made in ED-DDT. The licence
    limitations under the License.
 ```
 
+## Ship engineering planner: journal blueprint names
+
+`plugin/journal_blueprints.py` links the names the journal uses for engineering blueprints and experimental effects (`FSD_LongRange`,
+`special_fsd_heavy`) to the names in WNTB's blueprint table. The journal names come from [EDCD/coriolis-data](https://github.com/EDCD/coriolis-data)
+(`modifications/blueprints.json` and `specials.json`; the repository declares no licence, so only the names are used, as game facts, with credit) and
+the join uses the Coriolis UUID that each row of [msarilar/EDEngineer](https://github.com/msarilar/EDEngineer)'s `blueprints.json` records (MIT; see the
+engineering blueprints section above). The mapping from ship items to module types is WNTB's own, written from the names in
+[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs) `outfitting.csv` (no licence declared; Frontier's own names). The format a pasted ship loadout is read
+in is the journal's `Loadout` event, which EDSY and Coriolis export as SLEF ([EDCD/slef-specification](https://github.com/jixxed/slef-specification)).
+No code was taken.
+
 ## Commodity names (Trade)
 
 `plugin/trade_commodities_data.py` is generated from the `commodity.csv` published by

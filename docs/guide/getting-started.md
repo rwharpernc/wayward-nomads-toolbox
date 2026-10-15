@@ -241,7 +241,7 @@ Switch to the mode first, then use the button listed here.
 | Watch list | Trade | **WATCH** button in the Watch list section |
 | Inventory | Field Ops | Click one of the **inventory bars** (there is no button) |
 | Materials | Field Ops | **MATERIALS** button in the Materials section |
-| Engineering (blueprints, wishlist, engineers) | Field Ops | **BLUEPRINTS** button in the Materials section |
+| Engineering (blueprints, wishlist, ship planner, engineers) | Field Ops | **BLUEPRINTS** button in the Materials section |
 | Material trader | Field Ops | **Find a trader** button in the Materials window |
 | Ship Builds | Field Ops | **SHIPS** button |
 | Colonization Sites | Colonization | **DASHBOARD** button |
@@ -292,7 +292,7 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **MARKS** | Open the Marks window | Exploration (Compass section) |
 | **BKF** | Backfill from journal history (Codex Completionist) | Exploration |
 | **MATERIALS** | Open the Materials window | Field Ops (Materials section) |
-| **BLUEPRINTS** | Open the Engineering window (blueprints, wishlist, engineers) | Field Ops (Materials section) |
+| **BLUEPRINTS** | Open the Engineering window (blueprints, wishlist, ship planner, engineers) | Field Ops (Materials section) |
 | **H.S.** | Find nearby hotspots | Mining |
 | **+H.S.** | Save hotspot here | Mining |
 | **PRICE** | Find best price | Mining |

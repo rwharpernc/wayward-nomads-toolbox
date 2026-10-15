@@ -324,6 +324,37 @@ eng.apply_event({"event": "EngineerProgress", "Engineer": "Lei Cheung", "Enginee
 pump()
 check(dict(bwin._engineer_rows())["Lei Cheung"][1] == "Unlocked, rank 1", "a change from the journal shows in the open window")
 listeners = len(wish._listeners)
+# --- the Ship planner tab ----------------------------------------------------------------------------------------------------------------
+import json as _json
+planner = bwin._ship_plan
+wish.clear()
+check(bwin._tabs is not None and planner._plan is None, "the planner starts empty")
+check(not planner.load_text("not a loadout") and "not JSON" in bwin._shell._status.cget("text"), f"unreadable text is explained: {bwin._shell._status.cget('text')!r}")
+fsd = {"Slot": "FrameShiftDrive", "Item": "int_hyperdrive_size5_class5",
+       "Engineering": {"EngineerID": 300160, "BlueprintName": "FSD_LongRange", "Level": 5, "Quality": 1.0, "ExperimentalEffect": "special_fsd_heavy"}}
+other = {"Slot": "Cargo", "Item": "int_cargorack_size6_class1", "Engineering": {"EngineerID": 1, "BlueprintName": "CargoRack_IncreasedCapacity", "Level": 1}}
+loadout = {"event": "Loadout", "Ship": "asp", "ShipName": "Test", "Modules": [fsd, other, {"Slot": "Hatch", "Item": "modularcargobaydoor"}]}
+check(planner.load_text(_json.dumps([{"header": {}, "data": loadout}])), "a SLEF list reads")
+pump()
+check(len(planner._table) == 2, f"the engineered modules are listed, the plain one is not: {len(planner._table)}")
+check("1 not counted" in planner._summary.cget("text"), f"the summary counts what was skipped: {planner._summary.cget('text')!r}")
+planner._table.select("0", notify=True)
+check("Increased FSD Range" in planner._note.cget("text") and "Mass Manager" in planner._note.cget("text"), f"a module's detail: {planner._note.cget('text')!r}")
+planner._table.select("1", notify=True)
+check("no module type" in planner._note.cget("text"), f"why a module is not counted: {planner._note.cget('text')!r}")
+planner._rolls.set("2")
+planner._summarize()
+planner.add_to_wishlist()
+check(wish.get("Frame Shift Drive|Increased FSD Range|5") is not None and wish.get("Frame Shift Drive|Increased FSD Range|5").crafts == 2,
+      f"the plan goes on the wishlist at two rolls a grade: {[(i.blueprint_id, i.crafts) for i in wish.items()]}")
+check(wish.get("Frame Shift Drive|Mass Manager|0").crafts == 1, "an experimental effect is one craft")
+check("Put 6 blueprints" in bwin._shell._status.cget("text"), f"the status says what happened: {bwin._shell._status.cget('text')!r}")
+planner.clear()
+check(planner._plan is None and len(planner._table) == 0, "Clear empties the tab")
+planner.add_to_wishlist()
+check("Read a loadout" in bwin._shell._status.cget("text"), "adding with no plan says what to do first")
+wish.clear()
+
 blueprints_window.close()
 pump()
 check(not bwin.alive and len(wish._listeners) == listeners - 1, "closing the Engineering window removes its listener")

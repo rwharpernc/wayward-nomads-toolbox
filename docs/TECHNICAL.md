@@ -71,7 +71,7 @@ plugin/           everything that ships; becomes the WNTB folder
 tests/            unittest suites for the pure-logic modules
 .github/          ISSUE_TEMPLATE/bug_report.yml, the form the Report an issue button opens (not shipped in the zip)
 .githooks/        commit-msg, which rejects AI-credit lines (enable with core.hooksPath)
-scripts/          build.mjs, package.mjs
+scripts/          build.mjs, package.mjs, gen_journal_blueprints.py (dev only: regenerates plugin/journal_blueprints.py)
 docs/             this file, the development guide, the feature specs, the overlay guide, acknowledgements
 ```
 
@@ -1069,6 +1069,31 @@ the newest WNTB log lines on the clipboard (`copy_diagnostics`):
 Nothing is sent by WNTB: the browser and the user do the sending, so the feature is listed in
 [internet-and-privacy.md](guide/internet-and-privacy.md) but opens no connection of its own. The user-facing how-to is
 [reporting-problems.md](guide/reporting-problems.md).
+
+### Ship engineering planner (`ship_plan.py`, `ship_plan_tab.py`, `journal_blueprints.py`)
+
+A ship loadout in the shape of the journal's `Loadout` event (EDSY and Coriolis export the same shape as SLEF, a list of `{header, data}`) becomes a
+list of blueprints and crafts for the wishlist. `ship_plan.parse` accepts a SLEF list, one SLEF object or a bare `Loadout`; `plan_module` takes one
+module's `Engineering` block (`BlueprintName`, `Level` 1 to 5, `ExperimentalEffect`, `EngineerID`).
+
+- **Module type** comes from the item symbol by prefix (`ship_plan.MODULE_TYPES`; armour is `<ship>_armour_*`), because the same journal blueprint is a
+  different table row per module type (`Weapon_LightWeight` is "Lightweight Mount" on a weapon, `Misc_LightWeight` is "Lightweight" on a utility).
+- **Blueprint** comes from `journal_blueprints.BLUEPRINT_NAMES[journal name][module type]`; grades 1 to `Level` are the table's rows of that type and
+  name. **Experimental effect** comes from `SPECIAL_NAMES[journal effect]`, a list of candidate names because the table's spelling differs
+  ("Drag Munition" and "Drag Munition (Seeker only)"), and is the grade 0 row of that module type; one craft.
+- **Generated data.** `scripts/gen_journal_blueprints.py` (run by hand; needs the network) joins EDCD/coriolis-data's `modifications/blueprints.json` and
+  `specials.json` to the table through the Coriolis UUID EDEngineer records per grade. EDEngineer gives every blueprint that shares a name the same
+  UUID whatever the module ("Lightweight", "Reinforced", "Shielded"), so the join is limited to the module types of the journal name's family
+  (`FAMILY_TYPES`/`FDNAME_TYPES` in the script) and a link must also agree on the words. What it cannot link is printed, not guessed. Review the
+  diff before committing; `tests/test_ship_plan.py` checks that every link points at rows the table has.
+- **Not counted, never guessed.** No `Engineering` block: left out. `EngineerID` 399999 (Frontier's pre-engineered marker): listed, takes nothing. An
+  item with no module type, a journal blueprint with no entry for that type, a level outside 1 to 5, or fewer grades in the table than the level:
+  listed as not counted or partly counted with the reason.
+- **Rolls.** `Plan.entries(rolls)`: each grade `rolls` crafts (1 to 10), an effect one, the same blueprint on several modules added together. The
+  `Quality` of the last roll is shown, not planned with.
+- **Wishlist.** `WishBook.add_many` validates every entry first and then applies them with one save and one redraw, or changes nothing and raises
+  `WishError` (no commander, a blueprint not in the table, more than 100 blueprints, more than 99 crafts of one). Input is capped at 2 MB of text and 100
+  modules; nothing is fetched from the network, and every table cell is length-capped.
 
 ### Auto-Honk (`autohonk.py`)
 

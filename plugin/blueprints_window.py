@@ -5,6 +5,8 @@ hold and where each ingredient is found; set a number of crafts and add it to th
 **Wishlist** tab: each entry with its crafts, whether it can be made now (worked out in list order, so an entry only sees what the ones above it
 leave), how many pieces it is short and who can do it (an engineer you have unlocked, or a vendor that needs none), then one shopping list for the
 whole wishlist: need, have, short and where to find each ingredient.
+**Ship planner** tab: paste a ship loadout (SLEF from EDSY or Coriolis, or a journal `Loadout` line) and put what its engineering takes on the wishlist
+(`ship_plan_tab.py`, logic in `ship_plan.py`).
 **Engineers** tab: where you stand with each engineer (from the journal's `EngineerProgress`), what they offer and what unlocking them takes, with
 buttons to list their blueprints or put their unlock on the wishlist.
 
@@ -23,6 +25,7 @@ from config import appname, config
 from . import blueprint_needs as needs_mod
 from . import blueprint_wishlist as wishlist_mod
 from . import blueprints, engineers
+from .ship_plan_tab import ShipPlanTab
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -183,6 +186,7 @@ class BlueprintsWindow:
         self._tabs.pack(fill="both", expand=True)
         self._build_browse(self._tabs.add("Blueprints"))
         self._build_wishlist(self._tabs.add("Wishlist"))
+        self._ship_plan = ShipPlanTab(self._tabs.add("Ship planner"), wishbook, self._shell.set_status)
         self._build_engineers(self._tabs.add("Engineers"))
         self._tabs.select(0)
 

@@ -190,6 +190,11 @@ Linux; 1.10.1 stopped the Expedition and Materials sections from widening the ma
       `BGS: rebuilt the closed period ... from the journals`.
 - [ ] **Finished colonization build name**: a completed site in the Colonization sites window reads `Wayward Station`, not `Orbital Construction Site: Wayward Station`.
 
+- [ ] **Ship planner** (Engineering window, added after 1.10.2, Windows-tested only): export a build from EDSY or Coriolis as SLEF and **Paste from clipboard**
+      (check the clipboard paste works on your desktop, X11 and Wayland). The table lists each engineered module; the summary line shows blueprints and crafts;
+      **Add plan to wishlist** puts them on the Wishlist tab (a pre-engineered module and an unknown item show their reason). Set **Rolls per grade** to 2 and add again:
+      the crafts double. Nothing goes online.
+
 ## 6b. Fixed in the platform audit - please confirm
 
 - [ ] Settings → Exploration → Auto-Honk, Field Ops → Screenshots and Field Ops → Inventory each show a **Works on:** line, green when

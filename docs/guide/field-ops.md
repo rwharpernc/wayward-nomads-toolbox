@@ -132,7 +132,7 @@ it sends Spansh the system name and the type. The same search within two minutes
 
 ## Engineering: blueprints and a wishlist
 
-**BLUEPRINTS** on the Materials row opens the Engineering window. It has three tabs.
+**BLUEPRINTS** on the Materials row opens the Engineering window. It has four tabs: Blueprints, Wishlist, Ship planner and Engineers.
 
 **To use it:**
 1. Press **BLUEPRINTS** on the Materials row. On the **Blueprints** tab, search for a module or an effect and pick a blueprint.
@@ -152,6 +152,25 @@ whether it **can be made now** and how many pieces it is **short**. Below is one
 where each ingredient is found, with what is short at the top. Each entry also says **who can do it**: an engineer you have unlocked,
 or a vendor or the synthesis panel (which need no unlocking), or "No engineer unlocked yet". Select an entry to change its crafts, **Remove** it
 or **Clear list** (each asks twice). The Materials row shows a line such as `Wishlist: 3 blueprints, 2 can be made, 14 pieces short`.
+
+**Ship planner.** Work out what a whole ship's engineering takes, and put it on the wishlist in one step.
+
+1. In **EDSY** or **Coriolis**, design the ship with its engineering and export it as **SLEF** (the Ship Loadout Exchange Format). You can also paste one
+   `Loadout` line from your journal to plan your current ship.
+2. In the Engineering window open the **Ship planner** tab and press **Paste from clipboard**, or paste into the box and press **Read loadout**. If
+   the text holds several ships, pick one in the **Ship** box.
+3. The table lists each engineered module: its slot, the module, the blueprint, the level, the experimental effect and whether it was **counted**.
+   Select a row for the detail. A module with no engineering is left out. A **pre-engineered** module (it comes that way from Frontier) says so and
+   takes nothing, and anything WNTB's table does not cover says **not counted** and why.
+4. Set **Rolls per grade**. To reach level 5 the game applies grades 1 to 5 in order, and how many rolls each grade takes depends on the game's dice,
+   which the journal cannot tell, so you say how many to plan for (1 to 10). An experimental effect is one craft. The summary line shows the totals.
+5. Press **Add plan to wishlist**. The same blueprint on several modules is added together. The wishlist holds 100 blueprints and 99 crafts of each; if the
+   plan would pass either, **nothing is added** and the message says why. Then use the **Wishlist** tab for what you can make now and the shopping list.
+
+Nothing is sent anywhere: the text comes from you and everything is worked out on your computer. What it cannot do: it does not know how many rolls you
+need, it plans the whole build rather than what your current ship already has (remove what you have done from the wishlist, or set the rolls to 1), and it
+only covers module types in the blueprint table. The journal's names for blueprints and effects are matched to the table's from public lists
+(see [Technical](../TECHNICAL.md#ship-engineering-planner-ship_planpy-ship_plan_tabpy-journal_blueprintspy)); a name it does not know is shown as **not counted**.
 
 **Engineers.** All 38 engineers (ship and on-foot, the Colonia ones included). The **Show** box above the table picks **Both**, **Bubble** (the 30 engineers in the human
 bubble) or **Colonia** (the 8 in the Colonia region, about 22,000 ly away: Baltanos, Eleanor Bresa, Etienne Dorn, Marsha Hicks, Mel Brandon, Petra Olmanova, Rosa Dayette and Yi
@@ -219,7 +238,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Your materials to be right as soon as EDMC starts | The game writes the full list only when you **log in**. Between logins WNTB follows each change, and after a restart it shows the counts from your last session until the next login list arrives (the window says so). | Log in to the game, or start EDMC before the game. |
 | Materials you were not able to carry to be counted | When you are at the limit, the game discards what you cannot carry. WNTB never counts above the limit. | Nothing; the login list corrects any difference. |
 | Which engineer or blueprint needs a material | Not shown yet. This page counts what you hold; it does not know what you need it for. | Use a site such as Inara or EDSY for what a blueprint takes. |
-| The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes and, since October 2026, five synthesis recipes corrected and seven synthesis rows and nine Thargoid-war and chip materials added from EDDiscovery's data. Neither source is Frontier's own list. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. Checked against 4,391 real blueprint crafts from the journals of one commander, every one used exactly the materials the table lists for that grade. The table does not list **experimental effects** (the 143 further crafts in those journals, each of which used its own materials), so the wishlist does not count them. | Check the in-game recipe before you spend rare materials, and report a difference. |
+| The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes and, since October 2026, five synthesis recipes corrected and seven synthesis rows and nine Thargoid-war and chip materials added from EDDiscovery's data. Neither source is Frontier's own list. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. Checked against 4,391 real blueprint crafts from the journals of one commander, every one used exactly the materials the table lists for that grade. Experimental effects are in the table as one-craft entries, but they were **not** part of that check (the journals held 143 further crafts that used them), so their recipes are less certain. | Check the in-game recipe before you spend rare materials, and report a difference. |
 | Which upgrades each Colonia engineer offers to be certain | EDEngineer's table (March 2024) lacks the four **Colonia on-foot engineers** (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen). Their places and unlock steps are in EDDiscovery's table, and which suit and weapon upgrades each offers follows EDCoPilot's engineer list as applied in the author's ED-DDT; other sources may differ, and none is Frontier's own list. Yi Shen's unlock is the three sets of items handed to the other three. | Check what an engineer offers in the game's Engineers panel before you spend items on it, and report a difference. |
 | Engineer places and steps to be current | They come from EDDiscovery's table and can drift when the game changes. Yarden Bond's meeting requirement says 5 Smear campaign plans (EDDiscovery has 8; the wiki and Inara say 5), while the blueprint table's "Unlock" row for him, which is EDEngineer's, asks for 8 to be handed over: the sources disagree on that step. | Check the engineer's requirements in the game's Engineers panel. |
 | What unlocking an engineer takes to be complete | The table lists the **materials or goods** an engineer asks for. An invitation can ask for more (a rank, a visit, a referral), which it does not list. | Check the engineer's requirements in the game's Engineers panel. |

@@ -90,6 +90,11 @@ being listed doesn't mean a tool was the first or the only one.
   in the author's ED-DDT), and Yi Shen's three sets of referral items are game facts as stated in the Materials Helper's English text (MIT) and the
   engineering checklist on [edblackbox.com](https://edblackbox.com/guides/engineering/engineering-manuals/checklist.html). The grade thresholds for
   ship engineers are facts from the community wiki. No code was taken, and none of it is from Frontier.
+- **Ship engineering planner** (a ship's engineering as a wishlist): the idea follows
+  [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper)'s ship builder and wishlist import from EDSY and Coriolis,
+  which WNTB's is not a copy of: no code or data was taken, and its design here is the journal's own `Loadout` shape. The journal's blueprint and
+  effect names come from [EDCD/coriolis-data](https://github.com/EDCD/coriolis-data) (names only; notice in `THIRD-PARTY-NOTICES.md`), and
+  [EDSY](https://edsy.org/) and [Coriolis](https://coriolis.io/) are where a build is designed and exported (SLEF).
 - **Material trader finder:** [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s material trader finder shaped the idea. WNTB's is its own,
   and no code was taken. The stations are [Spansh](https://spansh.co.uk/)'s station search, filtered by its material trader field.
 - **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials

@@ -54,6 +54,10 @@ npm run package    # builds, then zips the contents of dist/WNTB into dist/WNTB.
 data and plugin-managed files that aren't part of the build (saved hotspots, sessions, logs, backups,
 downloaded updates). Overwrite the files the build produces and leave everything else alone.
 
+`plugin/journal_blueprints.py` is generated: run `python scripts/gen_journal_blueprints.py` (it needs the network) to rebuild it from the public
+Coriolis, EDEngineer and FDevIDs lists, review the diff, and run the tests (`tests/test_ship_plan.py` checks every link points at a row the blueprint
+table has). It is never run by the build.
+
 Settings and window positions are stored in EDMC's own config, under keys starting `wntb_`.
 
 ## Working on Windows and Linux

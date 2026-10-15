@@ -165,7 +165,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Screenshots**: automatic PNG conversion with an optional crop to the HUD panel ([Screenshots](docs/guide/field-ops.md#screenshots)).
 - **Inventory**: your backpack, ship locker and cargo as bars, and the Carrier Locker, with a pick-up sound ([Inventory](docs/guide/field-ops.md#inventory)).
 - **Materials**: how many Raw, Manufactured and Encoded engineering materials you hold, each one's grade and limit, the last change, and what is at the limit, with a searchable window ([Materials](docs/guide/field-ops.md#materials)).
-- **Engineering**: about 1,180 blueprints with their ingredients against what you hold and where each is found, a wishlist with a combined shopping list, and an Engineers tab with where each engineer is, where you stand and what unlocking each takes ([Engineering](docs/guide/field-ops.md#engineering-blueprints-and-a-wishlist)).
+- **Engineering**: about 1,180 blueprints with their ingredients against what you hold and where each is found, a wishlist with a combined shopping list, a ship planner that turns an EDSY or Coriolis build into wishlist entries, and an Engineers tab with where each engineer is, where you stand and what unlocking each takes ([Engineering](docs/guide/field-ops.md#engineering-blueprints-and-a-wishlist)).
 - **Material trader finder**: the closest Raw, Manufactured or Encoded trader to a system, with distance and pad filters, from Spansh ([Find a trader](docs/guide/field-ops.md#materials)).
 - **Ship Builds**: a list of builds from Coriolis, EDSY or Spansh, kept by link ([Ship Builds](docs/guide/field-ops.md#ship-builds)).
 
