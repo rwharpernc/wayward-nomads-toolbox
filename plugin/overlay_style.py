@@ -49,6 +49,27 @@ DEFAULT_PADDING = 6        # a little roomier than before, so a border has some 
 DEFAULT_SPACING = 3
 
 
+WIDE_CHARS = "MWmw@%&"           # glyphs wider than the average the character estimates are tuned on
+WIDE_FACTOR = 1.3
+CAPITAL_FACTOR = 1.2             # capitals and digits run wider than lower-case letters, so a title in capitals or a body name full of them outgrew its card
+
+
+def _em(text: str) -> float:
+    """`text` as a count of average-width characters: a capital, digit or wide glyph counts for more than one, a space or narrow mark for less,
+    so a card sized from it holds capitals ("NEW SYSTEM DISCOVERY"), catalog names ("HIP 12345 AB 1 a") and the like without clipping."""
+    total = 0.0
+    for ch in text:
+        if ch in WIDE_CHARS:
+            total += WIDE_FACTOR
+        elif ch.isupper() or ch.isdigit():
+            total += CAPITAL_FACTOR
+        elif ch in " .,'|:;!ilIjt-":
+            total += 0.6
+        else:
+            total += 1.0
+    return total
+
+
 @dataclass(frozen=True)
 class Palette:
     """The colors of one scheme, by role. Colors are '#rrggbb', or '#aarrggbb' where the overlay takes an alpha."""
@@ -159,6 +180,11 @@ class Look:
     def text_width(self, text: str, base: str = "normal") -> int:
         """Estimated width in pixels of `text` at that size, padded by WIDTH_PAD so a box sized from it holds the text."""
         return int(round(len(text) * self.char_px(base) * WIDTH_PAD))
+
+    def measured_width(self, text: str, base: str = "normal") -> int:
+        """Like `text_width` but counting capitals, digits and wide glyphs as wider and spaces and narrow marks as narrower, for a card that must
+        hold text of any mix (a title in capitals, a body name such as "HIP 12345 AB 1 a") without clipping. Never less than `text_width`."""
+        return max(self.text_width(text, base), int(round(_em(text) * self.char_px(base) * WIDTH_PAD)))
 
     def pad_x(self, base_pad: int) -> int:
         """A card's side padding: its own base padding plus the chosen extra."""

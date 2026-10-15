@@ -124,7 +124,7 @@ def describe(look):
 check(S.LEGACY.size("large") == "large" and S.LEGACY.char_px("normal") == 8 and S.LEGACY.line_px("normal") == 20, "LEGACY basics")
 geometry = D.card_geometry(S.LEGACY, [("NEW SYSTEM DISCOVERY", "Some system")])
 check((geometry.width, geometry.height, geometry.name_offset, geometry.body_offset, geometry.pad_x, geometry.pad_top) ==
-      (460, 84, 38, 150, 22, 16), f"discovery legacy geometry: {geometry}")
+      (461, 84, 38, 150, 22, 16), f"discovery legacy geometry: {geometry}")
 interdiction = I._geometry(S.LEGACY, I._SAMPLE_WHO)
 check((interdiction.width, interdiction.height, interdiction.y_who, interdiction.y_resolution) == (600, 116, 130, 160),
       f"interdiction legacy geometry: {interdiction}")

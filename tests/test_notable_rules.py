@@ -302,6 +302,12 @@ class TrackerTests(unittest.TestCase):
         self.assertLessEqual(len(self.snapshot().name), self.notable.NAME_MAX_CHARS)
         self.assertLessEqual(len(self.snapshot().title), self.notable.TITLE_MAX_CHARS)
 
+    def test_a_long_real_body_name_is_shown_in_full(self) -> None:
+        name = "Pegasi Sector XX-X b1-2 AB 3 a"      # 30 characters: over the old 24-character cap that cut names short
+        self.tracker.handle_event(planet(5, BodyName=name, Landable=True, SurfaceGravity=35.0))
+        self.assertEqual(self.snapshot().name, name)
+        self.assertEqual(self.notable._texts(self.snapshot())[1], name)
+
 
 class ConfigTests(unittest.TestCase):
     def setUp(self) -> None:

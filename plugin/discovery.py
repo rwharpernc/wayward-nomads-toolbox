@@ -298,7 +298,7 @@ class CardGeometry:
 def card_geometry(look: Look, texts: Sequence[Tuple[str, str]] = ()) -> CardGeometry:
     """The card measures for the given (title, name) pairs: wide enough for the widest of them at the look's sizes, never narrower
     than the standard card. Shared by the Notable Bodies card, which is drawn the same way."""
-    widest = max((max(look.text_width(title, _TITLE_BASE), look.text_width(name, _NAME_BASE)) for title, name in texts), default=0)
+    widest = max((max(look.measured_width(title, _TITLE_BASE), look.measured_width(name, _NAME_BASE)) for title, name in texts), default=0)
     pad_x = look.pad_x(_CARD_BASE_PAD_X)
     pad_top = look.pad_y(_CARD_BASE_PAD_TOP)
     name_offset = look.line_px(_TITLE_BASE) + _NAME_GAP
@@ -308,7 +308,7 @@ def card_geometry(look: Look, texts: Sequence[Tuple[str, str]] = ()) -> CardGeom
 
 def centered_x(text: str, base: str, center_x: int, look: Look = LEGACY) -> int:
     """Left-edge draw position that centers `text`, drawn where a display would normally use size `base`, on `center_x`."""
-    return center_x - look.text_width(text, base) // 2
+    return center_x - look.measured_width(text, base) // 2
 
 
 def _alerts(snapshot: Optional[DiscoverySnapshot]) -> List[Tuple[str, str]]:
