@@ -200,6 +200,13 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
       **Add plan to wishlist** puts them on the Wishlist tab (a pre-engineered module and an unknown item show their reason). Set **Rolls per grade** to 2 and add again:
       the crafts double. Tick **Subtract what my current ship already has** with a build for the ship you fly: what the ship holds is left out. Nothing goes online.
 
+- [ ] **Megaship scans** (Powerplay, added after 1.11.0, Windows-tested only): in a Powerplay system, drop out of supercruise at a megaship and scan its datalink. The
+      Powerplay panel gains `Cycle N megaships: 1 (N merits)` and **SES → Megaships** lists it with its name and system. Scanning it again changes nothing. A scan at a
+      station or a settlement adds nothing. After restarting EDMC the list is still there. Needs the Journal directory set on Linux.
+
+- [ ] **Upgrade planner** (Engineering window, added after 1.11.0, Windows-tested only): pick the Karma AR-50 from class 1 to 5: four steps, 12,500,000 credits, and **Add to wishlist**
+      puts four entries on the Wishlist tab. Pick the TK Zenith: the credits read "not recorded". Pick a modification not offered for the item (they are filtered), and four at most.
+
 ## 6b. Fixed in the platform audit - please confirm
 
 - [ ] Settings → Exploration → Auto-Honk, Field Ops → Screenshots and Field Ops → Inventory each show a **Works on:** line, green when

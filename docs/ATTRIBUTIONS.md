@@ -54,6 +54,10 @@ being listed doesn't mean a tool was the first or the only one.
 - **Surface compass and marks** (an arrow and distance to a chosen latitude and longitude, with saved spots):
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s target tracking and [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s
   compass and bookmarks. WNTB's is its own: it grew out of Mining's own hotspot arrow, and no code was taken from either.
+- **Megaship scans** (a count of the megaships scanned each Powerplay cycle, with name and system):
+  [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s BGS data store keeps the same list. Its source (no licence is declared, so none of it is
+  copied) was read for how it names the ship: the megaship you dropped to just before the uplink scan. WNTB's is its own code, checked against real
+  journals, with the merits each scan earned, a check that the destination really is a megaship, and a journal back-fill.
 - **Colonisation tracking:** Architect Tracker, [Raven Colonial](https://ravencolonial.com/),
   ED Colonization Helper, EDColony and BGS-Tally. The shopping-list overlay card follows
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s layout. Raven Colonial publishes its API as OpenAPI, which SrvSurvey and
@@ -90,6 +94,9 @@ being listed doesn't mean a tool was the first or the only one.
   in the author's ED-DDT), and Yi Shen's three sets of referral items are game facts as stated in the Materials Helper's English text (MIT) and the
   engineering checklist on [edblackbox.com](https://edblackbox.com/guides/engineering/engineering-manuals/checklist.html). The grade thresholds for
   ship engineers are facts from the community wiki. No code was taken, and none of it is from Frontier.
+- **Odyssey upgrade planner** (a suit's or weapon's upgrade and modifications as a wishlist): the idea follows [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper)'s
+  loadout editor, which WNTB's is not a copy of: its stat tables are not public and none of its data or code was taken. The upgrade costs are read from the game's own `UpgradeSuit` and
+  `UpgradeWeapon` journal events (game facts), and the modification recipes are the blueprint table's (EDEngineer, MIT).
 - **Ship engineering planner** (a ship's engineering as a wishlist): the idea follows
   [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper)'s ship builder and wishlist import from EDSY and Coriolis,
   which WNTB's is not a copy of: no code or data was taken, and its design here is the journal's own `Loadout` shape. The journal's blueprint and

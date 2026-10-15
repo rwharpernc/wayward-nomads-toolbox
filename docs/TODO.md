@@ -47,6 +47,12 @@ These are built and covered by unit tests, but have not all been seen working in
   (EDSM)** against real EDSM; and that the row does not widen the EDMC window. Then Linux.
 - [ ] **Notes.** Quick add, the window, **Here**, Delete twice, the count when jumping into a system with notes, and that the EDMC window does not get
   wider. Then Linux.
+- [ ] **Upgrade planner.** Pick an item, a class range and modifications and add them to the wishlist; compare the materials with the in-game upgrade screen for an item
+  other than the eight confirmed ones (Karma P-15, Manticore Intimidator and Oppressor, TK Aphelion, Eclipse and Zenith), and note the credits shown at the upgrade screen:
+  each one confirmed is a line in `odyssey_upgrade_plan.CREDIT_UNIT` (or send the `UpgradeWeapon` journal line). Then Linux.
+- [ ] **Megaship scans.** In a Powerplay system drop out of supercruise at a megaship and scan its datalink: the panel line and **SES → Megaships** row appear with
+  the right name and system, the merits fill in a moment later, a second scan of the same megaship changes nothing, and a scan at a station adds nothing. Restart EDMC and
+  check the list is kept. Then Linux.
 - [ ] **Help tab** (Settings → General → Help). **Report an issue** opens the prefilled form (it needs the issue template on GitHub), and **Copy
   diagnostics** puts the versions and recent WNTB log lines on the clipboard with the commander name redacted. Then Linux, native and Flatpak.
 - [ ] **BGS** after a tick passes with EDMC closed: the period that closed holds the play made meanwhile. And a finished Colonization build showing
@@ -81,13 +87,12 @@ or build type Raven needs), ready flags, and Raven's `supply` call, which Raven 
 ## Ideas from other tools
 
 Surveyed: SrvSurvey (GPL-3.0), EDDiscovery (Apache-2.0), Elite Dangerous Odyssey Materials Helper (MIT), EDEngineer (MIT), ODEliteTracker and OD-Explorer
-(no licence given: ideas only, no code read or copied). Built so far: the fleet carrier jump countdown, low-fuel and next-star warnings, system and body
+(no licence given: its source is read for how things work and none is copied). Built so far: the fleet carrier jump countdown, low-fuel and next-star warnings, system and body
 notes, the Surface Compass with marks, the Trade watch list, materials and engineering (including the blueprint wishlist, the engineers and the ship
 planner), the material trader finder, and expedition planning. Later, in rough order:
 
-- [ ] **MegaShip scans** (from ODEliteTracker).
-- [ ] **Materials and engineering, not done:** synthesis and engineer-craft prompts, a data-terminal overlay, and an Odyssey (suit and weapon)
-  loadout planner. The data for that one is not open: the suit and weapon stat tables and upgrade costs would need a source of their own.
+- [ ] **Odyssey upgrade planner, next steps:** a stat preview (needs each item's base stats and the effect of each level and modification, which are not open data), and
+  reading what the commander already owns from the journal's `SuitLoadout` so the starting class is filled in.
 - [ ] **Expedition planning, not done:** an overlay card and per-stop scan or discovery tracking.
 
 ## Very low priority

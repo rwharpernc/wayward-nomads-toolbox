@@ -1100,6 +1100,25 @@ module's `Engineering` block (`BlueprintName`, `Level` 1 to 5, `ExperimentalEffe
   `WishError` (no commander, a blueprint not in the table, more than 100 blueprints, more than 99 crafts of one). Input is capped at 2 MB of text and 100
   modules; nothing is fetched from the network, and every table cell is length-capped.
 
+### Odyssey upgrade planner (`odyssey_upgrade_plan.py`, `odyssey_plan_tab.py`)
+
+The suit and weapon upgrade rows of the blueprint table (type Suit or Weapon, named for the item, engineer Merchant, grades 2 to 5) were EDEngineer's old costs (1,
+5, 10 and 15 of each material). They were rewritten on 2026-10-15 from 17 `UpgradeSuit` / `UpgradeWeapon` journal events, which record the `Class` reached, the
+`Cost` and the `Resources` spent: 1, 2, 4 and 5 for the schematic, the family item and Manufacturing Instructions (or Health Monitor), and 2, 5, 9 and 12 for the item's
+other two materials, for every item and kind seen; `tests/test_odyssey_upgrade_plan.py` holds the transcribed events and checks the table and the credit formula against
+them. The credits are not in the table: `CREDIT_UNIT` holds the cost of class 2 for the eight items seen, and class n costs `CLASS_FACTOR[n]` times that (1, 3, 6, 10,
+confirmed across several items and classes), so an unseen item has unknown credits (`None`) and the plan says so. `modifications_for` lists a suit's or weapon's
+grade 0 rows, leaving out the upgrade rows and, for a weapon, the modifications marked for another family. `Plan.entries()` is each class step and each modification
+once, for `WishBook.add_many`. To add an item's credits, add its `UpgradeSuit` / `UpgradeWeapon` journal line to `CREDIT_UNIT` (cost divided by the class factor) and to the test.
+
+### Megaship scans (`megaship_scans.py`, `powerplay_megaships_tab.py`)
+
+The Powerplay activity *Scan datalinks at Megaships* is recorded per cycle in the Powerplay ledger (section 11.2f of the
+[Powerplay specification](POWERPLAY_TECH_SPEC.md)). `MegaShipTracker` follows the journal (jumps, the FSS megaship list, `SupercruiseDestinationDrop`,
+the `$Datascan_ShipUplink;` scan, the `PowerplayMerits` that follows) and is fed by both the live controller (`PowerplayController.handle_event`) and the
+back-fill (`powerplay_backfill.replay_entries`), so the two agree; the ledger de-duplicates by megaship and system, and a merit event is counted once
+(`MegaShipScan.merit_at`). Held back during a journal scan like any other live op. Tests: `tests/test_megaship_scans.py`.
+
 ### Auto-Honk (`autohonk.py`)
 
 Reads the commander's active Elite binds file to find which physical key the chosen fire button is

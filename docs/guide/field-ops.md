@@ -132,7 +132,7 @@ it sends Spansh the system name and the type. The same search within two minutes
 
 ## Engineering: blueprints and a wishlist
 
-**BLUEPRINTS** on the Materials row opens the Engineering window. It has four tabs: Blueprints, Wishlist, Ship planner and Engineers.
+**BLUEPRINTS** on the Materials row opens the Engineering window. It has five tabs: Blueprints, Wishlist, Ship planner, Upgrade planner and Engineers.
 
 **To use it:**
 1. Press **BLUEPRINTS** on the Materials row. On the **Blueprints** tab, search for a module or an effect and pick a blueprint.
@@ -176,6 +176,27 @@ Nothing is sent anywhere: the text comes from you and everything is worked out o
 need, it cannot tell which of two ships of one kind a build is meant for, and it
 only covers module types in the blueprint table. The journal's names for blueprints and effects are matched to the table's from public lists
 (see [Technical](../TECHNICAL.md#ship-engineering-planner-ship_planpy-ship_plan_tabpy-journal_blueprintspy)); a name it does not know is shown as **not counted**.
+
+**Upgrade planner.** What it takes to upgrade an Odyssey suit or weapon, and to fit its modifications, onto the wishlist.
+
+1. Open the **Upgrade planner** tab and pick the **Item**: the Artemis, Dominator or Maverick suit, or one of the Karma, Manticore and TK weapons.
+2. Set the **Class now** and the class you **Wanted** (1 to 5). The table lists each step, from the class you have to the class you want, with the materials it takes
+   and the credits. A line under the table gives the total.
+3. Optionally pick up to four **Modifications**. The boxes offer those the table has for the item: a weapon modification marked with a family in brackets,
+   such as "(Kinematic kinetic)", is only offered for that family (Karma is kinetic, Manticore is plasma, TK is laser). The table does not say whether the game
+   offers every unmarked modification for every weapon.
+4. Press **Add to wishlist**. Each class step and each modification goes on the list once, all or nothing (the limits are the wishlist's: 100 blueprints, 99
+   crafts). The Wishlist tab then shows the shopping list: what you hold in your ship locker and what you are short of.
+
+What the costs are, and are not:
+- **The materials** are the game's current ones: the schematic, the item's family item and Manufacturing Instructions (a Health Monitor for a suit) take 1, 2, 4
+  and 5 for classes 2 to 5, and the item's other two materials take 2, 5, 9 and 12. They were read from real upgrade events in the journals of play, for the Karma
+  AR-50, C-44 and L-6, the Manticore Tormentor and Executioner, and the Maverick, Artemis and Dominator suits. The counts were the same for every item, so they are
+  used for the rest (the Karma P-15, Manticore Intimidator and Oppressor, and the three TK lasers), but those have not been confirmed by an upgrade of their own.
+- **The credits** are a unit for the item times 1, 3, 6 and 10 for classes 2 to 5 (the Karma AR-50 costs 625,000 for class 2, so 12,500,000 for classes 2 to 5 together).
+  They are shown only for the eight items listed above. For the others the tab says the credits are **not recorded**, and still plans the materials.
+- **A modification's engineer fee** is not in the table, so it is not counted.
+- The planner does not preview an item's stats, and does not read what you already own.
 
 **Engineers.** All 38 engineers (ship and on-foot, the Colonia ones included). The **Show** box above the table picks **Both**, **Bubble** (the 30 engineers in the human
 bubble) or **Colonia** (the 8 in the Colonia region, about 22,000 ly away: Baltanos, Eleanor Bresa, Etienne Dorn, Marsha Hicks, Mel Brandon, Petra Olmanova, Rosa Dayette and Yi
@@ -243,7 +264,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Your materials to be right as soon as EDMC starts | The game writes the full list only when you **log in**. Between logins WNTB follows each change, and after a restart it shows the counts from your last session until the next login list arrives (the window says so). | Log in to the game, or start EDMC before the game. |
 | Materials you were not able to carry to be counted | When you are at the limit, the game discards what you cannot carry. WNTB never counts above the limit. | Nothing; the login list corrects any difference. |
 | Which engineer or blueprint needs a material | Not shown yet. This page counts what you hold; it does not know what you need it for. | Use a site such as Inara or EDSY for what a blueprint takes. |
-| The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes and, since October 2026, five synthesis recipes corrected and seven synthesis rows and nine Thargoid-war and chip materials added from EDDiscovery's data. Neither source is Frontier's own list. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. Checked against 4,391 real blueprint crafts from the journals of one commander, every one used exactly the materials the table lists for that grade. Experimental effects are in the table as one-craft entries, but they were **not** part of that check (the journals held 143 further crafts that used them), so their recipes are less certain. | Check the in-game recipe before you spend rare materials, and report a difference. |
+| The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes and, since October 2026, the suit and weapon upgrade costs brought to the game's current ones (from real upgrade events), five synthesis recipes corrected and seven synthesis rows and nine Thargoid-war and chip materials added from EDDiscovery's data. Neither source is Frontier's own list. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. Checked against 4,391 real blueprint crafts from the journals of one commander, every one used exactly the materials the table lists for that grade. Experimental effects are in the table as one-craft entries, but they were **not** part of that check (the journals held 143 further crafts that used them), so their recipes are less certain. | Check the in-game recipe before you spend rare materials, and report a difference. |
 | Which upgrades each Colonia engineer offers to be certain | EDEngineer's table (March 2024) lacks the four **Colonia on-foot engineers** (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen). Their places and unlock steps are in EDDiscovery's table, and which suit and weapon upgrades each offers follows EDCoPilot's engineer list as applied in the author's ED-DDT; other sources may differ, and none is Frontier's own list. Yi Shen's unlock is the three sets of items handed to the other three. | Check what an engineer offers in the game's Engineers panel before you spend items on it, and report a difference. |
 | Engineer places and steps to be current | They come from EDDiscovery's table and can drift when the game changes. Yarden Bond's meeting requirement says 5 Smear campaign plans (EDDiscovery has 8; the wiki and Inara say 5), while the blueprint table's "Unlock" row for him, which is EDEngineer's, asks for 8 to be handed over: the sources disagree on that step. | Check the engineer's requirements in the game's Engineers panel. |
 | What unlocking an engineer takes to be complete | The table lists the **materials or goods** an engineer asks for. An invitation can ask for more (a rank, a visit, a referral), which it does not list. | Check the engineer's requirements in the game's Engineers panel. |

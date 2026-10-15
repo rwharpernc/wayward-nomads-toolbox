@@ -370,6 +370,13 @@ check("No current ship found" in bwin._shell._status.cget("text"), f"no journal 
 planner._subtract.set(False)
 planner._choose()
 planner.clear()
+upgrades = bwin._upgrade_plan
+upgrades._gear.set("Maverick suit")
+upgrades._gear_changed()
+check(len(upgrades._table) == 4, f"the upgrade planner starts at class 1 to 5: {len(upgrades._table)} steps")
+upgrades.add_to_wishlist()
+check(wish.get("Suit|Maverick|5") is not None and wish.get("Suit|Maverick|2") is not None, f"an upgrade goes on the wishlist: {[i.blueprint_id for i in wish.items()]}")
+wish.clear()
 check(planner._plan is None and len(planner._table) == 0, "Clear empties the tab")
 planner.add_to_wishlist()
 check("Read a loadout" in bwin._shell._status.cget("text"), "adding with no plan says what to do first")

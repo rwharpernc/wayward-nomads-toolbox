@@ -7,6 +7,8 @@ leave), how many pieces it is short and who can do it (an engineer you have unlo
 whole wishlist: need, have, short and where to find each ingredient.
 **Ship planner** tab: paste a ship loadout (SLEF from EDSY or Coriolis, or a journal `Loadout` line) and put what its engineering takes on the wishlist
 (`ship_plan_tab.py`, logic in `ship_plan.py`).
+**Upgrade planner** tab: take an Odyssey suit or weapon from one class to another and fit up to four modifications, see the materials and credits, and put
+them on the wishlist (`odyssey_plan_tab.py`, logic in `odyssey_upgrade_plan.py`).
 **Engineers** tab: where you stand with each engineer (from the journal's `EngineerProgress`), what they offer and what unlocking them takes, with
 buttons to list their blueprints or put their unlock on the wishlist.
 
@@ -25,6 +27,7 @@ from config import appname, config
 from . import blueprint_needs as needs_mod
 from . import blueprint_wishlist as wishlist_mod
 from . import blueprints, engineers
+from .odyssey_plan_tab import UpgradePlanTab
 from .ship_plan_tab import ShipPlanTab
 from .uikit import palette as P
 from .uikit import style
@@ -187,6 +190,7 @@ class BlueprintsWindow:
         self._build_browse(self._tabs.add("Blueprints"))
         self._build_wishlist(self._tabs.add("Wishlist"))
         self._ship_plan = ShipPlanTab(self._tabs.add("Ship planner"), wishbook, self._shell.set_status)
+        self._upgrade_plan = UpgradePlanTab(self._tabs.add("Upgrade planner"), wishbook, self._shell.set_status)
         self._build_engineers(self._tabs.add("Engineers"))
         self._tabs.select(0)
 
