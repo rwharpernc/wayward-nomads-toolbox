@@ -42,7 +42,12 @@ all_missions.py        A generic summary of every active mission (the "All Missi
 mission_cargo.py       Collect / delivery progress of cargo missions (CargoDepot events).
 community_goal_state.py Community Goal snapshots and the commander's contribution.
 mission_types.py       The rules that decide a mission's category. Pure, no dependencies.
-missions_ui.py         The panel (category pages) and the "All Missions" and detail pop-ups.
+missions_ui.py         The panel (category pages); opens the Missions window.
+missions_board.py      The Missions window's data: a Row per active mission, totals, grouping by place, detail lines. Pure.
+missions_window.py     The Missions window (Active and By place tabs, detail strip, pinning).
+mission_pins.py        The commander's pinned mission ids (per commander, mission_pins.json).
+mission_sources.py     The commodities the missions still need, and the source lookups (section 10c).
+mission_sources_window.py  The Source commodities window.
 notifier.py            A small subscribe/notify helper the views use to tell the UI something changed.
 ```
 
@@ -190,6 +195,19 @@ hidden. Each line is `title > place  time left` clipped to `LINE_CHARS` (46) wit
 limit (60 minutes by default), amber under six hours, green when ready. The card has one fixed width and is drawn at its placement slot. The overlay is redrawn when the
 lines change, now and then (every 45 s) so it does not expire, and a 30 s tick keeps the times left current. Tests: `tests/test_missions_overlay.py`; the look smoke test draws
 the widest card at every text size.
+
+## 10b-2. The Missions window and pinning
+
+`missions_board.rows_from` turns the active missions (`all_missions.MissionSummary`) into `Row`s: ready if the mission is in `kill_tracker.get_redirected` (its place is
+then the redirect's `get_redirect_destination`), cargo progress from `MissionSummary.cargo`, kill progress from `kill_missions.estimate_progress` (an estimate for wing and
+on-foot missions, shown with `~`), sorted ready first then soonest to expire. `totals` is the summary line, `by_place` groups by system (here, next jump, then urgency) and
+`detail` is the selected mission's lines. `missions_window.MissionsWindow` shows them in two `DataTable`s, rebuilding a table only when its rows changed (so selection and scroll
+stay put), refreshes from `MissionsUI.redraw` and every 30 s. It replaced the old "All" popup and the per-mission detail popup. `MissionsUI.__live_rows` supplies the live data.
+
+Pins: `mission_pins.PinBook` keeps a set of mission ids per commander in `mission_pins.json` (`commander_data`), written at every change. `missions_overlay._live_entries` prunes
+pins whose mission is gone, but only once the roster is known (`all_missions.view.missions` is not None). `Entry.pinned` makes `stack` keep the mission as its own `Item`, and
+`build_lines` puts pinned items first under PINNED (taking rows before HERE, NEXT and the rest; overflow counts in the `+N more` line). Tests: `tests/test_missions_board.py`,
+`tests/test_missions_overlay.py` (`PinnedTests`).
 
 ## 10c. Source commodities
 

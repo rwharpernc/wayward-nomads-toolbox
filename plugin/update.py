@@ -71,6 +71,7 @@ _OWN_DATA_FILES: set = {
     "notes.json",  # the commander's notes on systems and bodies (notes_data.py)
     "materials.json",  # the commander's engineering materials (materials.py)
     "blueprint_wishlist.json",  # the commander's blueprint wishlist (blueprint_wishlist.py)
+    "mission_pins.json",  # the missions the commander pinned to the overlay (mission_pins.py)
     "engineers.json",  # the commander's standing with each engineer (engineers.py)
     "expeditions.json",  # the commander's expeditions and their progress (expedition.py)
     "trade_watch.json",  # the commander's market watch list and the prices seen (trade_watch_data.py)

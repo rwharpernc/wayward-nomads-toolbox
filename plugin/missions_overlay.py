@@ -21,7 +21,7 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tuple
 
 import tkinter as tk
 
@@ -29,7 +29,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import active_missions, all_missions, kill_tracker, mission_types, overlay, overlay_appearance, overlay_placement
+from . import active_missions, all_missions, kill_tracker, mission_pins, mission_types, overlay, overlay_appearance, overlay_placement
 from .overlay import OverlayClient
 from .overlay_style import LEGACY, Look
 
@@ -118,6 +118,7 @@ class Entry:
     expiry: Optional[datetime]
     ready: bool                  # the objective is done: hand it in
     progress: str = ""           # "12/40" for cargo
+    pinned: bool = False         # the commander pinned it: it is listed first, under PINNED
 
 
 @dataclass(frozen=True)
@@ -129,6 +130,7 @@ class Item:
     expiry: Optional[datetime]
     ready: bool
     count: int = 1
+    pinned: bool = False
 
 
 def parse_expiry(text: Any) -> Optional[datetime]:
@@ -154,8 +156,9 @@ def _short_label(summary: all_missions.MissionSummary) -> str:
     return summary.name
 
 
-def entries_from(missions: Dict[int, all_missions.MissionSummary], cmdr: Optional[str]) -> List[Entry]:
-    """The card's entries from the Missions mode's active missions. A redirected mission is ready, and goes to its new hand-in place if the game gave one."""
+def entries_from(missions: Dict[int, all_missions.MissionSummary], cmdr: Optional[str], pinned: Collection[int] = ()) -> List[Entry]:
+    """The card's entries from the Missions mode's active missions. A redirected mission is ready, and goes to its new hand-in place if the game gave one.
+    The ids in `pinned` are marked so the card lists them first."""
     done = kill_tracker.get_redirected(cmdr)
     entries = []
     for summary in missions.values():
@@ -169,7 +172,7 @@ def entries_from(missions: Dict[int, all_missions.MissionSummary], cmdr: Optiona
         if summary.cargo is not None and summary.cargo.total:
             progress = f"{summary.cargo.delivered}/{summary.cargo.total}"
         entries.append(Entry(summary.id, summary.category, _short_label(summary), summary.source_faction, system, station, summary.reward,
-                             parse_expiry(summary.expiry), ready, progress))
+                             parse_expiry(summary.expiry), ready, progress, summary.id in pinned))
     return entries
 
 
@@ -205,6 +208,12 @@ def stack(entries: Sequence[Entry]) -> List[Item]:
     items: List[Item] = []
     stacked: Dict[Tuple[Any, ...], List[Entry]] = {}
     for entry in entries:
+        if entry.pinned:                      # a pinned mission is always its own line, with its faction when it is a massacre
+            text = f"{entry.label} {entry.progress}".strip()
+            if entry.category in MASSACRES and entry.faction:
+                text += f" {entry.faction}"
+            items.append(Item(text, entry.system, entry.station, entry.expiry, entry.ready, pinned=True))
+            continue
         if entry.progress:
             items.append(Item(f"{entry.label} {entry.progress}".strip(), entry.system, entry.station, entry.expiry, entry.ready))
             continue
@@ -267,33 +276,41 @@ def build_lines(entries: Sequence[Entry], here: str, next_system: str, rows: int
     rows = max(MIN_ROWS, min(MAX_ROWS, rows))
     urgent = urgent_minutes * 60
     items = stack(entries)
+    pinned_items = sorted((i for i in items if i.pinned), key=_order)
+    items = [i for i in items if not i.pinned]
     here_items = sorted((i for i in items if _same(i.system, here)), key=_order)
     next_items = sorted((i for i in items if show_next and _same(i.system, next_system) and not _same(next_system, here)), key=_order)
     placed = {id(i) for i in (*here_items, *next_items)}
     other_items = sorted((i for i in items if id(i) not in placed), key=_order)
 
-    here_shown = here_items[:rows]
-    next_shown = next_items[:max(0, rows - len(here_shown))]
-    other_shown = other_items[:max(0, rows - len(here_shown) - len(next_shown))]
-    hidden = [*here_items[len(here_shown):], *next_items[len(next_shown):], *other_items[len(other_shown):]]
+    pinned_shown = pinned_items[:rows]
+    here_shown = here_items[:max(0, rows - len(pinned_shown))]
+    next_shown = next_items[:max(0, rows - len(pinned_shown) - len(here_shown))]
+    other_shown = other_items[:max(0, rows - len(pinned_shown) - len(here_shown) - len(next_shown))]
+    hidden = [*pinned_items[len(pinned_shown):], *here_items[len(here_shown):], *next_items[len(next_shown):], *other_items[len(other_shown):]]
 
-    expiring = sum(i.count for i in items if not i.ready and i.expiry is not None and (i.expiry - now).total_seconds() < urgent)
-    ready = sum(i.count for i in items if i.ready)
-    total = sum(i.count for i in items)
+    everything = [*pinned_items, *items]
+    expiring = sum(i.count for i in everything if not i.ready and i.expiry is not None and (i.expiry - now).total_seconds() < urgent)
+    ready = sum(i.count for i in everything if i.ready)
+    total = sum(i.count for i in everything)
     lines: List[Line] = [(_fit(f"MISSIONS {total}" + (f" · {ready} ready" if ready else "") + (f" · {expiring} soon" if expiring else ""), ""), "title")]
 
-    def section(title: str, group: List[Item], use_station: bool) -> None:
+    def section(title: str, group: List[Item], use_station: bool, either: bool = False) -> None:
         if not group:
             return
         if title:
             lines.append((_fit(title, ""), "header"))
         for item in group:
-            where = item.station if use_station else (item.system or item.station)
+            if either:                       # pinned: the station when it is in this system, else the system to go to
+                where = item.station if _same(item.system, here) and item.station else (item.system or item.station)
+            else:
+                where = item.station if use_station else (item.system or item.station)
             lines.append((_item_line(item, where, now), _role(item, now, urgent)))
 
+    section("PINNED", pinned_shown, False, True)
     section(f"HERE {here}".strip(), here_shown, True)
     section(f"NEXT {next_system}".strip(), next_shown, True)
-    section("ELSEWHERE" if (here_shown or next_shown) else "", other_shown, False)
+    section("ELSEWHERE" if (pinned_shown or here_shown or next_shown) else "", other_shown, False)
     if hidden:
         systems = {(i.system or "?").casefold() for i in hidden}
         count = sum(i.count for i in hidden)
@@ -436,7 +453,10 @@ def _draw_live(lines: List[Line]) -> None:
 
 
 def _live_entries() -> List[Entry]:
-    return entries_from(all_missions.view.missions or {}, active_missions.tracker.commander)
+    missions, cmdr = all_missions.view.missions, active_missions.tracker.commander
+    if missions is not None:
+        mission_pins.book.prune(cmdr, missions.keys())       # a pin goes with its mission (only once the roster is known)
+    return entries_from(missions or {}, cmdr, mission_pins.book.pinned(cmdr))
 
 
 _state: Optional[MissionsOverlay] = None
@@ -462,6 +482,7 @@ def _tick_loop() -> None:
 def start(plugin_dir: str) -> None:
     global _ticker
     _stop.clear()
+    mission_pins.book.load(plugin_dir)
     all_missions.view.changed.connect(lambda _missions: get_state().refresh())     # the roster changed: a mission came, went or was handed in
     if _ticker is None or not _ticker.is_alive():
         _ticker = threading.Thread(target=_tick_loop, name="WNTB-missions-tick", daemon=True)

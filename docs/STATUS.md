@@ -20,6 +20,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Unreleased on `master`
 
+- Missions window (Active and By place tabs, detail strip) replacing the All popup, pinned missions on the overlay (PINNED section), larger text beside the panel arrows. Unit-tested and run under real Tk; the in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
 - Source picks: Trade → Market **Best picks** and the Missions **Source commodities** window (closest, best local, cheapest anywhere, recommended within 10%). Unit-tested against a fake Spansh and checked against live Spansh for the price band; Windows in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
 - Missions overlay card (HERE / NEXT / the rest, capped, in a corner). Unit-tested and drawn from a real mission history; Windows in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
 - Engineering window: **Upgrade planner** tab (Odyssey suit and weapon upgrades and modifications onto the wishlist), and corrected upgrade costs in the blueprint table.

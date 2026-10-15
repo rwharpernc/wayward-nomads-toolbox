@@ -6,17 +6,36 @@ One view of every mission on your board, sorted by type, plus Community Goals an
 
 ## Using it
 
-The panel shows one category at a time, with a line like `◀  Combat (3)  ▶  All`. Click the **◀** or **▶** arrow to
+The panel shows one category at a time, with a line like `◀  Combat (3)  ▶  Window`. Click the **◀** or **▶** arrow to
 page between categories; the number is how many missions are in that category. The pages, in order, are:
 
 **Massacre (Space) · Settlement Raids (Ground) · Combat · Trade & Mining · Passenger · Covert / On-Foot Ops · Other · Community Goals**
 
 - **Massacre** and **Settlement Raids** missions show grouped **kill-progress bars**, so you can see at a glance how
   many kills are still needed across all your missions for the same faction.
-- Everything else shows **one card per mission**. Click a card for that mission's full details.
-- **All** (at the right of the arrows) opens one flat table of every active mission, across every category.
+- Everything else shows **one card per mission**. Click a card to open the Missions window on that mission.
+- **Window** (at the right of the arrows) opens the Missions window, with every active mission across every category.
 
-The "All" window is titled *WNTB - All Active Missions*.
+## The Missions window
+
+Opens from **Window** on the panel (or by clicking a mission's card). It stays live while you play: times left count down, progress moves, and missions
+come and go as you accept and hand them in.
+
+- **Active** tab: one row per mission, ready ones (✓, green) first, then the soonest to expire (red under an hour, amber under six hours). Columns: mission,
+  kind, faction, where to go now (the hand-in place once a mission is done), progress (`80/200` for cargo, `~18/40 kills` for massacres and raids), reward, and
+  time left. Above the table, the summary: how many missions, how many are ready or under an hour from expiring, how many are pinned, and the rewards held.
+- **By place** tab: the same missions grouped by the system to go to, your own system first, then the next jump you have targeted, then the places with
+  something ready. A route plan at a glance.
+- **Detail strip** below the tabs: click a mission for the faction, status, where to go, cargo and commodity (with the tonnes still needed), exact reward, wing,
+  when it was accepted and when it expires.
+- **Pin / Unpin** pins the selected mission; **Pin all here** pins every mission for the system you are in; **Unpin all** clears them. **Copy system** puts the
+  selected mission's system on the clipboard for the galaxy map. **Sources** opens [Source commodities](#source-commodities).
+
+### Pinned missions
+
+A pinned mission (★) is shown on the [Missions overlay card](#missions-on-the-overlay) in its own **PINNED** section above everything else, on its own line (never
+stacked with others), with its place and time left. Pinned missions are listed first, then HERE, NEXT and the rest, within the same row limit. A pin is kept
+for each commander (`mission_pins.json`, mission numbers only) and goes when its mission is handed in, fails, is abandoned or expires.
 
 **Example.** You've taken five massacre missions against the same faction from different stations. Page to
 **Massacre (Space)** and the bars show your total progress, rather than five separate counters to remember.
@@ -56,6 +75,7 @@ Combat > HIP 20019                  3d
 +8 more in 5 systems
 ```
 
+- **PINNED** (when you have pinned any in the Missions window) comes first, one line per pinned mission, the station when it is in your system and the system otherwise.
 - **HERE** is the missions whose turn-in or destination is the system you are in. **NEXT** is the same for the system you have **targeted** for the next
   jump (plot a route and the game targets each hop in turn). Then the rest (**ELSEWHERE**), and `+N more in M systems` when your row limit cuts it off.
 - **Order:** a finished mission (✓) first, with the place to hand it in, then the soonest to expire. A mission with under an hour left (you can change it)

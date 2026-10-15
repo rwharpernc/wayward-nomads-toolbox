@@ -360,5 +360,50 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual((cfg.enabled, cfg.rows, cfg.show_next, cfg.urgent_minutes), (False, 8, True, 60))
 
 
+class PinnedTests(unittest.TestCase):
+    def lines(self, entries, rows=8, here="Jarogee", next_system=""):
+        return M.build_lines(entries, here, next_system, rows, NOW, show_next=True)
+
+    def test_pinned_missions_come_first_under_their_own_heading(self):
+        entries = [entry(1, system="Jarogee", minutes=30), entry(2, system="Lave", label="Mine Gold", minutes=5000)]
+        entries[1] = M.Entry(2, mission_types.TRADE, "Mine Gold", "", "Lave", "Dock", 100000, at(5000), False, "", True)
+        lines = self.lines(entries)
+        texts = [t for t, _r in lines]
+        self.assertEqual(texts[1], "PINNED")
+        self.assertIn("Mine Gold", texts[2])
+        self.assertIn("Lave", texts[2])                               # not in this system: the system to go to
+        self.assertTrue(texts[3].startswith("HERE"))
+
+    def test_a_pinned_mission_in_this_system_shows_its_station(self):
+        pinned = M.Entry(1, mission_types.TRADE, "Deliver", "", "Jarogee", "Fabian Port", 1, at(300), False, "", True)
+        self.assertIn("Fabian Port", self.lines([pinned])[2][0])
+
+    def test_pinned_missions_are_not_stacked_and_not_listed_twice(self):
+        a = M.Entry(1, mission_types.MASSACRE_SPACE, "Massacre", "Li Yong-Rui", "Jarogee", "Dock", 1, at(60), False, "", True)
+        b = M.Entry(2, mission_types.MASSACRE_SPACE, "Massacre", "Li Yong-Rui", "Jarogee", "Dock", 1, at(90), False, "", False)
+        c = M.Entry(3, mission_types.MASSACRE_SPACE, "Massacre", "Li Yong-Rui", "Jarogee", "Dock", 1, at(95), False, "", False)
+        texts = [t for t, _r in self.lines([a, b, c])]
+        self.assertEqual(sum("Massacre" in t for t in texts), 2)       # the pinned one, and the other two stacked as x2
+        self.assertTrue(any("x2" in t for t in texts))
+
+    def test_pinned_take_the_rows_first_and_the_rest_is_counted(self):
+        entries = [M.Entry(i, mission_types.TRADE, f"P{i}", "", "Far", "", 1, at(100 + i), False, "", True) for i in range(3)]
+        entries += [entry(10 + i, minutes=50 + i) for i in range(4)]
+        lines = self.lines(entries, rows=3)
+        texts = [t for t, _r in lines]
+        self.assertEqual(sum(t[:1] == "P" and t[1:2].isdigit() for t in texts), 3)
+        self.assertTrue(texts[-1].startswith("+4 more"))
+        self.assertTrue(texts[0].startswith("MISSIONS 7"))
+
+    def test_entries_from_marks_the_pinned_ids(self):
+        summary = all_missions.MissionSummary.from_event({"MissionID": 7, "Name": "Mission_Delivery", "LocalisedName": "Deliver", "Faction": "F", "Expiry": "2026-10-16T12:00:00Z",
+                                                          "DestinationSystem": "Sol", "DestinationStation": "Dock", "Reward": 5, "timestamp": "2026-10-15T10:00:00Z"})
+        with mock.patch.object(kill_tracker, "get_redirected", lambda cmdr: set()):
+            marked = M.entries_from({7: summary}, "cmdr", pinned={7})
+            plain = M.entries_from({7: summary}, "cmdr")
+        self.assertTrue(marked[0].pinned)
+        self.assertFalse(plain[0].pinned)
+
+
 if __name__ == "__main__":
     unittest.main()

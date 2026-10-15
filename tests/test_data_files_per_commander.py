@@ -18,6 +18,7 @@ ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 # file -> how the commander's data is kept apart
 PER_COMMANDER = {
+    "mission_pins.json": "keyed by commander (commander_data.py, mission_pins.PinBook): only mission ids",
     "sessions.json": "every session records its commander; the history window and its totals show only the active commander's, "
                      "and the 200-session limit is per commander (store.sessions_of / trim)",
     "boxel_state.json": "keyed by commander (boxel_state.py)",
