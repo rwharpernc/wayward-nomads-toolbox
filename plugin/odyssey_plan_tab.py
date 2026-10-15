@@ -10,6 +10,7 @@ import tkinter as tk
 from typing import Callable, List, Optional, Tuple
 
 from . import blueprint_wishlist as wishlist_mod
+from . import odyssey_gear
 from . import odyssey_upgrade_plan as plan_mod
 from .uikit import palette as P
 from .uikit.table import Column, DataTable
@@ -53,9 +54,13 @@ def summary(plan: plan_mod.Plan) -> str:
 
 
 class UpgradePlanTab:
-    def __init__(self, tab: tk.Frame, wishbook: wishlist_mod.WishBook, set_status: Callable[[str], None]) -> None:
+    def __init__(self, tab: tk.Frame, wishbook: wishlist_mod.WishBook, set_status: Callable[[str], None],
+                 owned_source: Callable[[], List[odyssey_gear.OwnedGear]] = odyssey_gear.owned_gear) -> None:
         self._wishbook = wishbook
         self._set_status = set_status
+        self._owned_source = owned_source          # where "my gear" comes from: the journals, or a stand-in in tests
+        self._owned: List[odyssey_gear.OwnedGear] = []
+        self._fitted: Tuple[str, ...] = ()          # the modifications the picked item of mine already carries
         self._plan: Optional[plan_mod.Plan] = None
 
         pad = tk.Frame(tab, bg=P.PANE)
@@ -68,7 +73,7 @@ class UpgradePlanTab:
         self._gear = tk.StringVar(value=plan_mod.labels()[0])
         gear_box = Combobox(top, textvariable=self._gear, values=plan_mod.labels(), state="readonly", width=26)
         gear_box.pack(side="left", padx=(P.PAD_SM, P.PAD))
-        gear_box.bind("<<ComboboxSelected>>", lambda _e: self._gear_changed())
+        gear_box.bind("<<ComboboxSelected>>", lambda _e: self._gear_chosen())
         classes = [str(c) for c in plan_mod.CLASSES]
         tk.Label(top, text="Class now", fg=P.MUTED, bg=P.PANE).pack(side="left")
         self._current = tk.StringVar(value="1")
@@ -80,6 +85,16 @@ class UpgradePlanTab:
         target_box = Combobox(top, textvariable=self._target, values=classes, state="readonly", width=3)
         target_box.pack(side="left", padx=(P.PAD_SM, 0))
         target_box.bind("<<ComboboxSelected>>", lambda _e: self._class_changed(target_chosen=True))
+
+        mine = tk.Frame(pad, bg=P.PANE)
+        mine.pack(fill="x", pady=(0, P.PAD_SM))
+        FlatButton(mine, "Read my gear", self.read_gear).pack(side="left")
+        self._mine = tk.StringVar(value="")
+        self._mine_box = Combobox(mine, textvariable=self._mine, values=[], state="readonly", width=44)
+        self._mine_box.pack(side="left", padx=(P.PAD, 0))
+        self._mine_box.bind("<<ComboboxSelected>>", lambda _e: self._pick_owned())
+        tk.Label(mine, text="reads your suits and weapons from the journal; picking one fills in the item, its class and its fitted modifications",
+                 fg=P.MUTED, bg=P.PANE).pack(side="left", padx=(P.PAD, 0))
 
         mods = tk.Frame(pad, bg=P.PANE)
         mods.pack(fill="x", pady=(0, P.PAD_SM))
@@ -110,14 +125,42 @@ class UpgradePlanTab:
     def _item(self) -> Optional[plan_mod.Gear]:
         return plan_mod.gear(self._gear.get())
 
+    def _gear_chosen(self) -> None:
+        """The item was picked by hand: whatever was read from the journal no longer describes it."""
+        self._fitted = ()
+        self._mine.set("")
+        self._gear_changed()
+
     def _gear_changed(self) -> None:
         item = self._item()
-        options = [NONE, *(plan_mod.modifications_for(item) if item else [])]
-        for box, var in zip(self._mod_boxes, self._mod_vars):
-            box.configure(values=options)
-            if var.get() not in options:
+        options = [NONE, *(n for n in (plan_mod.modifications_for(item) if item else []) if n not in self._fitted)]
+        free = max(0, plan_mod.MAX_MODS - len(self._fitted))              # an item that already carries some has fewer slots left
+        for index, (box, var) in enumerate(zip(self._mod_boxes, self._mod_vars)):
+            usable = options if index < free else [NONE]
+            box.configure(values=usable)
+            if var.get() not in usable:
                 var.set(NONE)
         self.refresh()
+
+    def read_gear(self) -> None:
+        """Read the suits and weapons the commander owns from the journal and offer them."""
+        self._owned = list(self._owned_source())
+        self._mine_box.configure(values=[g.label for g in self._owned])
+        self._mine.set("")
+        self._set_status(f"Found {len(self._owned)} suit{'s' if len(self._owned) != 1 else ''} and weapon{'s' if len(self._owned) != 1 else ''} in your journal. Pick one."
+                         if self._owned else "No suits or weapons found in your journal (is the journal folder set in EDMC, and has the game run?).")
+
+    def _pick_owned(self) -> None:
+        owned = next((g for g in self._owned if g.label == self._mine.get()), None)
+        if owned is None:
+            return
+        self._gear.set(owned.item.label)
+        self._fitted = owned.fitted
+        self._current.set(str(owned.current))
+        self._target.set(str(max(owned.current, int(self._target.get()))))
+        self._gear_changed()
+        if owned.unknown_mods:
+            self._set_status(f"The journal lists modifications the planner has no name for: {', '.join(owned.unknown_mods)}.")
 
     def _class_changed(self, target_chosen: bool = False) -> None:
         """Keep the two classes in order: moving one past the other drags the other with it."""
@@ -137,7 +180,7 @@ class UpgradePlanTab:
         if item is None:
             return
         try:
-            self._plan = plan_mod.plan(item, int(self._current.get()), int(self._target.get()), self.chosen_mods())
+            self._plan = plan_mod.plan(item, int(self._current.get()), int(self._target.get()), self.chosen_mods(), self._fitted)
         except plan_mod.OdysseyPlanError as err:
             self._summary.configure(text=str(err))
             self._notes.configure(text="")

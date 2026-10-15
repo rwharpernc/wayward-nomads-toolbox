@@ -124,6 +124,7 @@ class Plan:
     steps: Tuple[blueprints.Blueprint, ...]
     mods: Tuple[blueprints.Blueprint, ...]
     credits: Optional[int]                    # None when the item's credit cost is not known (and 0 when no class step is planned)
+    fitted: Tuple[str, ...] = ()              # modifications the item already carries (from the journal), which take up slots and are not planned again
 
     def entries(self) -> List[Tuple[str, int]]:
         """(blueprint id, crafts) for the whole plan: each class step once and each modification once."""
@@ -137,23 +138,30 @@ class Plan:
             if not self.item.confirmed:
                 out.append(f"{self.item.label}'s materials are EDEngineer's list for it with the game's current counts; they have not been confirmed by an "
                            "upgrade event of this item.")
+        if self.fitted:
+            out.append(f"Already fitted: {', '.join(self.fitted)}.")
         if self.mods:
             out.append("Modification fees (the engineer's credits) are not in the table and not counted.")
         return out
 
 
-def plan(item: Gear, current: int, target: int, mod_names: Sequence[str] = ()) -> Plan:
-    """The plan for taking `item` from class `current` to `target` (equal means no upgrade) and fitting `mod_names`."""
+def plan(item: Gear, current: int, target: int, mod_names: Sequence[str] = (), fitted: Sequence[str] = ()) -> Plan:
+    """The plan for taking `item` from class `current` to `target` (equal means no upgrade) and fitting `mod_names`. `fitted` are the modifications the item
+    already carries: they use up slots and cannot be chosen again."""
     for value in (current, target):
         if isinstance(value, bool) or value not in CLASSES:
             raise OdysseyPlanError("A class is a whole number from 1 to 5.")
     if target < current:
         raise OdysseyPlanError("The target class cannot be lower than the current one.")
     chosen = [n for n in mod_names if n]
-    if len(chosen) > MAX_MODS:
-        raise OdysseyPlanError(f"An item carries at most {MAX_MODS} modifications.")
+    have = tuple(dict.fromkeys(n for n in fitted if n))
+    if len(chosen) + len(have) > MAX_MODS:
+        raise OdysseyPlanError(f"An item carries at most {MAX_MODS} modifications" + (f" and this one already has {len(have)}." if have else "."))
     if len(set(chosen)) != len(chosen):
         raise OdysseyPlanError("Each modification can be fitted once.")
+    for name in chosen:
+        if name in have:
+            raise OdysseyPlanError(f"{name} is already fitted.")
     allowed = set(modifications_for(item))
     mods = []
     for name in chosen:
@@ -161,4 +169,4 @@ def plan(item: Gear, current: int, target: int, mod_names: Sequence[str] = ()) -
             raise OdysseyPlanError(f"{name} is not offered for {item.label}.")
         mods.append(next(b for b in blueprints.ALL if b.type == item.kind and b.name == name and b.grade == 0))
     steps = _steps(item, current, target)
-    return Plan(item, current, target, tuple(steps), tuple(mods), credits_to(item, current, target))
+    return Plan(item, current, target, tuple(steps), tuple(mods), credits_to(item, current, target), have)

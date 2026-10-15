@@ -1109,7 +1109,11 @@ other two materials, for every item and kind seen; `tests/test_odyssey_upgrade_p
 them. The credits are not in the table: `CREDIT_UNIT` holds the cost of class 2 for the eight items seen, and class n costs `CLASS_FACTOR[n]` times that (1, 3, 6, 10,
 confirmed across several items and classes), so an unseen item has unknown credits (`None`) and the plan says so. `modifications_for` lists a suit's or weapon's
 grade 0 rows, leaving out the upgrade rows and, for a weapon, the modifications marked for another family. `Plan.entries()` is each class step and each modification
-once, for `WishBook.add_many`. To add an item's credits, add its `UpgradeSuit` / `UpgradeWeapon` journal line to `CREDIT_UNIT` (cost divided by the class factor) and to the test.
+once, for `WishBook.add_many`. `odyssey_gear.owned_gear` reads the commander's gear on demand: it goes back through the newest journals of the newest journal's commander (up to 80 files) until two
+have `SuitLoadout`, `SwitchSuitLoadout` or `CreateSuitLoadout` events, and `from_loadouts` keeps the newest sighting of each suit (`SuitID`; `SuitName` ends in `_classN`) and
+weapon (`SuitModuleID`; `ModuleName`, `Class`, `WeaponMods`), raised by any later `UpgradeSuit` / `UpgradeWeapon`. The journal's modification ids map to the planner's names
+in `SUIT_MODS` and `WEAPON_MODS` (range, headshot damage and hip-fire accuracy are one id for all weapons, spelled with the weapon's family). `plan(..., fitted=)` counts the
+fitted modifications against the four slots and does not plan them again. To add an item's credits, add its `UpgradeSuit` / `UpgradeWeapon` journal line to `CREDIT_UNIT` (cost divided by the class factor) and to the test.
 
 ### Megaship scans (`megaship_scans.py`, `powerplay_megaships_tab.py`)
 

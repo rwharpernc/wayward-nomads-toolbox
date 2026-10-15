@@ -48,7 +48,7 @@ These are built and covered by unit tests, but have not all been seen working in
 - [ ] **Notes.** Quick add, the window, **Here**, Delete twice, the count when jumping into a system with notes, and that the EDMC window does not get
   wider. Then Linux.
 - [ ] **Upgrade planner.** Pick an item, a class range and modifications and add them to the wishlist; compare the materials with the in-game upgrade screen for an item
-  other than the eight confirmed ones (Karma P-15, Manticore Intimidator and Oppressor, TK Aphelion, Eclipse and Zenith), and note the credits shown at the upgrade screen:
+  other than the eight confirmed ones (Karma P-15, Manticore Intimidator and Oppressor, TK Aphelion, Eclipse and Zenith), and try **Read my gear** and compare it with your loadouts, and note the credits shown at the upgrade screen:
   each one confirmed is a line in `odyssey_upgrade_plan.CREDIT_UNIT` (or send the `UpgradeWeapon` journal line). Then Linux.
 - [ ] **Megaship scans.** In a Powerplay system drop out of supercruise at a megaship and scan its datalink: the panel line and **SES → Megaships** row appear with
   the right name and system, the merits fill in a moment later, a second scan of the same megaship changes nothing, and a scan at a station adds nothing. Restart EDMC and
@@ -91,8 +91,7 @@ Surveyed: SrvSurvey (GPL-3.0), EDDiscovery (Apache-2.0), Elite Dangerous Odyssey
 notes, the Surface Compass with marks, the Trade watch list, materials and engineering (including the blueprint wishlist, the engineers and the ship
 planner), the material trader finder, and expedition planning. Later, in rough order:
 
-- [ ] **Odyssey upgrade planner, next steps:** a stat preview (needs each item's base stats and the effect of each level and modification, which are not open data), and
-  reading what the commander already owns from the journal's `SuitLoadout` so the starting class is filled in.
+- [ ] **Odyssey upgrade planner, next step:** a stat preview (needs each item's base stats and the effect of each level and modification, which are not open data).
 - [ ] **Expedition planning, not done:** an overlay card and per-stop scan or discovery tracking.
 
 ## Very low priority

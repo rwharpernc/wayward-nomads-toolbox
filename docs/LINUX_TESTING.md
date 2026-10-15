@@ -205,7 +205,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
       station or a settlement adds nothing. After restarting EDMC the list is still there. Needs the Journal directory set on Linux.
 
 - [ ] **Upgrade planner** (Engineering window, added after 1.11.0, Windows-tested only): pick the Karma AR-50 from class 1 to 5: four steps, 12,500,000 credits, and **Add to wishlist**
-      puts four entries on the Wishlist tab. Pick the TK Zenith: the credits read "not recorded". Pick a modification not offered for the item (they are filtered), and four at most.
+      puts four entries on the Wishlist tab. Press **Read my gear**: your suits and weapons are listed with their class (needs the Journal directory set on Linux); picking one fills in its item, class and fitted modifications. Pick the TK Zenith: the credits read "not recorded". Pick a modification not offered for the item (they are filtered), and four at most.
 
 ## 6b. Fixed in the platform audit - please confirm
 

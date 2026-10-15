@@ -179,10 +179,13 @@ only covers module types in the blueprint table. The journal's names for bluepri
 
 **Upgrade planner.** What it takes to upgrade an Odyssey suit or weapon, and to fit its modifications, onto the wishlist.
 
-1. Open the **Upgrade planner** tab and pick the **Item**: the Artemis, Dominator or Maverick suit, or one of the Karma, Manticore and TK weapons.
+1. Open the **Upgrade planner** tab and pick the **Item**: the Artemis, Dominator or Maverick suit, or one of the Karma, Manticore and TK weapons. Or press
+   **Read my gear**: WNTB reads the suits and weapons you own from your journal (the loadouts the game lists when you log in on foot, plus any upgrade since)
+   and offers them in the box beside it. Picking one fills in the item, the class it is now and the modifications it already carries.
 2. Set the **Class now** and the class you **Wanted** (1 to 5). The table lists each step, from the class you have to the class you want, with the materials it takes
    and the credits. A line under the table gives the total.
-3. Optionally pick up to four **Modifications**. The boxes offer those the table has for the item: a weapon modification marked with a family in brackets,
+3. Optionally pick up to four **Modifications** (an item you read from the journal that already carries some has fewer slots left, and the ones it has are
+   not offered again). The boxes offer those the table has for the item: a weapon modification marked with a family in brackets,
    such as "(Kinematic kinetic)", is only offered for that family (Karma is kinetic, Manticore is plasma, TK is laser). The table does not say whether the game
    offers every unmarked modification for every weapon.
 4. Press **Add to wishlist**. Each class step and each modification goes on the list once, all or nothing (the limits are the wishlist's: 100 blueprints, 99
@@ -196,7 +199,10 @@ What the costs are, and are not:
 - **The credits** are a unit for the item times 1, 3, 6 and 10 for classes 2 to 5 (the Karma AR-50 costs 625,000 for class 2, so 12,500,000 for classes 2 to 5 together).
   They are shown only for the eight items listed above. For the others the tab says the credits are **not recorded**, and still plans the materials.
 - **A modification's engineer fee** is not in the table, so it is not counted.
-- The planner does not preview an item's stats, and does not read what you already own.
+- **Read my gear** is what the game last listed, not a live inventory: a suit or weapon you bought, sold or changed since the last time you logged in on foot may
+  not show, and a session that never went on foot has no loadouts, so WNTB looks back through your newest journals. It reads only the commander of your newest
+  journal. A modification the planner has no name for is mentioned in the status line and left out.
+- The planner does not preview an item's stats.
 
 **Engineers.** All 38 engineers (ship and on-foot, the Colonia ones included). The **Show** box above the table picks **Both**, **Bubble** (the 30 engineers in the human
 bubble) or **Colonia** (the 8 in the Colonia region, about 22,000 ly away: Baltanos, Eleanor Bresa, Etienne Dorn, Marsha Hicks, Mel Brandon, Petra Olmanova, Rosa Dayette and Yi

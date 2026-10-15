@@ -97,6 +97,8 @@ being listed doesn't mean a tool was the first or the only one.
 - **Odyssey upgrade planner** (a suit's or weapon's upgrade and modifications as a wishlist): the idea follows [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper)'s
   loadout editor, which WNTB's is not a copy of: its stat tables are not public and none of its data or code was taken. The upgrade costs are read from the game's own `UpgradeSuit` and
   `UpgradeWeapon` journal events (game facts), and the modification recipes are the blueprint table's (EDEngineer, MIT).
+  The names the journal uses for suit and weapon modifications (`suit_nightvision`, `weapon_range`) and for the weapons are the game's, as [EDDI](https://github.com/EDCD/EDDI)'s
+  definitions and real journals agree; WNTB's own table maps them to the planner's names. No code was taken.
 - **Ship engineering planner** (a ship's engineering as a wishlist): the idea follows
   [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper)'s ship builder and wishlist import from EDSY and Coriolis,
   which WNTB's is not a copy of: no code or data was taken, and its design here is the journal's own `Loadout` shape. The journal's blueprint and
