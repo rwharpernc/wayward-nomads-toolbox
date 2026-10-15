@@ -32,6 +32,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
+_SITE_PREFIX = re.compile(r"^[^:]*construction site:\s*", re.IGNORECASE)
+
 EVENT_DEPOT = "ColonisationConstructionDepot"
 EVENT_CONTRIBUTION = "ColonisationContribution"
 EVENT_CLAIM = "ColonisationSystemClaim"
@@ -104,7 +106,14 @@ class Site:
         return not (self.complete or self.failed)
 
     def display_name(self) -> str:
-        return self.name or f"Construction site {self.market_id}"
+        """The name to show. A finished build becomes an ordinary station under a new `MarketID`, so docking there never renames this depot's record;
+        its name would keep the game's "Orbital Construction Site: " prefix for good. Once the build is complete the prefix is dropped
+        ("Orbital Construction Site: Wayward Station" -> "Wayward Station")."""
+        if not self.name:
+            return f"Construction site {self.market_id}"
+        if not self.complete:
+            return self.name
+        return _SITE_PREFIX.sub("", self.name, count=1).strip() or self.name
 
     def to_dict(self) -> Dict[str, Any]:
         return {

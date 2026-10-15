@@ -125,5 +125,33 @@ class RoundTripTests(unittest.TestCase):
         self.assertEqual(again.to_dict(), site.to_dict())
 
 
+class DisplayNameTests(unittest.TestCase):
+    """A finished build keeps the game's "Construction Site:" prefix in the depot's saved name; the shown name drops it."""
+
+    def _site(self, name, complete):
+        from plugin.colonisation import Site
+        return Site(market_id=12345, name=name, complete=complete)
+
+    def test_a_site_still_being_built_keeps_the_full_name(self):
+        self.assertEqual(self._site("Orbital Construction Site: Wayward Station", False).display_name(), "Orbital Construction Site: Wayward Station")
+
+    def test_a_finished_site_drops_the_prefix_whatever_the_kind(self):
+        for prefix in ("Orbital Construction Site: ", "Planetary Construction Site: ", "orbital construction site:"):
+            self.assertEqual(self._site(prefix + "Wayward Station", True).display_name(), "Wayward Station")
+
+    def test_a_name_with_no_prefix_or_nothing_after_it_is_left_alone(self):
+        self.assertEqual(self._site("Wayward Station", True).display_name(), "Wayward Station")
+        self.assertEqual(self._site("Orbital Construction Site:", True).display_name(), "Orbital Construction Site:")
+
+    def test_an_unnamed_site_is_still_named_by_its_number(self):
+        self.assertEqual(self._site("", True).display_name(), "Construction site 12345")
+        self.assertEqual(self._site("", False).display_name(), "Construction site 12345")
+
+    def test_the_saved_name_is_not_changed(self):
+        site = self._site("Orbital Construction Site: Wayward Station", True)
+        site.display_name()
+        self.assertEqual(site.name, "Orbital Construction Site: Wayward Station")
+
+
 if __name__ == "__main__":
     unittest.main()

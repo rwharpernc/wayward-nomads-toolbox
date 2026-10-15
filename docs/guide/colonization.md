@@ -31,6 +31,8 @@ carrier and for one without; the wording changes to match, and the carrier lines
 | Next | One sentence on what to do now |
 | Others | `+N more active sites` when you have more than the one shown (the line is left out when you have none) |
 
+**A finished build** is shown by its own name: the game calls a depot `Orbital Construction Site: Wayward Station` while it is being built, and once the build is complete WNTB drops the `Construction Site:` part (`Wayward Station`) in the sites window, the shopping list and the history.
+
 **History** is yours alone (everything is per commander). The heading names the commander it is for (`History - SILAS KADE`), so you can see at a glance whose figures these are:
 
 | Line | What it says |
