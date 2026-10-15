@@ -29,6 +29,7 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | ELW rarity or EDSM upload status in Exploration | The two options under Exploration Value | Settings → Exploration → Exploration Value |
 | Fleet carriers missing from "where to buy" results | **Include fleet carriers** in the Colonization sites window | Colonization sites window |
 | Raven Colonial not updating | The master switch and the two options under it ([steps](#raven-colonial-doesnt-update-as-i-deliver)) | Settings → Colonization → Raven Colonial |
+| Something else is wrong | **Report an issue** | Settings → WNTB → General → Help |
 | WNTB never updates itself | **Automatically download and install updates** | Settings → WNTB → General → Updates |
 
 Notes:

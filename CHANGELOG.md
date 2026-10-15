@@ -3,6 +3,11 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Report an issue** button (Settings → WNTB → General → Help). It opens a new bug report on GitHub in your browser with the WNTB, EDMC and Python versions and your operating system (Windows build, or Linux distro, X11 or Wayland and Flatpak) already filled in. Nothing is sent by WNTB: you read and edit the form, and submit it with your own GitHub account. No commander name, system or file path is included. The form is `.github/ISSUE_TEMPLATE/bug_report.yml`.
+
 ## 1.10.2 - 2026-10-14
 
 ### Changed

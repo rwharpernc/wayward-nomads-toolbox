@@ -1,0 +1,42 @@
+name: Bug report
+description: Something in WNTB does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please do not include your commander name or anything else you want kept private.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you saw, and what you expected to see instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, in order, and which part of WNTB (panel, window or Settings page) it was in.
+      placeholder: |
+        1. ...
+        2. ...
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Filled in for you when you use Settings → WNTB → General → Help → Report an issue. Otherwise give the versions and your OS.
+      placeholder: |
+        - WNTB:
+        - EDMC:
+        - Python:
+        - OS:
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log lines (optional)
+      description: |
+        Relevant lines from EDMC's log (in EDMC: Help, then Open Log Folder). Remove anything personal first.
+      render: text

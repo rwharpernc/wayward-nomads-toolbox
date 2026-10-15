@@ -41,6 +41,7 @@ from . import (
     notable, notes_panel, expedition_panel, surface_compass, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
     game_mode, session_credits, session_merits, settings_scroll, system_names, trade_panel, trade_watch_panel,
 )
+from . import issue_report
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -551,7 +552,7 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         placed.update(features)
         return [feature.build_settings for feature in features]
 
-    _settings_group(tabs, "General", [_create_window_tab, _create_updates_tab], page_bg)
+    _settings_group(tabs, "General", [_create_window_tab, _create_updates_tab, _create_help_tab], page_bg)
     for feature in (powerplay, missions):
         for build in settings_of(feature):
             settings_scroll.scrolled_page(tabs, build, page_bg)
@@ -640,6 +641,21 @@ def _create_updates_tab(notebook: nb.Notebook) -> None:
     HyperlinkLabel(
         frame, text="Release notes", background=nb.Label().cget("background"), url=RELEASES_PAGE_URL, underline=True,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(2, 10))
+
+
+def _create_help_tab(notebook: nb.Notebook) -> None:
+    frame = nb.Frame(notebook)
+    frame.columnconfigure(0, weight=1)
+    notebook.add(frame, text="Help")
+
+    nb.Button(frame, text="Report an issue", command=issue_report.open_report).grid(
+        row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
+    nb.Label(
+        frame, justify=tk.LEFT, wraplength=420,
+        text="Opens a new bug report on GitHub in your browser, with the WNTB, EDMC and Python versions and your "
+             "operating system already filled in. Nothing is sent until you submit it there with your own GitHub "
+             "account; you can read and change everything first. No commander name, system or file path is included.",
+    ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def save_prefs() -> None:

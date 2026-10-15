@@ -449,3 +449,22 @@ def sound_support_note() -> Tuple[str, bool]:
         return (f"{works_on} This system: Linux, no sound player found - unavailable until you install one "
                 "(canberra-gtk-play or pulseaudio-utils)."), False
     return f"{works_on} This system is not supported, so this option is unavailable.", False
+
+
+def describe_system() -> str:
+    """One line naming this machine's OS for a bug report: Windows build, or Linux distro with the session type
+    (X11 or Wayland) and whether EDMC runs as a Flatpak. Never raises, and holds nothing personal."""
+    import platform
+    try:
+        if IS_LINUX:
+            try:
+                distro = platform.freedesktop_os_release().get("PRETTY_NAME", "Linux")
+            except (OSError, AttributeError):
+                distro = "Linux"
+            parts = [distro, os.environ.get("XDG_SESSION_TYPE", "") or "session unknown"]
+            if os.environ.get("FLATPAK_ID") or os.path.exists("/.flatpak-info"):
+                parts.append("Flatpak")
+            return ", ".join(parts)
+        return f"{platform.system()} {platform.release()} ({platform.version()})"
+    except Exception:
+        return sys.platform

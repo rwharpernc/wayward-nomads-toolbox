@@ -195,7 +195,7 @@ Trade, BGS, Colonization, Field Ops and Overlays. Some have a row of tabs of the
 
 | Tab | Inner tabs |
 |---|---|
-| **General** | Window (including *Suggest system names from Spansh while typing*), Updates |
+| **General** | Window (including *Suggest system names from Spansh while typing*), Updates, Help (**Report an issue**) |
 | **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Auto-Honk |
 | **Field Ops** | Screenshots, Inventory, Ship Builds |
 | **Overlays** | Overlay Connection, Overlay Placement, Appearance (color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Flight Alerts, Landing, Surface Compass, Mining, Notable Bodies, Screenshots |

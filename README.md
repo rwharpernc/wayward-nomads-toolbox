@@ -308,7 +308,8 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 
 ## Getting help
 
-Found a bug, or have an idea? Please open an issue on the project's
+Found a bug? **File → Settings → WNTB → General → Help → Report an issue** opens a bug report in your browser with your versions and
+operating system already filled in. Or, for a bug or an idea, open an issue on the project's
 [Issues page](https://github.com/rwharpernc/wayward-nomads-toolbox/issues), or find me in the Wayward Nomads
 squadron. Say what you were doing, what you expected, and what happened. Including EDMC's log (EDMC's Help menu can
 open its log folder) helps a lot. The squadron website is [waywardnomads.org](https://waywardnomads.org/).
