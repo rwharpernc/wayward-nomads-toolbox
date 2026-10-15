@@ -202,7 +202,7 @@ the widest card at every text size.
 then the redirect's `get_redirect_destination`), cargo progress from `MissionSummary.cargo`, kill progress from `kill_missions.estimate_progress` (an estimate for wing and
 on-foot missions, shown with `~`), sorted ready first then soonest to expire. `totals` is the summary line, `by_place` groups by system (here, next jump, then urgency) and
 `detail` is the selected mission's lines. `missions_window.MissionsWindow` shows them in two `DataTable`s, rebuilding a table only when its rows changed (so selection and scroll
-stay put), refreshes from `MissionsUI.redraw` and every 30 s. It replaced the old "All" popup and the per-mission detail popup. `MissionsUI.__live_rows` supplies the live data.
+stay put), refreshes from `MissionsUI.redraw` and every 30 s. It replaced the old "All" popup and the per-mission detail popup. `MissionsUI.__live_rows` supplies the live data. The panel's two buttons (Missions window, Find sources) are built once in `build_panel`, in grid row 1 below the canvas, so they show on every page.
 
 Pins: `mission_pins.PinBook` keeps a set of mission ids per commander in `mission_pins.json` (`commander_data`), written at every change. `missions_overlay._live_entries` prunes
 pins whose mission is gone, but only once the roster is known (`all_missions.view.missions` is not None). `Entry.pinned` makes `stack` keep the mission as its own `Item`, and

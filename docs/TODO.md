@@ -47,7 +47,7 @@ These are built and covered by unit tests, but have not all been seen working in
   (EDSM)** against real EDSM; and that the row does not widen the EDMC window. Then Linux.
 - [ ] **Notes.** Quick add, the window, **Here**, Delete twice, the count when jumping into a system with notes, and that the EDMC window does not get
   wider. Then Linux.
-- [ ] **Missions window and pinned missions.** With a real board: open the window from **Window**, check the Active and By place tabs, the summary line and the detail strip against the game's mission board;
+- [ ] **Missions window and pinned missions.** With a real board: open the window from the **Missions window** button at the bottom of the panel, check the Active and By place tabs, the summary line and the detail strip against the game's mission board;
   pin two missions and check the PINNED section on the overlay card (and that it goes when you hand the mission in). Look at the text size beside the panel arrows. Then Linux.
 - [ ] **Best picks and Source commodities.** With Trade lookups on: Market → type a commodity → **Best picks** (buy and sell), and Missions → **Find sources** with a few Collect or Mining
   missions active. Compare the four picks with what EDCoPilot says for the same commodity, ship and system; note any that differ (the 10% band is measured against the cheapest station in the galaxy).

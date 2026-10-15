@@ -6,7 +6,7 @@ One view of every mission on your board, sorted by type, plus Community Goals an
 
 ## Using it
 
-The panel shows one category at a time, with a line like `◀  Combat (3)  ▶  Window`. Click the **◀** or **▶** arrow to
+The panel shows one category at a time, with a line like `◀  Combat (3)  ▶`. Click the **◀** or **▶** arrow to
 page between categories; the number is how many missions are in that category. The pages, in order, are:
 
 **Massacre (Space) · Settlement Raids (Ground) · Combat · Trade & Mining · Passenger · Covert / On-Foot Ops · Other · Community Goals**
@@ -14,11 +14,11 @@ page between categories; the number is how many missions are in that category. T
 - **Massacre** and **Settlement Raids** missions show grouped **kill-progress bars**, so you can see at a glance how
   many kills are still needed across all your missions for the same faction.
 - Everything else shows **one card per mission**. Click a card to open the Missions window on that mission.
-- **Window** (at the right of the arrows) opens the Missions window, with every active mission across every category.
+- Two buttons at the very bottom of the panel, on every page: **Missions window** (every active mission across every category) and **Find sources** (where to buy the cargo your missions need).
 
 ## The Missions window
 
-Opens from **Window** on the panel (or by clicking a mission's card). It stays live while you play: times left count down, progress moves, and missions
+Opens from the **Missions window** button at the bottom of the panel (or by clicking a mission's card). It stays live while you play: times left count down, progress moves, and missions
 come and go as you accept and hand them in.
 
 - **Active** tab: one row per mission, ready ones (✓, green) first, then the soonest to expire (red under an hour, amber under six hours). Columns: mission,
@@ -93,17 +93,18 @@ journals (as above). The next jump is the system you have *targeted*; with no ta
 
 ## Source commodities
 
-Collect and Mining missions need cargo you have to find. The **Commodities needed** list (Trade & Mining page) has a **Find sources** link that opens the
+Collect and Mining missions need cargo you have to find. The **Find sources** button at the bottom of the panel (or **Sources** in the Missions window) opens the
 Source commodities window: for each commodity, summed over all your active missions, the same four picks as Trade's [Best picks](trade.md#best-picks) (closest,
 best local, cheapest anywhere, recommended within 10% of the cheapest), for buying.
 
-1. Pick where to measure from: **From where I am** (your current system) or **From the turn-in system** (where most of the missions for that commodity are
+1. Pick where to measure from: **From where I am** (your current system; if WNTB has not seen you jump since EDMC started, it reads it from EDMC and then from your newest journal, so you do not need to jump first) or **From the turn-in system** (where most of the missions for that commodity are
    handed in, so you can see what is nearest to the place you will deliver to).
 2. Press **Find sources**. It asks Spansh a few times per commodity, one commodity after another, and shows each as it finishes. Press **Cancel** to stop.
 3. Pick a row and press **Copy system** to put its system name on the clipboard for the galaxy map.
 
 It uses the landing pad size, "Near me" radius, carriers and ground settings from Trade, and it only works when **Enable Spansh trade lookups** is on in
-Settings → Trade (it is off by default). Nothing is searched until you press the button. The window lists at most twelve commodities, the biggest need first.
+Settings → Trade (it is off by default; if it is off when you press **Find sources**, the window asks whether to turn it on, and nothing is searched until you say yes).
+Nothing is searched until you press the button. If none of your missions needs cargo to be found, the window says so. The window lists at most twelve commodities, the biggest need first.
 
 Not covered: the nearest ring hotspot for a Mining mission (use Mining's hotspot finder), and market data older than 7 days is ignored.
 

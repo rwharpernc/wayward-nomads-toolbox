@@ -48,7 +48,7 @@ from typing import Callable, Optional
 from config import appname, config
 from theme import theme
 
-from . import all_missions, community_goal_state, kill_missions, kill_tracker, mining_methods, mission_pins, mission_sources, mission_types, missions_board, missions_overlay, panelkit
+from . import all_missions, community_goal_state, current_system, kill_missions, kill_tracker, mining_methods, mission_pins, mission_sources, mission_types, missions_board, missions_overlay, panelkit
 from .mission_sources_window import MissionSourcesWindow
 from .missions_window import MissionsWindow
 from .community_goal_state import CommunityGoal
@@ -478,21 +478,17 @@ def _display_cmdr_header(frame: tk.Frame, count: Optional[int],
 
 
 def _display_category_nav(frame: tk.Frame, current: str, counts: dict[str, int],
-                          row: int, on_prev, on_next, on_show_all) -> int:
-    """◂ Category Name (count) ▸ Window - click either arrow to page between the
-    panel's category pages, or "Window" to open the Missions window with every
-    active mission at once (unconstrained by the main panel's narrow width)."""
+                          row: int, on_prev, on_next) -> int:
+    """◂ Category Name (count) ▸ - click either arrow to page between the
+    panel's category pages. The Missions window and Find sources are the
+    buttons at the bottom of the panel."""
     nav = _line(frame, row, pady=(0, 4))
 
     fonts = _get_fonts()
 
     panelkit.nav_arrow(nav, -1, on_prev).pack(side=tk.LEFT)
 
-    all_label = tk.Label(nav, text="Window", font=fonts["bold"], cursor="hand2")
-    all_label.pack(side=tk.RIGHT)
-    all_label.bind("<Button-1>", lambda _e: on_show_all())
-
-    panelkit.nav_arrow(nav, 1, on_next).pack(side=tk.RIGHT, padx=(0, 8))
+    panelkit.nav_arrow(nav, 1, on_next).pack(side=tk.RIGHT)
 
     title_text = f"{_PAGE_LABELS[current]} ({counts.get(current, 0)})"
     title_label = tk.Label(nav, text=title_text, font=fonts["bold"])
@@ -688,7 +684,7 @@ def _aggregate_commodities_needed(
 
 
 def _display_commodities_needed(frame: tk.Frame, rows: list[tuple[str, int, int]],
-                                row: int, on_sources: Optional[Callable[[], None]] = None) -> int:
+                                row: int) -> int:
     """A shopping-list summary at the top of the Trade & Mining page, so a
     commander doesn't have to open every Collect/Mining mission card to
     tally up what's still needed. No-op (returns row unchanged) when
@@ -698,10 +694,6 @@ def _display_commodities_needed(frame: tk.Frame, rows: list[tuple[str, int, int]
     fonts = _get_fonts()
     header = _line(frame, row, pady=(0, _LINE_PAD))
     tk.Label(header, text="Commodities needed:", font=fonts["bold"]).pack(side=tk.LEFT)
-    if on_sources is not None:
-        link = tk.Label(header, text="Find sources", font=fonts["small"], cursor="hand2")
-        link.pack(side=tk.RIGHT)
-        link.bind("<Button-1>", lambda _e: on_sources())
     row += 1
 
     for name, count, mission_count in rows:
@@ -861,6 +853,12 @@ class MissionsUI:
         self.__canvas.bind("<Enter>", lambda _e: self.__bind_mousewheel())
         self.__canvas.bind("<Leave>", lambda _e: self.__unbind_mousewheel())
 
+        # The two buttons at the very bottom of the panel, always there whichever page is showing.
+        buttons = tk.Frame(parent)
+        buttons.grid(column=0, row=1, columnspan=2, sticky="w", pady=(4, 0))
+        tk.Button(buttons, text="Missions window", command=self.__show_missions_window).pack(side=tk.LEFT)
+        tk.Button(buttons, text="Find sources", command=self.__show_sources_window).pack(side=tk.LEFT, padx=(6, 0))
+
         parent.bind("<<Refresh>>", lambda _e: self.redraw())
         self.redraw()
         # This first redraw() call almost always lands before Tk has
@@ -1017,7 +1015,7 @@ class MissionsUI:
                    if m.category == category}
         if category == mission_types.TRADE and self.__settings.commodities_needed:
             row = _display_commodities_needed(
-                frame, _aggregate_commodities_needed(missions), row, self.__show_sources_window)
+                frame, _aggregate_commodities_needed(missions), row)
         return _display_all_missions(frame, missions, row, no_missions_text,
                                      self.__show_missions_window)
 
@@ -1048,8 +1046,7 @@ class MissionsUI:
                 self.__ensure_valid_category(counts)
                 row = _display_category_nav(self.__content, self.__current_category,
                                             counts, row,
-                                            self.__prev_category, self.__next_category,
-                                            self.__show_missions_window)
+                                            self.__prev_category, self.__next_category)
                 self.__render_current_page(self.__content, row)
 
         theme.update(self.__parent)
@@ -1080,7 +1077,7 @@ class MissionsUI:
             state = missions_overlay.get_state()
             self.__window = MissionsWindow(
                 self.__parent.winfo_toplevel(), self.__live_rows, lambda: kill_tracker.current_cmdr,
-                lambda: state.here, lambda: state.next_system, on_pins_changed=state.refresh, open_sources=self.__show_sources_window)
+                lambda: current_system.find(state.here), lambda: state.next_system, on_pins_changed=state.refresh, open_sources=self.__show_sources_window)
         if mission_id is not None:
             self.__window.select(mission_id)
 
@@ -1092,7 +1089,7 @@ class MissionsUI:
         self.__sources = MissionSourcesWindow(
             self.__parent.winfo_toplevel(),
             lambda: mission_sources.needs_from((self.__all_missions_data or {}).values()),
-            lambda: missions_overlay.get_state().here)
+            lambda: current_system.find(missions_overlay.get_state().here))
 
 
 ui = MissionsUI()

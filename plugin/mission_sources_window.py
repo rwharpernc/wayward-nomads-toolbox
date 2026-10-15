@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import threading
 import tkinter as tk
+from tkinter import messagebox
 from typing import Callable, Dict, List, Optional
 
 from . import mission_sources, panelkit, ship_current, source_picks, trade_ship
@@ -97,6 +98,7 @@ class MissionSourcesWindow:
         self._worker: Optional[threading.Thread] = None
         self._cancel = threading.Event()
         self._error = ""
+        self._note = ""
         self._copyable: Dict[str, str] = {}      # table row id -> the system on that row
         self._selected: Optional[str] = None
         self._shell = WindowShell(
@@ -162,22 +164,28 @@ class MissionSourcesWindow:
         if self._busy():
             self._cancel.set()
             return
-        if not lookups_enabled():
-            self.refresh()
-            return
         needs, here = self._needs(), self._here()
         mode = _MODES.get(self._mode.get(), mission_sources.HERE)
+        note = ""
         if not needs:
+            self._shell.set_status("None of your active missions needs cargo to be found (Collect and Mining missions do).")
+            return
+        if not lookups_enabled() and not self._offer_lookups():
             self.refresh()
             return
         if mode == mission_sources.HERE and not here:
-            self._shell.set_status("WNTB does not know your system yet: jump or log in, or choose the turn-in system.")
-            return
+            # Not even the journal names a system: measure from each commodity's turn-in system instead, and say so.
+            if not any(need.turn_in for need in needs):
+                self._shell.set_status("WNTB cannot tell which system you are in (no jump or login in the journal yet), and no mission names a turn-in system.")
+                return
+            mode = mission_sources.TURN_IN
+            note = " Your system is not known yet, so this is measured from the turn-in system."
         options = read_options()
         self._cancel = cancel = threading.Event()
         self._results, self._pending, self._error = {}, {}, ""
         self._find.configure(text="Cancel")
-        self._shell.set_status("Asking Spansh...")
+        self._note = note
+        self._shell.set_status("Asking Spansh..." + note)
         pending = self._pending
 
         def work() -> None:
@@ -192,18 +200,29 @@ class MissionSourcesWindow:
         self._worker.start()
         self._shell.window.after(_POLL_MS, self._poll)
 
+    def _offer_lookups(self) -> bool:
+        """Lookups are off by default. Rather than do nothing, ask once whether to turn on the switch Settings > Trade has (the only thing that goes online here)."""
+        if config is None:
+            return False
+        if not messagebox.askyesno("Turn on online lookups?", "Finding sources asks Spansh (spansh.co.uk) for market prices, a few requests per commodity, "
+                                   "only when you press Find sources.\n\nTurn on Trade's online lookups now? (The same switch as Settings > Trade; you can turn it off there.)",
+                                   parent=self._shell.window):
+            return False
+        config.set(_CFG_LOOKUPS, True)
+        return True
+
     def _poll(self) -> None:
         if not self.alive:
             return
         self._results.update(self._pending)
         self.refresh()
         if self._busy():
-            self._shell.set_status(f"Asking Spansh... {len(self._results)} of {len(self._needs())} done (press Cancel to stop)")
+            self._shell.set_status(f"Asking Spansh... {len(self._results)} of {len(self._needs())} done (press Cancel to stop)." + self._note)
             self._shell.window.after(_POLL_MS, self._poll)
             return
         self._find.configure(text="Find sources")
         self._shell.set_status(self._error or ("Cancelled." if self._cancel.is_set() else
-                                               "Done. Pick a row and press Copy system to put its system name on the clipboard."))
+                                               "Done. Pick a row and press Copy system to put its system name on the clipboard.") + self._note)
 
     def _select(self, iid: str) -> None:
         self._selected = iid

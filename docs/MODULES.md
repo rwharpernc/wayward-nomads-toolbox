@@ -212,6 +212,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_market.py` | Reads `Market.json` and values your cargo at the docked station |
 | `trade_pages.py` | Trade's page order |
 | `trade_panel.py` | Trade mode's entry point: chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
+| `current_system.py` | The system the commander is in now, asked on demand: what the caller tracked, EDMC's state, then the newest journal |
 | `mission_pins.py` | The missions a commander pinned (ids only), kept per commander in `mission_pins.json`; pins go with their mission |
 | `missions_board.py` | The Missions window's data: a row per active mission (progress, reward, time left, ready, pinned), the totals line, grouping by place, the detail lines; no Tk |
 | `missions_window.py` | The Missions window (Active and By place tabs, detail strip, Pin / Unpin, Pin all here, Unpin all, Copy system, Sources); replaces the old "All" popup |
