@@ -5,7 +5,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **1.11.0** is the current release (2026-10-15, tag `v1.11.0`): the Ship planner (an EDSY or Coriolis build onto the wishlist), the Engineers tab with where each engineer is and how to
+- **1.12.0** is the current release (2026-10-15, tag `v1.12.0`): the Missions window (replacing the All popup) with pinned missions, the Missions overlay card, Source commodities and Trade's Best picks, the Upgrade planner for Odyssey suits and weapons (with Read my gear), Megaship scans per Powerplay cycle, and the Ship planner's subtract-current-ship option. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
+- **1.11.0** (2026-10-15, tag `v1.11.0`): the Ship planner (an EDSY or Coriolis build onto the wishlist), the Engineers tab with where each engineer is and how to
   unlock them and a Bubble / Colonia filter, engineering data corrected from EDDiscovery's tables, Settings → General → Help (**Report an issue** and **Copy
   diagnostics**), BGS rebuilding a period that closed while EDMC was not running, and finished Colonization builds shown without the "Construction Site:" prefix.
   Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
@@ -18,19 +19,10 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
 
-## Unreleased on `master`
-
-- Missions window (Active and By place tabs, detail strip) replacing the All popup, pinned missions on the overlay (PINNED section), larger text beside the panel arrows. Unit-tested and run under real Tk; the in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
-- Source picks: Trade → Market **Best picks** and the Missions **Source commodities** window (closest, best local, cheapest anywhere, recommended within 10%). Unit-tested against a fake Spansh and checked against live Spansh for the price band; Windows in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
-- Missions overlay card (HERE / NEXT / the rest, capped, in a corner). Unit-tested and drawn from a real mission history; Windows in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
-- Engineering window: **Upgrade planner** tab (Odyssey suit and weapon upgrades and modifications onto the wishlist), and corrected upgrade costs in the blueprint table.
-- Powerplay: **Megaships** tab and panel line (megaship datalink scans per cycle, named from the megaship you dropped to). Unit-tested and checked against real journals; Windows in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
-- Ship planner: **Subtract what my current ship already has**. Windows-tested by unit and smoke tests only; the Linux check is in `docs/LINUX_TESTING.md` section 6.
-
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.11.0 release. For a fix to a released version, cut a short branch from
-`master` (for example `bugfix/1.11.1`), and merge it back.
+There is one long-lived branch, `master`, and it matches the 1.12.0 release. For a fix to a released version, cut a short branch from
+`master` (for example `bugfix/1.12.1`), and merge it back.
 
 ## Testing
 

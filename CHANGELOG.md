@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.12.0 - 2026-10-15
 
 ### Added
 - **Missions window, and pinned missions.** The Missions panel gets two buttons at the very bottom, **Missions window** and **Find sources** (they replace the **All** link and the Commodities needed link), and the first opens a full window (it replaces the old All popup and the per-mission detail popup): an **Active** tab with every mission's title, kind, faction, where to go now, progress (cargo `80/200`, kills `~18/40`), reward and time left, ready ones first in green and the soonest to expire in red or amber; a **By place** tab grouping the missions by the system to hand them in at, with your system and the next jump first; a summary line (missions, ready, expiring under an hour, pinned, rewards held); and a detail strip for the selected mission. **Pin / Unpin**, **Pin all here**, **Unpin all**, **Copy system** and **Sources** (the Source commodities window) are in the header. A pinned mission is listed first on the Missions overlay card under **PINNED**; pins are kept per commander and go with their mission.

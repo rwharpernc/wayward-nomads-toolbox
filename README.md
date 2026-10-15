@@ -94,8 +94,8 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2 and 1.11.0 have been
-> tried on Windows only. The newest parts (the Engineering window's Ship planner and Engineers tab, the Materials and Engineering work, the material trader finder, the
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0 and 1.12.0 have been
+> tried on Windows only. The newest parts (the Missions window, the Missions overlay and Source commodities, Best picks, the Upgrade planner, Megaships, the Engineering window's Ship planner and Engineers tab, the Materials and Engineering work, the material trader finder, the
 > Expedition planner and the Help buttons) have had less time in the game than the rest, so expect a few small fixes in a later update. If something looks off,
 > please [report it](#getting-help) (Settings has a **Report an issue** button that does most of the work).
 
@@ -121,6 +121,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Live merits and Control Points** for your pledged Power: this system, this session and the whole Powerplay cycle ([Using it](docs/guide/powerplay.md#using-it)).
 - **Sessions window** (SES) with tabs for the current session, systems, cycles, days and history ([The Sessions window](docs/guide/powerplay.md#the-sessions-window)).
 - **Catch-up from your journals**, so playing without EDMC running does not lose a cycle, and **RESCAN** to rebuild ([Catching up](docs/guide/powerplay.md#catching-up-from-your-journals)).
+- **Megaships**: the megaships whose datalink you scanned this cycle, with a count and where ([Megaships](docs/guide/powerplay.md#megaships)).
 - **Rare Goods Finder** (RARES): the rare commodities closest to you, with pad size and which Power controls the system ([Rare Goods Finder](docs/guide/powerplay.md#rare-goods-finder)).
 
 ### Exploration ([guide](docs/guide/exploration.md))
@@ -150,7 +151,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Session profit** after fuel, repairs and other running costs, with credits per hour, your ship's hold, your fleet carrier's space, what was bought but not yet sold (an estimate) and the game's own lifetime trading totals ([The Session page](docs/guide/trade.md#the-session-page)).
 - **Trade History** window for saved sessions, with a CSV export ([Trade History](docs/guide/trade.md#trade-history-saving-sessions)).
 - **Routes**: the best trade routes from where you are, and a round trip, from Spansh ([Routes](docs/guide/trade.md#routes)).
-- **Market**: where to sell or buy a commodity ([Market](docs/guide/trade.md#market)).
+- **Market**: where to sell or buy a commodity ([Market](docs/guide/trade.md#market)), and **Best picks**: the closest, best local, cheapest anywhere and recommended (within 10% of the cheapest) station ([Best picks](docs/guide/trade.md#best-picks)).
 - **Watch list**: the commodities you care about, with the best buy and sell price for each, where, how much stock or demand, and how old ([Watch list](docs/guide/trade.md#watch-list)).
 - **Fleet and squadron carrier cargo** and tritium, kept up to date from the journal ([Your fleet carrier](docs/guide/trade.md#your-fleet-carrier-and-squadron-carrier)).
 - **Two computers**: how Trade records behave when you play on Windows and Linux ([Using Trade on two computers](docs/guide/trade.md#using-trade-on-two-computers)).
@@ -158,7 +159,9 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 ### Missions ([guide](docs/guide/missions.md))
 
 - **Every mission on one view**, in pages by type, with grouped kill-progress bars for massacre and settlement-raid missions and one card per mission otherwise ([Using it](docs/guide/missions.md#using-it)).
-- **All** window: one table of every active mission.
+- **Missions window** (button at the bottom of the panel): every mission with progress, reward and time left, grouped by where to hand it in, with a detail strip and **pinned missions** that stay at the top of the overlay card ([The Missions window](docs/guide/missions.md#the-missions-window)).
+- **Missions overlay card**: the missions for the system you are in and the one you are jumping to first, ready ones in green, in a corner of the screen ([Missions on the overlay](docs/guide/missions.md#missions-on-the-overlay)).
+- **Source commodities**: where to buy the cargo your Collect and Mining missions need, with the closest, best local, cheapest and a recommended station ([Source commodities](docs/guide/missions.md#source-commodities)).
 - **Community Goals** and what they paid you.
 
 ### Field Ops ([guide](docs/guide/field-ops.md))

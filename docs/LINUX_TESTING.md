@@ -15,19 +15,21 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## Testing: start here
 
-**1.11.0 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
+**1.12.0 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
 Linux; 1.10.1 stopped the Expedition and Materials sections from widening the main panel; 1.10.2 made long names wrap instead of being cut off. 1.10.1 and 1.10.2
-were tested on Windows only, and so was 1.11.0.
+were tested on Windows only, and so were 1.11.0 and 1.12.0.
 
-**The Linux checks for 1.11.0** are the items in section 6 below: Settings → General → **Help** (Report an issue, Copy diagnostics); the Engineering window's **Engineers** tab
+**The Linux checks for 1.12.0** are the items in section 6 below marked "added in 1.12.0": the Missions window and pinned missions, Best picks and Source commodities, the Missions overlay card, the Upgrade planner, Megaship scans and the Ship planner's subtract option.
+
+**The Linux checks for 1.11.0** are also still open: Settings → General → **Help** (Report an issue, Copy diagnostics); the Engineering window's **Engineers** tab
 (places, unlock steps, the Bubble / Colonia filter) and **Ship planner** tab; BGS rebuilding a period that closed while EDMC was not running; and finished Colonization builds
 losing the "Construction Site:" prefix. The data behind the Engineering window changed too (five recipes corrected, new synthesis rows and materials, the Colonia
 engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 
 **Getting set up**
-1. Install the released **1.11.0** the normal way (the automatic update, or the zip from the
+1. Install the released **1.12.0** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
-   buttons should read `Plugin: v1.11.0`. Work through sections 0 and 1 below first.
+   buttons should read `Plugin: v1.12.0`. Work through sections 0 and 1 below first.
 2. To get the checklist and the test suite, fetch the repository and use `master`:
    `git fetch --all --tags`, then `git switch master`, then `git pull --rebase`. Once per machine:
    `git config core.hooksPath .githooks`.
@@ -200,18 +202,18 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
       **Add plan to wishlist** puts them on the Wishlist tab (a pre-engineered module and an unknown item show their reason). Set **Rolls per grade** to 2 and add again:
       the crafts double. Tick **Subtract what my current ship already has** with a build for the ship you fly: what the ship holds is left out. Nothing goes online.
 
-- [ ] **Megaship scans** (Powerplay, added after 1.11.0, Windows-tested only): in a Powerplay system, drop out of supercruise at a megaship and scan its datalink. The
+- [ ] **Megaship scans** (Powerplay, added in 1.12.0, Windows-tested only): in a Powerplay system, drop out of supercruise at a megaship and scan its datalink. The
       Powerplay panel gains `Cycle N megaships: 1 (N merits)` and **SES → Megaships** lists it with its name and system. Scanning it again changes nothing. A scan at a
       station or a settlement adds nothing. After restarting EDMC the list is still there. Needs the Journal directory set on Linux.
 
-- [ ] **Upgrade planner** (Engineering window, added after 1.11.0, Windows-tested only): pick the Karma AR-50 from class 1 to 5: four steps, 12,500,000 credits, and **Add to wishlist**
+- [ ] **Upgrade planner** (Engineering window, added in 1.12.0, Windows-tested only): pick the Karma AR-50 from class 1 to 5: four steps, 12,500,000 credits, and **Add to wishlist**
       puts four entries on the Wishlist tab. Press **Read my gear**: your suits and weapons are listed with their class (needs the Journal directory set on Linux); picking one fills in its item, class and fitted modifications. Pick the TK Zenith: the credits read "not recorded". Pick a modification not offered for the item (they are filtered), and four at most.
 
-- [ ] **Missions window and pinned missions** (added after 1.11.0, Windows-tested only): the **Missions window** button at the bottom of the Missions panel opens the window; the Active and By place tabs fill and the times count down;
+- [ ] **Missions window and pinned missions** (added in 1.12.0, Windows-tested only): the **Missions window** button at the bottom of the Missions panel opens the window; the Active and By place tabs fill and the times count down;
       select a row and **Pin / Unpin** puts a ★ on it and (with the Missions overlay on) a PINNED section on the card; the text beside the arrows is bold and readable.
-- [ ] **Best picks and Source commodities** (added after 1.11.0, Windows-tested only; needs Trade lookups on): Trade → Market, type a commodity, **Best picks** shows four labelled stations;
+- [ ] **Best picks and Source commodities** (added in 1.12.0, Windows-tested only; needs Trade lookups on): Trade → Market, type a commodity, **Best picks** shows four labelled stations;
       Missions → **Find sources** (bottom of the panel) fills the window as each commodity finishes, **Copy system** puts the system on the clipboard, and **Cancel** stops it.
-- [ ] **Missions overlay card** (added after 1.11.0, Windows-tested only; needs EDMCModernOverlay): Settings → Overlays → Missions → **Test Card** draws a sample in the bottom-right corner; with a few
+- [ ] **Missions overlay card** (added in 1.12.0, Windows-tested only; needs EDMCModernOverlay): Settings → Overlays → Missions → **Test Card** draws a sample in the bottom-right corner; with a few
       real missions and the card enabled it lists those for the system you are in under HERE and those for the system you target under NEXT, and times count down. It sits where Overlay Placement says
       and does not widen as lines change.
 
