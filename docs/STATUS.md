@@ -5,8 +5,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **Unreleased on `master`** (uncommitted, 2026-10-15, Windows only): history moved off the mode panels. Trade's Session page and the Colonization panel show the present only; the Credits Ledger window (click the Credits line) and the Colonization History window (HISTORY button) hold the past. Still to check on Linux: both windows open and fit, and the Credits line click works.
-- **1.13.0** is the current release (2026-10-15, tag `v1.13.0`): progress for source-and-return missions from the hold (`36/60 held`) with bars and colour by progress in the Missions window and on the overlay, Notable Bodies and Discovery cards that show full names, and the Missions overlay card putting a long place on its own line. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
+- **1.14.0** is the current release (2026-10-15, tag `v1.14.0`): history moved off the mode panels (the Credits Ledger window from the Credits line, the Colonization History window from HISTORY), the main panel no longer folds, fold sections start folded, Ship Builds folds, and bold page names in Mining and Trade. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md`.
+- **1.13.0** (2026-10-15, tag `v1.13.0`): progress for source-and-return missions from the hold (`36/60 held`) with bars and colour by progress in the Missions window and on the overlay, Notable Bodies and Discovery cards that show full names, and the Missions overlay card putting a long place on its own line. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
 - **1.12.0** (2026-10-15, tag `v1.12.0`): the Missions window (replacing the All popup) with pinned missions, the Missions overlay card, Source commodities and Trade's Best picks, the Upgrade planner for Odyssey suits and weapons (with Read my gear), Megaship scans per Powerplay cycle, and the Ship planner's subtract-current-ship option. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
 - **1.11.0** (2026-10-15, tag `v1.11.0`): the Ship planner (an EDSY or Coriolis build onto the wishlist), the Engineers tab with where each engineer is and how to
   unlock them and a Bubble / Colonia filter, engineering data corrected from EDDiscovery's tables, Settings → General → Help (**Report an issue** and **Copy
@@ -23,7 +23,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.13.0 release. For a fix to a released version, cut a short branch from
+There is one long-lived branch, `master`, and it matches the 1.14.0 release. For a fix to a released version, cut a short branch from
 `master` (for example `bugfix/1.13.1`), and merge it back.
 
 ## Testing

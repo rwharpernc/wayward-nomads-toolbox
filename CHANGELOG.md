@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.14.0 - 2026-10-15
 
 ### Changed
 - **Sections always start folded.** Expedition, Boxel Survey, Materials, Notes and the other fold sections now start folded every time EDMC starts; opening one lasts for that session only. **Ship Builds** (Field Ops) is now a fold section too.
