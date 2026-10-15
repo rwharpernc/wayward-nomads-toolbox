@@ -38,7 +38,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | **Exploration** | [Exploration](exploration.md): Auto-Honk, alerts, Boxel Survey, exobiology, Codex, Notes, Expedition planner, Compass |
 | **Mining** | [Mining](mining.md): space and surface mining, the Mining Book |
 | **Trade** | [Trade](trade.md): profit, routes, prices, Watch list, carrier cargo, History |
-| **Missions** | [Missions](missions.md): every mission in one view |
+| **Missions** | [Missions](missions.md): every mission in one view, the Missions window and pinning, progress colours, where to buy mission cargo |
 | **Field Ops** | [Field Ops](field-ops.md): screenshots, inventory, engineering materials, blueprints, a wishlist, ship and Odyssey upgrade planners, where the engineers are, material traders, ship builds |
 | **Colonization** | [Colonization](colonization.md): your current project, your history, the sites window, where to buy |
 | **BGS** | [BGS](bgs.md): factions, states and your effect on them |

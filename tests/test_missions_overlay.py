@@ -89,6 +89,16 @@ class FitTests(unittest.TestCase):
         self.assertEqual(M._fit("Short", "5m"), "Short  5m")
         self.assertEqual(M._fit("Short", ""), "Short")
 
+    def test_a_long_place_goes_under_the_title_instead_of_being_cut(self):
+        place = "Hutchinson Orbital Maintenance Station"
+        item = M.Item("36 Agri-Medicines", "Jarogee", place, at(90), False)
+        lines = M._item_lines(item, place, NOW)
+        self.assertEqual(len(lines), 2)
+        self.assertTrue(lines[0].endswith("1h30m"))
+        self.assertIn(place, lines[1])
+        self.assertTrue(all(len(line) <= M.LINE_CHARS for line in lines))
+        self.assertEqual(len(M._item_lines(M.Item("Mine Gold", "J", "Fabian Port", None, False), "Fabian Port", NOW)), 1)
+
 
 class StackTests(unittest.TestCase):
     def test_massacres_for_one_faction_at_one_place_become_one_line(self):

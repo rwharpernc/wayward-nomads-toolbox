@@ -52,7 +52,7 @@ MAX_URGENT_MINUTES = 720
 SOON_SECONDS = 6 * 3600
 MASSACRES = (mission_types.MASSACRE_SPACE, mission_types.MASSACRE_GROUND)
 
-LINE_CHARS = 46          # a line is clipped to this many characters
+LINE_CHARS = 46          # a line is this many characters; a mission whose title and place do not fit takes two lines, and only a name longer than a line is clipped
 CHAR_SCALE = 1.25        # the wire protocol has no text metrics, so the box is measured this much wider than the plain estimate
 EXTRA_LINES = 6          # heading, the three section headings, "+N more" and a spare: lines beyond the mission rows
 _BASE_PAD_X = 12
@@ -62,7 +62,7 @@ _Y = 420
 GROUP_NAME = "wntb_missions"
 GROUP_PREFIX = "wntb_missions_"
 _CARD_ID = "wntb_missions_card"
-_LINE_IDS = tuple(f"wntb_missions_line{i}" for i in range(MAX_ROWS + EXTRA_LINES))
+_LINE_IDS = tuple(f"wntb_missions_line{i}" for i in range(2 * MAX_ROWS + EXTRA_LINES))      # a mission can take two lines (its place under its title)
 OVERLAY_TTL = 90         # each draw lasts this long, so a stalled WNTB cannot leave the card up
 RESEND_S = 45.0          # an unchanged card is drawn again this often
 TICK_S = 30.0            # times left are recomputed this often
@@ -269,17 +269,17 @@ def _clip(text: str, room: int) -> str:
     return text if len(text) <= room else text[:max(1, room - 1)].rstrip() + "…"
 
 
-def _item_line(item: Item, where: str, now: datetime) -> str:
-    """'✓ Title > Place  time': the title and the place share the room, the title getting a little over half, so neither pushes the other (or the time) off."""
+def _item_lines(item: Item, where: str, now: datetime) -> List[str]:
+    """'✓ Title > Place  time' on one line when it fits. When it does not, the place goes under the title on a line of its own ('    > Place'),
+    so a long station or system name is shown in full instead of being cut. Only a name longer than a whole line is clipped."""
     mark = "✓ " if item.ready else ""
     right = time_left(item.expiry, now)
-    budget = LINE_CHARS - len(right) - (2 if right else 0) - len(mark)
     if not where:
-        return _fit(mark + item.label, right)
-    place_room = max(8, budget - len(" > ") - max(12, min(len(item.label), int(budget * 0.55))))
-    place = _clip(where, place_room)
-    title = _clip(item.label, budget - len(" > ") - len(place))
-    return f"{mark}{title} > {place}" + (f"  {right}" if right else "")
+        return [_fit(mark + item.label, right)]
+    whole = f"{mark}{item.label} > {where}" + (f"  {right}" if right else "")
+    if len(whole) <= LINE_CHARS:
+        return [whole]
+    return [_fit(mark + item.label, right), _clip(f"{' ' * (len(mark) + 2)}> {where}", LINE_CHARS)]
 
 
 def build_lines(entries: Sequence[Entry], here: str, next_system: str, rows: int, now: datetime,
@@ -320,7 +320,7 @@ def build_lines(entries: Sequence[Entry], here: str, next_system: str, rows: int
                 where = item.station if _same(item.system, here) and item.station else (item.system or item.station)
             else:
                 where = item.station if use_station else (item.system or item.station)
-            lines.append((_item_line(item, where, now), _role(item, now, urgent)))
+            lines.extend((text, _role(item, now, urgent)) for text in _item_lines(item, where, now))
 
     section("PINNED", pinned_shown, False, True)
     section(f"HERE {here}".strip(), here_shown, True)
@@ -363,7 +363,7 @@ def render(lines: List[Line], client: OverlayClient, look: Look = LEGACY) -> Non
     if not lines:
         clear(client)
         return
-    lines = lines[:MAX_ROWS + EXTRA_LINES]
+    lines = lines[:len(_LINE_IDS)]
     width, height = _card_size(look, len(lines))
     left, top = _X - look.pad_x(_BASE_PAD_X), _Y - look.pad_y(_BASE_PAD_Y)
     client.send_shape(_CARD_ID, "rect", look.color("border"), look.color("fill"), left, top, width, height, ttl=OVERLAY_TTL, thickness=2)

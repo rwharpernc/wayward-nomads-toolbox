@@ -16,7 +16,8 @@ plugins like WNTB. It runs on Windows and Linux. If you already use EDMC, you ha
 
 **2. An overlay (optional).** An *overlay* is a small helper program that draws on top of your game screen.
 WNTB only needs one for its on-screen extras: Discovery Alerts, Notable Bodies, Landing Assist, Interdiction
-Warning, and the optional overlays for Inventory, Mining and Screenshots. Everything else works without one.
+Warning, Flight Alerts, the Surface Compass, and the optional overlays for Inventory, Mining, Missions, Colonization and
+Screenshots. Everything else works without one.
 
 - **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)** is the recommended one. It works
   on Windows and Linux.
@@ -66,10 +67,10 @@ WNTB can also update itself. Turn on **Automatically download and install update
 **File → Settings → WNTB → General → Updates**. It is **off by default**, and it only looks at official published
 releases. The **Release notes** link on that tab opens the latest release's page in your browser.
 
-The first line under the mode buttons always says which version you are running (**Plugin: v1.12.0**). While an update is coming
-it says **Plugin: v1.12.0 (downloading v1.12.1...)**, and once the update is downloaded it turns bold black on **orange** and reads
-**v1.12.1 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
-After the restart the line shows **Plugin: v1.12.1 (updated)** in green for a short while. Clicking the line opens the release page.
+The first line under the mode buttons always says which version you are running (**Plugin: v1.13.0**). While an update is coming
+it says **Plugin: v1.13.0 (downloading v1.13.1...)**, and once the update is downloaded it turns bold black on **orange** and reads
+**v1.13.1 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
+After the restart the line shows **Plugin: v1.13.1 (updated)** in green for a short while. Clicking the line opens the release page.
 
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 
@@ -109,7 +110,7 @@ mining and flip to Trade to check a price, your mining stats keep counting.
 
 Just under the mode buttons, above the page itself, WNTB shows these lines, on every mode:
 
-- **Plugin**: the version you are running, for example `Plugin: v1.12.0` (see "Updating" for what it says during an update).
+- **Plugin**: the version you are running, for example `Plugin: v1.13.0` (see "Updating" for what it says during an update).
 - **Game mode**: For example *You are in Solo mode.*, *Open*, or *Private Group* with its name.
 - **Credits**: what you've earned or lost since you logged in, for example
   `+1,234,567 cr earned (+411,522 cr/hr)` or `-5,000 cr lost`. It is your balance now minus your balance at login.
@@ -143,7 +144,7 @@ If you'd rather set the height yourself, untick *Resize the EDMC window's height
 **Everything WNTB saves about your play belongs to one commander.** Nothing is shared between commanders, and switching
 commander in EDMC switches what every feature shows: Trade sessions and route start, Powerplay and BGS ledgers,
 Missions, Mining hotspots and the ground your Rhino has driven, the Boxel Survey position and finds, the Codex tally,
-Colonisation sites, Ship Builds, Organic Scanning and Powerplay history. Names are matched ignoring case, so
+Colonization sites, Ship Builds, Organic Scanning and Powerplay history. Names are matched ignoring case, so
 `BOCHEAUX` in the journal and `Bocheaux` in EDMC are the same commander.
 
 The few things that are not about a commander are the same for everyone: your Settings, the downloaded Codex catalog
@@ -176,7 +177,7 @@ adds what is new, so nothing is counted twice:
 | **Powerplay** | Merits and Control Points | The gap since EDMC last saw the journal (up to the scan depth in Settings) |
 | **BGS** | Your effect on factions this tick | From the start of the tick |
 | **Missions** | Active missions, kill progress, cargo progress, Community Goals | The last 2 weeks |
-| **Colonisation** | Deliveries (also counted into your history) and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most); the delivery history is also rebuilt once from every journal |
+| **Colonization** | Deliveries (also counted into your history) and sites docked at, and transfers to your fleet carrier (its FC column) | 14 days, or back to your oldest site (30 days at most); the delivery history is also rebuilt once from every journal |
 | **Codex Completionist** | Codex finds, for the active commander | Everything since the last find it counted (a one-time rebuild from all their journals after updating) |
 | **Boxel Survey** | Systems you arrived at, and the notable bodies and biological signals you scanned (systems new to the survey log; a system it already had keeps its scanned count) | The last 14 days |
 | **Mining** | The run in progress | The current journal file |
@@ -214,7 +215,7 @@ unused. Switches exist for individual features:
 | | |
 |---|---|
 | **Have a switch** | Auto-Honk, Discovery Alerts, Notable Bodies, Organic Scanning, Codex Completionist, Exploration Value (and its two online extras), BGS (and its tick detection), Landing Assist, Interdiction Warning, Flight Alerts, the Surface Compass, the Trade and Mining online lookups, and every overlay |
-| **Have no switch** | The core of Powerplay, Missions, Mining and Trade tracking, screenshot conversion, Inventory tracking, Materials and Engineering, the Expedition planner, Colonisation, Ship Builds, Boxel Survey, and the GEC and Canonn POI finders. Some of these (Boxel Survey, the POI finders) only fold away and do nothing until you press a button |
+| **Have no switch** | The core of Powerplay, Missions, Mining and Trade tracking, screenshot conversion, Inventory tracking, Materials and Engineering, the Expedition planner, Colonization, Ship Builds, Boxel Survey, and the GEC and Canonn POI finders. Some of these (Boxel Survey, the POI finders) only fold away and do nothing until you press a button |
 
 Most online lookups are off until you switch them on, or only run when you press a button. The exceptions are listed
 in [what goes on the internet](internet-and-privacy.md).
@@ -231,7 +232,7 @@ Switch to the mode first, then use the button listed here.
 
 | Window | Mode | How to open it |
 |---|---|---|
-| Powerplay Sessions (tabs: Current session, Systems, Cycles, Daily, History) | Powerplay | **SES** button (bottom row of the panel) |
+| Powerplay Sessions (tabs: Current session, Systems, Cycles, Daily, Megaships, History) | Powerplay | **SES** button (bottom row of the panel) |
 | Rare Goods Finder | Powerplay | **RARES** button, next to SES |
 | BGS Report | BGS | **REPORT** button |
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
@@ -239,6 +240,8 @@ Switch to the mode first, then use the button listed here.
 | Expedition | Exploration | **EXPEDITION** button in the Expedition section |
 | Marks (for the Surface Compass) | Exploration | **MARKS** button in the Compass section |
 | Watch list | Trade | **WATCH** button in the Watch list section |
+| Missions window (tabs: Active, By place) | Missions | **Missions window** button at the very bottom of the panel, or click a mission's card |
+| Source commodities | Missions | **Find sources** button at the very bottom of the panel (or **Sources** in the Missions window) |
 | Inventory | Field Ops | Click one of the **inventory bars** (there is no button) |
 | Materials | Field Ops | **MATERIALS** button in the Materials section |
 | Engineering (blueprints, wishlist, ship and Odyssey upgrade planners, engineers) | Field Ops | **BLUEPRINTS** button in the Materials section |
@@ -251,8 +254,8 @@ Switch to the mode first, then use the button listed here.
 Notes:
 
 - You don't need to be mining to open the Mining Book. It lists your saved hotspots either way.
-- In Missions, click **All** for a table of every active mission, or click a mission card for that mission's
-  details.
+- In Missions, the **Missions window** button is a table of every active mission with its progress, where to go and time left; you can pin
+  missions there so they show on the overlay. Clicking a mission card opens the window on that mission.
 - If you can't find the BGS or Codex Completionist sections, each can be switched off under
   **File → Settings → WNTB**. Both are on by default.
 
@@ -309,10 +312,13 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **Copy next system** | Copy the first destination to the clipboard | Trade (Routes page) |
 | **Sell** / **Buy** | Choose whether the search is for selling or buying | Trade (Market page) |
 | **Near me** / **Galaxy** | Best place to sell or buy, near you / anywhere | Trade (Market page) |
+| **Best picks** | Closest, best local, cheapest or highest anywhere, and a price within 10% of the best, for the commodity in the box | Trade (Market page) |
 | **Price finder** | The Mining PRICE finder, for any commodity | Trade (Market page) |
 | **REFRESH** | Ask Spansh for the best buy and sell price of each watched commodity near you (needs Trade lookups on) | Trade (Watch list section) |
 | **WATCH** | Open the Watch list window | Trade (Watch list section) |
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
+| **Missions window** | Open the window listing every active mission, with progress and pinning | Missions (bottom of every page) |
+| **Find sources** | Where to buy the cargo your Collect and Mining missions need (needs Trade lookups on) | Missions (bottom of every page) |
 | **SHIPS** | Manage ship builds | Field Ops |
 | **DASHBOARD** | Colonization sites | Colonization |
 | **OVERLAY** | Force the colonization shopping list onto the overlay (lit while on), press again to let go | Colonization |

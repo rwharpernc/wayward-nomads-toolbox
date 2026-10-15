@@ -87,6 +87,7 @@ eccentricity, fast orbit, fast rotation and wide ring.
 - If a body matches several rules you get **one banner**, for example "High-value body +2".
 - A body only alerts **once per rule**.
 - Banners take turns if several come at once.
+- The banner widens to fit the body's name and the rule's title, so a long catalog name shows in full (only text past about 56 characters is cut with "…").
 - The limits are fixed defaults.
 - If the banner lands on top of other overlay text, move it under **Settings → Overlays → Placement**.
 

@@ -5,7 +5,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **1.12.0** is the current release (2026-10-15, tag `v1.12.0`): the Missions window (replacing the All popup) with pinned missions, the Missions overlay card, Source commodities and Trade's Best picks, the Upgrade planner for Odyssey suits and weapons (with Read my gear), Megaship scans per Powerplay cycle, and the Ship planner's subtract-current-ship option. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
+- **1.13.0** is the current release (2026-10-15, tag `v1.13.0`): progress for source-and-return missions from the hold (`36/60 held`) with bars and colour by progress in the Missions window and on the overlay, Notable Bodies and Discovery cards that show full names, and the Missions overlay card putting a long place on its own line. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
+- **1.12.0** (2026-10-15, tag `v1.12.0`): the Missions window (replacing the All popup) with pinned missions, the Missions overlay card, Source commodities and Trade's Best picks, the Upgrade planner for Odyssey suits and weapons (with Read my gear), Megaship scans per Powerplay cycle, and the Ship planner's subtract-current-ship option. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
 - **1.11.0** (2026-10-15, tag `v1.11.0`): the Ship planner (an EDSY or Coriolis build onto the wishlist), the Engineers tab with where each engineer is and how to
   unlock them and a Bubble / Colonia filter, engineering data corrected from EDDiscovery's tables, Settings → General → Help (**Report an issue** and **Copy
   diagnostics**), BGS rebuilding a period that closed while EDMC was not running, and finished Colonization builds shown without the "Construction Site:" prefix.
@@ -19,14 +20,10 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
 
-## Unreleased on `master`
-
-- Missions window and overlay: progress for source-and-return missions from the hold (`36/60 held`), progress bars, and colour by progress (lime half or more, blue started). Unit-tested and run against the real Collect missions in the journal; the in-game check is in `docs/TODO.md`.
-
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.12.0 release. For a fix to a released version, cut a short branch from
-`master` (for example `bugfix/1.12.1`), and merge it back.
+There is one long-lived branch, `master`, and it matches the 1.13.0 release. For a fix to a released version, cut a short branch from
+`master` (for example `bugfix/1.13.1`), and merge it back.
 
 ## Testing
 

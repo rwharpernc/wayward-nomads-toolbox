@@ -3,10 +3,11 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.13.0 - 2026-10-15
 
 ### Fixed
 - **Notable-body alerts show their full text.** The card cut a body name at 24 characters and a title at 28 with an ellipsis, and sized its width from a plain character count, so capitals and digits ran past the edge. Real names and titles now show in full (the limits are only a guard against runaway text), and the card width is measured with capitals, digits and wide letters counted wider. The new-system and new-body discovery cards use the same measure.
+- **Missions overlay card no longer cuts a long place.** When a mission's title and place do not fit on one line, the place goes on a line under the title, in the same colour, so a long station or system name shows in full.
 
 ### Added
 - **Progress you can see, in colour.** The Missions window now shows progress for source-and-return (Collect) missions, which the game does not report until you hand cargo in: the tonnes of that commodity in your hold against what the mission asks for (`36/60 held`), updating as you buy and sell. Progress is also drawn as a small bar, and rows and overlay lines are coloured by it: green when ready, lime when half or more done, blue when started (time pressure, red and amber, still comes first). The overlay card colours massacres too, using the combined progress of a stack.

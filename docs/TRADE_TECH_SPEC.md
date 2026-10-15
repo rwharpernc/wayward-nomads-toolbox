@@ -496,6 +496,14 @@ charge less (buying) than the best station. Carriers can be hidden entirely in S
 arrival star, shown as `orbital Coriolis Starport, 1,200 ls` or `ground Planetary Outpost, 80 ls`
 (`trade_prices.describe_place`); a fleet carrier is just `carrier`.
 
+### 9a. Best picks
+
+The **Best picks** button on the Market page runs `source_picks.find` for the commodity in the box: four Spansh station searches (cheapest or highest anywhere, best
+local within the Near me radius, closest, and the nearest station within 10% of the galaxy's best price), a fifth for carriers when they are included, one after
+another with a 0.4 s pause. It uses the pad, ground-facility and carrier settings, asks for market data at most 7 days old, and falls back to the nearest station with any
+stock when none has the full amount (saying how much). A fleet carrier is never a pick; a better carrier price is a note. The results are held in memory only. The
+Missions mode's Source commodities window calls the same function for each commodity a mission needs; see `MISSIONS_TECH_SPEC.md` 10c and `TECHNICAL.md`.
+
 ## 10. Settings, config keys and files
 
 Settings > WNTB > Trade (a top-level tab between Mining and BGS).

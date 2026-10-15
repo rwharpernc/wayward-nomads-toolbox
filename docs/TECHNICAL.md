@@ -652,7 +652,7 @@ geometry and colors and is the default argument of every pure layout function, w
 exposes `block_rect(..., look)` so placement sees the size the card really has, and `Placement`/`slot_size` scale a slot's nominal
 size by the look. `tests/overlay_look_smoke.py` draws every display at 144 looks (scheme x text size x padding x spacing) and checks
 every text lies inside its card and that `block_rect` equals what was drawn. `text_width` pads every estimate by `WIDTH_PAD` (10%), because the
-overlay's own font sizing differs from one screen to the next and a box a little too wide looks fine where text past its edge does not. The text
+overlay's own font sizing differs from one screen to the next and a box a little too wide looks fine where text past its edge does not. `measured_width` is the stricter measure for the Discovery and Notable Bodies cards, whose text is capitals and catalog names: it counts capitals, digits and wide letters (M, W) as wider and spaces and narrow marks as narrower, and is never less than `text_width`. The Notable Bodies text limits (60, 56 and 70 characters) only guard against a runaway value; the card widens to fit. The text
 size is a setting again (`wntb_overlay_text_size`: Smaller, Default, Larger; it starts at Larger, the size the displays were fixed at on
 2026-10-12); the fourth step, Largest, was dropped because it is where text ran past its box. Interdiction keeps fixed red alert colors.
 

@@ -2,7 +2,7 @@
 
 Find your symptom below. Most problems are a missing setting or a missing permission.
 
-**Jump to:** [Nothing happens (settings that start off)](#nothing-happens-settings-that-start-off) · [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Trade](#trade) · [Still stuck?](#still-stuck)
+**Jump to:** [Nothing happens (settings that start off)](#nothing-happens-settings-that-start-off) · [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Missions](#missions) · [Trade](#trade) · [Still stuck?](#still-stuck)
 
 ## Nothing happens (settings that start off)
 
@@ -15,6 +15,7 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | Any card on your game screen | The feature's own **Enable** box, below, and the overlay itself must be running ([setup](../OVERLAY_SETUP.md)) | Settings → Overlays |
 | Landing Assist diagram | **Enable Landing**, then **Show on Overlay** (the diagram on the game screen is a separate tick, also off) | Settings → Overlays → Landing |
 | Interdiction warning | **Enable Interdiction Warning** | Settings → Overlays → Interdiction Warning |
+| The missions list on the game screen | **Enable** under Missions; pinned missions need the overlay too | Settings → Overlays → Missions |
 | Carrier jump and fuel alerts | **Enable Flight Alerts** | Settings → Overlays → Flight Alerts |
 | Discovery alerts | **Enable Discovery Alerts**, or the **D.A.** button | Settings → Overlays → Discovery |
 | Notable find banners | **Enable Notable Bodies alerts**, then pick the rules you want | Settings → Overlays → Notable Bodies |
@@ -24,6 +25,7 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | "Screenshot saved" message on the game screen | The overlay message option for screenshots | Settings → Field Ops → Screenshots |
 | The Colonization shopping list appears by itself at markets | **Also show the shopping list automatically**. Otherwise only the **OVERLAY** button on the COL page shows it | Settings → Overlays → Colonization |
 | Auto-Honk | **Enable Auto-Honk** or the **A.H.** button | Settings → Exploration → Auto-Honk |
+| **Find sources** (Missions) and **Best picks** (Trade) | **Enable Spansh trade lookups**; Find sources asks to turn it on when you press it | Settings → WNTB → Trade |
 | Routes and Market on the Trade page | **Enable Spansh trade lookups** ([details](#the-lookup-buttons-are-grayed-out-or-there-is-no-commodity-box)) | Settings → WNTB → Trade |
 | The **H.S.**, **PRICE** or **RES** buttons in Mining | **Enable Spansh Nearby Hotspot Finder**, **Enable Spansh Best Price Finder**, **Enable EDSM Ring Reserve Lookup** (each separately) | Settings → Mining |
 | ELW rarity or EDSM upload status in Exploration | The two options under Exploration Value | Settings → Exploration → Exploration Value |
@@ -74,7 +76,7 @@ back. Things to try if a figure is still off:
 - **Starting EDMC before the game.** WNTB reads the last commander from your newest journal a few seconds after
   start-up, so your saved data and panels appear without logging in. If you then log in as someone else, everything
   switches to them.
-- A feature can only look back a limited way (Missions two weeks, Colonisation, including its FC column, 14 to 30 days, Boxel Survey 14 days).
+- A feature can only look back a limited way (Missions two weeks, Colonization, including its FC column, 14 to 30 days, Boxel Survey 14 days).
   Older play with EDMC closed isn't found.
 
 ### My hotspots, survey finds or Codex tally are missing for a commander
@@ -151,6 +153,18 @@ screen edge**. The details are in [Setting up the overlay](../OVERLAY_SETUP.md).
 
 Open **Settings → Overlays → Appearance** and press **Show sample**. Cards are sized from an estimate of the text at the
 chosen size and given 10% extra width, so a card may still be tight on a small screen. Try a smaller **Text size** on the same tab.
+
+## Missions
+
+### A mission shows no progress
+
+- **Source and return (Collect) missions** get nothing from the game until you hand cargo in, so WNTB shows what is in your hold against what the mission asks for (`36/60 held`). It counts every tonne of that commodity aboard, whether or not you bought it for the mission, and it does not count cargo in a fleet carrier or another ship. With an empty hold it reads `0/60 held`.
+- **Massacre and settlement-raid kills** marked `~` are estimates, and wing and on-foot kills are often missing from the journal until the mission completes.
+- A mission accepted more than two weeks ago, before WNTB could see it, is not on the list at all. See [Missions](missions.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it).
+
+### Find sources does nothing, or says it does not know where I am
+
+It needs **Enable Spansh trade lookups** (Settings → WNTB → Trade); the window asks to turn it on. "From where I am" uses your current system from EDMC, then from your newest journal, so you do not need to jump first; if neither knows, it falls back to the turn-in system and says so. If none of your missions needs cargo to be found, the window says that too.
 
 ## Colonization
 

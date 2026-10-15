@@ -96,7 +96,7 @@ Combat > HIP 20019                  3d
   is red, under six hours amber, a finished one (ready to hand in) is always a clear green, whichever overlay colour scheme you use. Otherwise a line takes its colour from [progress](#progress): lime when a mission is half or more done, blue when it is started. These colours are fixed and do not follow the overlay colour scheme; time pressure (red, amber) comes before progress.
 - **Stacking:** massacres and settlement raids against one faction in one place, and any other missions with the same title for the same station, are one
   line with a count (`x3`). A cargo mission shows its progress (`12/40`).
-- **Long names** are cut short to keep the card one fixed width; the time left is always shown. The card's top-left corner never moves as lines come and go.
+- **Long names** keep the card one fixed width: when a mission's title and place do not fit on one line, the place goes on a line under it, and only a name longer than a whole line is cut short. The time left is always shown. The card's top-left corner never moves as lines come and go.
 - **Placement:** Settings → Overlays → Overlay Placement ("Missions list"). It starts in the bottom-right corner, above the screenshot messages; move it to
   any corner.
 - **Settings:** the number of mission lines to show (3 to 14, 8 by default), whether to show the next jump, and the red limit in minutes. **Test Card**

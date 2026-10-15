@@ -64,7 +64,7 @@ WNTB has one panel with eight **modes**. You click a button to switch between th
 | **Exploration** | Auto-honk, "first discovery" and notable-body alerts, a boxel survey tool, scan values and how far through a system you are, what your data sales actually paid, exobiology help, a lifetime tally of everything you've scanned, notes on systems and bodies, an expedition planner (named trips of stops, ticked off as you arrive), and a compass that points at a spot on the planet you are on. | [Exploration](docs/guide/exploration.md) |
 | **Mining** | Tracks space mining and surface (SRV) mining, and keeps your own catalog of mining hotspots. | [Mining](docs/guide/mining.md) |
 | **Trade** | Your trading profit after fuel and repairs, what fills your ship hold (cargo, mission, stolen, limpets), your fleet carrier's cargo space, tritium, location and orders, saved sessions in a Trade History window, Spansh lookups for the best trade routes and the best place to buy or sell, and a watch list of the commodities you care about with the best buy and sell price. | [Trade](docs/guide/trade.md) |
-| **Missions** | One view of every mission you have, with kill-progress bars for massacre missions and collect / delivery progress for cargo missions. | [Missions](docs/guide/missions.md) |
+| **Missions** | One view of every mission you have, with kill-progress bars for massacre missions and collect / delivery progress for cargo missions, a Missions window to see them all and pin some to the overlay, and where to buy the cargo they need. | [Missions](docs/guide/missions.md) |
 | **Field Ops** | Screenshots, your backpack/locker/cargo, the engineering materials you hold, a blueprint browser with a wishlist and shopping list, a finder for the closest material traders, and saved ship builds. | [Field Ops](docs/guide/field-ops.md) |
 | **Colonization** | The project you are building now, your colonization history, and a window with every site's shopping list, where to buy, and optional links and sharing with Raven Colonial. | [Colonization](docs/guide/colonization.md) |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. | [BGS](docs/guide/bgs.md) |
@@ -80,7 +80,7 @@ and Canonn POI finders) can only be folded away, not switched off.
 to the commander you are playing; nothing is shared between commanders.
 
 **Playing with EDMC closed is fine.** When EDMC starts, WNTB reads the recent journal files and catches up on what it
-missed (trades, missions, colonisation deliveries, Codex finds, merits and more), counting nothing twice. Getting
+missed (trades, missions, colonization deliveries, Codex finds, merits and more), counting nothing twice. Getting
 started has a table of what each feature catches up on and how far back.
 
 **Full disclosure.** WNTB works from the game's journal files plus the other sources described in
@@ -94,7 +94,7 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0 and 1.12.0 have been
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0, 1.12.0 and 1.13.0 have been
 > tried on Windows only. The newest parts (the Missions window, the Missions overlay and Source commodities, Best picks, the Upgrade planner, Megaships, the Engineering window's Ship planner and Engineers tab, the Materials and Engineering work, the material trader finder, the
 > Expedition planner and the Help buttons) have had less time in the game than the rest, so expect a few small fixes in a later update. If something looks off,
 > please [report it](#getting-help) (Settings has a **Report an issue** button that does most of the work).
@@ -119,7 +119,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 ### Powerplay ([guide](docs/guide/powerplay.md))
 
 - **Live merits and Control Points** for your pledged Power: this system, this session and the whole Powerplay cycle ([Using it](docs/guide/powerplay.md#using-it)).
-- **Sessions window** (SES) with tabs for the current session, systems, cycles, days and history ([The Sessions window](docs/guide/powerplay.md#the-sessions-window)).
+- **Sessions window** (SES) with tabs for the current session, systems, cycles, days, megaships and history ([The Sessions window](docs/guide/powerplay.md#the-sessions-window)).
 - **Catch-up from your journals**, so playing without EDMC running does not lose a cycle, and **RESCAN** to rebuild ([Catching up](docs/guide/powerplay.md#catching-up-from-your-journals)).
 - **Megaships**: the megaships whose datalink you scanned this cycle, with a count and where ([Megaships](docs/guide/powerplay.md#megaships)).
 - **Rare Goods Finder** (RARES): the rare commodities closest to you, with pad size and which Power controls the system ([Rare Goods Finder](docs/guide/powerplay.md#rare-goods-finder)).
@@ -159,8 +159,8 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 ### Missions ([guide](docs/guide/missions.md))
 
 - **Every mission on one view**, in pages by type, with grouped kill-progress bars for massacre and settlement-raid missions and one card per mission otherwise ([Using it](docs/guide/missions.md#using-it)).
-- **Missions window** (button at the bottom of the panel): every mission with progress, reward and time left, grouped by where to hand it in, with a detail strip and **pinned missions** that stay at the top of the overlay card ([The Missions window](docs/guide/missions.md#the-missions-window)).
-- **Missions overlay card**: the missions for the system you are in and the one you are jumping to first, ready ones in green, in a corner of the screen ([Missions on the overlay](docs/guide/missions.md#missions-on-the-overlay)).
+- **Missions window** (button at the bottom of the panel): every mission with progress (including cargo held for source-and-return missions) shown as a bar and in colour, reward and time left, grouped by where to hand it in, with a detail strip and **pinned missions** that stay at the top of the overlay card ([The Missions window](docs/guide/missions.md#the-missions-window)).
+- **Missions overlay card**: the missions for the system you are in and the one you are jumping to first, ready ones in green and the rest coloured by time left and progress, in a corner of the screen ([Missions on the overlay](docs/guide/missions.md#missions-on-the-overlay)).
 - **Source commodities**: where to buy the cargo your Collect and Mining missions need, with the closest, best local, cheapest and a recommended station ([Source commodities](docs/guide/missions.md#source-commodities)).
 - **Community Goals** and what they paid you.
 
