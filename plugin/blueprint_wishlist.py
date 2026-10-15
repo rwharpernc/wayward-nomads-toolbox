@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from . import blueprints, commander_data
 
@@ -159,6 +159,39 @@ class WishBook:
         self._save()
         self._changed()
         return item
+
+    def add_many(self, entries: List[Tuple[str, int]]) -> int:
+        """Put several blueprints on the list at once (a ship plan), all or nothing: every entry is checked first and, if any would break a limit
+        (no commander, a blueprint not in the table, too many entries, too many crafts), nothing is added and a WishError says why. A blueprint
+        already on the list has the crafts added to its own. One save and one redraw for the lot. Returns how many entries were added or changed."""
+        if not self.ready:
+            raise WishError("The wishlist is kept per commander and no commander is known yet. Log in first.")
+        crafts_by_id: Dict[str, int] = {}
+        for blueprint_id, crafts in entries:
+            if blueprints.get(blueprint_id) is None:
+                raise WishError("A blueprint in the plan is not in the table.")
+            crafts_by_id[blueprint_id] = crafts_by_id.get(blueprint_id, 0) + self._checked_crafts(crafts)
+        new = [i for i in crafts_by_id if self.get(i) is None]
+        if len(self._items) + len(new) > MAX_ITEMS:
+            raise WishError(f"There is room for {MAX_ITEMS} blueprints and this adds {len(new)} to the {len(self._items)} on the list. "
+                            "Remove some first, or plan fewer modules.")
+        for blueprint_id, crafts in crafts_by_id.items():
+            old = self.get(blueprint_id)
+            if old is not None and old.crafts + crafts > MAX_CRAFTS:
+                raise WishError(f"A blueprint can be crafted at most {MAX_CRAFTS} times on the list; {blueprint_id.split('|')[1]} would pass that.")
+            if old is None and crafts > MAX_CRAFTS:
+                raise WishError(f"A blueprint can be crafted at most {MAX_CRAFTS} times on the list; {blueprint_id.split('|')[1]} would pass that.")
+        for blueprint_id, crafts in crafts_by_id.items():
+            old = self.get(blueprint_id)
+            item = WishItem(blueprint_id, crafts + (old.crafts if old is not None else 0))
+            if old is None:
+                self._items.append(item)
+            else:
+                self._items[self._items.index(old)] = item
+        if crafts_by_id:
+            self._save()
+            self._changed()
+        return len(crafts_by_id)
 
     def set_crafts(self, blueprint_id: str, crafts: int) -> WishItem:
         old = self.get(blueprint_id)
