@@ -8,7 +8,7 @@ the panel row is `materials_panel.py` and the window `materials_window.py`.
 count; the others add or take away. If WNTB starts in the middle of a session, it takes EDMC's own running totals once (the `Raw`,
 `Manufactured` and `Encoded` entries of the state EDMC passes to plugins) so the counts are right before the next login list arrives.
 
-**Names, types and grades** come from the FDevIDs material table (`materials_data.py`): 137 materials, each with a type and a grade from 1
+**Names, types and grades** come from the FDevIDs material table (`materials_data.py`): 146 materials, each with a type and a grade from 1
 (very common) to 5 (very rare). The game holds at most 300, 250, 200, 150 and 100 of a grade 1 to 5 material, so a count is never taken above
 that, and `full()` lists what is at the limit. A material the table does not know (a new one) is still tracked, under the name and category
 the game gave, with no grade and no limit.

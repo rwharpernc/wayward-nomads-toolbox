@@ -17,8 +17,8 @@ class DataTests(unittest.TestCase):
     def test_the_whole_table_is_there(self):
         from plugin.blueprints_data import BLUEPRINT_ROWS
         from plugin.blueprints_extra import EXTRA_ROWS
-        self.assertEqual(len(BLUEPRINT_ROWS), 1172)
-        self.assertEqual(len(B.ALL), 1172 + len(EXTRA_ROWS))
+        self.assertEqual(len(BLUEPRINT_ROWS), 1176)
+        self.assertEqual(len(B.ALL), 1176 + len(EXTRA_ROWS))
         self.assertEqual(len({b.id for b in B.ALL}), len(B.ALL))    # no two blueprints share an id
 
     def test_every_blueprint_has_ingredients_with_counts(self):
@@ -100,6 +100,62 @@ class BrowseTests(unittest.TestCase):
 
     def test_an_unlock_is_recognised(self):
         self.assertTrue(next(b for b in B.ALL if b.type == "Unlock").is_unlock)
+
+
+class EdddtAlignmentTests(unittest.TestCase):
+    """The corrections and additions made to match ED-DDT's tables (EDDiscovery's data), each pinned."""
+
+    @staticmethod
+    def _row(kind, name, grade):
+        return next(b for b in B.ALL if (b.type, b.name, b.grade) == (kind, name, grade))
+
+    @staticmethod
+    def _counts(blueprint):
+        return {i.name: i.count for i in blueprint.ingredients}
+
+    def test_five_corrected_synthesis_recipes(self):
+        self.assertEqual(self._counts(self._row("AX Remote Flak Munitions", "+10% Damage Boost", 3))["Weapon Parts"], 1)
+        self.assertNotIn("Wreckage Components", self._counts(self._row("AX Remote Flak Munitions", "+10% Damage Boost", 3)))
+        self.assertEqual(self._counts(self._row("Chaff Launcher", "100% Refill, +2 Seconds Duration", 3))["Thermic Alloys"], 1)
+        flechette = self._counts(self._row("Flechette Launcher Munitions", "+10% Damage Boost", 3))
+        self.assertEqual((flechette["Electrochemical Arrays"], flechette["Mechanical Components"]), (5, 9))
+        self.assertEqual(self._counts(self._row("Guardian Gauss Cannon Munitions", "None", 1))["Guardian Power Conduit"], 2)
+        plasma = self._counts(self._row("Guardian Plasma Charger Munitions", "+30% Damage Boost", 3))
+        self.assertEqual((plasma["Phase Alloys"], plasma["Guardian Power Cell"]), (6, 4))
+
+    def test_seven_new_synthesis_rows(self):
+        for kind, name, grade in (("Caustic Sinks", "Standard", 2), ("Configurable Small Calibre Munitions", "Basic", 1),
+                                  ("Configurable Small Calibre Munitions", "Standard", 2), ("Mining Rig", "Basic", 1),
+                                  ("Nanite Munitions", "Basic", 1), ("Seismic Charge Munitions", "Basic", 1),
+                                  ("Sub-Surface Displacement Munitions", "Basic", 1)):
+            row = self._row(kind, name, grade)
+            self.assertEqual(row.engineers, ("Synthesis",))        # the data's "@Synthesis" stand-in, shown without the @
+        self.assertEqual(self._counts(self._row("Caustic Sinks", "Standard", 2)),
+                         {"Chemical Storage Units": 1, "Galvanising Alloys": 1, "Caustic Shard": 4, "Corrosive Mechanisms": 2})
+
+    def test_the_duplicate_higher_accuracy_rows_are_gone(self):
+        self.assertFalse([b for b in B.ALL if b.name.startswith("Higher Accuracy")])
+        self.assertEqual(len([b for b in B.ALL if b.name.startswith("Improved Hip Fire Accuracy")]), 3)
+
+    def test_the_colonia_engineers_offer_suit_and_weapon_upgrades(self):
+        by_engineer = {}
+        for b in B.ALL:
+            if b.is_unlock:
+                continue
+            for engineer in b.engineers:
+                by_engineer.setdefault(engineer, []).append(b)
+        self.assertEqual({k: len(by_engineer[k]) for k in ("Baltanos", "Eleanor Bresa", "Rosa Dayette", "Yi Shen")},
+                         {"Baltanos": 9, "Eleanor Bresa": 7, "Rosa Dayette": 9, "Yi Shen": 6})
+        for engineer in ("Baltanos", "Eleanor Bresa", "Rosa Dayette", "Yi Shen"):
+            self.assertTrue(all(b.type in ("Suit", "Weapon") for b in by_engineer[engineer]), engineer)
+        self.assertIn("Eleanor Bresa", self._row("Suit", "Added melee damage", 0).engineers)
+
+    def test_the_thargoid_war_materials_resolve(self):
+        for name in ("Caustic Shard", "Corrosive Mechanisms", "Heat Exposure Specimen", "Phasing Membrane Residue"):
+            ingredient = next(i for b in B.ALL for i in b.ingredients if i.name == name)
+            self.assertEqual(ingredient.kind, B.SHIP, name)
+            self.assertIn(ingredient.key, CATALOG, name)
+        self.assertEqual(B.unresolved(), [])
 
 
 if __name__ == "__main__":

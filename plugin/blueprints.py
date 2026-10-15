@@ -13,7 +13,7 @@ Broker", "Bartender" and "Merchant". They need no unlocking, so they always coun
 Each ingredient has a kind, because the counts live in different places: `SHIP` (Raw, Manufactured and Encoded materials, key as in
 `materials.py`), `ODYSSEY` (micro-resources, key as in the Inventory) and `COMMODITY` (a Technology Broker unlock needs trade goods; not
 counted). The data is older than the game: blueprints or materials added since March 2024 may be missing, and the guide says so. The few entries
-added by hand (the Colonia engineers, `blueprints_extra.py`) are marked there with their sources."""
+added by hand (Yi Shen's unlock, `blueprints_extra.py`) are marked there with their sources."""
 from __future__ import annotations
 
 import re

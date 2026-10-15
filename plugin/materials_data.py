@@ -4,6 +4,10 @@ AUTO-GENERATED - do not hand-edit. Regenerate by re-importing every row from:
   https://raw.githubusercontent.com/EDCD/FDevIDs/master/material.csv
 (its `rarity` column is the material's grade, 1 very common to 5 very rare; its `type` is Raw, Manufactured or Encoded). The journal names
 a material by its symbol in lower case ("iron", "gridresistors"), which is the key used here. Imported 2026-10-13, 137 rows.
+
+Nine Thargoid-war and chip materials (`tg_*`, `unknowncorechip`) were added 2026-10-15, the same ones ED-DDT carries; their names, types and
+grades agree between elite-intel's material table and EDDiscovery's item list (Apache-2.0; notice in THIRD-PARTY-NOTICES.md). They are game
+facts. That makes 146 rows. Re-importing the CSV would drop these nine, so add them back.
 """
 
 from __future__ import annotations
@@ -149,4 +153,13 @@ MATERIAL_ROWS: Tuple[Tuple[str, str, str, int], ...] = (
     ('Guardian_VesselBlueprint', 'Guardian Vessel Blueprint Segment', 'Encoded', 5),
     ('EmbeddedFirmware', 'Modified Embedded Firmware', 'Encoded', 5),
     ('ShieldFrequencyData', 'Peculiar Shield Frequency Data', 'Encoded', 5),
+    ('tg_interdictiondata', 'Thargoid Interdiction Telemetry', 'Encoded', 3),
+    ('tg_shutdowndata', 'Massive Energy Surge Analytics', 'Encoded', 3),
+    ('tg_causticgeneratorparts', 'Corrosive Mechanisms', 'Manufactured', 3),
+    ('tg_causticshard', 'Caustic Shard', 'Manufactured', 2),
+    ('tg_causticcrystal', 'Caustic Crystal', 'Manufactured', 4),
+    ('tg_abrasion01', 'Heat Exposure Specimen', 'Manufactured', 5),
+    ('tg_abrasion02', 'Phasing Membrane Residue', 'Manufactured', 3),
+    ('tg_abrasion03', 'Hardened Surface Fragments', 'Manufactured', 1),
+    ('unknowncorechip', 'Tactical Core Chip', 'Manufactured', 2),
 )

@@ -36,7 +36,7 @@ LOGIN = {"event": "Materials",
 
 class TableTests(unittest.TestCase):
     def test_every_material_has_a_known_type_and_grade(self):
-        self.assertEqual(len(M.CATALOG), 137)
+        self.assertEqual(len(M.CATALOG), 146)
         for material in M.CATALOG.values():
             self.assertIn(material.type, M.TYPES)
             self.assertIn(material.grade, M.CAPS)

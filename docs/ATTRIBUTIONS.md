@@ -77,16 +77,19 @@ being listed doesn't mean a tool was the first or the only one.
 - **Engineering materials** (what you hold of each Raw, Manufactured and Encoded material, with its grade and limit):
   [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper) (source MIT),
   [EDEngineer](https://github.com/msarilar/EDEngineer) (MIT) and EDDiscovery. WNTB's is its own, built from the journal's events, and no
-  code was taken from any of them. (The one exception to "nothing taken" is the Colonia engineers' unlock steps, below.) Material names, types and grades come from
+  code was taken from any of them. (What is taken is data, below.) Material names, types and grades come from
   **[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs)** (`material.csv`; see Data below).
 - **Engineering blueprints** (what each blueprint takes and where its ingredients are found): the recipes and the "where found" text are a
   trimmed copy of [EDEngineer](https://github.com/msarilar/EDEngineer)'s `blueprints.json` and `entryData.json` (MIT; notice in
   `THIRD-PARTY-NOTICES.md`), compiled by its contributors from the game. That project is archived, its data last changed in March 2024, and newer
   game content may be missing. [Elite Dangerous Odyssey Materials Helper](https://github.com/jixxed/ed-odyssey-materials-helper) shaped the idea.
-  The four Colonia on-foot engineers (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen), whom that table lacks, are added by hand in
-  `plugin/blueprints_extra.py`: their unlock steps and the items for Yi Shen are game facts as stated in the Materials Helper's English text
-  (MIT) and in the engineering checklist on [edblackbox.com](https://edblackbox.com/guides/engineering/engineering-manuals/checklist.html),
-  which also gives their places (unconfirmed there); a Frontier forum thread agrees on the steps. No code was taken, and none of it is from Frontier.
+  [EDDiscovery](https://github.com/EDDiscovery/EliteDangerousCore) (Apache-2.0; notice in `THIRD-PARTY-NOTICES.md`) corrected five synthesis recipes,
+  supplied seven synthesis families and nine Thargoid-war and chip materials, and its engineer table is `plugin/engineers_data.py` (each engineer's
+  place and how to find, be invited by and unlock them). The four Colonia on-foot engineers (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen), whom
+  EDEngineer's table lacks, are in that table; which suit and weapon upgrades each offers comes from EDCoPilot's engineer list (read for facts only, as
+  in the author's ED-DDT), and Yi Shen's three sets of referral items are game facts as stated in the Materials Helper's English text (MIT) and the
+  engineering checklist on [edblackbox.com](https://edblackbox.com/guides/engineering/engineering-manuals/checklist.html). The grade thresholds for
+  ship engineers are facts from the community wiki. No code was taken, and none of it is from Frontier.
 - **Material trader finder:** [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s material trader finder shaped the idea. WNTB's is its own,
   and no code was taken. The stations are [Spansh](https://spansh.co.uk/)'s station search, filtered by its material trader field.
 - **Odyssey inventory tracking:** EDMC's own ship locker data, ED Recon and the Odyssey Materials
