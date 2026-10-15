@@ -22,7 +22,7 @@ from config import appname, config
 
 from . import blueprint_needs as needs_mod
 from . import blueprint_wishlist as wishlist_mod
-from . import blueprints, blueprints_extra, engineers
+from . import blueprints, engineers
 from .uikit import palette as P
 from .uikit import style
 from .uikit.shell import WindowShell
@@ -41,7 +41,6 @@ SEARCH_DELAY_MS = 250  # typing in the search box refills the table once it paus
 CONFIRM_MS = 5000      # how long a first press of Remove or Clear waits for the second
 FOUND_CHARS = 80
 
-ON_FOOT_TYPES = ("Suit", "Weapon")   # the table lacks the Colonia engineers, who also offer these
 KIND_LABELS = {blueprints.SHIP: "Ship material", blueprints.ODYSSEY: "On foot", blueprints.COMMODITY: "Commodity"}
 
 _window: Optional["BlueprintsWindow"] = None
@@ -67,10 +66,11 @@ _WISH_COLUMNS = (
     Column("who", "Who can do it", 250, max_chars=60),
 )
 _ENGINEER_COLUMNS = (
-    Column("engineer", "Engineer", 190, max_chars=34),
-    Column("standing", "You are", 150, max_chars=30),
-    Column("offers", "Offers", 90, anchor="e"),
-    Column("unlock", "To unlock", 480, stretch=True, max_chars=170),
+    Column("engineer", "Engineer", 170, max_chars=34),
+    Column("standing", "You are", 130, max_chars=30),
+    Column("offers", "Offers", 60, anchor="e"),
+    Column("where", "Where", 250, max_chars=60),
+    Column("unlock", "To unlock", 340, stretch=True, max_chars=170),
 )
 _SHOPPING_COLUMNS = (
     Column("ingredient", "Ingredient", 230, stretch=True, max_chars=44),
@@ -124,8 +124,6 @@ def who_can(blueprint: blueprints.Blueprint, book: Optional[engineers.EngineerBo
     unlocked = [e for e in blueprints.real_engineers(blueprint) if (s := book.standing(e)) is not None and s.unlocked]
     if free or unlocked:
         return clip(", ".join(free + unlocked), 60)
-    if blueprint.type in ON_FOOT_TYPES:
-        return clip("No listed engineer unlocked (Colonia ones may offer it)", 60)
     return clip("No engineer unlocked yet", 60)
 
 
@@ -409,17 +407,20 @@ class BlueprintsWindow:
         FlatButton(controls, "Put their unlock on the wishlist", self._add_unlock).pack(side="left", padx=(P.PAD, 0))
         self._engineer_note = tk.Label(pad, text="", fg=P.MUTED, bg=P.PANE, anchor="w", justify="left", wraplength=980)
         self._engineer_note.pack(fill="x", pady=(P.PAD_SM, 0))
+        tk.Label(pad, text="Ship engineers open higher grades by the net profit you sell at their workshop: " + engineers.grade_profit_text()
+                 + ". On-foot engineers have no grades.", fg=P.MUTED, bg=P.PANE, anchor="w", justify="left",
+                 wraplength=980).pack(fill="x", pady=(P.PAD_SM, 0))
         self._picked_engineer: Optional[str] = None
 
     def _engineer_rows(self) -> List[tuple]:
-        """(name, row values) for every engineer the table or the journal knows, unlocked ones first, then A to Z."""
+        """(name, row values) for every engineer the tables or the journal know, unlocked ones first, then A to Z."""
         names: dict = {}
         for name in blueprints.engineer_names():
             names[engineers.name_key(name)] = name
+        for key, info in engineers.INFO.items():
+            names.setdefault(key, info.name)          # everyone in the location table is listed, even before the game names them
         for standing in self._engineers.all():
             names.setdefault(engineers.name_key(standing.name), standing.name)
-        for key, note in blueprints_extra.NOTES.items():
-            names.setdefault(key, note.name)          # the Colonia engineers are always listed, even before the game names them
         offers: dict = {}
         for b in blueprints.ALL:
             if b.is_unlock:
@@ -430,20 +431,27 @@ class BlueprintsWindow:
         rows = []
         for key, name in names.items():
             standing = self._engineers.standing(name)
+            info = engineers.info(name)
             unlock = blueprints.unlock_for(name, key=engineers.name_key)
-            note = blueprints_extra.NOTES.get(key)
             items = "; ".join(self._unlock_part(n) for n in needs_mod.needs_for(unlock, 1, self._holdings())) if unlock is not None else ""
             if standing is not None and standing.unlocked:
                 text = "-"
-            elif note is not None:
-                text = clip(note.unlock + (f" Items: {items}" if items else ""), 170)
+            elif info is not None:
+                steps = []
+                if info.invite and not (standing is not None and standing.progress == engineers.INVITED):
+                    steps.append(f"Invite: {info.invite}")
+                if info.unlock:
+                    steps.append(f"Unlock: {info.unlock}")
+                if items:
+                    steps.append(f"Items: {items}")
+                text = clip(" ".join(steps), 170) if steps else "-"
             elif unlock is not None:
                 text = clip(items, 170)
             else:
                 text = "not in the table"
-            offered = offers.get(key, 0) or ("suit, weapon" if note is not None else "-")
-            rows.append((standing is not None and standing.unlocked, name, (name, standing.describe() if standing is not None
-                         else ("not known yet" if known else "?"), offered, text)))
+            rows.append((standing is not None and standing.unlocked, name, (
+                name, standing.describe() if standing is not None else ("not known yet" if known else "?"),
+                offers.get(key, 0) or "-", info.place() if info is not None else "-", text)))
         rows.sort(key=lambda r: (not r[0], r[1].casefold()))
         return [(name, values) for _unlocked, name, values in rows]
 
@@ -459,22 +467,43 @@ class BlueprintsWindow:
             self._engineer_table.insert(name, values)
         if keep and self._engineer_table.exists(keep):
             self._engineer_table.select(keep)
-        if self._picked_engineer and blueprints_extra.NOTES.get(engineers.name_key(self._picked_engineer)):
-            pass                          # the note for the picked Colonia engineer stays
+        if self._picked_engineer:
+            self._pick_engineer(self._picked_engineer)           # keep the picked engineer's details
         elif self._engineers.has_data:
-            self._engineer_note.configure(text="Standings come from the journal's engineer list, sent at login and when one changes. Unlock needs are from "
-                                               "the blueprint table (March 2024): an invitation may also need something the table does not list.")
+            self._engineer_note.configure(text="Standings come from the journal's engineer list, sent at login and when one changes. Places and steps are "
+                                               "from EDDiscovery's table, and what each one offers from the blueprint table (March 2024): they may lag the "
+                                               "game. Select an engineer for the details.")
         else:
-            self._engineer_note.configure(text="The game has not listed your engineers yet. Log in to the game and they appear here.")
+            self._engineer_note.configure(text="The game has not listed your engineers yet. Log in to the game and they appear here. Select an engineer "
+                                               "for where they are and how to unlock them.")
 
     def _pick_engineer(self, name: str) -> None:
         self._picked_engineer = name
-        note = blueprints_extra.NOTES.get(engineers.name_key(name))
-        if note is not None:
-            self._engineer_note.configure(text=clip(
-                f"{name}: a Colonia on-foot engineer (suit and weapon modifications; which ones is not listed). Where: {note.where}. "
-                f"To unlock: {note.unlock}{' Hand each of the other three their items (see the table).' if blueprints.unlock_for(name, key=engineers.name_key) else ''} Where and the steps are from {note.source} They were not confirmed in the game, and "
-                f"the places are from one guide.", 520))
+        self._engineer_note.configure(text=self._engineer_detail(name))
+
+    def _engineer_detail(self, name: str) -> str:
+        """Everything the tables hold about one engineer, as a paragraph."""
+        info = engineers.info(name)
+        if info is None:
+            return clip(f"{name}: not in the location table. What they offer is in the blueprint table.", 900)
+        parts = [f"{info.name}: {info.place()}."]
+        if info.find:
+            parts.append(f"Find: {info.find}")
+        if info.invite:
+            parts.append(f"Invited by: {info.invite}")
+        if info.unlock:
+            parts.append(f"Unlock: {info.unlock}")
+        if info.standing:
+            parts.append(f"Standing: {info.standing}")
+        unlock = blueprints.unlock_for(name, key=engineers.name_key)
+        if unlock is not None:
+            parts.append("Hand each of the other three their items (see the table).")
+        if info.on_foot:
+            parts.append("On-foot engineer: no ranks; every upgrade is offered once you have met them.")
+        quirk = engineers.QUIRKS.get(engineers.name_key(name))
+        if quirk:
+            parts.append(quirk)
+        return clip(" ".join(p if p.endswith((".", "!", "?")) else p + "." for p in parts), 900)
 
     def _show_engineer_blueprints(self) -> None:
         if self._picked_engineer is None:
@@ -491,8 +520,8 @@ class BlueprintsWindow:
             return
         unlock = blueprints.unlock_for(self._picked_engineer, key=engineers.name_key)
         if unlock is None:
-            note = blueprints_extra.NOTES.get(engineers.name_key(self._picked_engineer))
-            self._shell.set_status("Their unlock is an action, not items, so there is nothing to put on the wishlist." if note is not None
+            info = engineers.info(self._picked_engineer)
+            self._shell.set_status("Their unlock is an action, not items, so there is nothing to put on the wishlist." if info is not None and info.unlock
                                    else "The table has no unlock for that engineer.")
             return
         self._add_blueprint(unlock.id, 1)

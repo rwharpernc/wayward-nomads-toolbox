@@ -179,9 +179,12 @@ class TableHelperTests(unittest.TestCase):
                 self.assertNotIn(name, B.STAND_IN_NAMES)
             self.assertFalse(any(e.startswith("@") for e in blueprint.engineers), blueprint.id)
 
-    def test_the_colonia_engineers_the_table_lacked(self):
-        from plugin.blueprints_extra import NOTES
-        self.assertEqual(set(NOTES), {"baltanos", "eleanor bresa", "rosa dayette", "yi shen"})
+    def test_the_colonia_engineers(self):
+        colonia = {"baltanos", "eleanor bresa", "rosa dayette", "yi shen"}
+        self.assertTrue(colonia <= set(E.INFO))
+        self.assertTrue(all(E.INFO[k].on_foot for k in colonia))
+        offered = {E.name_key(e) for b in B.ALL if not b.is_unlock for e in B.real_engineers(b)}
+        self.assertTrue(colonia <= offered)         # they offer suit and weapon upgrades
         unlock = B.unlock_for("Yi Shen")
         self.assertEqual([(i.name, i.count, i.kind, i.key) for i in unlock.ingredients],
                          [("Faction Associates", 10, B.ODYSSEY, "factionassociates"), ("Digital Designs", 10, B.ODYSSEY, "digitaldesigns"),
@@ -189,7 +192,7 @@ class TableHelperTests(unittest.TestCase):
         self.assertEqual(B.unresolved(), [])
         for name in ("Baltanos", "Eleanor Bresa", "Rosa Dayette"):
             self.assertIsNone(B.unlock_for(name))       # their unlocks are actions, not items
-            self.assertIn(E.name_key(name), NOTES)
+            self.assertTrue(E.info(name).unlock)
 
     def test_an_engineers_unlock_row(self):
         unlock = B.unlock_for("Bill Turner")
@@ -198,6 +201,35 @@ class TableHelperTests(unittest.TestCase):
         self.assertIsNone(B.unlock_for("Nobody At All"))
         self.assertIs(B.unlock_for("FELICITY  farseer", key=E.name_key), B.unlock_for("Felicity Farseer"))
         self.assertIsNotNone(B.unlock_for("FELICITY  farseer", key=E.name_key))
+
+
+class LocationTableTests(unittest.TestCase):
+    def test_every_engineer_in_the_blueprints_has_a_place_and_the_other_way_round(self):
+        blueprint_names = {E.name_key(n) for n in B.engineer_names()}
+        self.assertEqual(blueprint_names, set(E.INFO))
+        self.assertEqual(len(E.INFO), 38)
+
+    def test_the_journals_nickname_form_finds_the_entry(self):
+        info = E.info("Tod 'The Blaster' McQuinn")
+        self.assertEqual((info.system, info.base), ("Wolf 397", "Trophy Camp"))
+        self.assertIsNone(E.info("Nobody"))
+        self.assertIsNone(E.info(None))
+
+    def test_places_and_flags(self):
+        self.assertEqual(E.info("Felicity Farseer").place(), "Farseer Inc, Deciat 6 A")
+        self.assertIn("on foot", E.info("Domino Green").place())
+        self.assertFalse(E.info("Felicity Farseer").on_foot)
+        self.assertTrue(E.info("Eleanor Bresa").on_foot)
+        self.assertIn("permit needed", E.info("Bill Turner").place())
+        self.assertEqual(len(E.info("Bill Turner").coords), 3)
+
+    def test_yarden_bonds_meeting_requirement_is_five_plans(self):
+        self.assertIn("5 Smear campaign plans", E.info("Yarden Bond").invite)
+
+    def test_the_grade_thresholds_and_the_one_quirk(self):
+        self.assertEqual(E.GRADE_PROFIT_CREDITS, ((2, 500_000), (3, 2_000_000), (4, 8_000_000), (5, 16_000_000)))
+        self.assertEqual(E.grade_profit_text(), "grade 2 at 500,000 cr, grade 3 at 2,000,000 cr, grade 4 at 8,000,000 cr, grade 5 at 16,000,000 cr")
+        self.assertIn("terra velasquez", E.QUIRKS)
 
 
 if __name__ == "__main__":

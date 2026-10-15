@@ -11,8 +11,10 @@ checked); an engineer who ranks up is unlocked, so it is read as `Unlocked` at t
 `Barred`; neither was seen, `Acquainted` is read as `Known` and `Barred` is kept as it is.
 
 **Names.** The journal writes `Tod 'The Blaster' McQuinn` where the blueprint table writes `Tod McQuinn`, so engineers are matched by a key that
-drops a nickname in quotes, case and spacing (`name_key`). Three engineers in the journal (Baltanos, Eleanor Bresa, Rosa Dayette) are not in the
-blueprint table, which is older than the game; they are listed with their standing and no blueprints."""
+drops a nickname in quotes, case and spacing (`name_key`).
+
+**Where each engineer is** and how to be invited by and unlock them is `engineers_data.py` (EDDiscovery's table, as ED-DDT imported it), read through
+`info(name)`. `GRADE_PROFIT_CREDITS` and `QUIRKS` are the facts the community wiki documents about the ship engineers' grades and one known bug."""
 from __future__ import annotations
 
 import logging
@@ -21,7 +23,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
-from . import commander_data
+from . import commander_data, engineers_data
 
 try:
     from config import appname
@@ -61,6 +63,50 @@ class Standing:
         if self.unlocked and self.rank:
             return f"Unlocked, rank {self.rank}" + (f" ({self.rank_progress}%)" if self.rank < 5 and self.rank_progress else "")
         return self.progress
+
+
+@dataclass(frozen=True)
+class Info:
+    """Where an engineer is and how to unlock them (one row of `engineers_data.ENGINEER_ROWS`)."""
+    name: str
+    system: str
+    base: str
+    coords: tuple            # (x, y, z) in light years
+    body: str                # planet or orbit, e.g. "3 A"; may be empty
+    find: str                # how to learn where they are
+    invite: str              # what gets you an invitation
+    unlock: str              # what unlocks them once invited
+    standing: str            # how to gain standing (rank) with them
+    permit: bool             # a permit is needed to reach them
+    on_foot: bool            # an Odyssey (on-foot) engineer: no ranks
+
+    def place(self) -> str:
+        """"Base, System planet", with the extras that matter on one line."""
+        where = f"{self.base}, {self.system}" + (f" {self.body}" if self.body else "")
+        return where + (" - on foot" if self.on_foot else "") + (" - permit needed" if self.permit else "")
+
+
+INFO: Dict[str, Info] = {name_key(row[0]): Info(*row) for row in engineers_data.ENGINEER_ROWS}
+
+
+def info(name: Any) -> Optional[Info]:
+    """Where `name` is and how to unlock them, or None when the table does not have them. Matched with `name_key`, so the journal's
+    `Tod 'The Blaster' McQuinn` finds the table's entry."""
+    return INFO.get(name_key(name))
+
+
+GRADE_PROFIT_CREDITS = ((2, 500_000), (3, 2_000_000), (4, 8_000_000), (5, 16_000_000))
+"""Net profit from selling at a ship engineer's workshop that opens each grade, as the community wiki documents it (grade 1 opens with the unlock
+itself). Facts only, read 2026-10-14. On-foot engineers have no grades: they offer everything once met."""
+
+QUIRKS: Dict[str, str] = {
+    "terra velasquez": "Her meeting requirement is reported bugged: Covert Theft missions may not count, Covert Heist missions do.",
+}
+"""Known quirks worth telling the commander about, by `name_key`."""
+
+
+def grade_profit_text() -> str:
+    return ", ".join(f"grade {grade} at {credits:,} cr" for grade, credits in GRADE_PROFIT_CREDITS)
 
 
 def _progress(value: Any) -> Optional[str]:

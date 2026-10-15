@@ -119,7 +119,7 @@ material trades, synthesis, engineering crafts, the Technology Broker, materials
 those. If you start EDMC in the middle of a session, WNTB takes EDMC's own running totals once, so the counts are right straight away.
 The counts are kept on your computer for the commander they belong to, and nothing is sent anywhere.
 
-**The limits** are 300, 250, 200, 150 and 100 for grades 1 to 5. The names, types and grades are a built-in table of the game's 137 materials;
+**The limits** are 300, 250, 200, 150 and 100 for grades 1 to 5. The names, types and grades are a built-in table of the game's 146 materials;
 a new material the table does not know is still counted, with no grade or limit shown, until WNTB is updated.
 
 **Find a trader.** A material trader swaps materials within one category (a Raw trader trades Raw materials, and so on). **Find a trader** in the
@@ -141,7 +141,7 @@ it sends Spansh the system name and the type. The same search within two minutes
 4. Open the **Wishlist** tab: it says which entries can be made now, what you are short of, and the shopping list for all of it.
 5. Open the **Engineers** tab to see who you have unlocked and what unlocking the others takes. **Put their unlock on the wishlist** adds it.
 
-**Blueprints.** Every engineering blueprint in the table (about 1,170: ship modules, Guardian items, Technology Broker unlocks, engineer
+**Blueprints.** Every engineering blueprint in the table (about 1,180: ship modules, Guardian items, Technology Broker unlocks, engineer
 unlocks, synthesis recipes, and Odyssey suit and weapon upgrades). **Search** matches the module, blueprint name, engineer, effect or an
 ingredient (every word you type must match), and **Module** narrows to one type. Pick a blueprint to see who offers it, its effects, and what
 **one craft** takes: each ingredient with how many you need, how many you hold, and where it is found. Set **Crafts** and press **Add to
@@ -153,8 +153,14 @@ where each ingredient is found, with what is short at the top. Each entry also s
 or a vendor or the synthesis panel (which need no unlocking), or "No engineer unlocked yet". Select an entry to change its crafts, **Remove** it
 or **Clear list** (each asks twice). The Materials row shows a line such as `Wishlist: 3 blueprints, 2 can be made, 14 pieces short`.
 
-**Engineers.** Every engineer the table or your journal knows (and the four Colonia on-foot engineers, whose steps are added by hand), with where you stand (Known, Invited, or Unlocked with their rank), how many
-blueprints they offer and what unlocking them asks for, with how much of it you hold (for the Colonia engineers: the steps in words, and for Yi Shen the three sets of items, which can go on the wishlist); unlocked engineers first. **Show their blueprints** lists
+**Engineers.** All 38 engineers (ship and on-foot, the four Colonia ones included), with where you stand (Known, Invited, or Unlocked with their rank), how many
+blueprints they offer, **where they are** (base, system and planet, with "on foot" or "permit needed") and what unlocking them asks for. Until an engineer is
+unlocked, the last column gives what gets you invited and what unlocks them, in words, and for an engineer whose unlock is items (such as Yi Shen's three sets)
+how much of it you hold; those items can go on the wishlist. Unlocked engineers come first. **Select an engineer** for the full details under the table: how to
+find them, who introduces them, what to do to be invited and to unlock them, how to gain standing with them, whether they work on foot (no ranks: every
+upgrade is offered once you have met them), and any known quirk (for example, Terra Velasquez's meeting requirement is reported bugged: Covert Theft missions may
+not count, Covert Heist missions do). A line below the table gives the net profit that opens each grade for a ship engineer: grade 2 at 500,000 cr, grade 3 at
+2,000,000 cr, grade 4 at 8,000,000 cr and grade 5 at 16,000,000 cr (sold at their workshop; the community wiki's figures). **Show their blueprints** lists
 what they offer, and **Put their unlock on the wishlist** adds what unlocking them takes. Your standings come from the game's engineer list, sent
 at login and whenever one changes (including a rank-up), and are kept on your computer for each commander.
 
@@ -210,8 +216,9 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Your materials to be right as soon as EDMC starts | The game writes the full list only when you **log in**. Between logins WNTB follows each change, and after a restart it shows the counts from your last session until the next login list arrives (the window says so). | Log in to the game, or start EDMC before the game. |
 | Materials you were not able to carry to be counted | When you are at the limit, the game discards what you cannot carry. WNTB never counts above the limit. | Nothing; the login list corrects any difference. |
 | Which engineer or blueprint needs a material | Not shown yet. This page counts what you hold; it does not know what you need it for. | Use a site such as Inara or EDSY for what a blueprint takes. |
-| The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. Checked against 4,391 real blueprint crafts from the journals of one commander, every one used exactly the materials the table lists for that grade. The table does not list **experimental effects** (the 143 further crafts in those journals, each of which used its own materials), so the wishlist does not count them. | Check the in-game recipe before you spend rare materials, and report a difference. |
-| Every engineer to appear with their blueprints | The blueprint table is from March 2024 and lacks the four **Colonia on-foot engineers** (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen). WNTB adds their unlock steps and Yi Shen's items by hand from community sources, with their places (one guide, unconfirmed). It does **not** know which suit or weapon modification each offers: the sources disagree. | For what each Colonia engineer offers, use the game's Engineers panel or a site such as Inara. |
+| The blueprint table to be current | The recipes are a copy of EDEngineer's table, last changed in **March 2024**, with a few spelling fixes and, since October 2026, five synthesis recipes corrected and seven synthesis rows and nine Thargoid-war and chip materials added from EDDiscovery's data. Neither source is Frontier's own list. A blueprint or material added to the game since may be missing, and a recipe Frontier changed may be out of date. Checked against 4,391 real blueprint crafts from the journals of one commander, every one used exactly the materials the table lists for that grade. The table does not list **experimental effects** (the 143 further crafts in those journals, each of which used its own materials), so the wishlist does not count them. | Check the in-game recipe before you spend rare materials, and report a difference. |
+| Which upgrades each Colonia engineer offers to be certain | EDEngineer's table (March 2024) lacks the four **Colonia on-foot engineers** (Baltanos, Eleanor Bresa, Rosa Dayette and Yi Shen). Their places and unlock steps are in EDDiscovery's table, and which suit and weapon upgrades each offers follows EDCoPilot's engineer list as applied in the author's ED-DDT; other sources may differ, and none is Frontier's own list. Yi Shen's unlock is the three sets of items handed to the other three. | Check what an engineer offers in the game's Engineers panel before you spend items on it, and report a difference. |
+| Engineer places and steps to be current | They come from EDDiscovery's table and can drift when the game changes. Yarden Bond's meeting requirement says 5 Smear campaign plans (EDDiscovery has 8; the wiki and Inara say 5), while the blueprint table's "Unlock" row for him, which is EDEngineer's, asks for 8 to be handed over: the sources disagree on that step. | Check the engineer's requirements in the game's Engineers panel. |
 | What unlocking an engineer takes to be complete | The table lists the **materials or goods** an engineer asks for. An invitation can ask for more (a rank, a visit, a referral), which it does not list. | Check the engineer's requirements in the game's Engineers panel. |
 | Your materials to match the game after every pick-up | The journal reports almost every gain, but not all of them: replaying real journals, WNTB's counts matched the game's next login list 97% of the time when the game was restarted within ten minutes (737 of 761), and 93% over all gaps (the rest are mostly play on another computer). The misses that remain are exactly 5 more of several materials in the game with no event in between. | The next login list corrects the counts. |
 | The Engineering window to know how many crafts you need | The game rolls the result of each craft; nothing in the journal says how many it will take. | Set the number of crafts you expect. |
