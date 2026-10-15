@@ -15,14 +15,14 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## Testing: start here
 
-**1.10.1 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
-Linux; 1.10.1 stops the Expedition and Materials sections from widening the main panel, and was tested on Windows. The Linux check for 1.10.1 is
-the panel-width item below.
+**1.10.2 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
+Linux; 1.10.1 stopped the Expedition and Materials sections from widening the main panel; 1.10.2 makes long names wrap instead of being cut off.
+1.10.1 and 1.10.2 were tested on Windows only. The Linux checks for 1.10.2 are the wrapping and panel-width items below.
 
 **Getting set up**
-1. Install the released **1.10.1** the normal way (the automatic update, or the zip from the
+1. Install the released **1.10.2** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
-   buttons should read `Plugin: v1.10.1`. Work through sections 0 and 1 below first.
+   buttons should read `Plugin: v1.10.2`. Work through sections 0 and 1 below first.
 2. To get the checklist and the test suite, fetch the repository and use `master`:
    `git fetch --all --tags`, then `git switch master`, then `git pull --rebase`. Once per machine:
    `git config core.hooksPath .githooks`.
@@ -31,7 +31,14 @@ the panel-width item below.
 4. To try the `master` build instead of the release, run `npm run deploy` in the repository. It finds EDMC's plugins folder (native or Flatpak) and copies the
    build there; restart EDMC afterwards. `master` reports the same version as the release until the next one is cut.
 
-**What changed in 1.10.1, in the order to check it:**
+**What changed in 1.10.2, in the order to check it:**
+- **Wrapping:** in Colonization, a long site, project, system or commodity name (such as `Orbital Construction Site: ...`) is shown in full and
+  wraps at the window's width instead of ending in `...`. In Expedition, Materials, Notes and the Trade watch list, lines use the whole width of
+  the window when it is wide, and a narrow window is still never widened.
+- **History heading:** the Colonization History heading names the commander (`History - NAME`).
+- **Busiest site:** shows the site's name and system rather than `Construction site <number>` once you have docked at it.
+
+**What changed in 1.10.1 (still worth checking):**
 - **Layout:** with Expedition (Exploration mode) and Materials (Field Ops mode) open, the main EDMC window must not grow wider. In Expedition,
   **Copy on arrival** sits on its own line under **COPY** and **EXPEDITION**; in Materials, **BLUEPRINTS** sits under **MATERIALS**, not beside it.
 
