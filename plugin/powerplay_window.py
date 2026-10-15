@@ -26,6 +26,7 @@ from .session import (
     total_merits,
     visited_systems,
 )
+from .powerplay_megaships_tab import MegaShipsTab
 from .powerplay_systems_tab import CyclesTab, DailyTab, SystemsPane, SystemsTab
 from .uikit import palette as P
 from .uikit import style
@@ -125,6 +126,7 @@ class SessionWindow:
         self._systems_tab = SystemsTab(tabs.add("Systems"), self._toplevel)
         self._cycles_tab = CyclesTab(tabs.add("Cycles"))
         self._daily_tab = DailyTab(tabs.add("Daily"))
+        self._megaships_tab = MegaShipsTab(tabs.add("Megaships"))
         self._history_tab = _HistoryTab(tabs.add("History"))
 
         # Journal events arrive in bursts and every tab is a table of widgets, so a refresh is
@@ -135,6 +137,7 @@ class SessionWindow:
             lambda: self._systems_tab.update(self._systems, self._current_system),
             lambda: self._cycles_tab.update(self._systems),
             lambda: self._daily_tab.update(self._systems),
+            lambda: self._megaships_tab.update(self._systems),
             lambda: self._history_tab.update(self._sessions.history, self._sessions.current),
         ]
         self._stale = set(range(len(self._updaters)))

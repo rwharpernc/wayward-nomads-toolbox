@@ -35,6 +35,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from .formulas import ACTIVITIES
+from .megaship_scans import MegaShipScan
 
 RECENT_SYSTEMS = 6
 """How many recently visited systems get a tab (pinned ones are extra)."""
@@ -45,6 +46,9 @@ MAX_PINNED = 5
 MAX_ARCHIVE = 52
 """How many closed cycles are kept (a year)."""
 
+MAX_MEGASHIPS = 500
+"""How many megaship scans one cycle keeps (a week of heavy play is far fewer)."""
+
 DEFAULT_BACKFILL_CYCLES = 4
 MAX_BACKFILL_CYCLES = 12
 """How many cycles (the current one included) the journal scan covers by default / at most."""
@@ -52,8 +56,8 @@ MAX_BACKFILL_CYCLES = 12
 UP_TO_DATE_WINDOW = timedelta(minutes=2)
 """If the ledger has seen the journal this recently there is nothing to scan."""
 
-SCHEMA = 2
-"""Saved-ledger layout. 2 added the per-day merit tally; an older ledger is rebuilt from the journals once."""
+SCHEMA = 3
+"""Saved-ledger layout. 2 added the per-day merit tally, 3 the megaships scanned each cycle; an older ledger is rebuilt from the journals once."""
 
 SCAN_NONE = "none"
 SCAN_INCREMENTAL = "incremental"
@@ -298,6 +302,12 @@ class CycleView:
     """The Power(s) the commander was pledged to during the cycle (empty = none seen / not pledged)."""
     daily: Dict[str, Dict[str, int]] = field(default_factory=dict)
     """Merits per activity for each day of the cycle: "1" (first 24 h from the cycle start) to "7"."""
+    megaships: List[MegaShipScan] = field(default_factory=list)
+    """The megaships whose datalink the commander scanned this cycle, oldest first (one per megaship per system)."""
+
+    def megaship_merits(self) -> int:
+        """Merits the megaship scans earned (those whose PowerplayMerits was seen)."""
+        return sum(scan.merits for scan in self.megaships)
 
     @property
     def number(self) -> Optional[int]:
@@ -347,6 +357,7 @@ def view_from_archive(record: Dict[str, Any]) -> CycleView:
     parsed = [SystemRecord.from_dict(v) for v in raw.values()] if isinstance(raw, dict) else []
     powers = record.get("powers")
     return CycleView(
+        megaships=_clean_megaships(record.get("megaships")),
         daily=_clean_daily(record.get("daily")),
         cycle_start=record.get("cycle_start"), cycle_end=record.get("cycle_end"), current=False,
         records={r.system.casefold(): r for r in parsed if r},
@@ -355,6 +366,23 @@ def view_from_archive(record: Dict[str, Any]) -> CycleView:
 
 
 # --- the ledger ----------------------------------------------------------------
+
+
+def _clean_megaships(raw: Any) -> List[MegaShipScan]:
+    scans = [MegaShipScan.from_dict(v) for v in raw] if isinstance(raw, list) else []
+    return sorted((s for s in scans if s is not None), key=lambda s: s.at)[:MAX_MEGASHIPS]
+
+
+def _merge_megaships(first: List[MegaShipScan], second: List[MegaShipScan]) -> List[MegaShipScan]:
+    """The scans of both lists, one per megaship: the earlier scan is kept and the larger merit figure, so a rebuilt list never loses a live one."""
+    merged: Dict[Any, MegaShipScan] = {}
+    for scan in sorted(first + second, key=lambda s: s.at):
+        known = merged.get(scan.key)
+        if known is None:
+            merged[scan.key] = MegaShipScan(scan.name, scan.system, scan.address, scan.at, scan.merits, scan.merit_at)
+        elif scan.merits > known.merits:
+            known.merits, known.merit_at = scan.merits, scan.merit_at
+    return sorted(merged.values(), key=lambda s: s.at)[:MAX_MEGASHIPS]
 
 
 class PowerplayLedger:
@@ -379,6 +407,8 @@ class PowerplayLedger:
         """Timestamp of the newest journal event the ledger is known to be up to date with."""
         self.archive: List[Dict[str, Any]] = []
         """Closed cycles, newest first: {"cycle_start", "cycle_end", "systems"}."""
+        self.megaships: List[MegaShipScan] = []
+        """The megaships scanned this cycle, oldest first (see megaship_scans.py)."""
 
     # -- cycle bookkeeping --
 
@@ -390,14 +420,17 @@ class PowerplayLedger:
         if when < self.cycle_start + CYCLE:
             return
         kept = {k: r.to_dict() for k, r in self.records.items() if r.has_data()}
-        if kept:
-            self.archive.insert(0, {
+        if kept or self.megaships:
+            record = {
                 "cycle_start": format_ts(self.cycle_start),
                 "cycle_end": format_ts(self.cycle_start + CYCLE),
                 "systems": kept,
                 "powers": list(self.powers),
                 "daily": {d: dict(m) for d, m in self.daily.items()},
-            })
+            }
+            if self.megaships:
+                record["megaships"] = [s.to_dict() for s in self.megaships]
+            self.archive.insert(0, record)
             del self.archive[MAX_ARCHIVE:]
         # Each system's newest reading is the next cycle's baseline.
         carried: Dict[str, SystemRecord] = {}
@@ -406,6 +439,7 @@ class PowerplayLedger:
             if latest is not None:
                 carried[key] = SystemRecord(system=record.system, before=latest, last_at=record.last_at)
         self.records = carried
+        self.megaships = []
         self.daily = {}
         self.powers = self.powers[-1:]  # still pledged to the same Power until told otherwise
         self.cycle_start = cycle_start_for(when)
@@ -476,6 +510,39 @@ class PowerplayLedger:
         record.events[activity] = record.events.get(activity, 0) + 1
         if timestamp > record.last_at:  # type: ignore[operator]
             record.last_at = timestamp  # type: ignore[assignment]
+        return True
+
+    def record_megaship(self, scan: MegaShipScan) -> bool:
+        """A megaship's datalink was scanned. False if ignored (an unusable timestamp, from before this cycle, the same megaship in the same
+        system already scanned this cycle, or the cycle is full)."""
+        when = parse_ts(scan.at)
+        if when is None or not scan.name or not scan.system:
+            return False
+        self._advance(when)
+        assert self.cycle_start is not None
+        if when < self.cycle_start or len(self.megaships) >= MAX_MEGASHIPS:
+            return False
+        if any(known.key == scan.key for known in self.megaships):
+            return False
+        self.megaships.append(MegaShipScan(scan.name, _clip(scan.system), scan.address, scan.at, scan.merits, scan.merit_at))
+        self.megaships.sort(key=lambda s: s.at)
+        return True
+
+    def add_megaship_merits(self, key: Any, merits: int, timestamp: Optional[str]) -> bool:
+        """Merits that followed a megaship scan, added to it. False if that scan is not in this cycle (a cycle ended in between), or the merits
+        are not a positive whole number."""
+        if isinstance(merits, bool) or not isinstance(merits, int) or merits <= 0:
+            return False
+        when = parse_ts(timestamp)
+        if when is not None:
+            self._advance(when)
+        scan = next((s for s in self.megaships if s.key == key), None)
+        if scan is None or not isinstance(timestamp, str):
+            return False
+        if scan.merit_at and timestamp <= scan.merit_at:
+            return False          # already counted: the same events seen again (the journal scan and the live feed overlap)
+        scan.merits += merits
+        scan.merit_at = timestamp
         return True
 
     def record_power(self, power: Optional[str], timestamp: Optional[str] = None) -> None:
@@ -556,13 +623,23 @@ class PowerplayLedger:
             for record in fresh.archive:
                 key = record.get("cycle_start")
                 if isinstance(key, str) and (key not in merged or _archived_merits(record) >= _archived_merits(merged[key])):
+                    old = merged.get(key)
                     merged[key] = record
+                    if old is not None and (record.get("megaships") or old.get("megaships")):
+                        record["megaships"] = [s.to_dict() for s in _merge_megaships(_clean_megaships(old.get("megaships")),
+                                                                                  _clean_megaships(record.get("megaships")))]
+                elif isinstance(key, str) and record.get("megaships"):
+                    kept = merged[key]
+                    kept["megaships"] = [s.to_dict() for s in _merge_megaships(_clean_megaships(kept.get("megaships")),
+                                                                              _clean_megaships(record.get("megaships")))]
             self.archive = sorted(merged.values(), key=lambda r: r["cycle_start"], reverse=True)[:MAX_ARCHIVE]
             if fresh.cycle_start == self.cycle_start:
                 if sum(r.total_merits() for r in fresh.records.values()) >= \
                         sum(r.total_merits() for r in self.records.values()):
                     self.records, self.daily = fresh.records, fresh.daily
                 self.powers = fresh.powers or self.powers
+            if fresh.cycle_start == self.cycle_start:
+                self.megaships = _merge_megaships(self.megaships, fresh.megaships)
         if fresh.last_merit_ts and (self.last_merit_ts is None or fresh.last_merit_ts > self.last_merit_ts):
             self.last_merit_ts, self.last_merit_n = fresh.last_merit_ts, fresh.last_merit_n
         for stamp in (seen_to, fresh.seen_to):
@@ -578,7 +655,7 @@ class PowerplayLedger:
         return CycleView(
             cycle_start=format_ts(self.cycle_start) if self.cycle_start else None, cycle_end=None,
             current=True, records=dict(self.records), powers=list(self.powers),
-            daily={d: dict(m) for d, m in self.daily.items()})
+            daily={d: dict(m) for d, m in self.daily.items()}, megaships=[MegaShipScan(s.name, s.system, s.address, s.at, s.merits, s.merit_at) for s in self.megaships])
 
     def views(self) -> List[CycleView]:
         """The live cycle first, then the closed ones, newest first and in order: a cycle the
@@ -611,6 +688,7 @@ class PowerplayLedger:
             "systems": {k: r.to_dict() for k, r in self.records.items()},
             "powers": list(self.powers),
             "daily": {d: dict(m) for d, m in self.daily.items()},
+            "megaships": [s.to_dict() for s in self.megaships],
             "schema": self.schema,
             "last_merit_ts": self.last_merit_ts,
             "last_merit_n": self.last_merit_n,
@@ -634,6 +712,7 @@ class PowerplayLedger:
         ledger.powers = [_clip(p) for p in powers if p] if isinstance(powers, list) else []
         ledger.last_merit_ts = data["last_merit_ts"] if parse_ts(data.get("last_merit_ts")) else None
         ledger.daily = _clean_daily(data.get("daily"))
+        ledger.megaships = _clean_megaships(data.get("megaships"))
         schema = data.get("schema")
         ledger.schema = schema if isinstance(schema, int) and not isinstance(schema, bool) else 1
         n = data.get("last_merit_n")

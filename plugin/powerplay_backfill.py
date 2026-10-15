@@ -30,6 +30,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from config import appname
 
+from .megaship_scans import MegaShipScan, MegaShipTracker
 from .powerplay_ledger import PowerplayLedger, Snapshot, parse_snapshot, parse_ts
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -38,6 +39,8 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 OP_SNAPSHOT = "snapshot"
 OP_MERITS = "merits"
 OP_POWER = "power"
+OP_MEGASHIP = "megaship"
+OP_MEGASHIP_MERITS = "megaship merits"
 
 _PLEDGE_EVENTS = ("Powerplay", "PowerplayJoin", "PowerplayLeave", "PowerplayDefect")
 _CONTEXT_EVENTS = ("Location", "FSDJump", "Docked")
@@ -46,8 +49,10 @@ _DELIVERY_EVENTS = ("PowerplayDeliver", "SearchAndRescue", "DeliverPowerMicroRes
 _RELEVANT = (
     "Fileheader", "Commander", "LoadGame", "Location", "FSDJump", "CarrierJump", "Docked", "PowerplayMerits",
     "PowerplayRank", "PowerplayDeliver", "SearchAndRescue", "DeliverPowerMicroResources", *_PLEDGE_EVENTS,
+    "SupercruiseDestinationDrop", "SupercruiseEntry",
 )
-_NEEDLES = tuple(f'"{name}"' for name in _RELEVANT)
+# Megaship scans: the uplink scan itself, and the FSS list of a system's megaships (only the lines that name one: FSS signal lines are very numerous)
+_NEEDLES = (*(f'"{name}"' for name in _RELEVANT), '"$Datascan_ShipUplink;"', '"Megaship"')
 
 
 @dataclass
@@ -61,6 +66,8 @@ class Op:
     merits: int = 0
     snapshot: Optional[Snapshot] = None
     power: str = ""
+    scan: Optional[MegaShipScan] = None        # OP_MEGASHIP: the scan
+    key: Any = None                            # OP_MEGASHIP_MERITS: which scan the merits belong to (the scan's `key`); `merits` is the amount
 
 
 @dataclass
@@ -84,6 +91,10 @@ def apply_ops(ledger: PowerplayLedger, ops: Iterable[Op]) -> None:
             ledger.record_merits(op.system, op.activity, op.merits, op.ts, replay=True)
         elif op.kind == OP_POWER:
             ledger.record_power(op.power, op.ts)
+        elif op.kind == OP_MEGASHIP and op.scan is not None:
+            ledger.record_megaship(op.scan)
+        elif op.kind == OP_MEGASHIP_MERITS:
+            ledger.add_megaship_merits(op.key, op.merits, op.ts)
 
 
 # --- replaying journal entries ----------------------------------------------------
@@ -98,6 +109,7 @@ def replay_entries(
     wanted = cmdr.strip().casefold()
     result = ScanResult(ok=True)
     tracker = tracker_factory()
+    megaships = MegaShipTracker()
     current = ""
     system: Optional[str] = None
     last_power: Optional[str] = None
@@ -113,11 +125,13 @@ def replay_entries(
         event = entry.get("event")
         if event == "Fileheader":
             tracker, current, system, last_power = tracker_factory(), "", None, None
+            megaships = MegaShipTracker()
             continue
         if event in ("Commander", "LoadGame"):
             name = str(entry.get("Name" if event == "Commander" else "Commander", "")).strip().casefold()
             if name and name != current:
                 tracker, current, system, last_power = tracker_factory(), name, None, None
+                megaships = MegaShipTracker()
             continue
         if current != wanted:
             continue
@@ -145,6 +159,13 @@ def replay_entries(
             activity = tracker.classify_current_activity(system)
             if gained is not None and in_window and system:
                 emit(Op(OP_MERITS, ts, system=system, activity=activity, merits=gained))
+        for found in megaships.feed(entry):
+            if not in_window:
+                continue
+            if found[0] == "scan":
+                emit(Op(OP_MEGASHIP, found[1].at, system=found[1].system, scan=found[1]))
+            else:
+                emit(Op(OP_MEGASHIP_MERITS, found[3], key=found[1], merits=found[2]))
         if event in _CONTEXT_EVENTS:
             tracker.apply_system_context(system, entry)
         if event in _SNAPSHOT_EVENTS and in_window and system:

@@ -36,6 +36,7 @@ from config import appname, config
 from monitor import monitor
 
 from . import panelkit
+from .megaship_scans import MegaShipTracker
 from .formulas import (
     ACQUISITION, ACTIVITIES, ACTIVITY_LABELS, DEFAULT_RATIOS, DELIVERY, NO_CP_ACTIVITIES,
     REINFORCEMENT, UNDERMINING, UNKNOWN, merits_to_cp,
@@ -43,7 +44,7 @@ from .formulas import (
 from .powerplay_clipboard import DEFAULT_TEMPLATE as DEFAULT_CLIPBOARD_TEMPLATE
 from .powerplay_clipboard import PLACEHOLDERS as CLIPBOARD_PLACEHOLDERS
 from . import powerplay_backfill, powerplay_state
-from .powerplay_backfill import OP_MERITS, OP_SNAPSHOT, Op, ScanResult
+from .powerplay_backfill import OP_MEGASHIP, OP_MEGASHIP_MERITS, OP_MERITS, OP_SNAPSHOT, Op, ScanResult
 from .powerplay_ledger import parse_ts as _parse_ts
 from .powerplay_ledger import (
     DEFAULT_BACKFILL_CYCLES, MAX_BACKFILL_CYCLES, SCAN_NONE, SCAN_REBUILD, PowerplayLedger, ScanPlan, TabPrefs,
@@ -555,6 +556,15 @@ def _cycle_lines(view) -> tuple:
     return f"{label} merits: {sum(totals.values()):,}", f"{label} CP: {cp_bits}"
 
 
+def _megaship_line(view) -> str:
+    """The main panel's megaship tally for the Powerplay cycle in progress: how many megaships were scanned, and the merits those scans earned."""
+    number = view.number
+    label = f"Cycle {number}" if number is not None else "Cycle"
+    count = len(view.megaships)
+    merits = view.megaship_merits()
+    return f"{label} megaships: {count}" + (f" ({merits:,} merits)" if merits else "")
+
+
 def _system_summary(pp: PowerplayTracker) -> str:
     """'Nervi — Exploited (Zachary Hudson)' for the main panel. Deliberately
     just the controller, not the full rival/contested-Powers list — the
@@ -585,6 +595,7 @@ class PowerplayController:
         # Per-commander, per-system ledger for the Sessions window's Systems
         # tab (powerplay_ledger.py) - swapped out when the commander changes.
         self.ledger = PowerplayLedger()
+        self._megaships = MegaShipTracker()
         self.tab_prefs = TabPrefs()
         # Start-up journal scan (powerplay_backfill.py): runs on a worker thread, answers on a
         # queue, and live ledger writes wait in `_scan_buffer` until it has been applied.
@@ -605,6 +616,7 @@ class PowerplayController:
         self._here_cp_label: Optional[tk.Label] = None
         self._merits_label: Optional[tk.Label] = None
         self._cp_label: Optional[tk.Label] = None
+        self._cycle_megaships_label: Optional[tk.Label] = None
         self._cycle_merits_label: Optional[tk.Label] = None
         self._cycle_cp_label: Optional[tk.Label] = None
         self._last_event_label: Optional[tk.Label] = None
@@ -637,6 +649,7 @@ class PowerplayController:
         saved = powerplay_state.load_state(self._plugin_dir, cmdr) if self._plugin_dir else None
         data = saved if isinstance(saved, dict) else {}
         self.ledger = PowerplayLedger.from_dict(data.get("ledger"))
+        self._megaships = MegaShipTracker()
         self.tab_prefs = TabPrefs.from_dict(data.get("pinned_systems"), data.get("hidden_systems"))
         if saved:
             logger.info("Restored Powerplay ledger for %s: %d system(s), %d archived cycle(s)",
@@ -725,6 +738,10 @@ class PowerplayController:
             self.ledger.record_snapshot(op.system, op.snapshot)
         elif op.kind == OP_MERITS:
             self.ledger.record_merits(op.system, op.activity, op.merits, op.ts)
+        elif op.kind == OP_MEGASHIP and op.scan is not None:
+            self.ledger.record_megaship(op.scan)
+        elif op.kind == OP_MEGASHIP_MERITS:
+            self.ledger.add_megaship_merits(op.key, op.merits, op.ts)
         self._persist_ledger()
 
     def _persist_ledger(self) -> None:
@@ -799,6 +816,11 @@ class PowerplayController:
         self._poll_scan()
         self.ledger.touch(entry.get("timestamp"))
         self._tick_cycle()
+        for found in self._megaships.feed(entry):
+            if found[0] == "scan":
+                self._apply_live(Op(OP_MEGASHIP, found[1].at, system=found[1].system, scan=found[1]))
+            else:
+                self._apply_live(Op(OP_MEGASHIP_MERITS, found[3], key=found[1], merits=found[2]))
 
         star_pos = entry.get("StarPos")
         if (
@@ -1066,12 +1088,15 @@ class PowerplayController:
         self._cycle_cp_label = panelkit.wrap_label(parent, text="Cycle CP: —", font=fonts["small"])
         self._cycle_cp_label.grid(row=10, column=0, sticky=tk.W)
 
+        self._cycle_megaships_label = panelkit.wrap_label(parent, text="Cycle megaships: 0", font=fonts["small"])
+        self._cycle_megaships_label.grid(row=11, column=0, sticky=tk.W)
+
         self._last_event_label = panelkit.wrap_label(
             parent, text="No merit events yet this session.", font=fonts["small"])
-        self._last_event_label.grid(row=11, column=0, sticky=tk.W, pady=(6, 0))
+        self._last_event_label.grid(row=12, column=0, sticky=tk.W, pady=(6, 0))
 
         windows_row = tk.Frame(parent)
-        windows_row.grid(row=12, column=0, sticky=tk.W, pady=(4, 0))
+        windows_row.grid(row=13, column=0, sticky=tk.W, pady=(4, 0))
         sessions_button = tk.Button(windows_row, text="SES", command=self._show_sessions)
         sessions_button.pack(side=tk.LEFT, padx=(0, 6))
         panelkit.add_tooltip(sessions_button, "Sessions - open the Powerplay sessions window")
@@ -1130,6 +1155,8 @@ class PowerplayController:
             cycle_merits_text, cycle_cp_text = _cycle_lines(self.ledger.live_view())
             self._cycle_merits_label["text"] = cycle_merits_text
             self._cycle_cp_label["text"] = cycle_cp_text
+            if self._cycle_megaships_label is not None:
+                self._cycle_megaships_label["text"] = _megaship_line(self.ledger.live_view())
 
         from . import powerplay_window, session_merits
         session_merits.controller.refresh()     # the "Merits this session" line under the mode buttons

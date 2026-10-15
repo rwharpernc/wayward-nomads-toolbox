@@ -35,7 +35,7 @@ Two buttons on the bottom row:
 
 ## The Sessions window
 
-Click **SES**. It has five tabs.
+Click **SES**. It has six tabs.
 
 | Tab | What it shows |
 |---|---|
@@ -43,6 +43,7 @@ Click **SES**. It has five tabs.
 | **Systems** | One tab per system for the cycle, with the system's standing and what you earned there. |
 | **Cycles** | One row per Powerplay cycle, newest first: period, the Power you were pledged to, systems worked, merits, estimated CP, merits by activity. |
 | **Daily** | Merits and estimated CP (whole numbers) for each day of a cycle, with a total. |
+| **Megaships** | The megaships whose datalink you scanned, cycle by cycle: its name, the system, when, and the merits the scan earned. |
 | **History** | Every past session of the commander you are playing, with their running total. Other commanders' sessions are kept but not shown, and each commander keeps their own last 200. |
 
 ### Cycles
@@ -51,6 +52,23 @@ A Powerplay cycle runs from **Thursday 07:00 UTC** to the next Thursday 07:00 UT
 cycle 101 began on 2026-10-01. Each day of a cycle also runs 07:00 to 07:00 UTC, so **day 1 is the Thursday**.
 
 The Systems, Cycles and Daily tabs all have a drop-down to look at an earlier cycle.
+
+### Megaships
+
+Powerplay rewards scanning the datalink of a megaship (the activity is called *Scan datalinks at Megaships*). WNTB keeps a list of the megaships you
+scan, and counts them for the cycle: the **Megaships** tab has one row per megaship with its name, the system, when you scanned it and the merits that
+scan earned, the live cycle first, and the main panel has a line under the cycle tally, for example `Cycle 103 megaships: 5 (2,340 merits)`.
+
+- **How it knows which megaship.** The game's journal does not name the ship in the scan. WNTB takes the name from the megaship you **dropped out of
+  supercruise at** just before the scan (the journal writes it when you drop), and checks that it really is a megaship: it is one the FSS listed in
+  that system, or its name has "class" in it ("Aquarius-class Tanker"). A scan at a station, a settlement or an ordinary ship is not counted.
+- **One per megaship per system per cycle.** Scanning the same megaship again the same cycle changes nothing.
+- **Merits** are those of the `PowerplayMerits` event that follows the scan within a few seconds. They can be blank: when you are not pledged, or the
+  game gave none. WNTB counts the scan either way.
+- **A scan without the drop.** If you approach a megaship some other way (for example from a different supercruise destination) and scan it, the
+  journal never named it, so WNTB cannot count it. Drop out of supercruise at the megaship first.
+- **Old cycles.** The first time WNTB starts after this feature was added, it reads your journals back as far as the Settings scan depth (4 cycles by
+  default) and fills in the earlier cycles too. Each commander has their own list.
 
 ### The buttons at the top
 
@@ -105,6 +123,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 |---|---|---|
 | Each merit tagged with the activity that earned it | The journal does not say. WNTB **infers** the activity from the state of the system you are in; an unusual situation can be misattributed. This also applies to the per-system and daily numbers. | Trust the merit totals. Treat the activity split as a good guess. |
 | Control Points reported | The game reports merits only. CP is **estimated** with ratios you can edit in Settings. | Only change the ratios if Frontier changes them. |
+| The name of a megaship you scanned | The scan event does not name it. WNTB uses the megaship you dropped to just before ([Megaships](#megaships)). | Drop out of supercruise at the megaship, then scan. |
 | Deliveries counted as CP | The game writes a `PowerplayDeliver` event (what and how many) just before the merits a hand-in earns, but it does not say which kind you chose (Acquisition, Reinforcement or Undermining). WNTB labels the merit events that follow a hand-in *Delivery*: the first one within 10 minutes, and any within 10 seconds of the last. It counts **merits only**. Unattributed merits are the same. A merit from something else that lands inside that window can be mislabelled. | Expect Delivery and Unattributed to add merits but no CP. Hand in as a separate step, away from other merit work, if the split matters. |
 | Live standing for any system | Whole-system figures update only when you **jump into or log in** at that system, so they are as fresh as your last visit. | Visit the system again for a fresh reading. |
 | Old cycles from before WNTB | They are rebuilt from journals only as far back as the files still exist and the scan depth allows (1 to 12 cycles, 4 by default). | Raise the depth in Settings, and keep your journal files. |

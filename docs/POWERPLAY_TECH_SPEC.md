@@ -143,6 +143,7 @@ clipboard line are covered by `tests/test_powerplay_session.py`. The panel and w
 - The merits-per-CP ratios are estimates.
 - Deliveries and unattributed merits don't produce Control Points.
 - The Rare Goods list is a snapshot; a new rare good needs the list updated.
+- A megaship scanned without dropping out of supercruise at it first is not named by the journal, so it is not counted (section 11.2f).
 
 - The Systems tab (section 11) only knows what the commander's own client has seen: a system's standing
   updates when they jump in or log in there. Cycles from before the feature was installed are rebuilt from the
@@ -238,6 +239,25 @@ and the delivery and unattributed merits count in merits only, as everywhere els
 `SCHEMA` (2) marks the saved layout: a ledger saved before the daily tally existed (schema 1) is planned as a **rebuild**
 once, which fills the days in from the journals, then marked current. A cycle whose journals are gone and which was
 kept because its saved merits were larger has no per-day split; the tab says so.
+
+### 11.2f Megaship scans
+Powerplay 2.0 rewards scanning a megaship's datalink. The journal writes `DataScanned` with `Type` `$Datascan_ShipUplink;` and does not name the ship;
+`megaship_scans.MegaShipTracker` (shared by the live feed and the back-fill, so both give the same answer) names it from the event before:
+
+- `SupercruiseDestinationDrop` `Type` is the destination dropped to, here the megaship's name (cleared by `SupercruiseEntry` and by any jump or
+  `Location` into another system).
+- `FSSSignalDiscovered` with `SignalType` `Megaship` lists the system's megaships; a destination in that list counts. Failing that the name must contain
+  the word "class" (every megaship class name does). Anything else (a station, a settlement, an ordinary ship) is not a megaship scan.
+- `PowerplayMerits` within `MERIT_WINDOW_S` (6 s) of the scan is that scan's merits (`MegaShipScan.merits`); `merit_at` is the newest merit timestamp counted,
+  so a replay of the same events adds nothing.
+
+The ledger keeps `megaships` for the live cycle (`record_megaship`: one per megaship name and `SystemAddress` per cycle, none from before the cycle,
+at most `MAX_MEGASHIPS` = 500) and writes it into each archived cycle as `"megaships"`. `SCHEMA` 3 makes an older ledger rebuild from the journals once.
+The back-fill adds `OP_MEGASHIP` and `OP_MEGASHIP_MERITS` and reads only the journal lines it needs (`"$Datascan_ShipUplink;"`, `"Megaship"`, the
+supercruise events). The Megaships tab is `powerplay_megaships_tab.py`; the main panel line is `powerplay._megaship_line`.
+
+Checked against real journals (39 uplink scans across four commanders): 37 resolved to a megaship in the right system, with the merits that followed;
+the other two were ordinary NPC ships and are correctly not counted.
 
 ### 11.2e Keeping the window responsive
 The Sessions window is a set of table widgets, and the controller asks it to refresh on every journal event. So
