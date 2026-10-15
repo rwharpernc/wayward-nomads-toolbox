@@ -208,7 +208,7 @@ produce a very wide image.
 upper bound on *every* dimension that affects layout.
 
 **Session strip.** Directly under the mode buttons (a frame at row 2 of the main frame, with a separator at
-row 3) are two lines shown in every mode; only the master collapse toggle hides them. Each is a feature
+row 3) are two lines shown in every mode; nothing hides them. Each is a feature
 module of its own, independent of Powerplay and of each other:
 
 - `game_mode.py`: "You are in Solo mode." (Open / Solo / Private Group with its name). Set from `LoadGame`'s

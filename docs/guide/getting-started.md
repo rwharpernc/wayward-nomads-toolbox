@@ -49,9 +49,8 @@ Set Elite to **borderless** or **windowed** mode and the overlay will work. The 
 4. **Check the result.** You should now have `plugins/WNTB/load.py`. If you see `plugins/WNTB/WNTB/load.py`, you
    extracted one level too deep; move the inner folder up.
 
-5. **Restart EDMC.** A **Wayward Nomads Toolbox (WNTB)** panel appears in the main window. **On a fresh install
-   it starts folded up**, showing only the title (`▸ Wayward Nomads Toolbox (WNTB)`). Click the title to open it.
-   WNTB remembers whether you left it open or closed.
+5. **Restart EDMC.** A **Wayward Nomads Toolbox (WNTB)** panel appears in the main window. It always shows
+   (there is no title to fold it away).
 
 If it doesn't, see [Troubleshooting](troubleshooting.md#the-wntb-panel-doesnt-appear). On Linux, also read
 [WNTB on Linux](linux.md) before you go further, because EDMC needs a couple of settings there.
@@ -78,7 +77,7 @@ After the restart the line shows **Plugin: v1.13.1 (updated)** in green for a sh
 
 You don't have to configure anything to get value out of WNTB, but this short tour helps:
 
-1. Click the WNTB title if the panel is folded up. Then look at the row of buttons under the "WNTB" title. Those are the eight **modes**. Click one and the panel below
+1. Look at the row of buttons at the top of the WNTB panel. Those are the eight **modes**. Click one and the panel below
    changes. Hover over a button for a moment to see its full name.
 2. Open **File → Settings → WNTB**. Each mode has its own tab. Look through the ones you care about and turn
    things on or off.
@@ -128,8 +127,8 @@ the panel to move between them. For example, Trade has **Session**, **Routes** a
 
 ### Collapsing the panel
 
-Click the WNTB title (it shows ▸ when folded and ▾ when open) to fold the whole panel away. Click it again to expand it. It starts folded on a fresh install. Sections inside Exploration also
-fold (look for the ▸ / ▾ marks), and WNTB remembers which ones you left open.
+The panel itself never folds away. Sections inside the modes (Exploration, Notes, Materials and so on) fold: they start folded, click a
+section's title (▸ / ▾) to open it, and WNTB remembers which ones you left open.
 
 ### Window height
 

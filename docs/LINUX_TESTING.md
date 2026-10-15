@@ -235,7 +235,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
       session: waiting for your balance…".
 - [ ] After loading into the game: "You are in Solo mode." (or Open, or Private Group with its name) and
       "Credits this session: no change yet". Both lines (and the Plugin version line above them) stay visible on every
-      mode button, and all disappear when you collapse the WNTB title.
+      mode button.
 - [ ] Switch through every mode, including Exploration and Trade: the whole block under the mode buttons stays visible.
 - [ ] After earning a Powerplay merit, a **Merits this session: +N (+N merits/hr)** line appears under the credits line, on
       every mode; the rate appears after a few minutes. It is absent before the first merit.

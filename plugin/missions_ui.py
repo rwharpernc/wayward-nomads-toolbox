@@ -32,7 +32,7 @@ column mode content but wrong here, since this content sits inside its own
 scrollable Canvas sub-region whose width differs from the outer frame's.
 
 No collapse header, no update-status row: both are redundant here - WNTB's
-own master collapse (see ui.py) already gates this mode's whole frame, and
+main panel never collapses, and
 WNTB's own "Updated to vX" slot (also ui.py) already covers the one shared
 self-updater every mode uses.
 """

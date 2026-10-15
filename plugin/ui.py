@@ -75,7 +75,6 @@ FEATURES = (
 # stay adjacent in FEATURES above for this to take effect.
 _SIDE_BY_SIDE_PAIRS = {autohonk: discovery}
 
-CONFIG_COLLAPSED = "wntb_main_collapsed"
 CONFIG_PANEL_MODE = "wntb_active_panel_mode"
 CONFIG_FIT_HEIGHT = "wntb_fit_window_height"
 _DEFAULT_FIT_HEIGHT = True
@@ -118,11 +117,8 @@ _ATTENTION_REASSERT_MS = 3_000
 _UPDATED_MESSAGE_DURATION_MS = 15_000
 
 _frame: Optional[tk.Frame] = None
-_title_label: Optional[tk.Label] = None
 _version_label: Optional[tk.Label] = None
 _version_natural: Optional[Tuple[str, str, str]] = None   # the label's own (background, foreground, font) before an override
-_collapsed: bool = False
-_collapsible_widgets: List[tk.Widget] = []
 
 _panel_mode: str = _DEFAULT_PANEL_MODE
 _mode_buttons: Dict[str, tk.Button] = {}
@@ -222,21 +218,16 @@ def _mode_row_full_label_size(frame: tk.Frame) -> Tuple[int, int]:
 
 def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     """Create the main-window frame for EDMC."""
-    global _frame, _title_label, _version_label, _collapsed, _collapsible_widgets
+    global _frame, _version_label
     global _panel_mode, _toggle_off_colors, _always_frame, _mode_holder
 
     _frame = tk.Frame(parent)
     _frame.columnconfigure(1, weight=1)
     _frame.bind("<Configure>", panelkit.on_frame_configure)
 
-    _collapsed = config.get_bool(CONFIG_COLLAPSED, default=True)
     _panel_mode = config.get_str(CONFIG_PANEL_MODE) or _DEFAULT_PANEL_MODE
     if _panel_mode not in _MODE_KEYS:
         _panel_mode = _DEFAULT_PANEL_MODE
-
-    _title_label = tk.Label(_frame, text=_title_text(), font=panelkit.bold_font(_frame), cursor="hand2")
-    _title_label.grid(row=0, column=0, sticky=tk.W, padx=(0, 4))
-    _title_label.bind("<Button-1>", _toggle_collapsed)
 
     # The row itself is held at the full-label size (see _mode_row_full_label_size) with
     # the short buttons left-justified inside it - no extra widget sits over the buttons.
@@ -254,7 +245,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
 
     # Session strip (game mode, then credits this session) + a separator,
     # directly under the buttons and before any page content: visible in every
-    # mode (it is not part of one), hidden only by the master collapse toggle.
+    # mode (it is not part of one), always shown (the main panel no longer collapses).
     # Each line is its own module (game_mode.py, session_credits.py, session_merits.py).
     session_strip = tk.Frame(_frame)
     session_strip.grid(row=2, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
@@ -307,8 +298,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     _always_frame.grid(row=5, column=0, columnspan=3, sticky="ew")
     _stack_features(_always_frame, "always")
 
-    _collapsible_widgets = [mode_row, session_strip, session_rule, _mode_holder, _always_frame]
-    _apply_collapsed_state()
+    _apply_panel_mode_visibility()
 
     theme.update(_frame)
     _toggle_off_colors = panelkit.capture_toggle_off_colors(_mode_buttons[_DEFAULT_PANEL_MODE])
@@ -337,28 +327,6 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
         _frame.after(delay_ms, lambda: panelkit.apply_theme_deep(_frame))
 
     return _frame
-
-
-def _title_text() -> str:
-    return f"{'▸' if _collapsed else '▾'} {PLUGIN_DISPLAY_NAME}"
-
-
-def _toggle_collapsed(_event: Optional[tk.Event] = None) -> None:
-    global _collapsed
-    _collapsed = not _collapsed
-    config.set(CONFIG_COLLAPSED, _collapsed)
-    _apply_collapsed_state()
-
-
-def _apply_collapsed_state() -> None:
-    if _title_label is not None:
-        _title_label["text"] = _title_text()
-    for widget in _collapsible_widgets:
-        if _collapsed:
-            widget.grid_remove()
-        else:
-            widget.grid()
-    _apply_panel_mode_visibility()
 
 
 def _sync_mode_holder_height() -> None:
@@ -410,8 +378,6 @@ def _fit_window_height() -> None:
 
 
 def _apply_panel_mode_visibility() -> None:
-    if _collapsed:
-        return
     for key, frame in _mode_frames.items():
         if key == _panel_mode:
             frame.grid()

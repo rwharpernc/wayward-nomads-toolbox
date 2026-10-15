@@ -6,6 +6,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Changed
+- **The main panel no longer folds.** The "Wayward Nomads Toolbox (WNTB)" title row that collapsed the whole panel is gone; the mode buttons are always shown. Sections inside the modes still fold, and start folded.
 - **No history on the mode panels.** A panel now shows the present only; the past lives in report windows. Trade's Session page no longer shows the game's lifetime totals (which mixed in Mining and Exobiology) or the "Journals reviewed" line, and the Colonization panel no longer lists its History block. Colonization history is in a new **Colonization History** window (the **HISTORY** button: Overview, By day, Commodities and Sites tabs).
 
 ### Added
