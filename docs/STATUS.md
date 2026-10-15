@@ -39,8 +39,8 @@ There is one long-lived branch, `master`, and it matches the 1.10.2 release. For
 - **Linux:** the steps and the ordered list of what to check are at the top of `docs/LINUX_TESTING.md` ("Testing: start here"). When
   reporting, give the distro, desktop, X11 or Wayland, native or Flatpak EDMC, and the relevant lines of EDMC's log
   (`~/.local/share/EDMarketConnector/EDMarketConnector.log`).
-- The in-game checks for Materials, Engineering and Expedition are in `docs/TODO.md`, which Git ignores on purpose: it only exists on the
-  machine where it was written. The Linux versions are in `docs/LINUX_TESTING.md`.
+- The in-game checks for Materials, Engineering, the Ship planner and Expedition are in [`docs/TODO.md`](TODO.md), the public list of open work. The Linux
+  versions are in `docs/LINUX_TESTING.md`.
 
 ## Working rules for now
 

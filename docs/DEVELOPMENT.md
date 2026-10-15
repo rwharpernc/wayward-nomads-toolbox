@@ -95,9 +95,9 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
 - `npm run deploy` builds and copies into EDMC's plugins folder for that OS. Restart EDMC after.
 - EDMC on Linux may be a Flatpak. Its log is
   `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/logs/EDMarketConnector-debug.log`
-  (on Windows: `%TEMP%\EDMarketConnector\EDMarketConnector-debug.log`). Check it first when something
+  (on Windows: `%LOCALAPPDATA%\EDMarketConnector\logs\EDMarketConnector-debug.log`; EDMC's **Help → Open Log Folder** opens it). Check it first when something
   works on one OS and not the other.
-- Not synced by Git (ignored on purpose): `.claude/`, `docs/roadmap.md`, `docs/TODO.md`, `dist/`. Copy local notes
+- Not synced by Git (ignored on purpose): `.claude/`, `docs/roadmap.md`, `dist/`. `docs/TODO.md` is tracked: it is the public list of open work. Copy local notes
   between machines yourself. `CLAUDE.md` is committed (it holds the two-machine guidance for both installs).
 
 **Keep code portable**

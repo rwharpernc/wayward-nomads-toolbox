@@ -52,4 +52,4 @@ one in a few clicks.
 ## For developers
 
 Technical documentation lives one level up in [docs/](..): [DEVELOPMENT.md](../DEVELOPMENT.md),
-[TECHNICAL.md](../TECHNICAL.md), [MODULES.md](../MODULES.md) and the feature specifications.
+[TECHNICAL.md](../TECHNICAL.md), [MODULES.md](../MODULES.md), the feature specifications, and [TODO.md](../TODO.md), the list of open work.
