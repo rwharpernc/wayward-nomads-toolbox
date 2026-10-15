@@ -90,7 +90,7 @@ class LedgerWindow:
             load_geometry=lambda: config.get_str(CONFIG_GEOMETRY) or "",
             save_geometry=lambda geometry: config.set(CONFIG_GEOMETRY, geometry))
         self._shell.window.protocol("WM_DELETE_WINDOW", self.close)
-        self._rebuild = self._shell.add_action("Rebuild from journals", lambda: self._controller.rebuild())
+        self._rebuild = self._shell.add_action("Rebuild from journals", self._on_rebuild)
         self._shell.set_status(LEGEND)
         self._tabs = Tabs(self._shell.body)
         self._tabs.pack(fill="both", expand=True)
@@ -112,6 +112,9 @@ class LedgerWindow:
     def alive(self) -> bool:
         return self._shell.alive
 
+    def _on_rebuild(self) -> None:
+        self._controller.rebuild()      # sets its status and refreshes this window straight away
+
     def lift(self) -> None:
         self._shell.window.deiconify()
         self._shell.window.lift()
@@ -122,12 +125,14 @@ class LedgerWindow:
         self._controller = controller
         record = controller.record()
         cmdr = controller.cmdr
-        self._shell.set_subtitle(cmdr or "No commander yet")
+        busy = controller.rebuilding()
+        self._shell.set_subtitle((cmdr or "No commander yet") + (f"  -  {controller.status}" if controller.status else ""))
+        self._rebuild.set_enabled(not busy)
         self._income.set_rows(income_rows(record))
         first = ledger.first_day(record)
         note = (f"Counted since {first}." if first else "No income has been counted yet.")
-        if controller.rebuilding():
-            note += " Reading your journals now; the figures grow as it goes."
+        if controller.status:
+            note += " " + controller.status
         self._income_note.configure(text=note)
         self._days.set_rows(ledger.day_rows(record))
         self._draw_lifetime(controller.lifetime())

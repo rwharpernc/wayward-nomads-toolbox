@@ -3,6 +3,12 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.14.1 - 2026-10-15
+
+### Fixed
+- **The Credits Ledger's Lifetime tab was empty.** The game's totals were read in the background but only picked up while a journal rebuild was running, so a commander whose rebuild had finished saw nothing. They now appear after start-up.
+- **Rebuild from journals now shows what it is doing.** The window says "Reading your journals...", greys the button while it runs, and ends with how many income events were read and how the total changed (or why it could not run).
+
 ## 1.14.0 - 2026-10-15
 
 ### Changed

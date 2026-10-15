@@ -15,7 +15,7 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## Testing: start here
 
-**1.14.0 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
+**1.14.1 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
 Linux; 1.10.1 stopped the Expedition and Materials sections from widening the main panel; 1.10.2 made long names wrap instead of being cut off. 1.10.1 and 1.10.2
 were tested on Windows only, and so were 1.11.0, 1.12.0, 1.13.0 and 1.14.0.
 
@@ -27,9 +27,9 @@ losing the "Construction Site:" prefix. The data behind the Engineering window c
 engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 
 **Getting set up**
-1. Install the released **1.14.0** the normal way (the automatic update, or the zip from the
+1. Install the released **1.14.1** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
-   buttons should read `Plugin: v1.14.0`. Work through sections 0 and 1 below first.
+   buttons should read `Plugin: v1.14.1`. Work through sections 0 and 1 below first.
 2. To get the checklist and the test suite, fetch the repository and use `master`:
    `git fetch --all --tags`, then `git switch master`, then `git pull --rebase`. Once per machine:
    `git config core.hooksPath .githooks`.

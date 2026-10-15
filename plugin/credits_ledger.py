@@ -44,6 +44,7 @@ class CreditsLedger:
         self._live: List[Tuple[str, Dict[str, Any]]] = []            # live events seen while a rebuild was running
         self._lifetimes: "queue.Queue[Dict[str, lifetime_stats.Lifetime]]" = queue.Queue()
         self._polling = False
+        self.status = ""          # what the last rebuild did, for the window ("Reading your journals...", "Done: ...")
 
     # --- lifecycle -------------------------------------------------------------------------------
 
@@ -87,6 +88,7 @@ class CreditsLedger:
             return
         if key not in self._lifetime:
             threading.Thread(target=self._read_lifetime, args=([cmdr],), name="WNTB-ledger-lifetime", daemon=True).start()
+            self._schedule()      # the answer is only picked up by the poll, which must be running
         if self.book.backfilled(cmdr) or key in self._pending:
             return
         self._pending.add(key)
@@ -96,11 +98,16 @@ class CreditsLedger:
     def rebuild(self) -> None:
         """Count the past again from every journal (the window's Rebuild button)."""
         key = commander_data.key_for(self.cmdr)
-        if not key or key in self._pending:
-            return
-        self._pending.add(key)
-        threading.Thread(target=self._read_past, args=(self.cmdr, key), name="WNTB-ledger-rebuild", daemon=True).start()
-        self._schedule()
+        if not key:
+            self.status = "No commander yet: log in to the game first."
+        elif key in self._pending:
+            self.status = "Already reading your journals..."
+        else:
+            self._pending.add(key)
+            self.status = "Reading your journals..."
+            threading.Thread(target=self._read_past, args=(self.cmdr, key), name="WNTB-ledger-rebuild", daemon=True).start()
+            self._schedule()
+        self._changed()
 
     def _read_past(self, cmdr: str, key: str) -> None:
         try:
@@ -140,12 +147,19 @@ class CreditsLedger:
                 cmdr, key, entries = self._rebuilt.get_nowait()
                 newer = [e for who, e in self._live if commander_data.key_for(who) == key]
                 self._live = [(who, e) for who, e in self._live if commander_data.key_for(who) != key]
+                before = sum(income_ledger.totals(self.book.record(cmdr)).values())
                 try:
                     self.book.rebuild(cmdr, entries, newer)
+                    after = sum(income_ledger.totals(self.book.record(cmdr)).values())
+                    self.status = (f"Done: read {len(entries):,} income events from your journals; the total went from "
+                                   f"{before:,} to {after:,} cr." if entries else
+                                   "Done: no income events were found in your journals.")
                     self.book.commit()
                 except Exception:
                     logger.exception("Could not apply the rebuilt Credits Ledger for %s", cmdr)
+                    self.status = "The rebuild failed; see the EDMC log."
                 self._pending.discard(key)
+                self._changed()
         except queue.Empty:
             pass
         if self._pending or any(t.name == "WNTB-ledger-lifetime" and t.is_alive() for t in threading.enumerate()):
