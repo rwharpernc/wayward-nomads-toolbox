@@ -109,6 +109,20 @@ If it bothers you:
   [Covered or the Carrier row looks wrong](#covered-or-the-carrier-row-looks-wrong)).
 - Or leave it on: the commander with a carrier needs it, and the failures for the others are harmless.
 
+### The Ship planner says a module is "not counted"
+
+The planner only counts what WNTB's blueprint table covers, and it says why in the **Counted?** column and the detail under the table (select the row):
+- *Pre-engineered*: the module comes engineered from Frontier, so there is nothing to craft.
+- *No module type for this item*: the item is not one the table has blueprints for (a cargo rack, a passenger cabin, a module reinforcement).
+- *No blueprint ... for a ...*: the journal's blueprint is not in the table for that module type. The table is EDEngineer's (March 2024) with a few later additions,
+  so a blueprint added to the game since may be missing. Check the in-game recipe.
+- *Only some grades*: the table has fewer grades of that blueprint than the level asks for.
+- The experimental effect is not in the table: the grades are counted and the effect is not.
+
+**Add plan to wishlist** can refuse with a message: no commander yet (log in first), more than 100 blueprints on the list, or more than 99 crafts of one. Nothing
+is added when it refuses; remove some entries and try again. If **Paste from clipboard** reports no text, paste into the box by hand and press **Read loadout**.
+See [Ship planner](field-ops.md#engineering-blueprints-and-a-wishlist).
+
 ## Overlay
 
 ### On-screen alerts don't show up

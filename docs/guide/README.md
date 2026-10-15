@@ -39,7 +39,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | **Mining** | [Mining](mining.md): space and surface mining, the Mining Book |
 | **Trade** | [Trade](trade.md): profit, routes, prices, Watch list, carrier cargo, History |
 | **Missions** | [Missions](missions.md): every mission in one view |
-| **Field Ops** | [Field Ops](field-ops.md): screenshots, inventory, engineering materials, blueprints and a wishlist, material traders, ship builds |
+| **Field Ops** | [Field Ops](field-ops.md): screenshots, inventory, engineering materials, blueprints, a wishlist, a ship planner and where the engineers are, material traders, ship builds |
 | **Colonization** | [Colonization](colonization.md): your current project, your history, the sites window, where to buy |
 | **BGS** | [BGS](bgs.md): factions, states and your effect on them |
 | *Always on* | [Landing Assist, Interdiction Warning and Flight Alerts](always-on.md) |

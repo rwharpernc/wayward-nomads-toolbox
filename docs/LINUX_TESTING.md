@@ -19,6 +19,11 @@ Where a step fails, copy the relevant lines from EDMC's log
 Linux; 1.10.1 stopped the Expedition and Materials sections from widening the main panel; 1.10.2 makes long names wrap instead of being cut off.
 1.10.1 and 1.10.2 were tested on Windows only. The Linux checks for 1.10.2 are the wrapping and panel-width items below.
 
+**After 1.10.2, unreleased on `master` and tried on Windows only**, each with its own checklist item in section 6 below: Settings → General → **Help** (Report an issue, Copy diagnostics); the
+Engineering window's **Engineers** tab (places, unlock steps, the Bubble / Colonia filter) and **Ship planner** tab; BGS rebuilding a period that closed while EDMC was not running; and finished
+Colonization builds losing the "Construction Site:" prefix. The data behind the Engineering window changed too (five recipes corrected, new synthesis rows and materials, the Colonia
+engineers' upgrades).
+
 **Getting set up**
 1. Install the released **1.10.2** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode

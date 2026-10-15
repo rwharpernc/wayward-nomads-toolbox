@@ -83,6 +83,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | Exact influence caused by your trade | Trade is counted as net credits traded at the station's controlling faction. It is an **approximation**, not the game's real supply-and-demand rules. | Use it to compare your own effort, not as a precise influence figure. |
+| Several ticks of play, if EDMC was closed over them | The journal does not say which tick a thing belongs to once they have passed, only when it happened, and WNTB learns ticks from a third-party service while it runs. | Nothing: the play across the missed ticks is filed in the one period that closed. |
 | Missions shown as an exact percentage | Frontier gives influence **pips** and a mission count, never a percentage. | Read the pips as strength, not a number. |
 | Every crime and kill attributed to a victim faction | Only what `CommitCrime` reports is counted. Kills have no victim-faction attribution. | Don't rely on BGS for the effects of murder. |
 | Combat zones as their own signal | Only the resulting bounty or combat-bond **redemption** is counted, not zone presence or wins. | Redeem your vouchers and bonds in the system you fought in. |

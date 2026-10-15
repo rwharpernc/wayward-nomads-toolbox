@@ -1149,6 +1149,14 @@ Trade mode's drawn page and its History window are the Tk exceptions:
 `tests/trade_history_window_smoke.py` opens the History window the same way and visits every tab. The drawn page: `tests/trade_view_smoke.py` draws it in a real window with EDMC
 stubbed, in a subprocess (skipped when there is no display), and checks widths, redraws and column alignment.
 
+The Help tab's buttons are covered by `tests/test_issue_report.py` (the prefilled address, the log filter, the redaction, the clipboard hand-off, and
+that the form template carries the `environment` field the code fills in). Engineering: `tests/test_blueprints.py` pins the EDDiscovery corrections and
+additions (five recipes, seven synthesis rows, the Colonia four's upgrades, the nine materials), `tests/test_engineers.py` the 38-engineer location table,
+its regions and name matching, and `tests/materials_smoke.py` opens the Engineering window (every tab, the Show filter, the Ship planner). The ship
+planner's logic is `tests/test_ship_plan.py` (parsing SLEF and `Loadout`, module types, grades and effects, merging, limits, and that every link in the
+generated `journal_blueprints.py` points at a row the table has). BGS: `tests/test_bgs_ledger.py` covers `repair_record` and `merge_records`, and
+`tests/test_bgs_panel_repair.py` (in a subprocess, with EDMC stubbed) the panel's roll, replay and filing of a closed period.
+
 Not covered by automation: anything else that needs a live EDMC or a Tk window (panels, dialogs, overlay
 rendering). Those are checked by hand in a real EDMC install, and overlay rendering changes should
 be verified against ModernOverlay's own payload log.
@@ -1279,6 +1287,10 @@ isolated in `platform_support.py` (plus the Windows branches in `autohonk.py` an
 | Overlay | EDMCModernOverlay | EDMCModernOverlay; same TCP protocol |
 | Modal dialogs | `grab_set` works at once | `ui.style.grab_when_visible`: X11 refuses a grab until the window is mapped, so it retries briefly |
 | Plain `tk.Listbox` colors | `SystemWindow` / `SystemWindowText` | `white` / `black` (those names are Windows-only Tk colors) |
+| Open a link in the browser (Report an issue, the Raven and Inara links) | `webbrowser.open` | `webbrowser.open` (the desktop's default browser, through `xdg-open` or similar; not yet checked from a Flatpak EDMC) |
+| The OS line of a bug report | `platform_support.describe_system()`: Windows release and build | The same function: distro (`PRETTY_NAME`), `XDG_SESSION_TYPE`, and `Flatpak` when it is one |
+| EDMC's log, for Copy diagnostics | The file handler of EDMC's logger, else `<app dir>/logs/EDMarketConnector-debug.log` | The same; a Flatpak EDMC keeps it under `~/.var/app/io.edcd.EDMarketConnector/data/EDMarketConnector/logs/` |
+| Paste a ship loadout (Ship planner) | `tk` clipboard (`clipboard_get`) | The same; needs a clipboard owner on X11 or Wayland, and the box accepts a paste by hand if the button reports no text |
 | Text symbols in the UI | Any | Only symbols every font has (`×`, `★`, `→`); `✕` was replaced because some Linux fonts lack it |
 | Settings notes | "This system: Windows - supported" | "This system: Linux, xdotool found / NOT found" (`platform_support.input_support_note`, `sound_support_note`) |
 

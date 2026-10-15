@@ -11,6 +11,8 @@ Look for the **Works on:** line.
 | Feature | Windows | Linux (Elite under Steam Proton or Wine) |
 |---|---|---|
 | Everything driven by the journal: Powerplay, Exploration, Mining, Missions, BGS, Colonisation, Inventory tracking, Materials and Engineering, the Expedition planner, Ship Builds, Boxel Survey, Codex, Landing Assist, Interdiction Warning, Discovery Alerts | Yes | Yes, once EDMC's **Journal directory** points at the game's journals inside the Proton/Wine folder |
+| **Report an issue** and **Copy diagnostics** (Settings → General → Help) | Yes | Yes. **Report an issue** opens your default browser; the OS line names your distro, X11 or Wayland and whether EDMC is a Flatpak. A Flatpak EDMC keeps its log elsewhere ([Reporting a problem](reporting-problems.md#if-something-does-not-work)) |
+| **Ship planner** (Engineering window): paste an EDSY or Coriolis loadout | Yes | Yes. **Paste from clipboard** needs a working clipboard; you can also paste into the box by hand |
 | **Game mode and credits lines** under the mode buttons | Yes | Yes (same journal data; the Journal directory must be set) |
 | **Trade**: session profit and costs, stock, carrier cargo, Trade History (including **Export log (CSV)**), and the Spansh route and price lookups | Yes | Yes. The Journal directory must be set: Trade reads the journals to catch a session up after EDMC was closed |
 | **Auto-Honk** (presses your Discovery Scanner key for you) | Yes | Yes, needs **`xdotool`**. X11 or XWayland windows only, not a native Wayland window |

@@ -1,11 +1,11 @@
 # Field Ops
 
-Field Ops holds the on-foot and housekeeping tools: screenshots, your inventory, your engineering materials and saved ship builds.
+Field Ops holds the on-foot and housekeeping tools: screenshots, your inventory, your engineering materials (with the blueprints, wishlist, ship planner and engineers) and saved ship builds.
 (Colonization has its own mode, with its own page: [Colonization](colonization.md).)
 
 > **Where this comes from:** screenshots, your backpack and ship locker, and ship loadouts come from the journal (or from EDMC's own state, which it rebuilds from the journal). The journal doesn't give your backpack's capacity, so WNTB uses a built-in table, and the Carrier Locker isn't in the journal at all: it comes from Frontier's servers through a signed-in EDMC. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 
-**On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Materials](#materials) · [Engineering](#engineering-blueprints-and-a-wishlist) · [Ship Builds](#ship-builds) ·
+**On this page:** [Screenshots](#screenshots) · [Inventory](#inventory) · [Materials](#materials) · [Engineering](#engineering-blueprints-and-a-wishlist) (including the [Ship planner](#engineering-blueprints-and-a-wishlist)) · [Ship Builds](#ship-builds) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 ## Screenshots
