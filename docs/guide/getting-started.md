@@ -128,7 +128,7 @@ the panel to move between them. For example, Trade has **Session**, **Routes** a
 ### Collapsing the panel
 
 The panel itself never folds away. Sections inside the modes (Exploration, Notes, Materials and so on) fold: they start folded, click a
-section's title (▸ / ▾) to open it, and WNTB remembers which ones you left open.
+section's title (▸ / ▾) to open it. They fold again each time EDMC starts.
 
 ### Window height
 

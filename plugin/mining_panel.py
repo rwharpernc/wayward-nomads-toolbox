@@ -177,7 +177,7 @@ class MiningPanelController:
         self._nav = tk.Frame(parent)
         self._nav.grid(column=0, row=0, columnspan=2, sticky="ew")
         panelkit.nav_arrow(self._nav, -1, lambda: self._step_page(-1)).pack(side=tk.LEFT)
-        self._page_label = tk.Label(self._nav, anchor=tk.CENTER)
+        self._page_label = tk.Label(self._nav, anchor=tk.CENTER, font=panelkit.view_fonts()["bold"])
         self._page_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         panelkit.nav_arrow(self._nav, 1, lambda: self._step_page(1)).pack(side=tk.LEFT)
 

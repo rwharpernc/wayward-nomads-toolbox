@@ -486,7 +486,7 @@ class TradePanelController:
         nav.grid(row=0, column=0, columnspan=3, sticky="ew")
         panelkit.nav_arrow(nav, -1, lambda: self._step_page(-1)).pack(side=tk.LEFT)
         panelkit.nav_arrow(nav, 1, lambda: self._step_page(1)).pack(side=tk.RIGHT)
-        self._page_label = tk.Label(nav, anchor=tk.CENTER)
+        self._page_label = tk.Label(nav, anchor=tk.CENTER, font=panelkit.view_fonts()["bold"])
         self._page_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         self._view = BlockView(parent)

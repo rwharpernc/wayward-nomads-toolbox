@@ -65,9 +65,7 @@ _CFG_CONFIRM_ALIAS_ARRIVAL = "wntb_boxel_confirm_alias_arrival"
 # Collapsed by default - this is the largest
 # single feature in Exploration mode's panel (three sub-modes' worth of
 # widgets), so it starts minimized rather than pushing everything below it
-# down the page; same click-the-title-to-toggle convention ui.py's own
-# main-panel collapse uses.
-_CFG_COLLAPSED = "wntb_boxel_collapsed"
+# down the page; always folded at start (opening it is not remembered).
 
 # Which of the two sub-modes (Sequence vs. Region Sweep) is selected -
 # persisted separately from either sub-mode's own state, since it's a
@@ -568,7 +566,7 @@ class BoxelSurveyController:
             self._submode = _SUBMODE_SEQUENCE
         self._region_sweep.set_active(self._submode == _SUBMODE_REGION_SWEEP)
         self._waypoint_route.set_active(self._submode == _SUBMODE_WAYPOINTS)
-        self._collapsed = config.get_bool(_CFG_COLLAPSED, default=True)
+        self._collapsed = True    # always starts folded; opening it is not remembered
 
         # ui.py's create_plugin_app() gives every PANEL_PLACEMENT feature its
         # own dedicated child frame (see _stack_features()), separated from
@@ -635,7 +633,6 @@ class BoxelSurveyController:
 
     def _toggle_collapsed(self, _event: Optional[tk.Event] = None) -> None:
         self._collapsed = not self._collapsed
-        config.set(_CFG_COLLAPSED, self._collapsed)
         self._apply_collapsed_visibility()
 
     def _apply_submode_visibility(self) -> None:

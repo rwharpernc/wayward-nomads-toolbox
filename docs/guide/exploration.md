@@ -1,7 +1,7 @@
 # Exploration
 
 Exploration mode is one scrolling panel with several sections stacked top to bottom. Some sections start folded:
-click a section's title (▸ / ▾) to open it. WNTB remembers which ones you left open.
+click a section's title (▸ / ▾) to open it. They fold again each time EDMC starts.
 
 > **Where this comes from:** your scans, jumps, honks and Codex finds come from the journal, so everything about *your* exploring is exact. What the journal can't say (which systems exist or are unvisited, a gas giant's color, which species a planet hosts before you sample it) is filled from what EDSM, Spansh, Canonn and edastro report, or worked out and labeled as a lead to check. See [How WNTB knows what it knows](README.md#how-wntb-knows-what-it-knows).
 

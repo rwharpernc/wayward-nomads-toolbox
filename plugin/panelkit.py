@@ -237,12 +237,10 @@ def add_tooltip(widget: tk.Widget, text: str) -> None:
 def collapsible_section(parent: tk.Frame, title: str, config_key: str, default_collapsed: bool = True) -> tk.Frame:
     """A bold, click-to-toggle title (▸ collapsed / ▾ expanded) in row 0 of
     `parent`, with a body frame in row 1 that the caller builds its widgets
-    into (`body.set_title_suffix(text)` adds a note to the title that shows even when folded). The state is remembered in
-    EDMC's config under `config_key`; with
-    nothing saved yet the section starts collapsed (`default_collapsed`) -
-    same convention as Boxel Survey's own title (boxel_survey.py) and ui.py's
-    main-panel collapse."""
-    collapsed = config.get_bool(config_key, default=default_collapsed)
+    into (`body.set_title_suffix(text)` adds a note to the title that shows even when folded). A section always starts
+    collapsed (`default_collapsed`) each time EDMC starts: opening it lasts for the session and is not remembered, so the
+    panel is the same short height every launch. `config_key` is kept for the callers that name it and is unused."""
+    collapsed = default_collapsed
     suffix = ""
     title_label = tk.Label(parent, font=bold_font(parent), cursor="hand2")
     title_label.grid(row=0, column=0, columnspan=3, sticky=tk.W)
@@ -262,7 +260,6 @@ def collapsible_section(parent: tk.Frame, title: str, config_key: str, default_c
     def toggle(_event: tk.Event) -> None:
         nonlocal collapsed
         collapsed = not collapsed
-        config.set(config_key, collapsed)
         apply()
 
     title_label.bind("<Button-1>", toggle)
