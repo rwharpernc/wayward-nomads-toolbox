@@ -36,10 +36,18 @@ import tkinter.font  # noqa: E402,F401  would otherwise drop from sys.modules ag
 
 _EDMC = ("theme", "myNotebook", "monitor", "ttkHyperlinkLabel", "edmc_data", "plug", "companion", "EDMCLogging",
          "l10n", "timeout_session", "protocol", "prefs", "killswitch", "Tooltips", "ttkDefaults", "requests")
+import plugin as _plugin_package  # noqa: E402
+
+_BEFORE = set(sys.modules)
 with mock.patch.dict(sys.modules, {name: _Anything(name) for name in _EDMC}):
     powerplay = importlib.import_module("plugin.powerplay")
     backfill = importlib.import_module("plugin.powerplay_backfill")
     T = importlib.import_module("plugin.powerplay_megaships_tab")
+    _ADDED = [name for name in sys.modules if name not in _BEFORE and name.startswith("plugin.")]
+for _name in _ADDED:                                     # the package keeps an attribute for each submodule imported under the stand-ins; drop them
+    _short = _name.split(".", 1)[1]
+    if "." not in _short and hasattr(_plugin_package, _short):
+        delattr(_plugin_package, _short)
 
 from plugin import megaship_scans as M  # noqa: E402
 from plugin import powerplay_ledger as L  # noqa: E402

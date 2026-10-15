@@ -54,7 +54,7 @@ Only when you press a button:
 ## What never goes online
 
 Everything else makes **no internet connection at all**: Powerplay tracking, Missions, Inventory, Screenshots,
-Copy diagnostics (clipboard only), the Ship planner (reads a loadout you paste, and your own journal for the ship you fly), the Upgrade planner (your own journal for the gear you own), Colonisation tracking, history and the shopping list overlay (Where to buy and Planned Builds are the only parts that go online,
+Copy diagnostics (clipboard only), the Missions overlay card, the Ship planner (reads a loadout you paste, and your own journal for the ship you fly), the Upgrade planner (your own journal for the gear you own), Colonisation tracking, history and the shopping list overlay (Where to buy and Planned Builds are the only parts that go online,
 above), Organic Scanning, Ship Builds, Landing Assist, Interdiction Warning, and Trade's session profit,
 stock, carrier cargo and History, and the Watch list's prices from the markets you open.
 

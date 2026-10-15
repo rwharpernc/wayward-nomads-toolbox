@@ -100,6 +100,7 @@ Spec: [ORGANIC_SCANNING_TECH_SPEC.md](ORGANIC_SCANNING_TECH_SPEC.md), [SCREENSHO
 | `odyssey_upgrade_plan.py` | The Odyssey upgrade planner: what it costs to take a suit or weapon from one class to another (materials from the blueprint table, credits from a per-item unit seen in real journals) and fit up to four modifications; no Tk |
 | `odyssey_gear.py` | The Odyssey suits and weapons the commander owns, from the journal's loadout events: item, class now and fitted modifications, for the Upgrade planner to fill in; read on demand, nothing stored |
 | `odyssey_plan_tab.py` | The Upgrade planner tab of the Engineering window: pick the item (or read your own gear), classes and modifications, see the steps and credits, and add them to the wishlist |
+| `missions_overlay.py` | The Missions card on the in-game overlay: the missions for this system and the next jump first, the rest by urgency, capped to a row limit; pure layout plus drawing and its Settings tab |
 | `ship_current.py` | The ship being flown, from the newest `Loadout` event in the newest journals, read on demand for the Ship planner to subtract; nothing stored |
 | `ship_plan_tab.py` | The Ship planner tab of the Engineering window: paste, read, the module table, rolls per grade, and Add plan to wishlist |
 | `blueprints_extra.py` | Hand-added entries the blueprint table lacks: Yi Shen's unlock, which asks for three sets of items handed to the other Colonia on-foot engineers, with its sources |

@@ -71,6 +71,8 @@ SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
           "wntb_notable_x", "wntb_notable_y", (700, 560), "wntb_notable", "wntb_notable_"),
     _slot("flight_alerts", "Flight alerts (carrier jump, fuel)", "right", "top", 40, 440, (440, 110),
           group="wntb_flight", group_prefix="wntb_flight_"),
+    _slot("missions", "Missions list", "right", "bottom", 40, 140, (440, 300),
+          group="wntb_missions", group_prefix="wntb_missions_"),
     _slot("interdiction", "Interdiction warning", "center", "top", 0, 20, (600, 116),
           group="wntb_interdiction", group_prefix="wntb_interdiction_"),
     _slot("landing", "Landing assist", "left", "bottom", 40, 40, (466, 324),

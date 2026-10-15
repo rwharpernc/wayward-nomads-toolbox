@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
     exploration_value, flight_alerts, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, materials_panel, mining_overlay, mining_panel, notes_panel, expedition_panel, surface_compass,
-    missions, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, system_names, powerplay_window, rare_goods_window, restore, screenshots, session_credits, session_merits, ship_builds_panel, trade_panel, trade_watch_panel, ui,
+    missions, missions_overlay, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, system_names, powerplay_window, rare_goods_window, restore, screenshots, session_credits, session_merits, ship_builds_panel, trade_panel, trade_watch_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -49,7 +49,7 @@ if not logger.hasHandlers():
 # Every feature module that consumes journal events. Order doesn't matter -
 # each one only ever reads `entry`/`state`, never mutates them.
 _FEATURES = (
-    powerplay, missions, autohonk, interdiction, flight_alerts, landing, discovery, notable, boxel_survey, exploration_value,
+    powerplay, missions, missions_overlay, autohonk, interdiction, flight_alerts, landing, discovery, notable, boxel_survey, exploration_value,
     organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, notes_panel, expedition_panel, surface_compass, ship_builds_panel, colonisation_panel, screenshots,
     inventory_panel, materials_panel, mining_panel, trade_panel, trade_watch_panel, bgs_panel, game_mode, session_credits, session_merits,
 )
@@ -112,11 +112,13 @@ def plugin_start3(plugin_dir: str) -> str:
     trade_panel.start(plugin_dir)
     trade_watch_panel.start(plugin_dir)
     flight_alerts.start(plugin_dir)
+    missions_overlay.start(plugin_dir)
     notes_panel.start(plugin_dir)
     expedition_panel.start(plugin_dir)
     surface_compass.start(plugin_dir)
     interdiction.set_overlay_client(_overlay)
     flight_alerts.set_overlay_client(_overlay)
+    missions_overlay.set_overlay_client(_overlay)
     surface_compass.set_overlay_client(_overlay)
     landing.set_overlay_client(_overlay)
     discovery.set_overlay_client(_overlay)
@@ -137,6 +139,7 @@ def plugin_start3(plugin_dir: str) -> str:
         (notable.GROUP_NAME, notable.GROUP_PREFIX),
         (interdiction.GROUP_NAME, interdiction.GROUP_PREFIX),
         (flight_alerts.GROUP_NAME, flight_alerts.GROUP_PREFIX),
+        (missions_overlay.GROUP_NAME, missions_overlay.GROUP_PREFIX),
         (surface_compass.GROUP_NAME, surface_compass.GROUP_PREFIX),
         (mining_overlay.GROUP_NAME, mining_overlay.GROUP_PREFIX),
         (screenshots.GROUP_NAME, screenshots.GROUP_PREFIX),
@@ -187,6 +190,7 @@ def plugin_stop() -> None:
     mining_panel.stop()
     trade_panel.stop()
     flight_alerts.stop()
+    missions_overlay.stop()
     notes_panel.stop()
     expedition_panel.stop()
     trade_watch_panel.stop()

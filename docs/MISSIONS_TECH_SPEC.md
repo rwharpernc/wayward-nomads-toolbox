@@ -178,7 +178,22 @@ accept and finish), the kill-progress rules (stacking, oldest-first, arena and t
 missions), the journal backlog reader (per-commander collection, malformed lines, age cut-off,
 missing folder, the derived active set, combat bonds, cargo progress) and `mission_cargo.py`. The category rules and the panel are exercised by hand in EDMC.
 
+## 10b. The overlay card
+
+`missions_overlay.py` draws the Missions card on the in-game overlay (settings in Settings → Overlays → Missions, off by default, placement the "Missions list" slot).
+`entries_from` turns the active missions (`all_missions.view.missions`) into `Entry`s: a redirected mission (`kill_tracker.get_redirected`) is ready and goes to its new
+hand-in place (`get_redirect_destination`), and the label is the mission's own title (a massacre is "Massacre", a cargo mission "40 Gold"). `stack` makes one `Item` of
+the entries with the same category, label, place and ready flag (a massacre's faction too; an entry with cargo progress stays alone), keeping the soonest expiry.
+`build_lines` sorts the items into HERE (the system the commander is in, from `FSDJump`, `Location` and `CarrierJump`), NEXT (the system named by `FSDTarget`, cleared on
+arrival and by `NavRouteClear`) and the rest, each ready first and then soonest to expire, shows at most the row limit of them (3 to 14) in that order and counts what is
+hidden. Each line is `title > place  time left` clipped to `LINE_CHARS` (46) with the time always kept; the title and the place share the room. Red is under the urgent
+limit (60 minutes by default), amber under six hours, green when ready. The card has one fixed width and is drawn at its placement slot. The overlay is redrawn when the
+lines change, now and then (every 45 s) so it does not expire, and a 30 s tick keeps the times left current. Tests: `tests/test_missions_overlay.py`; the look smoke test draws
+the widest card at every text size.
+
 ## 11. Known gaps
+
+- The overlay's NEXT section follows the targeted system only, not the whole route (section 10b).
 
 - Mission names the rules don't recognize land in **Other**; the hint lists need upkeep.
 - Kill counts for wing and on-foot missions are estimates and can lag.

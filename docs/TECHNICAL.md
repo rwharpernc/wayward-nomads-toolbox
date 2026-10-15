@@ -534,6 +534,11 @@ are `system_names.local()` (the systems seen by `load.journal_entry`, then sourc
 `add_source`) from two letters, plus Spansh's `/api/systems/field_values/system_names?q=` answers from three letters when
 `wntb_system_suggest_spansh` is on (off by default): the call is debounced 350 ms, runs on a worker thread, and is cached by typed start for the session.
 
+The Missions card (`missions_overlay.py`) is a second small text card of the same kind: pure layout (`build_lines`, in the Missions specification section 10b) apart from
+drawing, one fixed width, lines clipped to `LINE_CHARS`, drawn through the shared overlay client at the "Missions list" placement slot (`overlay_placement.SLOTS`, group
+`wntb_missions`, registered in `load.py` with the other groups). It follows the commander's system and `FSDTarget` from the journal and rereads the Missions mode's
+active missions on every change and every 30 s; nothing is stored.
+
 Flight Alerts (`flight_alerts.py`, over the pure `carrier_jump_timer.py` and `fuel_alerts.py`) draws one overlay card. The carrier
 countdown comes from `CarrierJumpRequest` (`SystemName`, `Body`, `DepartureTime`, parsed as UTC), cleared by `CarrierJumpCancelled` or
 `CarrierJump`; a request whose departure is already more than 90 s past is ignored (an old journal line), one alert is given as the time

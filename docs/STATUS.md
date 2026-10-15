@@ -20,6 +20,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Unreleased on `master`
 
+- Missions overlay card (HERE / NEXT / the rest, capped, in a corner). Unit-tested and drawn from a real mission history; Windows in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
 - Engineering window: **Upgrade planner** tab (Odyssey suit and weapon upgrades and modifications onto the wishlist), and corrected upgrade costs in the blueprint table.
 - Powerplay: **Megaships** tab and panel line (megaship datalink scans per cycle, named from the megaship you dropped to). Unit-tested and checked against real journals; Windows in-game and Linux checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`.
 - Ship planner: **Subtract what my current ship already has**. Windows-tested by unit and smoke tests only; the Linux check is in `docs/LINUX_TESTING.md` section 6.

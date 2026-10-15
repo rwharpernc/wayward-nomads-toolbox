@@ -59,6 +59,7 @@ sys.modules["config"] = cfgmod
 
 from plugin import colonisation, colonisation_overlay as C, discovery as D, interdiction as I, landing as L  # noqa: E402
 from plugin import flight_alerts as FA  # noqa: E402
+from plugin import missions_overlay as MO  # noqa: E402
 from plugin import surface_compass as CO  # noqa: E402
 from plugin import mining_overlay as M, notable as N, overlay_style as S, screenshots as SC  # noqa: E402
 
@@ -188,6 +189,11 @@ for look in looks():
         rec = Rec()
         FA.render(FA.SAMPLE_LINES[:3] * 2 if lines_shown == 4 else FA.SAMPLE_LINES[:lines_shown], rec, look)
         fits(rec, FA._CARD_ID, f"flight alerts x{lines_shown} {tag}")
+
+    for shown in (1, 5, MO.MAX_ROWS + MO.EXTRA_LINES):
+        rec = Rec()
+        MO.render([("W" * MO.LINE_CHARS, "text")] * shown, rec, look)       # the widest line the card can be given, as many times as it holds
+        fits(rec, MO._CARD_ID, f"missions x{shown} {tag}")
 
     for label, info in (("approved", landing_info), ("placeholder", landing_placeholder), ("denied", landing_denied)):
         rec = Rec()

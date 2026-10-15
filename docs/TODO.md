@@ -47,6 +47,9 @@ These are built and covered by unit tests, but have not all been seen working in
   (EDSM)** against real EDSM; and that the row does not widen the EDMC window. Then Linux.
 - [ ] **Notes.** Quick add, the window, **Here**, Delete twice, the count when jumping into a system with notes, and that the EDMC window does not get
   wider. Then Linux.
+- [ ] **Missions overlay card.** Enable it (Settings → Overlays → Missions), press **Test Card**, then fly with a real board of missions: HERE and NEXT follow your system and the system you target,
+  the times count down, a finished mission shows a tick, the card stays one width, and it sits in the corner you chose without covering the HUD. Note which rows you would drop or add (the label
+  for each kind of mission, the row limit). Then Linux.
 - [ ] **Upgrade planner.** Pick an item, a class range and modifications and add them to the wishlist; compare the materials with the in-game upgrade screen for an item
   other than the eight confirmed ones (Karma P-15, Manticore Intimidator and Oppressor, TK Aphelion, Eclipse and Zenith), and try **Read my gear** and compare it with your loadouts, and note the credits shown at the upgrade screen:
   each one confirmed is a line in `odyssey_upgrade_plan.CREDIT_UNIT` (or send the `UpgradeWeapon` journal line). Then Linux.
