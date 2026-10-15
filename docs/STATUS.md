@@ -1,7 +1,7 @@
 # Where things stand
 
 Read this first when picking the project up on a machine that has not seen the recent work (for example the Linux test machine). It is
-kept in Git because Git is the only thing shared between the Windows and Linux machines. Last updated 2026-10-14, on Windows.
+kept in Git because Git is the only thing shared between the Windows and Linux machines. Last updated 2026-10-15, on Windows.
 
 ## Releases
 
@@ -13,6 +13,12 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 - **1.9.1** (2026-10-13, tag `v1.9.1`) held the fixes found while testing 1.9.0 on Windows and Linux.
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
+
+## Unreleased on `master`
+
+- Settings → General → **Help**: **Report an issue** (opens a prefilled GitHub bug report) and **Copy diagnostics** (versions and recent
+  WNTB log lines on the clipboard, commander name and home folder redacted). Guide: `docs/guide/reporting-problems.md`. Tested on
+  Windows only (unit tests pass); the Linux checks are in `docs/LINUX_TESTING.md` section 6. Goes out with the next release.
 
 ## Branches
 

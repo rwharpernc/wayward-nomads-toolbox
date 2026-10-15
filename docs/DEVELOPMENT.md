@@ -21,7 +21,9 @@ cd wayward-nomads-toolbox
 ```
 
 The plugin source is the `plugin/` folder. Tests are in `tests/`, build scripts in `scripts/`, and
-documentation in `docs/`. [TECHNICAL.md](TECHNICAL.md) section 2 has the full layout and [MODULES.md](MODULES.md)
+documentation in `docs/`. `.github/ISSUE_TEMPLATE/bug_report.yml` is the bug-report form that Settings → General → Help →
+**Report an issue** opens; its `id: environment` field must stay in step with `plugin/issue_report.py` (a test checks), and the
+form is not part of the build, so a change to it takes effect for everyone once pushed to `master`. [TECHNICAL.md](TECHNICAL.md) section 2 has the full layout and [MODULES.md](MODULES.md)
 names every module. Adding a module means adding its row there (a test checks).
 
 ## Build

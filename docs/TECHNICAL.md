@@ -69,6 +69,8 @@ plugin/           everything that ships; becomes the WNTB folder
   update.py       the one self-updater
   <feature>*.py   one or more modules per feature (every module is listed in MODULES.md)
 tests/            unittest suites for the pure-logic modules
+.github/          ISSUE_TEMPLATE/bug_report.yml, the form the Report an issue button opens (not shipped in the zip)
+.githooks/        commit-msg, which rejects AI-credit lines (enable with core.hooksPath)
 scripts/          build.mjs, package.mjs
 docs/             this file, the development guide, the feature specs, the overlay guide, acknowledgements
 ```
@@ -1042,6 +1044,30 @@ or a `ColonisationConstructionDepot` event) and `GuiFocus` is 0 or 5. (4) The `M
 announced). (5) Optionally (`wntb_colonisation_overlay_right_panel`) `GuiFocus` 1 anywhere. A manual `forced` flag (the
 COL page OVERLAY button) overrides all of it and the enabled setting. Settings keys:
 `wntb_colonisation_overlay_enabled` / `_x` / `_y` / `_rows`.
+
+### Report an issue and Copy diagnostics (`issue_report.py`, `ui._create_help_tab`)
+
+Two buttons on Settings → General → Help. **Report an issue** opens `.../issues/new?template=bug_report.yml&labels=bug&title=...&environment=...`
+with `webbrowser.open`; GitHub prefills an issue-form field from a query parameter named after the field's `id`, so `ENVIRONMENT_FIELD`
+(`environment`) must match `id: environment` in `.github/ISSUE_TEMPLATE/bug_report.yml` (a test checks it). If the address would pass
+`MAX_URL_LENGTH` (2000) it falls back to the template alone. The Environment text is `environment_text()`: WNTB version, EDMC version
+(`config.appversion`, a function in current EDMC and a string in old ones), Python version and `platform_support.describe_system()`
+(Windows release and build, or Linux `PRETTY_NAME` + `XDG_SESSION_TYPE` + Flatpak flag). **Copy diagnostics** puts `environment_text()` and
+the newest WNTB log lines on the clipboard (`copy_diagnostics`):
+
+- The log file is the `baseFilename` of the file handler on EDMC's logger (else `<app_dir>/logs/EDMarketConnector-debug.log`);
+  `read_log_tail` reads only the last `LOG_TAIL_BYTES` (400 KB).
+- `wntb_log_lines` keeps a record when its header line (one starting with a date) contains `.<plugin folder>.`, with its continuation
+  lines, so a traceback stays with its record; the newest `MAX_LOG_LINES` (80) are kept and `MAX_LOG_CHARS` (12,000) caps the text.
+- `redact` replaces each commander name, case-insensitively and longest first, with `<commander>`, and the home folder (both slash
+  styles) with `~`. The names come from `commander_names()`: `restore.latest_commander()` and `monitor.cmdr`. A commander WNTB cannot
+  tell is not caught, which is why the guide tells people to read the text before posting.
+- The clipboard is written with `clipboard_clear` / `clipboard_append` / `update()` on the Settings frame; failure returns False and
+  the button shows *Could not copy to the clipboard*.
+
+Nothing is sent by WNTB: the browser and the user do the sending, so the feature is listed in
+[internet-and-privacy.md](guide/internet-and-privacy.md) but opens no connection of its own. The user-facing how-to is
+[reporting-problems.md](guide/reporting-problems.md).
 
 ### Auto-Honk (`autohonk.py`)
 

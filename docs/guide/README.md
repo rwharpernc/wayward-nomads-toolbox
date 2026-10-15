@@ -28,6 +28,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | [Windows and Linux](platforms.md) | What works where |
 | [WNTB on Linux](linux.md) | Step-by-step Linux and Flatpak setup |
 | [What goes on the internet](internet-and-privacy.md) | Every feature that contacts an outside site |
+| [Reporting a problem](reporting-problems.md) | The **Report an issue** and **Copy diagnostics** buttons, step by step, and what they include |
 
 ## The modes
 
@@ -45,7 +46,8 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 
 ## When something's wrong
 
-[Troubleshooting](troubleshooting.md) lists symptoms and fixes.
+[Troubleshooting](troubleshooting.md) lists symptoms and fixes. If it is a bug, [Reporting a problem](reporting-problems.md) shows how to file
+one in a few clicks.
 
 ## For developers
 

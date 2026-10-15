@@ -29,7 +29,7 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | ELW rarity or EDSM upload status in Exploration | The two options under Exploration Value | Settings → Exploration → Exploration Value |
 | Fleet carriers missing from "where to buy" results | **Include fleet carriers** in the Colonization sites window | Colonization sites window |
 | Raven Colonial not updating | The master switch and the two options under it ([steps](#raven-colonial-doesnt-update-as-i-deliver)) | Settings → Colonization → Raven Colonial |
-| Something else is wrong | **Report an issue**, then **Copy diagnostics** to paste the log lines into it | Settings → WNTB → General → Help |
+| Something else is wrong | **Report an issue**, then **Copy diagnostics** to paste the log lines into it ([how](reporting-problems.md)) | Settings → WNTB → General → Help |
 | WNTB never updates itself | **Automatically download and install updates** | Settings → WNTB → General → Updates |
 
 Notes:
@@ -319,4 +319,5 @@ tell us, and how to work around it": [Powerplay](powerplay.md#what-the-game-does
 ## Still stuck?
 
 EDMC's **Help** menu can open its log folder. The log often says exactly what went wrong, and including it in a
-report helps a lot. See [Getting help](../../README.md#getting-help).
+report helps a lot. **Settings → WNTB → General → Help** has a **Report an issue** button and a **Copy diagnostics** button that do most of
+the work: see [Reporting a problem](reporting-problems.md).

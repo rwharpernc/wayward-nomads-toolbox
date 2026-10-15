@@ -176,6 +176,11 @@ Linux; 1.10.1 stopped the Expedition and Materials sections from widening the ma
       your browser.
 - [ ] Restart EDMC: per-commander data (BGS, Boxel, Codex) is still there.
 
+- [ ] Settings -> WNTB -> General -> **Help** (added after 1.10.2, Windows-tested only): **Report an issue** opens the GitHub bug report in your
+      browser (check `xdg-open` works from EDMC, native and Flatpak), and its Environment box reads like
+      `Ubuntu 24.04, wayland` (distro, X11 or Wayland, `Flatpak` when it is one). **Copy diagnostics** shows *Copied*, pasting gives the
+      version lines and recent WNTB log lines, and the commander name reads `<commander>`. Say which log path the Flatpak case used.
+
 ## 6b. Fixed in the platform audit - please confirm
 
 - [ ] Settings → Exploration → Auto-Honk, Field Ops → Screenshots and Field Ops → Inventory each show a **Works on:** line, green when

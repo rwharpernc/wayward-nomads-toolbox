@@ -94,9 +94,9 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux has had a test pass.** The 1.10.0 build was tested on Linux, and 1.10.1 fixes a panel-width problem found in that pass. The
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux, 1.10.1 fixed a panel-width problem found in that pass, and 1.10.2 wraps long names in the panel (checked on Windows; the Linux check is still to do). The
 > newest parts (Materials, the Engineering blueprints and wishlist, the material trader finder and the Expedition planner) have had less
-> time in the game than the rest, so expect a few small fixes in a later update. If something looks off, please [report it](#getting-help).
+> time in the game than the rest, so expect a few small fixes in a later update. If something looks off, please [report it](#getting-help) (Settings has a **Report an issue** button that does most of the work).
 
 ## Full feature list
 
@@ -309,7 +309,7 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 ## Getting help
 
 Found a bug? **File → Settings → WNTB → General → Help → Report an issue** opens a bug report in your browser with your versions and
-operating system already filled in; **Copy diagnostics** (same tab) puts the matching log lines on your clipboard to paste into it. Or, for a bug or an idea, open an issue on the project's
+operating system already filled in; **Copy diagnostics** (same tab) puts the matching log lines on your clipboard to paste into it. Step by step: [Reporting a problem](docs/guide/reporting-problems.md). Or, for a bug or an idea, open an issue on the project's
 [Issues page](https://github.com/rwharpernc/wayward-nomads-toolbox/issues), or find me in the Wayward Nomads
 squadron. Say what you were doing, what you expected, and what happened. Including EDMC's log (EDMC's Help menu can
 open its log folder) helps a lot. The squadron website is [waywardnomads.org](https://waywardnomads.org/).
