@@ -24,7 +24,7 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 | `journal_files.py` | Shared start-up catch-up helpers: the journal folder, files changed since a moment, and a filtered event reader |
 | `__init__.py` | The package marker; holds `__version__`, the one place the version number lives (mirrored in `package.json`) |
 | `http_identity.py` | The User-Agent every web request sends, so services can tell which WNTB feature is calling |
-| `issue_report.py` | The Settings → General → Help **Report an issue** button: builds the prefilled GitHub bug-report address (versions and OS, nothing personal) and opens it in the browser |
+| `issue_report.py` | The Settings → General → Help **Report an issue** button: builds the prefilled GitHub bug-report address (versions and OS, nothing personal) and opens it in the browser; also **Copy diagnostics**, which puts the versions and the newest WNTB lines of EDMC's log (commander name and home folder redacted) on the clipboard |
 | `load.py` | The EDMC entry point: `plugin_start3`, `plugin_app`, `journal_entry`, `dashboard_entry`, `plugin_stop`, the one-time overlay reset, and forwarding to every feature |
 | `notifier.py` | A tiny subscribe/notify helper for where one module's data changes and others must redraw |
 | `overlay.py` | The one shared overlay client (EDMCModernOverlay over a local TCP port), its Plugin Group registration and group offsets |

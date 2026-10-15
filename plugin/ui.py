@@ -657,6 +657,22 @@ def _create_help_tab(notebook: nb.Notebook) -> None:
              "account; you can read and change everything first. No commander name, system or file path is included.",
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
+    copy_status = tk.StringVar(value="")
+
+    def copy_diagnostics() -> None:
+        copy_status.set("Copied. Paste it into the report's log box." if issue_report.copy_diagnostics(frame)
+                        else "Could not copy to the clipboard.")
+
+    nb.Button(frame, text="Copy diagnostics", command=copy_diagnostics).grid(
+        row=2, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+    nb.Label(
+        frame, justify=tk.LEFT, wraplength=420,
+        text="Copies the same version lines plus the newest WNTB lines from EDMC's log to the clipboard, to paste into "
+             "the report. Your commander name is replaced by <commander> and your home folder by ~ before copying. "
+             "Nothing leaves your computer until you paste it into a report and submit it.",
+    ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+    nb.Label(frame, textvariable=copy_status).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+
 
 def save_prefs() -> None:
     if _fit_height_var is not None:
