@@ -30,6 +30,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Every kill to be counted | **Wing and on-foot kills** are often missing from the journal until the mission completes, so those counts run low. WNTB marks them with a `~`. Combat-zone kills are recorded as combat bonds, not bounties; WNTB counts them too (checked against real journals), but they carry no ship type, so an on-foot combat-zone kill can be counted as a ship kill. | Read a `~` as "at least this many". The game's own mission screen is the final word. |
 | Active missions to appear after restarting EDMC mid-game | The game lists active missions only in its login event, so WNTB works the list out from the last two weeks of journals (the latest login list plus what was accepted, completed, abandoned or failed since). A mission that **expired without a journal entry** can show until your next login. | Log in again to get the game's own list. |
 | Cargo mission progress to be exact | The game reports it (`CargoDepot`: collected, delivered and total) when you collect or hand in cargo, and when a wing-mate does. Progress made before WNTB's two-week window, or with no event since, isn't known. | The card shows it once the game has reported any; otherwise check the game's mission screen. |
+| Where to find a mission's cargo for sale, offline | It asks Spansh, so it needs Trade's online lookups switched on and a button press. | Turn the switch on in Settings → Trade. |
 | The next jump's missions on the overlay when you have a route | The game names the system you have targeted (`FSDTarget`), not the whole route, so only the next hop is NEXT. | Plot the route in the galaxy map and target the hops as you go. |
 | Missions accepted a while ago to appear | WNTB reads only the **last two weeks** of journals at start-up. A mission still active but accepted earlier is not found and not shown. | Keep EDMC running while you hold long missions, and check the game's own mission board for older ones. |
 | Kills made while EDMC was closed | Counted only if they are in the last two weeks of journal files. | Run EDMC whenever you play. |
@@ -58,7 +59,7 @@ Combat > HIP 20019                  3d
 - **HERE** is the missions whose turn-in or destination is the system you are in. **NEXT** is the same for the system you have **targeted** for the next
   jump (plot a route and the game targets each hop in turn). Then the rest (**ELSEWHERE**), and `+N more in M systems` when your row limit cuts it off.
 - **Order:** a finished mission (✓) first, with the place to hand it in, then the soonest to expire. A mission with under an hour left (you can change it)
-  is red, under six hours amber, a finished one green.
+  is red, under six hours amber, a finished one (ready to hand in) is always a clear green, whichever overlay colour scheme you use.
 - **Stacking:** massacres and settlement raids against one faction in one place, and any other missions with the same title for the same station, are one
   line with a count (`x3`). A cargo mission shows its progress (`12/40`).
 - **Long names** are cut short to keep the card one fixed width; the time left is always shown. The card's top-left corner never moves as lines come and go.
@@ -69,6 +70,22 @@ Combat > HIP 20019                  3d
 
 What it cannot know: the game lists your active missions only at login, so after restarting EDMC mid-game the card is built from your last two weeks of
 journals (as above). The next jump is the system you have *targeted*; with no target there is no NEXT section.
+
+## Source commodities
+
+Collect and Mining missions need cargo you have to find. The **Commodities needed** list (Trade & Mining page) has a **Find sources** link that opens the
+Source commodities window: for each commodity, summed over all your active missions, the same four picks as Trade's [Best picks](trade.md#best-picks) (closest,
+best local, cheapest anywhere, recommended within 10% of the cheapest), for buying.
+
+1. Pick where to measure from: **From where I am** (your current system) or **From the turn-in system** (where most of the missions for that commodity are
+   handed in, so you can see what is nearest to the place you will deliver to).
+2. Press **Find sources**. It asks Spansh a few times per commodity, one commodity after another, and shows each as it finishes. Press **Cancel** to stop.
+3. Pick a row and press **Copy system** to put its system name on the clipboard for the galaxy map.
+
+It uses the landing pad size, "Near me" radius, carriers and ground settings from Trade, and it only works when **Enable Spansh trade lookups** is on in
+Settings → Trade (it is off by default). Nothing is searched until you press the button. The window lists at most twelve commodities, the biggest need first.
+
+Not covered: the nearest ring hotspot for a Mining mission (use Mining's hotspot finder), and market data older than 7 days is ignored.
 
 ## Settings
 

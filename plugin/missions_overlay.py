@@ -66,6 +66,7 @@ _LINE_IDS = tuple(f"wntb_missions_line{i}" for i in range(MAX_ROWS + EXTRA_LINES
 OVERLAY_TTL = 90         # each draw lasts this long, so a stalled WNTB cannot leave the card up
 RESEND_S = 45.0          # an unchanged card is drawn again this often
 TICK_S = 30.0            # times left are recomputed this often
+GREEN = "#4ade80"        # ready to hand in: always a clear green, whichever colour scheme is chosen
 RED = "#f87171"          # under the urgent limit: a safety signal, so it does not follow the colour scheme (as the flight alerts do not)
 
 Line = Tuple[str, str]   # (text, role)
@@ -321,7 +322,7 @@ def placed_client(client: OverlayClient, look: Look = LEGACY, rows: int = DEFAUL
 
 
 def _colour(look: Look, role: str) -> str:
-    return RED if role == "red" else look.color(role)
+    return RED if role == "red" else GREEN if role == "ok" else look.color(role)
 
 
 def render(lines: List[Line], client: OverlayClient, look: Look = LEGACY) -> None:

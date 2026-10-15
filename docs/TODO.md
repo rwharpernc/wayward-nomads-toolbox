@@ -47,6 +47,9 @@ These are built and covered by unit tests, but have not all been seen working in
   (EDSM)** against real EDSM; and that the row does not widen the EDMC window. Then Linux.
 - [ ] **Notes.** Quick add, the window, **Here**, Delete twice, the count when jumping into a system with notes, and that the EDMC window does not get
   wider. Then Linux.
+- [ ] **Best picks and Source commodities.** With Trade lookups on: Market → type a commodity → **Best picks** (buy and sell), and Missions → **Find sources** with a few Collect or Mining
+  missions active. Compare the four picks with what EDCoPilot says for the same commodity, ship and system; note any that differ (the 10% band is measured against the cheapest station in the galaxy).
+  Then Linux. Not built: the nearest ring hotspot for Mining missions in the same window.
 - [ ] **Missions overlay card.** Enable it (Settings → Overlays → Missions), press **Test Card**, then fly with a real board of missions: HERE and NEXT follow your system and the system you target,
   the times count down, a finished mission shows a tick, the card stays one width, and it sits in the corner you chose without covering the HUD. Note which rows you would drop or add (the label
   for each kind of mission, the row limit). Then Linux.

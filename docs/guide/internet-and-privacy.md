@@ -35,6 +35,7 @@ The table says exactly when.
 | Colonization: Report Complete to Raven (Raven Colonial menu in the Colonization Sites window) | Raven Colonial (ravencolonial.com) | Only when you press **Report Complete to Raven** on a site your journal shows complete and confirm. Sends your Raven Colonial key and that one project's id (an empty request to its `complete` address), after first reading the system's plan to find the project. No deliveries, cargo or journal data |
 | Colonization: Where to buy (**Find nearest**, **Find all**) | Spansh | Only when you press the button. Sends the commodity name and the system you search around, one request per commodity for **Find all**, plus one that sends the names of all of them together to find a station that sells the whole list (and, when the route still leaves two or more uncovered, one more with just those names). A commodity a single station can supply in full is not searched on its own. Identical searches are answered from memory for 2 minutes |
 | Trade: Watch list REFRESH (Trade row, or Refresh from Spansh in its window) | Spansh | **Off** until you turn Trade lookups on in Settings, and then only when you press it. Two requests per watched commodity (cheapest to buy, dearest to sell), about 0.4 seconds apart. Sends the commodity name and the system you search around, nothing about you. The prices WNTB keeps from the markets you open come from the game's own file and are not sent anywhere |
+| Trade: Best picks; Missions: Source commodities | Spansh | **Off** until you turn Trade lookups on in Settings, and then only when you press **Best picks** or **Find sources**. About four requests (five with carriers) per commodity, one after another with a short pause; sends the commodity name, the system you search around and your landing pad size |
 | Trade lookups (best routes; where to buy or sell a commodity) | Spansh | **Off** until you turn them on in Settings. See below for how often |
 | BGS tick detection | A community tick-time service (`tick.infomancer.uk`) | **On** by default. Every 60 seconds while BGS is on. Can be turned off in Settings → BGS. The service has no HTTPS, so this one request is **unencrypted**; it asks only for the time of the last tick and sends nothing about you but WNTB's name and version |
 | Automatic updates | GitHub | **Off** by default |
@@ -49,6 +50,7 @@ Only when you press a button:
 - **Find routes**: sends one request, then checks for the answer every 5 seconds, for up to 4 minutes, until you
   press **Cancel**.
 - **Near me** / **Galaxy**: two requests each (stations, then fleet carriers). One if you hide carriers.
+- **Best picks**: about four requests (five with carriers), one after another. **Find sources** in Missions: the same, per commodity, one commodity at a time.
 - **Round trip**: one to three requests of up to 100 stations each.
 
 ## What never goes online

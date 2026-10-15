@@ -207,6 +207,8 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 - [ ] **Upgrade planner** (Engineering window, added after 1.11.0, Windows-tested only): pick the Karma AR-50 from class 1 to 5: four steps, 12,500,000 credits, and **Add to wishlist**
       puts four entries on the Wishlist tab. Press **Read my gear**: your suits and weapons are listed with their class (needs the Journal directory set on Linux); picking one fills in its item, class and fitted modifications. Pick the TK Zenith: the credits read "not recorded". Pick a modification not offered for the item (they are filtered), and four at most.
 
+- [ ] **Best picks and Source commodities** (added after 1.11.0, Windows-tested only; needs Trade lookups on): Trade → Market, type a commodity, **Best picks** shows four labelled stations;
+      Missions → Commodities needed → **Find sources** fills the window as each commodity finishes, **Copy system** puts the system on the clipboard, and **Cancel** stops it.
 - [ ] **Missions overlay card** (added after 1.11.0, Windows-tested only; needs EDMCModernOverlay): Settings → Overlays → Missions → **Test Card** draws a sample in the bottom-right corner; with a few
       real missions and the card enabled it lists those for the system you are in under HERE and those for the system you target under NEXT, and times count down. It sits where Overlay Placement says
       and does not widen as lines change.

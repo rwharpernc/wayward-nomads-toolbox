@@ -191,6 +191,12 @@ limit (60 minutes by default), amber under six hours, green when ready. The card
 lines change, now and then (every 45 s) so it does not expire, and a 30 s tick keeps the times left current. Tests: `tests/test_missions_overlay.py`; the look smoke test draws
 the widest card at every text size.
 
+## 10c. Source commodities
+
+`mission_sources.needs_from` sums `needed_commodity_count` per commodity over the active missions (biggest first, at most 12) with the system most of them are handed in
+at; `lookup` runs `source_picks.find` (buying) for each in turn from the commander's system or that turn-in system. `mission_sources_window.py` shows the rows
+(`rows_for`), runs the lookup on a worker thread polled every 400 ms, and gates it on Trade's lookups switch. Tests: `tests/test_mission_sources.py`.
+
 ## 11. Known gaps
 
 - The overlay's NEXT section follows the targeted system only, not the whole route (section 10b).

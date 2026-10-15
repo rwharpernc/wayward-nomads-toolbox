@@ -398,7 +398,7 @@ def search_rows(record: Dict[str, Any]) -> List[Tuple[str, ...]]:
     for item in record.get("searches") or []:
         best = item.get("best") or {}
         rows.append((fmt_time(item.get("t")), "Buy" if item.get("side") == "buy" else "Sell", str(item.get("commodity") or ""),
-                     _n(_int(item.get("tonnes"))), "Near me" if item.get("scope") == "near" else "Galaxy",
+                     _n(_int(item.get("tonnes"))), {"near": "Near me", "picks": "Best picks"}.get(item.get("scope"), "Galaxy"),
                      str(best.get("station") or "(none found)"), str(best.get("system") or ""),
                      _n(_int(best.get("price"))) if best else "", f"{float(best.get('ly') or 0):.1f}" if best else ""))
     return rows

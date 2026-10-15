@@ -49,7 +49,8 @@ from config import appname, config
 from theme import theme
 
 from .uikit import style as ui_style
-from . import all_missions, community_goal_state, kill_missions, kill_tracker, mining_methods, mission_types, panelkit
+from . import all_missions, community_goal_state, kill_missions, kill_tracker, mining_methods, mission_sources, mission_types, missions_overlay, panelkit
+from .mission_sources_window import MissionSourcesWindow
 from .community_goal_state import CommunityGoal
 from .kill_missions import KillMission, estimate_progress
 
@@ -687,7 +688,7 @@ def _aggregate_commodities_needed(
 
 
 def _display_commodities_needed(frame: tk.Frame, rows: list[tuple[str, int, int]],
-                                row: int) -> int:
+                                row: int, on_sources: Optional[Callable[[], None]] = None) -> int:
     """A shopping-list summary at the top of the Trade & Mining page, so a
     commander doesn't have to open every Collect/Mining mission card to
     tally up what's still needed. No-op (returns row unchanged) when
@@ -697,6 +698,10 @@ def _display_commodities_needed(frame: tk.Frame, rows: list[tuple[str, int, int]
     fonts = _get_fonts()
     header = _line(frame, row, pady=(0, _LINE_PAD))
     tk.Label(header, text="Commodities needed:", font=fonts["bold"]).pack(side=tk.LEFT)
+    if on_sources is not None:
+        link = tk.Label(header, text="Find sources", font=fonts["small"], cursor="hand2")
+        link.pack(side=tk.RIGHT)
+        link.bind("<Button-1>", lambda _e: on_sources())
     row += 1
 
     for name, count, mission_count in rows:
@@ -917,6 +922,7 @@ class MissionsUI:
         self.__content_window: Optional[int] = None
         self.__scrollbar: Optional[tk.Scrollbar] = None
         self.__popup: Optional[tk.Toplevel] = None
+        self.__sources: Optional[MissionSourcesWindow] = None
         self.__popup_content: Optional[tk.Frame] = None
         self.__detail_popup: Optional[tk.Toplevel] = None
         self.__detail_content: Optional[tk.Frame] = None
@@ -1112,7 +1118,7 @@ class MissionsUI:
                    if m.category == category}
         if category == mission_types.TRADE and self.__settings.commodities_needed:
             row = _display_commodities_needed(
-                frame, _aggregate_commodities_needed(missions), row)
+                frame, _aggregate_commodities_needed(missions), row, self.__show_sources_window)
         return _display_all_missions(frame, missions, row, no_missions_text,
                                      self.__open_mission_detail)
 
@@ -1204,6 +1210,16 @@ class MissionsUI:
         y = master.winfo_rooty() + (master.winfo_height() - height) // 2
         self.__popup.geometry(f"{width}x{height}+{x}+{y}")
         self.__popup.deiconify()
+
+    def __show_sources_window(self):
+        """Opens (or raises) the Source commodities window: where to get what the Collect and Mining missions still need."""
+        if self.__sources is not None and self.__sources.alive:
+            self.__sources.lift()
+            return
+        self.__sources = MissionSourcesWindow(
+            self.__parent.winfo_toplevel(),
+            lambda: mission_sources.needs_from((self.__all_missions_data or {}).values()),
+            lambda: missions_overlay.get_state().here)
 
     def __close_popup(self):
         if self.__popup is not None:

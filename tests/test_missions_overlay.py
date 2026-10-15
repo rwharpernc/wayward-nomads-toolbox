@@ -310,6 +310,12 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(drawn["wntb_missions_line2"][2], M.RED)
         self.assertEqual(drawn["wntb_missions_line0"][2], M.LEGACY.color("title"))
 
+    def test_a_mission_ready_to_hand_in_is_always_green(self):
+        client = FakeClient()
+        M.render([("MISSIONS 1", "title"), ("✓ Gold > Dock  35m", "ok")], client)
+        drawn = {m[0]: m for m in client.messages if m[1]}
+        self.assertEqual(drawn["wntb_missions_line1"][2], M.GREEN)
+
     def test_lines_left_over_from_a_longer_card_are_blanked(self):
         client = FakeClient()
         M.render([("a", "text")], client)

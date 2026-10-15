@@ -266,7 +266,8 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
                                max_distance_ly: Optional[float], max_results: int = 10,
                                market_days_old: int = _MARKET_DAYS_OLD_DEFAULT,
                                station_types: Optional[Sequence[str]] = None,
-                               sort_by: str = "price", required_pad: Optional[str] = None) -> list[StationPrice]:
+                               sort_by: str = "price", required_pad: Optional[str] = None,
+                               min_quantity: int = 1, price_range: Optional[tuple[int, int]] = None) -> list[StationPrice]:
     """Queries Spansh for the best-price stations trading `commodity`
     within `max_distance_ly` of `reference_system` (None = no distance limit,
     i.e. the whole galaxy, still sorted by price; Spansh accepts that,
@@ -280,7 +281,11 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
     `sort_by` is "price" (the default: best price first) or "distance" (closest first, checked live 2026-10-11).
     `required_pad` is None (any station) or "medium" / "large": only stations with at least one pad of that size
     (Spansh filters on `medium_pads` / `large_pads`, checked live 2026-10-11). A small-pad ship fits anywhere, so
-    there is no "small"."""
+    there is no "small".
+
+    `min_quantity` is the least stock (Buy) or demand (Sell) a station must show, 1 by default. `price_range` is
+    (lowest, highest) price the station must show for the commodity, both included (Spansh filters on `buy_price` /
+    `sell_price`, checked live 2026-10-15); with `sort_by="distance"` it finds the closest station inside a price band."""
     if transaction not in ("Sell", "Buy"):
         raise ValueError('transaction must be "Sell" or "Buy"')
     if sort_by not in ("price", "distance"):
@@ -289,13 +294,17 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
         raise ValueError('required_pad must be None, "medium" or "large"')
 
     commodity = _normalize_commodity_name(commodity)
+    minimum = str(max(1, int(min_quantity)))
     market_filter: dict = {"name": commodity}
     if transaction == "Sell":
-        market_filter["demand"] = {"value": ["1", "999999999"], "comparison": "<=>"}
+        market_filter["demand"] = {"value": [minimum, "999999999"], "comparison": "<=>"}
         sort_object = {"market_sell_price": [{"name": commodity, "direction": "desc"}]}
     else:
-        market_filter["supply"] = {"value": ["1", "999999999"], "comparison": "<=>"}
+        market_filter["supply"] = {"value": [minimum, "999999999"], "comparison": "<=>"}
         sort_object = {"market_buy_price": [{"name": commodity, "direction": "asc"}]}
+    if price_range is not None:
+        low, high = sorted(int(v) for v in price_range)
+        market_filter["sell_price" if transaction == "Sell" else "buy_price"] = {"value": [str(low), str(high)], "comparison": "<=>"}
 
     filters: dict = {
         "market_updated_at": {"comparison": "<=>", "value": [f"now-{market_days_old}d", "now"]},

@@ -212,6 +212,9 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_market.py` | Reads `Market.json` and values your cargo at the docked station |
 | `trade_pages.py` | Trade's page order |
 | `trade_panel.py` | Trade mode's entry point: chrome, page rendering, buttons, background jobs, Settings tab, journal dispatch |
+| `mission_sources.py` | The commodities your Collect and Mining missions still need, and the four source picks looked up for each |
+| `mission_sources_window.py` | The Missions "Source commodities" window (Find sources, Copy system) |
+| `source_picks.py` | The four answers to "where do I buy or sell this?": closest, best local, cheapest anywhere, recommended (within 10% of the best); used by Trade and Missions |
 | `trade_prices.py` | Ranks station offers for your load (sell and buy), carrier split and verdict lines |
 | `trade_route_start.py` | Each commander's route start (last real station docked at) and `trade_route_start.json`; the journal scan feeds it docks, newest wins |
 | `trade_roundtrip.py` | Finds the best back-and-forth station pair, loaded both ways |

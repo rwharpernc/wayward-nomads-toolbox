@@ -39,6 +39,7 @@ from . import trade_journal_scan
 from . import mining_price_finder_dialog as price_finder_dialog
 from . import mining_spansh_client as spansh_prices
 from . import panelkit
+from . import source_picks
 from . import trade_ledger as ledger_mod
 from . import trade_market as market_mod
 from . import trade_carrier
@@ -214,6 +215,7 @@ class TradePanelController:
         side = (config.get_str(_CFG_MARKET_SIDE) or trade_prices.SELL).lower()
         self._side = side if side in (trade_prices.SELL, trade_prices.BUY) else trade_prices.SELL
         self._sell_error: Optional[str] = None
+        self._picks: Optional[source_picks.Picks] = None        # the four picks from the last "Best picks" search
         self._pad_dropped: Dict[str, int] = {}                  # scope -> stations left out for pad size
         self._job: Optional[_Job] = None
 
@@ -440,7 +442,7 @@ class TradePanelController:
         self._ship, self._credits, self._jump_range = None, 0, 0.0
         self._market, self._market_station = {}, None
         self._route_blocks, self._next_system = [], None
-        self._sell, self._sell_for, self._sell_error, self._pad_dropped = {}, None, None, {}
+        self._sell, self._sell_for, self._sell_error, self._pad_dropped, self._picks = {}, None, None, {}, None
 
     def _read_hold_split(self, entry: Dict[str, Any]) -> None:
         """Mission and stolen tonnes in the hold: from the Cargo event's inventory when it carries one, else from
@@ -661,6 +663,7 @@ class TradePanelController:
                 ("Cancel" if busy else "Near me", self._cancel_job if busy else lambda: self._find_prices("near"),
                  busy or can_search),
                 ("Galaxy", lambda: self._find_prices("galaxy"), can_search),
+                ("Best picks", self._find_picks, can_search),
                 ("Price finder", self._open_price_finder, lookups_enabled() and not busy))
         self._view.show(blocks)
         for row in (self._search_row, self._side_row):
@@ -800,7 +803,7 @@ class TradePanelController:
             return
         self._side = side
         config.set(_CFG_MARKET_SIDE, side)
-        self._sell, self._sell_for, self._sell_error, self._pad_dropped = {}, None, None, {}
+        self._sell, self._sell_for, self._sell_error, self._pad_dropped, self._picks = {}, None, None, {}, None
         self._paint_side_buttons()
         self._refresh()
 
@@ -817,6 +820,8 @@ class TradePanelController:
             return [Heading("Market"), Note(f"Asking Spansh... {int(time.monotonic() - self._job.started)} s")]
         if self._sell_error:
             return [Heading("Market"), Note(self._sell_error, warn=True)]
+        if self._picks is not None:
+            return self._picks_blocks(self._picks)
         if self._sell and self._sell_for:
             return self._price_result_blocks()
         buying = self._side == trade_prices.BUY
@@ -831,7 +836,8 @@ class TradePanelController:
             name, tonnes, _known = target
             blocks += [Pair("Commodity", _clip(name)),
                        Pair("Amount", f"{tonnes:,} t" + (" (your free hold space)" if buying else ""))]
-        return blocks + [Pair("Near me", f"within {self._near_radius()} ly"), Pair("Galaxy", "anywhere")]
+        return blocks + [Pair("Near me", f"within {self._near_radius()} ly"), Pair("Galaxy", "anywhere"),
+                          Pair("Best picks", "closest, best local, cheapest and recommended")]
 
     def _carried(self) -> Dict[str, int]:
         """Cargo by the name Spansh knows (falls back to the game's name for anything unlisted)."""
@@ -1139,9 +1145,66 @@ class TradePanelController:
             return scope, (display, tonnes, pad, side), ranked, bool(found or carrier_found), dropped
 
         self._sell_error = None
+        self._picks = None
         if self._sell_for != (display, tonnes, pad, side):
             self._sell = {}  # a different search: the other scope's answer no longer applies
         self._start_job("sell", work)
+
+    def _find_picks(self) -> None:
+        """Closest, best local, cheapest anywhere and recommended (within 10% of the cheapest) for the commodity in the box."""
+        if not self._system or (self._job is not None and not self._job.done):
+            return
+        target = self._search_target()
+        buying = self._side == trade_prices.BUY
+        if target is None:
+            self._sell_error = ("Type the commodity you want to buy." if buying
+                                else "Type a commodity to search for, or load some cargo.")
+            self._refresh()
+            return
+        display, tonnes, _known = target
+        system, side, pad = self._system, self._side, self._ship_pad()
+        radius = float(self._near_radius())
+        carriers = config.get_bool(_CFG_CARRIERS, default=True)
+        ground = config.get_bool(_CFG_GROUND, default=True)
+
+        def work(cancel: threading.Event) -> Any:
+            return source_picks.find(system, display, side, tonnes, radius_ly=radius, ship_pad=pad, include_carriers=carriers,
+                                     include_ground=ground, cancelled=cancel.is_set)
+
+        self._sell_error = None
+        self._start_job("picks", work)
+
+    def _finish_picks(self, job: _Job) -> None:
+        if job.error:
+            self._sell_error = job.error
+            return
+        self._sell, self._sell_for, self._picks = {}, None, job.result
+        if self._ledger is not None and job.result.picks:
+            top = job.result.picks.get(source_picks.RECOMMENDED) or next(iter(job.result.picks.values()))
+            ledger_mod.add_search(self._ledger, {
+                "t": self._now(), "side": job.result.side, "commodity": job.result.commodity, "tonnes": job.result.needed_t, "scope": "picks",
+                "best": {"station": top.offer.station, "system": top.offer.system, "price": top.offer.price, "ly": round(top.offer.distance_ly, 1)}})
+
+    def _picks_blocks(self, picks: source_picks.Picks) -> List[Block]:
+        """One row per pick, each station's numbers as in the other results, then the notes (a carrier that beats them, nothing found)."""
+        buying = picks.side == trade_prices.BUY
+        blocks: List[Block] = [Heading(f"{'Buying' if buying else 'Selling'} {_clip(picks.commodity)}: best picks"),
+                               Pair("From", _clip(picks.reference)),
+                               Pair("Amount", f"{picks.needed_t:,} t")]
+        if buying:
+            blocks.append(Note(f"Recommended is the nearest station within {round(source_picks.TOLERANCE * 100)}% of the cheapest price in the galaxy."))
+        else:
+            blocks.append(Note(f"Recommended is the nearest station within {round(source_picks.TOLERANCE * 100)}% of the highest price in the galaxy."))
+        for kind in source_picks.KINDS:
+            pick = picks.picks.get(kind)
+            if pick is None:
+                continue
+            blocks.append(Heading(picks.label(kind), minor=True))
+            blocks.append(Columns(_OFFER_COLUMNS))
+            item = self._offer_item(pick.offer, picks.needed_t)
+            blocks.append(Item(item.title, item.cells, detail=item.detail, warn=pick.note or item.warn))
+        blocks += [Note(text, warn=True) for text in picks.notes]
+        return blocks
 
     def _start_job(self, kind: str, work: Callable[[threading.Event], Any]) -> None:
         self._job = _Job(kind, work)
@@ -1161,6 +1224,8 @@ class TradePanelController:
             self._finish_routes(job)
         elif job.kind == "roundtrip":
             self._finish_round_trip(job)
+        elif job.kind == "picks":
+            self._finish_picks(job)
         else:
             self._finish_sell(job)
         self._job = None

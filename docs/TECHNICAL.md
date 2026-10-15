@@ -739,6 +739,11 @@ for as little as it can. These are the measures that are in the code today.
   (`codex_catalog.json`) and reused for 14 days.
 - The automatic ring-reserve check (opt-in) is remembered per ring for the session, and is never run
   while the journal is being replayed at start-up.
+- Source picks (`source_picks.find`, used by Trade's Best picks button and by the Missions Source commodities window) run one Spansh station search per pick
+  (cheapest, local, closest, then the 10% band sorted by distance, with a carrier search fifth), one after another with a 0.4 s pause, each asking for 25 stations
+  of market data at most 7 days old. The search asks Spansh for a minimum supply (or demand) and, for the band, a `buy_price` / `sell_price` range
+  (`mining_spansh_client.search_best_price_stations(min_quantity=, price_range=)`); the band is the cheapest price up to 110% of it (selling: 90% of the
+  highest up to it). `mission_sources.lookup` runs it for each commodity in turn on a worker thread. Nothing is cached or stored.
 - The Colonisation window's Where to buy search remembers an identical search (same system, commodity, radius, pad
   size, carriers and sort) for 2 minutes, and runs only when you press Find nearest or Find all, asking for at most
   25 stations and 10 carriers per commodity. Find all (`colonisation_sources.find_whole_list`) is the same search once per

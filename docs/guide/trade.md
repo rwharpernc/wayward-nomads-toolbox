@@ -245,6 +245,26 @@ never crowd the real stations out of the list. A line says when a carrier would 
 In **Settings → WNTB → Trade** you can stop searching for fleet carriers, for **ground facilities** (planetary ports
 and outposts, and settlements), or both, which leaves only stations in space.
 
+### Best picks
+
+The **Best picks** button answers "where should I buy (or sell) this?" the way EDCoPilot does, with four choices for the commodity in the box
+(buying: what you typed; selling: what you typed, or your largest load):
+
+| Pick | Meaning |
+|---|---|
+| **Closest** | The nearest station that has it in stock (buying) or wants it (selling), whatever the price. |
+| **Best local** | The cheapest (buying) or highest-paying (selling) station within your **Near me** radius. |
+| **Cheapest anywhere** / **Highest anywhere** | The best price in the whole galaxy, nearest first when prices tie. |
+| **Recommended** | The nearest station whose price is within **10%** of the best price in the galaxy: nearly the best price without the long trip. |
+
+"In stock" means at least the amount shown (your free hold space when buying, your load when selling). If no station has that much, the pick falls back to
+the nearest with any and says how much it has ("only 12 t in stock"). Your landing pad size, the ground-facilities setting and the carriers setting apply, and
+market data older than 7 days is ignored. A fleet carrier is not offered as a pick (it can move); if one has a better price than the cheapest station it is
+mentioned underneath. A station that is two picks is listed for each, with "same as ..." beside the second.
+
+It asks Spansh about four times (five with carriers), one after another, so it takes a few seconds. The numbers are the same as the other results: cr/t,
+total for the amount, and distance. The same four picks for a mission's cargo are in the Missions mode ([Source commodities](missions.md#source-commodities)).
+
 ### Price finder
 
 Opens the finder that Mining's **PRICE** button also uses, for any commodity, to buy or sell, with its own distance
