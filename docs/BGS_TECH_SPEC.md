@@ -73,12 +73,22 @@ bgs_window.py      Report window (uikit): tick drop-down + one tab per system, e
 1. A journal event reveals the commander (`_switch_cmdr` loads the saved ledger + archive).
 2. The tick poll returns the latest galaxy tick `T`. Once both are known, `_reconcile_tick()` runs:
    - stored `tick_start` older than `T` (a tick passed, maybe while EDMC was closed) -> archive the
-     stored period, start a new one at `T`;
+     stored period, start a new one at `T`, and queue a **repair** (`_repair`: the closing period's start, `T` and
+     the missions open then);
    - no stored `tick_start` -> adopt `T`.
 3. `_start_backfill()` (once per commander + tick per session) replays the journals on a worker thread
    into a fresh `TickLedger`. Live events that arrive meanwhile are buffered; when the replay finishes
    they are applied on top, skipping any the replay already saw (matched by `fingerprint()`). If no
    journal events are found (folder unset/unreadable) the live ledger is kept untouched.
+   The same worker read also serves the repair: it reads from the closing period's start, and
+   `bgs_ledger.repair_record(events, old_start, T, open_missions)` replays only the events before `T`
+   into that period (events before its start set up state but never count) and returns an archive record, or None
+   if the journals show no activity, the times can't be read, or the period began more than
+   `REPAIR_MAX_DAYS` (14) ago. `_apply_repair` files it over the live record with the same start and end via
+   `bgs_ledger.merge_records` (the rebuilt activity and tracks win per faction; a faction only the live record
+   has stays), or adds it when nothing was filed live. It is applied whatever happens to the current period's
+   replay, but only if the commander is still the one it was built for. Ticks missed altogether can't be told apart: their
+   play lands in the one record.
 4. Later ticks while running: same as step 2's roll, then a new replay.
 
 If tick detection is off or unreachable and no tick was ever stored, there is no period boundary: the

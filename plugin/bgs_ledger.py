@@ -478,6 +478,49 @@ def rebuild(
     return ledger
 
 
+REPAIR_MAX_DAYS = 14
+"""A closed period is only rebuilt from the journals this far back; an older one stays as it was filed."""
+
+
+def repair_record(
+    events: Iterable[Dict[str, Any]], old_start: Optional[str], new_tick: str,
+    open_missions: Optional[Dict[str, Tuple[str, str]]] = None,
+) -> Optional[Dict[str, Any]]:
+    """The archive record for the period that ran from `old_start` to `new_tick`, rebuilt from journal `events` (journal order).
+
+    A period closed while EDMC was not running was filed with only what WNTB saw live, so play made in the meantime is missing from it.
+    The journals hold all of it, so the closed period is replayed here, with every event from `new_tick` onwards left out (they belong to the
+    next period). Events before `old_start` still update the state the replay needs (where the commander was, who owns the station, which
+    missions were open) but never count. None when `old_start`/`new_tick` can't be read, the period is older than `REPAIR_MAX_DAYS`, or the
+    journals show no activity in it. Ticks missed altogether can't be told apart, so play across several lands in this one record."""
+    start, end = parse_timestamp(old_start), parse_timestamp(new_tick)
+    if start is None or end is None or end <= start:
+        return None
+    if datetime.now(timezone.utc) - start > timedelta(days=REPAIR_MAX_DAYS):
+        return None
+    inside = []
+    for entry in events:
+        when = parse_timestamp(entry.get("timestamp"))
+        if when is not None and when >= end:
+            continue
+        inside.append(entry)
+    ledger = rebuild(inside, old_start, open_missions)
+    return ledger.archive_record(new_tick) if ledger.has_activity() else None
+
+
+def merge_records(filed: Optional[Dict[str, Any]], rebuilt: Dict[str, Any]) -> Dict[str, Any]:
+    """`rebuilt` (from the journals, the source of truth) over `filed` (what was seen live): per faction, the rebuilt activity wins; a
+    faction only the filed record has stays, and the same for the influence tracks. The period's dates are the rebuilt record's."""
+    if not filed:
+        return rebuilt
+    merged = dict(rebuilt)
+    for field in ("activity", "tracks"):
+        combined = dict(filed.get(field) or {})
+        combined.update(rebuilt.get(field) or {})
+        merged[field] = combined
+    return merged
+
+
 def prune_archive(archive: List[Dict[str, Any]], now: datetime, keep_days: int) -> List[Dict[str, Any]]:
     """Drop archived periods that ended more than `keep_days` ago (newest
     first order is preserved)."""

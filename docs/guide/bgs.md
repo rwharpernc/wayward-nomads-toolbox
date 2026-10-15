@@ -61,6 +61,9 @@ Tabs show the last 6 systems you've been in (the one you're in first), each with
 ## Resets and history
 
 - The totals **reset at each tick**, and the closed tick is archived.
+- **Play made while EDMC was closed still reaches the history.** When a tick closes a period, WNTB rebuilds that period from your journals and files
+  the rebuilt version over the one it saw live (keeping any faction only the live one had). It reads back up to 14 days; an older period stays as it was
+  filed. If several ticks passed while EDMC was closed, WNTB cannot tell them apart, so everything you did across them is in the one period that closed.
 - When EDMC starts, WNTB re-reads your last few journals, so the totals are cumulative since the tick even if EDMC
   wasn't running the whole time.
 - Everything is kept separately for each commander.

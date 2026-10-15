@@ -13,6 +13,7 @@ import sys
 import tempfile
 import types
 import unittest
+import unittest.mock
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -271,6 +272,77 @@ class JournalReplayTests(unittest.TestCase):
     def test_missing_folder_or_tick_returns_nothing(self) -> None:
         self.assertEqual(bgs_journal.read_events("Bocheaux", TICK, os.path.join(tempfile.gettempdir(), "nope-bgs")), [])
         self.assertEqual(bgs_journal.read_events("Bocheaux", "not a time", tempfile.gettempdir()), [])
+
+
+class ClosedPeriodRepairTests(unittest.TestCase):
+    """Play made while EDMC was closed is rebuilt into the period that closed (repair_record), over what was filed live (merge_records)."""
+
+    OLD = "2026-10-14T03:00:00+00:00"
+    NEW = "2026-10-15T03:00:00+00:00"
+
+    def _events(self) -> list:
+        return [
+            _jump("2026-10-14T02:00:00Z", "Sol", 0.40),                 # before the period: sets up where the commander was
+            _mission("2026-10-14T05:10:00Z", "Alpha Party", mission_id=1),     # inside the closed period
+            _mission("2026-10-14T20:00:00Z", "Alpha Party", mission_id=2),     # inside it too
+            _mission("2026-10-15T04:00:00Z", "Alpha Party", mission_id=3),     # after the tick: the next period's
+        ]
+
+    def test_replays_only_the_closed_period(self) -> None:
+        with mock_now("2026-10-15T10:00:00+00:00"):
+            record = bgs_ledger.repair_record(self._events(), self.OLD, self.NEW)
+        self.assertEqual((record["tick_start"], record["tick_end"]), (self.OLD, self.NEW))
+        self.assertEqual(record["activity"]["sol|alpha party"]["missions"], 2)
+
+    def test_no_activity_gives_nothing_to_file(self) -> None:
+        with mock_now("2026-10-15T10:00:00+00:00"):
+            self.assertIsNone(bgs_ledger.repair_record([_jump("2026-10-14T02:00:00Z", "Sol", 0.4)], self.OLD, self.NEW))
+
+    def test_unreadable_or_reversed_times_and_old_periods_are_left_alone(self) -> None:
+        with mock_now("2026-10-15T10:00:00+00:00"):
+            self.assertIsNone(bgs_ledger.repair_record(self._events(), None, self.NEW))
+            self.assertIsNone(bgs_ledger.repair_record(self._events(), self.OLD, "garbage"))
+            self.assertIsNone(bgs_ledger.repair_record(self._events(), self.NEW, self.OLD))
+        with mock_now("2026-11-30T10:00:00+00:00"):                       # the period closed more than 14 days ago
+            self.assertIsNone(bgs_ledger.repair_record(self._events(), self.OLD, self.NEW))
+
+    def test_a_mission_open_before_the_period_still_counts_when_it_finishes_inside(self) -> None:
+        with mock_now("2026-10-15T10:00:00+00:00"):
+            record = bgs_ledger.repair_record(
+                [_jump("2026-10-14T02:00:00Z", "Sol", 0.40), _mission("2026-10-14T06:00:00Z", "Alpha Party", mission_id=7)],
+                self.OLD, self.NEW, {"7": ("Alpha Party", "Sol")})
+        self.assertEqual(record["activity"]["sol|alpha party"]["missions"], 1)
+
+    def test_merge_keeps_what_only_the_filed_record_has_and_the_journals_win_elsewhere(self) -> None:
+        filed = {"tick_start": self.OLD, "tick_end": self.NEW, "activity": {"a": {"missions": 1}, "only filed": {"missions": 5}},
+                 "tracks": {"t": {"x": 1}}}
+        rebuilt = {"tick_start": self.OLD, "tick_end": self.NEW, "activity": {"a": {"missions": 3}, "b": {"missions": 2}},
+                   "tracks": {"u": {"x": 2}}}
+        merged = bgs_ledger.merge_records(filed, rebuilt)
+        self.assertEqual(merged["activity"], {"a": {"missions": 3}, "b": {"missions": 2}, "only filed": {"missions": 5}})
+        self.assertEqual(merged["tracks"], {"t": {"x": 1}, "u": {"x": 2}})
+        self.assertIs(bgs_ledger.merge_records(None, rebuilt), rebuilt)
+
+
+class mock_now:
+    """Pins `datetime.now` inside bgs_ledger to a moment, so the 14 day limit can be tested."""
+
+    def __init__(self, iso: str) -> None:
+        self._moment = datetime.fromisoformat(iso)
+
+    def __enter__(self):
+        moment = self._moment
+
+        class _Frozen(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return moment if tz is None else moment.astimezone(tz)
+
+        self._patch = unittest.mock.patch.object(bgs_ledger, "datetime", _Frozen)
+        self._patch.start()
+
+    def __exit__(self, *_exc) -> None:
+        self._patch.stop()
 
 
 if __name__ == "__main__":

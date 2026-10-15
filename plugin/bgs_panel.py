@@ -105,7 +105,9 @@ class BgsController:
         self._tick_poll_started = False
         self._tick_status_text = "Tick check: not yet run."
 
-        self._backfill_queue: "queue.Queue[Tuple[int, str, Optional[TickLedger], set]]" = queue.Queue()
+        self._backfill_queue: "queue.Queue[Tuple[int, str, Optional[TickLedger], set, Optional[Dict[str, Any]]]]" = queue.Queue()
+        self._repair: Optional[Tuple[str, str, Dict[str, Tuple[str, str]]]] = None
+        """(start of the period that just closed, the tick that closed it, the missions open then) until the journals have been replayed for it."""
         self._backfill_generation = 0
         self._backfill_running = False
         self._backfill_done_for: Optional[Tuple[str, str]] = None  # (cmdr, tick) already replayed
@@ -288,11 +290,11 @@ class BgsController:
             if generation == self._tick_generation:  # discard a stale in-flight result
                 self._handle_tick_result(tick_iso, error)
         try:
-            generation, cmdr, replayed, seen = self._backfill_queue.get_nowait()
+            generation, cmdr, replayed, seen, repaired = self._backfill_queue.get_nowait()
         except queue.Empty:
             pass
         else:
-            self._finish_backfill(generation, cmdr, replayed, seen)
+            self._finish_backfill(generation, cmdr, replayed, seen, repaired)
         if self._parent is not None:
             self._parent.after(_TICK_QUEUE_POLL_MS, self._poll_queues)
 
@@ -325,6 +327,8 @@ class BgsController:
 
     def _roll_period(self, new_tick_iso: str) -> None:
         logger.info("BGS tick detected (%s) - archiving the closed period", new_tick_iso)
+        # Play made while EDMC was closed is not in the ledger being archived: have the journals replayed for the period that is closing.
+        self._repair = (self._ledger.tick_start or "", new_tick_iso, dict(self._ledger.open_missions)) if self._ledger.tick_start else None
         record = self._ledger.roll(new_tick_iso)
         if record is not None:
             self._archive.insert(0, record)
@@ -345,28 +349,52 @@ class BgsController:
         self._backfill_running = True
         self._live_buffer = []
         self._backfill_generation += 1
+        repair, self._repair = self._repair, None
         threading.Thread(
             target=self._backfill_worker,
-            args=(self._backfill_generation, self._cmdr, self._ledger.tick_start, dict(self._ledger.open_missions)),
+            args=(self._backfill_generation, self._cmdr, self._ledger.tick_start, dict(self._ledger.open_missions), repair),
             daemon=True,
         ).start()
 
     def _backfill_worker(
         self, generation: int, cmdr: str, tick_start: str, open_missions: Dict[str, Tuple[str, str]],
+        repair: Optional[Tuple[str, str, Dict[str, Tuple[str, str]]]] = None,
     ) -> None:
-        """Off the main thread: replay the journals into a fresh ledger."""
+        """Off the main thread: replay the journals into a fresh ledger, and, when a period has just closed, into a record for that period."""
+        repaired: Optional[Dict[str, Any]] = None
         try:
-            events = bgs_journal.read_events(cmdr, tick_start)
+            # one read serves both: from the closing period's start when there is one (events before a period only set up state)
+            events = bgs_journal.read_events(cmdr, repair[0] if repair and repair[0] else tick_start)
             replayed = bgs_ledger.rebuild(events, tick_start, open_missions) if events else None
             seen = {bgs_ledger.fingerprint(e) for e in events}
+            if repair and events:
+                repaired = bgs_ledger.repair_record(events, repair[0], repair[1], repair[2])
         except Exception:  # never let a journal quirk take the thread (or plugin) down
             logger.exception("BGS journal replay failed")
             replayed, seen = None, set()
-        self._backfill_queue.put((generation, cmdr, replayed, seen))
+        self._backfill_queue.put((generation, cmdr, replayed, seen, repaired))
 
-    def _finish_backfill(self, generation: int, cmdr: str, replayed: Optional[TickLedger], seen: set) -> None:
+    def _apply_repair(self, record: Dict[str, Any]) -> None:
+        """File the journals' version of the period that just closed: over the one filed live (keeping what only that one has), or as a new
+        entry when nothing was filed (no play seen live)."""
+        for index, filed in enumerate(self._archive):
+            if filed.get("tick_start") == record.get("tick_start") and filed.get("tick_end") == record.get("tick_end"):
+                self._archive[index] = bgs_ledger.merge_records(filed, record)
+                break
+        else:
+            self._archive.insert(0, record)
+        self._archive = bgs_ledger.prune_archive(self._archive, datetime.now(timezone.utc), archive_days())
+        logger.info("BGS: rebuilt the closed period %s to %s from the journals (%d faction(s))",
+                    record.get("tick_start"), record.get("tick_end"), len(record.get("activity") or {}))
+        self._persist()
+        self._refresh_display()
+
+    def _finish_backfill(self, generation: int, cmdr: str, replayed: Optional[TickLedger], seen: set,
+                         repaired: Optional[Dict[str, Any]] = None) -> None:
         self._backfill_running = False
         buffered, self._live_buffer = self._live_buffer, []
+        if repaired is not None and cmdr == self._cmdr:
+            self._apply_repair(repaired)           # whatever happens to the current period below, the closed one is right
         if generation != self._backfill_generation or cmdr != self._cmdr or replayed is None:
             return  # stale (commander switched) or nothing to replay - keep the live ledger
         if replayed.tick_start != self._ledger.tick_start:
