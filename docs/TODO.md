@@ -47,6 +47,7 @@ These are built and covered by unit tests, but have not all been seen working in
   (EDSM)** against real EDSM; and that the row does not widen the EDMC window. Then Linux.
 - [ ] **Notes.** Quick add, the window, **Here**, Delete twice, the count when jumping into a system with notes, and that the EDMC window does not get
   wider. Then Linux.
+- [ ] **Mission progress colours.** Take two source-and-return missions, buy some of the cargo, and check the Missions window shows `N/total held` with a bar, the row turns blue and then lime past half, and the overlay line follows; hand a mission in and check it goes green. Check a massacre stack's colour moves as kills land. Say if the colours or the held counting (everything of that commodity in the hold) are wrong for how you play.
 - [ ] **Missions window and pinned missions.** With a real board: open the window from the **Missions window** button at the bottom of the panel, check the Active and By place tabs, the summary line and the detail strip against the game's mission board;
   pin two missions and check the PINNED section on the overlay card (and that it goes when you hand the mission in). Look at the text size beside the panel arrows. Then Linux.
 - [ ] **Best picks and Source commodities.** With Trade lookups on: Market → type a commodity → **Best picks** (buy and sell), and Missions → **Find sources** with a few Collect or Mining

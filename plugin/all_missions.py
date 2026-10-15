@@ -13,7 +13,7 @@ from typing import Optional
 
 from config import appname
 
-from . import active_missions, kill_tracker, mission_cargo, mission_types
+from . import active_missions, kill_tracker, mission_cargo, mission_progress, mission_types
 from .notifier import Notifier
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -55,6 +55,8 @@ class MissionSummary:
     collected."""
     cargo: Optional[mission_cargo.CargoProgress] = None
     """Collect / delivery progress from the journal's CargoDepot events, when it has reported any."""
+    commodity_key: str = ""
+    """The commodity's internal name as EDMC's cargo map spells it ("agriculturalmedicines"), for missions that need it sourced; matches the hold to the mission."""
 
     @classmethod
     def from_event(cls, event: dict, cargo: Optional[mission_cargo.CargoProgress] = None) -> "MissionSummary":
@@ -79,6 +81,7 @@ class MissionSummary:
             needed_commodity=commodity if supplied else "",
             needed_commodity_count=needed,
             cargo=cargo,
+            commodity_key=mission_progress.commodity_key(event.get("Commodity")) if supplied else "",
         )
 
 

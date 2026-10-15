@@ -29,7 +29,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import active_missions, all_missions, kill_tracker, mission_pins, mission_types, overlay, overlay_appearance, overlay_placement
+from . import active_missions, all_missions, current_cargo, kill_tracker, mission_pins, mission_progress, mission_types, overlay, overlay_appearance, overlay_placement
 from .overlay import OverlayClient
 from .overlay_style import LEGACY, Look
 
@@ -67,6 +67,8 @@ OVERLAY_TTL = 90         # each draw lasts this long, so a stalled WNTB cannot l
 RESEND_S = 45.0          # an unchanged card is drawn again this often
 TICK_S = 30.0            # times left are recomputed this often
 GREEN = "#4ade80"        # ready to hand in: always a clear green, whichever colour scheme is chosen
+LIME = "#a3e635"         # half or more of the way there
+BLUE = "#60a5fa"         # started, less than half
 RED = "#f87171"          # under the urgent limit: a safety signal, so it does not follow the colour scheme (as the flight alerts do not)
 
 Line = Tuple[str, str]   # (text, role)
@@ -117,8 +119,10 @@ class Entry:
     reward: int
     expiry: Optional[datetime]
     ready: bool                  # the objective is done: hand it in
-    progress: str = ""           # "12/40" for cargo
+    progress: str = ""           # "12/40" for cargo or cargo held; blank for kills (so massacres still stack)
     pinned: bool = False         # the commander pinned it: it is listed first, under PINNED
+    done: int = 0                # progress in tonnes or kills, and what the mission asks for; they colour the line
+    required: int = 0
 
 
 @dataclass(frozen=True)
@@ -131,6 +135,12 @@ class Item:
     ready: bool
     count: int = 1
     pinned: bool = False
+    done: int = 0
+    required: int = 0
+
+    @property
+    def fraction(self) -> Optional[float]:
+        return min(1.0, self.done / self.required) if self.required else None
 
 
 def parse_expiry(text: Any) -> Optional[datetime]:
@@ -156,10 +166,12 @@ def _short_label(summary: all_missions.MissionSummary) -> str:
     return summary.name
 
 
-def entries_from(missions: Dict[int, all_missions.MissionSummary], cmdr: Optional[str], pinned: Collection[int] = ()) -> List[Entry]:
+def entries_from(missions: Dict[int, all_missions.MissionSummary], cmdr: Optional[str], pinned: Collection[int] = (),
+                 kills: Optional[Dict[int, Tuple[int, int, bool]]] = None, held: Optional[Dict[str, int]] = None) -> List[Entry]:
     """The card's entries from the Missions mode's active missions. A redirected mission is ready, and goes to its new hand-in place if the game gave one.
     The ids in `pinned` are marked so the card lists them first."""
     done = kill_tracker.get_redirected(cmdr)
+    progress_by_id = mission_progress.compute(list(missions.values()), kills=kills, held=held, ready=done)
     entries = []
     for summary in missions.values():
         ready = summary.id in done
@@ -168,11 +180,11 @@ def entries_from(missions: Dict[int, all_missions.MissionSummary], cmdr: Optiona
             dropoff = kill_tracker.get_redirect_destination(cmdr, summary.id)
             if dropoff and (dropoff.get("system") or dropoff.get("station")):
                 system, station = str(dropoff.get("system") or system), str(dropoff.get("station") or station)
-        progress = ""
-        if summary.cargo is not None and summary.cargo.total:
-            progress = f"{summary.cargo.delivered}/{summary.cargo.total}"
+        found = progress_by_id.get(summary.id)
+        progress = found.text.split(" ")[0] if found and not found.text.endswith("kills") else ""      # "36/60 held" -> "36/60"
         entries.append(Entry(summary.id, summary.category, _short_label(summary), summary.source_faction, system, station, summary.reward,
-                             parse_expiry(summary.expiry), ready, progress, summary.id in pinned))
+                             parse_expiry(summary.expiry), ready, progress, summary.id in pinned,
+                             found.done if found else 0, found.required if found else 0))
     return entries
 
 
@@ -212,10 +224,11 @@ def stack(entries: Sequence[Entry]) -> List[Item]:
             text = f"{entry.label} {entry.progress}".strip()
             if entry.category in MASSACRES and entry.faction:
                 text += f" {entry.faction}"
-            items.append(Item(text, entry.system, entry.station, entry.expiry, entry.ready, pinned=True))
+            items.append(Item(text, entry.system, entry.station, entry.expiry, entry.ready, pinned=True, done=entry.done, required=entry.required))
             continue
         if entry.progress:
-            items.append(Item(f"{entry.label} {entry.progress}".strip(), entry.system, entry.station, entry.expiry, entry.ready))
+            items.append(Item(f"{entry.label} {entry.progress}".strip(), entry.system, entry.station, entry.expiry, entry.ready,
+                              done=entry.done, required=entry.required))
             continue
         faction = entry.faction if entry.category in MASSACRES else ""
         stacked.setdefault((entry.category, entry.label, faction, entry.system.casefold(), entry.station.casefold(), entry.ready), []).append(entry)
@@ -225,7 +238,8 @@ def stack(entries: Sequence[Entry]) -> List[Item]:
         text = f"{first.label} x{len(group)}" if len(group) > 1 else first.label
         if first.category in MASSACRES and first.faction:
             text += f" {first.faction}"
-        items.append(Item(text, first.system, first.station, min(expiries) if expiries else None, first.ready, len(group)))
+        items.append(Item(text, first.system, first.station, min(expiries) if expiries else None, first.ready, len(group), False,
+                          sum(e.done for e in group), sum(e.required for e in group)))
     return items
 
 
@@ -247,7 +261,8 @@ def _role(item: Item, now: datetime, urgent_seconds: int) -> str:
             return "red"
         if left < SOON_SECONDS:
             return "warn"
-    return "text"
+    band = mission_progress.tier(item.fraction)
+    return {mission_progress.HIGH: "high", mission_progress.LOW: "low"}.get(band, "text")
 
 
 def _clip(text: str, room: int) -> str:
@@ -339,7 +354,7 @@ def placed_client(client: OverlayClient, look: Look = LEGACY, rows: int = DEFAUL
 
 
 def _colour(look: Look, role: str) -> str:
-    return RED if role == "red" else GREEN if role == "ok" else look.color(role)
+    return {"red": RED, "ok": GREEN, "high": LIME, "low": BLUE}.get(role) or look.color(role)
 
 
 def render(lines: List[Line], client: OverlayClient, look: Look = LEGACY) -> None:
@@ -456,7 +471,7 @@ def _live_entries() -> List[Entry]:
     missions, cmdr = all_missions.view.missions, active_missions.tracker.commander
     if missions is not None:
         mission_pins.book.prune(cmdr, missions.keys())       # a pin goes with its mission (only once the roster is known)
-    return entries_from(missions or {}, cmdr, mission_pins.book.pinned(cmdr))
+    return entries_from(missions or {}, cmdr, mission_pins.book.pinned(cmdr), mission_progress.live_kills(), current_cargo.held())
 
 
 _state: Optional[MissionsOverlay] = None
@@ -483,6 +498,7 @@ def start(plugin_dir: str) -> None:
     global _ticker
     _stop.clear()
     mission_pins.book.load(plugin_dir)
+    current_cargo.changed.connect(lambda: get_state().refresh())      # buying or selling moves the "held" progress of a source-and-return mission
     all_missions.view.changed.connect(lambda _missions: get_state().refresh())     # the roster changed: a mission came, went or was handed in
     if _ticker is None or not _ticker.is_alive():
         _ticker = threading.Thread(target=_tick_loop, name="WNTB-missions-tick", daemon=True)

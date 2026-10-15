@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import Callable, Dict, List, Optional
 
 from . import mission_pins, missions_board, panelkit
-from .missions_overlay import GREEN, RED, time_left
+from .missions_overlay import BLUE, GREEN, LIME, RED, time_left
 from .uikit import palette as P
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
@@ -30,18 +30,27 @@ _ACTIVE_COLUMNS = (
     Column("kind", "Kind", 130, max_chars=24),
     Column("faction", "Faction", 150, max_chars=26),
     Column("where", "Go to", 230, max_chars=44),
-    Column("progress", "Progress", 110, anchor="e", max_chars=18),
+    Column("progress", "Progress", 190, anchor="e", max_chars=30),
     Column("reward", "Reward", 80, anchor="e"),
     Column("left", "Left", 70, anchor="e"),
 )
 _PLACE_COLUMNS = (
     Column("title", "Mission", 280, stretch=True, max_chars=48),
     Column("station", "Station", 220, max_chars=40),
-    Column("progress", "Progress", 110, anchor="e", max_chars=18),
+    Column("progress", "Progress", 190, anchor="e", max_chars=30),
     Column("reward", "Reward", 80, anchor="e"),
     Column("left", "Left", 70, anchor="e"),
 )
 _PIN = "★"
+_BAR = 6
+
+
+def _bar(row: missions_board.Row) -> str:
+    """'████░░ 36/60 held': a small bar then the count, so progress reads at a glance and by shape as well as colour."""
+    if row.fraction is None:
+        return row.progress
+    filled = round(row.fraction * _BAR)
+    return "█" * filled + "░" * (_BAR - filled) + " " + row.progress
 
 
 def _now() -> datetime:
@@ -57,7 +66,7 @@ def _tag(row: missions_board.Row, now: datetime) -> Optional[str]:
             return "soon"
         if left < 6 * 3600:
             return "warn"
-    return None
+    return row.tier if row.tier in ("high", "low") else None
 
 
 class MissionsWindow:
@@ -95,6 +104,8 @@ class MissionsWindow:
             table.tag_configure("ready", foreground=GREEN)
             table.tag_configure("soon", foreground=RED)
             table.tag_configure("warn", foreground=P.WARN)
+            table.tag_configure("high", foreground=LIME)
+            table.tag_configure("low", foreground=BLUE)
             table.tag_configure("here", foreground=P.INFO)
         self.refresh()
         self._tick()
@@ -136,7 +147,7 @@ class MissionsWindow:
         self._show_detail(now)
 
     def _fill_active(self, rows: List[missions_board.Row], now: datetime) -> None:
-        cells = [[_PIN if r.pinned else "", ("✓ " if r.ready else "") + r.title, r.kind, r.faction, r.where(), r.progress,
+        cells = [[_PIN if r.pinned else "", ("✓ " if r.ready else "") + r.title, r.kind, r.faction, r.where(), _bar(r),
                   missions_board.money(r.reward) if r.reward else "-", time_left(r.expiry, now)] for r in rows]
         signature = [(r.id, _tag(r, now), tuple(c)) for r, c in zip(rows, cells)]
         if self._signatures.get("active") != signature:
@@ -160,7 +171,7 @@ class MissionsWindow:
             group = f"p{index}"
             self._places.insert(group, [title, "", "", "", ""], "here" if place.here or place.next_jump else None, group=True)
             for row in place.rows:
-                self._places.insert(f"m{row.id}", [(_PIN + " " if row.pinned else "") + ("✓ " if row.ready else "") + row.title, row.station or "-", row.progress,
+                self._places.insert(f"m{row.id}", [(_PIN + " " if row.pinned else "") + ("✓ " if row.ready else "") + row.title, row.station or "-", _bar(row),
                                                    missions_board.money(row.reward) if row.reward else "-", time_left(row.expiry, now)],
                                     _tag(row, now), parent=group)
         self._reselect(self._places)

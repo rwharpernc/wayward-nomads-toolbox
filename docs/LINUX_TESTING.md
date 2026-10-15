@@ -209,6 +209,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 - [ ] **Upgrade planner** (Engineering window, added in 1.12.0, Windows-tested only): pick the Karma AR-50 from class 1 to 5: four steps, 12,500,000 credits, and **Add to wishlist**
       puts four entries on the Wishlist tab. Press **Read my gear**: your suits and weapons are listed with their class (needs the Journal directory set on Linux); picking one fills in its item, class and fitted modifications. Pick the TK Zenith: the credits read "not recorded". Pick a modification not offered for the item (they are filtered), and four at most.
 
+- [ ] **Mission progress colours** (added after 1.12.0, Windows-tested only): the Missions window's Progress column shows a bar and `N/total held` for a source-and-return mission, and rows and overlay lines change colour as the hold fills.
 - [ ] **Missions window and pinned missions** (added in 1.12.0, Windows-tested only): the **Missions window** button at the bottom of the Missions panel opens the window; the Active and By place tabs fill and the times count down;
       select a row and **Pin / Unpin** puts a ★ on it and (with the Missions overlay on) a PINNED section on the card; the text beside the arrows is bold and readable.
 - [ ] **Best picks and Source commodities** (added in 1.12.0, Windows-tested only; needs Trade lookups on): Trade → Market, type a commodity, **Best picks** shows four labelled stations;

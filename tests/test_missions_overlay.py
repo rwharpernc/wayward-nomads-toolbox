@@ -405,5 +405,31 @@ class PinnedTests(unittest.TestCase):
         self.assertFalse(plain[0].pinned)
 
 
+class ProgressColourTests(unittest.TestCase):
+    def line_roles(self, entries, here="Jarogee"):
+        return [role for _t, role in M.build_lines(entries, here, "", 8, NOW)][1:]
+
+    def test_progress_colours_the_line(self):
+        def e(i, done, required, minutes=3000, ready=False):
+            return M.Entry(i, mission_types.TRADE, f"Gold {i}", "", "Jarogee", "Dock", 1, at(minutes), ready, f"{done}/{required}", False, done, required)
+        roles = self.line_roles([e(1, 0, 40), e(2, 10, 40), e(3, 30, 40), e(4, 40, 40, ready=True)])
+        self.assertEqual(sorted(roles[1:]), sorted(["ok", "high", "low", "text"]))     # ready, over half, started, not started
+
+    def test_time_pressure_still_comes_before_progress(self):
+        late = M.Entry(1, mission_types.TRADE, "Gold", "", "Jarogee", "Dock", 1, at(20), False, "30/40", False, 30, 40)
+        self.assertEqual(self.line_roles([late])[1], "red")
+
+    def test_stacked_missions_use_their_combined_progress(self):
+        a = M.Entry(1, mission_types.MASSACRE_SPACE, "Massacre", "F", "Jarogee", "Dock", 1, at(3000), False, "", False, 40, 40)
+        b = M.Entry(2, mission_types.MASSACRE_SPACE, "Massacre", "F", "Jarogee", "Dock", 1, at(3100), False, "", False, 0, 40)
+        item = M.stack([a, b])[0]
+        self.assertEqual((item.count, item.fraction), (2, 0.5))
+
+    def test_the_colours_are_fixed_whatever_the_scheme(self):
+        self.assertEqual(M._colour(M.LEGACY, "high"), M.LIME)
+        self.assertEqual(M._colour(M.LEGACY, "low"), M.BLUE)
+        self.assertEqual(M._colour(M.LEGACY, "ok"), M.GREEN)
+
+
 if __name__ == "__main__":
     unittest.main()

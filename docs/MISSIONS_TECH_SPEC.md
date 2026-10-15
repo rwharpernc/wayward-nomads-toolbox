@@ -209,6 +209,14 @@ pins whose mission is gone, but only once the roster is known (`all_missions.vie
 `build_lines` puts pinned items first under PINNED (taking rows before HERE, NEXT and the rest; overflow counts in the `+N more` line). Tests: `tests/test_missions_board.py`,
 `tests/test_missions_overlay.py` (`PinnedTests`).
 
+## 10b-3. Progress and its colours
+
+`mission_progress.compute` gives each mission a `Progress` (text, fraction, done, required): the game's `CargoDepot` count when there is one, else the kill estimate, else (for a
+source-and-return mission, whose `MissionSummary.commodity_key` is the commodity's internal name) the tonnes of it in the hold, `current_cargo.held()`, shared out among the missions for
+that commodity soonest-expiring first. `current_cargo` takes `state["Cargo"]` from EDMC on every journal event (`missions.handle_event`) and tells the window and the overlay when the hold
+changes. `tier` maps a fraction to ready / high (at least half) / low / none. The window tags rows (`ready`, `soon`, `warn`, then `high` and `low`) and draws a six-cell bar; the overlay card's `_role` is ready, red,
+amber, then high and low, drawn in the fixed `GREEN`, `RED`, `LIME` and `BLUE`. An overlay `Item` carries the summed done and required of the missions stacked into it. Tests: `tests/test_mission_progress.py`.
+
 ## 10c. Source commodities
 
 `mission_sources.needs_from` sums `needed_commodity_count` per commodity over the active missions (biggest first, at most 12) with the system most of them are handed in

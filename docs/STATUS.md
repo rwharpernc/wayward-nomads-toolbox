@@ -19,6 +19,10 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
 
+## Unreleased on `master`
+
+- Missions window and overlay: progress for source-and-return missions from the hold (`36/60 held`), progress bars, and colour by progress (lime half or more, blue started). Unit-tested and run against the real Collect missions in the journal; the in-game check is in `docs/TODO.md`.
+
 ## Branches
 
 There is one long-lived branch, `master`, and it matches the 1.12.0 release. For a fix to a released version, cut a short branch from

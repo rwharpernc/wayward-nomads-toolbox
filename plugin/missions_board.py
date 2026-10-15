@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Collection, Dict, Iterable, List, Mapping, Optional, Tuple
 
-from . import mission_types
+from . import mission_progress, mission_types
 from .missions_overlay import parse_expiry, time_left
 
 SOON_MINUTES = 60                 # "expiring soon" in the totals
@@ -22,7 +22,7 @@ class Row:
     faction: str
     system: str                   # where to go now: the hand-in place once the objective is done, else the destination
     station: str
-    progress: str                 # "80/200", "~18/40 kills" or ""
+    progress: str                 # "80/200", "~18/40 kills", "36/60 held" or ""
     fraction: Optional[float]     # 0..1 when there is progress to show
     reward: int
     expiry: Optional[datetime]
@@ -36,6 +36,11 @@ class Row:
     needed: int                   # tonnes still to find, 0 if none
     cargo_note: str               # "120/200 collected, 80 delivered" or ""
 
+    @property
+    def tier(self) -> str:
+        """The colour band of its progress: ready, high (half or more), low (started) or none."""
+        return mission_progress.tier(self.fraction, self.ready)
+
     def where(self) -> str:
         if self.system and self.station:
             return f"{self.system} / {self.station}"
@@ -43,11 +48,12 @@ class Row:
 
 
 def rows_from(missions: Mapping[int, Any], *, redirected: Collection[int] = (), redirects: Optional[Mapping[int, Mapping[str, str]]] = None,
-              kills: Optional[Mapping[int, Tuple[int, int, bool]]] = None, pinned: Collection[int] = ()) -> List[Row]:
+              kills: Optional[Mapping[int, Tuple[int, int, bool]]] = None, held: Optional[Mapping[str, int]] = None,
+              pinned: Collection[int] = ()) -> List[Row]:
     """A row for each of `missions` (`MissionSummary`s). `redirected` are the missions whose objective is done (the game redirected them to a hand-in
     place, named in `redirects[id]` when it said). `kills[id]` is (kills done, kills required, is an estimate) for a massacre or raid."""
     redirects = redirects or {}
-    kills = kills or {}
+    progress_by_id = mission_progress.compute(list(missions.values()), kills=kills, held=held, ready=redirected)
     rows: List[Row] = []
     for summary in missions.values():
         ready = summary.id in redirected
@@ -56,17 +62,8 @@ def rows_from(missions: Mapping[int, Any], *, redirected: Collection[int] = (), 
             place = redirects.get(summary.id) or {}
             if place.get("system") or place.get("station"):
                 system, station = place.get("system") or system, place.get("station") or station
-        progress, fraction, note = "", None, ""
-        cargo = summary.cargo
-        if cargo is not None and cargo.total:
-            progress = f"{cargo.delivered:,}/{cargo.total:,}"
-            fraction = min(1.0, cargo.delivered / cargo.total)
-            note = f"{cargo.collected:,}/{cargo.total:,} collected, {cargo.delivered:,} delivered"
-        elif summary.id in kills:
-            done, required, estimate = kills[summary.id]
-            if required:
-                progress = f"{'~' if estimate and not ready else ''}{done}/{required} kills"
-                fraction = min(1.0, done / required)
+        found = progress_by_id.get(summary.id)
+        progress, fraction, note = (found.text, found.fraction, found.note) if found else ("", None, "")
         if ready:
             fraction = 1.0
         rows.append(Row(

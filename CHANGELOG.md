@@ -3,6 +3,11 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Progress you can see, in colour.** The Missions window now shows progress for source-and-return (Collect) missions, which the game does not report until you hand cargo in: the tonnes of that commodity in your hold against what the mission asks for (`36/60 held`), updating as you buy and sell. Progress is also drawn as a small bar, and rows and overlay lines are coloured by it: green when ready, lime when half or more done, blue when started (time pressure, red and amber, still comes first). The overlay card colours massacres too, using the combined progress of a stack.
+
 ## 1.12.0 - 2026-10-15
 
 ### Added

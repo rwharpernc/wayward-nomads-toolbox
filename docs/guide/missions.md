@@ -21,8 +21,8 @@ page between categories; the number is how many missions are in that category. T
 Opens from the **Missions window** button at the bottom of the panel (or by clicking a mission's card). It stays live while you play: times left count down, progress moves, and missions
 come and go as you accept and hand them in.
 
-- **Active** tab: one row per mission, ready ones (✓, green) first, then the soonest to expire (red under an hour, amber under six hours). Columns: mission,
-  kind, faction, where to go now (the hand-in place once a mission is done), progress (`80/200` for cargo, `~18/40 kills` for massacres and raids), reward, and
+- **Active** tab: one row per mission, ready ones (✓, green) first, then the soonest to expire. A row's colour tells you where it stands: **green** ready to hand in, **red** under an hour left, **amber** under six hours, otherwise **lime** for a mission half or more done and **blue** for one that is started but under half. The progress column also draws a small bar, so it reads by shape as well as colour. Columns: mission,
+  kind, faction, where to go now (the hand-in place once a mission is done), progress (see below), reward, and
   time left. Above the table, the summary: how many missions, how many are ready or under an hour from expiring, how many are pinned, and the rewards held.
 - **By place** tab: the same missions grouped by the system to go to, your own system first, then the next jump you have targeted, then the places with
   something ready. A route plan at a glance.
@@ -30,6 +30,19 @@ come and go as you accept and hand them in.
   when it was accepted and when it expires.
 - **Pin / Unpin** pins the selected mission; **Pin all here** pins every mission for the system you are in; **Unpin all** clears them. **Copy system** puts the
   selected mission's system on the clipboard for the galaxy map. **Sources** opens [Source commodities](#source-commodities).
+
+### Progress
+
+Where the number comes from depends on the mission, and the window says which:
+
+| Shown as | Meaning |
+|---|---|
+| `20/60` | The game's own count of cargo handed in (from the journal's cargo depot events). |
+| `36/36 loaded` | Cargo picked up for a haulage mission but not yet handed in. |
+| `~18/40 kills` | Massacre and settlement-raid kills. `~` means an estimate: wing and on-foot kills are often missing from the journal until the mission completes. |
+| `36/60 held` | A **source and return** mission, while you are still buying the cargo. The game writes nothing about these until you hand cargo in, so WNTB compares what is in your hold with what the mission asks for. Several missions for one commodity share the hold, the soonest to expire first, so a tonne is never counted twice. |
+
+The colours are the same on the [overlay card](#missions-on-the-overlay). "Held" counts everything of that commodity in your hold, whether or not it was bought for the mission, and it follows the hold as you buy and sell. Cargo in a fleet carrier or another ship is not counted.
 
 ### Pinned missions
 
@@ -50,6 +63,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Active missions to appear after restarting EDMC mid-game | The game lists active missions only in its login event, so WNTB works the list out from the last two weeks of journals (the latest login list plus what was accepted, completed, abandoned or failed since). A mission that **expired without a journal entry** can show until your next login. | Log in again to get the game's own list. |
 | Cargo mission progress to be exact | The game reports it (`CargoDepot`: collected, delivered and total) when you collect or hand in cargo, and when a wing-mate does. Progress made before WNTB's two-week window, or with no event since, isn't known. | The card shows it once the game has reported any; otherwise check the game's mission screen. |
 | Where to find a mission's cargo for sale, offline | It asks Spansh, so it needs Trade's online lookups switched on and a button press. | Turn the switch on in Settings → Trade. |
+| Progress on a source-and-return mission before you hand cargo in | The game writes nothing about it until then. | WNTB shows what is in your hold against what the mission asks for (`36/60 held`). Cargo in a carrier does not count. |
 | The next jump's missions on the overlay when you have a route | The game names the system you have targeted (`FSDTarget`), not the whole route, so only the next hop is NEXT. | Plot the route in the galaxy map and target the hops as you go. |
 | Missions accepted a while ago to appear | WNTB reads only the **last two weeks** of journals at start-up. A mission still active but accepted earlier is not found and not shown. | Keep EDMC running while you hold long missions, and check the game's own mission board for older ones. |
 | Kills made while EDMC was closed | Counted only if they are in the last two weeks of journal files. | Run EDMC whenever you play. |
@@ -79,7 +93,7 @@ Combat > HIP 20019                  3d
 - **HERE** is the missions whose turn-in or destination is the system you are in. **NEXT** is the same for the system you have **targeted** for the next
   jump (plot a route and the game targets each hop in turn). Then the rest (**ELSEWHERE**), and `+N more in M systems` when your row limit cuts it off.
 - **Order:** a finished mission (✓) first, with the place to hand it in, then the soonest to expire. A mission with under an hour left (you can change it)
-  is red, under six hours amber, a finished one (ready to hand in) is always a clear green, whichever overlay colour scheme you use.
+  is red, under six hours amber, a finished one (ready to hand in) is always a clear green, whichever overlay colour scheme you use. Otherwise a line takes its colour from [progress](#progress): lime when a mission is half or more done, blue when it is started. These colours are fixed and do not follow the overlay colour scheme; time pressure (red, amber) comes before progress.
 - **Stacking:** massacres and settlement raids against one faction in one place, and any other missions with the same title for the same station, are one
   line with a count (`x3`). A cargo mission shows its progress (`12/40`).
 - **Long names** are cut short to keep the card one fixed width; the time left is always shown. The card's top-left corner never moves as lines come and go.

@@ -42,7 +42,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import active_missions, community_goal_state, kill_tracker, missions_ui
-from . import mission_cargo
+from . import current_cargo, mission_cargo
 from .journal_scan import read_backlog
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -136,6 +136,7 @@ class MissionsController:
 
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
         event = entry.get("event")
+        current_cargo.update(state)       # the hold, for "held" progress on source-and-return missions
 
         if cmdr:
             # Order matters: the kill tracker must know the CMDR before the

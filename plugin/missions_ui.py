@@ -48,7 +48,7 @@ from typing import Callable, Optional
 from config import appname, config
 from theme import theme
 
-from . import all_missions, community_goal_state, current_system, kill_missions, kill_tracker, mining_methods, mission_pins, mission_sources, mission_types, missions_board, missions_overlay, panelkit
+from . import all_missions, community_goal_state, current_cargo, current_system, kill_missions, kill_tracker, mining_methods, mission_pins, mission_progress, mission_sources, mission_types, missions_board, missions_overlay, panelkit
 from .mission_sources_window import MissionSourcesWindow
 from .missions_window import MissionsWindow
 from .community_goal_state import CommunityGoal
@@ -989,6 +989,11 @@ class MissionsUI:
         self.__all_missions_data = data
         self.redraw()
 
+    def on_cargo(self):
+        """The hold changed: the Missions window's "held" progress follows (the panel itself shows no held progress, so it is not redrawn)."""
+        if self.__window is not None:
+            self.__window.refresh()
+
     def on_community_goals(self, data: dict[int, CommunityGoal]):
         self.__community_goals = data
         self.redraw()
@@ -1061,13 +1066,11 @@ class MissionsUI:
     def __live_rows(self) -> list[missions_board.Row]:
         """The window's rows from the live Missions data: the kill progress estimate, the redirected missions and the pinned ids."""
         cmdr = kill_tracker.current_cmdr
-        kill_list = list((kill_missions.view.missions or {}).values())
-        progress = estimate_progress(kill_list) if kill_list else {}
-        kills = {m.id: (progress.get(m.id, 0), m.count, m.is_wing or m.is_ground) for m in kill_list}
+        kills = mission_progress.live_kills()
         redirected = kill_tracker.get_redirected(cmdr)
         redirects = {mid: kill_tracker.get_redirect_destination(cmdr, mid) or {} for mid in redirected}
         return missions_board.rows_from(self.__all_missions_data or {}, redirected=redirected, redirects=redirects, kills=kills,
-                                        pinned=mission_pins.book.pinned(cmdr))
+                                        held=current_cargo.held(), pinned=mission_pins.book.pinned(cmdr))
 
     def __show_missions_window(self, mission_id: Optional[int] = None):
         """Opens (or raises) the Missions window, on the mission whose card was clicked if there was one. It stays live: redraw() refreshes it."""
@@ -1100,5 +1103,6 @@ def handle_new_community_goal_state(data: dict[int, CommunityGoal]):
 
 
 kill_missions.view.changed.connect(ui.on_kill_missions)
+current_cargo.changed.connect(lambda: ui.on_cargo())
 all_missions.view.changed.connect(ui.on_all_missions)
 community_goal_state.community_goal_listeners.append(handle_new_community_goal_state)
