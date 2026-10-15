@@ -32,7 +32,8 @@ These are built and covered by unit tests, but have not all been seen working in
   March 2024 plus later corrections. Then Linux.
 - [ ] **Ship planner.** Export a build from EDSY and from Coriolis as SLEF, paste it, and compare the modules, levels and experimental effects with
   the build. Check **Add plan to wishlist** (and the refusal when it would pass 100 blueprints or 99 crafts), the **Rolls per grade** setting, a
-  pre-engineered module, and a `Loadout` line copied from a journal. Then Linux (the clipboard paste).
+  pre-engineered module, and a `Loadout` line copied from a journal. Then **Subtract what my current ship already has** with a build for the ship you
+  are flying (it reads your newest journal). Then Linux (the clipboard paste).
 - [ ] **System-name suggestions.** Try every box that takes a system name (Expedition System, the planner's Start and End, the trader finder,
   Colonization Around, Notes, Waypoint Route, Boxel Survey seed): the list under the box, Down / Enter / Escape, Enter with nothing highlighted still
   acting, and the list matching the EDMC theme in the main panel boxes. Then Settings → Window → Suggest system names from Spansh and type `outot`.
@@ -77,14 +78,6 @@ or build type Raven needs), ready flags, and Raven's `supply` call, which Raven 
   14-commodity list took 1 + 12 searches + 1 leftover request, and the 2 commodities with no stock within 50 ly were reported as not covered). Still to
   see in the window itself, then on Linux.
 
-## Acknowledgements
-
-- [ ] **Say in `docs/ATTRIBUTIONS.md` that parts of WNTB were ported from other languages (C#, TypeScript, React and others), and invite reuse.** Add a
-  short section and match the README's credits line: anyone may reuse WNTB's ports on GPL-3.0 terms (WNTB is GPL-3.0, see `LICENSE`), the original
-  authors' notices stay, and a nod or a pointer to where the code came from is appreciated. Also list each port's source and licence in
-  `THIRD-PARTY-NOTICES.md` (a port of GPL-3.0 code, such as SrvSurvey or Raven Colonial's web code, is fine under GPL-3.0; MIT and other licences need
-  their own notice kept), and check that every port is already listed there.
-
 ## Ideas from other tools
 
 Surveyed: SrvSurvey (GPL-3.0), EDDiscovery (Apache-2.0), Elite Dangerous Odyssey Materials Helper (MIT), EDEngineer (MIT), ODEliteTracker and OD-Explorer
@@ -95,7 +88,6 @@ planner), the material trader finder, and expedition planning. Later, in rough o
 - [ ] **MegaShip scans** (from ODEliteTracker).
 - [ ] **Materials and engineering, not done:** synthesis and engineer-craft prompts, a data-terminal overlay, and an Odyssey (suit and weapon)
   loadout planner. The data for that one is not open: the suit and weapon stat tables and upgrade costs would need a source of their own.
-- [ ] **Ship planner, next step:** subtract what the current ship already has (it needs the latest `Loadout` event kept per commander).
 - [ ] **Expedition planning, not done:** an overlay card and per-stop scan or discovery tracking.
 
 ## Very low priority

@@ -355,6 +355,13 @@ engineering blueprints section above). The mapping from ship items to module typ
 in is the journal's `Loadout` event, which EDSY and Coriolis export as SLEF ([EDCD/slef-specification](https://github.com/jixxed/slef-specification)).
 No code was taken.
 
+## Rare goods table
+
+`plugin/rare_goods.json` (behind the Rare Goods Finder) lists each rare commodity with the system and station that sells it, its pad size, what is illegal
+where, its cost and its Powerplay eligibility. It was compiled from public game data and community lists of the rare goods, which are game facts, with three
+ids looked up once: each system's coordinates from [EDSM](https://www.edsm.net/), each commodity's id on [Inara](https://inara.cz/) (used only to open its page)
+and each system's id from [Spansh](https://spansh.co.uk/). None of those services' code or pages are bundled, and the file is not a copy of any one list.
+
 ## Commodity names (Trade)
 
 `plugin/trade_commodities_data.py` is generated from the `commodity.csv` published by

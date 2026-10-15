@@ -162,13 +162,18 @@ or **Clear list** (each asks twice). The Materials row shows a line such as `Wis
 3. The table lists each engineered module: its slot, the module, the blueprint, the level, the experimental effect and whether it was **counted**.
    Select a row for the detail. A module with no engineering is left out. A **pre-engineered** module (it comes that way from Frontier) says so and
    takes nothing, and anything WNTB's table does not cover says **not counted** and why.
-4. Set **Rolls per grade**. To reach level 5 the game applies grades 1 to 5 in order, and how many rolls each grade takes depends on the game's dice,
+4. Optionally tick **Subtract what my current ship already has**. WNTB reads your newest journal for the ship you are flying and leaves out what it
+   already holds: for a module in the same slot with the same blueprint, the grades up to its level are done (only higher ones are planned), and an
+   experimental effect it already carries is done. A module that is completely done says **already done**. It only subtracts when the build is the same kind
+   of ship as yours (otherwise the line under the table says so), and it assumes the build is meant for the ship you are flying: two ships of one kind
+   cannot be told apart. A different blueprint in that slot is not subtracted from. If it finds no ship, the status line says so and nothing is subtracted.
+5. Set **Rolls per grade**. To reach level 5 the game applies grades 1 to 5 in order, and how many rolls each grade takes depends on the game's dice,
    which the journal cannot tell, so you say how many to plan for (1 to 10). An experimental effect is one craft. The summary line shows the totals.
-5. Press **Add plan to wishlist**. The same blueprint on several modules is added together. The wishlist holds 100 blueprints and 99 crafts of each; if the
+6. Press **Add plan to wishlist**. The same blueprint on several modules is added together. The wishlist holds 100 blueprints and 99 crafts of each; if the
    plan would pass either, **nothing is added** and the message says why. Then use the **Wishlist** tab for what you can make now and the shopping list.
 
 Nothing is sent anywhere: the text comes from you and everything is worked out on your computer. What it cannot do: it does not know how many rolls you
-need, it plans the whole build rather than what your current ship already has (remove what you have done from the wishlist, or set the rolls to 1), and it
+need, it cannot tell which of two ships of one kind a build is meant for, and it
 only covers module types in the blueprint table. The journal's names for blueprints and effects are matched to the table's from public lists
 (see [Technical](../TECHNICAL.md#ship-engineering-planner-ship_planpy-ship_plan_tabpy-journal_blueprintspy)); a name it does not know is shown as **not counted**.
 

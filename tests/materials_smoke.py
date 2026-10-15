@@ -349,6 +349,26 @@ check(wish.get("Frame Shift Drive|Increased FSD Range|5") is not None and wish.g
       f"the plan goes on the wishlist at two rolls a grade: {[(i.blueprint_id, i.crafts) for i in wish.items()]}")
 check(wish.get("Frame Shift Drive|Mass Manager|0").crafts == 1, "an experimental effect is one craft")
 check("Put 6 blueprints" in bwin._shell._status.cget("text"), f"the status says what happened: {bwin._shell._status.cget('text')!r}")
+# subtract what the current ship already has (the journal read is replaced by a stand-in)
+from plugin import ship_plan as _sp
+have_fsd = {"Slot": "FrameShiftDrive", "Item": "int_hyperdrive_size5_class5",
+            "Engineering": {"EngineerID": 300160, "BlueprintName": "FSD_LongRange", "Level": 3, "Quality": 1.0, "ExperimentalEffect": "special_fsd_heavy"}}
+planner._current_ship = lambda: _sp.build_from({"event": "Loadout", "Ship": "asp", "ShipName": "Mine", "Modules": [have_fsd]})
+wish.clear()
+planner._subtract.set(True)
+planner._choose()
+pump()
+check("Compared with your ship: Mine (Asp)" in planner._summary.cget("text"), f"the summary says what it was compared with: {planner._summary.cget('text')!r}")
+planner._rolls.set("1")
+planner.add_to_wishlist()
+check(sorted(i.blueprint_id for i in wish.items()) == ["Frame Shift Drive|Increased FSD Range|4", "Frame Shift Drive|Increased FSD Range|5"],
+      f"only the grades above the ship's level 3 go on the wishlist, and the effect it has is left out: {[i.blueprint_id for i in wish.items()]}")
+planner._current_ship = lambda: None
+wish.clear()
+planner._choose()
+check("No current ship found" in bwin._shell._status.cget("text"), f"no journal ship is explained: {bwin._shell._status.cget('text')!r}")
+planner._subtract.set(False)
+planner._choose()
 planner.clear()
 check(planner._plan is None and len(planner._table) == 0, "Clear empties the tab")
 planner.add_to_wishlist()

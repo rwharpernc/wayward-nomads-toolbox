@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **The Ship planner can subtract what your current ship already has.** Tick **Subtract what my current ship already has** and WNTB reads the ship you are flying from your newest journal (its last `Loadout` event; nothing is stored) and leaves out what it holds: for a module in the same slot with the same blueprint, the grades up to its level, and an experimental effect it already carries. A module that is completely done says **already done**, and the summary counts them. It only subtracts when the build is the same kind of ship as yours, and says so when it is not; a different blueprint in the slot is not subtracted from. With no ship found it says so and subtracts nothing.
+
+### Documentation
+- `THIRD-PARTY-NOTICES.md` gained an entry for the Rare Goods Finder's table (game facts with ids looked up once from EDSM, Inara and Spansh); every bundled data table now has one.
+
 ## 1.11.0 - 2026-10-15
 
 ### Added

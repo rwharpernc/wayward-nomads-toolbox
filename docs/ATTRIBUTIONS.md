@@ -145,7 +145,7 @@ come from FDevIDs' `material.csv` too.
 GitHub Releases (self-update, opt-in). [Inara](https://inara.cz/) is linked to only. Every network call
 goes to a documented API or a published data file, never to another site's HTML, and most are opt-in or
 user-triggered. The Rare Goods Finder's static list was compiled from public game data, with EDSM
-coordinates, Inara commodity ids and Spansh system ids looked up once.
+coordinates, Inara commodity ids and Spansh system ids looked up once (notice in `THIRD-PARTY-NOTICES.md`).
 
 ## Thanks
 

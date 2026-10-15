@@ -11,7 +11,7 @@ import tkinter as tk
 from typing import Callable, List, Optional
 
 from . import blueprint_wishlist as wishlist_mod
-from . import ship_plan
+from . import ship_current, ship_plan
 from .uikit import palette as P
 from .uikit.table import Column, DataTable
 from .uikit.widgets import Combobox, FlatButton, clip
@@ -29,9 +29,11 @@ _HELP = ("Paste a ship loadout (a SLEF export from EDSY or Coriolis, or a Loadou
 
 
 class ShipPlanTab:
-    def __init__(self, tab: tk.Frame, wishbook: wishlist_mod.WishBook, set_status: Callable[[str], None]) -> None:
+    def __init__(self, tab: tk.Frame, wishbook: wishlist_mod.WishBook, set_status: Callable[[str], None],
+                 current_ship: Callable[[], Optional[ship_plan.Build]] = ship_current.current_build) -> None:
         self._wishbook = wishbook
         self._set_status = set_status
+        self._current_ship = current_ship          # where "my current ship" comes from; the journals, or a stand-in in tests
         self._builds: List[ship_plan.Build] = []
         self._plan: Optional[ship_plan.Plan] = None
 
@@ -64,6 +66,9 @@ class ShipPlanTab:
         rolls.pack(side="left", padx=(P.PAD_SM, P.PAD))
         rolls.bind("<<ComboboxSelected>>", lambda _e: self._summarize())
         FlatButton(controls, "Add plan to wishlist", self.add_to_wishlist, kind="accent").pack(side="left")
+        self._subtract = tk.BooleanVar(value=False)
+        tk.Checkbutton(controls, text="Subtract what my current ship already has", variable=self._subtract, command=self._choose,
+                       fg=P.TEXT, bg=P.PANE, selectcolor=P.CARD, activebackground=P.PANE, activeforeground=P.TEXT).pack(side="left", padx=(P.PAD, 0))
         self._summary = tk.Label(pad, text="", fg=P.TEXT, bg=P.PANE, anchor="w", justify="left", wraplength=980)
         self._summary.pack(fill="x", pady=(P.PAD_SM, 0))
         self._note = tk.Label(pad, text="", fg=P.MUTED, bg=P.PANE, anchor="w", justify="left", wraplength=980)
@@ -115,7 +120,12 @@ class ShipPlanTab:
         build = next((b for b in self._builds if b.label == self._ship.get()), None)
         if build is None:
             return
-        self._plan = ship_plan.plan(build)
+        current = None
+        if self._subtract.get():
+            current = self._current_ship()
+            if current is None:
+                self._set_status("No current ship found in your journals (is the journal folder set in EDMC, and has the game run?). Nothing was subtracted.")
+        self._plan = ship_plan.plan(build, current)
         self._table.clear()
         for index, planned in enumerate(self._plan.modules):
             self._table.insert(str(index), (
@@ -149,7 +159,7 @@ class ShipPlanTab:
 
     def _summarize(self) -> None:
         if self._plan is not None:
-            self._summary.configure(text=self._plan.summary(self._rolls_value()))
+            self._summary.configure(text=(self._plan.summary(self._rolls_value()) + (f". {self._plan.compared}" if self._plan.compared else "")))
 
     # --- the wishlist ----------------------------------------------------------------------------------------------------
 

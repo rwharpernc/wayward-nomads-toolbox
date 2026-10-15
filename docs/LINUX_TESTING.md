@@ -198,7 +198,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 - [ ] **Ship planner** (Engineering window, added after 1.10.2, Windows-tested only): export a build from EDSY or Coriolis as SLEF and **Paste from clipboard**
       (check the clipboard paste works on your desktop, X11 and Wayland). The table lists each engineered module; the summary line shows blueprints and crafts;
       **Add plan to wishlist** puts them on the Wishlist tab (a pre-engineered module and an unknown item show their reason). Set **Rolls per grade** to 2 and add again:
-      the crafts double. Nothing goes online.
+      the crafts double. Tick **Subtract what my current ship already has** with a build for the ship you fly: what the ship holds is left out. Nothing goes online.
 
 ## 6b. Fixed in the platform audit - please confirm
 

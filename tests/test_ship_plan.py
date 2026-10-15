@@ -220,6 +220,120 @@ class AddToWishlistTests(unittest.TestCase):
             self.assertEqual(book.add_many([]), 0)
 
 
+def _ship(*modules, ship="federation_corvette"):
+    return S.build_from({"event": "Loadout", "Ship": ship, "ShipName": "Mine", "Modules": list(modules)})
+
+
+class SubtractCurrentShipTests(unittest.TestCase):
+    """plan(build, current): what the ship being flown already has is not planned again."""
+
+    TARGET = _ship(FSD, ARMOUR)
+
+    def test_without_a_current_ship_nothing_changes(self):
+        self.assertEqual(S.plan(self.TARGET).entries(), S.plan(self.TARGET, None).entries())
+        self.assertEqual(S.plan(self.TARGET).compared, "")
+
+    def test_the_grades_the_ship_has_are_left_out_and_so_is_the_effect_it_has(self):
+        have = module("FrameShiftDrive", "int_hyperdrive_size5_class5", "FSD_LongRange", 3, "special_fsd_heavy")
+        planned = S.plan(self.TARGET, _ship(have))
+        fsd = next(m for m in planned.modules if m.slot == "FrameShiftDrive")
+        self.assertEqual(([b.grade for b in fsd.grades], fsd.have, fsd.have_effect, fsd.special, fsd.status), ([4, 5], 3, True, None, S.COUNTED))
+        self.assertIn("level 3", fsd.note)
+        self.assertEqual(planned.compared, "Compared with your ship: Mine (Federation Corvette).")
+        ids = dict(planned.entries())
+        self.assertNotIn("Frame Shift Drive|Increased FSD Range|3", ids)
+        self.assertIn("Frame Shift Drive|Increased FSD Range|4", ids)
+        self.assertNotIn("Frame Shift Drive|Mass Manager|0", ids)
+
+    def test_a_module_the_ship_already_has_in_full_is_done(self):
+        have = module("FrameShiftDrive", "int_hyperdrive_size5_class5", "FSD_LongRange", 5, "special_fsd_heavy")
+        planned = S.plan(self.TARGET, _ship(have))
+        fsd = next(m for m in planned.modules if m.slot == "FrameShiftDrive")
+        self.assertEqual((fsd.status, fsd.grades, fsd.special), (S.DONE, (), None))
+        self.assertNotIn("Frame Shift Drive|Increased FSD Range|5", dict(planned.entries()))
+        self.assertIn("1 already on your ship", planned.summary())
+
+    def test_the_effect_is_still_planned_if_the_ship_has_another(self):
+        have = module("FrameShiftDrive", "int_hyperdrive_size5_class5", "FSD_LongRange", 5, "special_fsd_fastboot")
+        fsd = next(m for m in S.plan(self.TARGET, _ship(have)).modules if m.slot == "FrameShiftDrive")
+        self.assertEqual((fsd.grades, fsd.have_effect), ((), False))
+        self.assertEqual(fsd.special.name, "Mass Manager")
+
+    def test_a_lower_target_than_the_ship_has_is_done_at_the_target(self):
+        have = module("Armour", "asp_armour_grade1", "Armour_HeavyDuty", 5)
+        armour = next(m for m in S.plan(self.TARGET, _ship(have)).modules if m.slot == "Armour")
+        self.assertEqual((armour.status, armour.have, armour.grades), (S.DONE, 2, ()))
+
+    def test_a_different_blueprint_in_the_slot_is_not_subtracted_from(self):
+        have = module("FrameShiftDrive", "int_hyperdrive_size5_class5", "FSD_FastBoot", 5)
+        fsd = next(m for m in S.plan(self.TARGET, _ship(have)).modules if m.slot == "FrameShiftDrive")
+        self.assertEqual((fsd.have, len(fsd.grades)), (0, 5))
+        self.assertIn("different engineering", fsd.note)
+
+    def test_an_empty_slot_or_a_pre_engineered_module_is_not_subtracted_from(self):
+        nothing = next(m for m in S.plan(self.TARGET, _ship(PLAIN)).modules if m.slot == "FrameShiftDrive")
+        self.assertEqual((nothing.have, len(nothing.grades)), (0, 5))
+        self.assertIn("nothing engineered", nothing.note)
+        pre = module("FrameShiftDrive", "int_hyperdrive_size5_class5", "FSD_LongRange", 5, EngineerID=399999)
+        self.assertEqual(next(m for m in S.plan(self.TARGET, _ship(pre)).modules if m.slot == "FrameShiftDrive").have, 0)
+
+    def test_a_different_kind_of_ship_subtracts_nothing_and_says_so(self):
+        have = module("FrameShiftDrive", "int_hyperdrive_size5_class5", "FSD_LongRange", 5, "special_fsd_heavy")
+        planned = S.plan(self.TARGET, _ship(have, ship="asp"))
+        self.assertEqual(planned.entries(), S.plan(self.TARGET).entries())
+        self.assertIn("not a Federation Corvette", planned.compared)
+
+    def test_a_build_with_no_ship_name_is_never_compared(self):
+        planned = S.plan(S.Build("Ship", "", (FSD,)), _ship(FSD))
+        self.assertIn("nothing was subtracted", planned.compared)
+
+    def test_the_ship_id_is_kept_from_the_loadout(self):
+        self.assertEqual(self.TARGET.ship_id, "federation_corvette")
+        self.assertEqual(S.parse(json.dumps(LOADOUT))[0].ship_id, "federation_corvette")
+
+
+class CurrentShipFromJournalsTests(unittest.TestCase):
+    """ship_current: the newest Loadout event in the newest journals."""
+
+    def folder_with(self, files):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(lambda: __import__("shutil").rmtree(folder, ignore_errors=True))
+        for index, (name, lines) in enumerate(files):
+            path = os.path.join(folder, name)
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write("\n".join(lines) + "\n")
+            os.utime(path, (1_700_000_000 + index * 100, 1_700_000_000 + index * 100))      # later files are newer
+        return folder
+
+    @staticmethod
+    def loadout(ship, name="", *modules):
+        return json.dumps({"timestamp": "2026-10-15T10:00:00Z", "event": "Loadout", "Ship": ship, "ShipName": name, "Modules": list(modules)})
+
+    def test_the_last_loadout_in_the_newest_journal_wins(self):
+        from plugin import ship_current
+        folder = self.folder_with([
+            ("Journal.2026-10-14T100000.01.log", [self.loadout("asp", "Old")]),
+            ("Journal.2026-10-15T100000.01.log", [self.loadout("python", "First"), json.dumps({"event": "Music"}), self.loadout("cobra_mkiii", "Latest", FSD)]),
+        ])
+        build = ship_current.current_build(folder)
+        self.assertEqual((build.ship_id, build.name, len(build.modules)), ("cobra_mkiii", "Latest", 1))
+
+    def test_a_newest_journal_without_a_loadout_falls_back_to_an_older_one(self):
+        from plugin import ship_current
+        folder = self.folder_with([
+            ("Journal.2026-10-14T100000.01.log", [self.loadout("asp", "Older")]),
+            ("Journal.2026-10-15T100000.01.log", [json.dumps({"event": "Fileheader"})]),
+        ])
+        self.assertEqual(ship_current.current_build(folder).name, "Older")
+
+    def test_nothing_to_find_gives_none(self):
+        from plugin import ship_current
+        self.assertIsNone(ship_current.current_build(self.folder_with([])))
+        self.assertIsNone(ship_current.current_build(os.path.join(tempfile.gettempdir(), "no-such-journal-folder-xyz")))
+        broken = self.folder_with([("Journal.2026-10-15T100000.01.log", ["not json", json.dumps({"event": "Loadout", "Modules": "x"})])])
+        self.assertIsNone(ship_current.current_build(broken))
+
+
 class MappingTests(unittest.TestCase):
     """journal_blueprints.py is generated; whatever it holds must point at rows the table really has."""
 

@@ -18,6 +18,10 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
 
+## Unreleased on `master`
+
+- Ship planner: **Subtract what my current ship already has**. Windows-tested by unit and smoke tests only; the Linux check is in `docs/LINUX_TESTING.md` section 6.
+
 ## Branches
 
 There is one long-lived branch, `master`, and it matches the 1.11.0 release. For a fix to a released version, cut a short branch from

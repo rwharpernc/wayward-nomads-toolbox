@@ -1089,6 +1089,11 @@ module's `Engineering` block (`BlueprintName`, `Level` 1 to 5, `ExperimentalEffe
 - **Not counted, never guessed.** No `Engineering` block: left out. `EngineerID` 399999 (Frontier's pre-engineered marker): listed, takes nothing. An
   item with no module type, a journal blueprint with no entry for that type, a level outside 1 to 5, or fewer grades in the table than the level:
   listed as not counted or partly counted with the reason.
+- **Current ship.** `ship_current.current_build` reads the last `Loadout` event of the newest of the last three journals that has one, on demand (nothing is
+  stored; a `Loadout` has no commander name, so the newest file is the session being played). `plan(build, current)` compares only when `Build.ship_id` (the
+  journal's `Ship`, such as `federation_corvette`) matches; modules are paired by `Slot`. `_already_on` subtracts when the current module has the same
+  journal blueprint, the same module type and is not pre-engineered: `min(current level, target level)` grades are done and a matching
+  `ExperimentalEffect` is done. A module that is fully done gets the status `already done`. `Plan.compared` says what it was compared with, or why not.
 - **Rolls.** `Plan.entries(rolls)`: each grade `rolls` crafts (1 to 10), an effect one, the same blueprint on several modules added together. The
   `Quality` of the last roll is shown, not planned with.
 - **Wishlist.** `WishBook.add_many` validates every entry first and then applies them with one save and one redraw, or changes nothing and raises

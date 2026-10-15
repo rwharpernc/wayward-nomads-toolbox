@@ -17,6 +17,11 @@ and the experimental effect (grade 0 in the table) is one more craft. How many r
 cannot tell, so `rolls` (a number the commander sets, 1 to `MAX_ROLLS`) says how many crafts of each grade to plan for; an experimental effect is one
 craft. `Plan.entries(rolls)` adds the same blueprint across modules together, ready for the wishlist (blueprint_wishlist.WishBook.add_many).
 
+**What the current ship already has.** `plan(build, current)` takes the ship being flown (`ship_current.current_build`, from the journals) and subtracts what it
+already holds: for a module in the same slot with the same blueprint, the grades up to its level are done (only the higher ones are planned), and an
+experimental effect it already carries is done. Only when the build is the same kind of ship; otherwise nothing is subtracted and the plan says so. A
+different blueprint in that slot is not subtracted from. This assumes the build is meant for the ship you are flying (two ships of one kind cannot be told apart).
+
 **Not counted.** Modules with no `Engineering`, which are simply left out; pre-engineered modules (the engineer id 399999 marks them), which cannot be
 engineered further; and anything the mapping or the table lacks. The `Quality` of the last roll is shown but not planned with.
 """
@@ -36,7 +41,7 @@ MAX_LEVEL = 5
 PRE_ENGINEERED_ID = 399999
 """The `EngineerID` the game gives a pre-engineered module (one a Frontier-made module that already carries its engineering)."""
 
-COUNTED, PARTLY, PRE, NOT_COUNTED = "counted", "partly", "pre-engineered", "not counted"
+COUNTED, PARTLY, PRE, NOT_COUNTED, DONE = "counted", "partly", "pre-engineered", "not counted", "already done"
 
 
 class PlanError(ValueError):
@@ -77,6 +82,7 @@ class Build:
     ship: str                         # "Federation Corvette"
     name: str                         # the commander's name for the ship, or "" (shown as "Ship name (Ship)")
     modules: Tuple[Dict[str, Any], ...]
+    ship_id: str = ""                 # the journal's name for the kind of ship ("federation_corvette"), for comparing two builds
 
     @property
     def label(self) -> str:
@@ -96,6 +102,8 @@ class PlannedModule:
     grades: Tuple[blueprints.Blueprint, ...]
     special: Optional[blueprints.Blueprint]
     quality: float
+    have: int = 0                     # grades of this blueprint the current ship already has (0 when nothing was compared)
+    have_effect: bool = False         # the current ship already has this experimental effect
 
 
 def _words(item: Any) -> str:
@@ -116,24 +124,32 @@ def parse(text: Any) -> List[Build]:
     builds: List[Build] = []
     for entry in entries:
         data = entry.get("data") if isinstance(entry, dict) and isinstance(entry.get("data"), dict) else entry
-        modules = data.get("Modules") if isinstance(data, dict) else None
-        if not isinstance(modules, list):
-            continue
-        if len(modules) > MAX_MODULES:
-            raise PlanError(f"A ship has at most {MAX_MODULES} modules; this one lists {len(modules)}.")
-        builds.append(Build(_words(data.get("Ship")) or "Ship", str(data.get("ShipName") or "").strip()[:60],
-                            tuple(m for m in modules if isinstance(m, dict))))
+        build = build_from(data)
+        if build is not None:
+            builds.append(build)
     if not builds:
         raise PlanError("No ship with modules found in that text. A ship loadout has a \"Modules\" list.")
     return builds
+
+
+def build_from(data: Any) -> Optional[Build]:
+    """The build in one `Loadout` object (the `data` of a SLEF entry, or a journal event), or None if it has no module list."""
+    modules = data.get("Modules") if isinstance(data, dict) else None
+    if not isinstance(modules, list):
+        return None
+    if len(modules) > MAX_MODULES:
+        raise PlanError(f"A ship has at most {MAX_MODULES} modules; this one lists {len(modules)}.")
+    return Build(_words(data.get("Ship")) or "Ship", str(data.get("ShipName") or "").strip()[:60], tuple(m for m in modules if isinstance(m, dict)),
+                 str(data.get("Ship") or "").casefold()[:60])
 
 
 def _level(raw: Any) -> int:
     return raw if isinstance(raw, int) and not isinstance(raw, bool) and 1 <= raw <= MAX_LEVEL else 0
 
 
-def plan_module(module: Dict[str, Any]) -> Optional[PlannedModule]:
-    """What one module takes; None for a module with no engineering (nothing to plan)."""
+def plan_module(module: Dict[str, Any], current: Optional[Dict[str, Any]] = None) -> Optional[PlannedModule]:
+    """What one module takes; None for a module with no engineering (nothing to plan). `current` is the module in the same slot of the ship being
+    flown, if the plan is to subtract what it already has."""
     engineering = module.get("Engineering")
     if not isinstance(engineering, dict) or not engineering.get("BlueprintName"):
         return None
@@ -170,13 +186,40 @@ def plan_module(module: Dict[str, Any]) -> Optional[PlannedModule]:
             status, note = PARTLY, "The experimental effect is not in the table, so only the grades are counted."
         else:
             shown = special.name
-    return PlannedModule(slot, item, kind, name, level, shown, status, note, grades, special, quality)
+    have, have_effect = 0, False
+    if current is not None:
+        have, have_effect, said = _already_on(current, kind, journal_name, level, effect)
+        if have:
+            grades = tuple(b for b in grades if b.grade > have)
+        if have_effect and special is not None:
+            special = None
+        note = " ".join(part for part in (note, said) if part)
+        if not grades and special is None and status == COUNTED:
+            status = DONE
+    return PlannedModule(slot, item, kind, name, level, shown, status, note, grades, special, quality, have, have_effect)
+
+
+def _already_on(current: Dict[str, Any], kind: str, journal_name: str, level: int, effect: str) -> Tuple[int, bool, str]:
+    """(grades done, effect done, a sentence) for the planned blueprint, given the module the ship being flown has in that slot."""
+    engineering = current.get("Engineering")
+    if not isinstance(engineering, dict) or not engineering.get("BlueprintName"):
+        return 0, False, "Your ship has nothing engineered here yet."
+    if engineering.get("EngineerID") == PRE_ENGINEERED_ID or module_type(current.get("Item")) != kind or engineering.get("BlueprintName") != journal_name:
+        return 0, False, "Your ship has a different engineering here, so nothing is subtracted."
+    has_level = _level(engineering.get("Level"))
+    done = min(has_level, level)
+    effect_done = bool(effect) and engineering.get("ExperimentalEffect") == effect
+    parts = [f"Your ship already has this to level {has_level}"] if done else []
+    if effect_done:
+        parts.append("and the experimental effect" if parts else "Your ship already has the experimental effect")
+    return done, effect_done, (" ".join(parts) + ".") if parts else ""
 
 
 @dataclass(frozen=True)
 class Plan:
     build: Build
     modules: Tuple[PlannedModule, ...]
+    compared: str = ""                # what the plan was compared with, or why it was not ("Your ship is ..., not a ...")
 
     def entries(self, rolls: int = 1) -> List[Tuple[str, int]]:
         """(blueprint id, crafts) for the whole build, the same blueprint from different modules added together, in the order first met.
@@ -198,10 +241,19 @@ class Plan:
     def summary(self, rolls: int = 1) -> str:
         entries = self.entries(rolls)
         crafts = sum(c for _id, c in entries)
-        skipped = len(self.modules) - self.counted()
+        skipped = sum(1 for m in self.modules if m.status in (NOT_COUNTED, PRE) or (m.status == PARTLY and not m.grades and m.special is None))
+        done = sum(1 for m in self.modules if m.status == DONE)
         text = f"{len(self.modules)} engineered module{'s' if len(self.modules) != 1 else ''}: {len(entries)} blueprint{'s' if len(entries) != 1 else ''}, {crafts} craft{'s' if crafts != 1 else ''}"
-        return text + (f"; {skipped} not counted" if skipped else "")
+        return text + (f"; {done} already on your ship" if done else "") + (f"; {skipped} not counted" if skipped else "")
 
 
-def plan(build: Build) -> Plan:
-    return Plan(build, tuple(p for p in (plan_module(m) for m in build.modules) if p is not None))
+def plan(build: Build, current: Optional[Build] = None) -> Plan:
+    """The plan for `build`. With `current` (the ship being flown), what that ship already has is subtracted when it is the same kind of ship."""
+    if current is None:
+        return Plan(build, tuple(p for p in (plan_module(m) for m in build.modules) if p is not None))
+    if not build.ship_id or build.ship_id != current.ship_id:
+        return Plan(build, tuple(p for p in (plan_module(m) for m in build.modules) if p is not None),
+                    f"Your ship is {current.label}, not a {build.ship}, so nothing was subtracted.")
+    by_slot = {str(m.get("Slot")): m for m in current.modules}
+    planned = tuple(p for p in (plan_module(m, by_slot.get(str(m.get("Slot")), {})) for m in build.modules) if p is not None)
+    return Plan(build, planned, f"Compared with your ship: {current.label}.")
