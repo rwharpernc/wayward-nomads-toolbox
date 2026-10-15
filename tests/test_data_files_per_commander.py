@@ -43,6 +43,7 @@ PER_COMMANDER = {
     "engineers.json": "one set of standings per commander (commander_data.py, engineers.EngineerBook)",
     "expeditions.json": "one set of expeditions per commander (commander_data.py, expedition.ExpeditionBook)",
     "trade_watch.json": "one list and its prices per commander (commander_data.py, trade_watch_data.WatchBook)",
+    "income_ledger.json": "one record per commander (commander_data.py, income_ledger.IncomeBook)",
     "colonisation_history.json": "one record per commander (commander_data.py, colonisation_history.py)",
     "trade_ledger.json": "one session per commander (trade_ledger.LedgerBook)",
     "trade_carrier.json": "keyed by commander (trade_carrier.py)",

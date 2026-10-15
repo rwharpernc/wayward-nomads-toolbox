@@ -3,8 +3,9 @@ delivered (see colonisation.py), and compares it to the cargo currently
 aboard so a hauler can see what's left to get.
 
 Its own mode (PANEL_PLACEMENT = "colonisation", the COL button). The page shows the current project (progress, what is
-delivered, what the ship and the fleet carrier cover, the trips left) and the commander's colonization history (sites
-finished, tonnes delivered, recent activity); the full list is in a popup window (DASHBOARD). What is shown and how it is
+delivered, what the ship and the fleet carrier cover, the trips left) and nothing historical: the commander's
+colonization history (sites finished, tonnes delivered, recent activity) is in its own window (HISTORY,
+colonisation_history_window.py); the full list of sites is in a popup window (DASHBOARD). What is shown and how it is
 worded is in colonisation_stats.py, which adapts to a commander with or without a fleet carrier. A short fixed set of
 rows, each clipped, so the main panel stays narrow however many sites or commodities there are.
 """
@@ -25,7 +26,7 @@ import myNotebook as nb
 from config import appname, config
 
 from . import (overlay_appearance, overlay_layout, overlay_placement, colonisation, colonisation_carrier, colonisation_catchup, colonisation_history, colonisation_overlay as card, rcc_client, rcc_keys, rcc_sync,
-               colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_market, trade_panel)
+               colonisation_history_window, colonisation_stats as stats, colonisation_window, overlay, panelkit, restore, trade_market, trade_panel)
 from .colonisation import Site
 from . import commander_data
 from .colonisation_data import SiteRepository, site_repository
@@ -481,7 +482,7 @@ class ColonisationController:
             self._draw_bar(0, False)
             for name in ("progress", "delivered", "needed", "coverage", "hold", "carrier", "to_get", "trips", "gaps", "next", "more"):
                 self._set(name, "", show=False)
-            self._refresh_history(stats.history_for([], {}))
+            self._refresh_history_window()
             return
         sites = self._repository.for_cmdr(self._cmdr)
         active = [s for s in sites if s.active]
@@ -509,25 +510,7 @@ class ColonisationController:
             self._set("gaps", ", ".join(f"{_clip(label, 40)} {tons:,}" for label, tons in p.gaps) or "None", show=bool(p.gaps))
             self._set("next", stats.next_step(p))
             self._set("more", f"+{p.more_active} more active {'site' if p.more_active == 1 else 'sites'}", show=p.more_active > 0)
-        self._refresh_history(stats.history_for(sites, self._ledger.record(self._cmdr)))
-
-    def _refresh_history(self, h: "stats.History") -> None:
-        self._vars["h_head"].set(f"History - {_clip(self._cmdr, 24)}" if self._cmdr else "History")   # a heading, not a row
-        self._set("h_sites", stats.sites_text(h))
-        has = h.deliveries > 0
-        self._set("h_tonnes", f"{h.tonnes:,} t in {h.deliveries:,} {'delivery' if h.deliveries == 1 else 'deliveries'}"
-                  if has else "None counted yet")
-        self._set("h_recent", f"{h.last_7_days:,} t this week · {h.last_30_days:,} t this month", show=has)
-        chart = stats.chart_text(h.daily)
-        self._set("h_chart", f"{chart}  (peak {max(h.daily):,} t a day)" if chart else "", show=bool(chart))
-        self._set("h_busiest", f"{h.busiest_day[1]:,} t on {h.busiest_day[0]}" if h.busiest_day else "", show=bool(h.busiest_day))
-        self._set("h_site", f"{_clip(h.top_site[0], _NAME_MAX)} ({h.top_site[1]:,} t)" if h.top_site else "", show=bool(h.top_site))
-        claims = stats.claims_text(h)
-        self._set("h_claims", claims, show=bool(claims))
-        self._set("h_top", ", ".join(f"{_clip(label, 40)} {tons:,}" for label, tons in h.top_commodities),
-                  show=bool(h.top_commodities))
-        self._set("h_average", stats.average_text(h.average_days), show=h.average_days is not None)
-        self._set("h_since", f"Counted since {h.since}", show=bool(h.since))
+        self._refresh_history_window()
 
     # --- main-panel widgets -----------------------------------------------
 
@@ -580,19 +563,6 @@ class ColonisationController:
         line("more", "Others")
 
         row = panelkit.add_separator(parent, row)
-        self._vars["h_head"] = tk.StringVar(value="History")
-        tk.Label(parent, textvariable=self._vars["h_head"], font=fonts["bold"]).grid(row=row, column=0, columnspan=3, sticky=tk.W)
-        row += 1
-        line("h_sites", "Sites")
-        line("h_tonnes", "You delivered")
-        line("h_recent", "Recently")
-        line("h_chart", f"Last {stats.CHART_DAYS} days", wide=True)
-        line("h_busiest", "Best day")
-        line("h_site", "Busiest site", wide=True)
-        line("h_claims", "Claims", wide=True)
-        line("h_top", "Most delivered (t)", wide=True)
-        line("h_average", "Average build")
-        line("h_since", "Note")
 
         buttons = tk.Frame(parent)
         buttons.grid(row=row, column=0, columnspan=3, sticky=tk.W, pady=(6, 0))
@@ -605,6 +575,9 @@ class ColonisationController:
         panelkit.add_tooltip(self._show_button, "Turn the shopping list on the overlay on or off, whatever screen you are on "
                                                 "(lit while it is on). It stays as you leave it, even after a restart, and works "
                                                 "whether or not the automatic option in Settings is ticked.")
+        history_button = tk.Button(buttons, text="HISTORY", command=self._on_history_clicked)
+        history_button.pack(side=tk.LEFT, padx=(6, 0))
+        panelkit.add_tooltip(history_button, "Colonization History - what you have delivered over time (kept off this panel)")
         self._visibility.forced = config.get_bool(_CFG_OVERLAY_FORCED, default=False)
         panelkit.apply_toggle_button_state(self._show_button, self._visibility.forced, self._show_off_colors)
         if self._visibility.forced:
@@ -620,6 +593,17 @@ class ColonisationController:
         if self._show_button is not None:
             panelkit.apply_toggle_button_state(self._show_button, self._visibility.forced, self._show_off_colors)
         self._update_overlay()
+
+    def _history_view(self) -> tuple:
+        """What the History window draws: the commander, their tracked sites and their delivery record."""
+        return self._cmdr or "", (self._repository.for_cmdr(self._cmdr) if self._cmdr else []), self._ledger.record(self._cmdr)
+
+    def _on_history_clicked(self) -> None:
+        if self._parent is not None:
+            colonisation_history_window.show(self._parent, self._history_view)
+
+    def _refresh_history_window(self) -> None:
+        colonisation_history_window.refresh_if_open(self._history_view)
 
     def _on_manage_clicked(self) -> None:
         if self._parent is None:

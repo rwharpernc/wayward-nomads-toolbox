@@ -114,7 +114,8 @@ Just under the mode buttons, above the page itself, WNTB shows these lines, on e
 - **Game mode**: For example *You are in Solo mode.*, *Open*, or *Private Group* with its name.
 - **Credits**: what you've earned or lost since you logged in, for example
   `+1,234,567 cr earned (+411,522 cr/hr)` or `-5,000 cr lost`. It is your balance now minus your balance at login.
-  The hourly rate appears once the session is a few minutes old.
+  The hourly rate appears once the session is a few minutes old. **Click it** to open the Credits Ledger: income by
+  activity (trade, exploration data, exobiology data, mission rewards, bounties and bonds), by day, and the game's lifetime totals.
 - **Merits**: Powerplay merits earned since you logged in, for example `Merits this session: +1,234 (+567 merits/hr)`. It
   appears after your first merit of the session, so it stays out of the way if you do not play Powerplay. The rate is the
   merits divided by the time since you logged in, so it falls while you stop earning. The Powerplay mode's **CP** figures

@@ -272,7 +272,7 @@ below stay unticked, like the rest of this file, so it can be run again). Settin
       button. Buy cargo, then save the session: Trade History's **Stock & carrier** tab shows it under "Bought, not yet
       sold (journal estimate...)".
 - [ ] Two computers: copy the other computer's newer journal files into this one's journal folder while EDMC is running.
-      Within a minute the foot of the Session page reads "Journals reviewed [local date and time]. N new journals since the last review.", and the trades,
+      Within a minute EDMC's log reads "Trade read N new or changed journal file(s)", and the trades,
       stock and carrier figure from those files appear (nothing doubles if you copy the same files again). Press
       **Rebuild** on the Session page, type the date and time the session began (UTC), and check the totals against the
       other computer. A carrier figure with a `~` in front means estimate: open Carrier Management and it goes away.

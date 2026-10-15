@@ -39,7 +39,7 @@ from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, flight_alerts, gec_poi_panel, interdiction, inventory_panel, landing, materials_panel, mining_panel, missions, missions_overlay,
     notable, notes_panel, expedition_panel, surface_compass, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
-    game_mode, session_credits, session_merits, settings_scroll, system_names, trade_panel, trade_watch_panel,
+    credits_ledger, game_mode, session_credits, session_merits, settings_scroll, system_names, trade_panel, trade_watch_panel,
 )
 from . import issue_report
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
@@ -106,7 +106,7 @@ _MODE_TOOLTIPS = {
     "trade": "Trade - what you bought and sold this session, the value of your hold, and Spansh route and price lookups",
     "missions": "Missions - every mission you have in one view, with kill-progress bars for massacres",
     "fieldops": "Field Ops - screenshots, backpack/locker/cargo and saved ship builds",
-    "colonisation": "Colonization - the project you are building now (progress, what is left, trips) and your colonization history",
+    "colonisation": "Colonization - the project you are building now (progress, what is left, trips); history is in the HISTORY window",
 }
 _DEFAULT_PANEL_MODE = PANEL_MODES[0][0]
 _MODE_KEYS = {key for key, _ in PANEL_MODES}
@@ -264,7 +264,10 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     _show_version_state()          # an update may already have finished before the panel existed
     _schedule_clear_updated()
     game_mode.build(session_strip, row=1)          # "You are in Solo mode."
-    session_credits.build(session_strip, row=2)    # "Credits this session: +N cr earned"
+    credits_label = session_credits.build(session_strip, row=2)    # "Credits this session: +N cr earned"
+    credits_label.configure(cursor="hand2")
+    panelkit.add_tooltip(credits_label, "Click to open the Credits Ledger: income by activity, by day, and your lifetime totals")
+    credits_ledger.attach(credits_label)
     session_merits.build(session_strip, row=3)     # "Merits this session: +N (+N merits/hr)", once there is a merit
     panelkit.add_separator(_frame, 3)
     session_rule = _frame.grid_slaves(row=3, column=0)[0]

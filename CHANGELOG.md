@@ -3,6 +3,14 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Changed
+- **No history on the mode panels.** A panel now shows the present only; the past lives in report windows. Trade's Session page no longer shows the game's lifetime totals (which mixed in Mining and Exobiology) or the "Journals reviewed" line, and the Colonization panel no longer lists its History block. Colonization history is in a new **Colonization History** window (the **HISTORY** button: Overview, By day, Commodities and Sites tabs).
+
+### Added
+- **Credits Ledger.** Click the "Credits this session" line under the mode buttons. It adds up what you earned by activity and by day, per commander, kept apart: Trade (market profit), Exploration data, Exobiology data, Mission rewards, and Bounties and bonds, with Today, Last 7 days, Last 30 days and All counted. Past income is counted once from your journals in the background, and **Rebuild from journals** does it again. The **Lifetime** tab holds the game's own career totals (trading, mining, exobiology, fleet carrier), moved off Trade. Mining has no per-day income because the journal does not say which commodity sold was mined; its lifetime profit is on the Lifetime tab.
+
 ## 1.13.0 - 2026-10-15
 
 ### Fixed

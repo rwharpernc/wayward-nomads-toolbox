@@ -24,8 +24,8 @@ from typing import Any, Dict, Optional
 from config import appname, config
 
 from . import (
-    __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_overlay, colonisation_panel, discovery,
-    exploration_value, flight_alerts, game_mode, gec_poi_panel, interdiction, inventory_panel, landing, materials_panel, mining_overlay, mining_panel, notes_panel, expedition_panel, surface_compass,
+    __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_history_window, colonisation_overlay, colonisation_panel, credits_ledger, discovery,
+    exploration_value, flight_alerts, game_mode, gec_poi_panel, interdiction, inventory_panel, ledger_window, landing, materials_panel, mining_overlay, mining_panel, notes_panel, expedition_panel, surface_compass,
     missions, missions_overlay, notable, organic_scan_panel, overlay, overlay_placement, platform_support, powerplay, system_names, powerplay_window, rare_goods_window, restore, screenshots, session_credits, session_merits, ship_builds_panel, trade_panel, trade_watch_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
@@ -51,7 +51,7 @@ if not logger.hasHandlers():
 _FEATURES = (
     powerplay, missions, missions_overlay, autohonk, interdiction, flight_alerts, landing, discovery, notable, boxel_survey, exploration_value,
     organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, notes_panel, expedition_panel, surface_compass, ship_builds_panel, colonisation_panel, screenshots,
-    inventory_panel, materials_panel, mining_panel, trade_panel, trade_watch_panel, bgs_panel, game_mode, session_credits, session_merits,
+    inventory_panel, materials_panel, mining_panel, trade_panel, trade_watch_panel, bgs_panel, game_mode, session_credits, session_merits, credits_ledger,
 )
 
 _ui_frame: Optional[tk.Frame] = None
@@ -104,6 +104,7 @@ def plugin_start3(plugin_dir: str) -> str:
     organic_scan_panel.start(plugin_dir)
     bgs_panel.start(plugin_dir)
     session_credits.start(plugin_dir)
+    credits_ledger.start(plugin_dir)
     ship_builds_panel.start(plugin_dir)
     colonisation_panel.start(plugin_dir)
     inventory_panel.start(plugin_dir)
@@ -184,6 +185,7 @@ def plugin_stop() -> None:
     organic_scan_panel.stop()
     bgs_panel.stop()
     session_credits.stop()
+    credits_ledger.stop()
     inventory_panel.stop()
     materials_panel.stop()
     colonisation_panel.stop()
@@ -197,6 +199,8 @@ def plugin_stop() -> None:
     surface_compass.stop()
     powerplay_window.close()
     rare_goods_window.close()
+    ledger_window.close()
+    colonisation_history_window.close()
     _overlay.close()
     logger.info("WNTB shutting down")
 

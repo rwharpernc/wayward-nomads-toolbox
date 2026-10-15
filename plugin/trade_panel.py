@@ -44,7 +44,6 @@ from . import trade_ledger as ledger_mod
 from . import trade_market as market_mod
 from . import trade_carrier
 from . import trade_hold
-from . import trade_lifetime
 from . import trade_route_start
 from . import trade_history
 from . import trade_history_window
@@ -182,10 +181,6 @@ class TradePanelController:
         self._carrier = trade_carrier.CarrierTracker()  # each commander's fleet / squadron carrier cargo space
         self._cmdr = ""
         self._backfill: "queue.Queue[trade_carrier.CarrierTracker]" = queue.Queue()
-        # The game's lifetime totals (the Statistics event) per commander key: the newest one seen live, or else the one the
-        # start-up read found in the journals (that read answers through the queue).
-        self._lifetime: Dict[str, trade_lifetime.Lifetime] = {}
-        self._lifetime_found: "queue.Queue[Dict[str, trade_lifetime.Lifetime]]" = queue.Queue()
         self._scanlog: trade_journal_scan.Registry = trade_journal_scan.new_registry()   # which journal files have been read
         self._scanned: "queue.Queue[list]" = queue.Queue()                    # worker -> Tk: [(path, size, events)]
         self._scan_running = False
@@ -279,24 +274,11 @@ class TradePanelController:
         """Worker thread: find each commander's last carrier baseline in the recent journals. Hands the
         result over through a queue; the Tk thread merges it (`_merge_carrier_history`)."""
         try:
-            self._lifetime_found.put(trade_lifetime.latest_in_journals(
-                [*self._known_commanders(), self._cmdr], _journal_dir()))
-        except Exception:
-            logger.exception("Could not read the lifetime statistics from the journal")
-        try:
             self._backfill.put(trade_carrier.backfill_tracker(_journal_dir()))
         except Exception:
             logger.exception("Could not read fleet carrier history from the journal")
 
     def _merge_carrier_history(self) -> None:
-        try:
-            lifetimes = self._lifetime_found.get_nowait()
-        except queue.Empty:
-            pass
-        else:
-            for key, life in lifetimes.items():
-                self._lifetime.setdefault(key, life)    # a Statistics event seen live since is newer than what was read
-            self._refresh()
         try:
             found = self._backfill.get_nowait()
         except queue.Empty:
@@ -401,10 +383,6 @@ class TradePanelController:
                                               entry.get("StationName") or "",
                                               str(entry.get("timestamp") or "")) and self._plugin_dir is not None:
                     trade_route_start.save_all(self._plugin_dir, self._home)
-        elif event == "Statistics":
-            life = trade_lifetime.parse(entry)
-            if life is not None and self._cmdr:
-                self._lifetime[trade_carrier.key_for(self._cmdr)] = life
         elif event == "Loadout":
             if entry.get("Ship"):
                 self._ship = str(entry["Ship"])
@@ -695,8 +673,6 @@ class TradePanelController:
         blocks += self._hold_blocks()
         blocks += trade_carrier.cargo_blocks(self._carrier.records.get(trade_carrier.key_for(self._cmdr)),
                                              self._carrier_mode(self._cmdr))
-        blocks += trade_lifetime.blocks(self._lifetime.get(trade_carrier.key_for(self._cmdr)))
-        blocks.append(Note(trade_journal_scan.summary(self._scanlog)))
         return blocks
 
     def _display(self, name: str) -> str:

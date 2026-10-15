@@ -216,3 +216,49 @@ def average_text(days: Optional[float]) -> str:
         return "under a day"
     value = Decimal(str(round(days, 1))).normalize()
     return f"{value:f} days"
+
+
+# --- the History report window's tables (the main panel shows none of this) ------------------------------------------
+
+def overview_rows(h: History) -> List[Tuple[str, str]]:
+    """The History window's Overview tab: a label and its value per row. Rows with nothing to say are left out."""
+    rows: List[Tuple[str, str]] = [
+        ("Sites", sites_text(h)),
+        ("You delivered", f"{h.tonnes:,} t in {h.deliveries:,} {_plural(h.deliveries, 'delivery', 'deliveries')}"
+         if h.deliveries else "None counted yet")]
+    if h.deliveries:
+        rows.append(("Recently", f"{h.last_7_days:,} t this week · {h.last_30_days:,} t this month"))
+    if h.busiest_day:
+        rows.append(("Best day", f"{h.busiest_day[1]:,} t on {h.busiest_day[0]}"))
+    if h.top_site:
+        rows.append(("Busiest site", f"{h.top_site[0]} ({h.top_site[1]:,} t)"))
+    claims = claims_text(h)
+    if claims:
+        rows.append(("Claims", claims))
+    if h.average_days is not None:
+        rows.append(("Average build", average_text(h.average_days)))
+    if h.since:
+        rows.append(("Counted since", h.since))
+    return rows
+
+
+def day_rows(record: Mapping[str, Any]) -> List[Tuple[str, str]]:
+    """Tonnes delivered per day, newest first (only days with a delivery)."""
+    by_day = record.get("by_day") or {}
+    return [(day, f"{int(tons):,}") for day, tons in sorted(by_day.items(), reverse=True) if int(tons or 0) > 0]
+
+
+def commodity_rows(record: Mapping[str, Any]) -> List[Tuple[str, str]]:
+    """Every commodity delivered with its tonnes, most first."""
+    ranked = sorted(((v.get("label") or k, int(v.get("tonnes") or 0)) for k, v in (record.get("by_commodity") or {}).items()),
+                    key=lambda kv: (-kv[1], kv[0].casefold()))
+    return [(label, f"{tons:,}") for label, tons in ranked if tons > 0]
+
+
+def site_rows(sites: Sequence[Site], record: Mapping[str, Any]) -> List[Tuple[str, str]]:
+    """Every construction site delivered to with the tonnes this commander gave it, most first."""
+    names = {str(s.market_id): s.display_name() for s in sites}
+    remembered = record.get("site_names") or {}
+    rows = [(names.get(str(key)) or remembered.get(str(key)) or f"Construction site {key}", int(tons or 0))
+            for key, tons in (record.get("by_site") or {}).items()]
+    return [(name, f"{tons:,}") for name, tons in sorted(rows, key=lambda kv: (-kv[1], kv[0].casefold())) if tons > 0]

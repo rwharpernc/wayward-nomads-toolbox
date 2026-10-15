@@ -45,7 +45,12 @@ Spec: [TECHNICAL.md](TECHNICAL.md) sections 3 to 5 and 10
 |---|---|
 | `game_mode.py` | The "You are in Solo / Open / Private Group" line under the mode buttons |
 | `session_merits.py` | The "Merits this session" line under the credits line (Powerplay merits since login, with a per-hour rate) |
-| `session_credits.py` | The "Credits this session" line (earned or lost since login, with a per-hour rate) |
+| `session_credits.py` | The "Credits this session" line (earned or lost since login, with a per-hour rate); clicking it opens the Credits Ledger |
+| `credits_ledger.py` | The Credits Ledger feature's entry point: folds live income events into the commander's book, rebuilds the past from the journals once on a worker thread, reads the newest `Statistics` event, opens the window |
+| `income_ledger.py` | The Credits Ledger's data: income per commander by activity (trade profit, exploration data, exobiology data, mission rewards, bounties and bonds) and by day, counted without double counting; pure, no Tk |
+| `income_catchup.py` | Reads a commander's income events from every journal file, for the ledger's one-time rebuild |
+| `ledger_window.py` | The Credits Ledger window: Income (today, 7 days, 30 days, all), By day, and Lifetime tabs |
+| `lifetime_stats.py` | The game's lifetime totals (the `Statistics` event) for the ledger's Lifetime tab: parsing, the grouped rows, and finding each commander's newest event in the journals |
 
 ## Powerplay
 
@@ -203,7 +208,6 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `trade_commodities.py` | Commodity name matching and the type-ahead list |
 | `trade_commodities_data.py` | The generated commodity table (from FDevIDs) |
 | `trade_commodity_entry.py` | The type-ahead Commodity box widget |
-| `trade_lifetime.py` | The game's lifetime totals (the `Statistics` event) for Trade's Session page: parsing, the section's blocks, and finding each commander's newest event in the journals |
 | `trade_hold.py` | Mission and stolen tonnes in the ship's hold, from the `Cargo` inventory |
 | `trade_history.py` | Saved sessions, the `HistoryBook` and `trade_history.json` |
 | `trade_history_window.py` | The Trade History window (it widens to fit its widest table) |
@@ -261,6 +265,7 @@ Guide: [Colonization](guide/colonization.md)
 | `colonisation_carrier.py` | (Includes `scan_journals`, the rebuild behind Rescan Carrier.) Tonnes of each commodity transferred to the commander's fleet carrier, for the window's FC column (per commander, caught up from the journals without double counting) |
 | `colonisation_catchup.py` | Folds the recent journals into the saved construction sites at start-up, never counting a delivery twice |
 | `colonisation_data.py` | JSON persistence for construction sites (each carries `journal_at`, the newest journal event folded in) |
+| `colonisation_history_window.py` | The Colonization History window (HISTORY button): Overview, By day, Commodities and Sites tabs, so the panel itself shows no history |
 | `colonisation_history.py` | What the commander has delivered to construction sites (tonnes by commodity, site and day), kept per commander and caught up from the journals without double counting |
 | `colonisation_overlay.py` | The shopping-list card on the in-game overlay: what is still to get for the active site (pure formatting plus drawing); its visibility also follows the game rewriting `Market.json`, so the card shows when a market opens even if the journal's Market event is late |
 | `colonisation_panel.py` | The Colonization mode's page (current project and history), the overlay card's controller and the settings tabs |

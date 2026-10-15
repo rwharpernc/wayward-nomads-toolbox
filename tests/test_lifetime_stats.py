@@ -1,5 +1,5 @@
 """
-The game's lifetime totals on Trade's Session page (trade_lifetime.py): reading the `Statistics` event, the section it makes,
+The game's lifetime totals in the Credits Ledger window's Lifetime tab (lifetime_stats.py): reading the `Statistics` event, the section it makes,
 and finding each commander's newest event in the journals. Event shapes copied from a real journal (2026-10-12). Temporary
 folders only, so it behaves the same on Windows and Linux.
 """
@@ -20,7 +20,7 @@ if "config" not in sys.modules:
     _stub.config = types.SimpleNamespace(get_str=lambda key: "", default_journal_dir="")
     sys.modules["config"] = _stub
 
-from plugin import trade_lifetime as L  # noqa: E402
+from plugin import lifetime_stats as L  # noqa: E402
 from plugin.trade_blocks import to_text  # noqa: E402
 
 

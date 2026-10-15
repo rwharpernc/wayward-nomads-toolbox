@@ -1,7 +1,7 @@
 # Colonization
 
-Colonization has its own mode: press the **COL** button. The page has two parts, the project you are building now and
-your history, and a **DASHBOARD** button that opens the full sites window. It works the same for a commander with a fleet
+Colonization has its own mode: press the **COL** button. The page shows the project you are building now and nothing historical; the **HISTORY** button opens your history in its own
+window, and the **DASHBOARD** button opens the full sites window. It works the same for a commander with a fleet
 carrier and for one without; the wording changes to match, and the carrier lines are left out when you have none.
 
 > **Work in progress.** Co-op building (several commanders on one project) and colony tracking are planned, through a separate
@@ -33,27 +33,27 @@ carrier and for one without; the wording changes to match, and the carrier lines
 
 **A finished build** is shown by its own name: the game calls a depot `Orbital Construction Site: Wayward Station` while it is being built, and once the build is complete WNTB drops the `Construction Site:` part (`Wayward Station`) in the sites window, the shopping list and the history.
 
-**History** is yours alone (everything is per commander). The heading names the commander it is for (`History - SILAS KADE`), so you can see at a glance whose figures these are:
+**History** is yours alone (everything is per commander) and is kept off the page: press **HISTORY** to open the Colonization History
+window, named for the commander it is for. It has four tabs: **Overview**, **By day** (tonnes each day, every day counted), **Commodities**
+(everything you delivered, most first) and **Sites** (every depot you delivered to, most first). The Overview says:
 
 | Line | What it says |
 |---|---|
 | Sites | How many tracked sites are done, in progress and failed |
 | You delivered | The tons and number of deliveries you made |
 | Recently | Tons in the last 7 and 30 days |
-| Last 14 days | A row of blocks, one a day (oldest first), as tall as that day's tons against your busiest of the 14; a dot is a day with nothing delivered. The peak is named beside it |
 | Best day | Your biggest single day |
 | Busiest site | The site you delivered the most tons to, with the tons. A delivery in the journal names the depot only by a number, so WNTB takes the name and system from the time you docked there (it reads your journals for this once, and remembers it afterwards). A depot you never docked at in a journal shows as `Construction site <number>` |
 | Claims | How many systems you have claimed (`ColonisationSystemClaim`), how many of those you released, and how many colonisation beacons you deployed. Counts only: the game does not say when a claim ends, so WNTB does not list which systems are still yours |
-| Most delivered | Your top three commodities |
 | Average build | Days from the first time WNTB saw a site to the day the depot reported it complete, over the sites for which both are known |
-| Note | "Counted since [date]": the first delivery WNTB has counted |
+| Counted since | The first delivery WNTB has counted |
 
 **How far back the history goes.** The game does not keep a delivery history for a plugin to read, but your journal files
 do. The first time WNTB sees a commander it reads **all** of that commander's journals once, in the background, and
 rebuilds the history from every delivery in them, so it reaches back as far as your journals do. After that it counts each
 delivery as it happens, and when EDMC starts it catches up from the recent journals (14 days, or back to your oldest active
 site, never more than 30). If you have deleted old journals, the figures can only go back as far as what is left; the
-page says what date it is counting since, and a rebuild never replaces figures that are larger than it can find. A site's build time is only known for a site WNTB saw
+History window says what date it is counting since, and a rebuild never replaces figures that are larger than it can find. A site's build time is only known for a site WNTB saw
 being started or finished after this version; for the others the average leaves it out. The tons at the top
 ("Delivered") are everyone's, because the game reports them for the whole depot; "You delivered" is yours only.
 
@@ -424,5 +424,5 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | Everything on your carrier to count | The journal only records cargo you **transfer** to or from the carrier. Stock that arrived any other way is invisible to it. Frontier's carrier data lists the real hold, but only when EDMC is signed in, and it is fetched when you open Carrier Management (or about every 15 minutes) and can lag. | Sign EDMC in to Frontier, then open Carrier Management once; the Covered line and the Carrier row then follow the real hold. |
 | Colonization sites to appear on their own | The game writes the depot event only when you **dock or open the depot market**. A delivery to a site WNTB has never seen a depot snapshot for is ignored. | Dock at the depot (or open its market) once for each new site. Docking again replaces WNTB's figures with the game's own. Deliveries made with EDMC closed are caught up from the last 14 to 30 days of journals at start-up. |
 | A site to have its real name, or a renamed site to follow | The name is taken from the last time you docked at that market. Otherwise it is `Construction site <number>`. The game does not announce a rename; it shows in the name the market has the next time you dock. | Dock at the market once to pick up the name, and again after a rename. |
-| A full history of everything you ever delivered | The journal records each delivery as it happens. WNTB rebuilds your history once from every journal file you still have, so deliveries from journals you deleted are missing. | The history counts from the first delivery it found (shown on the page) and keeps growing. |
+| A full history of everything you ever delivered | The journal records each delivery as it happens. WNTB rebuilds your history once from every journal file you still have, so deliveries from journals you deleted are missing. | The history counts from the first delivery it found (shown in the History window) and keeps growing. |
 | Your teammates' work on the same project | The depot reports only the project's totals, not who delivered what. | Today the page shows your deliveries and the project's overall progress. Team support is planned. |

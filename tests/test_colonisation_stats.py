@@ -244,5 +244,27 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(S.sites_text(history), "None tracked yet")
 
 
+class HistoryWindowRowTests(unittest.TestCase):
+    RECORD = {"deliveries": 2, "tonnes": 90, "first": "2026-10-01T00:00:00+00:00",
+              "by_day": {"2026-10-14": 30, "2026-10-15": 60, "2026-10-13": 0},
+              "by_commodity": {"steel": {"label": "Steel", "tonnes": 30}, "water": {"label": "Water", "tonnes": 60}},
+              "by_site": {"5": 90}, "site_names": {"5": "Wayward Station (Sol)"}}
+
+    def test_days_are_newest_first_and_skip_empty_days(self):
+        self.assertEqual(S.day_rows(self.RECORD), [("2026-10-15", "60"), ("2026-10-14", "30")])
+
+    def test_commodities_and_sites_are_most_first(self):
+        self.assertEqual(S.commodity_rows(self.RECORD), [("Water", "60"), ("Steel", "30")])
+        self.assertEqual(S.site_rows([], self.RECORD), [("Wayward Station (Sol)", "90")])
+
+    def test_overview_names_what_was_delivered_and_leaves_out_what_is_empty(self):
+        rows = dict(S.overview_rows(S.history_for([], self.RECORD, today=date(2026, 10, 15))))
+        self.assertEqual(rows["You delivered"], "90 t in 2 deliveries")
+        self.assertEqual(rows["Recently"], "90 t this week · 90 t this month")
+        self.assertEqual(rows["Counted since"], "2026-10-01")
+        self.assertNotIn("Claims", rows)
+        self.assertEqual(dict(S.overview_rows(S.history_for([], {})))["You delivered"], "None counted yet")
+
+
 if __name__ == "__main__":
     unittest.main()

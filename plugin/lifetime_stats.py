@@ -1,13 +1,13 @@
 """
-Lifetime totals from the game's own `Statistics` event, for Trade mode's Session page (pure, no Tk).
+Lifetime totals from the game's own `Statistics` event, for the Credits Ledger window's Lifetime tab (pure, no Tk).
 
 The game writes a `Statistics` event at every login with the commander's lifetime figures: trading, mining, exobiology and,
-for an owner, the fleet carrier. They are the game's numbers for the whole of the commander's career, not this session's, so
-they are shown apart from the session, labelled with when they were taken, and never mixed into the session ledger.
+for an owner, the fleet carrier. They are the game's numbers for the whole of the commander's career, not any one session's,
+so they live in the ledger window (a report), never on a mode's panel, and are labelled with when they were taken.
 
-`parse` keeps the few figures worth a glance (anything missing is simply left out); `blocks` turns them into the page's
-sections; `latest_in_journals` finds each commander's newest event so the page has them straight after EDMC starts rather than
-at the next login.
+`parse` keeps the few figures worth a glance (anything missing is simply left out); `groups` turns them into titled rows and
+`blocks` into the same rows as panel blocks (for tests and logs); `latest_in_journals` finds each commander's newest event so
+the window has them straight after EDMC starts rather than at the next login.
 """
 from __future__ import annotations
 
@@ -75,17 +75,15 @@ def _n(value: float) -> str:
     return f"{int(round(value)):,}"
 
 
-def blocks(life: Optional[Lifetime]) -> List[Block]:
-    """The Session page's lifetime section: a heading, the figures in four short groups (a group with nothing in it is left out)
-    and a line saying when the game took them. Nothing at all when there is no event yet."""
+def groups(life: Optional[Lifetime]) -> List[Tuple[str, List[Tuple[str, str]]]]:
+    """The figures in four short groups of `(label, value)` rows (a group with nothing in it is left out). Empty with no event."""
     if life is None:
         return []
-    out: List[Block] = [Heading("Lifetime (the game's own totals)")]
+    out: List[Tuple[str, List[Tuple[str, str]]]] = []
 
     def group(title: str, rows: List[Tuple[str, str]]) -> None:
         if rows:
-            out.append(Heading(title, minor=True))
-            out.extend(Pair(label, value) for label, value in rows)
+            out.append((title, rows))
 
     t = life.trading
     group("Trading", [row for row in (
@@ -108,9 +106,25 @@ def blocks(life: Optional[Lifetime]) -> List[Block]:
         ("Distance", f"{int(round(c['distance_ly'])):,} ly" if "distance_ly" in c else ""),
         ("Exported / imported", f"{_t(c['exported_t'])} / {_t(c['imported_t'])}" if "exported_t" in c and "imported_t" in c else ""),
         ("Trade profit", _cr(c["trade_profit"]) if "trade_profit" in c else "")) if row[1]])
+    return out
+
+
+def taken_note(life: Lifetime) -> str:
+    """Says when the game took the figures."""
     when = life.at[:10]
-    out.append(Note("Taken from the game's statistics at " + (f"your last login ({when})." if when else "your last login.")
-                    + " They update when you next log in."))
+    return ("Taken from the game's statistics at " + (f"your last login ({when})." if when else "your last login.")
+            + " They update when you next log in.")
+
+
+def blocks(life: Optional[Lifetime]) -> List[Block]:
+    """`groups` as panel blocks under a heading, with the line saying when the game took the figures. Nothing with no event."""
+    if life is None:
+        return []
+    out: List[Block] = [Heading("Lifetime (the game's own totals)")]
+    for title, rows in groups(life):
+        out.append(Heading(title, minor=True))
+        out.extend(Pair(label, value) for label, value in rows)
+    out.append(Note(taken_note(life)))
     return out
 
 

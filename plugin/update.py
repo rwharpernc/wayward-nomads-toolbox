@@ -57,6 +57,7 @@ _OWN_DATA_FILES: set = {
     "visited_systems.json",  # Boxel Survey's per-commander visited log (visited_systems.py)
     "organic_scan_state.json",  # Organic Scanning's per-body state (organic_scan_state.py)
     "codex_completionist_state.json",  # Codex Completionist's tally (codex_completionist_state.py)
+    "income_ledger.json",  # Credits Ledger: income by activity and day (income_ledger.py)
     "session_credits.json",  # Credits this session: the current login's balance record (session_credits.py)
     "bgs_state.json",  # BGS tick ledger, archive, pinned/hidden tabs (bgs_state.py)
     "powerplay_state.json",  # Powerplay per-system ledger, archive, pinned/hidden tabs (powerplay_state.py)
