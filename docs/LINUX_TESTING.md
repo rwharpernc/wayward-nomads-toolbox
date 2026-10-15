@@ -15,19 +15,19 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## Testing: start here
 
-**1.10.2 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
-Linux; 1.10.1 stopped the Expedition and Materials sections from widening the main panel; 1.10.2 makes long names wrap instead of being cut off.
-1.10.1 and 1.10.2 were tested on Windows only. The Linux checks for 1.10.2 are the wrapping and panel-width items below.
+**1.11.0 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
+Linux; 1.10.1 stopped the Expedition and Materials sections from widening the main panel; 1.10.2 made long names wrap instead of being cut off. 1.10.1 and 1.10.2
+were tested on Windows only, and so was 1.11.0.
 
-**After 1.10.2, unreleased on `master` and tried on Windows only**, each with its own checklist item in section 6 below: Settings → General → **Help** (Report an issue, Copy diagnostics); the
-Engineering window's **Engineers** tab (places, unlock steps, the Bubble / Colonia filter) and **Ship planner** tab; BGS rebuilding a period that closed while EDMC was not running; and finished
-Colonization builds losing the "Construction Site:" prefix. The data behind the Engineering window changed too (five recipes corrected, new synthesis rows and materials, the Colonia
-engineers' upgrades).
+**The Linux checks for 1.11.0** are the items in section 6 below: Settings → General → **Help** (Report an issue, Copy diagnostics); the Engineering window's **Engineers** tab
+(places, unlock steps, the Bubble / Colonia filter) and **Ship planner** tab; BGS rebuilding a period that closed while EDMC was not running; and finished Colonization builds
+losing the "Construction Site:" prefix. The data behind the Engineering window changed too (five recipes corrected, new synthesis rows and materials, the Colonia
+engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 
 **Getting set up**
-1. Install the released **1.10.2** the normal way (the automatic update, or the zip from the
+1. Install the released **1.11.0** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
-   buttons should read `Plugin: v1.10.2`. Work through sections 0 and 1 below first.
+   buttons should read `Plugin: v1.11.0`. Work through sections 0 and 1 below first.
 2. To get the checklist and the test suite, fetch the repository and use `master`:
    `git fetch --all --tags`, then `git switch master`, then `git pull --rebase`. Once per machine:
    `git config core.hooksPath .githooks`.
@@ -181,16 +181,16 @@ engineers' upgrades).
       your browser.
 - [ ] Restart EDMC: per-commander data (BGS, Boxel, Codex) is still there.
 
-- [ ] Settings -> WNTB -> General -> **Help** (added after 1.10.2, Windows-tested only): **Report an issue** opens the GitHub bug report in your
+- [ ] Settings -> WNTB -> General -> **Help** (added in 1.11.0, Windows-tested only): **Report an issue** opens the GitHub bug report in your
       browser (check `xdg-open` works from EDMC, native and Flatpak), and its Environment box reads like
       `Ubuntu 24.04, wayland` (distro, X11 or Wayland, `Flatpak` when it is one). **Copy diagnostics** shows *Copied*, pasting gives the
       version lines and recent WNTB log lines, and the commander name reads `<commander>`. Say which log path the Flatpak case used.
 
-- [ ] Engineering window → **Engineers** tab (changed after 1.10.2, Windows-tested only): the table has a **Where** column; selecting an engineer shows
+- [ ] Engineering window → **Engineers** tab (changed in 1.11.0, Windows-tested only): the table has a **Where** column; selecting an engineer shows
       their find, invite and unlock steps under the table, and the grade-profit line sits below that. Selecting Baltanos shows Deriso and "On-foot engineer";
       Terra Velasquez shows the "reported bugged" note. The **Show** box offers Both / Bubble / Colonia: Colonia lists 8 engineers (`8 of 38 engineers`), Bubble 30, and the choice survives closing and reopening the window. The table stays inside the window with the new column, with no horizontal scroll.
 
-- [ ] **BGS with EDMC closed over a tick** (added after 1.10.2, Windows-tested only): note the BGS archive, close EDMC, do a few BGS actions (missions, bounties)
+- [ ] **BGS with EDMC closed over a tick** (added in 1.11.0, Windows-tested only): note the BGS archive, close EDMC, do a few BGS actions (missions, bounties)
       in the game, wait for a tick to pass, start EDMC: the archived tick that just closed now includes those actions, and EDMC's log has
       `BGS: rebuilt the closed period ... from the journals`.
 - [ ] **Finished colonization build name**: a completed site in the Colonization sites window reads `Wayward Station`, not `Orbital Construction Site: Wayward Station`.

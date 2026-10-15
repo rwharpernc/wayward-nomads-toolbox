@@ -6,8 +6,9 @@ Notable Bodies), Auto-Honk, the screenshot features and Trade all work. The newe
 Overlays tab with Placement and Appearance) have had only a first pass on Linux, and 1.9.1 holds fixes that came from it. Flight Alerts,
 the Surface Compass, Notes and the Trade watch list still need their Linux checks, and the newest (Materials and Engineering, and the
 Expedition planner, released in 1.10.0) have had less time in the game than the rest. Small fixes are expected in a later
-update. Three changes after 1.10.2 (the Engineers tab's places and unlock steps, BGS rebuilding a period that closed while EDMC was
-not running, and finished Colonization builds losing the "Construction Site:" prefix) have been tried on Windows only. Please report anything odd.
+update. The changes in 1.11.0 (the Ship planner, the Engineers tab's places and unlock steps and its Bubble / Colonia filter, the Help buttons, BGS
+rebuilding a period that closed while EDMC was not running, and finished Colonization builds losing the "Construction Site:" prefix) have been tried on Windows
+only. Please report anything odd.
 
 Elite runs under Steam Proton or Wine on Linux, which needs a few extras. **Work through the steps in order.**
 

@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.11.0 - 2026-10-15
 
 ### Added
 - **Show only Bubble or Colonia engineers.** The Engineers tab has a **Show** box (Both, Bubble, Colonia) with a count (`8 of 38 engineers`). Colonia is the 8 engineers within 500 ly of Colonia (Baltanos, Eleanor Bresa, Etienne Dorn, Marsha Hicks, Mel Brandon, Petra Olmanova, Rosa Dayette, Yi Shen); the other 30 are the Bubble. The choice is remembered, and an engineer filtered out is deselected.

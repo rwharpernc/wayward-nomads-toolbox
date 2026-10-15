@@ -94,9 +94,10 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
-> **Linux has had a test pass.** The 1.10.0 build was tested on Linux, 1.10.1 fixed a panel-width problem found in that pass, and 1.10.2 wraps long names in the panel (checked on Windows; the Linux check is still to do). The
-> newest parts (Materials, the Engineering blueprints and wishlist, the material trader finder and the Expedition planner) have had less
-> time in the game than the rest, so expect a few small fixes in a later update. If something looks off, please [report it](#getting-help) (Settings has a **Report an issue** button that does most of the work).
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2 and 1.11.0 have been
+> tried on Windows only. The newest parts (the Engineering window's Ship planner and Engineers tab, the Materials and Engineering work, the material trader finder, the
+> Expedition planner and the Help buttons) have had less time in the game than the rest, so expect a few small fixes in a later update. If something looks off,
+> please [report it](#getting-help) (Settings has a **Report an issue** button that does most of the work).
 
 ## Full feature list
 
