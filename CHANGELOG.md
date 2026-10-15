@@ -9,6 +9,18 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Report an issue** button (Settings → WNTB → General → Help). It opens a new bug report on GitHub in your browser with the WNTB, EDMC and Python versions and your operating system (Windows build, or Linux distro, X11 or Wayland and Flatpak) already filled in. Nothing is sent by WNTB: you read and edit the form, and submit it with your own GitHub account. No commander name, system or file path is included. The form is `.github/ISSUE_TEMPLATE/bug_report.yml`.
 - **Copy diagnostics** button (same Help tab). It copies the version lines and the newest WNTB lines of EDMC's log (up to 80 lines, tracebacks included) to the clipboard, to paste into the report's log box. Your commander name is replaced by `<commander>` and your home folder by `~` first; WNTB's own lines only, and the text stays on your clipboard until you paste it. A commander name is only caught if WNTB can tell it (EDMC's current one and the one in the newest journal), so read the text before posting it.
 
+### Changed
+- **Engineering data brought in line with the author's ED-DDT**, which applied EDDiscovery's data (Apache-2.0; notice in `THIRD-PARTY-NOTICES.md`):
+  - Five synthesis recipes corrected: AX Remote Flak Munitions +10%, Chaff Launcher 100% Refill +2 Seconds Duration, Flechette Launcher Munitions +10%, Guardian Gauss Cannon Munitions, Guardian Plasma Charger Munitions +30%.
+  - Seven synthesis rows added (Caustic Sinks, Configurable Small Calibre Munitions in two grades, Mining Rig, Nanite Munitions, Seismic Charge Munitions, Sub-Surface Displacement Munitions) and nine Thargoid-war and chip materials (146 materials; 1,176 blueprints).
+  - Three duplicate "Higher Accuracy" weapon rows removed (the "Improved Hip Fire Accuracy" rows already cover them).
+  - **The four Colonia on-foot engineers now offer their suit and weapon upgrades** in the blueprint table (31 rows), so the wishlist's "who can do it" counts them.
+- **The Engineers tab shows where each engineer is and how to unlock them.** All 38 engineers are listed with their base, system and planet ("on foot" or "permit needed" where it applies), and until unlocked what gets you invited and what unlocks them. Select one for how to find them, how to gain standing, whether they work on foot (no ranks), and a known quirk (Terra Velasquez's meeting requirement is reported bugged). A line below gives the net profit that opens each ship-engineer grade. This replaces the hand-written notes for the Colonia four, whose places the table now confirms.
+
+### Fixed
+- **BGS history now includes play made while EDMC was closed.** A period that closed while EDMC was not running was filed with only what WNTB had seen live, so a tick that ended while it was closed showed nothing (or too little) in the history. When a tick closes a period, that period is now rebuilt from your journals (the journals are the source of truth) and filed over the live record, keeping any faction only the live record had. It reads back 14 days at most; an older period stays as it was filed. Several ticks missed in a row cannot be told apart, so the play across them lands in the period that closed. Matches a fix the author made in ED-DDT.
+- **A finished colonization build no longer shows the game's "Construction Site:" prefix** in the sites window, the shopping list and the history (`Orbital Construction Site: Wayward Station` becomes `Wayward Station`). A finished build becomes an ordinary station under a new market ID, so the depot's saved name never changed. The saved name itself is untouched, and a site still being built keeps its full name.
+
 ## 1.10.2 - 2026-10-14
 
 ### Changed

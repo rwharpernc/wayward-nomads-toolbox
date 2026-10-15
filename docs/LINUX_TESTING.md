@@ -181,6 +181,15 @@ Linux; 1.10.1 stopped the Expedition and Materials sections from widening the ma
       `Ubuntu 24.04, wayland` (distro, X11 or Wayland, `Flatpak` when it is one). **Copy diagnostics** shows *Copied*, pasting gives the
       version lines and recent WNTB log lines, and the commander name reads `<commander>`. Say which log path the Flatpak case used.
 
+- [ ] Engineering window → **Engineers** tab (changed after 1.10.2, Windows-tested only): the table has a **Where** column; selecting an engineer shows
+      their find, invite and unlock steps under the table, and the grade-profit line sits below that. Selecting Baltanos shows Deriso and "On-foot engineer";
+      Terra Velasquez shows the "reported bugged" note. The table stays inside the window with the new column, with no horizontal scroll.
+
+- [ ] **BGS with EDMC closed over a tick** (added after 1.10.2, Windows-tested only): note the BGS archive, close EDMC, do a few BGS actions (missions, bounties)
+      in the game, wait for a tick to pass, start EDMC: the archived tick that just closed now includes those actions, and EDMC's log has
+      `BGS: rebuilt the closed period ... from the journals`.
+- [ ] **Finished colonization build name**: a completed site in the Colonization sites window reads `Wayward Station`, not `Orbital Construction Site: Wayward Station`.
+
 ## 6b. Fixed in the platform audit - please confirm
 
 - [ ] Settings → Exploration → Auto-Honk, Field Ops → Screenshots and Field Ops → Inventory each show a **Works on:** line, green when

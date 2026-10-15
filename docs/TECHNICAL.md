@@ -508,8 +508,8 @@ and the quick-name box is fixed at 26 characters, so nothing the commander or th
 Materials and Engineering (`materials.py`, `materials_panel.py`, `materials_window.py`, `blueprints*.py`, `engineers.py`, `material_traders.py`)
 keep the commander's Raw, Manufactured and Encoded counts in `materials.json` (`MaterialBook`, per commander): the login `Materials` list sets
 them, then each journal event that changes a count moves it, within the grade limits (300 to 100), and EDMC's own totals fill in a mid-session
-start. The blueprint table (`blueprints_data.py`, trimmed from EDEngineer, MIT) and the hand-added Colonia engineers (`blueprints_extra.py`)
-are static; `blueprint_wishlist.py` (`blueprint_wishlist.json`) and `engineers.py` (`engineers.json`, from `EngineerProgress`) are per
+start. The blueprint table (`blueprints_data.py`, trimmed from EDEngineer, MIT, and corrected from EDDiscovery's data, Apache-2.0), Yi Shen's unlock
+(`blueprints_extra.py`) and the engineer location table (`engineers_data.py`, read through `engineers.info`) are static; `blueprint_wishlist.py` (`blueprint_wishlist.json`) and `engineers.py` (`engineers.json`, from `EngineerProgress`) are per
 commander, and `blueprint_needs.py` works out what a blueprint or the wishlist needs against what is held (ship materials, and the Odyssey
 ship locker). The material trader finder is the only online part: it passes the system and the trader type to Spansh's station search on a
 worker thread when **Find** is pressed, with a two-minute cache, and nothing else is sent.
@@ -984,8 +984,9 @@ live events and on a replay of journal files (`bgs_journal.py`). Trade and explo
 attributed to the *station's* faction, which spans two events (`Docked`, then the market event), so the
 ledger carries that context. `bgs_format.py` is the shared wording. The tick client polls every 60
 seconds; a new tick archives the closed period (kept for the "archive days" setting) and starts a fresh
-one, and the current period is rebuilt from the journals once per session. See the
-[BGS spec](BGS_TECH_SPEC.md).
+one, and the current period is rebuilt from the journals once per session. The period that just closed is rebuilt from the
+journals too (`bgs_ledger.repair_record`, up to 14 days back) and filed over the live record, because play made with EDMC closed
+is not in it. See the [BGS spec](BGS_TECH_SPEC.md).
 
 ### Field Ops (`screenshots*.py`, `screenshot_*.py`, `inventory*.py`, `ship_builds*.py`) and Colonization (`colonisation*.py`)
 
