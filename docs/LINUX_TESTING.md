@@ -183,7 +183,7 @@ Linux; 1.10.1 stopped the Expedition and Materials sections from widening the ma
 
 - [ ] Engineering window → **Engineers** tab (changed after 1.10.2, Windows-tested only): the table has a **Where** column; selecting an engineer shows
       their find, invite and unlock steps under the table, and the grade-profit line sits below that. Selecting Baltanos shows Deriso and "On-foot engineer";
-      Terra Velasquez shows the "reported bugged" note. The table stays inside the window with the new column, with no horizontal scroll.
+      Terra Velasquez shows the "reported bugged" note. The **Show** box offers Both / Bubble / Colonia: Colonia lists 8 engineers (`8 of 38 engineers`), Bubble 30, and the choice survives closing and reopening the window. The table stays inside the window with the new column, with no horizontal scroll.
 
 - [ ] **BGS with EDMC closed over a tick** (added after 1.10.2, Windows-tested only): note the BGS archive, close EDMC, do a few BGS actions (missions, bounties)
       in the game, wait for a tick to pass, start EDMC: the archived tick that just closed now includes those actions, and EDMC's log has

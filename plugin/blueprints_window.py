@@ -33,6 +33,9 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CONFIG_GEOMETRY = "wntb_blueprints_window_geometry"
+CONFIG_ENGINEER_REGION = "wntb_engineers_region"
+BOTH = "Both"
+REGION_CHOICES = (BOTH, *engineers.REGIONS)
 DEFAULT_SIZE = (1080, 760)
 MIN_SIZE = (860, 560)
 ALL = "All types"
@@ -398,6 +401,16 @@ class BlueprintsWindow:
     def _build_engineers(self, tab: tk.Frame) -> None:
         pad = tk.Frame(tab, bg=P.PANE)
         pad.pack(fill="both", expand=True, padx=P.PAD, pady=P.PAD)
+        region_row = tk.Frame(pad, bg=P.PANE)
+        region_row.pack(fill="x", pady=(0, P.PAD_SM))
+        tk.Label(region_row, text="Show", fg=P.MUTED, bg=P.PANE).pack(side="left")
+        saved = config.get_str(CONFIG_ENGINEER_REGION) or BOTH
+        self._region = tk.StringVar(value=saved if saved in REGION_CHOICES else BOTH)
+        region_box = Combobox(region_row, textvariable=self._region, values=list(REGION_CHOICES), state="readonly", width=10)
+        region_box.pack(side="left", padx=(P.PAD_SM, P.PAD))
+        region_box.bind("<<ComboboxSelected>>", lambda _e: self._region_changed())
+        self._region_label = tk.Label(region_row, text="", fg=P.MUTED, bg=P.PANE)
+        self._region_label.pack(side="left")
         self._engineer_table = DataTable(pad, _ENGINEER_COLUMNS, on_select=self._pick_engineer, visible_rows=14,
                                          empty_text="No engineers yet. They appear when the game lists them (at login).")
         self._engineer_table.pack(fill="x", pady=(0, P.PAD_SM))
@@ -455,6 +468,22 @@ class BlueprintsWindow:
         rows.sort(key=lambda r: (not r[0], r[1].casefold()))
         return [(name, values) for _unlocked, name, values in rows]
 
+    def _in_region(self, name: str) -> bool:
+        """Does the Show choice include this engineer? "Both" includes everyone, including a name the location table lacks; Bubble and
+        Colonia include only the engineers it places there."""
+        choice = self._region.get()
+        if choice == BOTH:
+            return True
+        info = engineers.info(name)
+        return info is not None and info.region() == choice
+
+    def _region_changed(self) -> None:
+        choice = self._region.get()
+        config.set(CONFIG_ENGINEER_REGION, choice)
+        if self._picked_engineer and not self._in_region(self._picked_engineer):
+            self._picked_engineer = None             # the engineer picked is no longer listed
+        self._fill_engineers()
+
     @staticmethod
     def _unlock_part(need: needs_mod.Need) -> str:
         have = "" if need.have is None else f" (have {need.have:,})"
@@ -463,8 +492,11 @@ class BlueprintsWindow:
     def _fill_engineers(self) -> None:
         keep = self._picked_engineer
         self._engineer_table.clear()
-        for name, values in self._engineer_rows():
+        rows = self._engineer_rows()
+        shown = [(name, values) for name, values in rows if self._in_region(name)]
+        for name, values in shown:
             self._engineer_table.insert(name, values)
+        self._region_label.configure(text=f"{len(shown)} of {len(rows)} engineers")
         if keep and self._engineer_table.exists(keep):
             self._engineer_table.select(keep)
         if self._picked_engineer:

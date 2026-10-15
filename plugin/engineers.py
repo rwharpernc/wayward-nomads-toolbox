@@ -65,6 +65,15 @@ class Standing:
         return self.progress
 
 
+BUBBLE, COLONIA = "Bubble", "Colonia"
+REGIONS = (BUBBLE, COLONIA)
+COLONIA_CENTER = (-9530.0, -910.0, 19808.0)
+COLONIA_RADIUS_LY = 500.0
+"""Colonia is the region around Colonia (about 22,000 ly from Sol); every engineer within this distance of its centre is a Colonia engineer, and the
+rest are in the Bubble. The nearest Bubble engineer is more than 9,000 ly from it and the farthest Colonia one is about 50 ly, so the radius is not
+critical."""
+
+
 @dataclass(frozen=True)
 class Info:
     """Where an engineer is and how to unlock them (one row of `engineers_data.ENGINEER_ROWS`)."""
@@ -79,6 +88,11 @@ class Info:
     standing: str            # how to gain standing (rank) with them
     permit: bool             # a permit is needed to reach them
     on_foot: bool            # an Odyssey (on-foot) engineer: no ranks
+
+    def region(self) -> str:
+        """"Colonia" for an engineer in the Colonia region, else "Bubble"."""
+        distance = sum((a - b) ** 2 for a, b in zip(self.coords, COLONIA_CENTER)) ** 0.5
+        return COLONIA if distance <= COLONIA_RADIUS_LY else BUBBLE
 
     def place(self) -> str:
         """"Base, System planet", with the extras that matter on one line."""

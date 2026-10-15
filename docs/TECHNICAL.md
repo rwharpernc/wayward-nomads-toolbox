@@ -509,7 +509,7 @@ Materials and Engineering (`materials.py`, `materials_panel.py`, `materials_wind
 keep the commander's Raw, Manufactured and Encoded counts in `materials.json` (`MaterialBook`, per commander): the login `Materials` list sets
 them, then each journal event that changes a count moves it, within the grade limits (300 to 100), and EDMC's own totals fill in a mid-session
 start. The blueprint table (`blueprints_data.py`, trimmed from EDEngineer, MIT, and corrected from EDDiscovery's data, Apache-2.0), Yi Shen's unlock
-(`blueprints_extra.py`) and the engineer location table (`engineers_data.py`, read through `engineers.info`) are static; `blueprint_wishlist.py` (`blueprint_wishlist.json`) and `engineers.py` (`engineers.json`, from `EngineerProgress`) are per
+(`blueprints_extra.py`) and the engineer location table (`engineers_data.py`, read through `engineers.info`, which also tells the region: Bubble or within 500 ly of Colonia; the Engineers tab's Show choice is kept in `wntb_engineers_region`) are static; `blueprint_wishlist.py` (`blueprint_wishlist.json`) and `engineers.py` (`engineers.json`, from `EngineerProgress`) are per
 commander, and `blueprint_needs.py` works out what a blueprint or the wishlist needs against what is held (ship materials, and the Odyssey
 ship locker). The material trader finder is the only online part: it passes the system and the trader type to Spansh's station search on a
 worker thread when **Find** is pressed, with a two-minute cache, and nothing else is sent.

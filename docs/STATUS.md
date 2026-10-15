@@ -21,6 +21,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
   Windows only (unit tests pass); the Linux checks are in `docs/LINUX_TESTING.md` section 6. Goes out with the next release.
 - Engineering data matched to ED-DDT's (EDDiscovery's data, Apache-2.0): five recipes corrected, seven synthesis rows and nine materials added, the
   Colonia four's upgrades, and a Where/unlock/details Engineers tab from `engineers_data.py`. Windows-tested only.
+- Engineers tab **Show** box: Both / Bubble / Colonia (remembered). Windows-tested only.
 - BGS rebuilds the period that just closed from the journals (play with EDMC closed), and a finished Colonization build drops the
   "Construction Site:" prefix in its name. Both match fixes in ED-DDT. Windows-tested only.
 

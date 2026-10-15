@@ -223,6 +223,17 @@ class LocationTableTests(unittest.TestCase):
         self.assertIn("permit needed", E.info("Bill Turner").place())
         self.assertEqual(len(E.info("Bill Turner").coords), 3)
 
+    def test_regions(self):
+        colonia = sorted(i.name for i in E.INFO.values() if i.region() == E.COLONIA)
+        self.assertEqual(colonia, ["Baltanos", "Eleanor Bresa", "Etienne Dorn", "Marsha Hicks", "Mel Brandon", "Petra Olmanova", "Rosa Dayette", "Yi Shen"])
+        self.assertEqual(len([i for i in E.INFO.values() if i.region() == E.BUBBLE]), 30)
+        self.assertEqual(E.info("Felicity Farseer").region(), E.BUBBLE)
+        self.assertEqual(E.REGIONS, (E.BUBBLE, E.COLONIA))
+
+    def test_every_colonia_on_foot_engineer_is_in_colonia(self):
+        for name in ("Baltanos", "Eleanor Bresa", "Rosa Dayette", "Yi Shen"):
+            self.assertEqual(E.info(name).region(), E.COLONIA, name)
+
     def test_yarden_bonds_meeting_requirement_is_five_plans(self):
         self.assertIn("5 Smear campaign plans", E.info("Yarden Bond").invite)
 

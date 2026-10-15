@@ -153,7 +153,10 @@ where each ingredient is found, with what is short at the top. Each entry also s
 or a vendor or the synthesis panel (which need no unlocking), or "No engineer unlocked yet". Select an entry to change its crafts, **Remove** it
 or **Clear list** (each asks twice). The Materials row shows a line such as `Wishlist: 3 blueprints, 2 can be made, 14 pieces short`.
 
-**Engineers.** All 38 engineers (ship and on-foot, the four Colonia ones included), with where you stand (Known, Invited, or Unlocked with their rank), how many
+**Engineers.** All 38 engineers (ship and on-foot, the Colonia ones included). The **Show** box above the table picks **Both**, **Bubble** (the 30 engineers in the human
+bubble) or **Colonia** (the 8 in the Colonia region, about 22,000 ly away: Baltanos, Eleanor Bresa, Etienne Dorn, Marsha Hicks, Mel Brandon, Petra Olmanova, Rosa Dayette and Yi
+Shen); the count beside it reads like `8 of 38 engineers`, and WNTB remembers your choice. An engineer the location table lacks (a name only your journal knows) shows under
+**Both** only. Each row has where you stand (Known, Invited, or Unlocked with their rank), how many
 blueprints they offer, **where they are** (base, system and planet, with "on foot" or "permit needed") and what unlocking them asks for. Until an engineer is
 unlocked, the last column gives what gets you invited and what unlocks them, in words, and for an engineer whose unlock is items (such as Yi Shen's three sets)
 how much of it you hold; those items can go on the wishlist. Unlocked engineers come first. **Select an engineer** for the full details under the table: how to
