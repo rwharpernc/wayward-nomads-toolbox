@@ -38,7 +38,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, flight_alerts, gec_poi_panel, interdiction, inventory_panel, landing, materials_panel, mining_panel, missions, missions_overlay,
-    notable, notes_panel, expedition_panel, surface_compass, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, screenshots, ship_builds_panel,
+    notable, notes_panel, expedition_panel, surface_compass, organic_scan_panel, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, route_overlay, screenshots, ship_builds_panel,
     credits_ledger, game_mode, session_credits, session_merits, settings_scroll, system_names, trade_panel, trade_watch_panel,
 )
 from . import issue_report
@@ -64,7 +64,7 @@ FEATURES = (
     mining_panel,
     trade_panel, trade_watch_panel,
     bgs_panel,
-    interdiction, flight_alerts, missions_overlay, landing,
+    interdiction, flight_alerts, route_overlay, missions_overlay, landing,
 )
 
 # Feature pairs built into a single shared row (side by side) instead of
@@ -545,7 +545,7 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         colonisation_panel.build_overlay_settings,
         *settings_of(discovery),
         inventory_panel.build_overlay_settings,
-        *settings_of(interdiction, flight_alerts, missions_overlay, landing, surface_compass),
+        *settings_of(interdiction, flight_alerts, route_overlay, missions_overlay, landing, surface_compass),
         mining_panel.build_overlay_settings,
         *settings_of(notable),
         screenshots.build_overlay_settings,

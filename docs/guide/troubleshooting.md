@@ -17,6 +17,7 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | Interdiction warning | **Enable Interdiction Warning** | Settings → Overlays → Interdiction Warning |
 | The missions list on the game screen | **Enable** under Missions; pinned missions need the overlay too | Settings → Overlays → Missions |
 | Carrier jump and fuel alerts | **Enable Flight Alerts** | Settings → Overlays → Flight Alerts |
+| Route and ship status card | **Enable the Route overlay** | Settings → Overlays → Route |
 | Discovery alerts | **Enable Discovery Alerts**, or the **D.A.** button | Settings → Overlays → Discovery |
 | Notable find banners | **Enable Notable Bodies alerts**, then pick the rules you want | Settings → Overlays → Notable Bodies |
 | The arrow to a mark or hotspot on a planet | **Enable Surface Compass** | Settings → Overlays → Surface Compass |

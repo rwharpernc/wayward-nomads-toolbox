@@ -329,6 +329,8 @@ Spec: [TECHNICAL.md](TECHNICAL.md) section 12
 | `carrier_jump_timer.py` | Fleet carrier jump countdown, the pure part: the planned jump from `CarrierJumpRequest` (cleared by a cancel or the jump), time left, one alert at 10, 5 and 1 minute and at departure, and reading a request back from recent journals |
 | `fuel_alerts.py` | Fuel warnings, the pure part: low fuel at a chosen percentage, and a plotted star that cannot be scooped (`FSDTarget`) with a tank at or under a second percentage; tank size from `Loadout`, fuel from `Status.json` |
 | `flight_alerts.py` | Flight Alerts: one overlay card for the carrier jump countdown and the fuel warnings, with its Settings tab, optional sound and a one-second tick while a jump is planned |
+| `route_plan.py` | Route status, the pure part: the plotted route from `NavRoute.json`, where the ship is on it, jumps and light years left, each star's kind (neutron star, white dwarf, another star that cannot be scooped), the next supercharge, and the fuel and range figures from `Loadout`, `FSDJump` and `Status.json` |
+| `route_overlay.py` | Route overlay: one card with the ship's travel status and the systems of the plotted route, neutron stars and white dwarfs picked out; its Settings tab, Test Card and a one-second tick while a route applies |
 | `landing.py` | Landing Assist: assigned pad, diagram on the overlay and in the panel; one render worker that retries until the overlay is up |
 
 ## Shared window kit (`plugin/uikit/`)

@@ -54,6 +54,13 @@ covers the item as well.
   name, and confirm that the whole name fits inside the card at Default and Larger text sizes. On the Missions overlay card, check a mission
   with a long station or system name: the place should move to a second line under the title, in the same color. Report any text that still extends
   past an edge.
+- [ ] **Route overlay.** Enable it (Settings → Overlays → Route), press **Test Card**, then plot a real route in the galaxy map, ideally a neutron
+  highway. Confirm that the listed systems and their stars match the plotted route (`NavRoute.json`), that neutron stars and white dwarfs are picked
+  out, that the card moves on after each jump, that "jumps left" and the light years agree with the galaxy map, that the fuel, range and last-jump
+  figures match the ship, and that the card clears at the end of the route, when the route is cleared, and when you jump to a system that is not on
+  it. Restart EDMC mid-route and confirm that the card comes back. Check that the new default spots (Route top left; Surface Compass, Mining stats,
+  Flight Alerts and Missions moved in the right-hand column) do not cover the HUD. Not yet confirmed: the field names in `NavRoute.json` (`StarSystem`,
+  `StarClass`, `StarPos`) come from the journal documentation and from how the Expedition planner already reads the file. Then Linux.
 - [ ] **Overlay padding and alignment.** The overlay cards share one padding and left-justify their text. On each of Colonization, Discovery (system and
   body), Notable Bodies, Interdiction, Landing, Missions, Flight Alerts, Mining, Surface Compass and the Screenshot message, confirm that the text sits
   the same distance from the border on all four sides, that every line starts at the same left edge (no centered title or name), that the right edge

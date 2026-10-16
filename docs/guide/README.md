@@ -42,7 +42,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | **Field Ops** | [Field Ops](field-ops.md): screenshots, inventory, engineering materials, blueprints, a wishlist, ship and Odyssey upgrade planners, where the engineers are, material traders, ship builds |
 | **Colonization** | [Colonization](colonization.md): your current project, your history, the sites window, where to buy |
 | **BGS** | [BGS](bgs.md): factions, states and your effect on them |
-| *Always on* | [Landing Assist, Interdiction Warning and Flight Alerts](always-on.md) |
+| *Always on* | [Landing Assist, Interdiction Warning, Flight Alerts and the Route overlay](always-on.md) |
 
 ## When something's wrong
 

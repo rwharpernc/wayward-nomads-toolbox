@@ -469,11 +469,15 @@ class DefaultSpotTests(unittest.TestCase):
             rects = self.rects(1920, height)
             self.assertLessEqual(rects["inventory"][3], rects["flight_alerts"][1], height)
 
-    def test_the_surface_compass_clears_the_colonization_list_and_the_mining_stats(self):
+    def test_the_route_card_clears_the_colonization_list(self):
         rects = self.rects(1920, 1080)
-        compass, stats, shopping = rects["surface_compass"], rects["mining_stats"], rects["colonisation"]
-        self.assertLessEqual(stats[3], compass[1])
-        self.assertLessEqual(compass[3], shopping[1])
+        self.assertLessEqual(rects["route"][3], rects["colonisation"][1])
+
+    def test_the_right_hand_column_is_stacked_top_to_bottom_without_gaps_overlapping(self):
+        rects = self.rects(1920, 1080)
+        order = ["notable", "surface_compass", "inventory", "mining_stats", "flight_alerts", "missions", "screenshots"]
+        for upper, lower in zip(order, order[1:]):
+            self.assertLessEqual(rects[upper][3], rects[lower][1], f"{upper} should sit above {lower}")
 
 
 if __name__ == "__main__":

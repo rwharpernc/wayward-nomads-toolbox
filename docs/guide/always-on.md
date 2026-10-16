@@ -1,4 +1,4 @@
-# Landing Assist, Interdiction Warning and Flight Alerts
+# Landing Assist, Interdiction Warning, Flight Alerts and the Route overlay
 
 These three tools are always available, whichever mode you're in. They don't belong to a mode. Interdiction Warning and Flight Alerts draw only on
 your game screen, so they need an overlay running. Landing Assist can show in the EDMC panel without one, but its
@@ -62,6 +62,35 @@ One small card on your game screen with two jobs. It has no panel button, only S
 The card is always the same width and wraps what it says onto more lines (at the end of a sentence first), growing downward, so nothing
 runs off the screen however long a system name is. Fuel warnings show only while you are flying your main ship, not docked, landed or scooping. Where the card sits is set on
 **Overlay Placement** ("Flight alerts"); by default it is on the right, below the Inventory display.
+
+## Route overlay
+
+One card on your game screen for a trip. It has no panel button, only Settings.
+
+- **Travel status, at the top.** `Fuel 38%  12.2 / 32 t` (red when the tank is at or under 25%), `Range 61.4 ly   Last jump 3.2 t`,
+  `19 jumps left   412 ly`, and `Next supercharge: 2 jumps, neutron star` (or `No supercharge on the route`). A line the game has not
+  given you yet is left out.
+- **The systems you are jumping to, below it.** The route you plotted in the game, in order, one system to a row with its star beside it.
+  A **neutron star** and a **white dwarf** are picked out in color, name and all, so you can get ready to line up
+  the supercharge. Another star you cannot scoop (a black hole, a Wolf-Rayet or carbon star, a brown dwarf) is marked in a warning color so you can
+  plan the fuel; an ordinary star shows its class letter, dim. A last line counts the systems beyond the list and how many of them are
+  neutron stars or white dwarfs (`+ 14 more (3 neutron, 1 white dwarf)`).
+
+**To set it up:**
+
+1. Open **Settings → Overlays → Route**.
+2. Tick **Enable the Route overlay**. It is **off by default**. **Systems listed** (3 to 20, 8 to start) is how many of the next systems
+   the card lists.
+3. Press **Test Card** to see it with a made-up trip. The test works even while the feature is off, and reports whether an overlay could be reached.
+
+The card follows you along the route as you jump, and clears when you reach the end, clear the route, or jump to a system that is not on
+it. After a restart it reads the route the game has saved, so it comes straight back. Every line starts at the same left edge, the card's
+padding and text size follow **Appearance**, and where it sits is set on **Overlay Placement** ("Route and ship status"); by default it
+is at the top left, above the Colonization list.
+
+**What it cannot tell you:** the journal does not say what the next jump will cost in fuel, so the card shows the fuel on board and what
+your last jump used, not whether the tank is enough. The range is your ship's maximum with its current modules, from the game's `Loadout`
+event, not the range with the cargo and fuel it carries now. Distances are straight lines between the systems on the route.
 
 ## Overlay connection
 

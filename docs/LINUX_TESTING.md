@@ -150,6 +150,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
       list appears and a click or Enter picks it) and **Add**; open a station's commodity market in the game and the commodity gets a price, with
       the station under it when picked; **Remove** asks twice; with Trade lookups on, **REFRESH** fills in Spansh prices and says so, and with
       them off it says to turn them on; the row stays narrow with a long system name; restarting EDMC keeps the list and the seen prices.
+- [ ] Route overlay (Settings → Overlays → Route): **Test Card** draws a card at the top left with fuel, range and a list of systems, neutron stars and white dwarfs in their own colors, every line starting at the same left edge; plot a real route in the game and the list follows each jump and clears at the end.
 - [ ] Flight Alerts (Settings → Overlays → Flight Alerts): **Test Card** draws a card on the right, below where the Inventory display sits; with a carrier jump
       scheduled the countdown ticks every second and turns red in the last minute; a plotted neutron star with the tank at or under 50%
       shows the unscoopable-star line; the sound box is available only when `canberra-gtk-play` or `paplay` is installed, and a sound plays

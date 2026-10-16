@@ -5,7 +5,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ## Unreleased
 
+### Added
+- **Route overlay.** A card with the ship's travel status (fuel, jump range, the fuel the last jump used, jumps and light years left, the next supercharge) over the systems of the route plotted in the game. Neutron stars and white dwarfs are picked out so the supercharge can be prepared for, and other stars that cannot be scooped are marked. Off until ticked in Settings → Overlays → Route; it has a Test Card and its own entry on Overlay Placement. It follows the ship along the route and clears when the route ends, is cleared, or the ship jumps off it.
+
 ### Changed
+- **Default overlay spots moved** to make room for the Route card: it takes the top left; Surface Compass moved to the top right (between Notable and Inventory), and Mining stats, Flight Alerts and Missions each moved down the right-hand column. A spot you chose yourself is not changed.
 - **Every overlay is left-justified.** The Discovery and Notable Bodies alerts centered their title and name inside the card; they now start at the card's left padding, like Landing, Interdiction, Missions and the rest.
 - **Every overlay card uses the same padding.** Text sits the same distance from the border on all sides in Colonization, Discovery, Notable Bodies, Interdiction, Landing, Missions, Flight Alerts, Mining, Surface Compass and Screenshots (`CARD_PAD_X`/`CARD_PAD_Y` in `overlay_style.py`). The Discovery and Interdiction cards no longer have a minimum width, so they fit their text instead of leaving a blank strip on the right.
 - **Overlay text is never drawn at the overlay's "small" size**, which is hard to read over the game. The Text size choice is now Default or Larger; a saved "Smaller" is treated as Default.

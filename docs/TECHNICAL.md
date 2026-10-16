@@ -539,6 +539,8 @@ drawing, one fixed width, lines clipped to `LINE_CHARS`, drawn through the share
 `wntb_missions`, registered in `load.py` with the other groups). It follows the commander's system and `FSDTarget` from the journal and rereads the Missions mode's
 active missions on every change and every 30 s; nothing is stored.
 
+The Route overlay (`route_overlay.py`, over the pure `route_plan.py`) draws one overlay card: travel status lines over a two-column list (system, star) of the systems still to jump to. The route is `NavRoute.json` in the journal folder, read when a `NavRoute` event arrives and on `LoadGame`, `StartUp` and the restore event; `NavRouteClear` empties it. Progress is the system the ship is in (`FSDJump`, `Location`, `CarrierJump`, or EDMC's own current system); a route is shown only while the ship is in one of its systems (or its place is not known yet), so a diversion or a stale file shows nothing. Star kinds come from `StarClass` (`N` neutron, `D*` white dwarf, the rest by `fuel_alerts.is_scoopable`). Fuel comes from `fuel_alerts.FuelWatcher`, the range from `Loadout.MaxJumpRange`, the last jump's fuel from `FSDJump.FuelUsed`. The card has a fixed top and width, grows downward, and is redrawn when it changes or every 3 seconds, with a one-second tick while a route applies. Its group is `wntb_route`.
+
 Flight Alerts (`flight_alerts.py`, over the pure `carrier_jump_timer.py` and `fuel_alerts.py`) draws one overlay card. The carrier
 countdown comes from `CarrierJumpRequest` (`SystemName`, `Body`, `DepartureTime`, parsed as UTC), cleared by `CarrierJumpCancelled` or
 `CarrierJump`; a request whose departure is already more than 90 s past is ignored (an old journal line), one alert is given as the time

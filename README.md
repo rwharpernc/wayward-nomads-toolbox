@@ -69,8 +69,8 @@ WNTB has one panel with eight **modes**. You click a button to switch between th
 | **Colonization** | The project you are building now, your colonization history, and a window with every site's shopping list, where to buy, and optional links and sharing with Raven Colonial. | [Colonization](docs/guide/colonization.md) |
 | **BGS** | Tracks the Background Simulation: faction states, and what your own activity does to them. | [BGS](docs/guide/bgs.md) |
 
-Three more tools are always on and don't belong to a mode: **Landing Assist**, **Interdiction Warning** and **Flight Alerts**
-(a fleet carrier jump countdown and fuel warnings) ([guide](docs/guide/always-on.md)).
+Four more tools are always on and don't belong to a mode: **Landing Assist**, **Interdiction Warning**, **Flight Alerts**
+(a fleet carrier jump countdown and fuel warnings) and the **Route overlay** (travel status and the plotted route) ([guide](docs/guide/always-on.md)).
 
 Most individual features have their own on/off switch in Settings, and the alerts and overlays are off until you turn
 them on. The eight mode buttons themselves can't be hidden, and a few sections (for example Boxel Survey and the GEC
@@ -193,6 +193,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Landing Assist**: your assigned landing pad, in the panel and/or as a diagram on your game screen ([Landing Assist](docs/guide/always-on.md#landing-assist)).
 - **Interdiction Warning**: an alert on your game screen the moment an interdiction starts ([Interdiction Warning](docs/guide/always-on.md#interdiction-warning)).
 - **Flight Alerts**: a fleet carrier jump countdown and fuel warnings, including when the star you plotted to cannot be scooped ([Flight Alerts](docs/guide/always-on.md#flight-alerts)).
+- **Route overlay**: your fuel and jump range, the jumps left, and the systems of the route you plotted, with neutron stars and white dwarfs picked out so you can prepare for the supercharge ([Route overlay](docs/guide/always-on.md#route-overlay)).
 
 ## Planned and being researched
 
