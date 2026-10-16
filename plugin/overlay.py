@@ -302,6 +302,10 @@ class OverlayClient:
         self._send_raw(payload)
 
     def _send_raw(self, payload: dict) -> None:
+        from . import overlay_native
+        if overlay_native.accepting():          # WNTB's own overlay draws: no socket, no EDMCModernOverlay
+            overlay_native.scene.apply(payload)
+            return
         """Raises OSError (e.g. the overlay isn't running, or the socket
         was reset) after trying once to reconnect - a single reconnect
         attempt covers "the overlay wasn't running yet" and "the overlay
@@ -410,6 +414,28 @@ def check_connection(host: str, port: str, timeout: float = CONNECT_TIMEOUT_S) -
 
 _host_var: Optional[tk.StringVar] = None
 _port_var: Optional[tk.StringVar] = None
+_backend_var: Optional[tk.StringVar] = None
+_BACKEND_LABELS = {"modern": "EDMCModernOverlay (a separate app)", "builtin": "WNTB built-in overlay (Windows)"}
+
+
+def _build_backend_choice(frame: tk.Misc) -> None:
+    """Which overlay draws: EDMCModernOverlay, or WNTB's own window (Windows only; off until chosen)."""
+    global _backend_var
+    from . import overlay_native
+    if not overlay_native.supported():
+        _backend_var = None
+        return
+    box = tk.LabelFrame(frame, text="Which overlay draws")
+    box.grid(row=5, column=0, sticky=tk.W + tk.E, padx=10, pady=(8, 10))
+    _backend_var = tk.StringVar(value=_BACKEND_LABELS[overlay_native.selected()])
+    nb.Label(box, text=("WNTB can draw its overlays itself, in a transparent window it lays over Elite (borderless or windowed only), instead of through EDMCModernOverlay. "
+                        "It is new: try it, and switch back here if anything is off. Pick one; the host and port above are for EDMCModernOverlay. "
+                        "Takes effect when you press OK."),
+             wraplength=440, justify=tk.LEFT).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=6, pady=(4, 6))
+    nb.Label(box, text="Overlay:").grid(row=1, column=0, sticky=tk.W, padx=6, pady=2)
+    tk.OptionMenu(box, _backend_var, *_BACKEND_LABELS.values()).grid(row=1, column=1, sticky=tk.W, pady=2)
+    status = tk.StringVar(value=overlay_native.status_text())
+    nb.Label(box, textvariable=status, wraplength=440, justify=tk.LEFT).grid(row=2, column=0, columnspan=2, sticky=tk.W, padx=6, pady=(2, 6))
 
 
 def build_settings(notebook: nb.Notebook) -> None:
@@ -430,6 +456,8 @@ def build_settings(notebook: nb.Notebook) -> None:
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 8))
 
+    _build_backend_choice(frame)
+
     host_row = tk.Frame(frame)
     host_row.grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
     nb.Label(host_row, text="Host:").pack(side=tk.LEFT)
@@ -447,7 +475,11 @@ def build_settings(notebook: nb.Notebook) -> None:
         status_var.set("Checking...")
 
         def worker() -> None:
-            ok, message = check_connection(host, port)
+            from . import overlay_native
+            if overlay_native.accepting():
+                ok, message = True, overlay_native.status_text()
+            else:
+                ok, message = check_connection(host, port)
             if ok:
                 from . import overlay_processes
                 extra = overlay_processes.warning(overlay_processes.running_windows())
@@ -467,6 +499,13 @@ def build_settings(notebook: nb.Notebook) -> None:
 
 
 def save_settings() -> None:
+    if _backend_var is not None:
+        from . import overlay_native, overlay_placement
+        before = overlay_native.selected()
+        overlay_native.save_choice("builtin" if _backend_var.get() == _BACKEND_LABELS["builtin"] else "modern")
+        if overlay_native.selected() != before:
+            overlay_native.apply_choice()
+            overlay_placement.refresh()
     if _host_var is None:
         return
     save_config(

@@ -18,6 +18,7 @@ Old per-feature x/y settings are read once, so a position somebody set by hand i
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import logging
 import os
@@ -30,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import myNotebook as nb
 from config import appname, config
 
-from . import overlay, overlay_appearance, overlay_grid, overlay_layout as layout, overlay_style, platform_support
+from . import overlay, overlay_appearance, overlay_grid, overlay_layout as layout, overlay_native, overlay_style, platform_support
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -217,7 +218,11 @@ def _scaling_choice_value(label: str) -> Optional[float]:
 
 
 def screen_for(scaling_choice: str, mode_choice: str) -> layout.Screen:
-    """The screen for the given Settings choices ("auto" reads the overlay's log and the game's files)."""
+    """The screen for the given Settings choices ("auto" reads the overlay's log and the game's files). With the built-in overlay it is the game window's own size and scaling."""
+    own = overlay_native.screen()
+    if own is not None:
+        chosen = _scaling_choice_value(scaling_choice)
+        return own if chosen is None else dataclasses.replace(own, ratio=chosen, source=own.source + ", scaling chosen")
     chosen_ratio = _scaling_choice_value(scaling_choice)
     chosen_mode = mode_choice if mode_choice in (layout.MODE_FIT, layout.MODE_FILL) else None
     modern = _modern_overlay_installed()
@@ -324,6 +329,8 @@ def offsets_enabled() -> bool:
 
 def can_offset(slot_key: str) -> bool:
     """Whether a display can be carried past the overlay's right-hand clamp by an offset of its overlay group."""
+    if overlay_native.accepting():
+        return False                       # WNTB's own overlay has no clamp to carry a display past
     return bool(SLOTS[slot_key].group) and offsets_enabled() and overlay.group_offsets_available()
 
 

@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_history_window, exobiology_overlay, expedition_log_overlay, expedition_log_panel, colonisation_overlay, colonisation_panel, credits_ledger, discovery,
     exploration_value, flight_alerts, game_mode, gec_poi_panel, interdiction, inventory_panel, ledger_window, landing, materials_panel, mining_overlay, mining_panel, notes_panel, expedition_panel, surface_compass,
-    missions, missions_overlay, notable, organic_scan_panel, overlay, overlay_placement, overlay_visibility, platform_support, powerplay, system_names, powerplay_window, rare_goods_window, restore, route_overlay, screenshots, session_credits, session_merits, ship_builds_panel, system_survey, targets_overlay, body_info_overlay, trade_panel, trade_watch_panel, ui,
+    missions, missions_overlay, notable, organic_scan_panel, overlay, overlay_native, overlay_placement, overlay_visibility, platform_support, powerplay, system_names, powerplay_window, rare_goods_window, restore, route_overlay, screenshots, session_credits, session_merits, ship_builds_panel, system_survey, targets_overlay, body_info_overlay, trade_panel, trade_watch_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -124,6 +124,7 @@ def plugin_start3(plugin_dir: str) -> str:
     expedition_log_panel.start(plugin_dir)
     expedition_log_overlay.start(plugin_dir)
     overlay_visibility.start(plugin_dir)
+    overlay_native.start()
     surface_compass.start(plugin_dir)
     interdiction.set_overlay_client(_overlay)
     flight_alerts.set_overlay_client(_overlay)
@@ -221,6 +222,7 @@ def plugin_stop() -> None:
     expedition_log_panel.stop()
     expedition_log_overlay.stop()
     overlay_visibility.stop()
+    overlay_native.stop()
     trade_watch_panel.stop()
     surface_compass.stop()
     powerplay_window.close()

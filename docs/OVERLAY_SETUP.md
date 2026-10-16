@@ -178,6 +178,19 @@ keeps its fixed red alert colors whatever scheme is chosen. The default look is 
 - **EDMCModernOverlay has its own placement tool**, the Overlay Controller, where you can move each
   plugin's display, change anchors and backgrounds, and keep different profiles. See its wiki.
 
+## The built-in overlay (Windows, optional)
+
+Instead of EDMCModernOverlay, WNTB can draw its overlays itself, in a transparent window it lays over Elite. Turn it on in **Settings → WNTB → Overlays → Overlay Connection → Which overlay draws**,
+press OK, and start Elite in **borderless or windowed** mode (a fullscreen game cannot be drawn over). It is off until you choose it, and choosing EDMCModernOverlay again switches back.
+
+- It follows Elite's window as you move or resize it, shows only while Elite is the window you are in, and lets clicks and keys through to the game.
+- It draws in the font chosen under **Appearance → Overlay font** (when EDMCModernOverlay's fonts folder is installed; otherwise Segoe UI), so lower case text and your own fonts work.
+- It lives and dies with EDMC, so it cannot leave a second overlay window behind (see [Known issues](guide/known-issues.md)).
+- Everything else works the same: every card, Overlay Placement and its layout editor, panel opacity, and Hide overlays. **Check connection** reports whether it is running over Elite.
+- It is new. Sizes were tuned for EDMCModernOverlay, so a card's box may fit its text a little differently; report anything that looks off. The plan and what is left are in
+  [the built-in overlay specification](NATIVE_OVERLAY_SPEC.md).
+- Windows only. Linux keeps using EDMCModernOverlay.
+
 ## Hiding the overlays for a while
 
 To take a clean screenshot or look at the game without cards over it, hide every WNTB overlay at once and bring them back where they were:

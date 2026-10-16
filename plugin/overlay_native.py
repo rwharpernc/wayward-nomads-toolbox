@@ -1,0 +1,107 @@
+"""WNTB's built-in overlay: which overlay draws (EDMCModernOverlay or WNTB's own), and the glue between the two.
+
+EDMCModernOverlay is a separate program WNTB talks to over a local socket. The built-in overlay is a window WNTB draws itself (`overlay_window.py`, Windows only) from a scene the
+overlay features fill (`overlay_scene.py`, `overlay_raster.py`). The choice is the **Overlay** setting on Settings -> Overlays -> Overlay Connection and is off until the player turns it on.
+When it is on, `overlay.OverlayClient` hands every payload to the scene instead of the socket, so no overlay feature changes; placement reads the game window's size and display scaling from
+here instead of from EDMCModernOverlay's log. Only one of the two ever draws.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+from typing import Optional
+
+from config import appname, config
+
+from . import overlay_fonts, overlay_layout as layout, overlay_raster, overlay_window
+from .overlay_scene import Scene
+
+plugin_name = os.path.basename(os.path.dirname(__file__))
+logger = logging.getLogger(f"{appname}.{plugin_name}")
+
+CFG_BACKEND = "wntb_overlay_backend"
+MODERN = "modern"
+BUILTIN = "builtin"
+SOURCE = "WNTB built-in overlay"
+FALLBACK_SCREEN = (1920, 1080)
+
+scene = Scene()
+
+
+def _font_path() -> str:
+    """The font the built-in overlay draws in: the one chosen in Appearance (or its default) from EDMCModernOverlay's fonts folder when that is installed, else a system font."""
+    try:
+        from . import overlay_placement
+        folder = overlay_fonts.fonts_dir(overlay_placement._plugins_dir())
+        chosen = overlay_fonts.current(folder)
+        if chosen and not overlay_fonts.is_default(chosen) and os.path.isfile(os.path.join(folder, chosen)):
+            return os.path.join(folder, chosen)
+    except Exception:
+        logger.debug("Could not look up the chosen overlay font", exc_info=True)
+    return overlay_raster.default_font_path()
+
+
+window = overlay_window.OverlayWindow(scene, _font_path)
+
+
+def supported() -> bool:
+    return overlay_window.supported()
+
+
+def selected() -> str:
+    """BUILTIN when the player chose the built-in overlay and this machine can run it, otherwise MODERN."""
+    return BUILTIN if supported() and config.get_str(CFG_BACKEND) == BUILTIN else MODERN
+
+
+def accepting() -> bool:
+    """Whether payloads go to the scene (the built-in overlay is chosen) instead of the socket."""
+    return selected() == BUILTIN
+
+
+def save_choice(choice: str) -> None:
+    config.set(CFG_BACKEND, BUILTIN if choice == BUILTIN else MODERN)
+
+
+def apply_choice() -> None:
+    """Starts or stops the window to match the saved choice (and drops what the other overlay was showing)."""
+    if selected() == BUILTIN:
+        window.start()
+    else:
+        window.stop()
+        scene.clear()
+
+
+def start() -> None:
+    if selected() == BUILTIN:
+        window.start()
+
+
+def stop() -> None:
+    window.stop()
+    scene.clear()
+
+
+def screen() -> Optional[layout.Screen]:
+    """The screen as the built-in overlay sees it, for placement: the game window's size and display scaling now, or a stand-in until Elite is running. None when it is not chosen."""
+    if selected() != BUILTIN:
+        return None
+    geometry = window.geometry
+    if geometry:
+        _x, _y, width, height, ratio = geometry
+        return layout.Screen(width, height, layout.MODE_FILL, f"{SOURCE}, Elite's window", None, ratio, True, True)
+    return layout.Screen(*FALLBACK_SCREEN, layout.MODE_FILL, f"{SOURCE}, waiting for Elite (assuming 1920 x 1080)", None, 1.0, True, True)
+
+
+def status_text() -> str:
+    """One line for the Settings tab."""
+    if selected() != BUILTIN:
+        return ""
+    if window.error:
+        return window.error
+    if not window.running:
+        return "The built-in overlay is on and will start with EDMC."
+    geometry = window.geometry
+    if not geometry:
+        return "The built-in overlay is running; start Elite in borderless or windowed mode and it will appear over it."
+    return f"The built-in overlay is running over Elite's window ({geometry[2]} x {geometry[3]}, display scaling {int(round(geometry[4] * 100))}%)."

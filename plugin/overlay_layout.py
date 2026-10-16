@@ -69,6 +69,7 @@ class Screen:
     full_screen: Optional[int] = None  # the game's FullScreen value: 0 windowed, 1 borderless, 2 full screen
     ratio: float = 1.0                 # device pixels per logical pixel: the operating system's display scaling (1.25 = 125%)
     pixel_sizes: bool = True           # sizes are screen pixels (EDMCModernOverlay); False: canvas units (no EDMCModernOverlay found)
+    native: bool = False               # WNTB's own overlay window: it draws exactly where it is told, with no right-hand clamp and no group offsets
 
     @property
     def aspect(self) -> float:
@@ -102,7 +103,7 @@ class Screen:
         (measured: on a wide screen it stretches the canvas down the screen so y is free, and clamps across it, so x is
         clamped; in fit mode both are). A display placed past `canvas size - its pixel size` on a clamped axis loses the
         part beyond, so placement stops it before that. Overlays that draw in canvas units have no such limit."""
-        if not self.pixel_sizes:
+        if not self.pixel_sizes or self.native:
             return False, False
         if self.mode == MODE_FIT:
             return True, True
