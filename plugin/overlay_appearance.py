@@ -24,6 +24,7 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_SCHEME = "wntb_overlay_scheme"
+CFG_OPACITY = "wntb_overlay_panel_opacity"      # percent; unset keeps each scheme's own (about 90%)
 CFG_TEXT_SIZE = "wntb_overlay_text_size"     # 0 Default, 1 Larger (-1, the removed Smaller, reads as Default)
 # One padding and line spacing for every display. Earlier versions saved choices under wntb_overlay_text_level,
 # wntb_overlay_padding and wntb_overlay_line_spacing; they are no longer read. The text size is a new setting (CFG_TEXT_SIZE) that
@@ -48,17 +49,26 @@ def saved_text_size() -> int:
     return max(min(levels), min(max(levels), _int(CFG_TEXT_SIZE, DEFAULT_TEXT_SIZE)))
 
 
+def saved_opacity() -> Optional[int]:
+    raw = config.get_str(CFG_OPACITY)
+    try:
+        return max(style.MIN_OPACITY, min(100, int(raw))) if raw else None
+    except ValueError:
+        return None
+
+
 def current_look() -> style.Look:
     """The look every display should draw with right now: the saved color scheme and text size (or the defaults) at the fixed
     padding and spacing."""
     return style.look_from_choices(
-        config.get_str(CFG_SCHEME) or style.DEFAULT_SCHEME, saved_text_size(), LOCKED_PADDING, LOCKED_SPACING)
+        config.get_str(CFG_SCHEME) or style.DEFAULT_SCHEME, saved_text_size(), LOCKED_PADDING, LOCKED_SPACING, saved_opacity())
 
 
 # --- Settings tab --------------------------------------------------------------------------------------------------
 
 _scheme_var: Optional[tk.StringVar] = None
 _size_var: Optional[tk.StringVar] = None
+_opacity_var: Optional[tk.StringVar] = None
 _result_var: Optional[tk.StringVar] = None
 _frame: Optional[tk.Misc] = None
 _chips: dict = {}
@@ -72,7 +82,8 @@ def typed_look() -> style.Look:
     if _scheme_var is None:
         return current_look()
     size = style.value_for(style.TEXT_CHOICES, _size_var.get() if _size_var is not None else "", saved_text_size())
-    return style.look_from_choices(_scheme_var.get(), size, LOCKED_PADDING, LOCKED_SPACING)
+    opacity = style.value_for(style.OPACITY_CHOICES, _opacity_var.get() if _opacity_var is not None else "", style.DEFAULT_OPACITY)
+    return style.look_from_choices(_scheme_var.get(), size, LOCKED_PADDING, LOCKED_SPACING, None if opacity == style.DEFAULT_OPACITY else opacity)
 
 
 def _refresh_chips(*_args) -> None:
@@ -85,7 +96,7 @@ def _refresh_chips(*_args) -> None:
 
 
 def build_settings(notebook: tk.Misc) -> None:
-    global _scheme_var, _size_var, _result_var, _frame
+    global _scheme_var, _size_var, _opacity_var, _result_var, _frame
 
     frame = nb.Frame(notebook)
     _frame = frame
@@ -95,20 +106,22 @@ def build_settings(notebook: tk.Misc) -> None:
     nb.Label(
         frame,
         text=("How every WNTB overlay display looks, together: Colonization, Discovery, Notable Bodies, Interdiction, Landing, "
-              "Inventory, Mining and the Screenshot message. Spacing is fixed so the columns stay aligned; "
-              "the text size is yours to choose, and every box is sized from it. The Interdiction warning keeps its red "
-              "alert colors whatever the scheme."),
+              "Inventory, Mining, the Screenshot message and the cards (Route, System targets, Body info, Exobiology, Missions). Spacing is fixed so the "
+              "columns stay aligned; the text size is yours to choose, and every box is sized from it. Panel opacity is how solid each box's background is "
+              "(lower lets more of the game show through; the text stays solid). The Interdiction warning keeps its red alert colors whatever the scheme."),
         wraplength=460, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 8))
 
     look = current_look()
     _scheme_var = tk.StringVar(value=look.palette.name)
     _size_var = tk.StringVar(value=style.label_for(style.TEXT_CHOICES, saved_text_size()))
+    _opacity_var = tk.StringVar(value=style.label_for(style.OPACITY_CHOICES, saved_opacity() or style.DEFAULT_OPACITY))
 
     grid = tk.Frame(frame)
     grid.grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
     for row, (label, var, values) in enumerate((("Color scheme", _scheme_var, list(style.SCHEMES)),
-                                                ("Text size", _size_var, [label for label, _v in style.TEXT_CHOICES]))):
+                                                ("Text size", _size_var, [label for label, _v in style.TEXT_CHOICES]),
+                                                ("Panel opacity", _opacity_var, [label for label, _v in style.OPACITY_CHOICES]))):
         nb.Label(grid, text=label + ":").grid(row=row, column=0, sticky=tk.W, padx=(0, 10), pady=2)
         tk.OptionMenu(grid, var, *values, command=_refresh_chips).grid(row=row, column=1, sticky=tk.W, pady=2)
 
@@ -138,6 +151,7 @@ def save_settings() -> None:
     look = typed_look()
     config.set(CFG_SCHEME, look.palette.name)
     config.set(CFG_TEXT_SIZE, str(look.text_level))
+    config.set(CFG_OPACITY, str(look.panel_opacity) if look.panel_opacity is not None else "")
 
 
 def _reset() -> None:
@@ -146,6 +160,8 @@ def _reset() -> None:
     _scheme_var.set(style.DEFAULT.palette.name)
     if _size_var is not None:
         _size_var.set(style.label_for(style.TEXT_CHOICES, DEFAULT_TEXT_SIZE))
+    if _opacity_var is not None:
+        _opacity_var.set(style.label_for(style.OPACITY_CHOICES, style.DEFAULT_OPACITY))
     _refresh_chips()
     if _result_var is not None:
         _result_var.set("The default scheme and size are shown. Press OK in Settings to keep it.")

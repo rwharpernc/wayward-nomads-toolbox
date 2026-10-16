@@ -438,7 +438,7 @@ They need [EDMCModernOverlay](../OVERLAY_SETUP.md); nothing is sent anywhere, th
 - **Rows shown** (3 to 16, 6 to start) caps the list, and the rest are counted (`+ 3 more`). You can switch the life list off.
 
 **Body info** (Settings → Overlays → Body info) describes one body: its name and class; flags (`Undiscovered`, `Terraformable`, and `Unmapped`, `Mapped before`
-or `Mapped by you`); its main materials; and then the estimated scan value, temperature, gravity (in the warning color at 2.0 g and over), pressure, atmosphere,
+or `Mapped by you`); its materials, written as element symbols (`Fe 18.4% · S 18.2%`); and then the estimated scan value, temperature, gravity (in the warning color at 2.0 g and over), pressure, atmosphere and its composition (formulas such as `CO2`),
 volcanism, life signals (how many, how many are done, and the genera once you have mapped it), geology signals and distance. It shows for **the body you have
 targeted** in the galaxy or system map or the nav panel, and for **the body you are close to**; each can be switched off.
 

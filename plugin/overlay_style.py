@@ -45,6 +45,9 @@ WIDTH_PAD = 1.10
 
 # The sizes the Appearance tab offers. A fourth step ("Largest") was dropped: it is where text used to run past its box.
 TEXT_CHOICES: Tuple[Tuple[str, int], ...] = (("Default", 0), ("Larger", 1))   # "Smaller" was dropped: it drew the overlay's hard-to-read small size
+OPACITY_CHOICES: Tuple[Tuple[str, int], ...] = (("100% (solid)", 100), ("90% (default)", 90), ("75%", 75), ("60%", 60), ("40%", 40), ("25% (faint)", 25))
+DEFAULT_OPACITY = 90
+MIN_OPACITY = 10
 PADDING_CHOICES: Tuple[Tuple[str, int], ...] = (("Compact", 0), ("Comfortable", 6), ("Roomy", 14))
 SPACING_CHOICES: Tuple[Tuple[str, int], ...] = (("Tight", 0), ("Normal", 3), ("Loose", 7))
 
@@ -109,6 +112,12 @@ def with_alpha(color: str, alpha: int) -> str:
     return color
 
 
+def with_opacity(color: str, percent: int) -> str:
+    """'#aarrggbb' (or '#rrggbb') with its alpha set to `percent` (0 to 100) of full."""
+    rgb = color[-6:]
+    return f"#{round(max(0, min(100, percent)) * 255 / 100):02x}{rgb}"
+
+
 ELITE_ORANGE = Palette(
     "Elite orange", "#f97316", "#e6000000", "#fdba74", "#c2790e", "#e5e7eb", "#9ca3af", "#86efac", "#fbbf24", "#7dd3fc",
     "#f87171", ("#fbbf24", "#67e8f9", "#c4b5fd"), ("#4fc3f7", "#81c784", "#ba68c8", "#ff8c0d"))
@@ -147,6 +156,7 @@ class Look:
     text_level: int = 0       # steps up (+) or down (-) the four text sizes
     pad_extra: int = 0        # pixels added to each side of a card's own padding
     line_extra: int = 0       # pixels added between lines
+    panel_opacity: Optional[int] = None    # how opaque a card's background is, in percent (None: the scheme's own, about 90%)
 
     # --- colors ------------------------------------------------------------------------------------------------
     def color(self, role: str) -> str:
@@ -155,6 +165,8 @@ class Look:
             raise ValueError(f"unknown color role: {role!r}")
         if role == "faint":
             return darken(self.palette.muted, FAINT_FACTOR)
+        if role == "fill" and self.panel_opacity is not None:
+            return with_opacity(self.palette.fill, self.panel_opacity)
         return getattr(self.palette, role)
 
     def accent(self, index: int) -> str:
@@ -211,7 +223,7 @@ LEGACY = Look(ELITE_ORANGE, 0, 0, 0)
 DEFAULT = Look(ELITE_ORANGE, DEFAULT_TEXT_LEVEL, DEFAULT_PADDING, DEFAULT_SPACING)
 
 
-def look_from_choices(scheme: Optional[str], text_level: int, pad_extra: int, line_extra: int) -> Look:
+def look_from_choices(scheme: Optional[str], text_level: int, pad_extra: int, line_extra: int, panel_opacity: Optional[int] = None) -> Look:
     """A `Look` from stored choices, clamping anything out of range so damaged settings never break drawing."""
     levels = [value for _label, value in TEXT_CHOICES]
     return Look(
@@ -219,6 +231,7 @@ def look_from_choices(scheme: Optional[str], text_level: int, pad_extra: int, li
         max(min(levels), min(max(levels), int(text_level))),
         max(0, min(40, int(pad_extra))),
         max(0, min(20, int(line_extra))),
+        None if panel_opacity is None else max(MIN_OPACITY, min(100, int(panel_opacity))),
     )
 
 

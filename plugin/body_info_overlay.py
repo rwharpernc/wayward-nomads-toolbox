@@ -24,7 +24,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay, overlay_appearance, overlay_placement, restore, system_survey
+from . import chemistry, overlay, overlay_appearance, overlay_placement, restore, system_survey
 from .overlay import OverlayClient
 from .overlay_card import Card, CardLayout, LiveCard, Row, Ticker, cut
 from .overlay_style import LEGACY, Look
@@ -97,6 +97,18 @@ def _finished(body: Body) -> bool:
     return body.scanned and body.kind == "planet" and body.mapped and (body.bio == 0 or body.life_done)
 
 
+def _material(name: str) -> str:
+    """A material of the body's surface as the card writes it: the element's symbol (Fe, S) or, with full names, the name."""
+    symbol = chemistry.element(name) if chemistry.symbols_on() else None
+    return symbol or name.capitalize()
+
+
+def _spaced(name: str) -> str:
+    """'CarbonDioxide' as 'Carbon dioxide' (the scan writes a gas without spaces)."""
+    spaced = "".join(" " + c.lower() if c.isupper() and i else c for i, c in enumerate(name)).strip()
+    return spaced[:1].upper() + spaced[1:]
+
+
 def _clean(text: str, suffix: str = "") -> str:
     text = text.strip()
     if suffix and text.casefold().endswith(suffix):
@@ -128,7 +140,7 @@ def build_card(body: Optional[Body]) -> Card:
     if flags:
         header.append((", ".join(flags), "info"))
     if body.materials:
-        header.append((" · ".join(f"{name.capitalize()} {percent:.1f}%" for name, percent in sorted(body.materials, key=lambda m: -m[1])), "muted"))
+        header.append((" · ".join(f"{_material(name)} {percent:.1f}%" for name, percent in sorted(body.materials, key=lambda m: -m[1])), "muted"))
     rows: List[Row] = []
     value = body.scan_value()
     if value:
@@ -141,9 +153,9 @@ def build_card(body: Optional[Body]) -> Card:
         if body.pressure_atm:
             rows.append(("Pressure", f"{body.pressure_atm:.3f} atm", "text"))
         if body.landable or body.atmosphere:
-            parts = " · ".join(f"{name} {percent:.1f}%" for name, percent in sorted(body.atmosphere_parts, key=lambda a: -a[1]))
-            rows.append(("Atmosphere" + (f"\n{parts}" if parts else ""), _clean(body.atmosphere, " atmosphere") or "None", "text"))
-            rows.append(("Volcanism", _clean(body.volcanism, " volcanism") or "None", "text"))
+            parts = " · ".join(f"{chemistry.gas(name) if chemistry.symbols_on() else _spaced(name)} {percent:.1f}%" for name, percent in sorted(body.atmosphere_parts, key=lambda a: -a[1]))
+            rows.append(("Atmosphere" + (f"\n{parts}" if parts else ""), chemistry.shorten(_clean(body.atmosphere, " atmosphere")) or "None", "text"))
+            rows.append(("Volcanism", chemistry.shorten(_clean(body.volcanism, " volcanism")) or "None", "text"))
     if body.bio:
         done = len(set(body.analysed))
         rows.append(("Life", f"{body.bio} signal{'s' if body.bio != 1 else ''}, {done} done", "info"))
@@ -250,7 +262,8 @@ def build_settings(notebook: nb.Notebook) -> None:
         frame,
         text=("A card on your in-game overlay, through EDMCModernOverlay (a separate, optional helper WNTB does not install or launch; its connection "
               "settings are on the Overlay Connection tab). It describes one body: its class, whether it is undiscovered or terraformable or mapped, the "
-              "estimated scan value, temperature, gravity, pressure, atmosphere, volcanism, life and geology signals, distance and main materials. It "
+              "estimated scan value, temperature, gravity, pressure, atmosphere, volcanism, life and geology signals, distance and its materials, written as "
+              "element symbols and formulas (Fe, S, CO2) unless you choose full names below. It "
               "shows for the body you have targeted, and for the body you are close to. Everything comes from your journal and the game's Status.json; "
               "nothing is sent anywhere."),
         wraplength=440, justify=tk.LEFT,
@@ -267,21 +280,27 @@ def build_settings(notebook: nb.Notebook) -> None:
     nb.Checkbutton(frame, text="Show the body I have targeted", variable=_vars["targeted"]).grid(row=3, column=0, sticky=tk.W, padx=(30, 10), pady=2)
     nb.Checkbutton(frame, text="Show the body I am close to", variable=_vars["near"]).grid(row=4, column=0, sticky=tk.W, padx=(30, 10), pady=2)
 
+    style_row = tk.Frame(frame)
+    style_row.grid(row=5, column=0, sticky=tk.W, padx=(30, 10), pady=2)
+    nb.Label(style_row, text="Element and compound names:").pack(side=tk.LEFT)
+    _vars["style"] = tk.StringVar(value=next((label for label, value in chemistry.STYLE_CHOICES if value == chemistry.style()), chemistry.STYLE_CHOICES[0][0]))
+    tk.OptionMenu(style_row, _vars["style"], *[label for label, _v in chemistry.STYLE_CHOICES]).pack(side=tk.LEFT, padx=4)
+
     nb.Label(
         frame,
         text=("What WNTB cannot know: a body's details are known only after you have scanned it, so a body you have not scanned shows only its "
               "name. The scan value is an estimate and does not include what mapping pays. Gravity of 2.0 g and over is shown in the warning color; "
               "the real limit differs by ship and vehicle."),
         wraplength=440, justify=tk.LEFT,
-    ).grid(row=5, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+    ).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 4))
 
     action_row = tk.Frame(frame)
-    action_row.grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 2))
+    action_row.grid(row=7, column=0, sticky=tk.W, padx=10, pady=(6, 2))
     tk.Button(action_row, text="Test Card", command=_test_card).pack(side=tk.LEFT)
     _result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
     _result_label.pack(side=tk.LEFT, padx=(10, 0))
     nb.Label(frame, text="(Test Card works even while disabled above, and reports whether the overlay was actually reachable.)",
-             wraplength=440, justify=tk.LEFT).grid(row=7, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+             wraplength=440, justify=tk.LEFT).grid(row=8, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _test_card() -> None:
@@ -310,3 +329,5 @@ def _test_card() -> None:
 def save_settings() -> None:
     if _vars:
         save_config(BodyInfoConfig(enabled=bool(_vars["enabled"].get()), targeted=bool(_vars["targeted"].get()), near=bool(_vars["near"].get())))
+        chosen = next((value for label, value in chemistry.STYLE_CHOICES if label == _vars["style"].get()), chemistry.DEFAULT_STYLE)
+        config.set(chemistry.CFG_STYLE, chosen)

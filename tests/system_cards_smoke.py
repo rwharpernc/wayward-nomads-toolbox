@@ -177,6 +177,14 @@ for look in (S.LEGACY, S.DEFAULT):
     for label, layout, card in (("targets", TO.LAYOUT, TO.build_card(many, 0, 8, True)), ("body info", BI.LAYOUT, BI.build_card(many.bodies[1]))):
         shown = " ".join(t[0] for t in layout.plan(card, look)[1])
         check(all(g in shown for g in ("Bacterium", "Frutexa", "Tussock", "Fungoida", "Osseus")) and "…" not in shown, f"{label}: every genus is shown in full: {shown}")
+chem_body = BI.sample_body()
+chem_body.materials = [("iron", 20.9), ("sulphur", 20.3), ("sodium", 3.0), ("painite", 1.0)]
+chem_body.atmosphere_parts = [("CarbonDioxide", 100.0)]
+chem_body.volcanism = "minor sulphur dioxide magma volcanism"
+chem_card = BI.build_card(chem_body)
+check(any("Fe 20.9%" in h[0] and "S 20.3%" in h[0] and "Na 3.0%" in h[0] and "Painite 1.0%" in h[0] for h in chem_card.header), f"materials are written as element symbols: {chem_card.header}")
+check(any(r[0].startswith("Atmosphere") and "CO2 100.0%" in r[0] and r[1] == "thin CO2" for r in chem_card.rows), f"the atmosphere is written with formulas: {chem_card.rows}")
+check(any(r[0] == "Volcanism" and r[1] == "minor SO2 magma" for r in chem_card.rows), "and so is the volcanism")
 ff_body = BI.sample_body()
 check(any("First footfall" in h[0] for h in BI.build_card(ff_body).header), "the Body info card flags a first footfall")
 check(any(r[0] == "Footfall" and "5x" in r[1] for r in BI.build_card(ff_body).rows), "and says exobiology pays five times there")

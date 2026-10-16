@@ -45,13 +45,15 @@ own entry on **Overlay Placement**.
 
 - **Bio status** (top center). The heading is *Biological signals* with a count of how many you have analysed and a progress bar, which moves a third of a genus
   with each Log or Sample and all of it once analysed. While you are sampling a genus it shows the species and color variant in large type with three circles
-  (filled as you take each sample), what the species pays (**five times as much on a first footfall**, marked), and how far you are from the last sample
+  (filled as you take each sample), what the species pays (**five times as much on a first footfall**, with the reason on its own line), and how far you are from the last sample
   against the distance the genus needs (`Move 122 m further: 78 m of 200 m`, or `Clear` once you can take the next). With nothing in progress it lists each
   genus with the distance it needs between samples, and `Done` once analysed. A plant you have identified with the Composition Scanner is named at the foot
   until you sample it. On a body you have not mapped it says to map it.
-- **Biology** (bottom, left of center). Every genus on the body with the species it could be (candidates in the info color, a single likely species with a `~`
-  before its value) or is once a sample has named it (with its color variant), what each pays, and what the body could pay in all (`Rewards up to 11.9M CR (first
-  footfall bonus: 59.6M CR)`). Analysed species are in the good color.
+- **Biology** (bottom, left of center). Every genus on the body with the species it could be or is once a sample has named it (with its color variant), and what
+  it pays. While the species is open the genus shows the **range** it could pay (`1.0M - 5.3M CR`), and each candidate its value and a percentage (`~50%`); a single
+  likely species has a `~` before its value. The footer is the range the whole body could pay (`Rewards: 7.6M - 11.9M CR`), and with a first footfall the larger figure
+  is on its own line (`First footfall (5x): 38.2M - 59.6M CR`). Analysed species are in the good color. **The percentages are an even share:** the data says which
+  species the body's conditions allow, not how likely each one is, so with two candidates each shows about 50%. Treat them as a count of the candidates, not as odds.
 - **Bio radar**. A top-down plot centered on you with straight ahead up. Each sample you took has a circle as wide as the genus's minimum distance between
   samples: **red** while you are inside it (too close for the next sample), **green** once you are clear. The ship (where it touched down) and the SRV (where you
   launched or left it) are marked `S` and `V`. Under the plot: the distance to the ship, the SRV and your first two samples, each with a **little pointer**
@@ -109,6 +111,7 @@ The cards are plain dark panels, so they sit quietly over the game; the text siz
 |---|---|---|
 | The species before you map the body | The scan gives only the number of biological signals; the genera come with the mapping scan. | Map the body. Until then Bio status shows the signal count. |
 | The color variant before the first sample | The variant is named by the first sample (or the Composition Scanner). WNTB predicts the species from the body's conditions, not the variant. | Sample, or scan the plant with the Composition Scanner. |
+| A real chance for each candidate species | The data lists which species a body's conditions allow, with no frequency for each, so the percentages are an even share of the candidates. | The sample names the real species. |
 | A certain species before a sample names it | The prediction is a list of candidates from the body's conditions; unknown conditions never eliminate a species, so a candidate may be listed that the game would not allow. | The sample names the real species. |
 | The position of a sample taken while EDMC was closed | The journal does not record positions; WNTB reads yours from `Status.json` as you sample. | None: samples taken with EDMC running are kept for the body across restarts. |
 | The SRV's position | The journal does not give it; WNTB uses where you were when you launched or left it. | None. |

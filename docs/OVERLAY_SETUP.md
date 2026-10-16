@@ -67,7 +67,7 @@ makes sense, a test button:
 | **Route** | The route card (how many systems to list, whether to show the running expedition) | **Test Card** |
 | **Exobiology** | Four switches, one for each Exobiology card | **Test Cards** |
 | **System targets** | The list of bodies to map and sample (value threshold, rows, life list) | **Test Card** |
-| **Body info** | The body card (targeted body, nearby body) | **Test Card** |
+| **Body info** | The body card (targeted body, nearby body, symbols or full names for elements and compounds) | **Test Card** |
 | **Missions** | The missions card (rows to show, next jump, urgent limit) | **Test Card** |
 | **Landing** | The assigned pad and diagram | **Test Overlay** |
 | **Mining** | The mining stats | |
@@ -123,6 +123,8 @@ This needs EDMCModernOverlay; without it (or if the call fails) a display on the
 short of the edge. The Overlay Placement tab has a switch, **Carry displays on the right to the screen edge**, that turns this off
 (and clears the offsets) if displays end up in the wrong place. The bottom edge needs none of this. The two Mining displays share one overlay group, so they stop at the limit
 rather than being offset.
+
+**Opacity and clicking through.** **Settings → Overlays → Appearance → Panel opacity** sets how solid every WNTB display's background is (100%, 90% by default, 75%, 60%, 40% or 25%); the text stays solid, so a faint panel lets the game show through behind readable text. The overlay itself is click-through: EDMCModernOverlay draws its window so mouse clicks reach the game underneath, and only becomes clickable while its own drag or controller mode is on, so there is nothing to set in WNTB. EDMCModernOverlay also has an overall opacity in its own settings that dims everything it draws, text included. If clicks do not pass through, see that program's click-through notes (on GNOME its extension is needed).
 
 **Plain panels.** The Route, System targets, Body info and Exobiology cards and the Bio radar are plain dark panels, with no colored bar or outline, so they sit quietly over the game.
 

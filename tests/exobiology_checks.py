@@ -57,14 +57,15 @@ class Cards(unittest.TestCase):
         self.assertEqual(card.dots, (True, True, False))
         self.assertEqual(card.badge, "1 of 4 analysed")
         self.assertAlmostEqual(card.progress, (2 / 3 + 1) / 4)     # the Tussock is two samples in and the Osseus is analysed
-        self.assertIn("5.0M CR (first footfall bonus)", card.header[0][0])
-        self.assertTrue(card.header[1][0].startswith("Move 122 m further"))
-        self.assertEqual(card.header[1][1], "warn")
+        self.assertEqual(card.header[0][0], "5.0M CR")
+        self.assertTrue(card.header[1][0].startswith("First footfall bonus"))               # the reason is on its own line, not wrapped onto the reward
+        self.assertTrue(card.header[2][0].startswith("Move 122 m further"))
+        self.assertEqual(card.header[2][1], "warn")
 
     def test_status_card_says_clear_once_far_enough_and_with_nothing_active_lists_the_genera(self):
         genera = tuple(dataclasses.replace(g, distance_m=250.0) if g.key == "t" else g for g in self.view.genera)
         clear = EX.build_status_card(dataclasses.replace(self.view, genera=genera), "Sample System")
-        self.assertEqual(clear.header[1][1], "ok")
+        self.assertEqual(clear.header[2][1], "ok")
         idle = EX.build_status_card(dataclasses.replace(self.view, active=None), "Sample System")
         self.assertEqual([r[0] for r in idle.rows], ["Bacterium", "Frutexa", "Tussock Pennatis - Lime", "Osseus Fractus - Red"])
         self.assertEqual([r[1] for r in idle.rows], ["500 m apart", "150 m apart", "200 m apart", "Done"])
@@ -92,12 +93,12 @@ class Cards(unittest.TestCase):
     def test_list_card_shows_candidates_confirmed_species_and_the_rewards(self):
         card = EX.build_list_card(self.view, "Sample System")
         names = [r[0] for r in card.rows]
-        self.assertTrue(names[0].startswith("Bacterium\nBacterium Nebulus  5.3M CR\nBacterium Aurasus  1.0M CR"))
-        self.assertEqual(card.rows[0][1], "up to 5.3M CR")
+        self.assertTrue(names[0].startswith("Bacterium\nBacterium Nebulus  5.3M CR  ~50%\nBacterium Aurasus  1.0M CR  ~50%"))
+        self.assertEqual(card.rows[0][1], "1.0M - 5.3M CR")                         # the range the genus could pay
         self.assertEqual(card.rows[1], ("Frutexa Fera", "~1.6M CR", "info"))
         self.assertEqual(card.rows[2][0], "Tussock Pennatis - Lime")
         self.assertEqual(card.rows[3][2], "ok")                       # analysed
-        self.assertIn("Rewards up to 11.9M CR (first footfall bonus: 59.6M CR)", card.footer[0])
+        self.assertEqual(card.footer[0], "Rewards: 7.6M - 11.9M CR\nFirst footfall (5x): 38.2M - 59.6M CR")      # the range, and the bonus on its own line
         self.assertFalse(EX.build_list_card(organic_scan.BodyView("x", ())))
 
     def test_popup_card_and_its_first_footfall_value(self):
@@ -123,6 +124,37 @@ class Cards(unittest.TestCase):
                     self.assertLessEqual(y + look.line_px(base), top + height, f"{layout.prefix}: {text}")
             if look is S.DEFAULT:
                 self.assertEqual(len(rec.circles), 0)
+
+
+class Ranges(unittest.TestCase):
+    def test_a_genus_pays_a_range_until_a_sample_names_the_species(self):
+        genus = organic_scan.GenusView("b", "Bacterium", 500.0, candidates=(("A", 1_000_000), ("B", 5_000_000), ("C", 3_000_000)))
+        self.assertEqual(genus.value_range, (1_000_000, 5_000_000))
+        named = organic_scan.GenusView("b", "Bacterium", 500.0, species="A", value=1_000_000, candidates=genus.candidates)
+        self.assertEqual(named.value_range, (1_000_000, 1_000_000))
+        self.assertIsNone(organic_scan.GenusView("x", "X", 100.0).value_range)
+
+    def test_the_odds_are_an_even_share_and_only_while_the_species_is_open(self):
+        genus = organic_scan.GenusView("b", "Bacterium", 500.0, candidates=(("A", 1), ("B", 2), ("C", 3)))
+        self.assertEqual([p for _n, _v, p in genus.odds()], [33, 33, 33])
+        self.assertEqual([p for _n, _v, p in organic_scan.GenusView("b", "B", 1.0, candidates=(("A", 1),)).odds()], [100])
+        self.assertEqual(organic_scan.GenusView("b", "B", 1.0, species="A", candidates=(("A", 1), ("B", 2))).odds(), ())
+
+    def test_a_body_adds_its_genera_up_and_says_nothing_when_no_value_is_known(self):
+        view = EX.sample_view()
+        self.assertEqual(view.reward_range, (7_632_500, 11_922_400))
+        self.assertIsNone(organic_scan.BodyView("x", (organic_scan.GenusView("t", "T", 1.0),)).reward_range)
+
+    def test_the_footer_without_a_first_footfall_is_a_single_line(self):
+        view = dataclasses.replace(EX.sample_view(), first_footfall=False)
+        self.assertEqual(EX.build_list_card(view).footer[0], "Rewards: 7.6M - 11.9M CR")
+
+    def test_a_footer_of_two_lines_is_drawn_as_two_lines(self):
+        rec = Recorder()
+        EX.LAYOUT_LIST.render(EX.build_list_card(EX.sample_view()), rec, S.DEFAULT)
+        texts = [t for t in rec.texts()]
+        self.assertIn("Rewards: 7.6M - 11.9M CR", texts)
+        self.assertIn("First footfall (5x): 38.2M - 59.6M CR", texts)
 
 
 class Radar(unittest.TestCase):

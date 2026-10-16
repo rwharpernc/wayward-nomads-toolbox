@@ -194,5 +194,29 @@ class SavedChoicesTests(unittest.TestCase):
                 self.assertIn("overlay_appearance.current_look()", handle.read(), filename)
 
 
+class OpacityTests(unittest.TestCase):
+    def test_with_opacity_sets_the_alpha_and_keeps_the_color(self):
+        self.assertEqual(S.with_opacity("#e6000000", 100), "#ff000000")
+        self.assertEqual(S.with_opacity("#e6102030", 50), "#80102030")
+        self.assertEqual(S.with_opacity("#102030", 0), "#00102030")
+
+    def test_the_fill_follows_the_chosen_opacity_and_nothing_else_does(self):
+        solid = S.look_from_choices("Elite orange", 0, 0, 0, 100)
+        faint = S.look_from_choices("Elite orange", 0, 0, 0, 25)
+        self.assertEqual((solid.color("fill"), faint.color("fill")), ("#ff000000", "#40000000"))
+        self.assertEqual(solid.color("text"), faint.color("text"))
+        self.assertEqual(S.look_from_choices("Elite orange", 0, 0, 0).color("fill"), S.ELITE_ORANGE.fill)     # no choice: the scheme's own
+        self.assertEqual(S.LEGACY.color("fill"), S.ELITE_ORANGE.fill)
+
+    def test_a_damaged_opacity_is_kept_within_range(self):
+        self.assertEqual(S.look_from_choices(None, 0, 0, 0, 500).panel_opacity, 100)
+        self.assertEqual(S.look_from_choices(None, 0, 0, 0, 0).panel_opacity, S.MIN_OPACITY)
+
+    def test_the_menu_offers_the_default_and_stays_in_range(self):
+        values = [v for _label, v in S.OPACITY_CHOICES]
+        self.assertIn(S.DEFAULT_OPACITY, values)
+        self.assertTrue(all(S.MIN_OPACITY <= v <= 100 for v in values))
+
+
 if __name__ == "__main__":
     unittest.main()

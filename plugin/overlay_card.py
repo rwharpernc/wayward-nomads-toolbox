@@ -201,9 +201,10 @@ class CardLayout:
             text, role = card.footer
             divider(y)
             y += 1 + RULE_GAP
-            for line in self.wrap(text, look, inner):
-                texts.append((line, role, x, y, size))
-                y += step
+            for chunk in text.split("\n"):                    # a footer may be several lines, each wrapped on its own
+                for line in self.wrap(chunk, look, inner):
+                    texts.append((line, role, x, y, size))
+                    y += step
         height = max(y - LINE_GAP, look.line_px("normal")) + 2 * pad_y
         return shapes, texts, inner + 2 * pad_x, height
 

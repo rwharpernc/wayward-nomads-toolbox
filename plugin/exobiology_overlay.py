@@ -78,6 +78,11 @@ def _credits(value: Optional[int]) -> str:
     return f"{credits_text(value)} CR" if value else "?"
 
 
+def _range(low: int, high: int) -> str:
+    """'4.2M - 9.8M CR', or '5.0M CR' when it can only be one amount."""
+    return _credits(low) if low == high else f"{credits_text(low)} - {_credits(high)}"
+
+
 def _metres(meters: float) -> str:
     return f"{meters:.0f} m"
 
@@ -109,9 +114,11 @@ def build_status_card(view: Optional[organic_scan.BodyView], system: str = "", s
     if active is not None:
         filled = min(organic_scan.REQUIRED_SAMPLES, max(len(active.positions), active.stage))
         header = []
-        reward = active.best_value
-        if reward:
-            header.append((f"{_credits(reward * view.multiplier)}" + (" (first footfall bonus)" if view.first_footfall else ""), "text"))
+        span = active.value_range
+        if span:
+            header.append((_range(span[0] * view.multiplier, span[1] * view.multiplier), "text"))
+            if view.first_footfall:
+                header.append(("First footfall bonus: five times the usual reward", "info"))
         header.append(_distance_line(active) or (f"Samples must be {_metres(active.min_distance_m)} apart", "muted"))
         header.extend(_tracking(view))
         return Card(tuple(header), title=title, badge=badge, progress=progress, headline=(active.title, "title"),
@@ -152,14 +159,18 @@ def build_list_card(view: Optional[organic_scan.BodyView], system: str = "") -> 
             name, value = genus.candidates[0]
             rows.append((name, "~" + _credits(value), "info"))
         elif genus.candidates:
-            lines = "\n".join(f"{name}  {_credits(value)}" for name, value in sorted(genus.candidates, key=lambda c: -c[1]))
-            rows.append((f"{genus.name}\n{lines}", f"up to {_credits(genus.best_value)}", "info"))
+            lines = "\n".join(f"{name}  {_credits(value)}  ~{percent}%" for name, value, percent in sorted(genus.odds(), key=lambda c: -c[1]))
+            span = genus.value_range
+            rows.append((f"{genus.name}\n{lines}", _range(*span) if span else "?", "info"))
         else:
             rows.append((genus.name, "unknown", "muted"))
-    total = view.reward_up_to
+    span = view.reward_range
     footer = None
-    if total:
-        footer = (f"Rewards up to {_credits(total)}" + (f" (first footfall bonus: {_credits(total * view.multiplier)})" if view.first_footfall else ""), "title")
+    if span and span[1]:
+        text = f"Rewards: {_range(*span)}"
+        if view.first_footfall:                                    # the reason for the larger figure goes on its own line so nothing wraps
+            text += f"\nFirst footfall (5x): {_range(span[0] * view.multiplier, span[1] * view.multiplier)}"
+        footer = (text, "title")
     count = view.signal_count or len(view.genera)
     return Card((), tuple(rows), footer, title=(f"Bio signals {_short(view, system)}", "title"), badge=f"{view.analysed} of {count} done")
 

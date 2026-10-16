@@ -315,6 +315,22 @@ class GenusView:
         return self.variant or self.species or self.name
 
     @property
+    def value_range(self) -> Optional[Tuple[int, int]]:
+        """(least, most) this genus could pay: the confirmed species' value twice, else the lowest and highest of the candidates; None when neither is known."""
+        if self.value:
+            return self.value, self.value
+        values = [v for _n, v in self.candidates if v]
+        return (min(values), max(values)) if values else None
+
+    def odds(self) -> Tuple[Tuple[str, int, int], ...]:
+        """(species, value, percent) for each candidate, the percent being an even share: the data says which species the body's conditions allow, not how
+        likely each one is, so an even split is the honest estimate (100 for a single candidate). Empty once a sample has named the species."""
+        if self.species or not self.candidates:
+            return ()
+        share = round(100 / len(self.candidates))
+        return tuple((name, value, share) for name, value in self.candidates)
+
+    @property
     def best_value(self) -> Optional[int]:
         """What it pays: the confirmed species' value, else the highest of the candidates (None when neither is known)."""
         if self.value:
@@ -362,6 +378,12 @@ class BodyView:
         with every sample and not only when one is analysed."""
         total = self.signal_count or len(self.genera)
         return min(1.0, sum(min(g.stage, REQUIRED_SAMPLES) / REQUIRED_SAMPLES for g in self.genera) / total) if total else 0.0
+
+    @property
+    def reward_range(self) -> Optional[Tuple[int, int]]:
+        """(least, most) the whole body could pay, the genera added up, each at its lowest and highest possible species (the confirmed ones exactly)."""
+        ranges = [g.value_range for g in self.genera if g.value_range]
+        return (sum(r[0] for r in ranges), sum(r[1] for r in ranges)) if ranges else None
 
     @property
     def reward_up_to(self) -> int:
