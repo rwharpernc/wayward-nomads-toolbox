@@ -17,6 +17,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 - **The Exobiology cards lead you back to plants you identified.** The location of a plant scanned with the Composition Scanner is kept (up to four of the genus being surveyed, per body, across restarts); the Bio radar marks them, draws a pointer to the nearest and says how far and which way, and Bio status shows the same line. A plant drops off when you sample it, and the genus clears when analysed. Each distance under the radar (ship, SRV, your first two samples and the tracked plant) has a little pointer turned toward it, relative to the way you face.
 
+- **System targets remembers where you left off.** Each system's survey is now saved for each commander (the 60 most recently visited systems) and comes back when you return, whether
+  after a relog, a break or a later visit; for a system you were in before this existed it is rebuilt from your own journals (the newest 80). The card has a summary line (`1 mapped · life 1 of 3 done`)
+  and a **Done** section listing the bodies you have finished, so after a break you see what is left and what is finished. The card no longer shows `1 of 27 scanned` when you had scanned them all on an earlier visit.
+
 ### Documentation
 - A new guide, [Exobiology](docs/guide/exobiology.md), brings the Organic Scanning panel, the four overlay cards, plant waypoints and first footfall into one place (they were spread across the Exploration guide); the Organic Scanning specification covers the overlay view, waypoints and first footfall; Troubleshooting, Getting started, Overlay setup, Technical notes, Status, Linux testing and the attributions are brought up to date.
 

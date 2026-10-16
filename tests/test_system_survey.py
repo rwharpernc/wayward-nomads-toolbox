@@ -177,6 +177,148 @@ class RestoreTests(unittest.TestCase):
         self.assertEqual(S.RESTORE_EVENT, restore.RESTORE_EVENT)
 
 
+class Finished(Feed):
+    def test_a_mapped_body_with_no_life_is_finished_and_one_with_life_is_until_all_is_analysed(self):
+        self.feed(scan("A 1", "Earthlike body", 1.0), scan("A 2", "Water world", 1.0), scan("A 3", "Icy body", 0.1))
+        by = {b.short: b for b in self.survey.bodies.values()}
+        self.feed({"event": "SAAScanComplete", "BodyName": by["A 1"].name, "BodyID": by["A 1"].body_id})
+        self.feed({"event": "SAAScanComplete", "BodyName": by["A 2"].name, "BodyID": by["A 2"].body_id},
+                  {"event": "SAASignalsFound", "BodyName": by["A 2"].name, "BodyID": by["A 2"].body_id, "Signals": [{"Type": S.BIO_TYPE, "Count": 1}],
+                   "Genuses": [{"Genus": "$a;", "Genus_Localised": "Bacterium"}]})
+        self.assertEqual([b.short for b in self.survey.finished()], ["A 1"])
+        self.assertEqual((self.survey.mapped_count(), self.survey.life_counts()), (2, (0, 1)))
+        self.feed({"event": "ScanOrganic", "ScanType": "Analyse", "Genus_Localised": "Bacterium", "Body": by["A 2"].body_id})
+        self.assertEqual([b.short for b in self.survey.finished()], ["A 1", "A 2"])
+        self.assertEqual(self.survey.life_counts(), (1, 1))
+
+
+class StoreTests(unittest.TestCase):
+    """The per-commander saved surveys (system_survey_store.py): what was known about a system comes back on a later visit, and never crosses commanders."""
+
+    def setUp(self):
+        from plugin import system_survey_store as Store
+        self.Store = Store
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+
+    def new_store(self, cmdr):
+        store = self.Store.SurveyStore()
+        store.delay = 0.01
+        store.start(self.folder.name)
+        store.set_commander(cmdr)
+        return store
+
+    def surveyed(self):
+        survey = S.SystemSurvey()
+        survey.handle_event(arrive())
+        survey.handle_event({"event": "FSSDiscoveryScan", "BodyCount": 9, "Progress": 0.5})
+        for number, mass in (("A 1", 1.0), ("A 2", 0.5)):
+            survey.handle_event(scan(number, "Earthlike body", mass))
+        survey.handle_event({"event": "SAAScanComplete", "BodyName": f"{SYSTEM} A 1", "BodyID": hash("A 1") % 1000})
+        return survey
+
+    def test_a_saved_system_comes_back_on_a_later_visit(self):
+        store = self.new_store("CMDR A")
+        store.remember(self.surveyed())
+        store.flush()
+        later = S.SystemSurvey()
+        later.handle_event(arrive())
+        later_store = self.new_store("cmdr a")                      # a new session reads the file; the commander key ignores case
+        self.assertEqual(later_store.merge_into(later, S.Body), 2)
+        self.assertEqual((later.scanned_count(), later.honked, later.body_count), (2, True, 9))
+        self.assertEqual(sorted(b.mapped for b in later.bodies.values()), [False, True])
+
+    def test_another_commander_sees_nothing_of_it(self):
+        store = self.new_store("CMDR A")
+        store.remember(self.surveyed())
+        store.flush()
+        other = S.SystemSurvey()
+        other.handle_event(arrive())
+        self.assertEqual(self.new_store("CMDR B").merge_into(other, S.Body), 0)
+        self.assertEqual(other.scanned_count(), 0)
+
+    def test_what_the_live_survey_knows_wins_and_the_saved_copy_fills_the_gaps(self):
+        store = self.new_store("A")
+        store.remember(self.surveyed())
+        store.flush()
+        live = S.SystemSurvey()
+        live.handle_event(arrive())
+        live.handle_event(scan("A 1", "Water world", 3.0))                 # rescanned this visit: its own data stays
+        store.merge_into(live, S.Body)
+        first = next(b for b in live.bodies.values() if b.short == "A 1")
+        self.assertEqual(first.planet_class, "Water world")
+        self.assertTrue(first.mapped)                                       # but the mapping the saved copy knew is added
+        self.assertEqual(live.scanned_count(), 2)
+
+    def test_only_the_most_recent_systems_are_kept(self):
+        store = self.new_store("A")
+        for number in range(self.Store.MAX_SYSTEMS + 5):
+            survey = S.SystemSurvey()
+            survey.handle_event(dict(arrive(f"System {number}"), SystemAddress=1000 + number))
+            survey.handle_event(dict(scan("1"), StarSystem=f"System {number}"))
+            store.remember(survey)
+            store.flush()
+        self.assertEqual(len(store._systems()), self.Store.MAX_SYSTEMS)
+        self.assertIsNone(store.saved("System 0", 1000))
+        self.assertIsNotNone(store.saved(f"System {self.Store.MAX_SYSTEMS + 4}", 1000 + self.Store.MAX_SYSTEMS + 4))
+
+    def test_a_system_with_nothing_in_it_is_not_saved(self):
+        store = self.new_store("A")
+        empty = S.SystemSurvey()
+        empty.handle_event(arrive())
+        store.remember(empty)
+        store.flush()
+        self.assertIsNone(store.saved(SYSTEM, 99))
+
+    def test_a_damaged_file_gives_an_empty_store(self):
+        with open(os.path.join(self.folder.name, self.Store.STATE_FILENAME), "w", encoding="utf-8") as handle:
+            handle.write("not json")
+        self.assertIsNone(self.new_store("A").saved(SYSTEM, 99))
+
+
+class RebuildTests(unittest.TestCase):
+    """rebuild_system: one system from every visit in the commander's journals, however many other systems were visited between."""
+
+    def write(self, folder, name, lines):
+        with open(os.path.join(folder, name), "w", encoding="utf-8") as handle:
+            handle.write(chr(10).join(json.dumps(line) for line in lines) + chr(10))
+
+    def test_every_visit_to_the_system_is_replayed_and_other_systems_and_commanders_are_left_out(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.write(folder, "Journal.2026-10-16T000000.01.log", [
+                {"event": "LoadGame", "Commander": "A"}, arrive(), scan("A 1", "Earthlike body", 1.0), arrive("Elsewhere"), dict(scan("1"), StarSystem="Elsewhere")])
+            self.write(folder, "Journal.2026-10-16T010000.01.log", [
+                {"event": "LoadGame", "Commander": "B"}, arrive(), scan("B 1", "Earthlike body", 1.0)])
+            self.write(folder, "Journal.2026-10-16T020000.01.log", [
+                {"event": "LoadGame", "Commander": "A"}, arrive("Elsewhere"), arrive(), scan("A 2", "Water world", 1.0)])
+            for index, name in enumerate(sorted(os.listdir(folder))):
+                os.utime(os.path.join(folder, name), (index + 1, index + 1))
+            found = S.rebuild_system(SYSTEM, "A", folder)
+            self.assertEqual(sorted(b.short for b in found.bodies.values()), sorted(S.short_name(f"{SYSTEM} {n}", SYSTEM) for n in ("A 1", "A 2")))
+            self.assertIsNone(S.rebuild_system("Never Been", "A", folder))
+            self.assertEqual(S.rebuild_system(SYSTEM, "B", folder).scanned_count(), 1)
+
+    def test_absorbing_a_rebuilt_survey_adds_to_what_was_saved(self):
+        from plugin import system_survey_store as Store
+        with tempfile.TemporaryDirectory() as folder:
+            store = Store.SurveyStore()
+            store.start(folder)
+            store.set_commander("A")
+            first = S.SystemSurvey()
+            first.handle_event(arrive())
+            first.handle_event(scan("A 1", "Earthlike body", 1.0))
+            store.remember(first)
+            store.flush()
+            older = S.SystemSurvey()
+            older.handle_event(arrive())
+            older.handle_event(scan("A 2", "Water world", 1.0))
+            store.absorb(older, S.Body)
+            live = S.SystemSurvey()
+            live.handle_event(arrive())
+            store.merge_into(live, S.Body)
+            self.assertEqual(live.scanned_count(), 2)
+
+
 class Footfall(Feed):
     def test_a_landable_body_nobody_has_stood_on_is_a_first_footfall(self):
         self.feed(scan("1", WasFootfalled=False))

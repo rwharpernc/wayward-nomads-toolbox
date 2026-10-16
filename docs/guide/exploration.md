@@ -430,6 +430,11 @@ They need [EDMCModernOverlay](../OVERLAY_SETUP.md); nothing is sent anywhere, th
   and a count (`4 of 8 scanned`) once you have honked, and a message says so when nothing at or above your threshold is left (`Nothing over 100k left to map or sample`;
   a long message continues on the next line). Each row shows the body, a muted tag and distance (`HMC  82k ls`) or the genera once known, and the value on the right.
 - **Also look up bodies other commanders have scanned** (off until you tick it): right after you honk, WNTB asks [EDSM](https://www.edsm.net/) once for the system's planets (it sends only the system name; see [What goes on the internet](internet-and-privacy.md)) and lists the worthwhile ones with their estimated value, marked `EDSM`, before you have scanned anything. Your own scan then replaces what EDSM said, and the Body info card shows them as `From EDSM, not scanned by you`. EDSM does not say who has mapped a body, so a looked-up body stays on the list until you map it.
+- Under the heading a **summary line** says how far you have got (`1 mapped · life 1 of 3 done`), and a third section, **Done**, lists the bodies you have finished (mapped,
+  and any life analysed) as `2 d  mapped · life 3/3`, so after a break you can see where you left off as well as what is left. You can switch the Done list off.
+- **Coming back to a system.** WNTB keeps each system's survey for you between sessions (the 60 most recently visited, kept separately for each commander), so leaving a system,
+  logging out, or visiting it again later brings the card back as you left it. For a system you were in before this was saved it rebuilds the survey from your journals
+  (your own commander's, at most the newest 80 files).
 - **Rows shown** (3 to 16, 6 to start) caps the list, and the rest are counted (`+ 3 more`). You can switch the life list off.
 
 **Body info** (Settings → Overlays → Body info) describes one body: its name and class; flags (`Undiscovered`, `Terraformable`, and `Unmapped`, `Mapped before`
@@ -446,7 +451,7 @@ targeted** in the galaxy or system map or the nav panel, and for **the body you 
 | Whether a body has been stood on | The scan's `WasFootfalled` says whether anyone has set foot on a landable body. WNTB flags a first footfall (Body info: `First footfall`, and the five times exobiology reward; System targets: `FF` on a life row). It reflects the scan you made; a body scanned by someone before you but not yet footfalled in the data may show as footfalled. | Treat the flag as a strong hint and check the in-game body info if it matters. |
 | What mapping pays | The value shown is the estimated **scan** value (the same estimate the [Exploration Value](#exploration-value) readout uses). What mapping adds is not estimated. | Use the threshold as a guide to which bodies are worth a probe run. |
 | The kinds of life before you map | The system scan gives the **number** of biological signals; the genera are given when you map the body. | Map it to see the genera. |
-| The cards to remember a system after a restart or relog | They are rebuilt from your journals when EDMC starts or you log in: back to your last arrival, reading earlier journals of the same commander (up to eight) when you have stayed in the system across a relog. | Nothing: it happens by itself. |
+| The cards to remember a system after a restart, a relog or a visit later | The survey of each system is saved for each commander and merged back when you return; for a system visited before it was saved, it is rebuilt from your journals (your commander's, the newest 80 files). | Nothing: it happens by itself. Bodies the journals never recorded (a system you never scanned) cannot be recovered. |
 
 **When the cards show.** They follow the commander and the situation, so they are there when you are exploring and gone when you are not: they hide in hyperspace, while docked
 or on a carrier, when the game is closed or at its main menu (including while another commander signs in), and a different commander loading in starts with a clean slate.

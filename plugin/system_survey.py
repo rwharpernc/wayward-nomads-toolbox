@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
@@ -118,6 +119,11 @@ class Body:
     def first_footfall(self) -> bool:
         """A landable body nobody has set foot on: the first commander down is paid five times the usual exobiology reward."""
         return self.landable and self.was_footfalled is False
+
+    @property
+    def finished(self) -> bool:
+        """Nothing left to do on it: mapped by the commander (or its life analysed) and, if it has life, all of it analysed."""
+        return (self.mapped or self.life_done) and (self.bio == 0 or self.life_done)
 
     @property
     def life_done(self) -> bool:
@@ -327,6 +333,18 @@ class SystemSurvey:
         found = [b for b in self.bodies.values() if b.kind == "planet" and (b.scanned or b.known) and not b.mapped and b.scan_value() >= threshold]
         return sorted(found, key=lambda b: -b.scan_value())
 
+    def finished(self) -> List[Body]:
+        """The planets and moons with nothing left to do (mapped, and any life analysed), in name order: where the commander has already been."""
+        return sorted((b for b in self.bodies.values() if b.kind == "planet" and b.scanned and b.finished), key=lambda b: b.short.casefold())
+
+    def life_counts(self) -> Tuple[int, int]:
+        """(bodies whose life is all analysed, bodies with life): how far the biology of the system has got."""
+        with_life = [b for b in self.bodies.values() if b.bio > 0]
+        return sum(1 for b in with_life if b.life_done), len(with_life)
+
+    def mapped_count(self) -> int:
+        return sum(1 for b in self.bodies.values() if b.kind == "planet" and b.mapped)
+
     def with_life(self) -> List[Body]:
         """Bodies with biological signals that are not fully analysed yet, in name order."""
         return sorted((b for b in self.bodies.values() if b.bio > 0 and not b.life_done), key=lambda b: b.short.casefold())
@@ -345,13 +363,123 @@ class SystemSurvey:
 survey = SystemSurvey()
 
 
+SAVED_EVENTS = ("FSSDiscoveryScan", "FSSAllBodiesFound", "Scan", "FSSBodySignals", "SAASignalsFound", "SAAScanComplete", "ScanOrganic")
+
+
+def start(plugin_dir: str) -> None:
+    from . import system_survey_store
+    system_survey_store.store.start(plugin_dir)
+
+
+def stop() -> None:
+    from . import system_survey_store
+    system_survey_store.store.flush()
+
+
+_visited: Dict[str, set] = {}            # commander -> the systems (lower case names) their journals say they have been in; read once, in the background
+_pending = {"merge": False}
+
+
+def _index_visited(commander: str) -> None:
+    """Reads the commander's journals once (newest MAX_BACKFILL_FILES) for the systems they have been in, so arriving in one that is not saved can be told from
+    arriving somewhere new, without reading the journals again at every jump."""
+    from . import journal_files
+    key = commander.casefold()
+    if not key or key in _visited:
+        return
+    _visited[key] = set()
+
+    def worker() -> None:
+        try:
+            names = set()
+            for path in journal_files.files_modified_since(0.0)[-MAX_BACKFILL_FILES:]:
+                entries = list(journal_files.read_events(path, journal_files.event_pattern(*ARRIVALS, "LoadGame")))
+                owner = _commander_of(entries)
+                if owner and owner != key:
+                    continue
+                names.update(str(e.get("StarSystem") or "").casefold() for e in entries if e.get("event") in ARRIVALS)
+            _visited[key] = names
+        except Exception:
+            logger.debug("Could not index the visited systems", exc_info=True)
+
+    threading.Thread(target=worker, name="WNTB-survey-index", daemon=True).start()
+
+
+def _backfill_if_visited_before(saved: Any, force: bool = False) -> None:
+    """Arrived in a system with no saved survey: if the journals say the commander has been here before, rebuild it from those visits in the background."""
+    if not survey.name or saved.has_saved(survey.name, survey.address) or not saved.commander:
+        return
+    commander, name, address = saved.commander, survey.name, survey.address
+    if not force and name.casefold() not in _visited.get(commander.casefold(), set()):
+        return
+    key = (commander.casefold(), name.casefold())
+    if key in _backfilled:
+        return
+    _backfilled.add(key)
+
+    def worker() -> None:
+        try:
+            found = rebuild_system(name, commander)
+            if found is not None:
+                found.address = found.address or address
+                saved.absorb(found, Body)
+                _pending["merge"] = True
+        except Exception:
+            logger.debug("Could not rebuild the system survey from the journals", exc_info=True)
+
+    threading.Thread(target=worker, name="WNTB-survey-backfill", daemon=True).start()
+
+
+_backfilled: set = set()
+
+
+def apply_pending() -> None:
+    """Applies a survey rebuilt in the background (called on the main thread, from the journal and Status.json hooks, so the survey is never changed from two
+    threads)."""
+    if _pending["merge"]:
+        _pending["merge"] = False
+        from . import system_survey_store
+        _merge_saved()
+        system_survey_store.store.remember(survey)
+
+
+def dashboard_status(entry: Mapping[str, Any]) -> None:
+    apply_pending()
+
+
+def _merge_saved() -> None:
+    """Adds what was saved about this system on earlier visits (see system_survey_store.py): the bodies scanned, what is mapped and analysed."""
+    from . import system_survey_store
+    try:
+        system_survey_store.store.merge_into(survey, Body)
+    except Exception:    # a damaged save must never stop the live path
+        logger.debug("Could not merge the saved system survey", exc_info=True)
+
+
 def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
     """The journal hook: feeds the shared survey. Registered ahead of the cards that read it, so they see the state after the event."""
-    if entry.get("event") in ("StartUp", RESTORE_EVENT):
-        restore_from_journal(survey)      # EDMC started in the middle of a system: rebuild it from the newest journal
+    from . import system_survey_store
+    saved = system_survey_store.store
+    saved.set_commander(cmdr)
+    apply_pending()
+    event = entry.get("event")
+    if cmdr:
+        _index_visited(cmdr)
+    if event in ("StartUp", RESTORE_EVENT):
+        restore_from_journal(survey)      # EDMC started in the middle of a system: rebuild it from the journals
         survey.cmdr = cmdr or survey.cmdr
+        _merge_saved()
+        _backfill_if_visited_before(saved, force=True)       # the system EDMC found the commander in: rebuild it from every visit
+        saved.remember(survey)
         return
-    survey.handle_event(entry, system or "")
+    changed = survey.handle_event(entry, system or "")
+    if event in ARRIVALS:
+        _merge_saved()                    # back in a system surveyed before: what was known comes back
+        _backfill_if_visited_before(saved)
+    if event == "Shutdown":
+        saved.flush()
+    elif changed and (event in SAVED_EVENTS or event in ARRIVALS):
+        saved.remember(survey)
 
 
 MAX_RESTORE_FILES = 8             # journals read back at most, newest first, while the commander has stayed in the same system
@@ -359,6 +487,37 @@ MAX_RESTORE_FILES = 8             # journals read back at most, newest first, wh
 
 def _commander_of(entries: List[Dict[str, Any]]) -> str:
     return next((str(e.get("Commander") or "").casefold() for e in entries if e.get("event") == "LoadGame"), "")
+
+
+MAX_BACKFILL_FILES = 80
+
+
+def rebuild_system(name: str, commander: str = "", folder: Optional[str] = None, max_files: int = MAX_BACKFILL_FILES) -> Optional[SystemSurvey]:
+    """What the journals say about one system across every visit: the scans, signals, mapping and organisms from each time the commander was in it, in order.
+    Only the given commander's journals are read (each begins with their LoadGame). None when the commander was never in it. Reads at most `max_files` journals,
+    newest first, so a long history is not walked in full."""
+    from . import journal_files
+    files = journal_files.files_modified_since(0.0, folder)[-max_files:]
+    pattern = journal_files.event_pattern(*EVENTS)
+    found = SystemSurvey()
+    seen = False
+    wanted = commander.casefold()
+    for path in files:
+        entries = list(journal_files.read_events(path, pattern))
+        owner = _commander_of(entries)
+        if wanted and owner and owner != wanted:
+            continue
+        inside = False
+        for entry in entries:
+            event = entry.get("event")
+            if event in ARRIVALS:
+                inside = str(entry.get("StarSystem") or "").casefold() == name.casefold()
+                if inside:
+                    found.handle_event(entry)
+                    seen = True
+            elif inside and event in SAVED_EVENTS:
+                found.handle_event(entry, name)
+    return found if seen else None
 
 
 def restore_from_journal(target: Optional[SystemSurvey] = None, folder: Optional[str] = None) -> bool:

@@ -40,6 +40,7 @@ _CFG_THRESHOLD = "wntb_targets_threshold"
 _CFG_ROWS = "wntb_targets_rows"
 _CFG_LIFE = "wntb_targets_life"
 _CFG_ONLINE = "wntb_targets_online"
+_CFG_DONE = "wntb_targets_done"
 
 DEFAULT_THRESHOLD = 100_000
 THRESHOLD_RANGE = (0, 50_000_000)
@@ -62,6 +63,7 @@ class TargetsConfig:
     threshold: int = DEFAULT_THRESHOLD
     rows: int = DEFAULT_ROWS
     life: bool = True
+    done: bool = True             # also list the bodies already finished, so where you left off is on the card
     online: bool = False          # also look up what other commanders have scanned in the system (EDSM)
 
 
@@ -76,7 +78,7 @@ def load_config() -> TargetsConfig:
     return TargetsConfig(enabled=config.get_bool(_CFG_ENABLED, default=False),
                          threshold=_clamp(config.get_str(_CFG_THRESHOLD), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
                          rows=_clamp(config.get_str(_CFG_ROWS), *ROWS_RANGE, DEFAULT_ROWS), life=config.get_bool(_CFG_LIFE, default=True),
-                         online=config.get_bool(_CFG_ONLINE, default=False))
+                         done=config.get_bool(_CFG_DONE, default=True), online=config.get_bool(_CFG_ONLINE, default=False))
 
 
 def save_config(cfg: TargetsConfig) -> None:
@@ -85,6 +87,7 @@ def save_config(cfg: TargetsConfig) -> None:
     config.set(_CFG_ROWS, str(cfg.rows))
     config.set(_CFG_LIFE, cfg.life)
     config.set(_CFG_ONLINE, cfg.online)
+    config.set(_CFG_DONE, cfg.done)
 
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
@@ -109,27 +112,49 @@ def _life_row(body: Body) -> Row:
     return cut(body.short, NAME_CHARS) + (f"\n{genera}" if genera else ""), f"{done}/{body.bio} life" + (" FF" if body.first_footfall else ""), "info"
 
 
-def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True) -> Card:
-    """The card for the survey: the scan progress, then what is left to map and what has life, at most `rows` rows. Empty before the system is honked
-    and while there is nothing to say."""
+def _done_row(body: Body) -> Row:
+    status = "mapped" if body.mapped else ""
+    if body.bio:
+        status += (" · " if status else "") + f"life {len(set(body.analysed))}/{body.bio}"
+    return f"{cut(body.short, 7)}	{status}", "done", "ok"
+
+
+def _summary(survey: SystemSurvey) -> str:
+    """Where the survey stands in one line: how many bodies are mapped and how much of the life is analysed."""
+    parts = []
+    if survey.mapped_count():
+        parts.append(f"{survey.mapped_count()} mapped")
+    finished, with_life = survey.life_counts()
+    if with_life:
+        parts.append(f"life {finished} of {with_life} done")
+    return " · ".join(parts)
+
+
+def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True, done: bool = True) -> Card:
+    """The card for the survey: the scan progress, a line on how far the mapping and the life have got, then what is left to map, what has life, and (when `done`)
+    what is already finished, at most `rows` rows. Empty before the system is honked and while there is nothing to say."""
     if not survey.visible:
         return Card()
     maps = survey.to_map(threshold)
     lives = survey.with_life() if life else []
+    finished = survey.finished() if done else []
     total = survey.body_count
     badge = f"{survey.scanned_count()} of {total} scanned" if total else f"{survey.scanned_count()} scanned"
     if survey.known_count():
         badge += f" · {survey.known_count()} online"
     heading, progress = (survey.name, "title"), (survey.progress if survey.honked else None)
+    summary = _summary(survey)
+    header: List[tuple] = []
     if not maps and not lives:
-        if not survey.honked:
+        if not survey.honked and not finished:
             return Card()
         over = f"over {credits_text(threshold)}" if threshold else "scanned"
-        message = (f"Nothing {over} left to map or sample" if survey.fss_complete else f"Nothing {over} to map yet", "ok" if survey.fss_complete else "muted")
-        return Card((message,), title=heading, badge=badge, progress=progress)
+        header.append((f"Nothing {over} left to map or sample" if survey.fss_complete else f"Nothing {over} to map yet", "ok" if survey.fss_complete else "muted"))
+    if summary:
+        header.append((summary, "muted"))
     listed: List[Row] = []
     budget = rows
-    for title, items, make in (("To map", maps, _map_row), ("Life", lives, _life_row)):
+    for title, items, make in (("To map", maps, _map_row), ("Life", lives, _life_row), ("Done", finished, _done_row)):
         if not items or budget < 2:
             continue
         listed.append((f"{title} ({len(items)})", "", "title"))
@@ -137,9 +162,9 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
         for body in items[:budget]:
             listed.append(make(body))
         budget -= min(budget, len(items))
-    hidden = (len(maps) + len(lives)) - sum(1 for r in listed if r[1])
+    hidden = (len(maps) + len(lives) + len(finished)) - sum(1 for r in listed if r[1])
     footer = (f"+ {hidden} more", "muted") if hidden > 0 else None
-    return Card((), tuple(listed), footer, title=heading, badge=badge, progress=progress)
+    return Card(tuple(header), tuple(listed), footer, title=heading, badge=badge, progress=progress)
 
 
 def sample_survey() -> SystemSurvey:
@@ -183,7 +208,7 @@ def render(card: Card, client: OverlayClient, look: Look = LEGACY) -> None:
 
 def _build() -> Card:
     cfg = load_config()
-    return build_card(system_survey.survey, cfg.threshold, cfg.rows, cfg.life)
+    return build_card(system_survey.survey, cfg.threshold, cfg.rows, cfg.life, cfg.done)
 
 
 def _draw_live(card: Card) -> None:
@@ -199,7 +224,7 @@ def _draw_live(card: Card) -> None:
 
 
 live = LiveCard(_build, lambda: load_config().enabled, _draw_live)
-_ticker = Ticker("WNTB-targets-tick", lambda: live.refresh() if live.showing() else None, 1.0, logger)
+_ticker = Ticker("WNTB-targets-tick", live.refresh, 1.0, logger)
 
 
 def start(plugin_dir: str) -> None:
@@ -271,6 +296,7 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     _vars["enabled"] = tk.BooleanVar(value=cfg.enabled)
     _vars["life"] = tk.BooleanVar(value=cfg.life)
+    _vars["done"] = tk.BooleanVar(value=cfg.done)
     _vars["online"] = tk.BooleanVar(value=cfg.online)
     _vars["threshold"] = tk.StringVar(value=f"{cfg.threshold}")
     _vars["rows"] = tk.StringVar(value=str(cfg.rows))
@@ -291,8 +317,10 @@ def build_settings(notebook: nb.Notebook) -> None:
     nb.Checkbutton(frame, text="Also list bodies with life that I have not finished analysing", variable=_vars["life"]).grid(
         row=5, column=0, sticky=tk.W, padx=(30, 10), pady=2)
 
+    nb.Checkbutton(frame, text="Also list the bodies I have finished (mapped, and their life analysed), so I can see where I left off", variable=_vars["done"]).grid(
+        row=6, column=0, sticky=tk.W, padx=(30, 10), pady=2)
     nb.Checkbutton(frame, text="Also look up bodies other commanders have scanned (EDSM, once per system)",
-                   variable=_vars["online"]).grid(row=6, column=0, sticky=tk.W, padx=(30, 10), pady=2)
+                   variable=_vars["online"]).grid(row=7, column=0, sticky=tk.W, padx=(30, 10), pady=2)
 
     nb.Label(
         frame,
@@ -300,20 +328,20 @@ def build_settings(notebook: nb.Notebook) -> None:
               "class and mass then, unless you tick the EDSM lookup above, which asks EDSM once per system after the honk (it sends only the system name) and adds the planets other commanders have already scanned. The list is rebuilt from your newest journal when EDMC starts in the middle of a system. Life counts come from the "
               "signal counts the scans give; the genera are known only after you map the body."),
         wraplength=440, justify=tk.LEFT,
-    ).grid(row=7, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+    ).grid(row=8, column=0, sticky=tk.W, padx=10, pady=(6, 4))
 
     action_row = tk.Frame(frame)
-    action_row.grid(row=8, column=0, sticky=tk.W, padx=10, pady=(6, 2))
+    action_row.grid(row=9, column=0, sticky=tk.W, padx=10, pady=(6, 2))
     tk.Button(action_row, text="Test Card", command=_test_card).pack(side=tk.LEFT)
     _result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
     _result_label.pack(side=tk.LEFT, padx=(10, 0))
     nb.Label(frame, text="(Test Card works even while disabled above, and reports whether the overlay was actually reachable.)",
-             wraplength=440, justify=tk.LEFT).grid(row=9, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+             wraplength=440, justify=tk.LEFT).grid(row=10, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _typed() -> TargetsConfig:
     return TargetsConfig(enabled=bool(_vars["enabled"].get()), threshold=_clamp(_vars["threshold"].get(), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
-                         rows=_clamp(_vars["rows"].get(), *ROWS_RANGE, DEFAULT_ROWS), life=bool(_vars["life"].get()),
+                         rows=_clamp(_vars["rows"].get(), *ROWS_RANGE, DEFAULT_ROWS), life=bool(_vars["life"].get()), done=bool(_vars["done"].get()),
                          online=bool(_vars["online"].get()))
 
 
@@ -328,7 +356,7 @@ def _test_card() -> None:
 
     def worker() -> None:
         try:
-            sample = build_card(sample_survey(), min(typed.threshold, 100_000), typed.rows, typed.life)
+            sample = build_card(sample_survey(), min(typed.threshold, 100_000), typed.rows, typed.life, typed.done)
             render(sample, placed_client(client, look, sample), look)
             outcome, color = "Sent: check your overlay.", "#2e7d32"
         except OSError as err:

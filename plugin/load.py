@@ -115,6 +115,7 @@ def plugin_start3(plugin_dir: str) -> str:
     flight_alerts.start(plugin_dir)
     route_overlay.start(plugin_dir)
     targets_overlay.start(plugin_dir)
+    system_survey.start(plugin_dir)
     body_info_overlay.start(plugin_dir)
     exobiology_overlay.start(plugin_dir)
     missions_overlay.start(plugin_dir)
@@ -207,6 +208,7 @@ def plugin_stop() -> None:
     route_overlay.stop()
     targets_overlay.stop()
     body_info_overlay.stop()
+    system_survey.stop()
     exobiology_overlay.stop()
     missions_overlay.stop()
     notes_panel.stop()
@@ -296,6 +298,7 @@ def dashboard_entry(cmdr: str, is_beta: bool, entry: Dict[str, Any]) -> None:
         interdiction.handle_dashboard_flags(flags)
     flight_alerts.dashboard_status(entry)
     route_overlay.dashboard_status(entry)
+    system_survey.dashboard_status(entry)      # applies a survey rebuilt in the background, on this thread
     body_info_overlay.dashboard_status(entry)
     notes_panel.dashboard_status(entry)
     mining_panel.dashboard_status(entry)

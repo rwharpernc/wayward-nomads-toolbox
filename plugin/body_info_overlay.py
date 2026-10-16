@@ -207,7 +207,7 @@ def _draw_live(card: Card) -> None:
 
 
 live = LiveCard(_build, lambda: load_config().enabled, _draw_live)
-_ticker = Ticker("WNTB-bodyinfo-tick", lambda: live.refresh() if live.showing() else None, 1.0, logger)
+_ticker = Ticker("WNTB-bodyinfo-tick", live.refresh, 1.0, logger)
 
 
 def start(plugin_dir: str) -> None:
