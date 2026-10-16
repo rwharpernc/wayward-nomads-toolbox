@@ -4,6 +4,17 @@ Open work and open questions. Completed work is recorded in [CHANGELOG.md](../CH
 [STATUS.md](STATUS.md). Step-by-step Linux checks are in [LINUX_TESTING.md](LINUX_TESTING.md). Bug reports and suggestions are welcome on the
 [Issues page](https://github.com/rwharpernc/wayward-nomads-toolbox/issues).
 
+## In progress
+
+Work that is under way and will take time. Items here are active, not waiting; they are listed once, here, and not again below.
+
+- [ ] **Data verification.** Work through [data_verification/verification_checklist.csv](data_verification/README.md) (about 335 rows, for a spreadsheet): what is
+  missing and what is carried from other authors' work but not yet checked in the game. Mark each row as it is verified, and change the method statement in
+  [ATTRIBUTIONS.md](ATTRIBUTIONS.md) to the past tense only when none are left.
+- [ ] **Odyssey upgrade planner, next step:** a stat preview. The stat tables are not available as open data, so they are being gathered and checked in the
+  game ([ODYSSEY_STAT_COLLECTION.md](ODYSSEY_STAT_COLLECTION.md); the sources looked at, with their licenses, are in [ODYSSEY_STAT_DATA.md](ODYSSEY_STAT_DATA.md)).
+  The preview itself waits for that data. A request to the Materials Helper's developer for its tables is a possible shortcut.
+
 ## Verification in the game
 
 The items below are implemented and covered by unit tests, but have not all been verified in the game. "Then Linux" means the Linux checklist
@@ -14,8 +25,7 @@ covers the item as well.
   documentation rather than from a recorded event); the sound; and the card position (right side, below the Inventory display). Then Linux (the sound
   requires `canberra-gtk-play` or `paplay`).
 - [ ] **Surface Compass.** The compass replaces the Mining waypoint arrow. On a landable surface, verify **Test Compass**, that the arrow follows the
-  nearest hotspot as the commander turns, **MARK** (the body name is taken from `Status.json`'s `BodyName`, per the documentation, and has not yet
-  been observed), **TARGET**, the Marks window, and that the previous Mining tick and arrow are removed while the saved placement is kept. Then Linux.
+  nearest hotspot as the commander turns, **MARK** (the body name is taken from `Status.json`'s `BodyName`, which was seen in a real file on 2026-10-16, game 4.4.1.1), **TARGET**, the Marks window, and that the previous Mining tick and arrow are removed while the saved placement is kept. Then Linux.
 - [ ] **Trade Watch list.** Add several commodities; open real markets (the `Market` event and `Market.json` for a watched item); press **REFRESH**
   against Spansh with Trade lookups enabled (two requests per commodity); verify the age and place columns, removal, and that the EDMC window does not
   become wider. Then Linux.
@@ -50,6 +60,7 @@ covers the item as well.
   window. Then Linux.
 - [ ] **Notes.** Verify quick add, the window, **Here**, deletion with confirmation, the count shown when jumping into a system that has notes, and that
   the EDMC window does not become wider. Then Linux.
+- [ ] **Expedition on the Route card, and survey tracking.** Start an Expedition with two or three stops and enable the Route overlay. Confirm that the card shows the expedition's name and progress, the next stop with its distance and note, and the stop just reached; that arriving in a stop updates it at once; and that unticking *Show the active expedition* removes it. At a stop, honk and scan some bodies, including one nobody has discovered and one you map, and confirm that the Expedition row, the card (`Here:`) and the window's **Found here** column agree with the game (the body count after the honk, scans, first discoveries, maps), that a body scanned twice counts once, and that the counts survive restarting EDMC. Confirmed in a real journal on 2026-10-16 (game 4.4.1.1): `Scan` carries `StarSystem` and `WasDiscovered`, `SAAScanComplete` carries `BodyName` and no system (the planner uses the system the commander is in), `FSSDiscoveryScan` carries `BodyCount` and `SystemName`, and `FSSAllBodiesFound` carries `Count`. Then Linux.
 - [ ] **Alert widths.** Trigger a Notable Bodies alert (or **Test Notable**) and a Discovery alert for a body or system with a long capitalized catalog
   name, and confirm that the whole name fits inside the card at Default and Larger text sizes. On the Missions overlay card, check a mission
   with a long station or system name: the place should move to a second line under the title, in the same color. Report any text that still extends
@@ -130,12 +141,7 @@ Projects reviewed: SrvSurvey (GPL-3.0), EDDiscovery (Apache-2.0), Elite Dangerou
 OD-Explorer (no license stated; their source was consulted only to understand how they read the journal, and none of it is copied). WNTB's code is
 written independently, and data used from the licensed projects is credited in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Implemented so far: the fleet
 carrier jump countdown, low-fuel and next-star warnings, system and body notes, the Surface Compass with marks, the Trade watch list, materials and
-engineering (including the blueprint wishlist, the engineers and the ship planner), the material trader finder, and expedition planning. Remaining
-items, in approximate priority order:
-
-- [ ] **Odyssey upgrade planner, next step:** a stat preview. This requires each item's base stats and the effect of each level and modification,
-  which are not available as open data.
-- [ ] **Expedition planning, remaining:** an overlay card, and per-stop scan or discovery tracking.
+engineering (including the blueprint wishlist, the engineers and the ship planner), the material trader finder, and expedition planning. What remains of it is under "In progress" above.
 
 ## Low priority
 

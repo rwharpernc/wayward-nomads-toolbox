@@ -147,6 +147,12 @@ notice, it is in `THIRD-PARTY-NOTICES.md`. Micro-resource and commodity names co
 **[EDCD/coriolis-data](https://github.com/EDCD/coriolis-data)**. Engineering material names, types and grades (Field Ops → Materials)
 come from FDevIDs' `material.csv` too.
 
+**How the data is gathered and verified.** The game changes, and a lot of old data about it is still in circulation, so the aim is to collect what can be found and keep it current. Other authors' published work is reviewed with respect for what they have built: it is checked against the game by the project owner, used once it has been verified, and credited here and in `THIRD-PARTY-NOTICES.md` with its license. What is not available as open data is measured in the game by the project owner, each value recorded with the game version, the date and a screenshot. A value that has not yet been checked in the game is marked as such. `docs/data_verification/verification_checklist.csv` lists every item that is still missing or still to be checked, with its source and license, and shows which have been verified in the game and which have not (tables added before the checklist existed are on it too). No Odyssey suit or weapon stat values are in WNTB yet; when they are, they will be the owner's own in-game measurements, or another author's published values that were checked in the game (`docs/ODYSSEY_STAT_COLLECTION.md`). Nothing was taken from any program's compiled files.
+
+I try to tread carefully and to respect all the work that came before: where someone's published work helped, I say so, and I would rather over-credit than under-credit. If I have missed a credit or got one wrong, please tell me and I will fix it.
+
+In the same spirit of the community, WNTB's data is open under the project's license (GPL-3.0) and not restricted any further. If you reuse or repurpose it, a word of acknowledgement for WNTB, and through it for the authors credited here whose work it was checked against, is all that is asked.
+
 ## Services
 
 [EDSM](https://www.edsm.net/), [Spansh](https://spansh.co.uk/), [edastro.com](https://edastro.com/)
