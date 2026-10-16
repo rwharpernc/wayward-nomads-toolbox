@@ -101,7 +101,7 @@ def build_status_card(view: Optional[organic_scan.BodyView], system: str = "", s
     total = view.signal_count or len(view.genera)
     title = ("Biological signals", "title")
     badge = f"{view.analysed} of {total} analysed" if total else ""
-    progress = view.analysed / total if total else None
+    progress = view.progress if total else None
     if not view.genera:
         return Card((("Map this body with the surface scanner to learn what lives here", "muted"),), title=title, badge=f"{total} signals", progress=None)
     active = view.active_genus

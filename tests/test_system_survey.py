@@ -148,6 +148,21 @@ class RestoreTests(unittest.TestCase):
         self.assertEqual(S.RESTORE_EVENT, restore.RESTORE_EVENT)
 
 
+class Footfall(Feed):
+    def test_a_landable_body_nobody_has_stood_on_is_a_first_footfall(self):
+        self.feed(scan("1", WasFootfalled=False))
+        body = next(iter(self.survey.bodies.values()))
+        self.assertTrue(body.first_footfall)
+
+    def test_a_footfalled_or_unlandable_body_is_not(self):
+        self.feed(scan("1", WasFootfalled=True), scan("2", WasFootfalled=False, Landable=False))
+        self.assertFalse(any(b.first_footfall for b in self.survey.bodies.values()))
+
+    def test_a_later_scan_after_landing_does_not_take_the_bonus_away(self):
+        self.feed(scan("1", WasFootfalled=False), scan("1", WasFootfalled=True))
+        self.assertTrue(next(iter(self.survey.bodies.values())).first_footfall)
+
+
 class Guardrails(Feed):
     """When the cards may show: not on the main menu, after the game closes, while another commander signs in, or while docked."""
 

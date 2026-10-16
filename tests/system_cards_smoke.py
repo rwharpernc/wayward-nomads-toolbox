@@ -168,6 +168,13 @@ for look in (S.LEGACY, S.DEFAULT):
     for label, layout, card in (("targets", TO.LAYOUT, TO.build_card(many, 0, 8, True)), ("body info", BI.LAYOUT, BI.build_card(many.bodies[1]))):
         shown = " ".join(t[0] for t in layout.plan(card, look)[1])
         check(all(g in shown for g in ("Bacterium", "Frutexa", "Tussock", "Fungoida", "Osseus")) and "…" not in shown, f"{label}: every genus is shown in full: {shown}")
+ff_body = BI.sample_body()
+check(any("First footfall" in h[0] for h in BI.build_card(ff_body).header), "the Body info card flags a first footfall")
+check(any(r[0] == "Footfall" and "5x" in r[1] for r in BI.build_card(ff_body).rows), "and says exobiology pays five times there")
+ff_body.was_footfalled = True
+check(not any("First footfall" in h[0] for h in BI.build_card(ff_body).header), "a footfalled body is not flagged")
+ff_survey = TO.sample_survey()
+check(any(r[1].endswith("FF") for r in TO.build_card(ff_survey, 400_000, 16, True).rows), "System targets marks a body with life where the first footfall is still open")
 known_info = BI.build_card(online.bodies[3])
 check(known_info.header[0][0] == "Earthlike body" and any("EDSM" in h[0] for h in known_info.header), f"Body info says it came from EDSM: {known_info.header}")
 

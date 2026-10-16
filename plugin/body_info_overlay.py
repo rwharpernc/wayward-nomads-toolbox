@@ -113,6 +113,8 @@ def build_card(body: Optional[Body]) -> Card:
         flags.append("Undiscovered")
     if body.terraformable:
         flags.append("Terraformable")
+    if body.first_footfall:
+        flags.append("First footfall")
     if body.known and not body.scanned:
         flags.append("From EDSM, not scanned by you")
     elif body.kind == "planet":
@@ -141,6 +143,8 @@ def build_card(body: Optional[Body]) -> Card:
         rows.append(("Life", f"{body.bio} signal{'s' if body.bio != 1 else ''}, {done} done", "info"))
         if body.genuses:
             rows.append(("Genera", ", ".join(body.genuses), "info"))
+    if body.bio and body.first_footfall:
+        rows.append(("Footfall", "First: exobiology pays 5x", "title"))
     if body.geo:
         rows.append(("Geology", f"{body.geo} signal{'s' if body.geo != 1 else ''}", "info"))
     badge = f"{body.distance_ls:,.0f} ls" if body.distance_ls is not None else ""
@@ -149,7 +153,7 @@ def build_card(body: Optional[Body]) -> Card:
 
 def sample_body() -> Body:
     """A made-up body for the Test Card."""
-    body = Body(7, "Sample System 3 b", "3 b", "planet", "Rocky body", terraformable=True, landable=True, was_discovered=False, was_mapped=False,
+    body = Body(7, "Sample System 3 b", "3 b", "planet", "Rocky body", terraformable=True, landable=True, was_discovered=False, was_mapped=False, was_footfalled=False,
                 mass_em=0.35, gravity_g=0.57, pressure_atm=0.006, temperature_k=157.0, distance_ls=3936.0, atmosphere="thin carbon dioxide atmosphere",
                 volcanism="minor silicate vapour volcanism", materials=[("iron", 20.9), ("sulphur", 20.3), ("carbon", 17.0)], scanned=True, bio=3, geo=2,
                 genuses=["Bacterium", "Fungoida", "Osseus"], analysed=["Bacterium"])

@@ -16,8 +16,11 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **A drag-and-drop layout editor on Overlay Placement.** A to-scale picture of your screen with a grid (20, 40, 60 or 120 pixels) and a box for every display: drag a box where you want it and the spot and offset are filled in for you. A box dropped near an edge snaps flush to it (offset 0), near the middle snaps to the center line, and otherwise to the grid. The table below it still works and the two stay in step. A **Picture size** choice (Default, Large, Extra large) makes the picture bigger and is remembered.
 
 ### Fixed
+- The Bio status progress bar now moves with each sample (a third of a genus per Log or Sample, all of it once analysed) instead of only when a genus is analysed, and the sample in progress is still shown after EDMC or the game restarts part-way through.
 - **Exobiology circles and the Bio radar drew away from their cards.** Circles were not moved with the rest of a placed card, so the sample dots and the radar's circles landed at the card's unplaced position and could drag the rest of the card with them.
 - **A zero offset at a bottom or right edge now sits on the edge.** Cards (Route, System targets, Body info and the Exobiology cards) were placed using their largest possible size, so a card shorter than that stopped short of the edge; they are now placed from the size they are drawn at.
+
+- **First footfall.** The Body info card now flags a landable body nobody has set foot on (`First footfall`) and says exobiology pays five times there, and the System targets card marks a body with life where the first footfall is still open (`1/3 life FF`). It comes from the scan's `WasFootfalled`, the same field the Exobiology cards use for the five times reward.
 
 ### Changed
 - Added a note on Linux support to the README and the Linux and platform guides: the author uses Linux (CachyOS) and Windows about equally, and new features are proven on Windows first, so Linux follows slightly behind.

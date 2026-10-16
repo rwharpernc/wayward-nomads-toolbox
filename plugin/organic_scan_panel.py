@@ -422,6 +422,10 @@ class OrganicScanController:
         organisms = {o.genus_key: o for o in self._tracker.organisms}
         if self._active_genus not in organisms or organisms[self._active_genus].complete:
             self._active_genus = None
+        if self._active_genus is None:         # after a restart or a relog: the genus part-way through its samples, the furthest along if there are several
+            started = [o for o in organisms.values() if 0 < o.stage < organic_scan.REQUIRED_SAMPLES]
+            if started:
+                self._active_genus = max(started, key=lambda o: o.stage).genus_key
         genera = []
         for genus_key in genus_keys:
             info = organic_scan.species_data.GENUS.get(genus_key)

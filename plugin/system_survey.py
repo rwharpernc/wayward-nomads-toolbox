@@ -84,6 +84,7 @@ class Body:
     landable: bool = False
     was_discovered: Optional[bool] = None
     was_mapped: Optional[bool] = None
+    was_footfalled: Optional[bool] = None   # the scan's WasFootfalled: False means nobody has set foot here, so a first footfall pays five times on exobiology
     mass_em: Optional[float] = None
     stellar_mass: Optional[float] = None
     gravity_g: Optional[float] = None
@@ -112,6 +113,11 @@ class Body:
         if self.kind == "star":
             return value.estimate_star_scan_value(self.stellar_mass, self.was_discovered, self.star_type)
         return value.estimate_planet_scan_value(self.planet_class, self.mass_em, self.terraformable, self.was_discovered)
+
+    @property
+    def first_footfall(self) -> bool:
+        """A landable body nobody has set foot on: the first commander down is paid five times the usual exobiology reward."""
+        return self.landable and self.was_footfalled is False
 
     @property
     def life_done(self) -> bool:
@@ -253,6 +259,11 @@ class SystemSurvey:
         body.landable = bool(entry.get("Landable"))
         body.was_discovered = entry.get("WasDiscovered") if isinstance(entry.get("WasDiscovered"), bool) else None
         body.was_mapped = entry.get("WasMapped") if isinstance(entry.get("WasMapped"), bool) else None
+        footfalled = entry.get("WasFootfalled")
+        if footfalled is False:
+            body.was_footfalled = False                    # kept once seen: a later scan after you have landed says True, but the bonus is still yours
+        elif footfalled is True and body.was_footfalled is None:
+            body.was_footfalled = True
         body.mass_em = _number(entry.get("MassEM"))
         body.stellar_mass = _number(entry.get("StellarMass"))
         gravity, pressure = _number(entry.get("SurfaceGravity")), _number(entry.get("SurfacePressure"))

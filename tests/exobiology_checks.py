@@ -56,7 +56,7 @@ class Cards(unittest.TestCase):
         self.assertEqual(card.headline[0], "Tussock Pennatis - Lime")
         self.assertEqual(card.dots, (True, True, False))
         self.assertEqual(card.badge, "1 of 4 analysed")
-        self.assertAlmostEqual(card.progress, 0.25)
+        self.assertAlmostEqual(card.progress, (2 / 3 + 1) / 4)     # the Tussock is two samples in and the Osseus is analysed
         self.assertIn("5.0M CR (first footfall bonus)", card.header[0][0])
         self.assertTrue(card.header[1][0].startswith("Move 122 m further"))
         self.assertEqual(card.header[1][1], "warn")
@@ -216,6 +216,17 @@ class View(unittest.TestCase):
         self.status(0.0, 0.0)
         view = self.controller.overlay_view()
         self.assertEqual((view.signal_count, view.genera, view.mapped), (3, (), False))
+
+    def test_the_sample_in_progress_is_still_active_after_a_restart_and_the_bar_counts_it(self):
+        self.event({"event": "FSDJump", "StarSystem": self.system, "StarPos": [0, 0, 0]})
+        self.controller._genus_hints[self.body] = [TUSSOCK, BACTERIUM]
+        self.status(0.0, 0.0)
+        self.controller._tracker.restore_organism(TUSSOCK, "$Codex_Ent_Tussocks_06_Name;", "Tussock Pennatis", 1_000_000, 2, 0.0, 0.0,
+                                                  "Tussock Pennatis - Lime", [(0.0, 0.0), (0.0, 0.0)])
+        view = self.controller.overlay_view()
+        self.assertEqual(view.active_genus.name, "Tussock")
+        self.assertAlmostEqual(view.progress, (2 / 3) / 2)
+        self.assertAlmostEqual(EX.build_status_card(view).progress, (2 / 3) / 2)
 
     def test_the_srv_is_where_the_commander_launched_it(self):
         self.event({"event": "FSDJump", "StarSystem": self.system, "StarPos": [0, 0, 0]})

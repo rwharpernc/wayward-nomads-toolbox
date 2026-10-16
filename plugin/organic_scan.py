@@ -330,6 +330,13 @@ class BodyView:
         return FIRST_FOOTFALL_MULTIPLIER if self.first_footfall else 1
 
     @property
+    def progress(self) -> float:
+        """How far along the body's organisms are, 0 to 1: each genus counts a third per Log or Sample taken and all of it once analysed, so the bar moves
+        with every sample and not only when one is analysed."""
+        total = self.signal_count or len(self.genera)
+        return min(1.0, sum(min(g.stage, REQUIRED_SAMPLES) / REQUIRED_SAMPLES for g in self.genera) / total) if total else 0.0
+
+    @property
     def reward_up_to(self) -> int:
         return sum(g.best_value or 0 for g in self.genera)
 

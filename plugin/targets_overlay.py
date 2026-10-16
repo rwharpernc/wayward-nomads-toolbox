@@ -106,7 +106,7 @@ def _map_row(body: Body) -> Row:
 def _life_row(body: Body) -> Row:
     done = len(set(body.analysed))
     genera = ", ".join(body.genuses)               # every genus, on lines of its own under the row
-    return cut(body.short, NAME_CHARS) + (f"\n{genera}" if genera else ""), f"{done}/{body.bio} life", "info"
+    return cut(body.short, NAME_CHARS) + (f"\n{genera}" if genera else ""), f"{done}/{body.bio} life" + (" FF" if body.first_footfall else ""), "info"
 
 
 def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True) -> Card:
@@ -153,6 +153,7 @@ def sample_survey() -> SystemSurvey:
         body = survey._body(number, f"Sample System {number}")
         body.kind, body.planet_class, body.terraformable, body.was_discovered, body.mass_em, body.scanned = "planet", planet_class, terraformable, discovered, mass, True
     survey._body(4, "").bio = 3
+    survey._body(4, "").landable, survey._body(4, "").was_footfalled = True, False
     survey._body(5, "").bio, survey._body(5, "").analysed = 2, ["Bacterium"]
     return survey
 
