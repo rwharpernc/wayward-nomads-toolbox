@@ -70,7 +70,7 @@ at once. Up to four plants of a genus are kept for the body, and the list surviv
 - The **Bio radar** marks each tracked plant with a ring and the genus's letter, draws a line from you toward it, and lists it under the plot (`Tussock 94 m`) with a
   **little pointer** that turns to show which way it lies. Each genus has its own color, the same for its ring, its line, its row and its line on Bio status.
 - **Bio status** has a line for each, with the distance and direction (`Tracking Tussock: 94 m, 60° right`; `ahead` or `behind` when it is nearly straight on or off).
-- **A pointer goes when you sample that plant.** A Log or Sample taken at a plant (the one nearest you, within about 40 m) drops it, and the genus's pointer moves to the
+- **A pointer goes when you sample that plant.** A Log or Sample taken at a plant drops it (the plant nearest you within about 100 m, or within about 150 m when the sample names the same color variant; the scanner names a plant from a distance, so the spot it recorded can be well away from where you stand to take the sample), and the genus's pointer moves to the
   next most recent plant of that genus you identified, or disappears if there is none. Analysing a genus clears all of its pointers.
 - Bark Mound and a few other genera whose codex names do not follow the usual pattern are not tracked.
 

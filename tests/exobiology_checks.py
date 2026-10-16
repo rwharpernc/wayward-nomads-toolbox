@@ -343,13 +343,37 @@ class WaypointTracking(unittest.TestCase):
 
     def test_sampling_a_plant_drops_its_waypoint_and_analysing_clears_the_genus(self):
         self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.0, 0.0)           # where we stand
-        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.01, 0.0)          # far away
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.05, 0.0)          # far away (about 520 m)
         sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis"}
         self.controller.handle_event({**sample, "ScanType": "Log"}, "CMDR", self.system, None, {})
-        self.assertEqual([w.lat for w in self.controller.overlay_view().waypoints], [0.01])
+        self.assertEqual([w.lat for w in self.controller.overlay_view().waypoints], [0.05])
         self.controller.handle_event({**sample, "ScanType": "Sample"}, "CMDR", self.system, None, {})
         self.controller.handle_event({**sample, "ScanType": "Analyse"}, "CMDR", self.system, None, {})
         self.assertEqual(self.controller.overlay_view().waypoints, ())
+
+    def test_a_plant_sampled_well_away_from_where_the_scanner_recorded_it_is_still_dropped(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.0, 0.0)           # recorded here
+        self.status(0.0, 0.007)                                           # sampled about 73 m away
+        sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis"}
+        self.controller.handle_event({**sample, "ScanType": "Log"}, "CMDR", self.system, None, {})
+        self.assertEqual(self.controller.overlay_view().waypoints, ())
+
+    def test_the_same_color_variant_is_matched_from_further_away(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.0, 0.0, "Tussock Pennatis - Lime")
+        self.codex("$Codex_Ent_Tussocks_06_F_Name;", 0.0, 0.002, "Tussock Pennatis - Green")          # about 21 m from the sampler, a different variant
+        self.status(0.0, -0.012)                                          # about 125 m from the Lime one, further from the Green one
+        sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis",
+                  "Variant_Localised": "Tussock Pennatis - Lime", "ScanType": "Log"}
+        self.controller.handle_event(sample, "CMDR", self.system, None, {})
+        self.assertEqual([w.name for w in self.controller.overlay_view().waypoints], ["Tussock Pennatis - Green"])
+
+    def test_without_a_position_the_plant_identified_last_is_dropped(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.001, 0.0, "Tussock Pennatis - Lime")
+        self.codex("$Codex_Ent_Tussocks_06_F_Name;", 0.003, 0.0, "Tussock Pennatis - Green")
+        self.controller._current_planet_radius = None
+        sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis", "ScanType": "Log"}
+        self.controller.handle_event(sample, "CMDR", self.system, None, {})
+        self.assertEqual([w.name for w in self.controller.overlay_view().waypoints], ["Tussock Pennatis - Lime"])
 
     def test_waypoints_survive_a_restart(self):
         self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.001, 0.002)

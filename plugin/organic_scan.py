@@ -52,7 +52,9 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 STAGE_ORDER = ("Log", "Sample", "Analyse")
 REQUIRED_SAMPLES = len(STAGE_ORDER)
 WAYPOINTS_PER_GENUS = 4          # plants kept per genus on a body: enough to come back to, not a list to maintain
-WAYPOINT_SAMPLED_M = 40.0        # a Log or Sample taken this close to a waypoint is that plant, so it is dropped from the list
+WAYPOINT_SAMPLED_M = 100.0       # a Log or Sample taken this close to a waypoint is that plant, so it is dropped from the list (the scanner names a plant from a distance, so the
+                                 # position it records can be well away from where the commander stands to take the sample)
+WAYPOINT_SAMPLED_SAME_VARIANT_M = 150.0    # further out when the sample names the same color variant as the waypoint
 FIRST_FOOTFALL_MULTIPLIER = 5    # the first commander to set foot on a body is paid five times the usual exobiology reward
 
 # Journal unit conversions to the units organic_species_data.py's rulesets

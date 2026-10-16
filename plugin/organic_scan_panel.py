@@ -262,21 +262,31 @@ class OrganicScanController:
         self._focus_genus = genus_key
         self._save_waypoints(body)
 
-    def _drop_waypoints(self, genus_key: str, complete: bool) -> None:
-        """A sample was taken: the plant sampled is no longer one to come back to (the waypoint nearest the commander, within a few dozen meters), and a genus
-        that is analysed has none left."""
+    def _drop_waypoints(self, genus_key: str, complete: bool, variant: Optional[str] = None) -> None:
+        """A sample was taken: the plant sampled is no longer one to come back to, so its waypoint goes. That is the waypoint of this genus nearest the commander within
+        `WAYPOINT_SAMPLED_M` (further out when it is the same color variant the sample names); without a position it is the one identified most recently. A genus that is
+        analysed has none left."""
         body = self._current_body_name
         if not body or body not in self._waypoints:
             return
         points = self._waypoints[body]
+        mine = [p for p in points if p.genus_key == genus_key]
         if complete:
             points = [p for p in points if p.genus_key != genus_key]
-        elif self._current_lat is not None and self._current_lon is not None and self._current_planet_radius:
-            near = [(organic_scan.haversine_distance_m(p.lat, p.lon, self._current_lat, self._current_lon, self._current_planet_radius), p)
-                    for p in points if p.genus_key == genus_key]
-            near = [item for item in near if item[0] <= organic_scan.WAYPOINT_SAMPLED_M]
-            if near:
-                points = [p for p in points if p is not min(near, key=lambda item: item[0])[1]]
+        elif mine:
+            gone: Optional[organic_scan.Waypoint] = None
+            if self._current_lat is not None and self._current_lon is not None and self._current_planet_radius:
+                scored = []
+                for p in mine:
+                    reach = organic_scan.WAYPOINT_SAMPLED_SAME_VARIANT_M if variant and p.name == variant else organic_scan.WAYPOINT_SAMPLED_M
+                    distance = organic_scan.haversine_distance_m(p.lat, p.lon, self._current_lat, self._current_lon, self._current_planet_radius)
+                    if distance <= reach:
+                        scored.append((distance, p))
+                gone = min(scored, key=lambda item: item[0])[1] if scored else None
+            else:
+                gone = mine[-1]                      # no position to go by: the plant identified last is the likeliest
+            if gone is not None:
+                points = [p for p in points if p is not gone]
         self._waypoints[body] = points
         self._save_waypoints(body)
 
@@ -377,7 +387,7 @@ class OrganicScanController:
         )
         self._active_genus = None if organism.complete else genus_key
         self._focus_genus = genus_key
-        self._drop_waypoints(genus_key, organism.complete)
+        self._drop_waypoints(genus_key, organism.complete, variant_name if isinstance(variant_name, str) else None)
         if self._current_body_name:
             self._save_organism(self._system_name, self._current_body_name, organism)
         self._refresh_active()

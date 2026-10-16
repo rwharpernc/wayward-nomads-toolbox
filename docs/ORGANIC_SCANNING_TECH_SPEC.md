@@ -151,4 +151,4 @@ genus (`GenusView`: predicted candidates with values, the confirmed species and 
 last one), the first footfall flag, the biological signal count, the commander's position and heading, the ship and SRV positions, the genus in progress and
 the plants identified and not yet sampled (`Waypoint`s of every genus, oldest first; `exo_radar.tracked` picks the latest of each genus). The cards in `exobiology_overlay.py` are built from it, and `exo_radar.py` turns the positions
 into pixels (a flat-earth offset rotated to the heading, accurate over the few hundred meters of a sampling walk). The genus a codex name belongs to comes from
-`organic_scan.genus_key_for_codex_name`. Each genus keeps `WAYPOINTS_PER_GENUS` plants; a Log or Sample within `WAYPOINT_SAMPLED_M` of a waypoint drops it.
+`organic_scan.genus_key_for_codex_name`. Each genus keeps `WAYPOINTS_PER_GENUS` plants; a Log or Sample drops the waypoint of its genus nearest the commander within `WAYPOINT_SAMPLED_M` (100 m; `WAYPOINT_SAMPLED_SAME_VARIANT_M`, 150 m, when the sample names the same color variant), or, with no position to go by, the plant identified last.
