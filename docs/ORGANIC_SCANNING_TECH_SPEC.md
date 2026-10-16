@@ -91,7 +91,8 @@ Conditions the data describes but WNTB doesn't check (such as orbital period, pa
 own distance requirement) are simply not evaluated, which has the same effect: possibly an extra
 candidate, never a missing one.
 
-A genus usually narrows to one species once enough conditions are known. A body holds at most one species
+The candidates carry no likelihood: the data lists the species a body's conditions allow, not how common each is, so the overlay's percentages are an even share (100 divided by
+the number of candidates) and the value range of an open genus is the lowest and highest of its candidates' values. A genus usually narrows to one species once enough conditions are known. A body holds at most one species
 per genus, so the answer is a list per genus. A species with no usable rules in the data can't be
 predicted and is never listed.
 

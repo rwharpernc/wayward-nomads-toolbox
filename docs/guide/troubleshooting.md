@@ -18,6 +18,7 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | The missions list on the game screen | **Enable** under Missions; pinned missions need the overlay too | Settings → Overlays → Missions |
 | Carrier jump and fuel alerts | **Enable Flight Alerts** | Settings → Overlays → Flight Alerts |
 | Route and ship status card | **Enable the Route overlay** | Settings → Overlays → Route |
+| The running expedition's totals on the game screen | **Enable the Expedition Log card** (and START an expedition in the Exploration panel) | Settings → Overlays → Expedition Log |
 | What is left to map and sample in a system | **Enable the System targets card** | Settings → Overlays → System targets |
 | A card describing the body you target or are near | **Enable the Body info card** | Settings → Overlays → Body info |
 | Sampling progress, predicted species, the sample radar, the sample popup | The tick for each of the four Exobiology cards | Settings → Overlays → Exobiology |
@@ -160,6 +161,13 @@ The Exobiology cards (Bio status, Biology, Bio radar) show the body the game say
 are empty in supercruise and clear when you leave a planet (what you sampled is kept and returns with the body). They also need the body to be **mapped**
 (the genera come with the mapping scan); until then Bio status shows the signal count. If a card is empty on a mapped planet you are standing on, press **Test Cards**
 (Settings → Overlays → Exobiology) to check the overlay itself, and see [Exobiology](exobiology.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it).
+
+### The Expedition Log shows nothing, or its numbers look low
+
+The log counts only while an expedition is **running**: press START in the Exploration panel (or **Start** in the LOG window) when you set off, and the row and the card show it. Anything
+that happened before you pressed it, or while EDMC was closed, is not counted until you press **Rescan** on that expedition in the LOG window (it works the totals out again from your
+journals between the expedition's start and end), and **Start since my last sale** begins one from your last sale and fills it in. Earned credits count when you **sell** the data, not when
+you scan it; the unsold figures are estimates. If you play more than one commander, each has its own archive.
 
 ### Overlay text wraps, or a card is too small or too big
 

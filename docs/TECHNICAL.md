@@ -852,9 +852,11 @@ a system you already visited could otherwise come back as "new". Details and ope
 
 ### Exploration Value (`exploration_value.py`, `elw_rarity_spansh.py`)
 
-Estimates the scan payout from the formula the community has reverse-engineered (a per-planet-class
-constant, a terraforming bonus, a mass exponent and a first-discovery multiplier). Only *scan* value
-is estimated; mapped value needs extra correlation and was scoped out. System age needs no formula:
+Estimates the scan payout with the community's formula, as a pure module (`scan_value.py`): a base value of k + k x 0.56591828 x mass^0.2 (at least 500) from the planet class's k
+(plus the terraforming bonus; an Earth-like world always counts as terraformable), a first-discovery multiplier of 2.6, and for a mapped planet the mapping multipliers (3.699622554 for a
+first discovery and first map, 8.0956 for a first map of an already discovered body, 3.3333333 for an already mapped one) with the Odyssey (30% of the mapping part) and efficiency (1.25)
+bonuses, from EDDiscovery's table; OD Explorer's figures agreed with it on the same journals. The readout shows the scan value; the mapped value is on the Body info card and in the Expedition Log.
+System age needs no formula:
 a star's `Scan` event already carries `Age_MY`. The region readout is a local lookup on `StarPos`
 against a coordinate grid with no network call.
 

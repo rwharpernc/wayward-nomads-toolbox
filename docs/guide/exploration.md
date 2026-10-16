@@ -89,7 +89,7 @@ eccentricity, fast orbit, fast rotation and wide ring.
 - Banners take turns if several come at once.
 - The banner widens to fit the body's name and the rule's title, so a long catalog name shows in full (only text past about 56 characters is cut with "…").
 - The limits are fixed defaults.
-- If the banner lands on top of other overlay text, move it under **Settings → Overlays → Placement**.
+- If the banner lands on top of other overlay text, move it under **Settings → Overlays → Overlay Placement**.
 
 ## Boxel Survey
 
@@ -249,7 +249,8 @@ A quiet readout of what you're finding. Nothing to turn on. It shows:
 - what your last data sales actually paid, to set against the estimate ("Last data sale: exploration 1,234,567 cr,
   organic 350,000 cr").
 
-All of that is worked out on your computer.
+All of that is worked out on your computer. The estimate is the value of scanning the body (with the first-discovery multiplier when nobody had found it); the value of
+mapping it as well is on the [Body info](#system-targets-and-body-info) card (**Mapped value**) and counted in the [Expedition Log](#expedition-log).
 
 The readout itself is on by default (*Show estimated scan value, system age, and current region*). Two extras are
 optional in **Settings → Exploration → Exploration Value**, and both are off until you tick them because they
@@ -434,7 +435,8 @@ earned), with **START**, **STOP** and **LOG**. START begins a new expedition now
 | **Ships** | each ship you flew (type, name and ident), added as you load into it |
 
 Earned figures are what the game reports when you sell, so they count when you sell, not when you scan. The unsold figures are estimates, marked `~`; selling clears them, since the
-game sells what you hold; the mapping bonus is not estimated.
+game sells what you hold. The estimates follow the community formula (the base value of the body from its class and mass, the first-discovery multiplier, the mapping multipliers for a
+first map, a first map of an already discovered body and an already mapped body, the efficiency bonus when your probe run met the target, and the Odyssey bonus); expect them to be close, not exact.
 
 **The LOG window** is the archive. A table lists every expedition, newest first. Select one to read everything it recorded and to **edit** its name, when it started and ended (UTC;
 `2026-10-16` or `2026-10-16 18:30`), where it started and ended, the ships used and your notes, then **Save changes**. The buttons: **Start** (with an optional name), **Stop**,
@@ -454,7 +456,7 @@ Everything is kept for your commander only (another commander has their own arch
 | Earnings the moment you scan | Credits are paid when you sell the data at a station | Sell as usual; the unsold estimate shows what is waiting |
 | Counting while EDMC was closed | The journal is read live; events written while EDMC was closed are not seen | Press **Rescan** on the expedition |
 | Which sale was for which expedition | The game reports a sale, not what it covered | A sale counts for the expedition running when you sell |
-| The mapping bonus | Not in the journal until sold, and not estimated | The sale reports it in the earned figure |
+| The exact value of a map | The journal gives the figures the estimate uses, not the payout, which is reported when you sell | The estimate is close (OD Explorer's agreed to within 0.2% on one expedition); the sale reports the exact figure in the earned total |
 
 ## System targets and Body info
 

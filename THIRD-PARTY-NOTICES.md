@@ -138,7 +138,8 @@ five synthesis recipes corrected and seven synthesis families added (from its `R
 list, which agrees with elite-intel's material table) and the engineer table (from its `Engineers.cs`: each engineer's system, base, coordinates, how to find,
 be invited by and unlock them, permit and on-foot flag). The data was changed from the original: it was converted to WNTB's tables, trimmed, and
 Yarden Bond's meeting requirement was corrected to 5 Smear campaign plans (the community wiki and Inara agree; EDDiscovery has 8). No EDDiscovery code
-is used. The changes follow the same ones the author made in ED-DDT. The license follows:
+is used. The changes follow the same ones the author made in ED-DDT. The exploration value formula in `plugin/scan_value.py` (the base value, the first-discovery and mapping
+multipliers and the efficiency and Odyssey bonuses) uses the figures in EDDiscovery's `EstimatedValues.cs`; they are game constants, rewritten here in WNTB's own code. The license follows:
 
 ```
                                  Apache License

@@ -105,8 +105,8 @@ overlay-canvas x and y instead.
 
 **Hiding a display.** Each row has a **Show** checkbox. Untick it and that display is never drawn, whatever its own settings say, and
 what is already on screen goes the next time it would redraw. The spot and offsets are kept, so ticking it again puts it back where it
-was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Flight alerts, Route, Interdiction, Missions, Landing, Inventory, Mining
-stats, Surface compass, Screenshot messages). **Reset all to defaults** shows them all again.
+was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Flight alerts, Route, Expedition Log, Biology, Bio status, Bio radar, Sample popup, System targets, Body
+info, Interdiction, Missions, Landing, Inventory, Mining stats, Surface compass, Screenshot messages). **Reset all to defaults** shows them all again.
 
 **How WNTB knows your screen.** It reads what the overlay itself is using: the window size, fit or fill mode and display
 scaling from EDMCModernOverlay's own log (its newest "Overlay scaling updated" line). If that isn't there it falls back to
@@ -132,7 +132,7 @@ rather than being offset.
 
 **The layout editor.** Above the table is a to-scale picture of your screen with a grid and a box for every display. Drag a box and drop it: WNTB works out the spot (the third of the screen its center is in) and the offset in screen pixels and fills in the table. A box dropped within a few pixels of an edge snaps flush to it (offset 0), one near the middle snaps to the center line, and the rest snap to the grid you choose (20, 40, 60 or 120 pixels); untick *Snap to the grid and to edges* to place a box exactly. Boxes are drawn at each display's size at your text size, so what you see is the room it takes; a card that grows (a list with more rows) is placed from the size it is drawn at, so a zero offset at the bottom or right is the screen edge. **Picture size** (Default, Large or Extra large) makes the picture bigger for finer placement; the choice is remembered. Typing in the table moves the box, and *Show placement preview* draws the real thing on your screen.
 
-**Default spots.** On a 1920 x 1080 screen or larger the default spots do not overlap each other (the Route card is at the top left; the right-hand column runs Notable, Surface compass, Inventory, Mining stats, Flight alerts, Missions and Screenshot messages from the top; System targets and Body info sit one above the other in the lower middle of the right half of the screen). The Exobiology cards start at the top center (Bio status), the bottom center left of the Body info card (Biology), the left middle (Bio radar) and above Biology (Sample popup); the radar and the popup share a spot with the Colonization list, and Bio status with the Interdiction warning, because those are never up at the same time (a planet's surface, a construction depot, supercruise). The displays are sized in pixels, so on a
+**Default spots.** On a 1920 x 1080 screen or larger the default spots do not overlap each other (the Route card is at the top left; the right-hand column runs Notable, Surface compass, Inventory, Mining stats, Flight alerts, Missions and Screenshot messages from the top; System targets and Body info sit one above the other in the lower middle of the right half of the screen). The Exobiology cards start at the top center (Bio status), the bottom center left of the Body info card (Biology), the left middle (Bio radar) and above Biology (Sample popup); the Expedition Log card sits at the top left, to the right of the Route card; the radar and the popup share a spot with the Colonization list, and Bio status and the Expedition Log with the Interdiction warning, because those are never up at the same time (a planet's surface, a construction depot, supercruise). The displays are sized in pixels, so on a
 smaller screen they take up more of it and some can overlap: use **Show placement preview** and move them. A position you chose yourself
 is never changed.
 
@@ -156,6 +156,8 @@ may sit slightly differently than before.
 - **Text size**: Default or Larger. It starts at **Larger**, the size the displays have had since 1.9.0, so nothing
   changes until you choose. If the overlays look too big on a small or high-resolution screen, try Default. Overlay text is never drawn below the
   overlay's "normal" size, which stays readable over the game.
+- **Panel opacity**: how solid every display's background is (100%, 90% by default, 75%, 60%, 40% or 25%). The text stays solid, so a faint panel lets the game show through
+  behind readable text.
 - **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
   puts the defaults back.
 
