@@ -144,6 +144,8 @@ exercised by hand in a live game, by visiting a planet with biological signals.
 - The color variant is not predicted, only reported once a sample or the Composition Scanner names it.
 - The SRV's position is where the commander was when it was launched or left, not a reading of the SRV.
 
+`organic_scan.display_species` writes a species as a scientific name (genus capitalized, species epithet in lower case, a color variant after a dash kept as is, the game's common names such as Bark Mound left alone); the per-body view, the sample popup, the Composition Scanner footer and the panel use it, while the stored names stay as the game wrote them.
+
 ## 11. The overlay view
 
 `organic_scan_panel.overlay_view()` builds an `organic_scan.BodyView` from the controller's state without any widgets: for the body the commander is at, each

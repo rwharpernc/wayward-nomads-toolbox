@@ -469,9 +469,9 @@ class OrganicScanController:
             if not candidates:
                 parts.append(f"{genus_name}: unknown")
             elif len(candidates) == 1:
-                parts.append(f"{genus_name}: {candidates[0].name} ({_format_credits(candidates[0].value)})")
+                parts.append(f"{genus_name}: {organic_scan.display_species(candidates[0].name)} ({_format_credits(candidates[0].value)})")
             else:
-                names = ", ".join(c.name for c in candidates)
+                names = ", ".join(organic_scan.display_species(c.name) for c in candidates)
                 parts.append(f"{genus_name}: {names}")
         self._predictions_var.set(f"Predicted species ({body_name}):\n" + "\n".join(parts))
 
@@ -510,9 +510,10 @@ class OrganicScanController:
             genera.append(organic_scan.GenusView(
                 key=genus_key, name=info.name if info else genus_key.strip("$;").replace("Codex_Ent_", "").replace("_Name", ""),
                 min_distance_m=info.min_distance_m if info else 0.0,
-                candidates=tuple((c.name, c.value) for c in candidates),
-                species=organism.species_name if organism else None, value=organism.value if organism else None,
-                stage=organism.stage if organism else 0, distance_m=distance, variant=organism.variant_name if organism else None,
+                candidates=tuple((organic_scan.display_species(c.name), c.value) for c in candidates),
+                species=organic_scan.display_species(organism.species_name) if organism and organism.species_name else None,
+                value=organism.value if organism else None,
+                stage=organism.stage if organism else 0, distance_m=distance, variant=organic_scan.display_species(organism.variant_name) if organism and organism.variant_name else None,
                 positions=tuple(organism.positions) if organism else ()))
         here = (self._current_lat, self._current_lon) if self._current_lat is not None and self._current_lon is not None else None
         focus = self._active_genus or self._focus_genus
@@ -532,7 +533,7 @@ class OrganicScanController:
             return
         parts = []
         for organism in organisms:
-            name = organism.species_name or organism.genus_key
+            name = organic_scan.display_species(organism.species_name) or organism.genus_key
             value_text = f" ({_format_credits(organism.value)})" if organism.complete else ""
             distance_text = ""
             if not organism.complete and self._current_lat is not None and self._current_lon is not None:

@@ -239,6 +239,23 @@ def genus_key_for_codex_name(name: str) -> Optional[str]:
     return next((s.genus_key for s in species_data.SPECIES.values() if s.species_key == species_name), None)
 
 
+def display_species(name: Optional[str]) -> str:
+    """A species named the way a scientific name is written: the genus with a capital and the species in lower case ("Tussock Pennatis" is "Tussock pennatis"). The game
+    capitalizes both words; this puts the species epithet back in lower case. A color variant after a dash keeps its capital ("Tussock Pennatis - Lime" is "Tussock pennatis -
+    Lime"). A name that is not a genus and a single species word (Bark Mound, Brain Tree, Amphora Plant: the game's own common names) is left as it is."""
+    text = str(name or "").strip()
+    if not text:
+        return ""
+    species, dash, variant = text.partition(" - ")
+    words = species.split()
+    if len(words) == 2 and words[0].casefold() in _GENUS_WORDS:
+        species = f"{words[0][:1].upper()}{words[0][1:].lower()} {words[1].lower()}"
+    return species + (dash + variant.strip() if dash else "")
+
+
+_GENUS_WORDS = frozenset(info.name.casefold() for info in species_data.GENUS.values() if " " not in info.name)
+
+
 def predict_species(genus_key: str, cond: BodyConditions) -> List[species_data.SpeciesInfo]:
     """Every species of `genus_key` whose habitability rulesets are
     consistent with `cond` - a body holds at most one species per genus in

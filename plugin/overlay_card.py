@@ -173,7 +173,7 @@ class CardLayout:
             if not right and role == "title":                    # a section label
                 if not first or card.header or card.title:
                     y += SECTION_GAP
-                texts.append((left.upper(), "header", x, y, size))
+                texts.append((left.upper(), "title", x, y, size))      # a section label is as bright as the heading
                 y += step
                 first = False
                 continue

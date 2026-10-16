@@ -76,12 +76,12 @@ def build_card(run: Optional[expedition_log.Run], now: Optional[float] = None) -
         ("First discoveries", f"{t.first_discoveries:,}", "title" if t.first_discoveries else "text"),
         ("Mapped (first)", f"{t.mapped:,} ({t.first_mapped:,})", "text"),
         ("Earned", f"{short_credits(t.explore_earned)} cr", "ok"),
-        ("Unsold (est.)", f"~{short_credits(t.explore_estimated)} cr", "muted"),
+        ("Unsold (est.)", f"~{short_credits(t.explore_estimated)} cr", "text"),
         ("Exobiology", "", "title"),
         ("Samples · species", f"{t.bio_samples:,} · {t.bio_species:,}", "text"),
         ("First footfalls", f"{t.bio_first_footfalls:,}", "title" if t.bio_first_footfalls else "text"),
         ("Earned", f"{short_credits(t.bio_earned)} cr", "ok"),
-        ("Unsold (est.)", f"~{short_credits(t.bio_estimated)} cr", "muted"),
+        ("Unsold (est.)", f"~{short_credits(t.bio_estimated)} cr", "text"),
     ]
     footer = (f"Total earned {short_credits(t.earned)} cr   (unsold ~{short_credits(t.unsold)})", "ok")
     return Card((), tuple(rows), footer, title=(expedition_log.clip(run.name, 28), "title"),

@@ -193,17 +193,17 @@ def sample_view() -> organic_scan.BodyView:
     """A made-up body for the Test Cards: sampling a Tussock, standing 78 m from its second sample and 209 m from its first."""
     return organic_scan.BodyView(
         "Sample System 2 d", (
-            organic_scan.GenusView("b", "Bacterium", 500.0, candidates=(("Bacterium Aurasus", 1_000_000), ("Bacterium Nebulus", 5_289_900))),
-            organic_scan.GenusView("f", "Frutexa", 150.0, candidates=(("Frutexa Fera", 1_632_500),)),
-            organic_scan.GenusView("t", "Tussock", 200.0, species="Tussock Pennatis", value=1_000_000, stage=2, distance_m=78.0,
-                                   variant="Tussock Pennatis - Lime", positions=((0.0, 0.0), (0.0, 0.0125))),
-            organic_scan.GenusView("o", "Osseus", 800.0, species="Osseus Fractus", value=4_000_000, stage=3, variant="Osseus Fractus - Red")),
+            organic_scan.GenusView("b", "Bacterium", 500.0, candidates=(("Bacterium aurasus", 1_000_000), ("Bacterium nebulus", 5_289_900))),
+            organic_scan.GenusView("f", "Frutexa", 150.0, candidates=(("Frutexa fera", 1_632_500),)),
+            organic_scan.GenusView("t", "Tussock", 200.0, species="Tussock pennatis", value=1_000_000, stage=2, distance_m=78.0,
+                                   variant="Tussock pennatis - Lime", positions=((0.0, 0.0), (0.0, 0.0125))),
+            organic_scan.GenusView("o", "Osseus", 800.0, species="Osseus fractus", value=4_000_000, stage=3, variant="Osseus fractus - Red")),
         first_footfall=True, signal_count=4, here=(0.0, 0.0200), heading=30.0, radius_m=600_000.0, ship=(0.0, 0.0215), srv=None, active="t",
         waypoints=(organic_scan.Waypoint("t", "Tussock Pennatis - Lime", 0.0, 0.0290),), focus="t")
 
 
 def sample_popup() -> Dict[str, Any]:
-    return {"name": "Tussock Pennatis - Lime", "value": 1_000_000, "range_m": 200, "scan": "Sample", "first_footfall": True}
+    return {"name": "Tussock pennatis - Lime", "value": 1_000_000, "range_m": 200, "scan": "Sample", "first_footfall": True}
 
 
 # --- state and the live path -----------------------------------------------------------------------------------------
@@ -321,7 +321,7 @@ def _note_codex(entry: Mapping[str, Any]) -> None:
         return
     value = next((s.value for s in organic_species_data.SPECIES.values() if name.casefold().startswith(s.name.casefold())), 0)
     _codex.clear()
-    _codex.update({"name": name, "value": value})
+    _codex.update({"name": organic_scan.display_species(name), "value": value})
     _refresh_all()
 
 
@@ -331,7 +331,7 @@ def _note_sample(entry: Mapping[str, Any]) -> None:
     info = organic_species_data.SPECIES.get(f"{genus_key}|{species_key}")
     genus = organic_species_data.GENUS.get(str(genus_key))
     view = _view()
-    _popup["info"] = {"name": entry.get("Variant_Localised") or entry.get("Species_Localised") or entry.get("Genus_Localised") or "Sample",
+    _popup["info"] = {"name": organic_scan.display_species(entry.get("Variant_Localised") or entry.get("Species_Localised")) or entry.get("Genus_Localised") or "Sample",
                       "value": info.value if info else 0, "range_m": genus.min_distance_m if genus else 0, "scan": entry.get("ScanType"),
                       "first_footfall": bool(view and view.first_footfall)}
     _popup["until"] = time.time() + POPUP_SECONDS

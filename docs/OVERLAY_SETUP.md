@@ -157,7 +157,7 @@ may sit slightly differently than before.
   changes until you choose. If the overlays look too big on a small or high-resolution screen, try Default. Overlay text is never drawn below the
   overlay's "normal" size, which stays readable over the game.
 - **Panel opacity**: how solid every display's background is (100%, 90% by default, 75%, 60%, 40% or 25%). The text stays solid, so a faint panel lets the game show through
-  behind readable text.
+  behind readable text; over a bright scene, 75% or more keeps small text easiest to read. Every text color in every scheme keeps strong contrast over a dark panel.
 - **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
   puts the defaults back.
 

@@ -218,5 +218,35 @@ class OpacityTests(unittest.TestCase):
         self.assertTrue(all(S.MIN_OPACITY <= v <= 100 for v in values))
 
 
+def _luminance(color):
+    c = color.lstrip("#")[-6:]
+    channels = [int(c[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    lin = [v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4 for v in channels]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def _contrast(color, background="#101010"):
+    a, b = _luminance(color), _luminance(background)
+    return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+
+
+class LegibleTests(unittest.TestCase):
+    """Every kind of text an overlay draws must be easy to read over a dark panel, in every color scheme: nothing is dim enough to strain over the game."""
+
+    def test_every_text_role_has_strong_contrast_in_every_scheme(self):
+        for name, palette in S.SCHEMES.items():
+            look = S.Look(palette)
+            for role, minimum in (("title", 10.0), ("text", 10.0), ("muted", 9.0), ("header", 8.0), ("ok", 8.0), ("warn", 8.0), ("info", 8.0), ("danger", 6.0)):
+                self.assertGreaterEqual(_contrast(look.color(role)), minimum, f"{name} {role}")
+
+    def test_the_faint_color_is_only_for_things_that_are_unavailable_and_is_still_readable(self):
+        for name, palette in S.SCHEMES.items():
+            self.assertGreaterEqual(_contrast(S.Look(palette).color("faint")), 4.5, name)
+
+    def test_muted_is_still_a_step_below_the_text(self):
+        for name, palette in S.SCHEMES.items():
+            self.assertLess(_contrast(palette.muted), _contrast(palette.text) + 1e-9, name)
+
+
 if __name__ == "__main__":
     unittest.main()

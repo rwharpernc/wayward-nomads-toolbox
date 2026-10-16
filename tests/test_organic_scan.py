@@ -364,5 +364,34 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(len(tracker.organisms), 0)
 
 
+class DisplaySpeciesTests(unittest.TestCase):
+    """A species is shown as a scientific name: the genus capitalized and the species in lower case."""
+
+    def test_the_species_epithet_is_lower_case_and_the_genus_keeps_its_capital(self):
+        for raw, shown in (("Tussock Pennatis", "Tussock pennatis"), ("ALEOIDA ARCUS", "Aleoida arcus"), ("fonticulua campestris", "Fonticulua campestris"),
+                           ("Bacterium Bullaris", "Bacterium bullaris")):
+            self.assertEqual(scan.display_species(raw), shown)
+
+    def test_a_color_variant_keeps_its_capital(self):
+        self.assertEqual(scan.display_species("Tussock Pennatis - Lime"), "Tussock pennatis - Lime")
+        self.assertEqual(scan.display_species("Osseus Fractus - Red"), "Osseus fractus - Red")
+
+    def test_the_games_common_names_are_left_alone(self):
+        for name in ("Bark Mound", "Brain Tree", "Roseum Brain Tree", "Amphora Plant", "Crystalline Shards", "Sinuous Tubers"):
+            self.assertEqual(scan.display_species(name), name)
+
+    def test_nothing_is_nothing(self):
+        self.assertEqual((scan.display_species(""), scan.display_species(None)), ("", ""))
+
+    def test_every_species_in_the_data_that_is_a_genus_and_one_word_is_shown_in_lower_case(self):
+        for info in data.SPECIES.values():
+            shown = scan.display_species(info.name)
+            words = info.name.split()
+            if len(words) == 2 and words[0] in {g.name for g in data.GENUS.values()}:
+                self.assertEqual(shown, f"{words[0]} {words[1].lower()}", info.name)
+            else:
+                self.assertEqual(shown, info.name, info.name)
+
+
 if __name__ == "__main__":
     unittest.main()

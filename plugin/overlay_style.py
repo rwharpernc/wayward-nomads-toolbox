@@ -119,29 +119,29 @@ def with_opacity(color: str, percent: int) -> str:
 
 
 ELITE_ORANGE = Palette(
-    "Elite orange", "#f97316", "#e6000000", "#fdba74", "#c2790e", "#e5e7eb", "#9ca3af", "#86efac", "#fbbf24", "#7dd3fc",
+    "Elite orange", "#f97316", "#e6000000", "#fdba74", "#ddb57a", "#e5e7eb", "#ced1d7", "#86efac", "#fbbf24", "#7dd3fc",
     "#f87171", ("#fbbf24", "#67e8f9", "#c4b5fd"), ("#4fc3f7", "#81c784", "#ba68c8", "#ff8c0d"))
 ICE_BLUE = Palette(
-    "Ice blue", "#38bdf8", "#e6000000", "#bae6fd", "#0ea5e9", "#f0f9ff", "#94a3b8", "#86efac", "#fde047", "#a5b4fc",
+    "Ice blue", "#38bdf8", "#e6000000", "#bae6fd", "#7acef3", "#f0f9ff", "#cad1dc", "#86efac", "#fde047", "#a5b4fc",
     "#fca5a5", ("#7dd3fc", "#5eead4", "#c4b5fd"), ("#38bdf8", "#34d399", "#a78bfa", "#fbbf24"))
 PHOSPHOR_GREEN = Palette(
-    "Phosphor green", "#22c55e", "#e6000000", "#86efac", "#16a34a", "#dcfce7", "#86a38f", "#bef264", "#fde047", "#67e8f9",
+    "Phosphor green", "#22c55e", "#e6000000", "#86efac", "#7fcc9b", "#dcfce7", "#c2d1c7", "#bef264", "#fde047", "#67e8f9",
     "#fca5a5", ("#4ade80", "#a3e635", "#5eead4"), ("#4ade80", "#a3e635", "#2dd4bf", "#facc15"))
 AMBER_MONO = Palette(
-    "Amber mono", "#f59e0b", "#e6000000", "#fcd34d", "#b45309", "#fef3c7", "#a8a29e", "#d9f99d", "#fb923c", "#fde68a",
+    "Amber mono", "#f59e0b", "#e6000000", "#fcd34d", "#d6a078", "#fef3c7", "#d4d0ce", "#d9f99d", "#fb923c", "#fde68a",
     "#fca5a5", ("#fcd34d", "#fbbf24", "#fdba74"), ("#fcd34d", "#fbbf24", "#f59e0b", "#d97706"))
 HIGH_CONTRAST = Palette(
-    "High contrast", "#ffffff", "#f2000000", "#ffff00", "#ffffff", "#ffffff", "#d4d4d8", "#00ff7f", "#ffb000", "#00e5ff",
+    "High contrast", "#ffffff", "#f2000000", "#ffff00", "#ffffff", "#ffffff", "#eaeaec", "#00ff7f", "#ffb000", "#00e5ff",
     "#ff5555", ("#ffff00", "#00e5ff", "#ff80ff"), ("#00e5ff", "#00ff7f", "#ff80ff", "#ffb000"))
 COLOR_BLIND_SAFE = Palette(      # the Okabe-Ito set, which stays distinct for the common kinds of color blindness
-    "Color-blind safe", "#56b4e9", "#e6000000", "#f0e442", "#e69f00", "#ffffff", "#bdbdbd", "#56b4e9", "#e69f00", "#cc79a7",
-    "#d55e00", ("#f0e442", "#56b4e9", "#cc79a7"), ("#56b4e9", "#009e73", "#cc79a7", "#e69f00"))
+    "Color-blind safe", "#56b4e9", "#e6000000", "#f0e442", "#e69f00", "#ffffff", "#bdbdbd", "#56b4e9", "#e69f00", "#e8a6cb",
+    "#ff7b2e", ("#f0e442", "#56b4e9", "#cc79a7"), ("#56b4e9", "#009e73", "#cc79a7", "#e69f00"))
 
 SCHEMES: Dict[str, Palette] = {p.name: p for p in (
     ELITE_ORANGE, ICE_BLUE, PHOSPHOR_GREEN, AMBER_MONO, HIGH_CONTRAST, COLOR_BLIND_SAFE)}
 
 ROLES = ("border", "fill", "title", "header", "text", "muted", "faint", "ok", "warn", "info", "danger")
-FAINT_FACTOR = 0.5   # "faint" is the scheme's muted color at this fraction of its brightness: clearly lesser than muted
+FAINT_FACTOR = 0.7   # "faint" is the scheme's muted color at this fraction of its brightness: lesser than muted but still legible
 
 
 def scheme_named(name: Optional[str]) -> Palette:

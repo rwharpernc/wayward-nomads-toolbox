@@ -40,6 +40,8 @@ makes no internet connection, and it submits nothing. The rules behind the predi
 
 ## The overlay cards
 
+Species are written as scientific names: the genus with a capital and the species in lower case (`Tussock pennatis`, `Bacterium aurasus`; the game writes both words with capitals), and a color variant keeps its capital (`Tussock pennatis - Lime`). The game's own common names (Bark Mound, Brain Tree, Amphora Plant and the like) are left as the game writes them. The overlay draws plain text, so a name cannot be italicized there.
+
 Four cards for the body you are on, whether you are in the ship, the SRV or on foot. Each has its own switch under **Settings → Overlays → Exobiology** and its
 own entry on **Overlay Placement**.
 

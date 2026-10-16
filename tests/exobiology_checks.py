@@ -53,7 +53,7 @@ class Cards(unittest.TestCase):
 
     def test_status_card_while_sampling_shows_the_variant_dots_reward_and_distance(self):
         card = EX.build_status_card(self.view, "Sample System")
-        self.assertEqual(card.headline[0], "Tussock Pennatis - Lime")
+        self.assertEqual(card.headline[0], "Tussock pennatis - Lime")
         self.assertEqual(card.dots, (True, True, False))
         self.assertEqual(card.badge, "1 of 4 analysed")
         self.assertAlmostEqual(card.progress, (2 / 3 + 1) / 4)     # the Tussock is two samples in and the Osseus is analysed
@@ -67,7 +67,7 @@ class Cards(unittest.TestCase):
         clear = EX.build_status_card(dataclasses.replace(self.view, genera=genera), "Sample System")
         self.assertEqual(clear.header[2][1], "ok")
         idle = EX.build_status_card(dataclasses.replace(self.view, active=None), "Sample System")
-        self.assertEqual([r[0] for r in idle.rows], ["Bacterium", "Frutexa", "Tussock Pennatis - Lime", "Osseus Fractus - Red"])
+        self.assertEqual([r[0] for r in idle.rows], ["Bacterium", "Frutexa", "Tussock pennatis - Lime", "Osseus fractus - Red"])
         self.assertEqual([r[1] for r in idle.rows], ["500 m apart", "150 m apart", "200 m apart", "Done"])
         self.assertIn("five times", idle.footer[0])
 
@@ -85,7 +85,7 @@ class Cards(unittest.TestCase):
         card = EX.build_status_card(idle, "Sample System", ("Tussock Pennatis - Lime", 1_000_000))
         self.assertEqual(card.footer, ("Scanned: Tussock Pennatis - Lime  5.0M CR (first footfall bonus)", "info"))
         EX._note_codex({"SubCategory": "$Codex_SubCategory_Organic_Structures;", "Name_Localised": "Tussock Pennatis - Lime"})
-        self.assertEqual(EX._codex_scan(), ("Tussock Pennatis - Lime", 1_000_000))
+        self.assertEqual(EX._codex_scan(), ("Tussock pennatis - Lime", 1_000_000))
         EX._codex.clear()
         EX._note_codex({"SubCategory": "$Codex_SubCategory_Geology;", "Name_Localised": "Something"})
         self.assertIsNone(EX._codex_scan())
@@ -93,17 +93,17 @@ class Cards(unittest.TestCase):
     def test_list_card_shows_candidates_confirmed_species_and_the_rewards(self):
         card = EX.build_list_card(self.view, "Sample System")
         names = [r[0] for r in card.rows]
-        self.assertTrue(names[0].startswith("Bacterium\nBacterium Nebulus  5.3M CR  ~50%\nBacterium Aurasus  1.0M CR  ~50%"))
+        self.assertTrue(names[0].startswith("Bacterium\nBacterium nebulus  5.3M CR  ~50%\nBacterium aurasus  1.0M CR  ~50%"))
         self.assertEqual(card.rows[0][1], "1.0M - 5.3M CR")                         # the range the genus could pay
-        self.assertEqual(card.rows[1], ("Frutexa Fera", "~1.6M CR", "info"))
-        self.assertEqual(card.rows[2][0], "Tussock Pennatis - Lime")
+        self.assertEqual(card.rows[1], ("Frutexa fera", "~1.6M CR", "info"))
+        self.assertEqual(card.rows[2][0], "Tussock pennatis - Lime")
         self.assertEqual(card.rows[3][2], "ok")                       # analysed
         self.assertEqual(card.footer[0], "Rewards: 7.6M - 11.9M CR\nFirst footfall (5x): 38.2M - 59.6M CR")      # the range, and the bonus on its own line
         self.assertFalse(EX.build_list_card(organic_scan.BodyView("x", ())))
 
     def test_popup_card_and_its_first_footfall_value(self):
         card = EX.build_popup_card(EX.sample_popup())
-        self.assertEqual(card.title[0], "Tussock Pennatis - Lime")
+        self.assertEqual(card.title[0], "Tussock pennatis - Lime")
         self.assertEqual(card.rows[0], ("Estimated value", "5,000,000 cr (FF bonus)", "title"))
         self.assertEqual(card.rows[1], ("Colony range", "200 m", "text"))
         self.assertEqual(card.footer[0], "Sampled")
@@ -423,7 +423,7 @@ class View(unittest.TestCase):
         self.event({**sample, "ScanType": "Sample"})
         view = self.controller.overlay_view()
         genus = view.active_genus
-        self.assertEqual((genus.name, genus.variant, genus.stage, len(genus.positions)), ("Tussock", "Tussock Pennatis - Lime", 2, 2))
+        self.assertEqual((genus.name, genus.variant, genus.stage, len(genus.positions)), ("Tussock", "Tussock pennatis - Lime", 2, 2))
         self.assertEqual(view.ship, (0.001, 0.0))
         self.assertEqual(view.here, (0.0, 0.01))
         self.assertAlmostEqual(genus.distance_m, 0.0, places=1)       # the last sample was taken where they stand
