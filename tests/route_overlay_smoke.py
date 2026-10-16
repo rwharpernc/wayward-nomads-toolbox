@@ -172,20 +172,18 @@ for look in (S.LEGACY, S.DEFAULT, S.look_from_choices("Ice blue", 1, 6, 3)):
     RO.render(RO.build_card(RO.sample_tracker(), 8), rec, look)
     left, top, width, height = rec.shapes[RO._CARD_ID]
     live = {k: v for k, v in rec.messages.items() if v[0]}
-    lefts = {v[2] for k, v in live.items() if not k.startswith("wntb_route_t")}
-    check(lefts == {RO._X}, f"every line and system name starts at the same left edge: {lefts}")
+    texts = {k: v for k, v in live.items() if k.startswith("wntb_route_x")}
+    check(RO._X in {v[2] for v in texts.values()} and min(v[2] for v in texts.values()) == RO._X, "lines start at the card's left edge")
     check(RO._X - left == look.pad_x(S.CARD_PAD_X), "the text sits one standard padding in from the card's left border")
     check(min(v[3] for v in live.values()) - top == look.pad_y(S.CARD_PAD_Y), "and one standard padding below its top border")
     bottom = max(v[3] for v in live.values()) + look.line_px("normal")
     check(abs(top + height - bottom - look.pad_y(S.CARD_PAD_Y)) <= 1, f"and one padding above its bottom border ({top + height - bottom})")
-    tags = [v for k, v in live.items() if k.startswith("wntb_route_t")]
-    check(all(v[2] + look.measured_width(v[0], "normal") <= left + width - look.pad_x(S.CARD_PAD_X) for v in tags),
-          "the star column fits inside the card")
-    check(all(v[4] == look.size("normal") for v in live.values()), "one text size throughout")
+    bad = [(v[0], v[2] + look.measured_width(v[0], "normal" if v[4] == look.size("normal") else "large"), left + width - look.pad_x(S.CARD_PAD_X)) for v in texts.values() if v[2] + look.measured_width(v[0], "normal" if v[4] == look.size("normal") else "large") > left + width - look.pad_x(S.CARD_PAD_X) + 1]
+    check(not bad, f"every text, the right-aligned star column included, fits inside the card: {bad}")
+    check({v[4] for v in texts.values()} <= {look.size("normal"), look.size("large")}, "only the normal and title sizes are used")
 
 rec = Recorder()
 RO.render(full, rec, S.LEGACY)
-check(sum(1 for k, v in rec.messages.items() if k.startswith('wntb_route_h') and v[0]) == RO.MAX_HEADER, 'every header id is used by a full header')
 rec = Recorder()
 RO.render(RO.Card(), rec, S.LEGACY)
 check(rec.shapes[RO._CARD_ID][2:] == (0, 0) and all(v[0] == "" for v in rec.messages.values()), "an empty card clears everything")

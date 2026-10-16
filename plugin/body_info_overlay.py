@@ -41,7 +41,7 @@ _CFG_NEAR = "wntb_body_info_near"
 
 HIGH_GRAVITY = 2.0       # g and above is shown in the warning color; an arbitrary caution level, since the real limits differ by ship and vehicle
 OVERLAY_TTL = 4
-NAME_CHARS = 12
+NAME_CHARS = 11
 TAG_CHARS = 25
 SAMPLE_TAG = "thin carbon dioxide, 100%"
 MAX_HEADER = 5
@@ -100,11 +100,11 @@ def build_card(body: Optional[Body]) -> Card:
     if body is None:
         return Card()
     if not body.scanned:
-        header = [(body.name or body.short, "title"), ("Scan required", "muted")]
+        header = [("Scan required", "muted")]
         if body.bio:
             header.append((f"{body.bio} life signal{'s' if body.bio != 1 else ''}", "info"))
-        return Card(tuple(header))
-    header = [(body.name, "title"), (body.planet_class or (f"{body.star_type} star" if body.star_type else "Body"), "text")]
+        return Card(tuple(header), title=(body.name or body.short, "title"))
+    header = [(body.planet_class or (f"{body.star_type} star" if body.star_type else "Body"), "text")]
     flags = []
     if body.was_discovered is False:
         flags.append("Undiscovered")
@@ -133,13 +133,13 @@ def build_card(body: Optional[Body]) -> Card:
             rows.append(("Volcanism", cut(_clean(body.volcanism, " volcanism") or "None", TAG_CHARS), "text"))
     if body.bio:
         done = len(set(body.analysed))
-        genera = f" ({', '.join(body.genuses[:2])}{'...' if len(body.genuses) > 2 else ''})" if body.genuses else ""
-        rows.append(("Life", cut(f"{body.bio} signal{'s' if body.bio != 1 else ''}, {done} done{genera}", TAG_CHARS), "info"))
+        rows.append(("Life", f"{body.bio} signal{'s' if body.bio != 1 else ''}, {done} done", "info"))
+        if body.genuses:
+            rows.append(("Genera", cut(", ".join(body.genuses), TAG_CHARS), "info"))
     if body.geo:
         rows.append(("Geology", f"{body.geo} signal{'s' if body.geo != 1 else ''}", "info"))
-    if body.distance_ls is not None:
-        rows.append(("Distance", f"{body.distance_ls:,.0f} ls", "muted"))
-    return Card(tuple(header[:MAX_HEADER]), tuple(rows[:MAX_ROWS]))
+    badge = f"{body.distance_ls:,.0f} ls" if body.distance_ls is not None else ""
+    return Card(tuple(header[:MAX_HEADER]), tuple(rows[:MAX_ROWS]), title=(body.name, "title"), badge=badge, align="column")
 
 
 def sample_body() -> Body:

@@ -10,7 +10,7 @@ EDMC.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
@@ -22,15 +22,22 @@ COLUMN_GAP = 14                   # pixels between the two columns
 
 @dataclass(frozen=True)
 class Card:
+    """What one card says. `title` (with an optional right-hand `badge` and a 0-1 `progress` bar under it) is the heading; `header` lines come
+    next, then `rows`, then the `footer`. A row whose right-hand text is empty and whose role is "title" is a section label. A row's left text may
+    hold a tab: what follows it is drawn muted in a second column (a class tag, a distance)."""
     header: Tuple[Line, ...] = ()
     rows: Tuple[Row, ...] = ()
     footer: Optional[Line] = None
+    title: Optional[Line] = None
+    badge: str = ""
+    progress: Optional[float] = None
+    align: str = "right"        # "right": a row's right-hand text ends at the card's right edge; "column": it starts in a second column (long values)
 
     def __bool__(self) -> bool:
-        return bool(self.header or self.rows)
+        return bool(self.header or self.rows or self.title)
 
     def line_count(self) -> int:
-        return len(self.header) + len(self.rows) + (1 if self.footer else 0)
+        return len(self.header) + len(self.rows) + (1 if self.footer else 0) + (1 if self.title else 0)
 
 
 def cut(text: str, limit: int) -> str:
@@ -38,20 +45,29 @@ def cut(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:max(1, limit - 1)].rstrip() + "…"
 
 
+ACCENT_W = 4                      # the colored bar down the card's left edge
+BAR_H = 4                         # the progress bar
+RULE_GAP = 6                      # space above and below a divider
+SECTION_GAP = 4                   # extra space above a section label
+TAB_CHARS = 7                     # width of the first column of a row that has a second (muted) part
+MAX_TEXTS = 64                    # overlay ids reserved for text and for shapes
+MAX_SHAPES = 12
+CHROME_PX = 22                    # what the title row, bar and divider add to the height placement assumes
+
+
 class CardLayout:
     """Where and how one kind of card is drawn. `prefix` starts every overlay id (so one Plugin Group covers the card); `x` and `y` are the
-    fixed draw origin of the first line; `name_chars` and `tag_chars` size the two columns; `sample_tag` is the widest right-hand text; and
-    `sample_lines` is the height placement assumes."""
+    fixed draw origin of the first line; `name_chars` sizes the left column and `sample_tag` is the widest right-hand text (together they fix the
+    card's width); `sample_lines` is the height placement assumes; and `accent` is the color role of the bar down the left edge."""
 
     def __init__(self, prefix: str, x: int, y: int, max_header: int, max_rows: int, name_chars: int, tag_chars: int, sample_tag: str,
-                 sample_lines: int) -> None:
+                 sample_lines: int, accent: str = "border") -> None:
         self.prefix, self.x, self.y = prefix, x, y
         self.name_chars, self.tag_chars, self.sample_tag, self.sample_lines = name_chars, tag_chars, sample_tag, sample_lines
+        self.accent = accent
         self.card_id = f"{prefix}card"
-        self.header_ids = tuple(f"{prefix}h{i}" for i in range(max_header))
-        self.name_ids = tuple(f"{prefix}n{i}" for i in range(max_rows))
-        self.tag_ids = tuple(f"{prefix}t{i}" for i in range(max_rows))
-        self.foot_id = f"{prefix}foot"
+        self._used_texts = 0
+        self._used_shapes = 0
 
     # geometry --------------------------------------------------------------------------------------------------------
     def name_width(self, look: Look) -> int:
@@ -60,20 +76,110 @@ class CardLayout:
     def inner_width(self, look: Look) -> int:
         return self.name_width(look) + COLUMN_GAP + look.measured_width(self.sample_tag)
 
-    def fit(self, text: str, look: Look, limit_px: int) -> str:
-        """`text` cut with an ellipsis until it fits the card's width at the look's size."""
-        while len(text) > 1 and look.measured_width(text) > limit_px:
+    def fit(self, text: str, look: Look, limit_px: int, base: str = "normal") -> str:
+        """`text` cut with an ellipsis until it fits `limit_px` at the look's size."""
+        while len(text) > 1 and look.measured_width(text, base) > limit_px:
             text = text[:-2].rstrip() + "…"
         return text
 
+    def wrap(self, text: str, look: Look, limit_px: int) -> List[str]:
+        """`text` broken at spaces into lines that each fit `limit_px`, so a long message continues on the next line instead of being cut."""
+        lines: List[str] = []
+        current = ""
+        for word in text.split():
+            trial = f"{current} {word}".strip()
+            if current and look.measured_width(trial) > limit_px:
+                lines.append(current)
+                current = word
+            else:
+                current = trial
+        if current:
+            lines.append(current)
+        return [self.fit(line, look, limit_px) for line in lines] or [""]
+
     def size(self, look: Look, lines: int) -> Tuple[int, int]:
         pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
-        return self.inner_width(look) + 2 * pad_x, 2 * pad_y + lines * look.line_px("normal") + max(0, lines - 1) * LINE_GAP
+        return self.inner_width(look) + 2 * pad_x, 2 * pad_y + lines * look.line_px("normal") + max(0, lines - 1) * LINE_GAP + CHROME_PX
 
     def block_rect(self, look: Look = LEGACY, card: Optional[Card] = None) -> Tuple[int, int, int, int]:
         """(left, top, width, height) of the card as `render` draws it; placement uses a card of `sample_lines` lines when none is given."""
-        width, height = self.size(look, self.sample_lines if card is None else card.line_count())
-        return self.x - look.pad_x(CARD_PAD_X), self.y - look.pad_y(CARD_PAD_Y), width, height
+        left, top = self.x - look.pad_x(CARD_PAD_X), self.y - look.pad_y(CARD_PAD_Y)
+        if card is None:
+            width, height = self.size(look, self.sample_lines)
+        else:
+            width, height = self.plan(card, look)[2:]
+        return left, top, width, height
+
+    # the plan: every shape and text, with its place ------------------------------------------------------------------
+    def plan(self, card: Card, look: Look = LEGACY) -> Tuple[List[tuple], List[tuple], int, int]:
+        """(shapes, texts, width, height). A shape is (kind, color, fill, x, y, w, h) and a text is (text, color role, x, y, size), with y relative to
+        the card's first line. Built before anything is sent, so the card's height is known from what it says, wrapped lines included."""
+        pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
+        inner = self.inner_width(look)
+        step = look.line_px("normal") + LINE_GAP
+        size = look.size("normal")
+        x = self.x
+        y = 0
+        shapes: List[tuple] = []
+        texts: List[tuple] = []
+        rule = look.color("faint")
+
+        def divider(at: int) -> None:
+            shapes.append(("rect", rule, rule, x, at, inner, 1))
+
+        if card.title:
+            title, role = card.title
+            badge = card.badge
+            badge_w = look.measured_width(badge) + COLUMN_GAP if badge else 0
+            base = "large" if look.measured_width(title, "large") <= inner - badge_w else "normal"
+            texts.append((self.fit(title, look, inner - badge_w, base), role, x, y, look.size(base)))
+            if badge:
+                texts.append((badge, "muted", x + inner - look.measured_width(badge), y + look.line_px(base) - look.line_px("normal"), size))
+            y += look.line_px(base) + 2
+            if card.progress is not None:
+                fraction = max(0.0, min(1.0, card.progress))
+                y += 2
+                shapes.append(("rect", look.color("faint"), look.color("faint"), x, y, inner, BAR_H))
+                if fraction > 0:
+                    shapes.append(("rect", look.color(role), look.color(role), x, y, max(2, int(inner * fraction)), BAR_H))
+                y += BAR_H + RULE_GAP
+            else:
+                y += RULE_GAP - 2
+            if card.header or card.rows or card.footer:
+                divider(y)
+                y += 1 + RULE_GAP
+        for text, role in card.header:
+            for line in self.wrap(text, look, inner):
+                texts.append((line, role, x, y, size))
+                y += step
+        first = True
+        tab_px = look.measured_width("X" * TAB_CHARS)
+        for left, right, role in card.rows:
+            if not right and role == "title":                    # a section label
+                if not first or card.header or card.title:
+                    y += SECTION_GAP
+                texts.append((left.upper(), "header", x, y, size))
+                y += step
+                first = False
+                continue
+            first = False
+            name, _tab, extra = left.partition("\t")
+            texts.append((name, "text", x, y, size))
+            if extra:
+                texts.append((extra, "muted", x + tab_px, y, size))
+            if right:
+                right_x = x + inner - look.measured_width(right) if card.align == "right" else x + self.name_width(look) + COLUMN_GAP
+                texts.append((right, role, right_x, y, size))
+            y += step
+        if card.footer:
+            text, role = card.footer
+            divider(y)
+            y += 1 + RULE_GAP
+            for line in self.wrap(text, look, inner):
+                texts.append((line, role, x, y, size))
+                y += step
+        height = max(y - LINE_GAP, look.line_px("normal")) + 2 * pad_y
+        return shapes, texts, inner + 2 * pad_x, height
 
     # drawing ---------------------------------------------------------------------------------------------------------
     def render(self, card: Card, client: Any, look: Look = LEGACY, ttl: int = 4) -> None:
@@ -81,42 +187,30 @@ class CardLayout:
         if not card:
             self.clear(client)
             return
-        width, height = self.size(look, card.line_count())
+        shapes, texts, width, height = self.plan(card, look)
+        shapes, texts = shapes[:MAX_SHAPES], texts[:MAX_TEXTS]
         left, top = self.x - look.pad_x(CARD_PAD_X), self.y - look.pad_y(CARD_PAD_Y)
-        client.send_shape(self.card_id, "rect", look.color("border"), look.color("fill"), left, top, width, height, ttl=ttl, thickness=2)
-        step = look.line_px("normal") + LINE_GAP
-        size = look.size("normal")
-        tag_x = self.x + self.name_width(look) + COLUMN_GAP
-        inner = self.inner_width(look)
-        row = 0
-        for index, msg_id in enumerate(self.header_ids):
-            if index < len(card.header):
-                text, role = card.header[index]
-                client.send_message(msg_id, self.fit(text, look, inner), look.color(role), self.x, self.y + row * step, ttl=ttl, size=size)
-                row += 1
-            else:
-                client.send_message(msg_id, "", "white", self.x, self.y, ttl=1)
-        for index, (name_id, tag_id) in enumerate(zip(self.name_ids, self.tag_ids)):
-            if index < len(card.rows):
-                name, tag, role = card.rows[index]
-                y = self.y + row * step
-                client.send_message(name_id, name, look.color("text" if role == "muted" else role), self.x, y, ttl=ttl, size=size)
-                client.send_message(tag_id, tag, look.color(role), tag_x, y, ttl=ttl, size=size)
-                row += 1
-            else:
-                client.send_message(name_id, "", "white", self.x, self.y, ttl=1)
-                client.send_message(tag_id, "", "white", self.x, self.y, ttl=1)
-        if card.footer:
-            text, role = card.footer
-            client.send_message(self.foot_id, self.fit(text, look, inner), look.color(role), self.x, self.y + row * step, ttl=ttl, size=size)
-        else:
-            client.send_message(self.foot_id, "", "white", self.x, self.y, ttl=1)
+        client.send_shape(self.card_id, "rect", look.soft(look.color("border")), look.color("fill"), left, top, width, height, ttl=ttl, thickness=1)
+        accent = look.color(self.accent)
+        client.send_shape(f"{self.prefix}bar", "rect", accent, accent, left, top, ACCENT_W, height, ttl=ttl, thickness=1)
+        for index, (kind, color, fill, sx, sy, sw, sh) in enumerate(shapes):
+            client.send_shape(f"{self.prefix}s{index}", kind, color, fill, sx, self.y + sy, sw, sh, ttl=ttl, thickness=1)
+        for index in range(len(shapes), self._used_shapes):
+            client.send_shape(f"{self.prefix}s{index}", "rect", "", "", left, top, 0, 0, ttl=1)
+        self._used_shapes = len(shapes)
+        for index, (text, role, tx, ty, tsize) in enumerate(texts):
+            client.send_message(f"{self.prefix}x{index}", text, look.color(role), tx, self.y + ty, ttl=ttl, size=tsize)
+        for index in range(len(texts), self._used_texts):
+            client.send_message(f"{self.prefix}x{index}", "", "white", self.x, self.y, ttl=1)
+        self._used_texts = len(texts)
 
     def clear(self, client: Any) -> None:
         left, top, _w, _h = self.block_rect(LEGACY)
-        client.send_shape(self.card_id, "rect", "", "", left, top, 0, 0, ttl=1)
-        for msg_id in self.header_ids + self.name_ids + self.tag_ids + (self.foot_id,):
-            client.send_message(msg_id, "", "white", self.x, self.y, ttl=1)
+        for msg_id in (self.card_id, f"{self.prefix}bar") + tuple(f"{self.prefix}s{i}" for i in range(self._used_shapes)):
+            client.send_shape(msg_id, "rect", "", "", left, top, 0, 0, ttl=1)
+        for index in range(self._used_texts):
+            client.send_message(f"{self.prefix}x{index}", "", "white", self.x, self.y, ttl=1)
+        self._used_texts = self._used_shapes = 0
 
 
 class LiveCard:

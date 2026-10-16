@@ -148,6 +148,52 @@ class RestoreTests(unittest.TestCase):
         self.assertEqual(S.RESTORE_EVENT, restore.RESTORE_EVENT)
 
 
+class Guardrails(Feed):
+    """When the cards may show: not on the main menu, after the game closes, while another commander signs in, or while docked."""
+
+    def test_the_game_closing_hides_the_survey_until_a_commander_loads_in(self):
+        self.assertTrue(self.survey.visible)
+        self.feed({"event": "Shutdown"})
+        self.assertFalse(self.survey.visible)
+        self.feed({"event": "LoadGame", "Commander": "A"}, arrive())
+        self.assertTrue(self.survey.visible)
+
+    def test_the_main_menu_hides_it_and_other_music_does_not(self):
+        self.feed({"event": "Music", "MusicTrack": "Supercruise"})
+        self.assertTrue(self.survey.visible)
+        self.feed({"event": "Music", "MusicTrack": "MainMenu"})
+        self.assertFalse(self.survey.visible)
+
+    def test_a_new_game_session_hides_it_but_a_journal_that_carries_on_does_not(self):
+        self.feed({"event": "Fileheader", "part": 2})
+        self.assertTrue(self.survey.visible)
+        self.feed({"event": "Fileheader", "part": 1})
+        self.assertFalse(self.survey.visible)
+
+    def test_another_commander_loading_in_clears_the_survey(self):
+        self.feed({"event": "LoadGame", "Commander": "A"}, scan("1"))
+        self.assertEqual(self.survey.scanned_count(), 1)
+        self.feed({"event": "Music", "MusicTrack": "MainMenu"}, {"event": "LoadGame", "Commander": "B"})
+        self.assertEqual(self.survey.scanned_count(), 0)
+        self.assertFalse(self.survey.visible)          # no system until they arrive somewhere
+        self.feed({"event": "Location", "StarSystem": SYSTEM, "SystemAddress": 99})
+        self.assertTrue(self.survey.visible)
+        self.assertEqual(self.survey.scanned_count(), 0)
+
+    def test_the_same_commander_loading_back_in_keeps_the_survey(self):
+        self.feed({"event": "LoadGame", "Commander": "A"}, scan("1"), {"event": "Shutdown"}, {"event": "LoadGame", "Commander": "A"})
+        self.feed({"event": "Location", "StarSystem": SYSTEM, "SystemAddress": 99})
+        self.assertEqual(self.survey.scanned_count(), 1)
+
+    def test_docking_hides_it_and_undocking_brings_it_back(self):
+        self.feed({"event": "Docked"})
+        self.assertFalse(self.survey.visible)
+        self.feed({"event": "Undocked"})
+        self.assertTrue(self.survey.visible)
+        self.feed({"event": "Location", "StarSystem": SYSTEM, "SystemAddress": 99, "Docked": True})
+        self.assertFalse(self.survey.visible)
+
+
 class Text(unittest.TestCase):
     def test_credits_text(self):
         self.assertEqual((S.credits_text(999), S.credits_text(56_000), S.credits_text(1_234_567)), ("999", "56k", "1.2M"))

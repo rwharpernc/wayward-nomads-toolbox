@@ -433,8 +433,9 @@ They need [EDMCModernOverlay](../OVERLAY_SETUP.md); nothing is sent anywhere, th
   threshold you choose (100,000 credits to start), most valuable first. Each row has the body's short name (`A 1`), a tag for the classes that matter
   (`ELW`, `WW`, `AW`, `HMC`, `MR`, and `TF` for any other terraformable world) and the value (`1.2M`, with `first` when nobody had discovered it).
 - Below that it lists the bodies **with life that you have not finished analysing**, as `1/3 life`.
-- A body leaves the list when you **map it** or **analyse its last organism**, and the whole card goes when you jump to another system. At the top, once you
-  have honked, it shows how far the system scan has got (`Scan 50%   4 of 8 bodies`), and says so when nothing at or above your threshold is left (`Nothing over 100k left to map or sample`).
+- A body leaves the list when you **map it** or **analyse its last organism**. The card's heading is the system name with a progress bar for the system scan
+  and a count (`4 of 8 scanned`) once you have honked, and a message says so when nothing at or above your threshold is left (`Nothing over 100k left to map or sample`;
+  a long message continues on the next line). Each row shows the body, a muted tag and distance (`HMC  82k ls`) or the genera once known, and the value on the right.
 - **Rows shown** (3 to 16, 6 to start) caps the list, and the rest are counted (`+ 3 more`). You can switch the life list off.
 
 **Body info** (Settings → Overlays → Body info) describes one body: its name and class; flags (`Undiscovered`, `Terraformable`, and `Unmapped`, `Mapped before`
@@ -450,6 +451,10 @@ targeted** in the galaxy or system map or the nav panel, and for **the body you 
 | What mapping pays | The value shown is the estimated **scan** value (the same estimate the [Exploration Value](#exploration-value) readout uses). What mapping adds is not estimated. | Use the threshold as a guide to which bodies are worth a probe run. |
 | The kinds of life before you map | The system scan gives the **number** of biological signals; the genera are given when you map the body. | Map it to see the genera. |
 | The cards to remember a system after a restart | They are rebuilt from your newest journal when EDMC starts in the middle of a system, back to your last arrival. | Nothing: it happens by itself. |
+
+**When the cards show.** They follow the commander and the situation, so they are there when you are exploring and gone when you are not: they hide in hyperspace, while docked
+or on a carrier, when the game is closed or at its main menu (including while another commander signs in), and a different commander loading in starts with a clean slate.
+They come back when you arrive in a system. The cards are drawn by the overlay over your game window; the overlay's own settings decide whether they show when another window has focus.
 
 Where each card sits is set on **Overlay Placement** ("System targets" and "Body info"). They start in the lower middle of the right half of the screen,
 one above the other; move them to suit your HUD.

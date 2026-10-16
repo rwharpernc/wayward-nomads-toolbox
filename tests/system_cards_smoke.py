@@ -92,7 +92,7 @@ def build_survey():
 survey = build_survey()
 card = TO.build_card(survey, 100_000, 6, True)
 texts = [r[0] for r in card.rows]
-check(card.header[0][0] == "Scan 50%   4 of 8 bodies", f"the scan progress line: {card.header}")
+check(card.title and card.title[0] == SYSTEM and card.badge == "4 of 8 scanned" and card.progress == 0.5, f"the title, scan count and progress: {card.title} {card.badge} {card.progress}")
 check(texts[0] == "To map (1)" or texts[0].startswith("To map ("), f"a To map section comes first: {texts}")
 check(any(t.startswith("A 1") and "ELW" in t for t in texts), f"the Earthlike world is listed with its tag: {texts}")
 check(any(r[0] == "B 1" and r[1] == "0/2 life" for r in card.rows), f"the body with life is listed with its progress: {card.rows}")
@@ -137,7 +137,7 @@ check(BI.pick_body(survey, {}, cfg) is None, "no target and no body nearby: no c
 
 body = survey.bodies[1]
 info = BI.build_card(body)
-check(info.header[0][0] == f"{SYSTEM} A 1" and info.header[1][0] == "Earthlike body", f"name and class: {info.header}")
+check(info.title[0] == f"{SYSTEM} A 1" and info.header[0][0] == "Earthlike body", f"name and class: {info.header}")
 check(any("Terraformable" in t and "Unmapped" in t for t, _r in info.header), f"flags: {info.header}")
 rows = {r[0]: r for r in info.rows}
 check("Scan value" in rows and rows["Scan value"][1].endswith(" first"), f"the scan value is shown, marked as a first discovery: {rows.get('Scan value')}")
@@ -145,7 +145,7 @@ check(rows["Gravity"][1] == "0.50 g" and rows["Gravity"][2] == "text", f"gravity
 heavy = SS.Body(9, "Heavy", "H", "planet", "Rocky body", gravity_g=2.5, scanned=True)
 check(dict((r[0], r) for r in BI.build_card(heavy).rows)["Gravity"][2] == "warn", "high gravity is in the warning color")
 unscanned = BI.build_card(SS.Body(10, "Mystery", "M", bio=2))
-check([h[0] for h in unscanned.header] == ["Mystery", "Scan required", "2 life signals"] and not unscanned.rows, f"an unscanned body: {unscanned.header}")
+check(unscanned.title[0] == "Mystery" and [h[0] for h in unscanned.header] == ["Scan required", "2 life signals"] and not unscanned.rows, f"an unscanned body: {unscanned.header}")
 check(not BI.build_card(None), "no body, no card")
 
 # --- drawing: every line starts at the same left edge, one padding ---------------------------------------------------------------------
@@ -168,14 +168,14 @@ for label, layout, render, build in (("targets", TO.LAYOUT, TO.render, lambda: T
         left, top, width, height = rec.shapes[layout.card_id]
         live = {k: v for k, v in rec.messages.items() if v[0]}
         check(live, f"{label}: something was drawn")
-        lefts = {v[2] for k, v in live.items() if not k.startswith(layout.prefix + "t")}
-        check(lefts == {layout.x}, f"{label}: every line and name starts at the same left edge: {lefts}")
+        texts = {k: v for k, v in live.items() if k.startswith(layout.prefix + "x")}
+        check(min(v[2] for v in texts.values()) == layout.x and all(v[2] >= layout.x for v in texts.values()), f"{label}: lines start at the card's left edge")
+        check(sum(1 for v in texts.values() if v[2] == layout.x) >= 2, f"{label}: the first column is left-aligned")
         check(layout.x - left == look.pad_x(S.CARD_PAD_X), f"{label}: one standard padding at the left")
         check(min(v[3] for v in live.values()) - top == look.pad_y(S.CARD_PAD_Y), f"{label}: and at the top")
         bottom = max(v[3] for v in live.values()) + look.line_px("normal")
         check(abs(top + height - bottom - look.pad_y(S.CARD_PAD_Y)) <= 1, f"{label}: and at the bottom ({top + height - bottom})")
-        tags = [v for k, v in live.items() if k.startswith(layout.prefix + "t")]
-        check(all(v[2] + look.measured_width(v[0], "normal") <= left + width - look.pad_x(S.CARD_PAD_X) for v in tags), f"{label}: the right column fits inside the card")
+        check(all(v[2] + look.measured_width(v[0], "normal" if v[4] == look.size("normal") else "large") <= left + width - look.pad_x(S.CARD_PAD_X) + 1 for v in texts.values()), f"{label}: every text fits inside the card")
     rec = Recorder()
     render(OC.Card(), rec, S.LEGACY)
     check(rec.shapes[layout.card_id][2:] == (0, 0) and all(v[0] == "" for v in rec.messages.values()), f"{label}: an empty card clears everything")

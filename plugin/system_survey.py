@@ -30,7 +30,8 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 ARRIVALS = ("FSDJump", "CarrierJump", "Location")
-EVENTS = ARRIVALS + ("StartJump", "FSSDiscoveryScan", "FSSAllBodiesFound", "Scan", "FSSBodySignals", "SAASignalsFound", "SAAScanComplete", "ScanOrganic")
+SESSION_EVENTS = ("Fileheader", "Shutdown", "LoadGame", "Music", "Docked", "Undocked")     # when the cards may show, not what they say
+EVENTS = ARRIVALS + SESSION_EVENTS + ("StartJump", "FSSDiscoveryScan", "FSSAllBodiesFound", "Scan", "FSSBodySignals", "SAASignalsFound", "SAAScanComplete", "ScanOrganic")
 STANDARD_GRAVITY = 9.80665        # m/s^2 in one g
 PASCALS_PER_ATMOSPHERE = 101325.0
 BIO_TYPE, GEO_TYPE = "$SAA_SignalType_Biological;", "$SAA_SignalType_Geological;"
@@ -127,6 +128,9 @@ class SystemSurvey:
         self.progress = 0.0
         self.fss_complete = False
         self.in_transit = False         # between systems: the survey of the last one is not shown
+        self.playing = True             # False from the game closing or its main menu until a commander loads in again
+        self.docked = False             # docked, or on a carrier: nothing to explore from here
+        self.cmdr = ""                  # whose survey this is; another commander loading in clears it
         self.bodies: Dict[int, Body] = {}
 
     # --- events ----------------------------------------------------------------------------------------------------------
@@ -144,8 +148,10 @@ class SystemSurvey:
             name = str(entry.get("StarSystem") or "").strip()
             if name and name.casefold() != self.name.casefold():
                 self.reset(name, entry.get("SystemAddress") if isinstance(entry.get("SystemAddress"), int) else None)
-            self.in_transit = False
+            self.in_transit, self.playing, self.docked = False, True, bool(entry.get("Docked"))
             return True
+        if event in SESSION_EVENTS:
+            return self._session(entry, event)
         if event == "StartJump":
             self.in_transit = entry.get("JumpType") == "Hyperspace"
             return self.in_transit
@@ -189,6 +195,26 @@ class SystemSurvey:
             return True
         return False
 
+    def _session(self, entry: Mapping[str, Any], event: str) -> bool:
+        """The game closing, going to its main menu, or a commander loading in: whether the cards may show at all, and whose survey this is."""
+        if event == "Shutdown" or (event == "Fileheader" and entry.get("part", 1) in (1, None)):
+            self.playing = False          # a journal that carries on from the last one (part 2 and up) is the same session
+        elif event == "Music":
+            if entry.get("MusicTrack") != "MainMenu":
+                return False
+            self.playing = False
+        elif event == "LoadGame":
+            name = str(entry.get("Commander") or "").strip()
+            if name and self.cmdr and name.casefold() != self.cmdr.casefold():
+                self.reset("", None)      # another commander: nothing scanned by the last one applies
+            self.cmdr = name or self.cmdr
+            self.playing = True
+        elif event == "Docked":
+            self.docked = True
+        elif event == "Undocked":
+            self.docked = False
+        return True
+
     def _body(self, body_id: int, name: str = "") -> Body:
         body = self.bodies.get(body_id)
         if body is None:
@@ -231,7 +257,7 @@ class SystemSurvey:
     # --- what is left to do -------------------------------------------------------------------------------------------------
     @property
     def visible(self) -> bool:
-        return bool(self.name) and not self.in_transit
+        return bool(self.name) and not self.in_transit and self.playing and not self.docked
 
     def scanned_count(self) -> int:
         return sum(1 for b in self.bodies.values() if b.scanned)
@@ -263,6 +289,7 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
     """The journal hook: feeds the shared survey. Registered ahead of the cards that read it, so they see the state after the event."""
     if entry.get("event") in ("StartUp", RESTORE_EVENT):
         restore_from_journal(survey)      # EDMC started in the middle of a system: rebuild it from the newest journal
+        survey.cmdr = cmdr or survey.cmdr
         return
     survey.handle_event(entry, system or "")
 

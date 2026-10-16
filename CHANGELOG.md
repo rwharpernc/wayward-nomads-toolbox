@@ -11,6 +11,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - Both cards have a Test Card, their own entry on Overlay Placement (new default spots in the lower middle of the right half of the screen), and are rebuilt from the newest journal when EDMC starts in the middle of a system.
 
 ### Changed
+- **A cleaner look for the Route, System targets and Body info cards.** A heading with a colored accent bar, a progress bar for the system scan, thin dividers, section labels, values aligned to the right (or in a second column), and a muted second column for tags and distances. A long message now continues on the next line instead of being cut off.
+- The System targets and Body info cards now hide when the game closes or is at its main menu (so they no longer linger while another commander signs in), while docked, and in hyperspace, and a different commander loading in clears the system the last one had scanned.
 - The overlay card drawing is shared (`overlay_card.py`) by the Route, System targets and Body info cards, and the scan-value formula is its own module (`scan_value.py`). The Route card looks the same.
 
 ## 1.15.0 - 2026-10-16

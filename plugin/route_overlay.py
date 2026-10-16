@@ -133,7 +133,7 @@ def build_card(tracker: RouteTracker, rows: int = DEFAULT_ROWS, low_percent: int
     ahead = tracker.remaining()
     extra_lines = tuple(expedition_lines)[:MAX_EXPEDITION_LINES]
     if not ahead:
-        return Card(tuple(status_lines(tracker, low_percent)) + extra_lines) if extra_lines else Card()
+        return Card(tuple(status_lines(tracker, low_percent)) + extra_lines, title=("Route", "title")) if extra_lines else Card()
     shown = ahead[:rows]
     listed: List[Row] = []
     for number, hop in enumerate(shown, 1):
@@ -146,7 +146,7 @@ def build_card(tracker: RouteTracker, rows: int = DEFAULT_ROWS, low_percent: int
         neutrons, dwarfs = tracker.special_counts(rest)
         extra = [f"{count} {word}" for count, word in ((neutrons, "neutron"), (dwarfs, "white dwarf")) if count]
         footer = (f"+ {len(rest)} more" + (f" ({', '.join(extra)})" if extra else ""), "muted")
-    return Card(tuple(status_lines(tracker, low_percent)) + extra_lines, tuple(listed), footer)
+    return Card(tuple(status_lines(tracker, low_percent)) + extra_lines, tuple(listed), footer, title=("Route", "title"))
 
 
 # --- drawing -------------------------------------------------------------------------------------------------------------

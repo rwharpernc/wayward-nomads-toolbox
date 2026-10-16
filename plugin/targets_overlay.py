@@ -45,7 +45,7 @@ THRESHOLD_RANGE = (0, 50_000_000)
 ROWS_RANGE = (3, 16)
 DEFAULT_ROWS = 6
 OVERLAY_TTL = 4
-NAME_CHARS = 20          # the body's short name and class tag
+NAME_CHARS = 26          # the body's short name, class tag and distance
 TAG_CHARS = 12           # the value or the life count
 SAMPLE_TAG = "123.4M first"
 MAX_HEADER = 2
@@ -85,16 +85,24 @@ def save_config(cfg: TargetsConfig) -> None:
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
 
+def _distance(body: Body) -> str:
+    ls = body.distance_ls
+    if ls is None:
+        return ""
+    return f"{ls / 1000:.1f}k ls" if ls >= 10_000 else f"{ls:,.0f} ls"
+
+
 def _map_row(body: Body) -> Row:
     first = body.was_discovered is False
-    left = f"{body.short}  {body.tag}".rstrip()
+    left = f"{cut(body.short, 7)}\t{(body.tag + '  ' + _distance(body)).strip()}"
     right = credits_text(body.scan_value()) + (" first" if first else "")
     return cut(left, NAME_CHARS), cut(right, TAG_CHARS), "title" if first else "text"
 
 
 def _life_row(body: Body) -> Row:
     done = len(set(body.analysed))
-    return cut(body.short, NAME_CHARS), f"{done}/{body.bio} life", "info"
+    genera = ", ".join(body.genuses[:2]) + ("…" if len(body.genuses) > 2 else "")
+    return cut(f"{cut(body.short, 7)}\t{genera}".rstrip("\t"), NAME_CHARS), f"{done}/{body.bio} life", "info"
 
 
 def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True) -> Card:
@@ -104,17 +112,15 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
         return Card()
     maps = survey.to_map(threshold)
     lives = survey.with_life() if life else []
-    header = []
-    if survey.honked:
-        total = survey.body_count
-        shown = f"{survey.scanned_count()} of {total} bodies" if total else f"{survey.scanned_count()} bodies"
-        header.append((f"Scan {round(survey.progress * 100)}%   {shown}", "title"))
+    total = survey.body_count
+    badge = f"{survey.scanned_count()} of {total} scanned" if total else f"{survey.scanned_count()} scanned"
+    heading, progress = (survey.name, "title"), (survey.progress if survey.honked else None)
     if not maps and not lives:
-        if not header:
+        if not survey.honked:
             return Card()
         over = f"over {credits_text(threshold)}" if threshold else "scanned"
-        header.append((f"Nothing {over} left to map or sample" if survey.fss_complete else f"Nothing {over} to map yet", "ok" if survey.fss_complete else "muted"))
-        return Card(tuple(header))
+        message = (f"Nothing {over} left to map or sample" if survey.fss_complete else f"Nothing {over} to map yet", "ok" if survey.fss_complete else "muted")
+        return Card((message,), title=heading, badge=badge, progress=progress)
     listed: List[Row] = []
     budget = rows
     for title, items, make in (("To map", maps, _map_row), ("Life", lives, _life_row)):
@@ -127,7 +133,7 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
         budget -= min(budget, len(items))
     hidden = (len(maps) + len(lives)) - sum(1 for r in listed if r[1])
     footer = (f"+ {hidden} more", "muted") if hidden > 0 else None
-    return Card(tuple(header), tuple(listed), footer)
+    return Card((), tuple(listed), footer, title=heading, badge=badge, progress=progress)
 
 
 def sample_survey() -> SystemSurvey:
