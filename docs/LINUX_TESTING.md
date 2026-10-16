@@ -15,11 +15,11 @@ Where a step fails, copy the relevant lines from EDMC's log
 
 ## Testing: start here
 
-**1.15.0 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
+**1.16.0 is the current release.** 1.10.0 added Materials, Engineering, the material trader finder and the Expedition planner, and was tested on
 Linux; 1.10.1 stopped the Expedition and Materials sections from widening the main panel; 1.10.2 made long names wrap instead of being cut off. 1.10.1 and 1.10.2
-were tested on Windows only, and so were 1.11.0, 1.12.0, 1.13.0, 1.14.0, 1.14.1 and 1.15.0.
+were tested on Windows only, and so were 1.11.0, 1.12.0, 1.13.0, 1.14.0, 1.14.1, 1.15.0 and 1.16.0.
 
-**The Linux checks for 1.15.0** are the items in section 6 below about the Route overlay, the Expedition card and survey counts, and the overlay padding and alignment (every card's text starts at the same left edge, the same distance from its border), plus a look at the new default overlay spots. **The Linux checks for 1.14.0** are the Credits Ledger window (click the Credits line: it opens, fits, and the tabs fill), the Colonization History window (HISTORY button), fold sections starting folded, and Ship Builds folding. **The Linux checks for 1.13.0** are the items in section 6 below marked "added in 1.13.0": mission progress colors and the alert widths. **The Linux checks for 1.12.0** are the items in section 6 below marked "added in 1.12.0": the Missions window and pinned missions, Best picks and Source commodities, the Missions overlay card, the Upgrade planner, Megaship scans and the Ship planner's subtract option.
+**The Linux checks for 1.16.0** are the Exobiology cards (Bio status, Biology, Bio radar, Sample popup), System targets and Body info, the Expedition Log (START, STOP, LOG window, Start since my last sale), the drag-and-drop layout editor on Overlay Placement, panel opacity and legible text on every color scheme, and species shown as `Genus species`; the items are in section 6 below. **The Linux checks for 1.15.0** are the items in section 6 below about the Route overlay, the Expedition card and survey counts, and the overlay padding and alignment (every card's text starts at the same left edge, the same distance from its border), plus a look at the new default overlay spots. **The Linux checks for 1.14.0** are the Credits Ledger window (click the Credits line: it opens, fits, and the tabs fill), the Colonization History window (HISTORY button), fold sections starting folded, and Ship Builds folding. **The Linux checks for 1.13.0** are the items in section 6 below marked "added in 1.13.0": mission progress colors and the alert widths. **The Linux checks for 1.12.0** are the items in section 6 below marked "added in 1.12.0": the Missions window and pinned missions, Best picks and Source commodities, the Missions overlay card, the Upgrade planner, Megaship scans and the Ship planner's subtract option.
 
 **The Linux checks for 1.11.0** are also still open: Settings → General → **Help** (Report an issue, Copy diagnostics); the Engineering window's **Engineers** tab
 (places, unlock steps, the Bubble / Colonia filter) and **Ship planner** tab; BGS rebuilding a period that closed while EDMC was not running; and finished Colonization builds
@@ -27,9 +27,9 @@ losing the "Construction Site:" prefix. The data behind the Engineering window c
 engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 
 **Getting set up**
-1. Install the released **1.15.0** the normal way (the automatic update, or the zip from the
+1. Install the released **1.16.0** the normal way (the automatic update, or the zip from the
    [releases page](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)) and restart EDMC. The line under the mode
-   buttons should read `Plugin: v1.15.0`. Work through sections 0 and 1 below first.
+   buttons should read `Plugin: v1.16.0`. Work through sections 0 and 1 below first.
 2. To get the checklist and the test suite, fetch the repository and use `master`:
    `git fetch --all --tags`, then `git switch master`, then `git pull --rebase`. Once per machine:
    `git config core.hooksPath .githooks`.
@@ -152,6 +152,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
       them off it says to turn them on; the row stays narrow with a long system name; restarting EDMC keeps the list and the seen prices.
 - [ ] Route overlay (Settings → Overlays → Route): **Test Card** draws a card at the top left with fuel, range and a list of systems, neutron stars and white dwarfs in their own colors, every line starting at the same left edge; plot a real route in the game and the list follows each jump and clears at the end.
 - [ ] Exobiology cards (Settings → Overlays → Exobiology): **Test Cards** draws all four as plain panels (no colored bar or outline) with the three circles beside the species name inside the card; sampling on a mapped body fills the circles, moves the progress bar a third per sample, updates the distance and the radar, and shows the popup; scanning a plant with the Composition Scanner and walking off shows a ring, a pointer line and `Tracking <species>` with the little pointers turning as you turn; leaving the planet clears the cards; first footfall is marked on a body nobody has landed on.
+- [ ] Overlay font (Settings → Overlays → Appearance): the section lists the fonts in EDMCModernOverlay's `fonts` folder (native or Flatpak); choosing one and pressing OK rewrites `preferred_fonts.txt` (with a `.bak`); **Add font file...** copies a `.ttf` and selects it; **Open fonts folder** opens it; after a restart the overlay text shows lower case.
 - [ ] Expedition Log (Exploration → Expedition Log; Settings → Overlays → Expedition Log): START, a few jumps and scans, STOP; LOG opens a window with the expedition, its facts and editor; Rescan, Reset and Delete (asking twice) work; Export CSV writes a file; the overlay card shows the running totals.
 - [ ] Body info as symbols and formulas, the Biology card's ranges and percentages, and Settings → Overlays → Appearance → Panel opacity (a lower value makes every card's background fainter, the text stays solid).
 - [ ] Expedition Log's **Start since my last sale** (just after your last sale, filled in from your journals, then counting live).

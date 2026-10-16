@@ -158,6 +158,10 @@ may sit slightly differently than before.
   overlay's "normal" size, which stays readable over the game.
 - **Panel opacity**: how solid every display's background is (100%, 90% by default, 75%, 60%, 40% or 25%). The text stays solid, so a faint panel lets the game show through
   behind readable text; over a bright scene, 75% or more keeps small text easiest to read. Every text color in every scheme keeps strong contrast over a dark panel.
+- **Overlay font**: the font every overlay is drawn in. It is EDMCModernOverlay's font, one for all plugins, and its default (Elite's cockpit font) has capital letters only, so
+  everything shows in capitals. Choose another installed font, or **Add font file...** to copy a `.ttf` or `.otf` you downloaded (Google Fonts has many; keep a font's license with it),
+  and WNTB puts your pick first in the overlay's `preferred_fonts.txt` (keeping a `.bak` of the old list once). It takes effect when EDMC restarts; **Overlay default** goes back to the cockpit font.
+  WNTB cannot give its own cards a different font from other plugins' (the overlay takes one font), and it does not install or license fonts for you.
 - **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
   puts the defaults back.
 

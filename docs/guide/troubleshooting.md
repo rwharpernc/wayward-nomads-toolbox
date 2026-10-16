@@ -171,6 +171,10 @@ that happened before you pressed it, or while EDMC was closed, is not counted un
 journals between the expedition's start and end), and **Start since my last sale** begins one from your last sale and fills it in. Earned credits count when you **sell** the data, not when
 you scan it; the unsold figures are estimates. If you play more than one commander, each has its own archive.
 
+### Every overlay is in capital letters
+
+The overlay draws text in the font EDMCModernOverlay loads, and its preferred font is `Eurocaps.ttf`, Elite's cockpit font, which has capital letters only. It is not WNTB, so the species names (`Tussock pennatis`) are sent in the right case but show in capitals, and so does every other plugin's text. To get lower case letters, open **Settings → WNTB → Overlays → Appearance → Overlay font**, pick a font with lower case letters (or **Add font file...** to use one you downloaded, for example from Google Fonts), press OK and restart EDMC. That changes the font for every overlay, and an EDMCModernOverlay update can put the old list back. WNTB cannot choose the font for its own cards only, or italicize text.
+
 ### Overlay text wraps, or a card is too small or too big
 
 Open **Settings → Overlays → Appearance** and press **Show sample**. Cards are sized from an estimate of the text at the

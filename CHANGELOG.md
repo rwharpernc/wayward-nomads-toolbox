@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.16.0 - 2026-10-16
 
 ### Added
 - **System targets card.** A list of what is left to do in the system you are in: scanned planets and moons worth mapping that you have not mapped (an estimated scan value at or above a threshold you choose, most valuable first), and bodies with life you have not finished analysing, until you map or analyse them. It shows the scan progress after the honk and clears when you jump. Off until ticked in Settings → Overlays → System targets.
@@ -25,6 +25,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Panel opacity** (Settings → Overlays → Appearance): choose how solid every WNTB display's background is, from 100% down to 25% (90% is the default and the scheme's own); the text stays solid.
 
 ### Changed
+- **Choose the overlay font.** Appearance has an **Overlay font** section to pick the font the overlay draws in (or add a `.ttf` or `.otf` file, such as one from Google Fonts), by putting it first in EDMCModernOverlay's font list. The overlay's default, Elite's cockpit font, has capital letters only, so every card showed in capitals; a font with lower case letters shows species as `Tussock pennatis`. The font is the overlay's, so it applies to every plugin's text.
 - **Species are shown as scientific names.** The exobiology cards, the sample popup and the Organic Scanning panel write a genus with a capital and the species in lower case (`Tussock pennatis`, `Bacterium aurasus - Emerald`) instead of the game's capitals on both words; the game's common names (Bark Mound, Brain Tree and the like) are unchanged. The overlay cannot draw italics, so they are not italicized.
 - **Plain card panels.** The Route, System targets, Body info and Exobiology cards (and the Bio radar) are now a plain dark panel: the wide colored bar down the left edge and the outline around the card are gone, leaving the text, thin dividers and progress bars.
 - **A cleaner look for the Route, System targets and Body info cards.** A heading, a progress bar for the system scan, thin dividers, section labels, values aligned to the right (or in a second column), and a muted second column for tags and distances. A long message now continues on the next line instead of being cut off.
@@ -36,6 +37,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ### Fixed
 - **Dim text on the overlays is brighter.** Section labels (`EXPLORATION`, `LIFE`, `TO MAP`) now use the heading color, the muted and secondary text colors of every scheme are lighter (and the faint color used for unavailable rows is easier to read), the Expedition Log's unsold figures use the normal text color, and the Color-blind safe scheme's carrier and warning colors are brighter. A test now requires every text color in every scheme to keep strong contrast over a dark panel.
+- **Troubleshooting: why overlay text is all capitals.** EDMCModernOverlay's preferred font (`Eurocaps.ttf`) has capital letters only, so species names and every other card show in capitals however WNTB writes them; the Troubleshooting guide says how to choose a lower case font.
 - **The Expedition Log row's title says what is running while it is folded.** The START, STOP and LOG buttons are inside a section that starts folded, which made them easy to miss; the title now reads `Expedition Log - Core Run, 6.5M earned` (or `- not running`) even when folded.
 - **The Expedition Log card now says what to do when nothing is running.** With the card switched on and no expedition started it showed nothing at all; it now reads `No expedition is running` with how to start one (START in the Exploration panel, or LOG → Start since my last sale).
 - **A plant you have sampled now leaves the tracked list reliably.** A Log or Sample drops the genus's nearest tracked plant within about 100 m (about 150 m when it is the same color variant), up from 40 m, because the scanner names a plant from a distance, so the position it records can be well away from where you stand to take the sample; with no position to go by it drops the plant identified last.

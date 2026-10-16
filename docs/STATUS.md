@@ -5,12 +5,9 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **Unreleased since 1.15.0** (on `master`, tested on Windows only): the System targets and Body info cards, the four Exobiology cards (bio status, biology, the
-  sample radar with little pointers, the sample popup) with plant waypoints and first footfall, an optional EDSM lookup of bodies other commanders have scanned, plain
-  card panels, panel opacity, element symbols and formulas on Body info, reward ranges and even-share percentages on the Biology card, a pointer for each genus identified, mapping value estimates and a corrected scan value formula, cards that reset when you leave a planet, a per-commander saved survey of each system so System targets remembers where you left off, the Expedition Log (an archive of exploration expeditions with totals, a window to edit and rescan them, and an overlay card), a drag-and-drop layout editor on Overlay Placement with a picture size choice, and
-  the Linux support note. The Linux checks are in `docs/LINUX_TESTING.md` and `docs/TODO.md`. A new guide, `docs/guide/exobiology.md`, covers all of exobiology.
+- **1.16.0** is the current release (2026-10-16, tag `v1.16.0`): the System targets and Body info cards (with a saved per-commander survey of each system, an optional EDSM lookup, element symbols and formulas, mapped value and first footfall), the four Exobiology cards (Bio status, Biology with reward ranges, the Bio radar with a pointer for each genus, the Sample popup) with plant waypoints, species written as scientific names, the Expedition Log (archive, window, overlay card, Start since my last sale), a corrected scan value formula, a drag-and-drop layout editor on Overlay Placement, plain card panels, panel opacity, brighter and more legible overlay text, cards that reset when you leave a planet, and the Linux support note. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6 and `docs/TODO.md`. A new guide, `docs/guide/exobiology.md`, covers all of exobiology.
 
-- **1.15.0** is the current release (2026-10-16, tag `v1.15.0`): the Route overlay (fuel, jump range, jumps left and the plotted route, with neutron stars and white dwarfs picked out), the running expedition and per-stop survey counts (bodies scanned, first discoveries, mapped) on that card and in the Expedition window, overlay text left-justified with one shared padding, no overlay text below the readable size (the Text size choice is Default or Larger), and new default overlay spots. Cards and route tracking were tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
+- **1.15.0** (2026-10-16, tag `v1.15.0`): the Route overlay (fuel, jump range, jumps left and the plotted route, with neutron stars and white dwarfs picked out), the running expedition and per-stop survey counts (bodies scanned, first discoveries, mapped) on that card and in the Expedition window, overlay text left-justified with one shared padding, no overlay text below the readable size (the Text size choice is Default or Larger), and new default overlay spots. Cards and route tracking were tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
 - **1.14.1** (2026-10-15, tag `v1.14.1`): the Credits Ledger's Lifetime tab fills in again, and Rebuild from journals reports what it did. Windows only.
 - **1.14.0** (2026-10-15, tag `v1.14.0`): history moved off the mode panels (the Credits Ledger window from the Credits line, the Colonization History window from HISTORY), the main panel no longer folds, fold sections start folded, Ship Builds folds, and bold page names in Mining and Trade. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md`.
 - **1.13.0** (2026-10-15, tag `v1.13.0`): progress for source-and-return missions from the hold (`36/60 held`) with bars and color by progress in the Missions window and on the overlay, Notable Bodies and Discovery cards that show full names, and the Missions overlay card putting a long place on its own line. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
@@ -30,7 +27,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.15.0 release. For a fix to a released version, cut a short branch from
+There is one long-lived branch, `master`, and it matches the 1.16.0 release. For a fix to a released version, cut a short branch from
 `master` (for example `bugfix/1.13.1`), and merge it back.
 
 ## Testing
