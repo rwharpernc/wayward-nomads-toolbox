@@ -73,6 +73,13 @@ class PlacementToBox(unittest.TestCase):
         self.assertEqual(G.rect_from_placement(L.Placement("right", "bottom", 0, 0), (3000.0, 2000.0), SCREEN), (0.0, 0.0))
 
 
+class Sizes(unittest.TestCase):
+    def test_the_picture_sizes_grow_and_the_default_is_the_smallest(self):
+        widths = [w for _label, w in G.SIZE_CHOICES]
+        self.assertEqual(widths, sorted(widths))
+        self.assertEqual(dict(G.SIZE_CHOICES)[G.DEFAULT_SIZE], widths[0])
+
+
 class Clients(unittest.TestCase):
     """Circles must be moved with everything else drawn through a placed client, or they land away from their card."""
 

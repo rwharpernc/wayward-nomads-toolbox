@@ -17,6 +17,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 from . import overlay_layout as layout
 
 GRID_CHOICES = (20, 40, 60, 120)
+SIZE_CHOICES = (("Default", 540), ("Large", 760), ("Extra large", 980))     # the picture's width in pixels
+DEFAULT_SIZE = "Default"
 DEFAULT_GRID = 40
 EDGE_SNAP = 14           # logical pixels: a box this close to an edge or the center line snaps to it
 THIRD = 1 / 3
@@ -85,18 +87,22 @@ class LayoutEditor:
     a key's current placement and `put` is called with (key, placement) when a box is dropped; `hidden` says whether a display is hidden. Built with Tk
     imported lazily so the module's pure functions import without it."""
 
-    WIDTH = 540
-
     def __init__(self, parent: Any, screen: Tuple[float, float], slots: Dict[str, Tuple[str, Tuple[int, int]]], get: Callable[[str], Optional[layout.Placement]],
-                 put: Callable[[str, layout.Placement], None], hidden: Callable[[str], bool], colors: Tuple[str, ...]) -> None:
+                 put: Callable[[str, layout.Placement], None], hidden: Callable[[str], bool], colors: Tuple[str, ...],
+                 size: str = DEFAULT_SIZE, on_size: Optional[Callable[[str], None]] = None) -> None:
         import tkinter as tk
         self._tk = tk
         self.screen, self.slots, self._get, self._put, self._hidden, self._colors = screen, slots, get, put, hidden, colors
+        self._on_size = on_size
+        self.WIDTH = dict(SIZE_CHOICES).get(size, dict(SIZE_CHOICES)[DEFAULT_SIZE])
         self.scale = self.WIDTH / screen[0]
         self.height = int(round(screen[1] * self.scale))
         self.frame = tk.Frame(parent)
         bar = tk.Frame(self.frame)
         bar.pack(anchor=tk.W)
+        tk.Label(bar, text="Picture size:").pack(side=tk.LEFT)
+        self.size_var = tk.StringVar(value=size if size in dict(SIZE_CHOICES) else DEFAULT_SIZE)
+        tk.OptionMenu(bar, self.size_var, *[label for label, _w in SIZE_CHOICES], command=self._resize).pack(side=tk.LEFT, padx=(4, 10))
         tk.Label(bar, text="Grid:").pack(side=tk.LEFT)
         self.grid_var = tk.StringVar(value=f"{DEFAULT_GRID} px")
         tk.OptionMenu(bar, self.grid_var, *[f"{g} px" for g in GRID_CHOICES], command=lambda _v: self.redraw()).pack(side=tk.LEFT, padx=(4, 10))
@@ -105,11 +111,23 @@ class LayoutEditor:
         self.canvas = tk.Canvas(self.frame, width=self.WIDTH, height=self.height, background="#101418", highlightthickness=1, highlightbackground="#555555")
         self.canvas.pack(anchor=tk.W, pady=(4, 2))
         self.status = tk.StringVar(value="Drag a box to place that display. A box near an edge snaps to it (offset 0).")
-        tk.Label(self.frame, textvariable=self.status, wraplength=self.WIDTH, justify=tk.LEFT).pack(anchor=tk.W)
+        self._status_label = tk.Label(self.frame, textvariable=self.status, wraplength=self.WIDTH, justify=tk.LEFT)
+        self._status_label.pack(anchor=tk.W)
         self._drag: Optional[Tuple[str, float, float]] = None
         self.canvas.bind("<ButtonPress-1>", self._press)
         self.canvas.bind("<B1-Motion>", self._move)
         self.canvas.bind("<ButtonRelease-1>", self._release)
+        self.redraw()
+
+    def _resize(self, choice: str) -> None:
+        """Changes the picture's size (and remembers it, through `on_size`): the same screen at a different scale."""
+        self.WIDTH = dict(SIZE_CHOICES).get(choice, dict(SIZE_CHOICES)[DEFAULT_SIZE])
+        self.scale = self.WIDTH / self.screen[0]
+        self.height = int(round(self.screen[1] * self.scale))
+        self.canvas.configure(width=self.WIDTH, height=self.height)
+        self._status_label.configure(wraplength=self.WIDTH)
+        if self._on_size is not None:
+            self._on_size(choice)
         self.redraw()
 
     def grid_px(self) -> int:

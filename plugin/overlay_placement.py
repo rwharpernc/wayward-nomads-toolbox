@@ -38,6 +38,7 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 CFG_SCALING = "wntb_overlay_display_scaling"   # "auto" or one of layout.SCALING_CHOICES such as "125%"
 CFG_MODE = "wntb_overlay_scale_mode"           # "auto", "fit" or "fill"
 CFG_HIDDEN_PREFIX = "wntb_overlay_hidden_"          # + the display's key: "1" while the commander has hidden that display
+CFG_EDITOR_SIZE = "wntb_overlay_editor_size"      # the layout picture's size on the Overlay Placement tab: Default, Large or Extra large
 CFG_OFFSETS = "wntb_overlay_group_offsets"     # whether right-hand displays are carried past the overlay's clamp (default on)
 AUTO = "auto"
 
@@ -539,7 +540,9 @@ def _build_editor(holder: tk.Misc) -> None:
             second.set(str(placement.y if placement.custom else placement.dy))
 
         slots = {key: (slot.label, slot_size(key)) for key, slot in SLOTS.items()}
-        _editor = overlay_grid.LayoutEditor(holder, logical, slots, get, put, lambda key: key in _hidden_vars and not _hidden_vars[key].get(), _PREVIEW_COLORS)
+        _editor = overlay_grid.LayoutEditor(holder, logical, slots, get, put, lambda key: key in _hidden_vars and not _hidden_vars[key].get(), _PREVIEW_COLORS,
+                                           size=config.get_str(CFG_EDITOR_SIZE) or overlay_grid.DEFAULT_SIZE,
+                                           on_size=lambda choice: config.set(CFG_EDITOR_SIZE, choice))
         _editor.frame.pack(anchor=tk.W)
         for choice, first, second in _rows.values():
             for var in (choice, first, second):
