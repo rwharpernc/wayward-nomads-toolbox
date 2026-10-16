@@ -448,6 +448,10 @@ def build_settings(notebook: nb.Notebook) -> None:
 
         def worker() -> None:
             ok, message = check_connection(host, port)
+            if ok:
+                from . import overlay_processes
+                extra = overlay_processes.warning(overlay_processes.running_windows())
+                message = f"{message} {extra}".strip()
             try:
                 frame.after(0, lambda: status_var.set(message))
             except tk.TclError:

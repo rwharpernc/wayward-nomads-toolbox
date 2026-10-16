@@ -171,6 +171,10 @@ that happened before you pressed it, or while EDMC was closed, is not counted un
 journals between the expedition's start and end), and **Start since my last sale** begins one from your last sale and fills it in. Earned credits count when you **sell** the data, not when
 you scan it; the unsold figures are estimates. If you play more than one commander, each has its own archive.
 
+### Overlay text looks doubled or ghosted, with a second copy in a different font
+
+Two copies of EDMCModernOverlay's overlay window are running and each draws everything WNTB sends. This happens when EDMC is closed or restarted in a way that leaves the old overlay window running (for example while testing an update), so the old window, which keeps the font it started with, reconnects to the new session and draws over the new one. Open Task Manager (or `ps` on Linux) and look for more than one `overlay_client` process (a `python.exe -m overlay_client.overlay_client` pair for each window, started at different times). End the older ones, or end them all and restart EDMC, and the ghosting goes. **Settings → WNTB → Overlays → Overlay Connection → Check connection** says when more than one overlay window is running (and Copy diagnostics lists how many). WNTB cannot start or stop the overlay itself, so it cannot end the extra one for you.
+
 ### Every overlay is in capital letters
 
 The overlay draws text in the font EDMCModernOverlay loads, and its preferred font is `Eurocaps.ttf`, Elite's cockpit font, which has capital letters only. It is not WNTB, so the species names (`Tussock pennatis`) are sent in the right case but show in capitals, and so does every other plugin's text. To get lower case letters, open **Settings → WNTB → Overlays → Appearance → Overlay font**, pick a font with lower case letters (or **Add font file...** to use one you downloaded, for example from Google Fonts), press OK and restart EDMC. That changes the font for every overlay, and an EDMCModernOverlay update can put the old list back. WNTB cannot choose the font for its own cards only, or italicize text.

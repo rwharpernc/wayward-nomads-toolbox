@@ -138,11 +138,12 @@ def commander_names() -> List[str]:
     return [n for n in names if n]
 
 
-def diagnostics_text(log_text: str = "", names: Iterable[str] = (), home: str = "") -> str:
-    """The text Copy diagnostics puts on the clipboard: the Environment lines, then the newest WNTB log lines."""
+def diagnostics_text(log_text: str = "", names: Iterable[str] = (), home: str = "", extra: str = "") -> str:
+    """The text Copy diagnostics puts on the clipboard: the Environment lines (and `extra`, one more line when there is one), then the newest WNTB log lines."""
     lines = wntb_log_lines(log_text)
     body = redact("\n".join(lines), names, home)[-MAX_LOG_CHARS:] if lines else "(no WNTB lines found in the log)"
-    return f"{environment_text()}\n\nWNTB log lines:\n{body}\n"
+    environment = environment_text() + (f"\n- {extra}" if extra else "")
+    return f"{environment}\n\nWNTB log lines:\n{body}\n"
 
 
 def read_log_tail(path: str) -> str:
@@ -159,7 +160,12 @@ def read_log_tail(path: str) -> str:
 def copy_diagnostics(widget) -> bool:
     """Copy the diagnostics to the clipboard via `widget`; False if the clipboard refused."""
     path = log_path()
-    text = diagnostics_text(read_log_tail(path) if path else "", commander_names())
+    try:
+        from . import overlay_processes
+        windows = overlay_processes.summary(overlay_processes.running_windows())
+    except Exception:
+        windows = ""
+    text = diagnostics_text(read_log_tail(path) if path else "", commander_names(), extra=windows)
     try:
         widget.clipboard_clear()
         widget.clipboard_append(text)
