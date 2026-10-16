@@ -423,7 +423,7 @@ visit; the log records what **happened** on a trip, whether or not you planned a
 
 **Starting an expedition you are already on.** In the LOG window, **Start since my last sale** begins an expedition just after your last exploration or exobiology sale (the earlier of the two) and fills it in from your journals since then, so the data you are still holding is what the expedition covers; it then carries on counting live. It is how to pick up a trip that was under way before you used the log.
 
-**The row** (Exploration panel, *Expedition Log*) shows the expedition that is running (its name, how long, systems, jumps and light-years, bodies and species, and what you have
+**The row** (Exploration panel, *Expedition Log*; it starts folded like the other sections, so click its title (▸) to open it; the title says what is running even while it is folded) shows the expedition that is running (its name, how long, systems, jumps and light-years, bodies and species, and what you have
 earned), with **START**, **STOP** and **LOG**. START begins a new expedition now, from the system you are in and in the ship you are flying, and stops the one that was running.
 
 **What it counts**, from your journal, while an expedition runs:

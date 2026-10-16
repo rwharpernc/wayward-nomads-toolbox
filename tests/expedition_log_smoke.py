@@ -99,6 +99,7 @@ frame.pack()
 PA.build_panel(frame)
 pump()
 check("Log in" in PA.summary_text(PA.book), "before a commander is known the row says to log in")
+check(PA.title_suffix(PA.book) == "", "and the folded title has nothing to add")
 ev({"event": "LoadGame", "Commander": "CMDR A"})
 check("No expedition yet" in PA.summary_text(PA.book), f"with a commander but no expedition: {PA.summary_text(PA.book)}")
 
@@ -109,6 +110,7 @@ run = PA.controller.start_expedition("Core Run")
 pump()
 check(run is not None and run.start_system == "Sol" and run.ships == ["Caspian Explorer 'Far Horizon' WN-01"], f"the expedition starts here in this ship: {run}")
 check(PA.book.running() is run, "and it is the one running")
+check(PA.title_suffix(PA.book).startswith(" - Core Run"), f"the folded title says what is running: {PA.title_suffix(PA.book)}")
 
 # --- journal events are counted while it runs -----------------------------------------------------------------------------------------
 stamp0 = time.time()

@@ -43,6 +43,14 @@ def summary_text(book_: expedition_log.LogBook, now: Optional[float] = None) -> 
     return "\n".join(lines)
 
 
+def title_suffix(book_: expedition_log.LogBook) -> str:
+    """The note after the section's title, which stays visible while the section is folded: what is running, or that nothing is (the buttons are inside the section)."""
+    run = book_.running()
+    if run is None:
+        return " - not running" if book_.ready else ""
+    return f" - {expedition_log.clip(run.name, 24)}, {expedition_log.short_credits(run.totals.earned)} earned"
+
+
 class LogController:
     def __init__(self) -> None:
         self._plugin_dir: Optional[str] = None
@@ -50,6 +58,7 @@ class LogController:
         self._ship = ""
         self._parent: Optional[tk.Misc] = None
         self._summary_var: Optional[tk.StringVar] = None
+        self._body: Optional[tk.Frame] = None
         self._buttons: Dict[str, tk.Button] = {}
         book.add_listener(self._update)
 
@@ -117,6 +126,7 @@ class LogController:
         self._parent = parent
         self._summary_var = tk.StringVar()
         body = panelkit.collapsible_section(parent, "Expedition Log", "wntb_expedition_log_collapsed")
+        self._body = body
         panelkit.wrap_label(body, min_wrap=_WRAP_PX, textvariable=self._summary_var, anchor="w").grid(
             row=1, column=0, columnspan=3, sticky=tk.W, pady=(2, 0))
         for column, (key, text, command, tip) in enumerate((
@@ -133,6 +143,8 @@ class LogController:
         try:
             if self._summary_var is not None:
                 self._summary_var.set(summary_text(book))
+            if self._body is not None:
+                self._body.set_title_suffix(title_suffix(book))      # type: ignore[attr-defined]
             if "stop" in self._buttons:
                 self._buttons["stop"].configure(state=tk.NORMAL if book.running() is not None else tk.DISABLED)
                 self._buttons["start"].configure(state=tk.NORMAL if book.ready else tk.DISABLED)
