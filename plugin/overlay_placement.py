@@ -86,6 +86,8 @@ SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
           group="wntb_exo_radar", group_prefix="wntb_exo_radar_"),
     _slot("bio_popup", "Sample popup", "center", "bottom", -230, 350, (360, 130),
           group="wntb_exo_popup", group_prefix="wntb_exo_popup_"),
+    _slot("expedition_log", "Expedition Log (totals of the running expedition)", "left", "top", 430, 40, (300, 330),
+          group="wntb_expedition_log", group_prefix="wntb_expedition_log_"),
     _slot("missions", "Missions list", "right", "bottom", 40, 120, (440, 300),
           group="wntb_missions", group_prefix="wntb_missions_"),
     _slot("interdiction", "Interdiction warning", "center", "top", 0, 20, (600, 116),

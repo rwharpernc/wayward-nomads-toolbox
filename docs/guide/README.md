@@ -35,7 +35,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | Mode | Guide |
 |---|---|
 | **Powerplay** | [Powerplay](powerplay.md): merits, cycles, sessions, rare goods |
-| **Exploration** | [Exploration](exploration.md): Auto-Honk, alerts, Boxel Survey, Codex, Notes, Expedition planner, System targets and Body info, Compass |
+| **Exploration** | [Exploration](exploration.md): Auto-Honk, alerts, Boxel Survey, Codex, Notes, Expedition planner, Expedition Log, System targets and Body info, Compass |
 | **Exobiology** | [Exobiology](exobiology.md): the Organic Scanning panel, the four overlay cards (status, predicted species, sample radar, popup), finding your way back to a plant, first footfall |
 | **Mining** | [Mining](mining.md): space and surface mining, the Mining Book |
 | **Trade** | [Trade](trade.md): profit, routes, prices, Watch list, carrier cargo, History |

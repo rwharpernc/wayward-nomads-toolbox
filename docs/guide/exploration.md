@@ -8,7 +8,7 @@ click a section's title (▸ / ▾) to open it. They fold again each time EDMC s
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
 [Organic Scanning](#organic-scanning) ([Exobiology guide](exobiology.md)) · [Codex Completionist](#codex-completionist) ·
-[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Expedition](#expedition) · [System targets and Body info](#system-targets-and-body-info) · [Compass](#compass) ·
+[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Expedition](#expedition) · [Expedition Log](#expedition-log) · [System targets and Body info](#system-targets-and-body-info) · [Compass](#compass) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 Anything that draws on your game screen needs an overlay. See [Getting started](getting-started.md#what-you-need)
@@ -415,6 +415,47 @@ reached. It is on by default once the Route overlay is on, and there is a tick t
 The expeditions are kept on your computer for each commander, and nothing is sent anywhere except the EDSM lookup above. It does not replace
 **Waypoints** (Boxel Survey), which stays a single quick list; **From plotted route** and the CSV import work the same way in both.
 
+## Expedition Log
+
+An archive of your exploration expeditions, and a card that keeps the running one in view. It is separate from the [Expedition planner](#expedition) above, which plans stops to
+visit; the log records what **happened** on a trip, whether or not you planned a route.
+
+**Starting an expedition you are already on.** In the LOG window, **Start since my last sale** begins an expedition just after your last exploration or exobiology sale (the earlier of the two) and fills it in from your journals since then, so the data you are still holding is what the expedition covers; it then carries on counting live. It is how to pick up a trip that was under way before you used the log.
+
+**The row** (Exploration panel, *Expedition Log*) shows the expedition that is running (its name, how long, systems, jumps and light-years, bodies and species, and what you have
+earned), with **START**, **STOP** and **LOG**. START begins a new expedition now, from the system you are in and in the ship you are flying, and stops the one that was running.
+
+**What it counts**, from your journal, while an expedition runs:
+
+| | |
+|---|---|
+| **Exploration** | systems visited, jumps and light-years, honks, bodies scanned (each once) and first discoveries, Earth-likes, water worlds, ammonia worlds and terraformables, bodies mapped and first maps, landings, new codex entries, **the credits earned when you sell exploration data**, and an estimate of what the scans and mapping you have not yet sold are worth (with the first discovery, first map, efficiency and Odyssey bonuses) |
+| **Exobiology** | samples taken, species analysed, genera, first footfalls, **the credits earned when you sell exobiology data**, and an estimate of what the species you have analysed but not yet sold are worth (five times as much on a first footfall) |
+| **Ships** | each ship you flew (type, name and ident), added as you load into it |
+
+Earned figures are what the game reports when you sell, so they count when you sell, not when you scan. The unsold figures are estimates, marked `~`; selling clears them, since the
+game sells what you hold; the mapping bonus is not estimated.
+
+**The LOG window** is the archive. A table lists every expedition, newest first. Select one to read everything it recorded and to **edit** its name, when it started and ended (UTC;
+`2026-10-16` or `2026-10-16 18:30`), where it started and ended, the ships used and your notes, then **Save changes**. The buttons: **Start** (with an optional name), **Stop**,
+**Resume** (carry on counting one that was stopped), **Reset** (clear its totals and count again from now; it asks twice), **Rescan** (work its totals out again from *your* journals
+between its start and its end, which fills in an expedition that missed events or one you gave an earlier start), **Delete** (asks twice), **Copy summary** and **Export CSV** (the
+whole archive, for a spreadsheet).
+
+**The overlay card** (Settings → Overlays → Expedition Log, off until ticked) shows the running expedition's exploration and exobiology totals and what it has earned, with its name and
+how long it has run in the heading and the total earned at the foot; it can keep showing the last expedition after you stop it. Place it on **Overlay Placement** ("Expedition Log").
+
+Everything is kept for your commander only (another commander has their own archive) and never leaves your computer.
+
+**What it cannot tell you:**
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| Earnings the moment you scan | Credits are paid when you sell the data at a station | Sell as usual; the unsold estimate shows what is waiting |
+| Counting while EDMC was closed | The journal is read live; events written while EDMC was closed are not seen | Press **Rescan** on the expedition |
+| Which sale was for which expedition | The game reports a sale, not what it covered | A sale counts for the expedition running when you sell |
+| The mapping bonus | Not in the journal until sold, and not estimated | The sale reports it in the earned figure |
+
 ## System targets and Body info
 
 Two cards on your game screen for working a system. Both are **off by default**, have no panel button, and are set up under **Settings → Overlays**.
@@ -449,7 +490,7 @@ targeted** in the galaxy or system map or the nav panel, and for **the body you 
 | A body to be listed as soon as you honk | The honk gives only a count. A body's class and mass come with its **scan** (the system scan, or a detailed scan), so a body appears when you have scanned it. | Scan the bodies, and they appear. Or tick **Also look up bodies other commanders have scanned** (below). |
 | Bodies in a system nobody has scanned | The EDSM lookup only knows what other commanders have uploaded. A system nobody has surveyed returns nothing. | Scan the bodies. |
 | Whether a body has been stood on | The scan's `WasFootfalled` says whether anyone has set foot on a landable body. WNTB flags a first footfall (Body info: `First footfall`, and the five times exobiology reward; System targets: `FF` on a life row). It reflects the scan you made; a body scanned by someone before you but not yet footfalled in the data may show as footfalled. | Treat the flag as a strong hint and check the in-game body info if it matters. |
-| What mapping pays | The value shown is the estimated **scan** value (the same estimate the [Exploration Value](#exploration-value) readout uses). What mapping adds is not estimated. | Use the threshold as a guide to which bodies are worth a probe run. |
+| What mapping pays | The **Scan value** is the estimated value of scanning (the same estimate the [Exploration Value](#exploration-value) readout uses); Body info's **Mapped value** is the estimate of scanning and mapping it with an efficient probe run. The System targets list is ranked by the scan value. | Use Body info's Mapped value, or the threshold, as a guide to which bodies are worth a probe run. |
 | The kinds of life before you map | The system scan gives the **number** of biological signals; the genera are given when you map the body. | Map it to see the genera. |
 | The cards to remember a system after a restart, a relog or a visit later | The survey of each system is saved for each commander and merged back when you return; for a system visited before it was saved, it is rebuilt from your journals (your commander's, the newest 80 files). | Nothing: it happens by itself. Bodies the journals never recorded (a system you never scanned) cannot be recovered. |
 

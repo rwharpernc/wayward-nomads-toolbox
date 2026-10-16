@@ -361,7 +361,7 @@ class BodyView:
     ship: Optional[Tuple[float, float]] = None
     srv: Optional[Tuple[float, float]] = None
     active: Optional[str] = None       # the genus key last sampled and not yet analysed
-    waypoints: Tuple[Waypoint, ...] = ()           # plants identified and not yet sampled, of the genus being surveyed
+    waypoints: Tuple[Waypoint, ...] = ()           # plants identified and not yet sampled, oldest first; the cards follow the latest of each genus
     focus: Optional[str] = None        # the genus being surveyed: the one in progress, else the one last identified
 
     @property

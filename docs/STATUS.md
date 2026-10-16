@@ -7,7 +7,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 - **Unreleased since 1.15.0** (on `master`, tested on Windows only): the System targets and Body info cards, the four Exobiology cards (bio status, biology, the
   sample radar with little pointers, the sample popup) with plant waypoints and first footfall, an optional EDSM lookup of bodies other commanders have scanned, plain
-  card panels, cards that reset when you leave a planet, a per-commander saved survey of each system so System targets remembers where you left off, a drag-and-drop layout editor on Overlay Placement with a picture size choice, and
+  card panels, cards that reset when you leave a planet, a per-commander saved survey of each system so System targets remembers where you left off, the Expedition Log (an archive of exploration expeditions with totals, a window to edit and rescan them, and an overlay card), a drag-and-drop layout editor on Overlay Placement with a picture size choice, and
   the Linux support note. The Linux checks are in `docs/LINUX_TESTING.md` and `docs/TODO.md`. A new guide, `docs/guide/exobiology.md`, covers all of exobiology.
 
 - **1.15.0** is the current release (2026-10-16, tag `v1.15.0`): the Route overlay (fuel, jump range, jumps left and the plotted route, with neutron stars and white dwarfs picked out), the running expedition and per-stop survey counts (bodies scanned, first discoveries, mapped) on that card and in the Expedition window, overlay text left-justified with one shared padding, no overlay text below the readable size (the Text size choice is Default or Larger), and new default overlay spots. Cards and route tracking were tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.

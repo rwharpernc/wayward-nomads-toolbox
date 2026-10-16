@@ -56,6 +56,7 @@ _OWN_DATA_FILES: set = {
     "waypoint_route_state.json",  # Waypoint Route's stop list (waypoint_route_state.py)
     "visited_systems.json",  # Boxel Survey's per-commander visited log (visited_systems.py)
     "organic_scan_state.json",  # Organic Scanning's per-body state (organic_scan_state.py)
+    "expedition_log.json",  # the Expedition Log's archive of exploration expeditions, per commander (expedition_log.py)
     "system_surveys.json",  # the System targets and Body info cards' saved surveys of each system, per commander (system_survey_store.py)
     "codex_completionist_state.json",  # Codex Completionist's tally (codex_completionist_state.py)
     "income_ledger.json",  # Credits Ledger: income by activity and day (income_ledger.py)

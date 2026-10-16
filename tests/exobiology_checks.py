@@ -157,6 +157,55 @@ class Ranges(unittest.TestCase):
         self.assertIn("First footfall (5x): 38.2M - 59.6M CR", texts)
 
 
+class MultiTrack(unittest.TestCase):
+    """One pointer for each genus identified, each the latest plant of its genus, each in its own color."""
+
+    def view(self):
+        base = EX.sample_view()
+        way = organic_scan.Waypoint
+        return dataclasses.replace(base, waypoints=(
+            way("t", "Tussock Pennatis - Lime", 0.0, 0.0250), way("b", "Bacterium Aurasus - Emerald", 0.0, 0.0300),
+            way("f", "Frutexa Fera - Green", 0.0, 0.0280), way("t", "Tussock Pennatis - Lime", 0.0, 0.0290)))
+
+    def test_three_genera_give_three_tracked_plants_the_latest_of_each(self):
+        followed = XR.tracked(self.view())
+        self.assertEqual(len(followed), 3)
+        by = {t.waypoint.genus_key: t for t in followed}
+        self.assertEqual(round(by["t"].waypoint.lon, 4), 0.0290)                      # the newer Tussock, not the first
+        self.assertEqual(sorted(t.color for t in followed), [0, 1, 2])
+
+    def test_the_radar_has_a_pointer_a_ring_and_a_row_for_each(self):
+        plan = XR.build_plan(self.view())
+        self.assertEqual((len(plan.pointers), len(plan.targets), len(plan.track)), (3, 3, 3))
+        tracked_rows = [row[0] for row in plan.rows if row and row[0].text.split(" ")[0] in ("Tussock", "Bacterium", "Frutexa")]
+        self.assertEqual(len(tracked_rows), 3)
+        self.assertTrue(all(item.angle is not None for item in tracked_rows))
+        self.assertEqual({item.role for item in tracked_rows}, {"series0", "series1", "series2"})
+
+    def test_the_radar_grows_a_row_for_each_plant_tracked(self):
+        one = dataclasses.replace(self.view(), waypoints=self.view().waypoints[:1])
+        layout = XR.RadarLayout("t_", 100, 100)
+        self.assertGreater(layout.block_rect(S.DEFAULT, XR.build_plan(self.view()))[3], layout.block_rect(S.DEFAULT, XR.build_plan(one))[3])
+
+    def test_drawing_sends_one_pointer_each_and_clears_the_ones_no_longer_needed(self):
+        rec = Recorder()
+        layout = XR.RadarLayout("t_", 100, 100)
+        layout.render(XR.build_plan(self.view()), rec, S.DEFAULT)
+        self.assertEqual(sorted(k for k, v in rec.vectors.items() if v and k.startswith("t_point")), ["t_point0", "t_point1", "t_point2"])
+        one = dataclasses.replace(self.view(), waypoints=self.view().waypoints[:1])
+        layout.render(XR.build_plan(one), rec, S.DEFAULT)
+        self.assertEqual(sorted(k for k, v in rec.vectors.items() if v and k.startswith("t_point")), ["t_point0"])
+
+    def test_bio_status_has_a_line_for_each_in_the_radar_s_color(self):
+        card = EX.build_status_card(self.view(), "Sample System")
+        lines = [h for h in card.header if h[0].startswith("Tracking ")]
+        self.assertEqual(len(lines), 3)
+        self.assertEqual({h[1] for h in lines}, {"series0", "series1", "series2"})
+        rec = Recorder()
+        EX.LAYOUT_STATUS.render(card, rec, S.DEFAULT)           # series roles are drawn like any other color
+        self.assertTrue(any(t.startswith("Tracking Tussock") for t in rec.texts()))
+
+
 class Radar(unittest.TestCase):
     def test_offset_is_right_and_ahead_for_the_heading(self):
         here, there = (0.0, 0.0), (0.0, 0.001)               # a point due east
@@ -206,15 +255,15 @@ class Waypoints(unittest.TestCase):
         plan = XR.build_plan(view)
         self.assertEqual(len(plan.targets), 1)
         self.assertEqual(plan.targets[0][0], "T")
-        self.assertIsNotNone(plan.pointer)
-        self.assertAlmostEqual(math.hypot(*plan.pointer), 1.0)
-        self.assertEqual(plan.track[0], "Tracking Tussock Pennatis")
-        self.assertRegex(plan.track[1], r"^\d+ m, \d+° (right|left)$")
+        self.assertEqual(len(plan.pointers), 1)
+        self.assertAlmostEqual(math.hypot(plan.pointers[0][0], plan.pointers[0][1]), 1.0)
+        self.assertEqual(len(plan.track), 1)
+        self.assertRegex(plan.track[0], r"^Tussock: \d+ m, \d+° (right|left)$")
 
     def test_every_distance_under_the_plot_has_a_little_pointer_turned_toward_it(self):
         plan = XR.build_plan(EX.sample_view())
         items = [item for row in plan.rows for item in row]
-        self.assertEqual([i.text for i in items if i.angle is not None], ["Ship: 16 m", "Scan 1: 209 m", "Scan 2: 79 m", "Tracking Tussock Pennatis"])
+        self.assertEqual([i.text for i in items if i.angle is not None], ["Ship: 16 m", "Scan 1: 209 m", "Scan 2: 79 m", "Tussock 94 m"])
         rec = Recorder()
         layout = XR.RadarLayout("t_", 100, 100)
         layout.render(plan, rec, S.DEFAULT)
@@ -240,9 +289,9 @@ class Waypoints(unittest.TestCase):
 
     def test_bio_status_names_the_plant_being_tracked(self):
         card = EX.build_status_card(EX.sample_view(), "Sample System")
-        self.assertTrue(any(h[0].startswith("Tracking Tussock Pennatis: ") for h in card.header))
+        self.assertTrue(any(h[0].startswith("Tracking Tussock: ") for h in card.header))
         idle = EX.build_status_card(dataclasses.replace(EX.sample_view(), active=None), "Sample System")
-        self.assertTrue(any(h[0].startswith("Tracking Tussock Pennatis: ") for h in idle.header))
+        self.assertTrue(any(h[0].startswith("Tracking Tussock: ") for h in idle.header))
 
     def test_the_genus_comes_from_the_codex_name(self):
         self.assertEqual(organic_scan.genus_key_for_codex_name("$Codex_Ent_Tussocks_06_G_Name;"), TUSSOCK)
@@ -273,12 +322,16 @@ class WaypointTracking(unittest.TestCase):
         self.assertEqual(view.focus, TUSSOCK)
         self.assertEqual([(w.name, w.lat, w.lon) for w in view.waypoints], [("Tussock Pennatis - Lime", 0.001, 0.0)])
 
-    def test_only_the_genus_being_surveyed_is_shown(self):
+    def test_every_genus_identified_is_kept_and_the_radar_follows_the_latest_of_each(self):
         self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.001, 0.0)
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.004, 0.0)                              # a later Tussock
         self.codex("$Codex_Ent_Bacterial_01_G_Name;", 0.002, 0.0, "Bacterium Aurasus - Emerald")
         view = self.controller.overlay_view()
-        self.assertEqual(view.focus, BACTERIUM)
-        self.assertEqual([w.name for w in view.waypoints], ["Bacterium Aurasus - Emerald"])
+        self.assertEqual(len(view.waypoints), 3)
+        followed = XR.tracked(view)
+        self.assertEqual([t.name for t in followed], ["Tussock", "Bacterium"])               # one per genus, in the order the genera were found
+        self.assertEqual([round(t.waypoint.lat, 3) for t in followed], [0.004, 0.002])        # the most recent of each
+        self.assertEqual(len({t.color for t in followed}), 2)
 
     def test_the_same_plant_is_not_listed_twice_and_each_genus_keeps_a_few(self):
         for number in range(6):

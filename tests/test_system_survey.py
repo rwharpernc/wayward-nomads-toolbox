@@ -396,8 +396,8 @@ class KnownBodies(Feed):
         added = self.survey.merge_known(SYSTEM, self.ROWS)
         self.assertEqual(added, 2)                      # a star, an unknown type and a body with no id are skipped
         listed = self.survey.to_map(0)
-        self.assertEqual([b.short for b in listed], ["2", "3"])        # the terraformable high metal world is worth more
-        self.assertEqual((listed[0].tag, listed[1].tag), ("HMC", "ELW"))
+        self.assertEqual([b.short for b in listed], ["3", "2"])        # an Earth-like world is always counted as terraformable, so it is worth more
+        self.assertEqual((listed[0].tag, listed[1].tag), ("ELW", "HMC"))
         self.assertTrue(all(b.known and not b.scanned and b.scan_value() > 0 for b in listed))
         self.assertEqual(self.survey.known_count(), 2)
 

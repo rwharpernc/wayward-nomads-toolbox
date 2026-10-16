@@ -63,14 +63,15 @@ own entry on **Overlay Placement**.
 
 ## Finding your way back to a plant
 
-When you identify a plant with the Composition Scanner, WNTB remembers where it is (the journal gives its latitude and longitude). You survey one genus at a
-time, so the genus you identified **last** is the one being followed. Up to four plants of it are kept for the body, and the list survives restarting EDMC.
+When you identify a plant with the Composition Scanner, WNTB remembers where it is (the journal gives its latitude and longitude). It follows **one plant for each
+genus you have identified**: the most recent one of that genus that you have not sampled. Identify a Tussock, a Bacterium and a Frutexa and you have three pointers
+at once. Up to four plants of a genus are kept for the body, and the list survives restarting EDMC.
 
-- The **Bio radar** marks each plant with a ring and the genus's letter, draws a line from you toward the nearest (to the edge of the plot if it is further),
-  and says under the plot which plant, how far and which way (`Tracking Tussock Pennatis`, `94 m, 60° right`; `ahead` or `behind` when it is nearly straight on
-  or off).
-- **Bio status** shows the same in one line.
-- A plant drops off the list when you take a sample at it (the one nearest you, within about 40 m), and the genus clears when you analyse it.
+- The **Bio radar** marks each tracked plant with a ring and the genus's letter, draws a line from you toward it, and lists it under the plot (`Tussock 94 m`) with a
+  **little pointer** that turns to show which way it lies. Each genus has its own color, the same for its ring, its line, its row and its line on Bio status.
+- **Bio status** has a line for each, with the distance and direction (`Tracking Tussock: 94 m, 60° right`; `ahead` or `behind` when it is nearly straight on or off).
+- **A pointer goes when you sample that plant.** A Log or Sample taken at a plant (the one nearest you, within about 40 m) drops it, and the genus's pointer moves to the
+  next most recent plant of that genus you identified, or disappears if there is none. Analysing a genus clears all of its pointers.
 - Bark Mound and a few other genera whose codex names do not follow the usual pattern are not tracked.
 
 ## First footfall

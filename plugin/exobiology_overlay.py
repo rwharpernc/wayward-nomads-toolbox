@@ -142,9 +142,8 @@ def build_status_card(view: Optional[organic_scan.BodyView], system: str = "", s
 
 
 def _tracking(view: organic_scan.BodyView) -> list:
-    """One line that leads you back to the plant you identified, as a card header line: 'Tracking Tussock Pennatis: 342 m, 30° right'."""
-    lines = exo_radar.track_lines(view)
-    return [(f"{lines[0]}: {lines[1]}", "warn")] if lines else []
+    """A header line for each plant being tracked, in the color it has on the radar: 'Tracking Tussock: 342 m, 30° right'."""
+    return [(f"Tracking {line}", f"series{t.color}") for t, line in zip(exo_radar.tracked(view), exo_radar.track_lines(view))]
 
 
 def build_list_card(view: Optional[organic_scan.BodyView], system: str = "") -> Card:
@@ -238,7 +237,7 @@ class _Display:
         self.live = LiveCard(self._build, enabled, self._draw_live)
 
     def block_rect(self, look: Look = LEGACY, card: Any = None) -> tuple:
-        return self.layout.block_rect(look) if isinstance(self.layout, exo_radar.RadarLayout) else self.layout.block_rect(look, card)
+        return self.layout.block_rect(look, card) if isinstance(self.layout, exo_radar.RadarLayout) else self.layout.block_rect(look, card)
 
     def placed_client(self, client: OverlayClient, look: Look = LEGACY, card: Any = None) -> OverlayClient:
         """`client` moved to where this card is placed, from the card's real size (so a bottom or right edge is the card's own edge)."""

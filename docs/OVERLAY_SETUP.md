@@ -17,6 +17,7 @@ on-screen extras.
 | **Interdiction Warning** | An alert the moment an interdiction starts |
 | **Flight Alerts** | A small card with the fleet carrier jump countdown and the low-fuel and unscoopable-star warnings |
 | **Route** | A card with your fuel and jump range, the jumps left and the plotted route (neutron stars and white dwarfs picked out), and the running expedition |
+| **Expedition Log** | The running expedition's exploration and exobiology totals and what it has earned |
 | **Bio status**, **Biology**, **Bio radar**, **Sample popup** | The Exobiology cards: sampling progress and distance, predicted species and what they pay, a plot of your samples and their circles, and a popup after each sample |
 | **System targets** | A list of scanned bodies worth mapping and bodies with life not yet analysed, with the scan progress |
 | **Body info** | A card describing the body you have targeted or are close to |
@@ -65,6 +66,7 @@ makes sense, a test button:
 | **Interdiction Warning** | The warning when you are interdicted | **Test Warning** |
 | **Flight Alerts** | The carrier jump countdown and fuel warnings card | **Test Card** |
 | **Route** | The route card (how many systems to list, whether to show the running expedition) | **Test Card** |
+| **Expedition Log** | The card of the running expedition's totals (and whether to keep showing the last one after it is stopped) | **Test Card** |
 | **Exobiology** | Four switches, one for each Exobiology card | **Test Cards** |
 | **System targets** | The list of bodies to map and sample (value threshold, rows, life list) | **Test Card** |
 | **Body info** | The body card (targeted body, nearby body, symbols or full names for elements and compounds) | **Test Card** |

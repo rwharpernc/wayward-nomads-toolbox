@@ -115,6 +115,14 @@ class Body:
             return value.estimate_star_scan_value(self.stellar_mass, self.was_discovered, self.star_type)
         return value.estimate_planet_scan_value(self.planet_class, self.mass_em, self.terraformable, self.was_discovered)
 
+    def mapped_value(self) -> int:
+        """The estimated credits for scanning and then mapping it with an efficient probe run (what the Scan value row plus the mapping would pay), for a planet; 0
+        for anything else or a body not yet scanned."""
+        if self.kind != "planet" or not (self.scanned or self.known):
+            return 0
+        from . import scan_value as value
+        return value.estimate_planet_mapped_value(self.planet_class, self.mass_em, self.terraformable, self.was_discovered, self.was_mapped)
+
     @property
     def first_footfall(self) -> bool:
         """A landable body nobody has set foot on: the first commander down is paid five times the usual exobiology reward."""

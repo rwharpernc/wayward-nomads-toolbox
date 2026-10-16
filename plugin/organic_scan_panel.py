@@ -506,7 +506,7 @@ class OrganicScanController:
                 positions=tuple(organism.positions) if organism else ()))
         here = (self._current_lat, self._current_lon) if self._current_lat is not None and self._current_lon is not None else None
         focus = self._active_genus or self._focus_genus
-        waypoints = tuple(p for p in self._waypoints.get(body_name, []) if p.genus_key == focus)
+        waypoints = tuple(self._waypoints.get(body_name, []))      # every plant identified and not yet sampled; the cards follow the latest of each genus
         return organic_scan.BodyView(
             body_name, tuple(genera), first_footfall=self._footfall.get(body_name, False), mapped=bool(self._genus_hints.get(body_name)),
             signal_count=self._signal_counts.get(body_name, 0), here=here, heading=self._current_heading,

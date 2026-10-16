@@ -27,6 +27,7 @@ PER_COMMANDER = {
     "waypoint_route_state.json": "keyed by commander (waypoint_route_state.py)",
     "visited_systems.json": "keyed by commander (visited_systems.py)",
     "organic_scan_state.json": "keyed by commander (organic_scan_state.py)",
+    "expedition_log.json": "one archive of expeditions per commander (commander_data.py, expedition_log.LogBook)",
     "system_surveys.json": "one set of surveyed systems per commander (commander_data.py, system_survey_store.SurveyStore)",
     "codex_completionist_state.json": "one tally per commander (codex_completionist_state.py)",
     "bgs_state.json": "keyed by commander (bgs_state.py)",

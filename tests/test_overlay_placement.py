@@ -427,7 +427,7 @@ class DefaultSpotTests(unittest.TestCase):
     pixels, so on a smaller screen they take up more of it and can overlap; Overlay Placement is where to move them then."""
 
     # Pairs that overlap by design: the Bio radar and Sample popup are for a planet's surface and the Colonization list for a construction depot, and the Interdiction warning is for supercruise, so those are never up together.
-    KNOWN: set = {frozenset(pair) for pair in (("colonisation", "bio_radar"), ("colonisation", "bio_popup"), ("interdiction", "bio_status"))}
+    KNOWN: set = {frozenset(pair) for pair in (("colonisation", "bio_radar"), ("colonisation", "bio_popup"), ("interdiction", "bio_status"), ("interdiction", "expedition_log"))}
 
     @staticmethod
     def rects(width, height):

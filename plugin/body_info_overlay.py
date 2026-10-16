@@ -145,6 +145,8 @@ def build_card(body: Optional[Body]) -> Card:
     value = body.scan_value()
     if value:
         rows.append(("Scan value", credits_text(value) + (" first" if body.was_discovered is False else ""), "title"))
+    if body.kind == "planet" and body.mapped_value() and not body.mapped:
+        rows.append(("Mapped value", "~" + credits_text(body.mapped_value()), "text"))
     if body.temperature_k is not None:
         rows.append(("Temperature", f"{body.temperature_k:,.0f} K", "text"))
     if body.kind == "planet":

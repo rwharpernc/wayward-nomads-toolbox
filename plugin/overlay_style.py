@@ -161,6 +161,8 @@ class Look:
     # --- colors ------------------------------------------------------------------------------------------------
     def color(self, role: str) -> str:
         """The color for a role ('title', 'text', 'ok', 'border' ...)."""
+        if role.startswith("series") and role[6:].isdigit():
+            return self.series(int(role[6:]))              # "series0" to "series3": one color per tracked genus
         if role not in ROLES:
             raise ValueError(f"unknown color role: {role!r}")
         if role == "faint":

@@ -148,6 +148,6 @@ exercised by hand in a live game, by visiting a planet with biological signals.
 `organic_scan_panel.overlay_view()` builds an `organic_scan.BodyView` from the controller's state without any widgets: for the body the commander is at, each
 genus (`GenusView`: predicted candidates with values, the confirmed species and variant, the stage, the positions of the samples and the distance from the
 last one), the first footfall flag, the biological signal count, the commander's position and heading, the ship and SRV positions, the genus in progress and
-the plants being tracked (`Waypoint`s of the genus being surveyed). The cards in `exobiology_overlay.py` are built from it, and `exo_radar.py` turns the positions
+the plants identified and not yet sampled (`Waypoint`s of every genus, oldest first; `exo_radar.tracked` picks the latest of each genus). The cards in `exobiology_overlay.py` are built from it, and `exo_radar.py` turns the positions
 into pixels (a flat-earth offset rotated to the heading, accurate over the few hundred meters of a sampling walk). The genus a codex name belongs to comes from
 `organic_scan.genus_key_for_codex_name`. Each genus keeps `WAYPOINTS_PER_GENUS` plants; a Log or Sample within `WAYPOINT_SAMPLED_M` of a waypoint drops it.
