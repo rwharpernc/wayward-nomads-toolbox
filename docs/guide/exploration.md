@@ -444,7 +444,7 @@ first map, a first map of an already discovered body and an already mapped body,
 between its start and its end, which fills in an expedition that missed events or one you gave an earlier start), **Delete** (asks twice), **Copy summary** and **Export CSV** (the
 whole archive, for a spreadsheet).
 
-**The overlay card** (Settings → Overlays → Expedition Log, off until ticked) shows the running expedition's exploration and exobiology totals and what it has earned, with its name and
+**The overlay card** (Settings → Overlays → Expedition Log, off until ticked) shows (while no expedition is running it says so and how to start one) the running expedition's exploration and exobiology totals and what it has earned, with its name and
 how long it has run in the heading and the total earned at the foot; it can keep showing the last expedition after you stop it. Place it on **Overlay Placement** ("Expedition Log").
 
 Everything is kept for your commander only (another commander has their own archive) and never leaves your computer.

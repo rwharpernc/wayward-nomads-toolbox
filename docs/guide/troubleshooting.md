@@ -164,7 +164,7 @@ are empty in supercruise and clear when you leave a planet (what you sampled is 
 
 ### The Expedition Log shows nothing, or its numbers look low
 
-The log counts only while an expedition is **running**: press START in the Exploration panel (or **Start** in the LOG window) when you set off, and the row and the card show it. Anything
+With the card switched on and no expedition running, the card says so (`No expedition is running`) and how to start one. The log counts only while an expedition is **running**: press START in the Exploration panel (or **Start** in the LOG window) when you set off, and the row and the card show it. Anything
 that happened before you pressed it, or while EDMC was closed, is not counted until you press **Rescan** on that expedition in the LOG window (it works the totals out again from your
 journals between the expedition's start and end), and **Start since my last sale** begins one from your last sale and fills it in. Earned credits count when you **sell** the data, not when
 you scan it; the unsold figures are estimates. If you play more than one commander, each has its own archive.

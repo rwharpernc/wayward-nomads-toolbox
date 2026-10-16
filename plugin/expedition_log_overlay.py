@@ -88,6 +88,14 @@ def build_card(run: Optional[expedition_log.Run], now: Optional[float] = None) -
                 badge=state + expedition_log.duration_text(run.elapsed(now)))
 
 
+def idle_card(has_commander: bool = True) -> Card:
+    """What the card says while it is switched on and no expedition is running, so a card that is on but empty is never a mystery."""
+    if not has_commander:
+        return Card((("Waiting for a commander (log in)", "muted"),), title=("Expedition Log", "title"))
+    return Card((("No expedition is running", "muted"), ("Press START in the Exploration panel,", "muted"), ("or LOG, then Start since my last sale", "muted")),
+                title=("Expedition Log", "title"))
+
+
 def sample_run() -> expedition_log.Run:
     """A made-up expedition for the Test Card."""
     run = expedition_log.Run("sample", "Core Run", expedition_log.RUNNING, "2026-10-16T08:00:00Z", systems=[f"System {n}" for n in range(1, 13)])
@@ -134,7 +142,8 @@ def _shown_run() -> Optional[expedition_log.Run]:
 def _build() -> Card:
     if not system_survey.survey.playing:
         return Card()
-    return build_card(_shown_run())
+    run = _shown_run()
+    return build_card(run) if run is not None else idle_card(expedition_log_panel.book.ready)
 
 
 def _draw_live(card: Card) -> None:
