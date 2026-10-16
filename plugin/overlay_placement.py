@@ -80,7 +80,7 @@ SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
           group="wntb_body_info", group_prefix="wntb_body_info_"),
     _slot("exobiology", "Biology (predicted species)", "center", "bottom", -230, 40, (420, 300),
           group="wntb_exo_pred", group_prefix="wntb_exo_pred_"),
-    _slot("bio_status", "Bio status (samples and progress)", "center", "top", 0, 20, (420, 130),
+    _slot("bio_status", "Bio status (samples and progress)", "center", "top", 0, 0, (440, 90),
           group="wntb_exo_status", group_prefix="wntb_exo_status_"),
     _slot("bio_radar", "Bio radar (sample circles, ship, SRV)", "left", "middle", 40, 0, (300, 320),
           group="wntb_exo_radar", group_prefix="wntb_exo_radar_"),

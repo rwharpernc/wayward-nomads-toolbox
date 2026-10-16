@@ -34,10 +34,11 @@ class Card:
     progress: Optional[float] = None
     headline: Optional[Line] = None      # a large line under the title, with `dots` (filled or empty circles) before it
     dots: Tuple[bool, ...] = ()
+    side: Tuple[Line, ...] = ()          # lines for the right-hand column of a WideCardLayout (CardLayout draws them after the header)
     align: str = "right"        # "right": a row's right-hand text ends at the card's right edge; "column": it starts in a second column (long values)
 
     def __bool__(self) -> bool:
-        return bool(self.header or self.rows or self.title or self.headline)
+        return bool(self.header or self.rows or self.title or self.headline or self.side)
 
     def line_count(self) -> int:
         return len(self.header) + len(self.rows) + (1 if self.footer else 0) + (1 if self.title else 0)
@@ -53,6 +54,8 @@ BAR_H = 4                         # the progress bar
 RULE_GAP = 6                      # space above and below a divider
 SECTION_GAP = 4                   # extra space above a section label
 TAB_CHARS = 7                     # width of the first column of a row that has a second (muted) part
+PANEL_TTL_FACTOR = 2              # the panel and shapes outlast the text: the overlay stacks things in the order they were first drawn, so a panel that expired a moment before the
+                                  # text on top of it (the first thing sent in a round is the first to lapse) came back above that text and dimmed it
 MAX_TEXTS = 64                    # overlay ids reserved for text and for shapes
 MAX_SHAPES = 12
 CHROME_PX = 22                    # what the title row, bar and divider add to the height placement assumes
@@ -113,23 +116,9 @@ class CardLayout:
             width, height = self.plan(card, look)[2:]
         return left, top, width, height
 
-    # the plan: every shape and text, with its place ------------------------------------------------------------------
-    def plan(self, card: Card, look: Look = LEGACY) -> Tuple[List[tuple], List[tuple], int, int]:
-        """(shapes, texts, width, height). A shape is (kind, color, fill, x, y, w, h) and a text is (text, color role, x, y, size), with y relative to
-        the card's first line. Built before anything is sent, so the card's height is known from what it says, wrapped lines included."""
-        pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
-        inner = self.inner_width(look)
-        step = look.line_px("normal") + LINE_GAP
+    def _heading(self, card: Card, look: Look, x: int, y: int, inner: int, shapes: List[tuple], texts: List[tuple], divider: Any) -> int:
+        """The title with its badge and progress bar and the divider under them; returns the y the next line starts at."""
         size = look.size("normal")
-        x = self.x
-        y = 0
-        shapes: List[tuple] = []
-        texts: List[tuple] = []
-        rule = look.color("faint")
-
-        def divider(at: int) -> None:
-            shapes.append(("rect", rule, rule, x, at, inner, 1))
-
         if card.title:
             title, role = card.title
             badge = card.badge
@@ -151,6 +140,26 @@ class CardLayout:
             if card.header or card.rows or card.footer:
                 divider(y)
                 y += 1 + RULE_GAP
+        return y
+
+    # the plan: every shape and text, with its place ------------------------------------------------------------------
+    def plan(self, card: Card, look: Look = LEGACY) -> Tuple[List[tuple], List[tuple], int, int]:
+        """(shapes, texts, width, height). A shape is (kind, color, fill, x, y, w, h) and a text is (text, color role, x, y, size), with y relative to
+        the card's first line. Built before anything is sent, so the card's height is known from what it says, wrapped lines included."""
+        pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
+        inner = self.inner_width(look)
+        step = look.line_px("normal") + LINE_GAP
+        size = look.size("normal")
+        x = self.x
+        y = 0
+        shapes: List[tuple] = []
+        texts: List[tuple] = []
+        rule = look.color("faint")
+
+        def divider(at: int) -> None:
+            shapes.append(("rect", rule, rule, x, at, inner, 1))
+
+        y = self._heading(card, look, x, y, inner, shapes, texts, divider)
         if card.headline:
             text, role = card.headline
             dot = 14
@@ -163,7 +172,7 @@ class CardLayout:
                 texts.append((line, role, x + dots_w, y, look.size(base)))
                 y += look.line_px(base) + 2
             y += 2
-        for text, role in card.header:
+        for text, role in card.header + card.side:
             for line in self.wrap(text, look, inner):
                 texts.append((line, role, x, y, size))
                 y += step
@@ -217,12 +226,12 @@ class CardLayout:
         shapes, texts, width, height = self.plan(card, look)
         shapes, texts = shapes[:MAX_SHAPES], texts[:MAX_TEXTS]
         left, top = self.x - look.pad_x(CARD_PAD_X), self.y - look.pad_y(CARD_PAD_Y)
-        client.send_shape(self.card_id, "rect", look.color("fill"), look.color("fill"), left, top, width, height, ttl=ttl, thickness=1)   # a plain panel: no outline, no edge bar
+        client.send_shape(self.card_id, "rect", look.color("fill"), look.color("fill"), left, top, width, height, ttl=ttl * PANEL_TTL_FACTOR, thickness=1)   # a plain panel: no outline, no edge bar
         for index, (kind, color, fill, sx, sy, sw, sh) in enumerate(shapes):
             if kind == "circle":
-                client.send_circle(f"{self.prefix}s{index}", color, fill, sx + sw // 2, self.y + sy + sh // 2, sw // 2, ttl=ttl, thickness=2)
+                client.send_circle(f"{self.prefix}s{index}", color, fill, sx + sw // 2, self.y + sy + sh // 2, sw // 2, ttl=ttl * PANEL_TTL_FACTOR, thickness=2)
             else:
-                client.send_shape(f"{self.prefix}s{index}", kind, color, fill, sx, self.y + sy, sw, sh, ttl=ttl, thickness=1)
+                client.send_shape(f"{self.prefix}s{index}", kind, color, fill, sx, self.y + sy, sw, sh, ttl=ttl * PANEL_TTL_FACTOR, thickness=1)
         for index in range(len(shapes), self._used_shapes):
             client.send_shape(f"{self.prefix}s{index}", "rect", "", "", left, top, 0, 0, ttl=1)
         self._used_shapes = len(shapes)
@@ -241,11 +250,96 @@ class CardLayout:
         self._used_texts = self._used_shapes = 0
 
 
+class WideCardLayout(CardLayout):
+    """A short, wide card: the same `Card`, laid out to sit in a strip, for example above the game's compass. The title, badge and progress bar run across the top. Next
+    comes the headline (with its dots) with the first header line at the right end of the same row, then any other header lines; then `rows` in one or two columns; then
+    `side` lines side by side in one row (each in its own column, so three tracked plants take one line); and the footer. `width_chars` fixes the width."""
+
+    def __init__(self, prefix: str, x: int, y: int, width_chars: int, sample_lines: int, accent: str = "border") -> None:
+        super().__init__(prefix, x, y, max_header=0, max_rows=0, name_chars=width_chars, tag_chars=0, sample_tag="", sample_lines=sample_lines, accent=accent)
+
+    def inner_width(self, look: Look) -> int:
+        return look.measured_width("X" * self.name_chars)
+
+    def _rows(self, rows: Tuple[Row, ...], look: Look, width: int, y: int, texts: List[tuple]) -> int:
+        """Rows in one column, or two when there are more than three; returns the height used."""
+        if not rows:
+            return 0
+        step = look.line_px("normal") + LINE_GAP
+        size = look.size("normal")
+        columns = 1 if len(rows) <= 3 else 2
+        per = -(-len(rows) // columns)
+        col_w = (width - COLUMN_GAP * (columns - 1)) // columns
+        for c in range(columns):
+            cx = self.x + c * (col_w + COLUMN_GAP)
+            for i, (left, right, role) in enumerate(rows[c * per:(c + 1) * per]):
+                name = left.split("\n")[0].split("\t")[0]
+                right_px = look.measured_width(right) + COLUMN_GAP if right else 0
+                texts.append((self.fit(name, look, col_w - right_px), "text" if role != "title" else "title", cx, y + i * step, size))
+                if right:
+                    texts.append((right, role, cx + col_w - look.measured_width(right), y + i * step, size))
+        return per * step
+
+    def plan(self, card: Card, look: Look = LEGACY) -> Tuple[List[tuple], List[tuple], int, int]:
+        pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
+        inner = self.inner_width(look)
+        step = look.line_px("normal") + LINE_GAP
+        size = look.size("normal")
+        x = self.x
+        y = 0
+        shapes: List[tuple] = []
+        texts: List[tuple] = []
+        rule = look.color("faint")
+
+        def divider(at: int) -> None:
+            shapes.append(("rect", rule, rule, x, at, inner, 1))
+
+        y = self._heading(card, look, x, y, inner, shapes, texts, divider)
+        header = list(card.header)
+        if card.headline:
+            text, role = card.headline
+            dot = 14
+            dots_w = len(card.dots) * (dot + 6) + (4 if card.dots else 0)
+            for number, filled in enumerate(card.dots):
+                shapes.append(("circle", look.color(role), look.color(role) if filled else "#00000000", x + number * (dot + 6), y + 6, dot, dot))
+            base = "large" if look.measured_width(text, "large") <= inner - dots_w else "normal"
+            name_w = look.measured_width(text, base)
+            texts.append((self.fit(text, look, inner - dots_w, base), role, x + dots_w, y, look.size(base)))
+            if header:                                           # the first header line (the reward) ends the headline's row when it fits
+                note, note_role = header[0]
+                note_w = look.measured_width(note)
+                if dots_w + name_w + COLUMN_GAP + note_w <= inner:
+                    texts.append((note, note_role, x + inner - note_w, y + look.line_px(base) - look.line_px("normal"), size))
+                    header.pop(0)
+            y += look.line_px(base) + 4
+        for text, role in header:
+            for line in self.wrap(text, look, inner):
+                texts.append((line, role, x, y, size))
+                y += step
+        y += self._rows(card.rows, look, inner, y, texts)
+        if card.side:
+            count = len(card.side)
+            col_w = (inner - COLUMN_GAP * (count - 1)) // count
+            for i, (text, role) in enumerate(card.side):
+                texts.append((self.fit(text, look, col_w), role, x + i * (col_w + COLUMN_GAP), y, size))
+            y += step
+        if card.footer:
+            text, role = card.footer
+            divider(y)
+            y += 1 + RULE_GAP
+            for chunk in text.split("\n"):
+                for line in self.wrap(chunk, look, inner):
+                    texts.append((line, role, x, y, size))
+                    y += step
+        height = max(y - LINE_GAP, look.line_px("normal")) + 2 * pad_y
+        return shapes, texts, inner + 2 * pad_x, height
+
+
 class LiveCard:
     """Keeps one card on the screen: `refresh` builds the card and draws it when it changed, or every `resend` seconds so it does not expire
     between changes, and clears it when it becomes empty. `build`, `enabled`, `draw` and `now` are injected so the timing is tested without an overlay."""
 
-    def __init__(self, build: Any, enabled: Any, draw: Any, now: Any = None, resend: float = 3.0) -> None:
+    def __init__(self, build: Any, enabled: Any, draw: Any, now: Any = None, resend: float = 2.0) -> None:
         import time
         self._build, self._enabled, self._draw = build, enabled, draw
         self._now = now or time.time

@@ -159,7 +159,7 @@ def _draw_live(card: Card) -> None:
 
 
 live = LiveCard(_build, lambda: load_config().enabled, _draw_live)
-_ticker = Ticker("WNTB-explog-tick", live.refresh, 2.0, logger)
+_ticker = Ticker("WNTB-explog-tick", live.refresh, 1.0, logger)
 
 
 def start(plugin_dir: str) -> None:

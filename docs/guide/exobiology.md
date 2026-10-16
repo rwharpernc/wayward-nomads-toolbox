@@ -45,9 +45,9 @@ Species are written as scientific names: the genus with a capital and the specie
 Four cards for the body you are on, whether you are in the ship, the SRV or on foot. Each has its own switch under **Settings → Overlays → Exobiology** and its
 own entry on **Overlay Placement**.
 
-- **Bio status** (top center). The heading is *Biological signals* with a count of how many you have analysed and a progress bar, which moves a third of a genus
+- **Bio status** (top center) is a short, wide strip, so it can sit above the game's compass. The heading is *Biological signals* with a count of how many you have analysed and a progress bar, which moves a third of a genus
   with each Log or Sample and all of it once analysed. While you are sampling a genus it shows the species and color variant in large type with three circles
-  (filled as you take each sample), what the species pays (**five times as much on a first footfall**, with the reason on its own line), and how far you are from the last sample
+  (filled as you take each sample), what the species pays at the right end of that row (**five times as much on a first footfall**, marked `FF 5x`), and how far you are from the last sample
   against the distance the genus needs (`Move 122 m further: 78 m of 200 m`, or `Clear` once you can take the next). With nothing in progress it lists each
   genus with the distance it needs between samples, and `Done` once analysed. A plant you have identified with the Composition Scanner is named at the foot
   until you sample it. On a body you have not mapped it says to map it.
@@ -71,7 +71,7 @@ at once. Up to four plants of a genus are kept for the body, and the list surviv
 
 - The **Bio radar** marks each tracked plant with a ring and the genus's letter, draws a line from you toward it, and lists it under the plot (`Tussock 94 m`) with a
   **little pointer** that turns to show which way it lies. Each genus has its own color, the same for its ring, its line, its row and its line on Bio status.
-- **Bio status** has a line for each, with the distance and direction (`Tracking Tussock: 94 m, 60° right`; `ahead` or `behind` when it is nearly straight on or off).
+- **Bio status** has a line for each, with the distance and direction (`Tussock: 94 m, 60° right`, the lines side by side in one row, each in its genus's color; `ahead` or `behind` when it is nearly straight on or off).
 - **A pointer goes when you sample that plant.** A Log or Sample taken at a plant drops it (the plant nearest you within about 100 m, or within about 150 m when the sample names the same color variant; the scanner names a plant from a distance, so the spot it recorded can be well away from where you stand to take the sample), and the genus's pointer moves to the
   next most recent plant of that genus you identified, or disappears if there is none. Analysing a genus clears all of its pointers.
 - Bark Mound and a few other genera whose codex names do not follow the usual pattern are not tracked.

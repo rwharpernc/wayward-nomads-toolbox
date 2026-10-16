@@ -57,15 +57,14 @@ class Cards(unittest.TestCase):
         self.assertEqual(card.dots, (True, True, False))
         self.assertEqual(card.badge, "1 of 4 analysed")
         self.assertAlmostEqual(card.progress, (2 / 3 + 1) / 4)     # the Tussock is two samples in and the Osseus is analysed
-        self.assertEqual(card.header[0][0], "5.0M CR")
-        self.assertTrue(card.header[1][0].startswith("First footfall bonus"))               # the reason is on its own line, not wrapped onto the reward
-        self.assertTrue(card.header[2][0].startswith("Move 122 m further"))
-        self.assertEqual(card.header[2][1], "warn")
+        self.assertEqual(card.header[0][0], "5.0M CR  ·  FF 5x")                # the reward and the reason share one line
+        self.assertTrue(card.header[1][0].startswith("Move 122 m further"))
+        self.assertEqual(card.header[1][1], "warn")
 
     def test_status_card_says_clear_once_far_enough_and_with_nothing_active_lists_the_genera(self):
         genera = tuple(dataclasses.replace(g, distance_m=250.0) if g.key == "t" else g for g in self.view.genera)
         clear = EX.build_status_card(dataclasses.replace(self.view, genera=genera), "Sample System")
-        self.assertEqual(clear.header[2][1], "ok")
+        self.assertEqual(clear.header[1][1], "ok")
         idle = EX.build_status_card(dataclasses.replace(self.view, active=None), "Sample System")
         self.assertEqual([r[0] for r in idle.rows], ["Bacterium", "Frutexa", "Tussock pennatis - Lime", "Osseus fractus - Red"])
         self.assertEqual([r[1] for r in idle.rows], ["500 m apart", "150 m apart", "200 m apart", "Done"])
@@ -198,12 +197,12 @@ class MultiTrack(unittest.TestCase):
 
     def test_bio_status_has_a_line_for_each_in_the_radar_s_color(self):
         card = EX.build_status_card(self.view(), "Sample System")
-        lines = [h for h in card.header if h[0].startswith("Tracking ")]
+        lines = [h for h in card.side if h[0].startswith(("Tussock", "Bacterium", "Frutexa", "Osseus"))]
         self.assertEqual(len(lines), 3)
         self.assertEqual({h[1] for h in lines}, {"series0", "series1", "series2"})
         rec = Recorder()
         EX.LAYOUT_STATUS.render(card, rec, S.DEFAULT)           # series roles are drawn like any other color
-        self.assertTrue(any(t.startswith("Tracking Tussock") for t in rec.texts()))
+        self.assertTrue(any(t.startswith("Tussock: ") for t in rec.texts()))
 
 
 class Radar(unittest.TestCase):
@@ -289,9 +288,9 @@ class Waypoints(unittest.TestCase):
 
     def test_bio_status_names_the_plant_being_tracked(self):
         card = EX.build_status_card(EX.sample_view(), "Sample System")
-        self.assertTrue(any(h[0].startswith("Tracking Tussock: ") for h in card.header))
+        self.assertTrue(any(h[0].startswith("Tussock: ") for h in card.side))
         idle = EX.build_status_card(dataclasses.replace(EX.sample_view(), active=None), "Sample System")
-        self.assertTrue(any(h[0].startswith("Tracking Tussock: ") for h in idle.header))
+        self.assertTrue(any(h[0].startswith("Tussock: ") for h in idle.side))
 
     def test_the_genus_comes_from_the_codex_name(self):
         self.assertEqual(organic_scan.genus_key_for_codex_name("$Codex_Ent_Tussocks_06_G_Name;"), TUSSOCK)

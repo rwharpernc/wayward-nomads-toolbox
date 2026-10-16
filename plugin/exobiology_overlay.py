@@ -33,7 +33,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from . import exo_radar, organic_scan, organic_species_data, overlay, overlay_appearance, overlay_placement, restore, system_survey
 from .overlay import OverlayClient
-from .overlay_card import Card, CardLayout, LiveCard, Ticker
+from .overlay_card import Card, CardLayout, LiveCard, Ticker, WideCardLayout
 from .overlay_style import LEGACY, Look
 from .system_survey import credits_text, short_name
 
@@ -47,9 +47,10 @@ _CFG = {"status": "wntb_exo_status_enabled", "list": "wntb_exo_list_enabled", "r
 OVERLAY_TTL = 4
 POPUP_SECONDS = 10.0
 NAME_CHARS = 24
+STATUS_CHARS = 54                  # the Bio status card is one wide strip
 GROUPS = {"status": ("wntb_exo_status", "wntb_exo_status_"), "list": ("wntb_exo_pred", "wntb_exo_pred_"),
           "radar": ("wntb_exo_radar", "wntb_exo_radar_"), "popup": ("wntb_exo_popup", "wntb_exo_popup_")}
-LAYOUT_STATUS = CardLayout(GROUPS["status"][1], x=650, y=100, max_header=3, max_rows=8, name_chars=NAME_CHARS, tag_chars=12, sample_tag="1000 m apart", sample_lines=6)
+LAYOUT_STATUS = WideCardLayout(GROUPS["status"][1], x=650, y=100, width_chars=STATUS_CHARS, sample_lines=4)       # short and wide, to sit above the game's compass
 LAYOUT_LIST = CardLayout(GROUPS["list"][1], x=650, y=100, max_header=1, max_rows=12, name_chars=NAME_CHARS, tag_chars=14, sample_tag="up to 12.3M CR", sample_lines=8)
 LAYOUT_POPUP = CardLayout(GROUPS["popup"][1], x=650, y=100, max_header=3, max_rows=4, name_chars=NAME_CHARS, tag_chars=14, sample_tag="5,000,000 cr", sample_lines=4)
 LAYOUT_RADAR = exo_radar.RadarLayout(GROUPS["radar"][1], x=650, y=100)
@@ -116,12 +117,10 @@ def build_status_card(view: Optional[organic_scan.BodyView], system: str = "", s
         header = []
         span = active.value_range
         if span:
-            header.append((_range(span[0] * view.multiplier, span[1] * view.multiplier), "text"))
-            if view.first_footfall:
-                header.append(("First footfall bonus: five times the usual reward", "info"))
+            reward = _range(span[0] * view.multiplier, span[1] * view.multiplier)
+            header.append((reward + ("  ·  FF 5x" if view.first_footfall else ""), "info" if view.first_footfall else "text"))
         header.append(_distance_line(active) or (f"Samples must be {_metres(active.min_distance_m)} apart", "muted"))
-        header.extend(_tracking(view))
-        return Card(tuple(header), title=title, badge=badge, progress=progress, headline=(active.title, "title"),
+        return Card(tuple(header), title=title, badge=badge, progress=progress, headline=(active.title, "title"), side=tuple(_tracking(view)),
                     dots=tuple(i < filled for i in range(organic_scan.REQUIRED_SAMPLES)))
     rows = []
     for genus in view.genera:
@@ -138,12 +137,12 @@ def build_status_card(view: Optional[organic_scan.BodyView], system: str = "", s
         footer = ("First footfall: every reward here is five times as much", "info")
     else:
         footer = ("Use the Composition Scanner on a plant to begin", "muted")
-    return Card(tuple(_tracking(view)), tuple(rows), footer, title=title, badge=badge, progress=progress)
+    return Card((), tuple(rows), footer, title=title, badge=badge, progress=progress, side=tuple(_tracking(view)))
 
 
 def _tracking(view: organic_scan.BodyView) -> list:
-    """A header line for each plant being tracked, in the color it has on the radar: 'Tracking Tussock: 342 m, 30° right'."""
-    return [(f"Tracking {line}", f"series{t.color}") for t, line in zip(exo_radar.tracked(view), exo_radar.track_lines(view))]
+    """A line for each plant being tracked, in the color it has on the radar: 'Tussock: 342 m, 30° right'."""
+    return [(line, f"series{t.color}") for t, line in zip(exo_radar.tracked(view), exo_radar.track_lines(view))]
 
 
 def build_list_card(view: Optional[organic_scan.BodyView], system: str = "") -> Card:
