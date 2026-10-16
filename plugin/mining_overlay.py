@@ -25,7 +25,7 @@ from . import mining_render as render
 from . import mining_space as space_mining
 from . import mining_surface as surface_mining
 from . import overlay, overlay_appearance, overlay_placement
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -44,8 +44,8 @@ at the default scheme is the Elite-orange-on-black HUD styling this display alwa
 the legacy look; the text size, padding and line spacing chosen on the Appearance tab are added to it (`_stat_pitch`,
 `_panel_rect`), so a larger size makes a larger panel and the text still fits inside the border."""
 
-_OVERLAY_PANEL_PAD_X = 10
-_OVERLAY_PANEL_PAD_Y = 8
+_OVERLAY_PANEL_PAD_X = CARD_PAD_X
+_OVERLAY_PANEL_PAD_Y = CARD_PAD_Y
 
 _BG_ID = "wntb_mining_stats_bg"
 

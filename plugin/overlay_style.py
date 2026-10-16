@@ -25,6 +25,11 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
 SIZES = ("small", "normal", "large", "huge")
+# The one padding every card uses, so the text sits the same distance from its card's border in all of them: the left and right
+# edges (CARD_PAD_X) and the top and bottom edges (CARD_PAD_Y). `Look.pad_x`/`pad_y` add the chosen extra to these.
+CARD_PAD_X = 16
+CARD_PAD_Y = 12
+MIN_SIZE = "normal"      # the smallest size any WNTB overlay text is drawn at, whatever the text size setting
 
 # Estimated width of one character, and the height of one line, at each size, in the pixels the overlay draws in (it offers no
 # text measurement; these were tuned on EDMCModernOverlay and err a little wide, since a card slightly too wide looks fine and
@@ -39,7 +44,7 @@ LINE_PX: Dict[str, int] = {"small": 16, "normal": 20, "large": 26, "huge": 34}
 WIDTH_PAD = 1.10
 
 # The sizes the Appearance tab offers. A fourth step ("Largest") was dropped: it is where text used to run past its box.
-TEXT_CHOICES: Tuple[Tuple[str, int], ...] = (("Smaller", -1), ("Default", 0), ("Larger", 1))
+TEXT_CHOICES: Tuple[Tuple[str, int], ...] = (("Default", 0), ("Larger", 1))   # "Smaller" was dropped: it drew the overlay's hard-to-read small size
 PADDING_CHOICES: Tuple[Tuple[str, int], ...] = (("Compact", 0), ("Comfortable", 6), ("Roomy", 14))
 SPACING_CHOICES: Tuple[Tuple[str, int], ...] = (("Tight", 0), ("Normal", 3), ("Loose", 7))
 
@@ -165,9 +170,9 @@ class Look:
     # --- text and card geometry ---------------------------------------------------------------------------------
     def size(self, base: str = "normal") -> str:
         """The overlay text size to ask for where a display would normally use `base`, stepped by the chosen text size. Stops
-        at the smallest and largest sizes the overlay has."""
+        at the largest size the overlay has, and never below MIN_SIZE: the overlay's "small" is hard to read over the game."""
         index = SIZES.index(base) if base in SIZES else SIZES.index("normal")
-        return SIZES[max(0, min(len(SIZES) - 1, index + self.text_level))]
+        return SIZES[max(SIZES.index(MIN_SIZE), min(len(SIZES) - 1, index + self.text_level))]
 
     def char_px(self, base: str = "normal") -> float:
         """Estimated width of one character drawn where a display would normally use size `base`."""

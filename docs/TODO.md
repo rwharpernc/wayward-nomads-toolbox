@@ -51,7 +51,7 @@ covers the item as well.
 - [ ] **Notes.** Verify quick add, the window, **Here**, deletion with confirmation, the count shown when jumping into a system that has notes, and that
   the EDMC window does not become wider. Then Linux.
 - [ ] **Alert widths.** Trigger a Notable Bodies alert (or **Test Notable**) and a Discovery alert for a body or system with a long capitalized catalog
-  name, and confirm that the whole name fits inside the card at Smaller, Default and Larger text sizes. On the Missions overlay card, check a mission
+  name, and confirm that the whole name fits inside the card at Default and Larger text sizes. On the Missions overlay card, check a mission
   with a long station or system name: the place should move to a second line under the title, in the same color. Report any text that still extends
   past an edge.
 - [ ] **Mission progress colors.** Take two source-and-return missions and buy part of the cargo. Confirm that the Missions window shows `N/total held`

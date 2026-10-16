@@ -63,7 +63,7 @@ def _slot(key: str, label: str, h: str, v: str, dx: int, dy: int, size: Tuple[in
 # Sizes are the block each display occupies, in the pixels the display is drawn in (used to preview it and to anchor it to
 # a right or bottom edge). Offsets are screen pixels in from the edge.
 SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
-    _slot("colonisation", "Colonization shopping list", "left", "middle", 40, 0, (800, 300),
+    _slot("colonisation", "Colonization shopping list", "left", "middle", 40, 0, (840, 300),
           "wntb_colonisation_overlay_x", "wntb_colonisation_overlay_y", (20, 300), "wntb_colonisation", "wntb_colonisation_"),
     _slot("discovery", "Discovery alerts", "center", "top", 0, 150, (460, 234),
           "wntb_discovery_x", "wntb_discovery_y", (700, 60), "wntb_discovery", "wntb_discovery_"),

@@ -3,6 +3,13 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Changed
+- **Every overlay is left-justified.** The Discovery and Notable Bodies alerts centered their title and name inside the card; they now start at the card's left padding, like Landing, Interdiction, Missions and the rest.
+- **Every overlay card uses the same padding.** Text sits the same distance from the border on all sides in Colonization, Discovery, Notable Bodies, Interdiction, Landing, Missions, Flight Alerts, Mining, Surface Compass and Screenshots (`CARD_PAD_X`/`CARD_PAD_Y` in `overlay_style.py`). The Discovery and Interdiction cards no longer have a minimum width, so they fit their text instead of leaving a blank strip on the right.
+- **Overlay text is never drawn at the overlay's "small" size**, which is hard to read over the game. The Text size choice is now Default or Larger; a saved "Smaller" is treated as Default.
+
 ## 1.14.1 - 2026-10-15
 
 ### Fixed

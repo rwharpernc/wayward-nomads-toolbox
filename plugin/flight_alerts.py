@@ -32,7 +32,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from . import carrier_jump_timer as jump_timer
 from . import fuel_alerts, overlay, overlay_appearance, overlay_placement, platform_support, restore
 from .overlay import OverlayClient
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
 try:
     import winsound  # stdlib, Windows-only
@@ -104,8 +104,8 @@ MAX_LINES = 10          # card lines; a message that would need more is cut off 
 WRAP_CHARS = 30         # characters in a card line
 _X = 650
 _Y = 100
-_BASE_PAD_X = 18
-_BASE_PAD_Y = 14
+_BASE_PAD_X = CARD_PAD_X
+_BASE_PAD_Y = CARD_PAD_Y
 _LINE_GAP = 6
 _SAMPLE_LINES = 5       # the card's height as placement sees it: this many card lines
 # The wire protocol has no text metrics, so a line's width is estimated from its characters, and the overlay font runs wider than the

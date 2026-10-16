@@ -41,7 +41,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from . import overlay, overlay_appearance, overlay_placement
 from .overlay import OverlayClient
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -323,10 +323,9 @@ _CARD_FILL = "#f2450a0a"  # red-950 at ~95% alpha
 _TITLE_COLOR = "#f87171"  # red-400
 _WHO_COLOR = "white"
 
-_CARD_MIN_W = 600
-_CARD_BASE_PAD_X = 20
-_CARD_BASE_PAD_TOP = 26
-_CARD_BOTTOM_MARGIN = 10        # below the last line (the card's bottom padding is that line's height plus this)
+_CARD_BASE_PAD_X = CARD_PAD_X
+_CARD_BASE_PAD_TOP = CARD_PAD_Y
+_CARD_BOTTOM_MARGIN = CARD_PAD_Y        # below the last line (the card's bottom padding is that line's height plus this)
 _TITLE = "INTERDICTION WARNING"
 _SAMPLE_WHO = "Interdictor: CMDR Test Hostile (Commander)"
 
@@ -370,7 +369,7 @@ def _geometry(look: Look, who: str) -> _Geometry:
     y_resolution = y_who + look.line_px("normal") + 10
     widest = max(look.text_width(_TITLE, "large"), look.text_width(who, "normal"), look.text_width("Submitted to interdiction", "normal"))
     height = (y_resolution + look.line_px("normal") + look.pad_y(_CARD_BOTTOM_MARGIN)) - (_Y_TITLE - pad_top)
-    return _Geometry(pad_x, pad_top, max(_CARD_MIN_W, widest + 2 * pad_x), height, y_who, y_resolution)
+    return _Geometry(pad_x, pad_top, widest + 2 * pad_x, height, y_who, y_resolution)
 
 
 def _who(snapshot: InterdictionSnapshot) -> str:

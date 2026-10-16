@@ -37,7 +37,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from . import overlay, overlay_appearance, overlay_layout, overlay_placement, panelkit
 from .overlay import OverlayClient
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -590,9 +590,9 @@ _Y_STATUS = 675
 _Y_STATION = 698
 _Y_PAD = 721
 _Y_DENIED = 744
-_BASE_PAD_X = 20            # card edge to text
-_BASE_PAD_TOP = 14
-_BASE_PAD_BOTTOM = 20       # diagram to card edge
+_BASE_PAD_X = CARD_PAD_X            # card edge to text
+_BASE_PAD_TOP = CARD_PAD_Y
+_BASE_PAD_BOTTOM = CARD_PAD_Y       # diagram to card edge
 _DIAGRAM_GAP = 16           # last text line to the diagram
 
 _CARD_ID = "wntb_landing_card"

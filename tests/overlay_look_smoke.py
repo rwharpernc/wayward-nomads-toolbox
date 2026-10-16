@@ -124,13 +124,13 @@ def describe(look):
 check(S.LEGACY.size("large") == "large" and S.LEGACY.char_px("normal") == 8 and S.LEGACY.line_px("normal") == 20, "LEGACY basics")
 geometry = D.card_geometry(S.LEGACY, [("NEW SYSTEM DISCOVERY", "Some system")])
 check((geometry.width, geometry.height, geometry.name_offset, geometry.body_offset, geometry.pad_x, geometry.pad_top) ==
-      (461, 84, 38, 150, 22, 16), f"discovery legacy geometry: {geometry}")
+      (449, 88, 38, 154, 16, 12), f"discovery legacy geometry: {geometry}")
 interdiction = I._geometry(S.LEGACY, I._SAMPLE_WHO)
-check((interdiction.width, interdiction.height, interdiction.y_who, interdiction.y_resolution) == (600, 116, 130, 160),
+check((interdiction.width, interdiction.height, interdiction.y_who, interdiction.y_resolution) == (402, 104, 130, 160),
       f"interdiction legacy geometry: {interdiction}")
 landing = L._geometry(S.LEGACY, None, False)
 check((landing.card_w, landing.card_h, landing.y_title, landing.y_status, landing.y_station, landing.y_pad, landing.y_denied,
-       landing.shift_x, landing.shift_y) == (320, 324, 650, 675, 698, 721, 744, 0, 0), f"landing legacy geometry: {landing}")
+       landing.shift_x, landing.shift_y) == (320, 314, 648, 673, 696, 719, 742, 0, -2), f"landing legacy geometry: {landing}")
 check(M._stat_pitch(S.LEGACY) == 22, "mining legacy geometry")
 check(CO._geometry(S.LEGACY) == (26, 290, 32), "surface compass legacy geometry (the old waypoint arrow's)")
 

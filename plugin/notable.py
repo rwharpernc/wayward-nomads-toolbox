@@ -297,19 +297,13 @@ def render(snapshot: NotableSnapshot, client: OverlayClient, x: int = DEFAULT_X,
         return
     title, name = _texts(snapshot)
     geometry = discovery.card_geometry(look, [(title, name)])
-    center_x = geometry.center_x(x)
     accent = look.accent(2)
     client.send_shape(
         _CARD_ID, "rect", look.soft(accent), look.color("fill"), geometry.left(x), geometry.top(y),
         geometry.width, geometry.height, ttl=30, thickness=discovery._CARD_BORDER_THICKNESS,
     )
-    client.send_message(
-        _TITLE_ID, title, accent, discovery.centered_x(title, "huge", center_x, look), y, ttl=30, size=look.size("huge"),
-    )
-    client.send_message(
-        _NAME_ID, name, look.color("text"), discovery.centered_x(name, "large", center_x, look),
-        y + geometry.name_offset, ttl=30, size=look.size("large"),
-    )
+    client.send_message(_TITLE_ID, title, accent, x, y, ttl=30, size=look.size("huge"))
+    client.send_message(_NAME_ID, name, look.color("text"), x, y + geometry.name_offset, ttl=30, size=look.size("large"))
 
 
 def clear(client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y) -> None:

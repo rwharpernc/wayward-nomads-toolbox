@@ -52,7 +52,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 **What changed in 1.9.1, in the order to check it** (each item is in the section named):
 - **Section 5, Overlay:** the Colonization card still showing when the game's Market event arrives late (the overlay now also watches `Market.json`).
 - **Section 7f, Overlay Placement:** an exact position that is off the overlay's canvas (such as a leftover `x = 1280`) falls back to the default spot.
-- **Section 7g, Overlay Appearance:** the Text size choice (Smaller, Default, Larger), and boxes holding their text at each size.
+- **Section 7g, Overlay Appearance:** the Text size choice (Default, Larger), and boxes holding their text at each size.
 - **Layout:** with a large font the Trade page and the Trade History window should not widen the EDMC window.
 
 **New in 1.10.0** (the checklists are in section 5 below):
@@ -209,7 +209,7 @@ engineers' upgrades). The 1.10.2 wrapping and panel-width items are still to do.
 - [ ] **Upgrade planner** (Engineering window, added in 1.12.0, Windows-tested only): pick the Karma AR-50 from class 1 to 5: four steps, 12,500,000 credits, and **Add to wishlist**
       puts four entries on the Wishlist tab. Press **Read my gear**: your suits and weapons are listed with their class (needs the Journal directory set on Linux); picking one fills in its item, class and fitted modifications. Pick the TK Zenith: the credits read "not recorded". Pick a modification not offered for the item (they are filtered), and four at most.
 
-- [ ] **Alert widths** (added in 1.13.0, Windows-tested only; needs EDMCModernOverlay): **Test Notable** and a Discovery alert with a long capitalized name fit inside their cards at Smaller, Default and Larger text; on the Missions overlay card a long station name drops to a line under its title.
+- [ ] **Alert widths** (added in 1.13.0, Windows-tested only; needs EDMCModernOverlay): **Test Notable** and a Discovery alert with a long capitalized name fit inside their cards at Default and Larger text; on the Missions overlay card a long station name drops to a line under its title.
 - [ ] **Mission progress colours** (added in 1.13.0, Windows-tested only): the Missions window's Progress column shows a bar and `N/total held` for a source-and-return mission, and rows and overlay lines change colour as the hold fills.
 - [ ] **Missions window and pinned missions** (added in 1.12.0, Windows-tested only): the **Missions window** button at the bottom of the Missions panel opens the window; the Active and By place tabs fill and the times count down;
       select a row and **Pin / Unpin** puts a ★ on it and (with the Missions overlay on) a PINNED section on the card; the text beside the arrows is bold and readable.

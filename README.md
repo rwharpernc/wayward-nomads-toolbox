@@ -272,7 +272,7 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 - **Placement** puts each display at one of nine spots plus pixel offsets, read from your real screen. If it looks wrong,
   press **Show placement preview**, then **Detect screen again**, or **Reset all to defaults**. The overlay can't draw
   flush against the right edge by itself; WNTB works around that with an offset (a switch on the Placement tab turns it off).
-- **Appearance** sets the color scheme for every overlay; the text size (Smaller, Default or Larger) is yours to choose, and the spacing is fixed so columns stay aligned. The Interdiction warning always stays red.
+- **Appearance** sets the color scheme for every overlay; the text size (Default or Larger) is yours to choose, and the spacing is fixed so columns stay aligned. The Interdiction warning always stays red.
 - Run Elite in borderless or windowed mode; some overlays can't draw over exclusive fullscreen (see the [overlay setup](docs/OVERLAY_SETUP.md)).
 
 **Colonization (work in progress)**

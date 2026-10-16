@@ -29,7 +29,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from .overlay_style import Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, Look
 from .uikit import style as ui_style
 from . import overlay, overlay_appearance, overlay_placement, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
 
@@ -114,8 +114,8 @@ _TEST_TTL_SECONDS = 20  # long enough to alt-tab from EDMC's Settings to the gam
 _ORIGIN_X = 30
 _ORIGIN_Y = 700
 _TEXT_SIZE = "normal"
-_BG_PADDING_X = 10
-_BG_PADDING_Y = 6
+_BG_PADDING_X = CARD_PAD_X
+_BG_PADDING_Y = CARD_PAD_Y
 # The panel is sized from its text at the overlay look's text size (overlay_style.py): the line is two pixels shorter than the
 # size's line height and a character is estimated 25% wider than its real width. No font metrics are available over the
 # protocol, so the width is estimated from character count rather than measured. Deliberately generous: a slightly wide panel

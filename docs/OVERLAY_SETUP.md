@@ -137,8 +137,8 @@ may sit slightly differently than before.
 
 - **Color scheme**: Elite orange (the default), Ice blue, Phosphor green, Amber mono, High contrast, or Color-blind safe
   (Okabe-Ito colors, so good, short and warning never rest on red against green). The chips show each color's role.
-- **Text size**: Smaller, Default or Larger. It starts at **Larger**, the size the displays have had since 1.9.0, so nothing
-  changes until you choose. If the overlays look too big on a small or high-resolution screen, try Default or Smaller.
+- **Text size**: Default or Larger. It starts at **Larger**, the size the displays have had since 1.9.0, so nothing
+  changes until you choose. If the overlays look too big on a small or high-resolution screen, try Default. Overlay text is never drawn below the overlay's "normal" size, which stays readable over the game. All overlay text is left-justified.
 - **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
   puts the defaults back.
 

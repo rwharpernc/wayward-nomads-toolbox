@@ -99,15 +99,15 @@ class LookTests(unittest.TestCase):
         self.assertEqual(look.size("large"), "large")
 
     def test_text_size_steps_through_the_four_sizes_and_stops_at_the_ends(self):
-        for level, expected in ((-1, "small"), (0, "normal"), (1, "large"), (2, "huge")):
+        for level, expected in ((-1, "normal"), (0, "normal"), (1, "large"), (2, "huge")):
             self.assertEqual(S.Look(text_level=level).size("normal"), expected)
         self.assertEqual(S.Look(text_level=2).size("huge"), "huge")        # already the largest: stays
-        self.assertEqual(S.Look(text_level=-1).size("small"), "small")
+        self.assertEqual(S.Look(text_level=-1).size("small"), "normal")    # never below the legible minimum
+        self.assertEqual(S.Look(text_level=-1).size("large"), "normal")
         self.assertEqual(S.Look(text_level=1).size("huge"), "huge")
 
     def test_a_larger_size_means_wider_characters_taller_lines_and_so_a_wider_card(self):
-        small, normal, large = (S.Look(text_level=n) for n in (-1, 0, 1))
-        self.assertLess(small.char_px(), normal.char_px())
+        normal, large = (S.Look(text_level=n) for n in (0, 1))
         self.assertLess(normal.char_px(), large.char_px())
         self.assertLess(normal.line_px(), large.line_px())
         self.assertLess(normal.text_width("Ceramic Composites"), large.text_width("Ceramic Composites"))
@@ -139,7 +139,7 @@ class LookTests(unittest.TestCase):
         look = S.look_from_choices("Nope", 99, -5, 500)
         self.assertEqual(look.palette.name, S.DEFAULT_SCHEME)
         self.assertEqual((look.text_level, look.pad_extra, look.line_extra), (1, 0, 20))   # the largest offered size is Larger
-        self.assertEqual(S.look_from_choices("Ice blue", -9, 99, -1).text_level, -1)
+        self.assertEqual(S.look_from_choices("Ice blue", -9, 99, -1).text_level, 0)
 
     def test_menu_labels_round_trip_and_unknown_values_use_the_nearest(self):
         for choices in (S.TEXT_CHOICES, S.PADDING_CHOICES, S.SPACING_CHOICES):
@@ -170,10 +170,10 @@ class SavedChoicesTests(unittest.TestCase):
                       "wntb_overlay_padding": "14", "wntb_overlay_line_spacing": "7"})
         look = A.current_look()
         self.assertEqual((look.palette.name, look.text_level, look.pad_extra, look.line_extra),
-                         ("High contrast", -1, A.LOCKED_PADDING, A.LOCKED_SPACING))
+                         ("High contrast", 0, A.LOCKED_PADDING, A.LOCKED_SPACING))
 
     def test_a_damaged_or_out_of_range_text_size_is_kept_in_range(self):
-        for saved, expected in (("9", 1), ("-9", -1), ("nonsense", 1)):
+        for saved, expected in (("9", 1), ("-9", 0), ("-1", 0), ("nonsense", 1)):
             STORE[A.CFG_TEXT_SIZE] = saved
             self.assertEqual(A.current_look().text_level, expected, saved)
 

@@ -30,7 +30,7 @@ from . import mining_live_position as live_position
 from . import mining_surface as surface_mining
 from . import overlay, overlay_appearance, overlay_placement, panelkit, surface_marks, surface_marks_window
 from .overlay import OverlayClient
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -120,8 +120,8 @@ _Y = 250
 _ARROW_X = _X + 10
 _ARROW_SIZE = 18
 _ARROW_GAP = 14
-_PAD_X = 10
-_PAD_Y = 8
+_PAD_X = CARD_PAD_X
+_PAD_Y = CARD_PAD_Y
 _TTL = 3
 WIDTH_SAFETY = 1.3     # the box is measured this much wider than the plain character estimate (the overlay font runs wider)
 

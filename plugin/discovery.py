@@ -42,7 +42,7 @@ from config import appname, config
 
 from . import neutron_finder, overlay, overlay_appearance, overlay_placement, panelkit
 from .overlay import OverlayClient
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -250,10 +250,9 @@ _BODY_NAME_ID = "wntb_discovery_body_name"
 # the body card 66 below the system card.
 _NAME_GAP = 4               # between the title's line and the name's, on top of the title line's own height
 _BODY_GAP = 66              # between the system card and the body card
-_CARD_MIN_W = 460
-_CARD_BASE_PAD_X = 22
-_CARD_BASE_PAD_TOP = 16
-_CARD_BASE_PAD_BOTTOM = 4
+_CARD_BASE_PAD_X = CARD_PAD_X
+_CARD_BASE_PAD_TOP = CARD_PAD_Y
+_CARD_BASE_PAD_BOTTOM = CARD_PAD_Y
 _CARD_BORDER_THICKNESS = 2
 _TITLE_BASE = "huge"       # the sizes a display asks for at the default text size
 _NAME_BASE = "large"
@@ -296,14 +295,13 @@ class CardGeometry:
 
 
 def card_geometry(look: Look, texts: Sequence[Tuple[str, str]] = ()) -> CardGeometry:
-    """The card measures for the given (title, name) pairs: wide enough for the widest of them at the look's sizes, never narrower
-    than the standard card. Shared by the Notable Bodies card, which is drawn the same way."""
+    """The card measures for the given (title, name) pairs: wide enough for the widest of them at the look's sizes. Shared by the Notable Bodies card, which is drawn the same way."""
     widest = max((max(look.measured_width(title, _TITLE_BASE), look.measured_width(name, _NAME_BASE)) for title, name in texts), default=0)
     pad_x = look.pad_x(_CARD_BASE_PAD_X)
     pad_top = look.pad_y(_CARD_BASE_PAD_TOP)
     name_offset = look.line_px(_TITLE_BASE) + _NAME_GAP
     height = pad_top + name_offset + look.line_px(_NAME_BASE) + look.pad_y(_CARD_BASE_PAD_BOTTOM)
-    return CardGeometry(pad_x, pad_top, max(_CARD_MIN_W, widest + 2 * pad_x), height, name_offset, height + _BODY_GAP)
+    return CardGeometry(pad_x, pad_top, widest + 2 * pad_x, height, name_offset, height + _BODY_GAP)
 
 
 def centered_x(text: str, base: str, center_x: int, look: Look = LEGACY) -> int:
@@ -336,19 +334,17 @@ def placed_client(client: Any, snapshot: Optional[DiscoverySnapshot] = None, loo
 
 def render(snapshot: DiscoverySnapshot, client: OverlayClient, x: int = DEFAULT_X, y: int = DEFAULT_Y,
            look: Look = LEGACY) -> None:
-    """Draws (or clears) both alert slots, anchored at (x, y). Title and name are each horizontally centered in the card
-    independently, since they're usually different lengths. Both cards share one width, so they line up."""
+    """Draws (or clears) both alert slots, anchored at (x, y). Title and name are left-justified at the card's padding, like
+    every other overlay. Both cards share one width, so they line up."""
     geometry = card_geometry(look, _alerts(snapshot))
-    center_x = geometry.center_x(x)
     title_size, name_size = look.size(_TITLE_BASE), look.size(_NAME_BASE)
 
     def draw(card_id, title_id, name_id, top_y, title, name, accent_index):
         accent = look.accent(accent_index)
         client.send_shape(card_id, "rect", look.soft(accent), look.color("fill"), geometry.left(x), geometry.top(top_y),
                           geometry.width, geometry.height, ttl=30, thickness=_CARD_BORDER_THICKNESS)
-        client.send_message(title_id, title, accent, centered_x(title, _TITLE_BASE, center_x, look), top_y, ttl=30, size=title_size)
-        client.send_message(name_id, name, look.color("text"), centered_x(name, _NAME_BASE, center_x, look),
-                            top_y + geometry.name_offset, ttl=30, size=name_size)
+        client.send_message(title_id, title, accent, x, top_y, ttl=30, size=title_size)
+        client.send_message(name_id, name, look.color("text"), x, top_y + geometry.name_offset, ttl=30, size=name_size)
 
     if snapshot.system_visible:
         draw(_SYSTEM_CARD_ID, _SYSTEM_TITLE_ID, _SYSTEM_NAME_ID, y, _SYSTEM_TITLE,

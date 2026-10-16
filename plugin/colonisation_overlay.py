@@ -38,7 +38,7 @@ from dataclasses import dataclass
 from typing import Collection, List, Mapping, Optional, Tuple
 
 from . import colonisation, commodity_categories, overlay
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 from .colonisation import Site
 from .screenshot_gui_focus import GUI_FOCUS_STATION_SERVICES
 
@@ -56,8 +56,8 @@ MAX_ROWS = 60
 # The card's own geometry at the default look. A `Look` (overlay_style.py) changes the text size, padding, line spacing and colors,
 # and the card is sized from the text it will show, so a bigger size makes a bigger card and nothing runs past the border.
 LINE_HEIGHT = 20
-PAD_X = 10
-PAD_Y = 8
+PAD_X = CARD_PAD_X
+PAD_Y = CARD_PAD_Y
 TTL = 3600          # persistent; re-sent whenever the list changes, and before this runs out
 RESEND_AFTER_S = TTL / 2
 

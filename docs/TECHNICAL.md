@@ -653,8 +653,8 @@ exposes `block_rect(..., look)` so placement sees the size the card really has, 
 size by the look. `tests/overlay_look_smoke.py` draws every display at 144 looks (scheme x text size x padding x spacing) and checks
 every text lies inside its card and that `block_rect` equals what was drawn. `text_width` pads every estimate by `WIDTH_PAD` (10%), because the
 overlay's own font sizing differs from one screen to the next and a box a little too wide looks fine where text past its edge does not. `measured_width` is the stricter measure for the Discovery and Notable Bodies cards, whose text is capitals and catalog names: it counts capitals, digits and wide letters (M, W) as wider and spaces and narrow marks as narrower, and is never less than `text_width`. The Notable Bodies text limits (60, 56 and 70 characters) only guard against a runaway value; the card widens to fit. The text
-size is a setting again (`wntb_overlay_text_size`: Smaller, Default, Larger; it starts at Larger, the size the displays were fixed at on
-2026-10-12); the fourth step, Largest, was dropped because it is where text ran past its box. Interdiction keeps fixed red alert colors.
+size is a setting again (`wntb_overlay_text_size`: Default, Larger; it starts at Larger, the size the displays were fixed at on
+2026-10-12); the fourth step, Largest, was dropped because it is where text ran past its box. Interdiction keeps fixed red alert colors. `Look.size` never returns less than `MIN_SIZE` ("normal"), so the overlay's "small" is not used (a saved -1 from the old Smaller choice clamps to Default), every card pads its text by the same `CARD_PAD_X` / `CARD_PAD_Y` (plus the fixed extra), with no per-card minimum width, and every display draws its text left-justified at its card's padding (Discovery and Notable Bodies no longer center).
 
 ### Plugin Groups (EDMCModernOverlay)
 

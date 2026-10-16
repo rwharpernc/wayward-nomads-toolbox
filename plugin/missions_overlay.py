@@ -31,7 +31,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from . import active_missions, all_missions, current_cargo, kill_tracker, mission_pins, mission_progress, mission_types, overlay, overlay_appearance, overlay_placement
 from .overlay import OverlayClient
-from .overlay_style import LEGACY, Look
+from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -55,8 +55,8 @@ MASSACRES = (mission_types.MASSACRE_SPACE, mission_types.MASSACRE_GROUND)
 LINE_CHARS = 46          # a line is this many characters; a mission whose title and place do not fit takes two lines, and only a name longer than a line is clipped
 CHAR_SCALE = 1.25        # the wire protocol has no text metrics, so the box is measured this much wider than the plain estimate
 EXTRA_LINES = 6          # heading, the three section headings, "+N more" and a spare: lines beyond the mission rows
-_BASE_PAD_X = 12
-_BASE_PAD_Y = 10
+_BASE_PAD_X = CARD_PAD_X
+_BASE_PAD_Y = CARD_PAD_Y
 _X = 40
 _Y = 420
 GROUP_NAME = "wntb_missions"
