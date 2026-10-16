@@ -17,6 +17,7 @@ showing these as separate cards over the cockpit comes from SrvSurvey's biology 
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import os
 import threading
@@ -207,8 +208,15 @@ def set_overlay_client(client: overlay.OverlayClient) -> None:
 
 
 def _view() -> Optional[organic_scan.BodyView]:
+    """Organic Scanning's view of the body, with the first footfall flag also taken from the system survey when Organic Scanning has not seen the body's
+    scan (it was made before this session or before the flag was kept): the survey is rebuilt from the journals, scan included."""
     from . import organic_scan_panel
-    return organic_scan_panel.overlay_view()
+    view = organic_scan_panel.overlay_view()
+    if view is not None and not view.first_footfall:
+        body = system_survey.survey.find(name=view.body_name)
+        if body is not None and body.first_footfall:
+            view = dataclasses.replace(view, first_footfall=True)
+    return view
 
 
 class _Display:

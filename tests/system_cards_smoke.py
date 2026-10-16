@@ -134,6 +134,12 @@ check(BI.pick_body(survey, {"Destination": {"Body": 2}, "BodyName": f"{SYSTEM} A
 check(BI.pick_body(survey, {"BodyName": f"{SYSTEM} A 3"}, BI.BodyInfoConfig(enabled=True, near=False)) is None, "the nearby body can be turned off")
 check(BI.pick_body(survey, {"Destination": {"Body": 2}}, BI.BodyInfoConfig(enabled=True, targeted=False)) is None, "and so can the target")
 check(BI.pick_body(survey, {}, cfg) is None, "no target and no body nearby: no card")
+finished = BI.pick_body(survey, {"Destination": {"System": 99, "Body": 2, "Name": f"{SYSTEM} A 2"}}, cfg)
+finished.mapped = True
+check(finished.bio == 0, "A 2 has no life, so mapping it finishes it")
+check(BI.pick_body(survey, {"Destination": {"System": 99, "Body": 2, "Name": f"{SYSTEM} A 2"}}, cfg) is None, "a finished body that is still the target is not held on to")
+check(BI.pick_body(survey, {"Destination": {"System": 99, "Body": 2}, "BodyName": f"{SYSTEM} A 3"}, cfg).short == "A 3", "the body you are close to shows instead")
+finished.mapped = False
 unscanned_target = BI.pick_body(survey, {"Destination": {"System": 99, "Body": 77, "Name": f"{SYSTEM} Z 9"}}, cfg)
 check(unscanned_target is not None and not unscanned_target.scanned and unscanned_target.short == "Z 9", "a targeted body that has not been scanned is still picked, as one to scan")
 check(BI.build_card(unscanned_target).header[0][0] == "Scan required", "and its card says to scan it")

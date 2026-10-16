@@ -81,14 +81,20 @@ def pick_body(survey: SystemSurvey, status: Mapping[str, Any], cfg: Optional[Bod
     if cfg.targeted and isinstance(destination, Mapping):
         in_system = survey.address is None or destination.get("System") in (None, survey.address)
         found = survey.find(destination.get("Body") if isinstance(destination.get("Body"), int) else None, str(destination.get("Name") or "")) if in_system else None
-        if found is not None:
+        if found is not None and not _finished(found):
             return found
-        if in_system and destination.get("Name"):       # targeted but not scanned yet: the journal has nothing on it, so the card says to scan it
+        if found is None and in_system and destination.get("Name"):       # targeted but not scanned yet: the journal has nothing on it, so the card says to scan it
             name = str(destination["Name"])
             return Body(destination["Body"] if isinstance(destination.get("Body"), int) else -1, name, system_survey.short_name(name, survey.name))
     if cfg.near and status.get("BodyName"):
         return survey.find(None, str(status["BodyName"]))
     return None
+
+
+def _finished(body: Body) -> bool:
+    """A body with nothing left to do: mapped by you (when it can be mapped) and all its life analysed. The card does not hold on to a finished body you
+    have targeted, so it can show the next one; it still shows one you are close to."""
+    return body.scanned and body.kind == "planet" and body.mapped and (body.bio == 0 or body.life_done)
 
 
 def _clean(text: str, suffix: str = "") -> str:

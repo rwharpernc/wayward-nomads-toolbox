@@ -214,8 +214,7 @@ class RadarLayout:
         left, top, width, height = self.block_rect(look)
         line = look.line_px("normal")
         size = look.size("normal")
-        client.send_shape(self.panel_id, "rect", look.soft(look.color("border")), look.color("fill"), left, top, width, height, ttl=ttl, thickness=1)
-        client.send_shape(f"{self.prefix}bar", "rect", look.color(self.accent), look.color(self.accent), left, top, ACCENT_W, height, ttl=ttl, thickness=1)
+        client.send_shape(self.panel_id, "rect", look.color("fill"), look.color("fill"), left, top, width, height, ttl=ttl, thickness=1)   # a plain panel
         cx, cy = self.x + SIZE / 2, self.y + line + 4 + SIZE / 2
         texts: List[tuple] = []
         plot_bottom = self.y + line + 4 + SIZE + 4

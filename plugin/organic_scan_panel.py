@@ -403,6 +403,15 @@ class OrganicScanController:
         if isinstance(radius, (int, float)):
             self._current_planet_radius = radius
 
+        if not body_name and self._current_body_name is not None:
+            # Status.json names no body once the commander has left the planet's vicinity (or is in the menu): the body just finished no longer applies,
+            # so the overlay cards reset and the next body can take over. What was sampled stays saved and returns with the body.
+            self._current_body_name = None
+            self._current_lat = self._current_lon = self._current_planet_radius = self._current_heading = None
+            self._ship_pos = self._srv_pos = self._active_genus = self._focus_genus = None
+            self._tracker.reset()
+            self._refresh_predictions()
+
         if body_name and body_name != self._current_body_name:
             self._current_body_name = body_name
             self._tracker.reset()

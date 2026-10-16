@@ -344,6 +344,19 @@ class View(unittest.TestCase):
         self.assertAlmostEqual(view.progress, (2 / 3) / 2)
         self.assertAlmostEqual(EX.build_status_card(view).progress, (2 / 3) / 2)
 
+    def test_leaving_the_planet_resets_the_view_and_returning_brings_the_samples_back(self):
+        self.event({"event": "FSDJump", "StarSystem": self.system, "StarPos": [0, 0, 0]})
+        self.controller._genus_hints[self.body] = [TUSSOCK]
+        self.status(0.0, 0.0)
+        sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis"}
+        self.event({**sample, "ScanType": "Log"})
+        self.assertIsNotNone(self.controller.overlay_view())
+        self.controller.dashboard_status({"Flags": 4})                       # Status.json names no body once the commander is away from the planet
+        self.assertIsNone(self.controller.overlay_view())
+        self.assertIsNone(self.controller._active_genus)
+        self.status(0.0, 0.0)                                                # back at the planet: what was sampled is still there
+        self.assertEqual(self.controller.overlay_view().genera[0].stage, 1)
+
     def test_the_srv_is_where_the_commander_launched_it(self):
         self.event({"event": "FSDJump", "StarSystem": self.system, "StarPos": [0, 0, 0]})
         self.status(0.0, 0.005)

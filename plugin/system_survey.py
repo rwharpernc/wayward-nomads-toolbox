@@ -354,22 +354,47 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
     survey.handle_event(entry, system or "")
 
 
+MAX_RESTORE_FILES = 8             # journals read back at most, newest first, while the commander has stayed in the same system
+
+
+def _commander_of(entries: List[Dict[str, Any]]) -> str:
+    return next((str(e.get("Commander") or "").casefold() for e in entries if e.get("event") == "LoadGame"), "")
+
+
 def restore_from_journal(target: Optional[SystemSurvey] = None, folder: Optional[str] = None) -> bool:
-    """Rebuilds the survey of the system the commander is in from the newest journal: everything since the last arrival. True when it found one."""
+    """Rebuilds the survey of the system the commander is in from the journals: everything since they arrived. A relog starts a new journal, so when the
+    newest one begins in the system they were already in, the journals before it (the same commander's, up to MAX_RESTORE_FILES) are read back to the
+    arrival, and the scans made before the relog are not lost. True when it found one."""
     from . import journal_files
     target = target or survey
     try:
         files = journal_files.files_modified_since(0.0, folder)
         if not files:
             return False
-        entries = list(journal_files.read_events(files[-1], journal_files.event_pattern(*EVENTS)))
+        pattern = journal_files.event_pattern(*EVENTS)
+        entries = list(journal_files.read_events(files[-1], pattern))
+        commander = _commander_of(entries)
+        for path in reversed(files[-MAX_RESTORE_FILES:-1]):
+            arrivals = {str(e.get("StarSystem") or "").casefold() for e in entries if e.get("event") in ARRIVALS}
+            if len(arrivals) > 1:
+                break                                   # the boundary of the current system is already in hand
+            older = list(journal_files.read_events(path, pattern))
+            if _commander_of(older) != commander:
+                break                                   # another commander's journal: nothing in it is theirs
+            entries = older + entries
     except Exception:    # reading an old journal is a convenience; it must never stop the live path
         logger.debug("Could not restore the system survey", exc_info=True)
         return False
-    last = max((i for i, e in enumerate(entries) if e.get("event") in ARRIVALS), default=None)
-    if last is None:
+    arrival_indexes = [i for i, e in enumerate(entries) if e.get("event") in ARRIVALS]
+    if not arrival_indexes:
         return False
+    here = str(entries[arrival_indexes[-1]].get("StarSystem") or "").casefold()
+    start = arrival_indexes[-1]
+    for index in reversed(arrival_indexes[:-1]):
+        if str(entries[index].get("StarSystem") or "").casefold() != here:
+            break
+        start = index
     target.reset("", None)
-    for entry in entries[last:]:
+    for entry in entries[start:]:
         target.handle_event(entry)
     return True

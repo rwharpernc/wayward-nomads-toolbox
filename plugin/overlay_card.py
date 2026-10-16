@@ -48,7 +48,7 @@ def cut(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:max(1, limit - 1)].rstrip() + "…"
 
 
-ACCENT_W = 4                      # the colored bar down the card's left edge
+ACCENT_W = 4                      # the width the colored bar down a card's left edge used to have; cards are plain panels now, and it is cleared when a card is
 BAR_H = 4                         # the progress bar
 RULE_GAP = 6                      # space above and below a divider
 SECTION_GAP = 4                   # extra space above a section label
@@ -216,9 +216,7 @@ class CardLayout:
         shapes, texts, width, height = self.plan(card, look)
         shapes, texts = shapes[:MAX_SHAPES], texts[:MAX_TEXTS]
         left, top = self.x - look.pad_x(CARD_PAD_X), self.y - look.pad_y(CARD_PAD_Y)
-        client.send_shape(self.card_id, "rect", look.soft(look.color("border")), look.color("fill"), left, top, width, height, ttl=ttl, thickness=1)
-        accent = look.color(self.accent)
-        client.send_shape(f"{self.prefix}bar", "rect", accent, accent, left, top, ACCENT_W, height, ttl=ttl, thickness=1)
+        client.send_shape(self.card_id, "rect", look.color("fill"), look.color("fill"), left, top, width, height, ttl=ttl, thickness=1)   # a plain panel: no outline, no edge bar
         for index, (kind, color, fill, sx, sy, sw, sh) in enumerate(shapes):
             if kind == "circle":
                 client.send_circle(f"{self.prefix}s{index}", color, fill, sx + sw // 2, self.y + sy + sh // 2, sw // 2, ttl=ttl, thickness=2)

@@ -139,6 +139,35 @@ class RestoreTests(unittest.TestCase):
             self.assertTrue(S.restore_from_journal(survey, folder))
             self.assertEqual((survey.name, survey.honked, survey.body_count, survey.scanned_count()), (SYSTEM, True, 5, 1))
 
+    def _write(self, folder, name, lines):
+        with open(os.path.join(folder, name), "w", encoding="utf-8") as handle:
+            handle.write(chr(10).join(json.dumps(line) for line in lines) + chr(10))
+
+    def test_a_relog_in_the_same_system_keeps_the_scans_from_the_journal_before(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self._write(folder, "Journal.2026-10-16T000000.01.log", [
+                {"event": "LoadGame", "Commander": "A"}, arrive("Elsewhere"), arrive(), scan("A 1", "Earthlike body", 1.0, WasFootfalled=False)])
+            os.utime(os.path.join(folder, "Journal.2026-10-16T000000.01.log"), (1, 1))
+            self._write(folder, "Journal.2026-10-16T010000.01.log", [
+                {"event": "Fileheader", "part": 1}, {"event": "LoadGame", "Commander": "A"}, {"event": "Location", "StarSystem": SYSTEM, "SystemAddress": 99},
+                scan("A 2", "Water world", 1.0)])
+            survey = S.SystemSurvey()
+            self.assertTrue(S.restore_from_journal(survey, folder))
+            self.assertEqual((survey.name, survey.scanned_count(), survey.visible), (SYSTEM, 2, True))
+            self.assertTrue(any(b.first_footfall for b in survey.bodies.values()))
+
+    def test_an_older_journal_from_another_system_or_commander_is_not_mixed_in(self):
+        for older in ([{"event": "LoadGame", "Commander": "A"}, arrive("Elsewhere"), dict(scan("1"), StarSystem="Elsewhere")],
+                      [{"event": "LoadGame", "Commander": "B"}, arrive(), scan("B 1", "Earthlike body", 1.0)]):
+            with tempfile.TemporaryDirectory() as folder:
+                self._write(folder, "Journal.2026-10-16T000000.01.log", older)
+                os.utime(os.path.join(folder, "Journal.2026-10-16T000000.01.log"), (1, 1))
+                self._write(folder, "Journal.2026-10-16T010000.01.log", [
+                    {"event": "LoadGame", "Commander": "A"}, {"event": "Location", "StarSystem": SYSTEM, "SystemAddress": 99}, scan("A 2", "Water world", 1.0)])
+                survey = S.SystemSurvey()
+                self.assertTrue(S.restore_from_journal(survey, folder))
+                self.assertEqual(survey.scanned_count(), 1)
+
     def test_an_empty_folder_restores_nothing_and_does_not_raise(self):
         with tempfile.TemporaryDirectory() as folder:
             self.assertFalse(S.restore_from_journal(S.SystemSurvey(), folder))
