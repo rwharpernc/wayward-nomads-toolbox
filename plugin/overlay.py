@@ -415,12 +415,13 @@ def check_connection(host: str, port: str, timeout: float = CONNECT_TIMEOUT_S) -
 _host_var: Optional[tk.StringVar] = None
 _port_var: Optional[tk.StringVar] = None
 _backend_var: Optional[tk.StringVar] = None
+_keep_var: Optional[tk.BooleanVar] = None
 _BACKEND_LABELS = {"modern": "EDMCModernOverlay (a separate app)", "builtin": "WNTB built-in overlay (Windows)"}
 
 
 def _build_backend_choice(frame: tk.Misc) -> None:
     """Which overlay draws: EDMCModernOverlay, or WNTB's own window (Windows only; off until chosen)."""
-    global _backend_var
+    global _backend_var, _keep_var
     from . import overlay_native
     if not overlay_native.supported():
         _backend_var = None
@@ -434,8 +435,11 @@ def _build_backend_choice(frame: tk.Misc) -> None:
              wraplength=440, justify=tk.LEFT).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=6, pady=(4, 6))
     nb.Label(box, text="Overlay:").grid(row=1, column=0, sticky=tk.W, padx=6, pady=2)
     tk.OptionMenu(box, _backend_var, *_BACKEND_LABELS.values()).grid(row=1, column=1, sticky=tk.W, pady=2)
+    _keep_var = tk.BooleanVar(value=overlay_native.keep_showing())
+    nb.Checkbutton(box, text="Keep showing when Elite is not the window in front (to take screenshots with another tool)", variable=_keep_var).grid(
+        row=2, column=0, columnspan=2, sticky=tk.W, padx=6, pady=2)
     status = tk.StringVar(value=overlay_native.status_text())
-    nb.Label(box, textvariable=status, wraplength=440, justify=tk.LEFT).grid(row=2, column=0, columnspan=2, sticky=tk.W, padx=6, pady=(2, 6))
+    nb.Label(box, textvariable=status, wraplength=440, justify=tk.LEFT).grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=6, pady=(2, 6))
 
 
 def build_settings(notebook: nb.Notebook) -> None:
@@ -503,6 +507,8 @@ def save_settings() -> None:
         from . import overlay_native, overlay_placement
         before = overlay_native.selected()
         overlay_native.save_choice("builtin" if _backend_var.get() == _BACKEND_LABELS["builtin"] else "modern")
+        if _keep_var is not None:
+            overlay_native.save_keep_showing(bool(_keep_var.get()))
         if overlay_native.selected() != before:
             overlay_native.apply_choice()
             overlay_placement.refresh()

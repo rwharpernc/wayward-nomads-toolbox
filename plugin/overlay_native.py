@@ -21,6 +21,7 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_BACKEND = "wntb_overlay_backend"
+CFG_KEEP = "wntb_overlay_keep_showing"          # keep drawing when Elite is not the window in front (to take screenshots with another tool)
 MODERN = "modern"
 BUILTIN = "builtin"
 SOURCE = "WNTB built-in overlay"
@@ -42,7 +43,15 @@ def _font_path() -> str:
     return overlay_raster.default_font_path()
 
 
-window = overlay_window.OverlayWindow(scene, _font_path)
+def keep_showing() -> bool:
+    return bool(config.get_bool(CFG_KEEP, default=False))
+
+
+def save_keep_showing(keep: bool) -> None:
+    config.set(CFG_KEEP, bool(keep))
+
+
+window = overlay_window.OverlayWindow(scene, _font_path, keep_showing)
 
 
 def supported() -> bool:

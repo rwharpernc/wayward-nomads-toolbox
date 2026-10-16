@@ -3,7 +3,7 @@
 It runs on a thread inside EDMC, so it lives and dies with EDMC: no overlay window can be left running behind to draw a second copy of every card. The thread owns the window and its message
 loop, and every few hundredths of a second it finds Elite's window, follows its position and size, and redraws when the scene changed (`overlay_scene.py`, drawn by `overlay_raster.py`).
 The window is topmost, layered (per-pixel alpha through `UpdateLayeredWindow`), transparent to the mouse and never takes focus, so clicks and keys reach the game. It shows only while Elite
-is the window you are in and there is something to show, and it does not exist unless the player turns the built-in overlay on. Nothing here talks to the network.
+is the window you are in (unless the player asks it to stay up, to take screenshots) and there is something to show, and it does not exist unless the player turns the built-in overlay on. Nothing here talks to the network.
 
 The game has to run borderless or windowed: a fullscreen game owns the screen and nothing can be drawn over it.
 """
@@ -115,9 +115,10 @@ def game_geometry(hwnd: int) -> Optional[Geometry]:
 class OverlayWindow:
     """Owns the window thread. `geometry` is where the game is as of the last look (None when it is not running), for placement."""
 
-    def __init__(self, scene: Scene, font_path: Callable[[], str] = overlay_raster.default_font_path) -> None:
+    def __init__(self, scene: Scene, font_path: Callable[[], str] = overlay_raster.default_font_path, keep_showing: Callable[[], bool] = lambda: False) -> None:
         self.scene = scene
         self._font_path = font_path
+        self._keep_showing = keep_showing
         self._thread: Optional[threading.Thread] = None
         self._stop = threading.Event()
         self._hidden = False
@@ -184,7 +185,8 @@ class OverlayWindow:
                 self.geometry = geometry
                 foreground = user32.GetForegroundWindow()
                 items = self.scene.items()
-                want = bool(geometry and items and not self._hidden and foreground in (elite, hwnd))
+                in_front = foreground in (elite, hwnd) or self._keep_showing()          # a screenshot tool or another window in front is not the game
+                want = bool(geometry and items and not self._hidden and in_front)
                 if want:
                     key = (geometry, self.scene.version)
                     if key != last or not shown:
