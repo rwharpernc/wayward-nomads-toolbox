@@ -24,6 +24,8 @@ SIZE = 260                  # the plot's width and height in pixels
 MIN_EXTENT_M = 150.0        # the plot never shows less than this radius
 MAX_EXTENT_M = 3000.0       # nor more than this
 MARGIN = 1.12               # room around the outermost circle
+ARROW_SIZE = 6.0             # half the width of a little pointer
+BOTTOM_LINES = 3            # lines under the plot: the first two samples, then which plant is being tracked and how far
 
 
 def offset_m(here: Tuple[float, float], there: Tuple[float, float], radius_m: float, heading: Optional[float]) -> Tuple[float, float]:
@@ -52,6 +54,65 @@ class Circle:
     active: bool = True     # the circle of the genus being sampled; the others are drawn dimmer
 
 
+def bearing_text(right: float, ahead: float) -> str:
+    """Where a point is relative to the way you face: 'ahead', 'behind', or the angle to your right or left ('30° right')."""
+    angle = math.degrees(math.atan2(right, ahead))
+    size = abs(angle)
+    if size < 8:
+        return "ahead"
+    if size > 172:
+        return "behind"
+    return f"{size:.0f}° {'right' if angle > 0 else 'left'}"
+
+
+def genus_label(waypoint: organic_scan.Waypoint) -> str:
+    """The species without its color variant ('Tussock Pennatis - Lime' is 'Tussock Pennatis')."""
+    return waypoint.name.split(" - ")[0] or waypoint.name
+
+
+def nearest_waypoint(view: Optional[organic_scan.BodyView]) -> Optional[Tuple[organic_scan.Waypoint, float, float, float]]:
+    """(waypoint, distance in meters, meters to the right, meters ahead) of the nearest plant being tracked, or None."""
+    if view is None or view.here is None or view.radius_m <= 0 or not view.waypoints:
+        return None
+    found = []
+    for waypoint in view.waypoints:
+        right, ahead = offset_m(view.here, (waypoint.lat, waypoint.lon), view.radius_m, view.heading)
+        found.append((math.hypot(right, ahead), waypoint, right, ahead))
+    distance, waypoint, right, ahead = min(found, key=lambda item: item[0])
+    return waypoint, distance, right, ahead
+
+
+def track_lines(view: Optional[organic_scan.BodyView]) -> Tuple[str, ...]:
+    """The lines that lead you back to a plant you identified: what it is, how far and in which direction. Empty when none is being tracked."""
+    nearest = nearest_waypoint(view)
+    if nearest is None:
+        return ()
+    waypoint, distance, right, ahead = nearest
+    count = len(view.waypoints) if view else 1
+    return (f"Tracking {genus_label(waypoint)}" + (f" ({count})" if count > 1 else ""), f"{distance_text(distance)}, {bearing_text(right, ahead)}")
+
+
+@dataclass(frozen=True)
+class Item:
+    """One labeled distance under the plot, with the bearing of the thing it names (degrees clockwise from straight ahead) for the little pointer drawn
+    before it, or None for no pointer."""
+    text: str
+    angle: Optional[float] = None
+    role: str = "text"
+
+
+def arrow_points(cx: float, cy: float, angle: float, size: float = 6.0) -> List[dict]:
+    """The outline of a small arrowhead centered on (cx, cy) pointing `angle` degrees clockwise from up, as the overlay's polyline points (closed)."""
+    shape = ((0.0, -size), (size * 0.75, size * 0.85), (0.0, size * 0.35), (-size * 0.75, size * 0.85), (0.0, -size))
+    turn = math.radians(angle)
+    sin, cos = math.sin(turn), math.cos(turn)
+    return [{"x": round(cx + x * cos - y * sin, 1), "y": round(cy + x * sin + y * cos, 1)} for x, y in shape]
+
+
+def _angle(right: float, ahead: float) -> float:
+    return math.degrees(math.atan2(right, ahead))
+
+
 @dataclass(frozen=True)
 class Plan:
     circles: Tuple[Circle, ...] = ()
@@ -60,6 +121,10 @@ class Plan:
     bottom: str = ""                                         # "Scan one: 342 m   Scan two: 0 m"
     scale: str = ""                                          # what half the plot's width is, e.g. "300 m"
     visible: bool = False
+    targets: Tuple[Tuple[str, float, float], ...] = ()       # (label, x, y) of each plant being tracked that fits in the plot
+    pointer: Optional[Tuple[float, float]] = None            # a unit direction (x right, y up) to the nearest tracked plant, drawn from the center
+    track: Tuple[str, ...] = ()                              # the lines under the plot that say which plant and how far
+    rows: Tuple[Tuple[Item, ...], ...] = ()                  # what is drawn under the plot, a row at a time, each item with its little pointer
 
 
 def build_plan(view: Optional[organic_scan.BodyView], size: int = SIZE) -> Plan:
@@ -72,10 +137,11 @@ def build_plan(view: Optional[organic_scan.BodyView], size: int = SIZE) -> Plan:
     for genus in view.genera:
         for position in genus.positions:
             spots.append((position, genus.min_distance_m, genus.key == (active.key if active else genus.key), genus.key))
-    if not spots and view.ship is None and view.srv is None:
+    if not spots and view.ship is None and view.srv is None and not view.waypoints:
         return Plan()
     reach = [distance_m(here, p, radius) + r for p, r, _a, _k in spots]
     reach += [distance_m(here, p, radius) for p in (view.ship, view.srv) if p is not None]
+    reach += [distance_m(here, (w.lat, w.lon), radius) for w in view.waypoints]
     extent = min(MAX_EXTENT_M, max(MIN_EXTENT_M, MARGIN * max(reach, default=0.0)))
     half = size / 2 - 10
     per_m = half / extent
@@ -87,24 +153,48 @@ def build_plan(view: Optional[organic_scan.BodyView], size: int = SIZE) -> Plan:
         circles.append(Circle(right * per_m, ahead * per_m, max(2.0, range_m * per_m), math.hypot(right, ahead) < range_m, is_active))
     markers = []
     parts = []
+    vehicles: List[Item] = []
     for label, position in (("Ship", view.ship), ("SRV", view.srv)):
         if position is None:
             continue
         right, ahead = offset_m(here, position, radius, view.heading)
         parts.append(f"{label}: {distance_text(distance_m(here, position, radius))}")
+        vehicles.append(Item(parts[-1], _angle(right, ahead), "info"))
         if math.hypot(right, ahead) <= extent:
             markers.append((label[0], right * per_m, ahead * per_m))
     bottom = ""
+    scan_items: List[Item] = []
     if active is not None and active.positions:
-        scans = [f"Scan {name}: {distance_text(distance_m(here, p, radius))}" for name, p in zip(("one", "two", "three"), active.positions)]
-        bottom = "   ".join(scans[:2])
-    return Plan(tuple(circles), tuple(markers), "   ".join(parts), bottom, distance_text(extent), True)
+        scans = []
+        for name, p in list(zip(("1", "2", "3"), active.positions))[:2]:
+            right, ahead = offset_m(here, p, radius, view.heading)
+            scans.append(f"Scan {name}: {distance_text(distance_m(here, p, radius))}")
+            scan_items.append(Item(scans[-1], _angle(right, ahead)))
+        bottom = "   ".join(scans)
+    targets = []
+    for waypoint in view.waypoints:
+        right, ahead = offset_m(here, (waypoint.lat, waypoint.lon), radius, view.heading)
+        if math.hypot(right, ahead) <= extent:
+            targets.append((genus_label(waypoint)[:1], right * per_m, ahead * per_m))
+    pointer = None
+    nearest = nearest_waypoint(view)
+    if nearest is not None and nearest[1] > 0:
+        _w, distance, right, ahead = nearest
+        pointer = (right / distance, ahead / distance)
+    lines = track_lines(view)
+    rows: List[Tuple[Item, ...]] = [tuple(vehicles), tuple(scan_items)]
+    if lines and nearest is not None:
+        rows.append((Item(lines[0], _angle(nearest[2], nearest[3]), "warn"),))
+        rows.append((Item(lines[1], None, "warn"),))
+    return Plan(tuple(circles), tuple(markers), "   ".join(parts), bottom, distance_text(extent), True, tuple(targets), pointer, lines, tuple(rows))
 
 
 class RadarLayout:
     """Draws a `Plan` in its own panel at a fixed origin. Shapes and texts use overlay ids under `prefix`; unused ones are cleared."""
 
     MAX_CIRCLES = 12
+    MAX_ARROWS = 6
+    MAX_TARGETS = organic_scan.WAYPOINTS_PER_GENUS
 
     def __init__(self, prefix: str, x: int, y: int, accent: str = "border") -> None:
         self.prefix, self.x, self.y, self.accent = prefix, x, y, accent
@@ -115,7 +205,7 @@ class RadarLayout:
     def block_rect(self, look: Look = LEGACY) -> Tuple[int, int, int, int]:
         pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
         line = look.line_px("normal")
-        return self.x - pad_x, self.y - pad_y, SIZE + 2 * pad_x, SIZE + 2 * line + 2 * pad_y + 8
+        return self.x - pad_x, self.y - pad_y, SIZE + 2 * pad_x, SIZE + (1 + BOTTOM_LINES) * line + 2 * pad_y + 8
 
     def render(self, plan: Plan, client: Any, look: Look = LEGACY, ttl: int = 4) -> None:
         if not plan.visible:
@@ -128,11 +218,17 @@ class RadarLayout:
         client.send_shape(f"{self.prefix}bar", "rect", look.color(self.accent), look.color(self.accent), left, top, ACCENT_W, height, ttl=ttl, thickness=1)
         cx, cy = self.x + SIZE / 2, self.y + line + 4 + SIZE / 2
         texts: List[tuple] = []
-        if plan.top:
-            texts.append((plan.top, "text", self.x, self.y))
         plot_bottom = self.y + line + 4 + SIZE + 4
-        if plan.bottom:
-            texts.append((plan.bottom, "text", self.x, plot_bottom))
+        row_y = [self.y, plot_bottom] + [plot_bottom + (1 + n) * (line + 2) for n in range(len(plan.track))]
+        arrows: List[tuple] = []                                  # (angle, role, x, y) of the little pointers
+        for row, items in enumerate(plan.rows[:len(row_y)]):
+            x = float(self.x)
+            for item in items:
+                if item.angle is not None:
+                    arrows.append((item.angle, item.role, x + ARROW_SIZE, row_y[row] + line / 2 - 2))
+                    x += 2 * ARROW_SIZE + 4
+                texts.append((item.text, item.role, x, row_y[row]))
+                x += look.measured_width(item.text) + 16
         texts.append((plan.scale, "muted", self.x + SIZE - look.measured_width(plan.scale), self.y + line + 4))
         for index, circle in enumerate(plan.circles[:self.MAX_CIRCLES]):
             role = "danger" if circle.inside else "ok"
@@ -150,8 +246,24 @@ class RadarLayout:
             client.send_circle(f"{self.prefix}m{index}", look.color("info"), "#00000000", cx + mx, cy - my, 8, ttl=ttl, thickness=2)
         for index in range(len(plan.markers), 2):
             client.send_circle(f"{self.prefix}m{index}", "", "", cx, cy, 1, ttl=1)
+        # the plants being tracked: a ring with the genus's letter, and a line from you toward the nearest one (to the edge of the plot if it is further)
+        for index, (label, tx, ty) in enumerate(plan.targets[:self.MAX_TARGETS]):
+            texts.append((label, "warn", cx + tx - 4, cy - ty - 9))
+            client.send_circle(f"{self.prefix}t{index}", look.color("warn"), "#00000000", cx + tx, cy - ty, 8, ttl=ttl, thickness=2)
+        for index in range(min(len(plan.targets), self.MAX_TARGETS), self.MAX_TARGETS):
+            client.send_circle(f"{self.prefix}t{index}", "", "", cx, cy, 1, ttl=1)
+        if plan.pointer is not None:
+            reach = SIZE / 2 - 14
+            client.send_vector(f"{self.prefix}point", [{"x": cx + plan.pointer[0] * 8, "y": cy - plan.pointer[1] * 8},
+                                                       {"x": cx + plan.pointer[0] * reach, "y": cy - plan.pointer[1] * reach}], look.color("warn"), ttl=ttl)
+        else:
+            client.send_vector(f"{self.prefix}point", [], "white", ttl=1)
         for index, (text, role, tx, ty) in enumerate(texts):
             client.send_message(f"{self.prefix}x{index}", text, look.color(role), int(tx), int(ty), ttl=ttl, size=size)
+        for index, (angle, role, ax, ay) in enumerate(arrows[:self.MAX_ARROWS]):
+            client.send_vector(f"{self.prefix}a{index}", arrow_points(ax, ay, angle, ARROW_SIZE), look.color(role), ttl=ttl)
+        for index in range(min(len(arrows), self.MAX_ARROWS), self.MAX_ARROWS):
+            client.send_vector(f"{self.prefix}a{index}", [], "white", ttl=1)
         for index in range(len(texts), self._used_texts):
             client.send_message(f"{self.prefix}x{index}", "", "white", self.x, self.y, ttl=1)
         self._used_texts = len(texts)
@@ -160,9 +272,13 @@ class RadarLayout:
         left, top, _w, _h = self.block_rect(LEGACY)
         for shape_id in (self.panel_id, f"{self.prefix}bar"):
             client.send_shape(shape_id, "rect", "", "", left, top, 0, 0, ttl=1)
-        for shape_id in [f"{self.prefix}c{i}" for i in range(self._used_circles)] + [f"{self.prefix}m0", f"{self.prefix}m1", f"{self.prefix}me"]:
+        for shape_id in [f"{self.prefix}c{i}" for i in range(self._used_circles)] + [f"{self.prefix}m0", f"{self.prefix}m1", f"{self.prefix}me"] + [
+                f"{self.prefix}t{i}" for i in range(self.MAX_TARGETS)]:
             client.send_circle(shape_id, "", "", left, top, 1, ttl=1)
         client.send_vector(f"{self.prefix}ahead", [], "white", ttl=1)
+        client.send_vector(f"{self.prefix}point", [], "white", ttl=1)
+        for index in range(self.MAX_ARROWS):
+            client.send_vector(f"{self.prefix}a{index}", [], "white", ttl=1)
         for index in range(self._used_texts):
             client.send_message(f"{self.prefix}x{index}", "", "white", self.x, self.y, ttl=1)
         self._used_circles = self._used_texts = 0

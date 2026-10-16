@@ -112,6 +112,7 @@ def build_status_card(view: Optional[organic_scan.BodyView], system: str = "", s
         if reward:
             header.append((f"{_credits(reward * view.multiplier)}" + (" (first footfall bonus)" if view.first_footfall else ""), "text"))
         header.append(_distance_line(active) or (f"Samples must be {_metres(active.min_distance_m)} apart", "muted"))
+        header.extend(_tracking(view))
         return Card(tuple(header), title=title, badge=badge, progress=progress, headline=(active.title, "title"),
                     dots=tuple(i < filled for i in range(organic_scan.REQUIRED_SAMPLES)))
     rows = []
@@ -129,7 +130,13 @@ def build_status_card(view: Optional[organic_scan.BodyView], system: str = "", s
         footer = ("First footfall: every reward here is five times as much", "info")
     else:
         footer = ("Use the Composition Scanner on a plant to begin", "muted")
-    return Card((), tuple(rows), footer, title=title, badge=badge, progress=progress)
+    return Card(tuple(_tracking(view)), tuple(rows), footer, title=title, badge=badge, progress=progress)
+
+
+def _tracking(view: organic_scan.BodyView) -> list:
+    """One line that leads you back to the plant you identified, as a card header line: 'Tracking Tussock Pennatis: 342 m, 30° right'."""
+    lines = exo_radar.track_lines(view)
+    return [(f"{lines[0]}: {lines[1]}", "warn")] if lines else []
 
 
 def build_list_card(view: Optional[organic_scan.BodyView], system: str = "") -> Card:
@@ -180,7 +187,8 @@ def sample_view() -> organic_scan.BodyView:
             organic_scan.GenusView("t", "Tussock", 200.0, species="Tussock Pennatis", value=1_000_000, stage=2, distance_m=78.0,
                                    variant="Tussock Pennatis - Lime", positions=((0.0, 0.0), (0.0, 0.0125))),
             organic_scan.GenusView("o", "Osseus", 800.0, species="Osseus Fractus", value=4_000_000, stage=3, variant="Osseus Fractus - Red")),
-        first_footfall=True, signal_count=4, here=(0.0, 0.0200), heading=30.0, radius_m=600_000.0, ship=(0.0, 0.0215), srv=None, active="t")
+        first_footfall=True, signal_count=4, here=(0.0, 0.0200), heading=30.0, radius_m=600_000.0, ship=(0.0, 0.0215), srv=None, active="t",
+        waypoints=(organic_scan.Waypoint("t", "Tussock Pennatis - Lime", 0.0, 0.0290),), focus="t")
 
 
 def sample_popup() -> Dict[str, Any]:

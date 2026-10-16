@@ -15,6 +15,8 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 - **A drag-and-drop layout editor on Overlay Placement.** A to-scale picture of your screen with a grid (20, 40, 60 or 120 pixels) and a box for every display: drag a box where you want it and the spot and offset are filled in for you. A box dropped near an edge snaps flush to it (offset 0), near the middle snaps to the center line, and otherwise to the grid. The table below it still works and the two stay in step. A **Picture size** choice (Default, Large, Extra large) makes the picture bigger and is remembered.
 
+- **The Exobiology cards lead you back to plants you identified.** The location of a plant scanned with the Composition Scanner is kept (up to four of the genus being surveyed, per body, across restarts); the Bio radar marks them, draws a pointer to the nearest and says how far and which way, and Bio status shows the same line. A plant drops off when you sample it, and the genus clears when analysed. Each distance under the radar (ship, SRV, your first two samples and the tracked plant) has a little pointer turned toward it, relative to the way you face.
+
 ### Fixed
 - The Bio status progress bar now moves with each sample (a third of a genus per Log or Sample, all of it once analysed) instead of only when a genus is analysed, and the sample in progress is still shown after EDMC or the game restarts part-way through.
 - **Exobiology circles and the Bio radar drew away from their cards.** Circles were not moved with the rest of a placed card, so the sample dots and the radar's circles landed at the card's unplaced position and could drag the rest of the card with them.

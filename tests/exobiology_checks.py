@@ -29,7 +29,7 @@ TUSSOCK, BACTERIUM = "$Codex_Ent_Tussocks_Genus_Name;", "$Codex_Ent_Bacterial_Ge
 
 class Recorder:
     def __init__(self):
-        self.shapes, self.circles, self.messages = {}, {}, {}
+        self.shapes, self.circles, self.messages, self.vectors = {}, {}, {}, {}
 
     def send_shape(self, shape_id, shape, color, fill, x, y, w, h, ttl=8, thickness=None):
         self.shapes[shape_id] = (x, y, w, h, color)
@@ -38,7 +38,7 @@ class Recorder:
         self.circles[shape_id] = (x, y, radius, color, fill)
 
     def send_vector(self, shape_id, points, color, ttl=8):
-        pass
+        self.vectors[shape_id] = list(points)
 
     def send_message(self, msg_id, text, color, x, y, ttl=8, size="normal"):
         self.messages[msg_id] = (text, color, x, y, size)
@@ -143,7 +143,7 @@ class Radar(unittest.TestCase):
         self.assertEqual(inside, {True, False})                 # 209 m from the first sample (clear), 78 m from the second (inside)
         self.assertEqual(plan.markers[0][0], "S")
         self.assertEqual(plan.top, "Ship: 16 m")
-        self.assertEqual(plan.bottom, "Scan one: 209 m   Scan two: 79 m")
+        self.assertEqual(plan.bottom, "Scan 1: 209 m   Scan 2: 79 m")
         for circle in plan.circles:                              # every circle is inside the plot
             self.assertLessEqual(math.hypot(circle.x, circle.y) + circle.radius, XR.SIZE / 2)
 
@@ -151,7 +151,7 @@ class Radar(unittest.TestCase):
         view = EX.sample_view()
         self.assertFalse(XR.build_plan(None).visible)
         self.assertFalse(XR.build_plan(dataclasses.replace(view, here=None)).visible)
-        bare = dataclasses.replace(view, ship=None, genera=tuple(dataclasses.replace(g, positions=()) for g in view.genera))
+        bare = dataclasses.replace(view, ship=None, waypoints=(), genera=tuple(dataclasses.replace(g, positions=()) for g in view.genera))
         self.assertFalse(XR.build_plan(bare).visible)
 
     def test_rendering_draws_and_then_clears(self):
@@ -164,6 +164,122 @@ class Radar(unittest.TestCase):
         layout.render(XR.Plan(), rec, S.DEFAULT)
         self.assertEqual(rec.shapes["t_panel"][2:4], (0, 0))
         self.assertTrue(all(v[0] == "" for v in rec.messages.values()))
+
+
+class Waypoints(unittest.TestCase):
+    """Plants identified with the Composition Scanner are remembered and the radar and Bio status lead back to them."""
+
+    def test_the_radar_marks_the_plant_points_to_it_and_says_how_far_and_which_way(self):
+        view = EX.sample_view()                      # standing at longitude 0.020, facing 30 degrees; the plant is at 0.029
+        plan = XR.build_plan(view)
+        self.assertEqual(len(plan.targets), 1)
+        self.assertEqual(plan.targets[0][0], "T")
+        self.assertIsNotNone(plan.pointer)
+        self.assertAlmostEqual(math.hypot(*plan.pointer), 1.0)
+        self.assertEqual(plan.track[0], "Tracking Tussock Pennatis")
+        self.assertRegex(plan.track[1], r"^\d+ m, \d+° (right|left)$")
+
+    def test_every_distance_under_the_plot_has_a_little_pointer_turned_toward_it(self):
+        plan = XR.build_plan(EX.sample_view())
+        items = [item for row in plan.rows for item in row]
+        self.assertEqual([i.text for i in items if i.angle is not None], ["Ship: 16 m", "Scan 1: 209 m", "Scan 2: 79 m", "Tracking Tussock Pennatis"])
+        rec = Recorder()
+        layout = XR.RadarLayout("t_", 100, 100)
+        layout.render(plan, rec, S.DEFAULT)
+        self.assertEqual(sorted(k for k, v in rec.vectors.items() if v and k[:3] == "t_a" and k[3:].isdigit()), ["t_a0", "t_a1", "t_a2", "t_a3"])
+
+    def test_an_arrowhead_points_the_way_it_is_turned(self):
+        up = XR.arrow_points(0, 0, 0.0)
+        self.assertEqual((up[0]["x"], up[0]["y"]), (0.0, -6.0))                  # the tip is straight up
+        right = XR.arrow_points(0, 0, 90.0)
+        self.assertAlmostEqual(right[0]["x"], 6.0, places=1)                      # turned a quarter clockwise: the tip points right
+        self.assertAlmostEqual(right[0]["y"], 0.0, places=1)
+        self.assertEqual(up[0], up[-1])                                           # the outline is closed
+
+    def test_bearing_text(self):
+        self.assertEqual(XR.bearing_text(0.0, 50.0), "ahead")
+        self.assertEqual(XR.bearing_text(0.0, -50.0), "behind")
+        self.assertEqual(XR.bearing_text(50.0, 0.0), "90° right")
+        self.assertEqual(XR.bearing_text(-50.0, 0.0), "90° left")
+
+    def test_only_a_waypoint_makes_the_radar_show(self):
+        view = dataclasses.replace(EX.sample_view(), ship=None, genera=tuple(dataclasses.replace(g, positions=()) for g in EX.sample_view().genera))
+        self.assertTrue(XR.build_plan(view).visible)
+
+    def test_bio_status_names_the_plant_being_tracked(self):
+        card = EX.build_status_card(EX.sample_view(), "Sample System")
+        self.assertTrue(any(h[0].startswith("Tracking Tussock Pennatis: ") for h in card.header))
+        idle = EX.build_status_card(dataclasses.replace(EX.sample_view(), active=None), "Sample System")
+        self.assertTrue(any(h[0].startswith("Tracking Tussock Pennatis: ") for h in idle.header))
+
+    def test_the_genus_comes_from_the_codex_name(self):
+        self.assertEqual(organic_scan.genus_key_for_codex_name("$Codex_Ent_Tussocks_06_G_Name;"), TUSSOCK)
+        self.assertEqual(organic_scan.genus_key_for_codex_name("$Codex_Ent_Shrubs_05_F_Name;"), "$Codex_Ent_Shrubs_Genus_Name;")
+        self.assertIsNone(organic_scan.genus_key_for_codex_name("$Codex_Ent_Nothing_99_Z_Name;"))
+        self.assertIsNone(organic_scan.genus_key_for_codex_name("garbage"))
+
+
+class WaypointTracking(unittest.TestCase):
+    def setUp(self):
+        self.controller = organic_scan_panel.OrganicScanController()
+        self.system = "Test Sector AB-C d1"
+        self.body = f"{self.system} 2 d"
+        self.controller.handle_event({"event": "FSDJump", "StarSystem": self.system, "StarPos": [0, 0, 0]}, "CMDR", self.system, None, {})
+        self.controller._genus_hints[self.body] = [TUSSOCK, BACTERIUM]
+        self.status(0.0, 0.0)
+
+    def status(self, lat, lon):
+        self.controller.dashboard_status({"BodyName": self.body, "Latitude": lat, "Longitude": lon, "PlanetRadius": 600_000.0, "Heading": 0.0})
+
+    def codex(self, name, lat, lon, label="Tussock Pennatis - Lime"):
+        self.controller.handle_event({"event": "CodexEntry", "SubCategory": "$Codex_SubCategory_Organic_Structures;", "Name": name, "Name_Localised": label,
+                                      "Latitude": lat, "Longitude": lon}, "CMDR", self.system, None, {})
+
+    def test_an_identified_plant_becomes_a_waypoint_and_the_genus_is_followed(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.001, 0.0)
+        view = self.controller.overlay_view()
+        self.assertEqual(view.focus, TUSSOCK)
+        self.assertEqual([(w.name, w.lat, w.lon) for w in view.waypoints], [("Tussock Pennatis - Lime", 0.001, 0.0)])
+
+    def test_only_the_genus_being_surveyed_is_shown(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.001, 0.0)
+        self.codex("$Codex_Ent_Bacterial_01_G_Name;", 0.002, 0.0, "Bacterium Aurasus - Emerald")
+        view = self.controller.overlay_view()
+        self.assertEqual(view.focus, BACTERIUM)
+        self.assertEqual([w.name for w in view.waypoints], ["Bacterium Aurasus - Emerald"])
+
+    def test_the_same_plant_is_not_listed_twice_and_each_genus_keeps_a_few(self):
+        for number in range(6):
+            self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.001 * (number + 1), 0.0)
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.006, 0.0)
+        waypoints = self.controller.overlay_view().waypoints
+        self.assertEqual(len(waypoints), organic_scan.WAYPOINTS_PER_GENUS)
+        self.assertEqual([round(w.lat, 3) for w in waypoints], [0.003, 0.004, 0.005, 0.006])
+
+    def test_sampling_a_plant_drops_its_waypoint_and_analysing_clears_the_genus(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.0, 0.0)           # where we stand
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.01, 0.0)          # far away
+        sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis"}
+        self.controller.handle_event({**sample, "ScanType": "Log"}, "CMDR", self.system, None, {})
+        self.assertEqual([w.lat for w in self.controller.overlay_view().waypoints], [0.01])
+        self.controller.handle_event({**sample, "ScanType": "Sample"}, "CMDR", self.system, None, {})
+        self.controller.handle_event({**sample, "ScanType": "Analyse"}, "CMDR", self.system, None, {})
+        self.assertEqual(self.controller.overlay_view().waypoints, ())
+
+    def test_waypoints_survive_a_restart(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.001, 0.002)
+        saved = self.controller._persisted[self.controller._body_key(self.system, self.body)]["waypoints"]
+        fresh = organic_scan_panel.OrganicScanController()
+        fresh._persisted = {fresh._body_key(self.system, self.body): {"waypoints": saved}}
+        fresh._system_name = self.system
+        fresh._restore_body(self.system, self.body)
+        self.assertEqual([(w.lat, w.lon) for w in fresh._waypoints[self.body]], [(0.001, 0.002)])
+
+    def test_a_codex_entry_that_is_not_a_plant_or_has_no_position_is_ignored(self):
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", None, None)
+        self.controller.handle_event({"event": "CodexEntry", "SubCategory": "$Codex_SubCategory_Geology;", "Name": "$Codex_Ent_Tussocks_06_G_Name;",
+                                      "Latitude": 1.0, "Longitude": 1.0}, "CMDR", self.system, None, {})
+        self.assertEqual(self.controller.overlay_view().waypoints, ())
 
 
 class View(unittest.TestCase):

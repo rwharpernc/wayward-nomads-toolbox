@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
@@ -50,6 +51,8 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 # this is the one that actually pays out).
 STAGE_ORDER = ("Log", "Sample", "Analyse")
 REQUIRED_SAMPLES = len(STAGE_ORDER)
+WAYPOINTS_PER_GENUS = 4          # plants kept per genus on a body: enough to come back to, not a list to maintain
+WAYPOINT_SAMPLED_M = 40.0        # a Log or Sample taken this close to a waypoint is that plant, so it is dropped from the list
 FIRST_FOOTFALL_MULTIPLIER = 5    # the first commander to set foot on a body is paid five times the usual exobiology reward
 
 # Journal unit conversions to the units organic_species_data.py's rulesets
@@ -221,6 +224,19 @@ def ruleset_matches(ruleset: species_data.SpeciesRuleset, cond: BodyConditions) 
     return True
 
 
+_VARIANT_NAME = re.compile(r"^(\$Codex_Ent_\w+?_\d\d)(?:_[A-Z]+)?_Name;$")
+
+
+def genus_key_for_codex_name(name: str) -> Optional[str]:
+    """The genus of an organism from the `Name` of its CodexEntry (`$Codex_Ent_Tussocks_06_G_Name;`: genus, species number, color variant), or None when
+    it is not one WNTB knows. The species is the same name without the variant letter."""
+    match = _VARIANT_NAME.match(name)
+    if not match:
+        return None
+    species_name = f"{match.group(1)}_Name;"
+    return next((s.genus_key for s in species_data.SPECIES.values() if s.species_key == species_name), None)
+
+
 def predict_species(genus_key: str, cond: BodyConditions) -> List[species_data.SpeciesInfo]:
     """Every species of `genus_key` whose habitability rulesets are
     consistent with `cond` - a body holds at most one species per genus in
@@ -307,6 +323,15 @@ class GenusView:
 
 
 @dataclass(frozen=True)
+class Waypoint:
+    """A plant the Composition Scanner identified: where it is (from the CodexEntry's latitude and longitude), so the commander can be led back to it."""
+    genus_key: str
+    name: str                 # e.g. "Tussock Pennatis - Lime"
+    lat: float
+    lon: float
+
+
+@dataclass(frozen=True)
 class BodyView:
     """The exobiology of the body the commander is at: its genera, in the order the journal named them."""
     body_name: str
@@ -320,6 +345,8 @@ class BodyView:
     ship: Optional[Tuple[float, float]] = None
     srv: Optional[Tuple[float, float]] = None
     active: Optional[str] = None       # the genus key last sampled and not yet analysed
+    waypoints: Tuple[Waypoint, ...] = ()           # plants identified and not yet sampled, of the genus being surveyed
+    focus: Optional[str] = None        # the genus being surveyed: the one in progress, else the one last identified
 
     @property
     def analysed(self) -> int:

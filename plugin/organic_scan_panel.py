@@ -82,6 +82,8 @@ class OrganicScanController:
         self._signal_counts: Dict[str, int] = {}      # body name -> biological signals
         self._mapped_bodies: set = set()
         self._active_genus: Optional[str] = None      # the genus last sampled and not yet analysed
+        self._focus_genus: Optional[str] = None       # the genus being surveyed: the one in progress, else the one last identified
+        self._waypoints: Dict[str, List[organic_scan.Waypoint]] = {}     # body name -> plants identified there and not yet sampled
         self._tracker = OrganicTracker()
 
         self._predictions_var: Optional[tk.StringVar] = None
@@ -181,6 +183,9 @@ class OrganicScanController:
                 organism_data.get("variant_name"),
                 organism_data.get("positions"),
             )
+        if body_name not in self._waypoints and stored.get("waypoints"):
+            self._waypoints[body_name] = [organic_scan.Waypoint(w[0], w[1], float(w[2]), float(w[3])) for w in stored["waypoints"]
+                                          if isinstance(w, (list, tuple)) and len(w) == 4]
         if body_name not in self._footfall and "first_footfall" in stored:
             self._footfall[body_name] = bool(stored["first_footfall"])
 
@@ -208,7 +213,8 @@ class OrganicScanController:
             self._current_lon = None
             self._current_planet_radius = None
             self._current_heading = None
-            self._ship_pos = self._srv_pos = self._active_genus = None
+            self._ship_pos = self._srv_pos = self._active_genus = self._focus_genus = None
+            self._waypoints = {}
             self._footfall, self._signal_counts, self._mapped_bodies = {}, {}, set()
             self._tracker.reset()
             self._refresh_predictions()
@@ -230,10 +236,54 @@ class OrganicScanController:
             self._mapped_bodies.add(entry["BodyName"])
         elif event == "ScanOrganic":
             self._handle_scan_organic(entry)
+        elif event == "CodexEntry":
+            self._handle_codex(entry)
         elif event in ("Touchdown", "Liftoff"):
             self._handle_ship(event, entry)
         elif event in ("LaunchSRV", "Disembark", "DockSRV", "Embark"):
             self._handle_vehicle(event, entry)
+
+    def _handle_codex(self, entry: Dict[str, Any]) -> None:
+        """A plant identified with the Composition Scanner: keep where it is, so the commander can be led back to it. Only one genus is followed at a time
+        (the latest), and each genus keeps a few plants."""
+        if entry.get("SubCategory") != "$Codex_SubCategory_Organic_Structures;" or not self._current_body_name:
+            return
+        lat, lon = entry.get("Latitude"), entry.get("Longitude")
+        genus_key = organic_scan.genus_key_for_codex_name(str(entry.get("Name") or ""))
+        if genus_key is None or not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
+            return
+        body = self._current_body_name
+        points = [p for p in self._waypoints.get(body, []) if p.genus_key != genus_key or abs(p.lat - lat) > 1e-5 or abs(p.lon - lon) > 1e-5]
+        points.append(organic_scan.Waypoint(genus_key, str(entry.get("Name_Localised") or ""), float(lat), float(lon)))
+        same = [p for p in points if p.genus_key == genus_key]
+        for extra in same[:-organic_scan.WAYPOINTS_PER_GENUS]:
+            points.remove(extra)
+        self._waypoints[body] = points
+        self._focus_genus = genus_key
+        self._save_waypoints(body)
+
+    def _drop_waypoints(self, genus_key: str, complete: bool) -> None:
+        """A sample was taken: the plant sampled is no longer one to come back to (the waypoint nearest the commander, within a few dozen meters), and a genus
+        that is analysed has none left."""
+        body = self._current_body_name
+        if not body or body not in self._waypoints:
+            return
+        points = self._waypoints[body]
+        if complete:
+            points = [p for p in points if p.genus_key != genus_key]
+        elif self._current_lat is not None and self._current_lon is not None and self._current_planet_radius:
+            near = [(organic_scan.haversine_distance_m(p.lat, p.lon, self._current_lat, self._current_lon, self._current_planet_radius), p)
+                    for p in points if p.genus_key == genus_key]
+            near = [item for item in near if item[0] <= organic_scan.WAYPOINT_SAMPLED_M]
+            if near:
+                points = [p for p in points if p is not min(near, key=lambda item: item[0])[1]]
+        self._waypoints[body] = points
+        self._save_waypoints(body)
+
+    def _save_waypoints(self, body: str) -> None:
+        stored = self._persisted.setdefault(self._body_key(self._system_name, body), {})
+        stored["waypoints"] = [[p.genus_key, p.name, p.lat, p.lon] for p in self._waypoints.get(body, [])]
+        self._persist()
 
     def _handle_ship(self, event: str, entry: Dict[str, Any]) -> None:
         lat, lon = entry.get("Latitude"), entry.get("Longitude")
@@ -326,6 +376,8 @@ class OrganicScanController:
             variant_name if isinstance(variant_name, str) else None,
         )
         self._active_genus = None if organism.complete else genus_key
+        self._focus_genus = genus_key
+        self._drop_waypoints(genus_key, organism.complete)
         if self._current_body_name:
             self._save_organism(self._system_name, self._current_body_name, organism)
         self._refresh_active()
@@ -444,10 +496,13 @@ class OrganicScanController:
                 stage=organism.stage if organism else 0, distance_m=distance, variant=organism.variant_name if organism else None,
                 positions=tuple(organism.positions) if organism else ()))
         here = (self._current_lat, self._current_lon) if self._current_lat is not None and self._current_lon is not None else None
+        focus = self._active_genus or self._focus_genus
+        waypoints = tuple(p for p in self._waypoints.get(body_name, []) if p.genus_key == focus)
         return organic_scan.BodyView(
             body_name, tuple(genera), first_footfall=self._footfall.get(body_name, False), mapped=bool(self._genus_hints.get(body_name)),
             signal_count=self._signal_counts.get(body_name, 0), here=here, heading=self._current_heading,
-            radius_m=self._current_planet_radius or 0.0, ship=self._ship_pos, srv=self._srv_pos, active=self._active_genus)
+            radius_m=self._current_planet_radius or 0.0, ship=self._ship_pos, srv=self._srv_pos, active=self._active_genus,
+            waypoints=waypoints, focus=focus)
 
     def _refresh_active(self) -> None:
         if self._active_var is None or not enabled():
