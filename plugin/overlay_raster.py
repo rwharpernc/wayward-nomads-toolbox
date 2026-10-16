@@ -138,6 +138,13 @@ def _rect(draw: ImageDraw.ImageDraw, item: Item, x: float, y: float, ratio: floa
     box = (x, y, x + item.w * ratio, y + item.h * ratio)
     fill, border = parse_color(item.fill), parse_color(item.color)
     width = max(1, int(round(item.thickness * ratio)))
+    corner = min(item.corner * ratio, (box[2] - box[0]) / 2, (box[3] - box[1]) / 2)
+    if corner >= 1:                                                      # a panel with rounded corners
+        if fill is not None and fill[3]:
+            draw.rounded_rectangle(box, radius=corner, fill=fill)
+        if border is not None and border[3] and border != fill:
+            draw.rounded_rectangle(box, radius=corner, outline=border, width=width)
+        return
     if fill is not None and fill[3]:
         draw.rectangle(box, fill=fill)
     if border is not None and border[3] and border != fill:

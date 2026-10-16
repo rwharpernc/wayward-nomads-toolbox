@@ -72,6 +72,7 @@ class NativeSwitchTests(unittest.TestCase):
             self.assertFalse(overlay_placement.can_offset(key), key)
 
     def test_a_snapshot_draws_the_scene_at_the_size_asked_for(self):
+        N.save_corners("square")
         self.assertIsNone(N.snapshot(1920, 1080))                        # not chosen
         N.save_choice(N.BUILTIN)
         self.assertIsNone(N.snapshot(1920, 1080))                        # Elite's window not known yet
@@ -124,6 +125,31 @@ class NativeSwitchTests(unittest.TestCase):
                 self.assertTrue(N._font_path().endswith("Gone.ttf") is False)         # one that is not there falls back (to the bundled one, here a stand-in folder has none)
         N.save_font(overlay_fonts.BUNDLED)
         self.assertEqual(N._font_path(), bundled)
+
+    def test_panels_get_rounded_corners_in_the_built_in_overlay_only(self):
+        client = overlay.OverlayClient()
+        sent = []
+        with mock.patch.object(overlay.OverlayClient, "_send", lambda _self, payload: sent.append(payload)):
+            N.save_choice(N.MODERN)
+            client.send_shape("panel", "rect", "#fff", "#000", 0, 0, 300, 200)
+            self.assertNotIn("radius", sent[-1])                           # EDMCModernOverlay is sent nothing extra
+            N.save_choice(N.BUILTIN)
+            N.save_corners("rounded")
+            client.send_shape("panel", "rect", "#fff", "#000", 0, 0, 300, 200)
+            self.assertEqual(sent[-1]["radius"], 10.0)
+            client.send_shape("divider", "rect", "#fff", "#fff", 0, 0, 300, 1)
+            client.send_shape("bar", "rect", "#fff", "#fff", 0, 0, 300, 4)
+            self.assertNotIn("radius", sent[-1])                           # dividers and bars stay square
+            self.assertNotIn("radius", sent[-2])
+            N.save_corners("square")
+            client.send_shape("panel", "rect", "#fff", "#000", 0, 0, 300, 200)
+            self.assertNotIn("radius", sent[-1])
+            N.save_corners("very")
+            client.send_shape("panel", "rect", "#fff", "#000", 0, 0, 300, 200)
+            self.assertEqual(sent[-1]["radius"], 16.0)
+        self.assertEqual(N.corner_key(), "very")
+        N.save_corners("bogus")
+        self.assertEqual(N.corner_key(), N.DEFAULT_CORNERS)                  # an unknown value falls back
 
     def test_the_overlay_clamp_still_applies_to_the_other_overlay(self):
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25).clamped, (True, False))

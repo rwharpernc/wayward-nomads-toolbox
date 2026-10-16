@@ -23,6 +23,7 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_BACKEND = "wntb_overlay_backend"
 CFG_FONT = "wntb_overlay_builtin_font"            # the font file (in WNTB's own fonts folder) the built-in overlay draws in; empty means the bundled one
+CFG_CORNERS = "wntb_overlay_corners"              # how rounded the panels are in the built-in overlay: square, slight, rounded or very
 CFG_KEEP = "wntb_overlay_keep_showing"          # keep drawing when Elite is not the window in front (to take screenshots with another tool)
 MODERN = "modern"
 BUILTIN = "builtin"
@@ -99,6 +100,27 @@ def measure(text: str, size: str) -> float:
 def install_measurer() -> None:
     """Cards are sized from measured text while the built-in overlay is chosen, and from the character estimates otherwise."""
     overlay_style.set_text_measurer(measure if selected() == BUILTIN else None)
+
+
+CORNER_CHOICES = (("square", "Square", 0), ("slight", "Slightly rounded", 6), ("rounded", "Rounded", 10), ("very", "Very rounded", 16))
+DEFAULT_CORNERS = "rounded"
+PANEL_MIN_PX = 24                       # a rectangle at least this wide and tall is a panel; thinner ones are dividers and bars and stay square
+
+
+def corner_key() -> str:
+    saved = config.get_str(CFG_CORNERS)
+    return saved if saved in {key for key, _l, _r in CORNER_CHOICES} else DEFAULT_CORNERS
+
+
+def save_corners(key: str) -> None:
+    config.set(CFG_CORNERS, key if key in {k for k, _l, _r in CORNER_CHOICES} else DEFAULT_CORNERS)
+
+
+def panel_radius(width: float, height: float) -> float:
+    """The corner radius (logical pixels) a panel of this size is drawn with in the built-in overlay; 0 for a thin rectangle (a divider or a bar) or when the overlay is not the built-in one."""
+    if not accepting() or min(width, height) < PANEL_MIN_PX:
+        return 0.0
+    return float(next(radius for key, _label, radius in CORNER_CHOICES if key == corner_key()))
 
 
 def keep_showing() -> bool:

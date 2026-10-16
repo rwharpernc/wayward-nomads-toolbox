@@ -41,6 +41,7 @@ class Item:
     text: str = ""
     size: str = "normal"
     thickness: int = 1
+    corner: float = 0.0         # rect: corner radius in logical pixels (0 is square)
     points: Tuple[Tuple[float, float, str, str, str], ...] = ()      # vect: (x, y, color, marker, text) for each point
 
 
@@ -68,7 +69,7 @@ def parse(payload: Mapping[str, Any], now: float) -> Optional[Item]:
         w, h = _number(payload.get("w")), _number(payload.get("h"))
         if w <= 0 or h <= 0 or not (common["color"] or common["fill"]):
             return None
-        return Item(kind=RECT, w=w, h=h, **common)
+        return Item(kind=RECT, w=w, h=h, corner=max(0.0, _number(payload.get("radius"))), **common)
     if shape == "circle":
         radius = _number(payload.get("radius"))
         if radius < 1 or not (common["color"] or common["fill"]):

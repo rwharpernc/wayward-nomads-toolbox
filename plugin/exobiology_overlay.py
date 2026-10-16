@@ -53,7 +53,16 @@ GROUPS = {"status": ("wntb_exo_status", "wntb_exo_status_"), "list": ("wntb_exo_
 LAYOUT_STATUS = WideCardLayout(GROUPS["status"][1], x=650, y=100, width_chars=STATUS_CHARS, sample_lines=4)       # short and wide, to sit above the game's compass
 LAYOUT_LIST = CardLayout(GROUPS["list"][1], x=650, y=100, max_header=1, max_rows=12, name_chars=NAME_CHARS, tag_chars=14, sample_tag="up to 12.3M CR", sample_lines=8)
 LAYOUT_POPUP = CardLayout(GROUPS["popup"][1], x=650, y=100, max_header=3, max_rows=4, name_chars=NAME_CHARS, tag_chars=14, sample_tag="5,000,000 cr", sample_lines=4)
-LAYOUT_RADAR = exo_radar.RadarLayout(GROUPS["radar"][1], x=650, y=100)
+_CFG_RADAR_SIZE = "wntb_exo_radar_size"
+
+
+def radar_size() -> int:
+    """The Bio radar plot's size in pixels, from the Radar size setting (Default 260, Large 340, Extra large 420)."""
+    raw = config.get_str(_CFG_RADAR_SIZE)
+    return next((px for label, px in exo_radar.SIZE_CHOICES if str(px) == raw or label == raw), exo_radar.SIZE)
+
+
+LAYOUT_RADAR = exo_radar.RadarLayout(GROUPS["radar"][1], x=650, y=100, size_fn=radar_size)
 
 
 @dataclass
@@ -269,7 +278,7 @@ def _popup_card(_view_: Any, _system: str) -> Card:
 
 status = _Display("bio_status", LAYOUT_STATUS, lambda view, system: build_status_card(view, system, _codex_scan()), lambda: load_config().status)
 listing = _Display("exobiology", LAYOUT_LIST, build_list_card, lambda: load_config().list)
-radar = _Display("bio_radar", LAYOUT_RADAR, lambda view, system: exo_radar.build_plan(view), lambda: load_config().radar)
+radar = _Display("bio_radar", LAYOUT_RADAR, lambda view, system: exo_radar.build_plan(view, radar_size()), lambda: load_config().radar)
 popup = _Display("bio_popup", LAYOUT_POPUP, _popup_card, lambda: load_config().popup)
 DISPLAYS = (status, listing, radar, popup)
 
@@ -376,21 +385,28 @@ def build_settings(notebook: nb.Notebook) -> None:
         _vars[key] = tk.BooleanVar(value=getattr(cfg, key))
         nb.Checkbutton(frame, text=_LABELS[key], variable=_vars[key]).grid(row=row, column=0, sticky=tk.W, padx=10, pady=2)
 
+    size_row = tk.Frame(frame)
+    size_row.grid(row=6, column=0, sticky=tk.W, padx=(30, 10), pady=2)
+    nb.Label(size_row, text="Radar size:").pack(side=tk.LEFT)
+    _vars["radar_size"] = tk.StringVar(value=next(label for label, px in exo_radar.SIZE_CHOICES if px == radar_size()))
+    tk.OptionMenu(size_row, _vars["radar_size"], *[label for label, _px in exo_radar.SIZE_CHOICES]).pack(side=tk.LEFT, padx=4)
+    nb.Label(size_row, text="(larger draws the sample circles larger)").pack(side=tk.LEFT)
+
     nb.Label(
         frame,
         text=("What WNTB cannot know: species are predicted from the body's conditions (the same prediction as the Organic Scanning panel), so a body can "
               "show several candidates until a sample names the species, and the color variant is known only after the first sample. A sample's "
               "position is known only for samples taken while EDMC was running, and the SRV's only from where you launched or left it."),
         wraplength=440, justify=tk.LEFT,
-    ).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+    ).grid(row=7, column=0, sticky=tk.W, padx=10, pady=(6, 4))
 
     action_row = tk.Frame(frame)
-    action_row.grid(row=7, column=0, sticky=tk.W, padx=10, pady=(6, 2))
+    action_row.grid(row=8, column=0, sticky=tk.W, padx=10, pady=(6, 2))
     tk.Button(action_row, text="Test Cards", command=_test_cards).pack(side=tk.LEFT)
     _result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
     _result_label.pack(side=tk.LEFT, padx=(10, 0))
     nb.Label(frame, text="(Test Cards works even while disabled above, and reports whether the overlay was actually reachable.)",
-             wraplength=440, justify=tk.LEFT).grid(row=8, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+             wraplength=440, justify=tk.LEFT).grid(row=9, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _test_cards() -> None:
@@ -405,7 +421,7 @@ def _test_cards() -> None:
     def worker() -> None:
         try:
             for display, card in ((status, build_status_card(view, "Sample System")), (listing, build_list_card(view, "Sample System")),
-                                  (radar, exo_radar.build_plan(view)), (popup, build_popup_card(sample_popup()))):
+                                  (radar, exo_radar.build_plan(view, radar_size())), (popup, build_popup_card(sample_popup()))):
                 display.render(card, display.placed_client(client, look, card), look)
             outcome, color = "Sent: check your overlay.", "#2e7d32"
         except OSError as err:
@@ -421,3 +437,5 @@ def _test_cards() -> None:
 def save_settings() -> None:
     if _vars:
         save_config(ExoConfig(**{key: bool(_vars[key].get()) for key in _CFG}))
+        if "radar_size" in _vars:
+            config.set(_CFG_RADAR_SIZE, str(next((px for label, px in exo_radar.SIZE_CHOICES if label == _vars["radar_size"].get()), exo_radar.SIZE)))

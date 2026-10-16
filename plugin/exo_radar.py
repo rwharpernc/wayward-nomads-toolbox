@@ -14,13 +14,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 from . import organic_scan
 from .overlay_card import ACCENT_W
 from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look, with_alpha
 
-SIZE = 260                  # the plot's width and height in pixels
+SIZE = 260                  # the plot's width and height in pixels (the Default radar size; the Radar size setting makes it larger)
+SIZE_CHOICES = (("Default", SIZE), ("Large", 340), ("Extra large", 420))     # the Radar size setting: a larger plot draws the circles larger, as wide as the genus needs
 MIN_EXTENT_M = 150.0        # the plot never shows less than this radius
 MAX_EXTENT_M = 3000.0       # nor more than this
 MARGIN = 1.12               # room around the outermost circle
@@ -226,18 +227,24 @@ class RadarLayout:
     MAX_ARROWS = 10
     MAX_TARGETS = 5
 
-    def __init__(self, prefix: str, x: int, y: int, accent: str = "border") -> None:
+    def __init__(self, prefix: str, x: int, y: int, accent: str = "border", size_fn: Optional[Callable[[], int]] = None) -> None:
         self.prefix, self.x, self.y, self.accent = prefix, x, y, accent
+        self._size_fn = size_fn
         self.panel_id = f"{prefix}panel"
         self._used_circles = 0
         self._used_texts = 0
+
+    @property
+    def size(self) -> int:
+        """The plot's width and height in pixels now: the Radar size setting, or the default."""
+        return int(self._size_fn()) if self._size_fn else SIZE
 
     def block_rect(self, look: Look = LEGACY, plan: Optional[Plan] = None) -> Tuple[int, int, int, int]:
         """(left, top, width, height): the plot with a row above it and a row under it for each thing listed (the rows grow with the plants tracked)."""
         pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
         line = look.line_px("normal")
         rows = (1 + BOTTOM_LINES) if plan is None or not plan.rows else max(2, len(plan.rows))
-        return self.x - pad_x, self.y - pad_y, SIZE + 2 * pad_x, SIZE + rows * (line + 2) + 2 * pad_y + 4
+        return self.x - pad_x, self.y - pad_y, self.size + 2 * pad_x, self.size + rows * (line + 2) + 2 * pad_y + 4
 
     def render(self, plan: Plan, client: Any, look: Look = LEGACY, ttl: int = 4) -> None:
         if not plan.visible:
@@ -247,9 +254,9 @@ class RadarLayout:
         line = look.line_px("normal")
         size = look.size("normal")
         client.send_shape(self.panel_id, "rect", look.color("fill"), look.color("fill"), left, top, width, height, ttl=ttl * 2, thickness=1)   # a plain panel
-        cx, cy = self.x + SIZE / 2, self.y + line + 4 + SIZE / 2
+        cx, cy = self.x + self.size / 2, self.y + line + 4 + self.size / 2
         texts: List[tuple] = []
-        plot_bottom = self.y + line + 4 + SIZE + 4
+        plot_bottom = self.y + line + 4 + self.size + 4
         row_y = [self.y] + [plot_bottom + n * (line + 2) for n in range(max(0, len(plan.rows) - 1))]
         arrows: List[tuple] = []                                  # (angle, role, x, y) of the little pointers
         for row, items in enumerate(plan.rows[:len(row_y)]):
@@ -260,7 +267,7 @@ class RadarLayout:
                     x += 2 * ARROW_SIZE + 4
                 texts.append((item.text, item.role, x, row_y[row]))
                 x += look.measured_width(item.text) + 16
-        texts.append((plan.scale, "muted", self.x + SIZE - look.measured_width(plan.scale), self.y + line + 4))
+        texts.append((plan.scale, "muted", self.x + self.size - look.measured_width(plan.scale), self.y + line + 4))
         for index, circle in enumerate(plan.circles[:self.MAX_CIRCLES]):
             role = "danger" if circle.inside else "ok"
             color = look.color(role) if circle.active else look.color("muted")
@@ -274,7 +281,7 @@ class RadarLayout:
         client.send_vector(f"{self.prefix}ahead", [{"x": cx, "y": cy - 4}, {"x": cx, "y": cy - 20}], look.color("title"), ttl=ttl)
         if plan.north is not None:
             # north, on the edge of the plot: the plot turns with you, so this says which way the map's north is (an arrowhead and an N)
-            edge = SIZE / 2 - 6
+            edge = self.size / 2 - 6
             nx, ny = math.sin(math.radians(plan.north)), math.cos(math.radians(plan.north))
             client.send_vector(f"{self.prefix}north", arrow_points(cx + nx * edge, cy - ny * edge, plan.north, ARROW_SIZE), look.color("muted"), ttl=ttl)
             texts.append(("N", "muted", cx + nx * (edge - 14) - 4, cy - ny * (edge - 14) - 9))
@@ -289,7 +296,7 @@ class RadarLayout:
             client.send_circle(f"{self.prefix}t{index}", look.color(f"series{color}"), "#00000000", cx + tx, cy - ty, ring, ttl=ttl, thickness=2)
         for index in range(min(len(plan.targets), self.MAX_TARGETS), self.MAX_TARGETS):
             client.send_circle(f"{self.prefix}t{index}", "", "", cx, cy, 1, ttl=1)
-        reach = SIZE / 2 - 14
+        reach = self.size / 2 - 14
         for index, (px, py, color) in enumerate(plan.pointers[:self.MAX_TARGETS]):
             client.send_vector(f"{self.prefix}point{index}", [{"x": cx + px * 8, "y": cy - py * 8}, {"x": cx + px * reach, "y": cy - py * reach}],
                                look.color(f"series{color}"), ttl=ttl)

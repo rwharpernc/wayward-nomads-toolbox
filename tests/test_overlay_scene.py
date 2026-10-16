@@ -174,6 +174,16 @@ class RasterTests(unittest.TestCase):
         self.assertEqual(image.getpixel((501, 501))[:3], (255, 0, 0))                # an item in no group is placed in canvas units
         self.assertEqual(R.group_of("g_x1", ["g_", "g_x"]), "g_x")                   # the longest prefix wins
 
+    def test_a_panel_with_a_radius_has_rounded_corners_and_one_without_is_square(self):
+        rounded = self.draw([rect("r", w=100, h=60, color="", fill="#ffff0000", radius=20)])
+        square = self.draw([rect("r", w=100, h=60, color="", fill="#ffff0000")])
+        self.assertEqual(rounded.getpixel((6, 6))[3], 0)                     # the corner is cut away
+        self.assertEqual(rounded.getpixel((50, 30))[:3], (255, 0, 0))        # the middle is filled
+        self.assertEqual(rounded.getpixel((50, 6))[:3], (255, 0, 0))         # and the straight edge is there
+        self.assertEqual(square.getpixel((6, 6))[:3], (255, 0, 0))
+        large = self.draw([rect("r", w=100, h=60, color="", fill="#ffff0000", radius=500)])
+        self.assertEqual(large.getpixel((50, 30))[:3], (255, 0, 0))          # a radius larger than the panel is held to half of it
+
     def test_an_empty_scene_is_a_transparent_picture(self):
         self.assertIsNone(self.draw([]).getbbox())
 

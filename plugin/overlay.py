@@ -362,6 +362,11 @@ class OverlayClient:
         }
         if thickness is not None:
             payload["thickness"] = thickness
+        if shape == "rect":
+            from . import overlay_native
+            radius = overlay_native.panel_radius(w, h)         # the built-in overlay rounds a panel's corners; EDMCModernOverlay is sent nothing extra
+            if radius:
+                payload["radius"] = radius
         self._send(payload)
 
     def send_circle(

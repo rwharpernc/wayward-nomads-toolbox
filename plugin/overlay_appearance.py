@@ -69,6 +69,7 @@ def current_look() -> style.Look:
 _scheme_var: Optional[tk.StringVar] = None
 _size_var: Optional[tk.StringVar] = None
 _opacity_var: Optional[tk.StringVar] = None
+_corners_var: Optional[tk.StringVar] = None
 _result_var: Optional[tk.StringVar] = None
 _frame: Optional[tk.Misc] = None
 _font_var: Optional[tk.StringVar] = None
@@ -98,7 +99,7 @@ def _refresh_chips(*_args) -> None:
 
 
 def build_settings(notebook: tk.Misc) -> None:
-    global _scheme_var, _size_var, _opacity_var, _result_var, _frame
+    global _scheme_var, _size_var, _opacity_var, _corners_var, _result_var, _frame
 
     frame = nb.Frame(notebook)
     _frame = frame
@@ -119,11 +120,14 @@ def build_settings(notebook: tk.Misc) -> None:
     _size_var = tk.StringVar(value=style.label_for(style.TEXT_CHOICES, saved_text_size()))
     _opacity_var = tk.StringVar(value=style.label_for(style.OPACITY_CHOICES, saved_opacity() or style.DEFAULT_OPACITY))
 
+    _corners_var = tk.StringVar(value=next(label for key, label, _r in overlay_native.CORNER_CHOICES if key == overlay_native.corner_key()))
     grid = tk.Frame(frame)
     grid.grid(row=1, column=0, sticky=tk.W, padx=10, pady=2)
+    corner_rows = ((("Corners (built-in overlay)", _corners_var, [label for _k, label, _r in overlay_native.CORNER_CHOICES]),)
+                   if overlay_native.supported() else ())
     for row, (label, var, values) in enumerate((("Color scheme", _scheme_var, list(style.SCHEMES)),
                                                 ("Text size", _size_var, [label for label, _v in style.TEXT_CHOICES]),
-                                                ("Panel opacity", _opacity_var, [label for label, _v in style.OPACITY_CHOICES]))):
+                                                ("Panel opacity", _opacity_var, [label for label, _v in style.OPACITY_CHOICES])) + corner_rows):
         nb.Label(grid, text=label + ":").grid(row=row, column=0, sticky=tk.W, padx=(0, 10), pady=2)
         tk.OptionMenu(grid, var, *values, command=_refresh_chips).grid(row=row, column=1, sticky=tk.W, pady=2)
 
@@ -156,6 +160,8 @@ def save_settings() -> None:
     config.set(CFG_TEXT_SIZE, str(look.text_level))
     config.set(CFG_OPACITY, str(look.panel_opacity) if look.panel_opacity is not None else "")
     _save_font()
+    if _corners_var is not None:
+        overlay_native.save_corners(next((key for key, label, _r in overlay_native.CORNER_CHOICES if label == _corners_var.get()), overlay_native.DEFAULT_CORNERS))
 
 
 # --- the overlay font ----------------------------------------------------------------------------------------------
@@ -264,6 +270,8 @@ def _reset() -> None:
         _size_var.set(style.label_for(style.TEXT_CHOICES, DEFAULT_TEXT_SIZE))
     if _opacity_var is not None:
         _opacity_var.set(style.label_for(style.OPACITY_CHOICES, style.DEFAULT_OPACITY))
+    if _corners_var is not None:
+        _corners_var.set(next(label for key, label, _r in overlay_native.CORNER_CHOICES if key == overlay_native.DEFAULT_CORNERS))
     _refresh_chips()
     if _result_var is not None:
         _result_var.set("The default scheme and size are shown. Press OK in Settings to keep it.")

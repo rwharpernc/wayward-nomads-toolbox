@@ -40,6 +40,7 @@ There are two, and you pick one under **Settings → WNTB → Overlays → Overl
 | Chosen with | The setting above (off until you choose it) | The same setting (it is the default) |
 | Font | Its own: Source Sans 3 (lower case), or any `.ttf` / `.otf` you add; changes at once | One font for all plugins, in its own list; takes effect after a restart |
 | Cards fit their text | Exactly (the text is measured in the font in use) | By estimate, a little roomier |
+| Card corners | Rounded (your choice: square to very rounded) | Square |
 | Stray windows | Cannot happen: it ends with EDMC | An old window can be left running (see [Known issues](guide/known-issues.md)) |
 | Elite must run | Borderless or windowed | Borderless or windowed (it also lists fullscreen: check its notes) |
 
@@ -187,6 +188,7 @@ may sit slightly differently than before.
   overlay's "normal" size, which stays readable over the game.
 - **Panel opacity**: how solid every display's background is (100%, 90% by default, 75%, 60%, 40% or 25%). The text stays solid, so a faint panel lets the game show through
   behind readable text; over a bright scene, 75% or more keeps small text easiest to read. Every text color in every scheme keeps strong contrast over a dark panel.
+- **Corners (built-in overlay)**: how rounded every card's corners are: Square, Slightly rounded, **Rounded** (the default), or Very rounded. It applies to the panels only (dividers and bars stay square) and only to WNTB's built-in overlay: EDMCModernOverlay cannot draw rounded rectangles, so its cards stay square.
 - **Overlay font**: the font the overlay draws in; see [Fonts](#fonts) below. It follows whichever overlay is chosen.
 - **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
   puts the defaults back.

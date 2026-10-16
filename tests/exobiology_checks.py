@@ -249,6 +249,19 @@ class Radar(unittest.TestCase):
         self.assertGreater(right, 10.0)
         self.assertAlmostEqual(ahead, 0.0, places=3)
 
+    def test_a_larger_radar_draws_the_circles_larger_and_takes_the_room(self):
+        view = EX.sample_view()
+        small, large = XR.build_plan(view, 260), XR.build_plan(view, 420)
+        self.assertGreater(large.circles[0].radius, small.circles[0].radius * 1.5)         # the same circle, in more pixels
+        wide = XR.RadarLayout("p_", 0, 0, size_fn=lambda: 420)
+        narrow = XR.RadarLayout("p_", 0, 0)
+        self.assertEqual(narrow.size, XR.SIZE)
+        self.assertGreater(wide.block_rect(S.DEFAULT, large)[2], narrow.block_rect(S.DEFAULT, small)[2] + 100)
+        rec = Recorder()
+        wide.render(large, rec, S.DEFAULT)
+        self.assertTrue(rec.circles)                                                       # and it draws at that size
+        self.assertEqual([c for c, _ in XR.SIZE_CHOICES], ["Default", "Large", "Extra large"])
+
     def test_north_is_marked_on_the_plot_and_turns_with_the_heading(self):
         facing_east = dataclasses.replace(EX.sample_view(), heading=90.0)
         self.assertAlmostEqual(XR.build_plan(facing_east).north, -90.0)             # facing east, north is to the left
