@@ -465,7 +465,7 @@ overlay maps its canvas and sizes there, have not been seen on Linux.
 
 ## 7g. Overlay Appearance (added 2026-10-11, Windows-tested only: check on Linux)
 
-- [ ] **Settings -> Overlays -> Appearance** exists, with a Color scheme menu and a Text size menu (Smaller, Default, Larger; Larger is the starting value). Pick each size and press **Show sample**: no text may run past its box.
+- [ ] **Settings -> Overlays -> Appearance** exists, with a Color scheme menu and a Text size menu (Default, Larger; Larger is the starting value). Pick each size and press **Show sample**: no text may run past its box.
 - [ ] **Show sample** draws the Colonization card in the game in the picked scheme.
 - [ ] At **Larger** (the starting size), each display (Colonization, Discovery, Notable, Landing, Inventory, Mining,
       Screenshots) keeps its text inside its border without wrapping. Note any that do not, with the font and Proton/Wine setup.

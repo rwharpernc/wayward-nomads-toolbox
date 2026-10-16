@@ -24,7 +24,7 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_SCHEME = "wntb_overlay_scheme"
-CFG_TEXT_SIZE = "wntb_overlay_text_size"     # -1 Smaller, 0 Default, 1 Larger
+CFG_TEXT_SIZE = "wntb_overlay_text_size"     # 0 Default, 1 Larger (-1, the removed Smaller, reads as Default)
 # One padding and line spacing for every display. Earlier versions saved choices under wntb_overlay_text_level,
 # wntb_overlay_padding and wntb_overlay_line_spacing; they are no longer read. The text size is a new setting (CFG_TEXT_SIZE) that
 # starts at "Larger", the size the displays were fixed at on 2026-10-12, so nobody's overlay changes until they choose.
