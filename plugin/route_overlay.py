@@ -22,7 +22,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import tkinter as tk
 
@@ -32,7 +32,8 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from . import fuel_alerts, journal_files, overlay, overlay_appearance, overlay_placement, restore, route_plan
 from .overlay import OverlayClient
-from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
+from .overlay_card import Card, CardLayout, Line, Row, cut
+from .overlay_style import LEGACY, Look
 from .route_plan import Hop, RouteTracker
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -79,29 +80,12 @@ def save_config(cfg: RouteConfig) -> None:
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
 
-Line = Tuple[str, str]            # (text, color role)
-Row = Tuple[str, str, str]        # (system text, star text, color role)
-
 NAME_CHARS = 24                   # characters of "N. System name" in a row; a longer name is cut with an ellipsis
 TAG_CHARS = 11                    # the widest star text ("WHITE DWARF")
 SAMPLE_TAG = "WHITE DWARF"
 
 _KIND_ROLE = {route_plan.KIND_NEUTRON: "info", route_plan.KIND_WHITE_DWARF: "ok", route_plan.KIND_NO_SCOOP: "warn"}
 _KIND_WORD = {route_plan.KIND_NEUTRON: "neutron star", route_plan.KIND_WHITE_DWARF: "white dwarf"}
-
-
-@dataclass(frozen=True)
-class Card:
-    header: Tuple[Line, ...] = ()
-    rows: Tuple[Row, ...] = ()
-    footer: Optional[Line] = None
-
-    def __bool__(self) -> bool:
-        return bool(self.header or self.rows)
-
-
-def _cut(text: str, limit: int) -> str:
-    return text if len(text) <= limit else text[:max(1, limit - 1)].rstrip() + "…"
 
 
 def _jumps(count: int) -> str:
@@ -155,7 +139,7 @@ def build_card(tracker: RouteTracker, rows: int = DEFAULT_ROWS, low_percent: int
     for number, hop in enumerate(shown, 1):
         tag, kind = route_plan.star_tag(hop.star_class)
         role = _KIND_ROLE.get(kind, "muted")
-        listed.append((_cut(f"{number}. {hop.name}", NAME_CHARS), _cut(tag, TAG_CHARS), role))
+        listed.append((cut(f"{number}. {hop.name}", NAME_CHARS), cut(tag, TAG_CHARS), role))
     rest = ahead[rows:]
     footer: Optional[Line] = None
     if rest:
@@ -168,48 +152,19 @@ def build_card(tracker: RouteTracker, rows: int = DEFAULT_ROWS, low_percent: int
 # --- drawing -------------------------------------------------------------------------------------------------------------
 
 # The card is drawn at this fixed origin; where it sits on the screen is the global Overlay Placement setting. Its top and its width
-# are fixed, so it grows downward as rows are added and never moves sideways with what it says.
-_X = 650
-_Y = 100
-_LINE_GAP = 4
-_COLUMN_GAP = 14
-_SAMPLE_LINES = 4 + DEFAULT_ROWS + 1    # the card's height as placement sees it
+# are fixed, so it grows downward as rows are added and never moves sideways with what it says. The drawing itself is overlay_card's.
 MAX_EXPEDITION_LINES = 5     # name and progress, what was found here, the next stop, its note, the stop just reached
 MAX_HEADER = 4 + MAX_EXPEDITION_LINES
 GROUP_NAME = "wntb_route"
 GROUP_PREFIX = "wntb_route_"
-_CARD_ID = "wntb_route_card"
-_HEADER_IDS = tuple(f"wntb_route_h{i}" for i in range(MAX_HEADER))
-_NAME_IDS = tuple(f"wntb_route_n{i}" for i in range(ROWS_RANGE[1]))
-_TAG_IDS = tuple(f"wntb_route_t{i}" for i in range(ROWS_RANGE[1]))
-_FOOT_ID = "wntb_route_foot"
-
-
-def _name_width(look: Look) -> int:
-    return look.measured_width("X" * NAME_CHARS)
-
-
-def _inner_width(look: Look) -> int:
-    return _name_width(look) + _COLUMN_GAP + look.measured_width(SAMPLE_TAG)
-
-
-def _fit(text: str, look: Look, limit_px: int) -> str:
-    """`text` cut with an ellipsis until it fits the card's width at the look's size."""
-    while len(text) > 1 and look.measured_width(text) > limit_px:
-        text = text[:-2].rstrip() + "…"
-    return text
-
-
-def _card_size(look: Look, lines: int) -> Tuple[int, int]:
-    pad_x, pad_y = look.pad_x(CARD_PAD_X), look.pad_y(CARD_PAD_Y)
-    return _inner_width(look) + 2 * pad_x, 2 * pad_y + lines * look.line_px("normal") + max(0, lines - 1) * _LINE_GAP
+LAYOUT = CardLayout(GROUP_PREFIX, x=650, y=100, max_header=MAX_HEADER, max_rows=ROWS_RANGE[1], name_chars=NAME_CHARS, tag_chars=TAG_CHARS,
+                    sample_tag=SAMPLE_TAG, sample_lines=4 + DEFAULT_ROWS + 1)
+_X, _Y, _CARD_ID = LAYOUT.x, LAYOUT.y, LAYOUT.card_id
 
 
 def block_rect(look: Look = LEGACY, card: Optional[Card] = None) -> tuple:
-    """(left, top, width, height) of the card as `render` draws it. Placement always uses a card of `_SAMPLE_LINES` lines."""
-    lines = _SAMPLE_LINES if card is None else len(card.header) + len(card.rows) + (1 if card.footer else 0)
-    width, height = _card_size(look, lines)
-    return _X - look.pad_x(CARD_PAD_X), _Y - look.pad_y(CARD_PAD_Y), width, height
+    """(left, top, width, height) of the card as `render` draws it. Placement always uses a card of 13 lines."""
+    return LAYOUT.block_rect(look, card)
 
 
 def placed_client(client: OverlayClient, look: Look = LEGACY) -> OverlayClient:
@@ -219,47 +174,7 @@ def placed_client(client: OverlayClient, look: Look = LEGACY) -> OverlayClient:
 def render(card: Card, client: OverlayClient, look: Look = LEGACY) -> None:
     """Draws the card, or clears it when it is empty. Every line starts at the card's left padding. Raises on an overlay failure; the
     live path swallows it and the Settings test reports it."""
-    if not card:
-        _clear(client)
-        return
-    lines = len(card.header) + len(card.rows) + (1 if card.footer else 0)
-    width, height = _card_size(look, lines)
-    left, top = _X - look.pad_x(CARD_PAD_X), _Y - look.pad_y(CARD_PAD_Y)
-    client.send_shape(_CARD_ID, "rect", look.color("border"), look.color("fill"), left, top, width, height, ttl=OVERLAY_TTL, thickness=2)
-    step = look.line_px("normal") + _LINE_GAP
-    size = look.size("normal")
-    tag_x = _X + _name_width(look) + _COLUMN_GAP
-    inner = _inner_width(look)
-    row = 0
-    for index, msg_id in enumerate(_HEADER_IDS):
-        if index < len(card.header):
-            text, role = card.header[index]
-            client.send_message(msg_id, _fit(text, look, inner), look.color(role), _X, _Y + row * step, ttl=OVERLAY_TTL, size=size)
-            row += 1
-        else:
-            client.send_message(msg_id, "", "white", _X, _Y, ttl=1)
-    for index, (name_id, tag_id) in enumerate(zip(_NAME_IDS, _TAG_IDS)):
-        if index < len(card.rows):
-            name, tag, role = card.rows[index]
-            y = _Y + row * step
-            client.send_message(name_id, name, look.color("text" if role == "muted" else role), _X, y, ttl=OVERLAY_TTL, size=size)
-            client.send_message(tag_id, tag, look.color(role), tag_x, y, ttl=OVERLAY_TTL, size=size)
-            row += 1
-        else:
-            client.send_message(name_id, "", "white", _X, _Y, ttl=1)
-            client.send_message(tag_id, "", "white", _X, _Y, ttl=1)
-    if card.footer:
-        text, role = card.footer
-        client.send_message(_FOOT_ID, _fit(text, look, inner), look.color(role), _X, _Y + row * step, ttl=OVERLAY_TTL, size=size)
-    else:
-        client.send_message(_FOOT_ID, "", "white", _X, _Y, ttl=1)
-
-
-def _clear(client: OverlayClient) -> None:
-    left, top, _w, _h = block_rect(LEGACY)
-    client.send_shape(_CARD_ID, "rect", "", "", left, top, 0, 0, ttl=1)
-    for msg_id in _HEADER_IDS + _NAME_IDS + _TAG_IDS + (_FOOT_ID,):
-        client.send_message(msg_id, "", "white", _X, _Y, ttl=1)
+    LAYOUT.render(card, client, look, ttl=OVERLAY_TTL)
 
 
 SAMPLE_EXPEDITION: List[Line] = [

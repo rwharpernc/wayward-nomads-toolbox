@@ -193,6 +193,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Landing Assist**: your assigned landing pad, in the panel and/or as a diagram on your game screen ([Landing Assist](docs/guide/always-on.md#landing-assist)).
 - **Interdiction Warning**: an alert on your game screen the moment an interdiction starts ([Interdiction Warning](docs/guide/always-on.md#interdiction-warning)).
 - **Flight Alerts**: a fleet carrier jump countdown and fuel warnings, including when the star you plotted to cannot be scooped ([Flight Alerts](docs/guide/always-on.md#flight-alerts)).
+- **System targets and Body info**: two overlay cards for working a system: a list of scanned bodies worth mapping (above a value you choose) and bodies with life you have not analysed yet, until you do; and a card describing the body you have targeted or are close to ([System targets and Body info](docs/guide/exploration.md#system-targets-and-body-info)).
 - **Route overlay**: your fuel and jump range, the jumps left, and the systems of the route you plotted, with neutron stars and white dwarfs picked out so you can prepare for the supercharge ([Route overlay](docs/guide/always-on.md#route-overlay)).
 
 ## Planned and being researched

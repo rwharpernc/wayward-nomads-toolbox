@@ -3,6 +3,16 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **System targets card.** A list of what is left to do in the system you are in: scanned planets and moons worth mapping that you have not mapped (an estimated scan value at or above a threshold you choose, most valuable first), and bodies with life you have not finished analysing, until you map or analyse them. It shows the scan progress after the honk and clears when you jump. Off until ticked in Settings → Overlays → System targets.
+- **Body info card.** A card describing the body you have targeted or are close to: class, flags (undiscovered, terraformable, mapped), estimated scan value, temperature, gravity, pressure, atmosphere, volcanism, life and geology signals, distance and main materials. Off until ticked in Settings → Overlays → Body info.
+- Both cards have a Test Card, their own entry on Overlay Placement (new default spots in the lower middle of the right half of the screen), and are rebuilt from the newest journal when EDMC starts in the middle of a system.
+
+### Changed
+- The overlay card drawing is shared (`overlay_card.py`) by the Route, System targets and Body info cards, and the scan-value formula is its own module (`scan_value.py`). The Route card looks the same.
+
 ## 1.15.0 - 2026-10-16
 
 ### Added

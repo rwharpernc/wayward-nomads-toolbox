@@ -8,7 +8,7 @@ click a section's title (▸ / ▾) to open it. They fold again each time EDMC s
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
 [Organic Scanning](#organic-scanning) · [Codex Completionist](#codex-completionist) ·
-[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Expedition](#expedition) · [Compass](#compass) ·
+[GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Expedition](#expedition) · [System targets and Body info](#system-targets-and-body-info) · [Compass](#compass) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
 Anything that draws on your game screen needs an overlay. See [Getting started](getting-started.md#what-you-need)
@@ -421,6 +421,38 @@ reached. It is on by default once the Route overlay is on, and there is a tick t
 
 The expeditions are kept on your computer for each commander, and nothing is sent anywhere except the EDSM lookup above. It does not replace
 **Waypoints** (Boxel Survey), which stays a single quick list; **From plotted route** and the CSV import work the same way in both.
+
+## System targets and Body info
+
+Two cards on your game screen for working a system. Both are **off by default**, have no panel button, and are set up under **Settings → Overlays**.
+They need [EDMCModernOverlay](../OVERLAY_SETUP.md); nothing is sent anywhere, they read your journal.
+
+**System targets** (Settings → Overlays → System targets) is a list of what is left to do in the system you are in:
+
+- After you have scanned bodies, it lists the planets and moons **worth mapping that you have not mapped**: those whose estimated scan value is at or above a
+  threshold you choose (100,000 credits to start), most valuable first. Each row has the body's short name (`A 1`), a tag for the classes that matter
+  (`ELW`, `WW`, `AW`, `HMC`, `MR`, and `TF` for any other terraformable world) and the value (`1.2M`, with `first` when nobody had discovered it).
+- Below that it lists the bodies **with life that you have not finished analysing**, as `1/3 life`.
+- A body leaves the list when you **map it** or **analyse its last organism**, and the whole card goes when you jump to another system. At the top, once you
+  have honked, it shows how far the system scan has got (`Scan 50%   4 of 8 bodies`), and says so when nothing at or above your threshold is left (`Nothing over 100k left to map or sample`).
+- **Rows shown** (3 to 16, 6 to start) caps the list, and the rest are counted (`+ 3 more`). You can switch the life list off.
+
+**Body info** (Settings → Overlays → Body info) describes one body: its name and class; flags (`Undiscovered`, `Terraformable`, and `Unmapped`, `Mapped before`
+or `Mapped by you`); its main materials; and then the estimated scan value, temperature, gravity (in the warning color at 2.0 g and over), pressure, atmosphere,
+volcanism, life signals (how many, how many are done, and the genera once you have mapped it), geology signals and distance. It shows for **the body you have
+targeted** in the galaxy or system map or the nav panel, and for **the body you are close to**; each can be switched off.
+
+**What they cannot tell you:**
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| A body to be listed as soon as you honk | The honk gives only a count. A body's class and mass come with its **scan** (the system scan, or a detailed scan), so a body appears when you have scanned it. | Scan the bodies, and they appear. |
+| What mapping pays | The value shown is the estimated **scan** value (the same estimate the [Exploration Value](#exploration-value) readout uses). What mapping adds is not estimated. | Use the threshold as a guide to which bodies are worth a probe run. |
+| The kinds of life before you map | The system scan gives the **number** of biological signals; the genera are given when you map the body. | Map it to see the genera. |
+| The cards to remember a system after a restart | They are rebuilt from your newest journal when EDMC starts in the middle of a system, back to your last arrival. | Nothing: it happens by itself. |
+
+Where each card sits is set on **Overlay Placement** ("System targets" and "Body info"). They start in the lower middle of the right half of the screen,
+one above the other; move them to suit your HUD.
 
 ## Compass
 

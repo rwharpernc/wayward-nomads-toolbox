@@ -57,7 +57,7 @@ SOFTWARE.
 
 ## Exploration Value: scan-value constants (GPL-3.0)
 
-The per-planet-class base values and the mass exponent in `plugin/exploration_value.py` are the
+The per-planet-class base values and the mass exponent in `plugin/scan_value.py` (used by `plugin/exploration_value.py`) are the
 community's figures for Frontier's exploration payout, as published in
 [Faber38/CMDRHelper](https://github.com/Faber38/CMDRHelper), licensed GPL-3.0, the same license as WNTB.
 

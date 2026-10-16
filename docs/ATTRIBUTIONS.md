@@ -28,6 +28,7 @@ being listed doesn't mean a tool was the first or the only one.
   No code was taken from any of them.
 - **Exploration value, system age and rarity readouts:** EDJP, EDDiscovery, Elite Observatory and
   many other exploration tools.
+- **What is left to scan, map and sample in a system, and a card for the body you target:** [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s system status (scan progress, bodies still worth a DSS, bodies with life remaining) and body info plotters shaped the idea and which facts to show. WNTB's System targets and Body info cards are its own code, built on the journal events, the scan-value estimate described below, and the system model in `system_survey.py`; no code was taken from SrvSurvey (GPL-3.0, the same license as WNTB).
 - **Exobiology species prediction and sampling help:**
   [EDMC-BioScan](https://github.com/Silarn/EDMC-BioScan),
   [Artemis Scanner Tracker](https://github.com/Balvald/ArtemisScannerTracker), SrvSurvey and the
