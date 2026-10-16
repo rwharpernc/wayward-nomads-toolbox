@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 import threading
+import time
 from ctypes import wintypes
 from typing import Callable, Optional, Sequence, Tuple
 
@@ -31,6 +32,9 @@ WS_POPUP = 0x80000000
 WS_EX_TOPMOST, WS_EX_TRANSPARENT, WS_EX_TOOLWINDOW, WS_EX_LAYERED, WS_EX_NOACTIVATE = 0x8, 0x20, 0x80, 0x80000, 0x8000000
 SW_HIDE, SW_SHOWNOACTIVATE = 0, 4
 ULW_ALPHA, AC_SRC_OVER, AC_SRC_ALPHA = 2, 0, 1
+HWND_TOPMOST = -1
+SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE = 0x1, 0x2, 0x10
+RAISE_EVERY_S = 0.5        # how often the window puts itself back above the game while it is showing
 PM_REMOVE = 1
 PER_MONITOR_AWARE_V2 = -4
 
@@ -73,6 +77,7 @@ if supported():
     user32.GetDC.argtypes = [wintypes.HWND]
     user32.ReleaseDC.argtypes = [wintypes.HWND, wintypes.HDC]
     user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+    user32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT]
     user32.DestroyWindow.argtypes = [wintypes.HWND]
     user32.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
     user32.ClientToScreen.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
@@ -177,37 +182,56 @@ class OverlayWindow:
         canvas = _Canvas(mem_dc)
         fonts = overlay_raster.Fonts(self._font_path())
         elite = 0
-        shown, last = False, None
+        shown, last, raised = False, None, 0.0
+        failures = 0
         try:
             while not self._stop.is_set():
-                self._pump()
-                if not elite or not user32.IsWindow(elite):
-                    elite = user32.FindWindowW(ELITE_CLASS, None) or 0
-                geometry = game_geometry(elite)
-                self.geometry = geometry
-                foreground = user32.GetForegroundWindow()
-                items = self.scene.items()
-                in_front = foreground in (elite, hwnd) or self._keep_showing()          # a screenshot tool or another window in front is not the game
-                want = bool(geometry and items and not self._hidden and in_front)
-                if want:
-                    key = (geometry, self.scene.version)
-                    if key != last or not shown:
-                        x, y, width, height, ratio = geometry
-                        image = overlay_raster.render(items, width, height, ratio, fonts, self._groups())
-                        canvas.paint(hwnd, screen_dc, x, y, image)
-                        last = key
-                    if not shown:
-                        user32.ShowWindow(hwnd, SW_SHOWNOACTIVATE)
-                        shown = True
-                elif shown:
-                    user32.ShowWindow(hwnd, SW_HIDE)
+                try:
+                    shown, last, raised, elite = self._tick(hwnd, screen_dc, canvas, fonts, elite, shown, last, raised)
+                    failures = 0
+                except Exception:
+                    failures += 1                                  # one bad frame must not end the overlay: log it (the first few times) and carry on
+                    if failures <= 3:
+                        logger.exception("The built-in overlay could not draw a frame")
                     shown, last = False, None
+                    user32.ShowWindow(hwnd, SW_HIDE)
                 self._stop.wait(TICK_S)
         finally:
             user32.DestroyWindow(hwnd)
             canvas.close()
             gdi32.DeleteDC(mem_dc)
             user32.ReleaseDC(None, screen_dc)
+
+    def _tick(self, hwnd, screen_dc, canvas, fonts, elite, shown, last, raised):
+        """One look at the game and the scene: shows, hides, redraws and raises the window as needed. Returns the state for the next look."""
+        self._pump()
+        if not elite or not user32.IsWindow(elite):
+            elite = user32.FindWindowW(ELITE_CLASS, None) or 0
+        geometry = game_geometry(elite)
+        self.geometry = geometry
+        foreground = user32.GetForegroundWindow()
+        items = self.scene.items()
+        in_front = foreground in (elite, hwnd) or self._keep_showing()          # a screenshot tool or another window in front is not the game
+        want = bool(geometry and items and not self._hidden and in_front)
+        now = time.monotonic()
+        if want:
+            key = (geometry, self.scene.version)
+            if key != last or not shown:
+                x, y, width, height, ratio = geometry
+                image = overlay_raster.render(items, width, height, ratio, fonts, self._groups())
+                canvas.paint(hwnd, screen_dc, x, y, image)
+                last = key
+            if not shown:
+                user32.ShowWindow(hwnd, SW_SHOWNOACTIVATE)
+                shown, raised = True, 0.0
+            if now - raised >= RAISE_EVERY_S:
+                # The game, when it is brought back to the front, takes its place above other topmost windows too, which left the overlay showing but underneath it.
+                user32.SetWindowPos(hwnd, wintypes.HWND(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
+                raised = now
+        elif shown:
+            user32.ShowWindow(hwnd, SW_HIDE)
+            shown, last = False, None
+        return shown, last, raised, elite
 
     @staticmethod
     def _pump() -> None:
