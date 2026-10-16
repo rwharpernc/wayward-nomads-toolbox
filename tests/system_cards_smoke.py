@@ -134,6 +134,9 @@ check(BI.pick_body(survey, {"Destination": {"Body": 2}, "BodyName": f"{SYSTEM} A
 check(BI.pick_body(survey, {"BodyName": f"{SYSTEM} A 3"}, BI.BodyInfoConfig(enabled=True, near=False)) is None, "the nearby body can be turned off")
 check(BI.pick_body(survey, {"Destination": {"Body": 2}}, BI.BodyInfoConfig(enabled=True, targeted=False)) is None, "and so can the target")
 check(BI.pick_body(survey, {}, cfg) is None, "no target and no body nearby: no card")
+unscanned_target = BI.pick_body(survey, {"Destination": {"System": 99, "Body": 77, "Name": f"{SYSTEM} Z 9"}}, cfg)
+check(unscanned_target is not None and not unscanned_target.scanned and unscanned_target.short == "Z 9", "a targeted body that has not been scanned is still picked, as one to scan")
+check(BI.build_card(unscanned_target).header[0][0] == "Scan required", "and its card says to scan it")
 
 body = survey.bodies[1]
 info = BI.build_card(body)
@@ -147,6 +150,26 @@ check(dict((r[0], r) for r in BI.build_card(heavy).rows)["Gravity"][2] == "warn"
 unscanned = BI.build_card(SS.Body(10, "Mystery", "M", bio=2))
 check(unscanned.title[0] == "Mystery" and [h[0] for h in unscanned.header] == ["Scan required", "2 life signals"] and not unscanned.rows, f"an unscanned body: {unscanned.header}")
 check(not BI.build_card(None), "no body, no card")
+
+online = SS.SystemSurvey()
+online.handle_event({"event": "FSDJump", "StarSystem": SYSTEM, "SystemAddress": 99})
+online.handle_event({"event": "FSSDiscoveryScan", "Progress": 1.0, "BodyCount": 5})
+online.merge_known(SYSTEM, [{"bodyId": 3, "name": f"{SYSTEM} B 2", "type": "Planet", "subType": "Earth-like world", "earthMasses": 1.0,
+                             "distanceToArrival": 500.0, "terraformingState": "Not terraformable"}])
+known_card = TO.build_card(online, 100_000, 6, True)
+check("1 online" in known_card.badge, f"the card says how many bodies came from the lookup: {known_card.badge}")
+check(known_card.rows and "EDSM" in known_card.rows[1][0] and "ELW" in known_card.rows[1][0], f"a looked-up body is tagged and marked: {known_card.rows}")
+many = SS.SystemSurvey()
+many.handle_event({"event": "FSDJump", "StarSystem": SYSTEM, "SystemAddress": 99})
+many.handle_event({"event": "Scan", "BodyName": f"{SYSTEM} A 1", "BodyID": 1, "StarSystem": SYSTEM, "PlanetClass": "Rocky body", "MassEM": 0.1})
+many.handle_event({"event": "SAASignalsFound", "BodyID": 1, "Signals": [{"Type": SS.BIO_TYPE, "Count": 5}],
+                   "Genuses": [{"Genus_Localised": g} for g in ("Bacterium", "Frutexa", "Tussock", "Fungoida", "Osseus")]})
+for look in (S.LEGACY, S.DEFAULT):
+    for label, layout, card in (("targets", TO.LAYOUT, TO.build_card(many, 0, 8, True)), ("body info", BI.LAYOUT, BI.build_card(many.bodies[1]))):
+        shown = " ".join(t[0] for t in layout.plan(card, look)[1])
+        check(all(g in shown for g in ("Bacterium", "Frutexa", "Tussock", "Fungoida", "Osseus")) and "…" not in shown, f"{label}: every genus is shown in full: {shown}")
+known_info = BI.build_card(online.bodies[3])
+check(known_info.header[0][0] == "Earthlike body" and any("EDSM" in h[0] for h in known_info.header), f"Body info says it came from EDSM: {known_info.header}")
 
 # --- drawing: every line starts at the same left edge, one padding ---------------------------------------------------------------------
 class Recorder:

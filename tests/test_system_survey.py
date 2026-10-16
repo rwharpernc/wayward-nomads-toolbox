@@ -194,6 +194,43 @@ class Guardrails(Feed):
         self.assertFalse(self.survey.visible)
 
 
+class KnownBodies(Feed):
+    """Planets other commanders have scanned (EDSM) listed before the commander's own scans."""
+
+    ROWS = [
+        {"bodyId": 5, "name": f"{SYSTEM} 2", "type": "Planet", "subType": "High metal content world", "distanceToArrival": 1200.5, "isLandable": False,
+         "earthMasses": 2.0, "gravity": 1.4, "surfaceTemperature": 600, "terraformingState": "Candidate for terraforming", "atmosphereType": "No atmosphere"},
+        {"bodyId": 6, "name": f"{SYSTEM} 3", "type": "Planet", "subType": "Earth-like world", "distanceToArrival": 90.0, "earthMasses": 1.0},
+        {"bodyId": 7, "name": f"{SYSTEM} A", "type": "Star", "subType": "K (Yellow-Orange) Star"},
+        {"bodyId": 8, "name": f"{SYSTEM} 4", "type": "Planet", "subType": "Something new"},
+        {"name": f"{SYSTEM} 5", "type": "Planet", "subType": "Icy body"},
+    ]
+
+    def test_known_planets_are_listed_with_a_value_and_a_tag(self):
+        added = self.survey.merge_known(SYSTEM, self.ROWS)
+        self.assertEqual(added, 2)                      # a star, an unknown type and a body with no id are skipped
+        listed = self.survey.to_map(0)
+        self.assertEqual([b.short for b in listed], ["2", "3"])        # the terraformable high metal world is worth more
+        self.assertEqual((listed[0].tag, listed[1].tag), ("HMC", "ELW"))
+        self.assertTrue(all(b.known and not b.scanned and b.scan_value() > 0 for b in listed))
+        self.assertEqual(self.survey.known_count(), 2)
+
+    def test_the_commanders_own_scan_wins_and_a_move_discards_the_lookup(self):
+        self.feed(scan("2", planet_class="Rocky body", mass=0.1))
+        body = next(b for b in self.survey.bodies.values() if b.scanned)
+        self.survey.merge_known(SYSTEM, [{"bodyId": body.body_id, "name": body.name, "type": "Planet", "subType": "Water world", "earthMasses": 3.0}])
+        self.assertEqual(body.planet_class, "Rocky body")
+        self.assertFalse(body.known)
+        self.assertEqual(self.survey.merge_known("Another System", self.ROWS), 0)
+        self.assertEqual(self.survey.merge_known(SYSTEM, "not a list"), 0)
+
+    def test_a_scan_replaces_what_the_lookup_said(self):
+        self.survey.merge_known(SYSTEM, self.ROWS)
+        self.feed({**scan("3", planet_class="Water world", mass=0.5), "BodyID": 6})
+        self.assertEqual(self.survey.bodies[6].planet_class, "Water world")
+        self.assertTrue(self.survey.bodies[6].scanned)
+
+
 class Text(unittest.TestCase):
     def test_credits_text(self):
         self.assertEqual((S.credits_text(999), S.credits_text(56_000), S.credits_text(1_234_567)), ("999", "56k", "1.2M"))

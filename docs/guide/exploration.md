@@ -436,6 +436,7 @@ They need [EDMCModernOverlay](../OVERLAY_SETUP.md); nothing is sent anywhere, th
 - A body leaves the list when you **map it** or **analyse its last organism**. The card's heading is the system name with a progress bar for the system scan
   and a count (`4 of 8 scanned`) once you have honked, and a message says so when nothing at or above your threshold is left (`Nothing over 100k left to map or sample`;
   a long message continues on the next line). Each row shows the body, a muted tag and distance (`HMC  82k ls`) or the genera once known, and the value on the right.
+- **Also look up bodies other commanders have scanned** (off until you tick it): right after you honk, WNTB asks [EDSM](https://www.edsm.net/) once for the system's planets (it sends only the system name; see [What goes on the internet](internet-and-privacy.md)) and lists the worthwhile ones with their estimated value, marked `EDSM`, before you have scanned anything. Your own scan then replaces what EDSM said, and the Body info card shows them as `From EDSM, not scanned by you`. EDSM does not say who has mapped a body, so a looked-up body stays on the list until you map it.
 - **Rows shown** (3 to 16, 6 to start) caps the list, and the rest are counted (`+ 3 more`). You can switch the life list off.
 
 **Body info** (Settings → Overlays → Body info) describes one body: its name and class; flags (`Undiscovered`, `Terraformable`, and `Unmapped`, `Mapped before`
@@ -447,7 +448,8 @@ targeted** in the galaxy or system map or the nav panel, and for **the body you 
 
 | What you might expect | What the game gives | What to do |
 |---|---|---|
-| A body to be listed as soon as you honk | The honk gives only a count. A body's class and mass come with its **scan** (the system scan, or a detailed scan), so a body appears when you have scanned it. | Scan the bodies, and they appear. |
+| A body to be listed as soon as you honk | The honk gives only a count. A body's class and mass come with its **scan** (the system scan, or a detailed scan), so a body appears when you have scanned it. | Scan the bodies, and they appear. Or tick **Also look up bodies other commanders have scanned** (below). |
+| Bodies in a system nobody has scanned | The EDSM lookup only knows what other commanders have uploaded. A system nobody has surveyed returns nothing. | Scan the bodies. |
 | What mapping pays | The value shown is the estimated **scan** value (the same estimate the [Exploration Value](#exploration-value) readout uses). What mapping adds is not estimated. | Use the threshold as a guide to which bodies are worth a probe run. |
 | The kinds of life before you map | The system scan gives the **number** of biological signals; the genera are given when you map the body. | Map it to see the genera. |
 | The cards to remember a system after a restart | They are rebuilt from your newest journal when EDMC starts in the middle of a system, back to your last arrival. | Nothing: it happens by itself. |

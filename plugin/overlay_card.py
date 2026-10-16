@@ -24,7 +24,8 @@ COLUMN_GAP = 14                   # pixels between the two columns
 class Card:
     """What one card says. `title` (with an optional right-hand `badge` and a 0-1 `progress` bar under it) is the heading; `header` lines come
     next, then `rows`, then the `footer`. A row whose right-hand text is empty and whose role is "title" is a section label. A row's left text may
-    hold a tab: what follows it is drawn muted in a second column (a class tag, a distance)."""
+    hold a tab (what follows it is drawn muted in a second column: a class tag, a distance) and newlines (each later line is a detail line drawn
+    under the row across the card's width and wrapped, so a long list is shown whole). In "column" align a long right-hand text wraps within its column."""
     header: Tuple[Line, ...] = ()
     rows: Tuple[Row, ...] = ()
     footer: Optional[Line] = None
@@ -163,14 +164,25 @@ class CardLayout:
                 first = False
                 continue
             first = False
-            name, _tab, extra = left.partition("\t")
+            head, *details = left.split("\n")
+            name, _tab, extra = head.partition("\t")
             texts.append((name, "text", x, y, size))
             if extra:
                 texts.append((extra, "muted", x + tab_px, y, size))
-            if right:
-                right_x = x + inner - look.measured_width(right) if card.align == "right" else x + self.name_width(look) + COLUMN_GAP
-                texts.append((right, role, right_x, y, size))
-            y += step
+            if right and card.align == "right":
+                texts.append((right, role, x + inner - look.measured_width(right), y, size))
+                y += step
+            elif right:
+                column_x = x + self.name_width(look) + COLUMN_GAP
+                for line in self.wrap(right, look, inner - (column_x - x)):
+                    texts.append((line, role, column_x, y, size))
+                    y += step
+            else:
+                y += step
+            for detail in details:
+                for line in self.wrap(detail, look, inner):
+                    texts.append((line, role if role != "text" else "muted", x, y, size))
+                    y += step
         if card.footer:
             text, role = card.footer
             divider(y)

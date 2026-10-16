@@ -83,6 +83,9 @@ def pick_body(survey: SystemSurvey, status: Mapping[str, Any], cfg: Optional[Bod
         found = survey.find(destination.get("Body") if isinstance(destination.get("Body"), int) else None, str(destination.get("Name") or "")) if in_system else None
         if found is not None:
             return found
+        if in_system and destination.get("Name"):       # targeted but not scanned yet: the journal has nothing on it, so the card says to scan it
+            name = str(destination["Name"])
+            return Body(destination["Body"] if isinstance(destination.get("Body"), int) else -1, name, system_survey.short_name(name, survey.name))
     if cfg.near and status.get("BodyName"):
         return survey.find(None, str(status["BodyName"]))
     return None
@@ -99,7 +102,7 @@ def build_card(body: Optional[Body]) -> Card:
     """The card for one body, or an empty one."""
     if body is None:
         return Card()
-    if not body.scanned:
+    if not body.scanned and not body.known:
         header = [("Scan required", "muted")]
         if body.bio:
             header.append((f"{body.bio} life signal{'s' if body.bio != 1 else ''}", "info"))
@@ -110,7 +113,9 @@ def build_card(body: Optional[Body]) -> Card:
         flags.append("Undiscovered")
     if body.terraformable:
         flags.append("Terraformable")
-    if body.kind == "planet":
+    if body.known and not body.scanned:
+        flags.append("From EDSM, not scanned by you")
+    elif body.kind == "planet":
         flags.append("Mapped by you" if body.mapped else "Mapped before" if body.was_mapped else "Unmapped")
     if flags:
         header.append((", ".join(flags), "info"))
@@ -129,13 +134,13 @@ def build_card(body: Optional[Body]) -> Card:
         if body.pressure_atm:
             rows.append(("Pressure", f"{body.pressure_atm:.3f} atm", "text"))
         if body.landable or body.atmosphere:
-            rows.append(("Atmosphere", cut(_clean(body.atmosphere, " atmosphere") or "None", TAG_CHARS), "text"))
-            rows.append(("Volcanism", cut(_clean(body.volcanism, " volcanism") or "None", TAG_CHARS), "text"))
+            rows.append(("Atmosphere", _clean(body.atmosphere, " atmosphere") or "None", "text"))
+            rows.append(("Volcanism", _clean(body.volcanism, " volcanism") or "None", "text"))
     if body.bio:
         done = len(set(body.analysed))
         rows.append(("Life", f"{body.bio} signal{'s' if body.bio != 1 else ''}, {done} done", "info"))
         if body.genuses:
-            rows.append(("Genera", cut(", ".join(body.genuses), TAG_CHARS), "info"))
+            rows.append(("Genera", ", ".join(body.genuses), "info"))
     if body.geo:
         rows.append(("Geology", f"{body.geo} signal{'s' if body.geo != 1 else ''}", "info"))
     badge = f"{body.distance_ls:,.0f} ls" if body.distance_ls is not None else ""

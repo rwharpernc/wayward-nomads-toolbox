@@ -37,6 +37,17 @@ PASCALS_PER_ATMOSPHERE = 101325.0
 BIO_TYPE, GEO_TYPE = "$SAA_SignalType_Biological;", "$SAA_SignalType_Geological;"
 RESTORE_EVENT = "WNTBRestoreCommander"      # restore.RESTORE_EVENT, repeated here so this module stays free of the restore module's imports
 
+# EDSM's names for planet types (lower case, hyphens as spaces) as the journal's PlanetClass spells them, which the value formula is keyed on.
+EDSM_CLASSES = {
+    "earth like world": "Earthlike body", "water world": "Water world", "ammonia world": "Ammonia world",
+    "high metal content world": "High metal content body", "metal rich body": "Metal rich body", "rocky body": "Rocky body", "icy body": "Icy body",
+    "rocky ice world": "Rocky ice body", "class i gas giant": "Sudarsky class I gas giant", "class ii gas giant": "Sudarsky class II gas giant",
+    "class iii gas giant": "Sudarsky class III gas giant", "class iv gas giant": "Sudarsky class IV gas giant",
+    "class v gas giant": "Sudarsky class V gas giant", "gas giant with ammonia based life": "Gas giant with ammonia based life",
+    "gas giant with water based life": "Gas giant with water based life", "helium rich gas giant": "Helium rich gas giant",
+    "helium gas giant": "Helium gas giant", "water giant": "Water giant",
+}
+
 # Short tags for the planet classes that matter most when choosing what to map.
 CLASS_TAGS = {"Earthlike body": "ELW", "Water world": "WW", "Ammonia world": "AW", "High metal content body": "HMC", "Metal rich body": "MR"}
 
@@ -83,6 +94,7 @@ class Body:
     atmosphere: str = ""
     materials: List[Tuple[str, float]] = field(default_factory=list)
     scanned: bool = False
+    known: bool = False                 # described by EDSM (other commanders' scans), not scanned by this commander yet
     mapped: bool = False                # the commander has mapped it (SAAScanComplete)
     bio: int = 0
     geo: int = 0
@@ -92,8 +104,8 @@ class Body:
 
     def scan_value(self) -> int:
         """The estimated credits for scanning it, from `scan_value`'s formula (the same estimate the Exploration Value readout shows). 0 for a
-        body not yet scanned."""
-        if not self.scanned:
+        body that is neither scanned nor known online."""
+        if not (self.scanned or self.known):
             return 0
         from . import scan_value as value
         if self.kind == "star":
@@ -262,9 +274,43 @@ class SystemSurvey:
     def scanned_count(self) -> int:
         return sum(1 for b in self.bodies.values() if b.scanned)
 
+    def known_count(self) -> int:
+        return sum(1 for b in self.bodies.values() if b.known and not b.scanned)
+
+    def merge_known(self, system: str, rows: Any) -> int:
+        """Adds the planets EDSM lists for `system` (what other commanders have scanned) as bodies this commander has not scanned: enough to estimate
+        their value and tag them before the first scan. A body the commander has scanned keeps what the journal said. Ignored when the commander has
+        moved on. Returns how many bodies it added or updated."""
+        if not isinstance(rows, list) or system.casefold() != self.name.casefold():
+            return 0
+        added = 0
+        for row in rows:
+            if not isinstance(row, Mapping) or row.get("type") != "Planet" or not isinstance(row.get("bodyId"), int):
+                continue
+            existing = self.bodies.get(row["bodyId"])
+            if existing is not None and existing.scanned:
+                continue
+            planet_class = EDSM_CLASSES.get(str(row.get("subType") or "").casefold().replace("-", " "), "")
+            if not planet_class:
+                continue
+            name = str(row.get("name") or "")
+            body = self._body(row["bodyId"], name)
+            body.kind, body.planet_class, body.known = "planet", planet_class, True
+            body.terraformable = str(row.get("terraformingState") or "").casefold().startswith("candidate")
+            body.landable = bool(row.get("isLandable"))
+            body.was_discovered, body.was_mapped = True, None
+            body.mass_em = _number(row.get("earthMasses"))
+            body.gravity_g = _number(row.get("gravity"))
+            body.temperature_k = _number(row.get("surfaceTemperature"))
+            body.distance_ls = _number(row.get("distanceToArrival"))
+            body.atmosphere = str(row.get("atmosphereType") or "")
+            body.volcanism = str(row.get("volcanismType") or "")
+            added += 1
+        return added
+
     def to_map(self, threshold: int) -> List[Body]:
         """Scanned planets and moons worth at least `threshold` credits that the commander has not mapped, most valuable first."""
-        found = [b for b in self.bodies.values() if b.kind == "planet" and b.scanned and not b.mapped and b.scan_value() >= threshold]
+        found = [b for b in self.bodies.values() if b.kind == "planet" and (b.scanned or b.known) and not b.mapped and b.scan_value() >= threshold]
         return sorted(found, key=lambda b: -b.scan_value())
 
     def with_life(self) -> List[Body]:

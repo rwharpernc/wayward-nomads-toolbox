@@ -39,6 +39,7 @@ _CFG_ENABLED = "wntb_targets_enabled"
 _CFG_THRESHOLD = "wntb_targets_threshold"
 _CFG_ROWS = "wntb_targets_rows"
 _CFG_LIFE = "wntb_targets_life"
+_CFG_ONLINE = "wntb_targets_online"
 
 DEFAULT_THRESHOLD = 100_000
 THRESHOLD_RANGE = (0, 50_000_000)
@@ -61,6 +62,7 @@ class TargetsConfig:
     threshold: int = DEFAULT_THRESHOLD
     rows: int = DEFAULT_ROWS
     life: bool = True
+    online: bool = False          # also look up what other commanders have scanned in the system (EDSM)
 
 
 def _clamp(value: Any, low: int, high: int, default: int) -> int:
@@ -73,7 +75,8 @@ def _clamp(value: Any, low: int, high: int, default: int) -> int:
 def load_config() -> TargetsConfig:
     return TargetsConfig(enabled=config.get_bool(_CFG_ENABLED, default=False),
                          threshold=_clamp(config.get_str(_CFG_THRESHOLD), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
-                         rows=_clamp(config.get_str(_CFG_ROWS), *ROWS_RANGE, DEFAULT_ROWS), life=config.get_bool(_CFG_LIFE, default=True))
+                         rows=_clamp(config.get_str(_CFG_ROWS), *ROWS_RANGE, DEFAULT_ROWS), life=config.get_bool(_CFG_LIFE, default=True),
+                         online=config.get_bool(_CFG_ONLINE, default=False))
 
 
 def save_config(cfg: TargetsConfig) -> None:
@@ -81,6 +84,7 @@ def save_config(cfg: TargetsConfig) -> None:
     config.set(_CFG_THRESHOLD, str(cfg.threshold))
     config.set(_CFG_ROWS, str(cfg.rows))
     config.set(_CFG_LIFE, cfg.life)
+    config.set(_CFG_ONLINE, cfg.online)
 
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
@@ -94,15 +98,15 @@ def _distance(body: Body) -> str:
 
 def _map_row(body: Body) -> Row:
     first = body.was_discovered is False
-    left = f"{cut(body.short, 7)}\t{(body.tag + '  ' + _distance(body)).strip()}"
+    left = f"{cut(body.short, 7)}\t{(body.tag + '  ' + _distance(body) + ('  EDSM' if body.known and not body.scanned else '')).strip()}"
     right = credits_text(body.scan_value()) + (" first" if first else "")
     return cut(left, NAME_CHARS), cut(right, TAG_CHARS), "title" if first else "text"
 
 
 def _life_row(body: Body) -> Row:
     done = len(set(body.analysed))
-    genera = ", ".join(body.genuses[:2]) + ("…" if len(body.genuses) > 2 else "")
-    return cut(f"{cut(body.short, 7)}\t{genera}".rstrip("\t"), NAME_CHARS), f"{done}/{body.bio} life", "info"
+    genera = ", ".join(body.genuses)               # every genus, on lines of its own under the row
+    return cut(body.short, NAME_CHARS) + (f"\n{genera}" if genera else ""), f"{done}/{body.bio} life", "info"
 
 
 def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True) -> Card:
@@ -114,6 +118,8 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
     lives = survey.with_life() if life else []
     total = survey.body_count
     badge = f"{survey.scanned_count()} of {total} scanned" if total else f"{survey.scanned_count()} scanned"
+    if survey.known_count():
+        badge += f" · {survey.known_count()} online"
     heading, progress = (survey.name, "title"), (survey.progress if survey.honked else None)
     if not maps and not lives:
         if not survey.honked:
@@ -204,8 +210,35 @@ def stop() -> None:
 
 def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str], state: Dict[str, Any]) -> None:
     """Runs after `system_survey.handle_event` has updated the shared survey."""
-    if entry.get("event") in system_survey.EVENTS or entry.get("event") in ("StartUp", restore.RESTORE_EVENT):
+    event = entry.get("event")
+    if event in system_survey.EVENTS or event in ("StartUp", restore.RESTORE_EVENT):
         live.refresh()
+    if event in ("FSSDiscoveryScan", "FSSAllBodiesFound", "StartUp", restore.RESTORE_EVENT):
+        _look_up_known()
+
+
+_looked_up: Dict[str, bool] = {}
+
+
+def _look_up_known() -> None:
+    """When it is switched on, asks EDSM once per system (after the honk) for the planets other commanders have scanned, and adds them to the survey."""
+    survey = system_survey.survey
+    if not load_config().online or not survey.visible or not survey.honked or _looked_up.get("system") == survey.name:
+        return
+    _looked_up["system"] = survey.name
+    name = survey.name
+
+    def worker() -> None:
+        try:
+            from . import edsm_client
+            rows = edsm_client.system_bodies(name)
+        except Exception:
+            logger.debug("EDSM lookup for the system targets failed", exc_info=True)
+            return
+        if rows and system_survey.survey.merge_known(name, rows):
+            live.refresh()
+
+    threading.Thread(target=worker, name="WNTB-targets-edsm", daemon=True).start()
 
 
 # --- Settings tab ----------------------------------------------------------------------------------------------------------
@@ -226,7 +259,7 @@ def build_settings(notebook: nb.Notebook) -> None:
         text=("A card on your in-game overlay, through EDMCModernOverlay (a separate, optional helper WNTB does not install or launch; its connection "
               "settings are on the Overlay Connection tab). After you scan bodies in a system it lists the ones worth mapping that you have not mapped yet, "
               "and the ones with life that you have not finished analysing, until you do. It goes when you leave the system. The value is the estimated "
-              "scan value (what mapping pays on top of it is not estimated). Everything comes from your journal; nothing is sent anywhere."),
+              "scan value (what mapping pays on top of it is not estimated). Everything comes from your journal; nothing is sent anywhere unless you tick the EDSM lookup further down."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     HyperlinkLabel(
@@ -236,6 +269,7 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     _vars["enabled"] = tk.BooleanVar(value=cfg.enabled)
     _vars["life"] = tk.BooleanVar(value=cfg.life)
+    _vars["online"] = tk.BooleanVar(value=cfg.online)
     _vars["threshold"] = tk.StringVar(value=f"{cfg.threshold}")
     _vars["rows"] = tk.StringVar(value=str(cfg.rows))
     nb.Checkbutton(frame, text="Enable the System targets card", variable=_vars["enabled"]).grid(row=2, column=0, sticky=tk.W, padx=10, pady=2)
@@ -255,26 +289,30 @@ def build_settings(notebook: nb.Notebook) -> None:
     nb.Checkbutton(frame, text="Also list bodies with life that I have not finished analysing", variable=_vars["life"]).grid(
         row=5, column=0, sticky=tk.W, padx=(30, 10), pady=2)
 
+    nb.Checkbutton(frame, text="Also look up bodies other commanders have scanned (EDSM, once per system)",
+                   variable=_vars["online"]).grid(row=6, column=0, sticky=tk.W, padx=(30, 10), pady=2)
+
     nb.Label(
         frame,
         text=("What WNTB cannot know: a body appears only after you have scanned it (the system scan or a detailed scan), because the journal gives its "
-              "class and mass then. The list is rebuilt from your newest journal when EDMC starts in the middle of a system. Life counts come from the "
+              "class and mass then, unless you tick the EDSM lookup above, which asks EDSM once per system after the honk (it sends only the system name) and adds the planets other commanders have already scanned. The list is rebuilt from your newest journal when EDMC starts in the middle of a system. Life counts come from the "
               "signal counts the scans give; the genera are known only after you map the body."),
         wraplength=440, justify=tk.LEFT,
-    ).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+    ).grid(row=7, column=0, sticky=tk.W, padx=10, pady=(6, 4))
 
     action_row = tk.Frame(frame)
-    action_row.grid(row=7, column=0, sticky=tk.W, padx=10, pady=(6, 2))
+    action_row.grid(row=8, column=0, sticky=tk.W, padx=10, pady=(6, 2))
     tk.Button(action_row, text="Test Card", command=_test_card).pack(side=tk.LEFT)
     _result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
     _result_label.pack(side=tk.LEFT, padx=(10, 0))
     nb.Label(frame, text="(Test Card works even while disabled above, and reports whether the overlay was actually reachable.)",
-             wraplength=440, justify=tk.LEFT).grid(row=8, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+             wraplength=440, justify=tk.LEFT).grid(row=9, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _typed() -> TargetsConfig:
     return TargetsConfig(enabled=bool(_vars["enabled"].get()), threshold=_clamp(_vars["threshold"].get(), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
-                         rows=_clamp(_vars["rows"].get(), *ROWS_RANGE, DEFAULT_ROWS), life=bool(_vars["life"].get()))
+                         rows=_clamp(_vars["rows"].get(), *ROWS_RANGE, DEFAULT_ROWS), life=bool(_vars["life"].get()),
+                         online=bool(_vars["online"].get()))
 
 
 def _test_card() -> None:
