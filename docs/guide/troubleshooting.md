@@ -159,7 +159,7 @@ screen edge**. The details are in [Setting up the overlay](../OVERLAY_SETUP.md).
 The Exobiology cards (Bio status, Biology, Bio radar) show the body the game says you are at, which it names in `Status.json` only while you are near it, so they
 are empty in supercruise and clear when you leave a planet (what you sampled is kept and returns with the body). They also need the body to be **mapped**
 (the genera come with the mapping scan); until then Bio status shows the signal count. If a card is empty on a mapped planet you are standing on, press **Test Cards**
-(Settings → Overlays → Exobiology) to check the overlay itself, and see [Exobiology](exobiology.md#what-the-game-doesnt-tell-us-and-how-to-work-around-it).
+(Settings → Overlays → Exobiology) to check the overlay itself, and see [Exobiology](exobiology.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it).
 
 ### Overlay text wraps, or a card is too small or too big
 
