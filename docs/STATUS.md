@@ -1,11 +1,12 @@
 # Where things stand
 
 Read this first when picking the project up on a machine that has not seen the recent work (for example the Linux test machine). It is
-kept in Git because Git is the only thing shared between the Windows and Linux machines. Last updated 2026-10-15, on Windows.
+kept in Git because Git is the only thing shared between the Windows and Linux machines. Last updated 2026-10-16, on Windows.
 
 ## Releases
 
-- **1.14.1** is the current release (2026-10-15, tag `v1.14.1`): the Credits Ledger's Lifetime tab fills in again, and Rebuild from journals reports what it did. Windows only.
+- **1.15.0** is the current release (2026-10-16, tag `v1.15.0`): the Route overlay (fuel, jump range, jumps left and the plotted route, with neutron stars and white dwarfs picked out), the running expedition and per-stop survey counts (bodies scanned, first discoveries, mapped) on that card and in the Expedition window, overlay text left-justified with one shared padding, no overlay text below the readable size (the Text size choice is Default or Larger), and new default overlay spots. Cards and route tracking were tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
+- **1.14.1** (2026-10-15, tag `v1.14.1`): the Credits Ledger's Lifetime tab fills in again, and Rebuild from journals reports what it did. Windows only.
 - **1.14.0** (2026-10-15, tag `v1.14.0`): history moved off the mode panels (the Credits Ledger window from the Credits line, the Colonization History window from HISTORY), the main panel no longer folds, fold sections start folded, Ship Builds folds, and bold page names in Mining and Trade. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md`.
 - **1.13.0** (2026-10-15, tag `v1.13.0`): progress for source-and-return missions from the hold (`36/60 held`) with bars and color by progress in the Missions window and on the overlay, Notable Bodies and Discovery cards that show full names, and the Missions overlay card putting a long place on its own line. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
 - **1.12.0** (2026-10-15, tag `v1.12.0`): the Missions window (replacing the All popup) with pinned missions, the Missions overlay card, Source commodities and Trade's Best picks, the Upgrade planner for Odyssey suits and weapons (with Read my gear), Megaship scans per Powerplay cycle, and the Ship planner's subtract-current-ship option. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6.
@@ -24,7 +25,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.14.1 release. For a fix to a released version, cut a short branch from
+There is one long-lived branch, `master`, and it matches the 1.15.0 release. For a fix to a released version, cut a short branch from
 `master` (for example `bugfix/1.13.1`), and merge it back.
 
 ## Testing

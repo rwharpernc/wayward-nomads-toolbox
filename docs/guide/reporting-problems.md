@@ -25,7 +25,7 @@ own free GitHub account. You can always write the report by hand on the
 5. Press **Report an issue**. Your browser opens GitHub's bug report form. If you are not signed in to GitHub, it asks you to sign in
    first.
 6. Fill in the form:
-   - **Title:** it starts with your version, like `[1.14.1] `. Finish it with a few words on what went wrong.
+   - **Title:** it starts with your version, like `[1.15.0] `. Finish it with a few words on what went wrong.
    - **What happened?** What you saw, and what you expected to see instead.
    - **Steps to reproduce:** what you did, in order, and which panel, window or Settings page it was in.
    - **Environment:** already filled in with your WNTB, EDMC and Python versions and your operating system. Leave it as it is.
@@ -39,7 +39,7 @@ own free GitHub account. You can always write the report by hand on the
 The form opens with the title started and the **Environment** box filled in, like this:
 
 ```
-- WNTB: 1.14.1
+- WNTB: 1.15.0
 - EDMC: 5.13.1
 - Python: 3.11.9
 - OS: Windows 11 (10.0.26200)

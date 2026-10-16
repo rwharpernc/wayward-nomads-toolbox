@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.15.0 - 2026-10-16
 
 ### Added
 - **The running expedition on the Route card, and survey tracking per stop.** With the Route overlay on, the card shows the running Expedition: its name and progress, what was found at the stop you are at, the next stop with its distance, that stop's note, and the stop just reached (a tick under Settings → Overlays → Route turns it off). Each stop now counts the bodies scanned, the first discoveries and the bodies mapped in its system (and how many bodies the system has, once you have honked), shown in the Expedition row, in a new **Found here** column of the window, and on the card.
@@ -13,6 +13,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Default overlay spots moved** to make room for the Route card: it takes the top left; Surface Compass moved to the top right (between Notable and Inventory), and Mining stats, Flight Alerts and Missions each moved down the right-hand column. A spot you chose yourself is not changed.
 - **Every overlay is left-justified.** The Discovery and Notable Bodies alerts centered their title and name inside the card; they now start at the card's left padding, like Landing, Interdiction, Missions and the rest.
 - **Every overlay card uses the same padding.** Text sits the same distance from the border on all sides in Colonization, Discovery, Notable Bodies, Interdiction, Landing, Missions, Flight Alerts, Mining, Surface Compass and Screenshots (`CARD_PAD_X`/`CARD_PAD_Y` in `overlay_style.py`). The Discovery and Interdiction cards no longer have a minimum width, so they fit their text instead of leaving a blank strip on the right.
+- **Documentation.** American spelling throughout; text that no longer matched the program was corrected; new notes on where Odyssey stat data was looked for, how it is checked in the game, and a checklist of data that is missing or still to be verified (`docs/data_verification/`). The project's method is stated in `docs/ATTRIBUTIONS.md`.
 - **Overlay text is never drawn at the overlay's "small" size**, which is hard to read over the game. The Text size choice is now Default or Larger; a saved "Smaller" is treated as Default.
 
 ## 1.14.1 - 2026-10-15
