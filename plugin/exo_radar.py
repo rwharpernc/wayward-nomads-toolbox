@@ -21,7 +21,11 @@ from .overlay_card import ACCENT_W
 from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look, with_alpha
 
 SIZE = 260                  # the plot's width and height in pixels (the Default radar size; the Radar size setting makes it larger)
-SIZE_CHOICES = (("Default", SIZE), ("Large", 340), ("Extra large", 420))     # the Radar size setting: a larger plot draws the circles larger, as wide as the genus needs
+SIZE_RANGE = (200, 800)     # what the Radar size setting may be: 260 is the default, 520 twice that
+FILL_RANGE = (0, 100)       # the circle fill, percent opaque while you are inside a circle
+FILL_DEFAULT = 70
+LINE_RANGE = (1, 6)         # the circle outline thickness in pixels
+LINE_DEFAULT = 2     # the Radar size setting: a larger plot draws the circles larger, as wide as the genus needs
 MIN_EXTENT_M = 150.0        # the plot never shows less than this radius
 MAX_EXTENT_M = 3000.0       # nor more than this
 MARGIN = 1.12               # room around the outermost circle
@@ -227,9 +231,10 @@ class RadarLayout:
     MAX_ARROWS = 10
     MAX_TARGETS = 5
 
-    def __init__(self, prefix: str, x: int, y: int, accent: str = "border", size_fn: Optional[Callable[[], int]] = None) -> None:
+    def __init__(self, prefix: str, x: int, y: int, accent: str = "border", size_fn: Optional[Callable[[], int]] = None,
+                 fill_fn: Optional[Callable[[], int]] = None, line_fn: Optional[Callable[[], int]] = None) -> None:
         self.prefix, self.x, self.y, self.accent = prefix, x, y, accent
-        self._size_fn = size_fn
+        self._size_fn, self._fill_fn, self._line_fn = size_fn, fill_fn, line_fn
         self.panel_id = f"{prefix}panel"
         self._used_circles = 0
         self._used_texts = 0
@@ -238,6 +243,17 @@ class RadarLayout:
     def size(self) -> int:
         """The plot's width and height in pixels now: the Radar size setting, or the default."""
         return int(self._size_fn()) if self._size_fn else SIZE
+
+    @property
+    def fill_alpha(self) -> int:
+        """The alpha byte of a circle's fill while you are inside it, from the Circle fill setting (percent opaque)."""
+        percent = int(self._fill_fn()) if self._fill_fn else FILL_DEFAULT
+        return round(255 * max(FILL_RANGE[0], min(FILL_RANGE[1], percent)) / 100)
+
+    @property
+    def line_width(self) -> int:
+        """The thickness of the circle outlines, pixels."""
+        return max(LINE_RANGE[0], min(LINE_RANGE[1], int(self._line_fn()))) if self._line_fn else LINE_DEFAULT
 
     def block_rect(self, look: Look = LEGACY, plan: Optional[Plan] = None) -> Tuple[int, int, int, int]:
         """(left, top, width, height): the plot with a row above it and a row under it for each thing listed (the rows grow with the plants tracked)."""
@@ -271,8 +287,8 @@ class RadarLayout:
         for index, circle in enumerate(plan.circles[:self.MAX_CIRCLES]):
             role = "danger" if circle.inside else "ok"
             color = look.color(role) if circle.active else look.color("muted")
-            fill = with_alpha(look.color(role), 0x55) if circle.inside else "#00000000"
-            client.send_circle(f"{self.prefix}c{index}", color, fill, cx + circle.x, cy - circle.y, circle.radius, ttl=ttl, thickness=2)
+            fill = with_alpha(look.color(role), self.fill_alpha) if circle.inside and self.fill_alpha else "#00000000"
+            client.send_circle(f"{self.prefix}c{index}", color, fill, cx + circle.x, cy - circle.y, circle.radius, ttl=ttl, thickness=self.line_width)
         for index in range(min(len(plan.circles), self.MAX_CIRCLES), self._used_circles):
             client.send_circle(f"{self.prefix}c{index}", "", "", cx, cy, 1, ttl=1)
         self._used_circles = min(len(plan.circles), self.MAX_CIRCLES)
@@ -293,7 +309,7 @@ class RadarLayout:
         # the plants being tracked: a ring with the genus's letter, and a line from you toward the nearest one (to the edge of the plot if it is further)
         for index, (label, tx, ty, color, ring) in enumerate(plan.targets[:self.MAX_TARGETS]):
             texts.append((label, f"series{color}", cx + tx - 4, cy - ty - 9))
-            client.send_circle(f"{self.prefix}t{index}", look.color(f"series{color}"), "#00000000", cx + tx, cy - ty, ring, ttl=ttl, thickness=2)
+            client.send_circle(f"{self.prefix}t{index}", look.color(f"series{color}"), "#00000000", cx + tx, cy - ty, ring, ttl=ttl, thickness=self.line_width)
         for index in range(min(len(plan.targets), self.MAX_TARGETS), self.MAX_TARGETS):
             client.send_circle(f"{self.prefix}t{index}", "", "", cx, cy, 1, ttl=1)
         reach = self.size / 2 - 14

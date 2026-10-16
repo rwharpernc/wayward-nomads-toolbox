@@ -54,15 +54,33 @@ LAYOUT_STATUS = WideCardLayout(GROUPS["status"][1], x=650, y=100, width_chars=ST
 LAYOUT_LIST = CardLayout(GROUPS["list"][1], x=650, y=100, max_header=1, max_rows=12, name_chars=NAME_CHARS, tag_chars=14, sample_tag="up to 12.3M CR", sample_lines=8)
 LAYOUT_POPUP = CardLayout(GROUPS["popup"][1], x=650, y=100, max_header=3, max_rows=4, name_chars=NAME_CHARS, tag_chars=14, sample_tag="5,000,000 cr", sample_lines=4)
 _CFG_RADAR_SIZE = "wntb_exo_radar_size"
+_CFG_RADAR_FILL = "wntb_exo_radar_fill"
+_CFG_RADAR_LINE = "wntb_exo_radar_line"
+
+
+def _setting(name: str, low: int, high: int, default: int) -> int:
+    try:
+        return max(low, min(high, int(str(config.get_str(name)).strip())))
+    except (TypeError, ValueError):
+        return default
 
 
 def radar_size() -> int:
-    """The Bio radar plot's size in pixels, from the Radar size setting (Default 260, Large 340, Extra large 420)."""
-    raw = config.get_str(_CFG_RADAR_SIZE)
-    return next((px for label, px in exo_radar.SIZE_CHOICES if str(px) == raw or label == raw), exo_radar.SIZE)
+    """The Bio radar plot's size in pixels (the Radar size setting; 260 is the default, 520 twice that)."""
+    return _setting(_CFG_RADAR_SIZE, *exo_radar.SIZE_RANGE, exo_radar.SIZE)
 
 
-LAYOUT_RADAR = exo_radar.RadarLayout(GROUPS["radar"][1], x=650, y=100, size_fn=radar_size)
+def radar_fill() -> int:
+    """How opaque (percent) a sample circle is filled while you are inside it."""
+    return _setting(_CFG_RADAR_FILL, *exo_radar.FILL_RANGE, exo_radar.FILL_DEFAULT)
+
+
+def radar_line() -> int:
+    """The thickness in pixels of the radar circles' outlines."""
+    return _setting(_CFG_RADAR_LINE, *exo_radar.LINE_RANGE, exo_radar.LINE_DEFAULT)
+
+
+LAYOUT_RADAR = exo_radar.RadarLayout(GROUPS["radar"][1], x=650, y=100, size_fn=radar_size, fill_fn=radar_fill, line_fn=radar_line)
 
 
 @dataclass
@@ -385,12 +403,16 @@ def build_settings(notebook: nb.Notebook) -> None:
         _vars[key] = tk.BooleanVar(value=getattr(cfg, key))
         nb.Checkbutton(frame, text=_LABELS[key], variable=_vars[key]).grid(row=row, column=0, sticky=tk.W, padx=10, pady=2)
 
-    size_row = tk.Frame(frame)
-    size_row.grid(row=6, column=0, sticky=tk.W, padx=(30, 10), pady=2)
-    nb.Label(size_row, text="Radar size:").pack(side=tk.LEFT)
-    _vars["radar_size"] = tk.StringVar(value=next(label for label, px in exo_radar.SIZE_CHOICES if px == radar_size()))
-    tk.OptionMenu(size_row, _vars["radar_size"], *[label for label, _px in exo_radar.SIZE_CHOICES]).pack(side=tk.LEFT, padx=4)
-    nb.Label(size_row, text="(larger draws the sample circles larger)").pack(side=tk.LEFT)
+    radar_box = tk.Frame(frame)
+    radar_box.grid(row=6, column=0, sticky=tk.W, padx=(30, 10), pady=2)
+    for row, (key, label, low, high, step, value, note) in enumerate((
+            ("radar_size", "Radar size:", *exo_radar.SIZE_RANGE, 20, radar_size(), "pixels across (260 is the default; 520 is twice that); a larger plot draws the sample circles larger"),
+            ("radar_fill", "Circle fill:", *exo_radar.FILL_RANGE, 5, radar_fill(), "% solid while you are inside a circle (0 leaves it an outline)"),
+            ("radar_line", "Circle outline:", *exo_radar.LINE_RANGE, 1, radar_line(), "pixels thick"))):
+        _vars[key] = tk.StringVar(value=str(value))
+        nb.Label(radar_box, text=label).grid(row=row, column=0, sticky=tk.W)
+        tk.Spinbox(radar_box, from_=low, to=high, increment=step, width=5, textvariable=_vars[key]).grid(row=row, column=1, padx=4, pady=1)
+        nb.Label(radar_box, text=note).grid(row=row, column=2, sticky=tk.W)
 
     nb.Label(
         frame,
@@ -437,5 +459,10 @@ def _test_cards() -> None:
 def save_settings() -> None:
     if _vars:
         save_config(ExoConfig(**{key: bool(_vars[key].get()) for key in _CFG}))
-        if "radar_size" in _vars:
-            config.set(_CFG_RADAR_SIZE, str(next((px for label, px in exo_radar.SIZE_CHOICES if label == _vars["radar_size"].get()), exo_radar.SIZE)))
+        for key, name, low, high, default in (("radar_size", _CFG_RADAR_SIZE, *exo_radar.SIZE_RANGE, exo_radar.SIZE), ("radar_fill", _CFG_RADAR_FILL, *exo_radar.FILL_RANGE, exo_radar.FILL_DEFAULT),
+                                              ("radar_line", _CFG_RADAR_LINE, *exo_radar.LINE_RANGE, exo_radar.LINE_DEFAULT)):
+            if key in _vars:
+                try:
+                    config.set(name, str(max(low, min(high, int(str(_vars[key].get()).strip())))))
+                except ValueError:
+                    config.set(name, str(default))

@@ -249,6 +249,15 @@ class Radar(unittest.TestCase):
         self.assertGreater(right, 10.0)
         self.assertAlmostEqual(ahead, 0.0, places=3)
 
+    def test_a_circle_you_are_inside_is_filled_mostly_solid(self):
+        plan = XR.build_plan(EX.sample_view())
+        inside = [c for c in plan.circles if c.inside]
+        self.assertTrue(inside)
+        rec = Recorder()
+        EX.LAYOUT_RADAR.render(plan, rec, S.DEFAULT)
+        fills = [fill for (_x, _y, _r, _c, fill) in rec.circles.values() if len(fill) == 9 and fill != "#00000000"]
+        self.assertTrue(fills and all(int(f[1:3], 16) >= 0xB0 for f in fills), fills)         # the alpha byte comes first
+
     def test_a_larger_radar_draws_the_circles_larger_and_takes_the_room(self):
         view = EX.sample_view()
         small, large = XR.build_plan(view, 260), XR.build_plan(view, 420)
@@ -260,7 +269,19 @@ class Radar(unittest.TestCase):
         rec = Recorder()
         wide.render(large, rec, S.DEFAULT)
         self.assertTrue(rec.circles)                                                       # and it draws at that size
-        self.assertEqual([c for c, _ in XR.SIZE_CHOICES], ["Default", "Large", "Extra large"])
+
+    def test_the_circle_fill_and_outline_follow_their_settings_and_are_held_to_their_range(self):
+        plan = XR.build_plan(EX.sample_view())
+        for fill, alpha in ((100, 0xFF), (50, 0x80), (70, 0xB2)):
+            rec = Recorder()
+            XR.RadarLayout("q_", 0, 0, fill_fn=lambda f=fill: f).render(plan, rec, S.DEFAULT)
+            inside = [f for (_x, _y, _r, _c, f) in rec.circles.values() if len(f) == 9 and f != "#00000000"]
+            self.assertTrue(inside and all(int(f[1:3], 16) == alpha for f in inside), (fill, inside))
+        rec = Recorder()
+        XR.RadarLayout("q_", 0, 0, fill_fn=lambda: 0).render(plan, rec, S.DEFAULT)
+        self.assertFalse([f for (_x, _y, _r, _c, f) in rec.circles.values() if len(f) == 9 and f != "#00000000"])      # 0 leaves every sample circle an outline
+        self.assertEqual(XR.RadarLayout("q_", 0, 0, fill_fn=lambda: 900).fill_alpha, 255)                        # held to the range
+        self.assertEqual((XR.RadarLayout("q_", 0, 0, line_fn=lambda: 0).line_width, XR.RadarLayout("q_", 0, 0, line_fn=lambda: 99).line_width, XR.RadarLayout("q_", 0, 0).line_width), (1, 6, 2))
 
     def test_north_is_marked_on_the_plot_and_turns_with_the_heading(self):
         facing_east = dataclasses.replace(EX.sample_view(), heading=90.0)
