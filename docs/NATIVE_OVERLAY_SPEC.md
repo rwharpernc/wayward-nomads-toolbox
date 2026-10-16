@@ -22,6 +22,8 @@ click-through, layered window over Elite is clean, follows the game window, hide
   click-through window that never takes focus (`UpdateLayeredWindow`, per-pixel alpha). It shows only while Elite is the window you are in and there is something to show. Because it is a
   thread of EDMC, it ends with EDMC: no window can be left behind.
 - **Pillow** is the one dependency, and EDMC's own build ships it.
+- **Groups.** Each feature's overlay is a group of items (a panel, lines, circles) sharing an id prefix. Like EDMCModernOverlay, the built-in overlay places a group at the canvas position of its top left item and treats the distances between the items inside it as logical pixels (times the display scaling), so a card's lines are the same distance apart on any screen. The registered prefixes come from `register_modern_overlay_groups`.
+- **Screenshots.** The game's own screenshot never includes an overlay, and a snipping tool takes the focus (the overlay hides unless **Keep showing** is on). `overlay_native.snapshot()` draws the scene at a screenshot's size so the Screenshots setting can lay it onto the converted copy.
 - **Placement** reads the game window's real size and scaling from the window thread (`overlay_native.screen()`), is told there is no right-hand clamp (`Screen.native`), and uses no group
   offsets. The layout editor, anchors and saved placements work as before.
 - **The font** is the one chosen in Appearance → Overlay font when EDMCModernOverlay's fonts folder is installed (so one choice serves both overlays), otherwise Segoe UI.

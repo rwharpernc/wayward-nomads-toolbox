@@ -31,7 +31,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 from .overlay_style import CARD_PAD_X, CARD_PAD_Y, Look
 from .uikit import style as ui_style
-from . import overlay, overlay_appearance, overlay_placement, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
+from . import overlay, overlay_appearance, overlay_native, overlay_placement, panelkit, platform_support, screenshot_automation, screenshot_convert, screenshot_gui_focus, screenshot_naming
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -41,6 +41,7 @@ PANEL_PLACEMENT = "fieldops"
 _CFG_SOURCE_DIR = "wntb_screenshot_source_dir"
 _CFG_OUTPUT_DIR = "wntb_screenshot_output_dir"
 _CFG_DELETE_ORIGINAL = "wntb_screenshot_delete_original"
+_CFG_INCLUDE_OVERLAY = "wntb_screenshot_include_overlay"
 _CFG_GROUP_BY_SYSTEM = "wntb_screenshot_group_by_system"
 _CFG_SHOW_TIMER_ICON = "wntb_screenshot_show_timer_icon"
 _CFG_MASK = "wntb_screenshot_mask"
@@ -142,6 +143,7 @@ def _panel(look: Look, lines: int, widest_chars: int) -> Tuple[int, int, int, in
 @dataclass
 class ScreenshotConfig:
     delete_original: bool = False
+    include_overlay: bool = False
     group_by_system: bool = False
     show_timer_icon: bool = True
     mask: str = screenshot_naming.DEFAULT_MASK
@@ -235,6 +237,7 @@ def _poll_interval_ms(cfg: ScreenshotConfig) -> int:
 def load_config() -> ScreenshotConfig:
     return ScreenshotConfig(
         delete_original=config.get_bool(_CFG_DELETE_ORIGINAL, default=False),
+        include_overlay=config.get_bool(_CFG_INCLUDE_OVERLAY, default=False),
         group_by_system=config.get_bool(_CFG_GROUP_BY_SYSTEM, default=False),
         show_timer_icon=config.get_bool(_CFG_SHOW_TIMER_ICON, default=True),
         mask=config.get_str(_CFG_MASK) or screenshot_naming.DEFAULT_MASK,
@@ -352,6 +355,7 @@ class ScreenshotsController:
         self._source_var: Optional[tk.StringVar] = None
         self._output_var: Optional[tk.StringVar] = None
         self._delete_var: Optional[tk.BooleanVar] = None
+        self._include_overlay_var: Optional[tk.BooleanVar] = None
         self._group_var: Optional[tk.BooleanVar] = None
         self._show_timer_icon_var: Optional[tk.BooleanVar] = None
         self._mask_var: Optional[tk.StringVar] = None
@@ -431,7 +435,8 @@ class ScreenshotsController:
         )
 
         try:
-            image = screenshot_convert.convert_to_png(source_file, dest)
+            layer = overlay_native.snapshot if cfg.include_overlay else None      # the built-in overlay as it was on the screen, when asked for
+            image = screenshot_convert.convert_to_png(source_file, dest, layer)
         except OSError as exc:
             message = screenshot_convert.describe_os_error(exc)
             logger.warning("Could not convert screenshot %s: %s", source_file, message)
@@ -871,6 +876,11 @@ class ScreenshotsController:
         )
         row += 1
 
+        self._include_overlay_var = tk.BooleanVar(value=cfg.include_overlay)
+        nb.Checkbutton(frame, text="Include WNTB's built-in overlay in the converted screenshot (the game's own capture never shows an overlay)",
+                       variable=self._include_overlay_var).grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=10, pady=(4, 0))
+        row += 1
+
         self._group_var = tk.BooleanVar(value=cfg.group_by_system)
         nb.Checkbutton(
             frame, text="Group converted files into a per-system subfolder", variable=self._group_var,
@@ -994,6 +1004,8 @@ class ScreenshotsController:
         config.set(_CFG_SOURCE_DIR, self._source_var.get().strip())
         config.set(_CFG_OUTPUT_DIR, self._output_var.get().strip())
         config.set(_CFG_DELETE_ORIGINAL, self._delete_var.get())
+        if self._include_overlay_var is not None:
+            config.set(_CFG_INCLUDE_OVERLAY, self._include_overlay_var.get())
         config.set(_CFG_GROUP_BY_SYSTEM, self._group_var.get())
         if self._show_timer_icon_var is not None:
             config.set(_CFG_SHOW_TIMER_ICON, self._show_timer_icon_var.get())

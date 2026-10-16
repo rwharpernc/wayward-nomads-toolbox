@@ -71,6 +71,19 @@ class NativeSwitchTests(unittest.TestCase):
         for key, slot in overlay_placement.SLOTS.items():
             self.assertFalse(overlay_placement.can_offset(key), key)
 
+    def test_a_snapshot_draws_the_scene_at_the_size_asked_for(self):
+        self.assertIsNone(N.snapshot(1920, 1080))                        # not chosen
+        N.save_choice(N.BUILTIN)
+        self.assertIsNone(N.snapshot(1920, 1080))                        # Elite's window not known yet
+        N.window.geometry = (0, 0, 1920, 1080, 1.0)
+        self.assertIsNone(N.snapshot(1920, 1080))                        # nothing showing
+        overlay.OverlayClient().send_shape("r", "rect", "", "#ffff0000", 640, 480, 100, 50, ttl=30)
+        image = N.snapshot(3840, 2160)                                   # a screenshot twice the window's size
+        self.assertEqual(image.size, (3840, 2160))
+        self.assertEqual(image.getpixel((1925, 1085))[:3], (255, 0, 0))  # 640 of 1280 across is 1920 of 3840, 480 of 960 down is 1080 of 2160; the rectangle is twice as many pixels
+        self.assertEqual(image.getpixel((1920 + 199, 1080 + 99))[:3], (255, 0, 0))
+        self.assertEqual(image.getpixel((1920 + 210, 1080 + 50))[3], 0)
+
     def test_the_overlay_clamp_still_applies_to_the_other_overlay(self):
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25).clamped, (True, False))
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25, native=True).clamped, (False, False))

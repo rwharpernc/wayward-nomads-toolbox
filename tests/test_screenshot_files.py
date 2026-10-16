@@ -165,6 +165,31 @@ class ConvertTests(unittest.TestCase):
         with Image.open(destination) as written:
             self.assertEqual((written.format, written.size), ("PNG", (64, 48)))
 
+    def test_an_overlay_layer_is_laid_over_the_screenshot_before_it_is_saved(self):
+        source = self.save_image("Screenshot_0003.bmp", (64, 48))
+        asked = []
+
+        def layer(width, height):
+            asked.append((width, height))
+            picture = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            picture.putpixel((10, 10), (255, 0, 0, 255))
+            return picture
+
+        destination = os.path.join(self.dir, "with_overlay.png")
+        image = convert.convert_to_png(source, destination, layer)
+        self.assertEqual(asked, [(64, 48)])
+        self.assertEqual(image.getpixel((10, 10))[:3], (255, 0, 0))
+        with Image.open(destination) as written:
+            self.assertEqual(written.convert("RGB").getpixel((10, 10)), (255, 0, 0))
+
+    def test_no_overlay_layer_or_one_that_fails_still_saves_the_screenshot(self):
+        source = self.save_image("Screenshot_0004.bmp", (64, 48))
+        for name, layer in (("none", lambda w, h: None), ("broken", lambda w, h: 1 / 0)):
+            destination = os.path.join(self.dir, f"{name}.png")
+            image = convert.convert_to_png(source, destination, layer)
+            self.assertEqual(image.size, (64, 48))
+            self.assertTrue(os.path.exists(destination))
+
     def test_the_source_can_be_deleted_straight_after_converting(self):
         source = self.save_image("Screenshot_0002.bmp")
         image = convert.convert_to_png(source, os.path.join(self.dir, "shot.png"))

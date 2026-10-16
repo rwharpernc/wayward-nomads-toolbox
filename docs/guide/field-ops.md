@@ -26,6 +26,7 @@ Converts Elite's screenshots to PNG automatically, with an optional crop to just
 - the auto-capture timing,
 - an optional "Screenshot saved" message on your game screen (off by default; needs an overlay; has a **Test
   Overlay** button),
+- *Include WNTB's built-in overlay in the converted screenshot* (off by default; Windows, needs the built-in overlay chosen under Settings → Overlays): the game's own screenshot never shows an overlay, so WNTB draws the cards that were on screen when you pressed the key onto the converted copy. A failure here never loses the screenshot,
 - *Group converted files into a per-system subfolder* (off by default),
 - *Show the auto-capture timer icon on the main window* (on by default),
 - *Automatically capture a screenshot when scanning a Thargoid signal* (on by default),

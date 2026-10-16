@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
+from typing import List, Optional
 
 from config import appname, config
 
@@ -28,6 +28,16 @@ SOURCE = "WNTB built-in overlay"
 FALLBACK_SCREEN = (1920, 1080)
 
 scene = Scene()
+_groups: List[str] = []
+
+
+def set_groups(groups) -> None:
+    """The id prefixes of the overlay displays (each feature's plugin group), so a display is placed as one piece."""
+    _groups[:] = [prefix for _name, prefix in groups]
+
+
+def groups() -> List[str]:
+    return list(_groups)
 
 
 def _font_path() -> str:
@@ -51,7 +61,7 @@ def save_keep_showing(keep: bool) -> None:
     config.set(CFG_KEEP, bool(keep))
 
 
-window = overlay_window.OverlayWindow(scene, _font_path, keep_showing)
+window = overlay_window.OverlayWindow(scene, _font_path, keep_showing, groups)
 
 
 def supported() -> bool:
@@ -100,6 +110,19 @@ def screen() -> Optional[layout.Screen]:
         _x, _y, width, height, ratio = geometry
         return layout.Screen(width, height, layout.MODE_FILL, f"{SOURCE}, Elite's window", None, ratio, True, True)
     return layout.Screen(*FALLBACK_SCREEN, layout.MODE_FILL, f"{SOURCE}, waiting for Elite (assuming 1920 x 1080)", None, 1.0, True, True)
+
+
+def snapshot(width: int, height: int):
+    """The overlay as it is now, drawn onto a transparent picture of the size of a screenshot, or None when the built-in overlay is not on, Elite's window is not known or nothing is showing.
+    The scale comes from the game window's size and display scaling, so a screenshot of a different size than the window still lines up."""
+    geometry = window.geometry
+    if selected() != BUILTIN or not geometry or width <= 0 or height <= 0:
+        return None
+    items = scene.items()
+    if not items:
+        return None
+    _x, _y, client_w, _h, dpi = geometry
+    return overlay_raster.render(items, width, height, dpi * (width / client_w), overlay_raster.Fonts(_font_path()), groups())
 
 
 def status_text() -> str:

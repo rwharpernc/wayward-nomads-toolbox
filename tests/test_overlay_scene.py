@@ -160,6 +160,20 @@ class RasterTests(unittest.TestCase):
         self.assertEqual(image.getpixel((640, 480))[3], 0)                           # hollow
         self.assertEqual(image.getpixel((200, 100))[:3], (0, 255, 255))             # the line between the points
 
+    def test_a_group_is_placed_at_its_top_left_and_the_distances_inside_it_are_pixels(self):
+        panel = {"id": "g_card", "shape": "rect", "color": "", "fill": "#ff0000ff", "x": 100, "y": 100, "w": 10, "h": 10, "ttl": 4}
+        marker = {"id": "g_x1", "shape": "rect", "color": "", "fill": "#ffffff00", "x": 116, "y": 130, "w": 4, "h": 4, "ttl": 4}
+        scene = S.Scene(Clock())
+        scene.apply(panel)
+        scene.apply(marker)
+        scene.apply({"id": "other", "shape": "rect", "color": "", "fill": "#ffff0000", "x": 500, "y": 500, "w": 4, "h": 4, "ttl": 4})
+        image = R.render(scene.items(), 1280, 960, 1.25, R.Fonts(R.default_font_path()), ["g_"])
+        self.assertEqual(image.getpixel((101, 101))[:3], (0, 0, 255))                # the group sits at its panel's canvas position
+        self.assertEqual(image.getpixel((121, 138))[:3], (255, 255, 0))              # 16 and 30 pixels along, times the 1.25 display scaling: 100 + 20, 100 + 37.5
+        self.assertEqual(image.getpixel((117, 131))[3], 0)                           # not where a canvas-unit reading would put it
+        self.assertEqual(image.getpixel((501, 501))[:3], (255, 0, 0))                # an item in no group is placed in canvas units
+        self.assertEqual(R.group_of("g_x1", ["g_", "g_x"]), "g_x")                   # the longest prefix wins
+
     def test_an_empty_scene_is_a_transparent_picture(self):
         self.assertIsNone(self.draw([]).getbbox())
 

@@ -16,7 +16,7 @@ import os
 import sys
 import threading
 from ctypes import wintypes
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Sequence, Tuple
 
 from . import overlay_raster
 from .overlay_scene import Scene
@@ -115,10 +115,12 @@ def game_geometry(hwnd: int) -> Optional[Geometry]:
 class OverlayWindow:
     """Owns the window thread. `geometry` is where the game is as of the last look (None when it is not running), for placement."""
 
-    def __init__(self, scene: Scene, font_path: Callable[[], str] = overlay_raster.default_font_path, keep_showing: Callable[[], bool] = lambda: False) -> None:
+    def __init__(self, scene: Scene, font_path: Callable[[], str] = overlay_raster.default_font_path, keep_showing: Callable[[], bool] = lambda: False,
+                 groups: Callable[[], Sequence[str]] = lambda: ()) -> None:
         self.scene = scene
         self._font_path = font_path
         self._keep_showing = keep_showing
+        self._groups = groups
         self._thread: Optional[threading.Thread] = None
         self._stop = threading.Event()
         self._hidden = False
@@ -191,7 +193,7 @@ class OverlayWindow:
                     key = (geometry, self.scene.version)
                     if key != last or not shown:
                         x, y, width, height, ratio = geometry
-                        image = overlay_raster.render(items, width, height, ratio, fonts)
+                        image = overlay_raster.render(items, width, height, ratio, fonts, self._groups())
                         canvas.paint(hwnd, screen_dc, x, y, image)
                         last = key
                     if not shown:

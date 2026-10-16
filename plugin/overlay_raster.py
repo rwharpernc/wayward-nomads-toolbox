@@ -5,13 +5,17 @@ It uses Pillow, which EDMC ships with, and nothing from Windows, so it is tested
 the size of text) is in logical pixels, the unit after the operating system's display scaling. So with `ratio` the display scaling (1.25 for 125%), a size becomes `size * ratio` device pixels
 and a position becomes `x * width / 1280` across and `y * height / 960` down.
 
+**Groups.** An overlay display is drawn as many items (a panel, lines of text, circles) that share an id prefix, a plugin group. The overlay places the *group* at the canvas position of its
+top left item, and the distances between the items inside it are in logical pixels, not canvas units: a card's lines are a fixed number of pixels apart whatever the screen. So each item is
+drawn at its group's anchor (the smallest x and y in the group, in canvas units) plus its distance from that anchor in logical pixels times `ratio`. An item with no group is its own anchor.
+
 Colors are "#RRGGBB", "#AARRGGBB" (alpha first, as the overlay's payloads write them) or a color name; an empty color means none. Text is drawn from the top left of its line.
 """
 
 from __future__ import annotations
 
 import os
-from typing import Dict, Iterable, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 
@@ -73,20 +77,57 @@ class Fonts:
         return self._cache[size]
 
 
-def render(items: Iterable[Item], width: int, height: int, ratio: float = 1.0, fonts: Optional[Fonts] = None) -> Image.Image:
-    """The items, already in drawing order, as a transparent RGBA picture `width` x `height` device pixels."""
+def group_of(ident: str, prefixes: Sequence[str]) -> str:
+    """The plugin group an id belongs to: the longest registered prefix it starts with, or "" when none does."""
+    best = ""
+    for prefix in prefixes:
+        if ident.startswith(prefix) and len(prefix) > len(best):
+            best = prefix
+    return best
+
+
+def _origin(item: Item) -> Tuple[float, float]:
+    if item.kind == VECT and item.points:
+        return min(p[0] for p in item.points), min(p[1] for p in item.points)
+    return item.x, item.y
+
+
+def anchors(items: Sequence[Item], prefixes: Sequence[str]) -> Dict[str, Tuple[float, float]]:
+    """Each group's anchor in canvas units: the smallest x and the smallest y of its items."""
+    found: Dict[str, Tuple[float, float]] = {}
+    for item in items:
+        group = group_of(item.id, prefixes)
+        if group:
+            x, y = _origin(item)
+            ax, ay = found.get(group, (x, y))
+            found[group] = (min(ax, x), min(ay, y))
+    return found
+
+
+def render(items: Iterable[Item], width: int, height: int, ratio: float = 1.0, fonts: Optional[Fonts] = None, groups: Sequence[str] = ()) -> Image.Image:
+    """The items, already in drawing order, as a transparent RGBA picture `width` x `height` device pixels. `groups` are the registered id prefixes (see the module note)."""
     fonts = fonts or Fonts(default_font_path())
+    items = list(items)
     image = Image.new("RGBA", (max(1, width), max(1, height)), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     ux, uy = width / BASE_WIDTH, height / BASE_HEIGHT
+    anchor_of = anchors(items, groups)
+
+    def place(item: Item, x: float, y: float) -> Tuple[float, float]:
+        """Device pixels for a point at canvas coordinates (x, y) in `item`'s group."""
+        anchor = anchor_of.get(group_of(item.id, groups))
+        if anchor is None:
+            return x * ux, y * uy
+        return anchor[0] * ux + (x - anchor[0]) * ratio, anchor[1] * uy + (y - anchor[1]) * ratio
+
     for item in items:
-        x, y = item.x * ux, item.y * uy
+        x, y = place(item, item.x, item.y)
         if item.kind == RECT:
             _rect(draw, item, x, y, ratio)
         elif item.kind == CIRCLE:
             _circle(draw, item, x, y, ratio)
         elif item.kind == VECT:
-            _vect(draw, item, ux, uy, ratio, fonts)
+            _vect(draw, item, place, ratio, fonts)
         elif item.kind == TEXT:
             color = parse_color(item.color) or (255, 255, 255, 255)
             draw.text((x, y), item.text, font=fonts.get(FONT_PX.get(item.size, DEFAULT_FONT_PX) * ratio), fill=color)
@@ -110,9 +151,9 @@ def _circle(draw: ImageDraw.ImageDraw, item: Item, x: float, y: float, ratio: fl
                  outline=border if border is not None and border[3] else None, width=max(1, int(round(item.thickness * ratio))))
 
 
-def _vect(draw: ImageDraw.ImageDraw, item: Item, ux: float, uy: float, ratio: float, fonts: Fonts) -> None:
+def _vect(draw: ImageDraw.ImageDraw, item: Item, place, ratio: float, fonts: Fonts) -> None:
     base = parse_color(item.color) or (255, 255, 255, 255)
-    points = [(px * ux, py * uy) for px, py, _c, _m, _t in item.points]
+    points = [place(item, px, py) for px, py, _c, _m, _t in item.points]
     if len(points) > 1:
         draw.line(points, fill=base, width=max(1, int(round(LINE_WIDTH * ratio))))
     r = MARKER_RADIUS * ratio

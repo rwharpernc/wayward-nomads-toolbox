@@ -7,7 +7,7 @@ import io
 import logging
 import os
 from collections import deque
-from typing import Iterable, Optional, Tuple
+from typing import Callable, Iterable, Optional, Tuple
 
 from config import appname
 from PIL import Image
@@ -71,11 +71,19 @@ def describe_os_error(exc: OSError) -> str:
     return str(exc)
 
 
-def convert_to_png(source_file: str, destination_file: str) -> Image.Image:
-    """Load `source_file` and save it as PNG at `destination_file`; returns the image."""
+def convert_to_png(source_file: str, destination_file: str, overlay_layer: Optional[Callable[[int, int], Optional[Image.Image]]] = None) -> Image.Image:
+    """Load `source_file` and save it as PNG at `destination_file`; returns the image. `overlay_layer(width, height)`, when given, may return a transparent picture
+    of that size (the overlay as it was on the screen) to lay over the screenshot before it is saved; the game's own screenshot never includes an overlay."""
     ensure_directory(os.path.dirname(destination_file))
     image = Image.open(source_file)
     image.load()  # force the read now, before the source may be deleted
+    if overlay_layer is not None:
+        try:
+            layer = overlay_layer(image.width, image.height)
+            if layer is not None:
+                image = Image.alpha_composite(image.convert("RGBA"), layer.convert("RGBA")).convert("RGB")
+        except Exception:                      # the screenshot is the point; a failed overlay must never lose it
+            logging.getLogger(__name__).warning("Could not add the overlay to a screenshot", exc_info=True)
     image.save(destination_file, "PNG")
     return image
 

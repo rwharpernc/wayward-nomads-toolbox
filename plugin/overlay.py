@@ -103,6 +103,9 @@ def register_modern_overlay_groups(groups: Iterable[Tuple[str, str]]) -> None:
     importable when it's installed as a sibling EDMC plugin - a plain
     ImportError means no overlay plugin at all, which this is a silent no-op for. Safe to call on every
     plugin_start3."""
+    groups = list(groups)
+    from . import overlay_native
+    overlay_native.set_groups(groups)          # the built-in overlay places each display as one piece too
     try:
         from overlay_plugin.overlay_api import define_plugin_group  # type: ignore[import-not-found]
     except ImportError:
