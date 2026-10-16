@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.17.0 - 2026-10-16
 
 ### Added
 - **The likely color of a species before you sample it.** The Biology card shows `Likely color: Emerald` under a genus whose colors follow the star the body orbits or a surface material (`Lime or White` when more than one material fits), until a sample names the real color. The rules come from SrvSurvey's `bio-criteria` data (GPL-3.0) and were checked against your own journals: all 397 samples with a known star and materials matched. It takes the system's main star as the star, so it can be wrong in a multi-star system, and the plants (Brain Trees, Anemones, Sinuous Tubers) are not predicted.

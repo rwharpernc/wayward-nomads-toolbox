@@ -1,12 +1,12 @@
 # Known issues
 
-What is known to go wrong in the current release (**1.16.0**) and in the work on `master` that ships next (marked *next release*), what it looks like, and what to do about it. This page is for things that are bugs or rough edges; the
+What is known to go wrong in the current release (**1.17.0**), what it looks like, and what to do about it. This page is for things that are bugs or rough edges; the
 limits of what the game's journal tells WNTB are in the last section of each mode guide. If you hit something that is not here, see
 [Reporting a problem](reporting-problems.md).
 
 ## Overlay text looks doubled or ghosted
 
-(This is EDMCModernOverlay's behavior. WNTB's own built-in overlay, *next release*, cannot leave a second window behind; but an EDMCModernOverlay window can still be running beside it.)
+(This is EDMCModernOverlay's behavior. WNTB's own built-in overlay (new in 1.17.0) cannot leave a second window behind; but an EDMCModernOverlay window can still be running beside it.)
 
 **What you see:** every overlay card has a faint second copy of its text beside or behind the real one, often in a different font or in capitals, and some rows look
 brighter or dimmer than others. It does not clear when the card refreshes.
@@ -33,13 +33,13 @@ something WNTB starts, and WNTB cannot stop the extra window for you.
 Fonts), press OK and restart EDMC. The font is the overlay's, so it changes every plugin's text, and an update of EDMCModernOverlay can put the old list back.
 WNTB cannot choose a font for its own cards only, and the overlay cannot draw italics, so species are not italicized. *Next release:* WNTB's built-in overlay (Windows) has a font of its own (Source Sans 3, lower case, and any `.ttf` or `.otf` you add) and does not have this problem; see [Fonts](../OVERLAY_SETUP.md#fonts).
 
-## The built-in overlay is new (*next release*)
+## The built-in overlay is new (1.17.0)
 
 WNTB's own overlay (Windows) is new and has had less time in the game than EDMCModernOverlay. It works with every card and with Overlay Placement, but expect small fixes: a card's box may fit its text a little differently than you are used to, and
 the radar's circles and lines and cards at the screen edges are the least tested. It draws WNTB's displays only, so other plugins' overlays still need EDMCModernOverlay (you can run both). See [Setting up the overlay](../OVERLAY_SETUP.md).
 It is off until you choose it under **Settings → Overlays → Overlay Connection**, and switching back is one setting.
 
-## A tracked plant's marker can be off by a couple of hundred meters (*next release* draws how far)
+## A tracked plant's marker can be off by a couple of hundred meters (1.17.0 draws how far)
 
 A marker is where *you* were when the Composition Scanner named the plant, so from a ship or SRV it can be far from the plant. The radar draws the marker's ring as wide as it may be off, and the distance carries a `~`. See
 [Exobiology](exobiology.md#finding-your-way-back-to-a-plant) for how it is judged and removed.
@@ -52,7 +52,7 @@ The overlay window can only sit over Elite when the game runs **borderless or wi
 ## Tested on Windows only
 
 The Exobiology cards, System targets, Body info, the Expedition Log, the layout editor on Overlay Placement, panel opacity, the overlay font choice, hiding the overlays and the duplicate window
-warning (1.16.0), and the built-in overlay, nearest place to land, likely colors and marker rings (*next release*) have been tried on Windows only. The checks still to do on Linux are listed in [Linux testing](../LINUX_TESTING.md). Expect small fixes in a later update, and please report anything odd.
+warning (1.16.0), and the built-in overlay, nearest place to land, likely colors, marker rings and per-commander overlay settings (1.17.0) have been tried on Windows only. The checks still to do on Linux are listed in [Linux testing](../LINUX_TESTING.md). Expect small fixes in a later update, and please report anything odd.
 
 - **The keyboard shortcut to hide the overlays exists on Windows only.** On Linux use the **Overlays shown** line in the WNTB panel or the button in Settings.
 - **The Bio status card is a wide strip now** (about half the screen wide). If you had placed it before, it keeps your old spot and may overlap something; move it in **Settings → WNTB → Overlays →

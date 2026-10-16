@@ -67,10 +67,10 @@ WNTB can also update itself. Turn on **Automatically download and install update
 **File → Settings → WNTB → General → Updates**. It is **off by default**, and it only looks at official published
 releases. The **Release notes** link on that tab opens the latest release's page in your browser.
 
-The first line under the mode buttons always says which version you are running (**Plugin: v1.16.0**). While an update is coming
-it says **Plugin: v1.16.0 (downloading v1.16.1...)**, and once the update is downloaded it turns bold black on **orange** and reads
-**v1.16.0 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
-After the restart the line shows **Plugin: v1.16.0 (updated)** in green for a short while. Clicking the line opens the release page.
+The first line under the mode buttons always says which version you are running (**Plugin: v1.17.0**). While an update is coming
+it says **Plugin: v1.17.0 (downloading v1.17.1...)**, and once the update is downloaded it turns bold black on **orange** and reads
+**v1.17.0 download - Restart EDMC**. The update only takes effect when EDMC starts again; nothing is swapped in while it runs.
+After the restart the line shows **Plugin: v1.17.0 (updated)** in green for a short while. Clicking the line opens the release page.
 
 *Building from source is for developers only. See [DEVELOPMENT.md](../DEVELOPMENT.md).*
 
@@ -110,7 +110,7 @@ mining and flip to Trade to check a price, your mining stats keep counting.
 
 Just under the mode buttons, above the page itself, WNTB shows these lines, on every mode:
 
-- **Plugin**: the version you are running, for example `Plugin: v1.16.0` (see "Updating" for what it says during an update).
+- **Plugin**: the version you are running, for example `Plugin: v1.17.0` (see "Updating" for what it says during an update).
 - **Game mode**: For example *You are in Solo mode.*, *Open*, or *Private Group* with its name.
 - **Credits**: what you've earned or lost since you logged in, for example
   `+1,234,567 cr earned (+411,522 cr/hr)` or `-5,000 cr lost`. It is your balance now minus your balance at login.
