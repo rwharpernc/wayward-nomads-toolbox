@@ -348,6 +348,7 @@ class OrganicScanController:
             system_name=self._system_name,
             galactic_position=self._star_pos,
             atmosphere_components=atmosphere_components,
+            materials=tuple(str(m.get("Name") or "").casefold() for m in entry.get("Materials") or [] if isinstance(m, dict)) if isinstance(entry.get("Materials"), list) else None,
         )
         self._body_conditions[body_name] = cond
         if isinstance(entry.get("WasFootfalled"), bool):
@@ -507,6 +508,12 @@ class OrganicScanController:
                     and self._current_lon is not None and self._current_planet_radius):
                 distance = organic_scan.haversine_distance_m(organism.last_lat, organism.last_lon, self._current_lat, self._current_lon,
                                                              self._current_planet_radius)
+            hint = ""
+            if cond is not None and not (organism and organism.variant_name):        # a sampled plant already has its color; before that, say what it would be
+                names = [organism.species_name] if organism and organism.species_name else [c.name for c in candidates]
+                found = [organic_scan.predict_variants(name, cond) for name in names]
+                if found and found[0] and all(f == found[0] for f in found):
+                    hint = " or ".join(found[0])
             genera.append(organic_scan.GenusView(
                 key=genus_key, name=info.name if info else genus_key.strip("$;").replace("Codex_Ent_", "").replace("_Name", ""),
                 min_distance_m=info.min_distance_m if info else 0.0,
@@ -514,7 +521,7 @@ class OrganicScanController:
                 species=organic_scan.display_species(organism.species_name) if organism and organism.species_name else None,
                 value=organism.value if organism else None,
                 stage=organism.stage if organism else 0, distance_m=distance, variant=organic_scan.display_species(organism.variant_name) if organism and organism.variant_name else None,
-                positions=tuple(organism.positions) if organism else ()))
+                positions=tuple(organism.positions) if organism else (), variant_hint=hint))
         here = (self._current_lat, self._current_lon) if self._current_lat is not None and self._current_lon is not None else None
         focus = self._active_genus or self._focus_genus
         waypoints = tuple(self._waypoints.get(body_name, []))      # every plant identified and not yet sampled; the cards follow the latest of each genus

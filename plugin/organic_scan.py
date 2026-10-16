@@ -101,6 +101,8 @@ class BodyConditions:
     `AtmosphereComposition` array - not the same thing as `atmosphere`
     (AtmosphereType, the dominant gas only). Feeds
     SpeciesRuleset.atmosphere_component."""
+    materials: Optional[Tuple[str, ...]] = None
+    """The surface materials the body's own Scan lists (lower case, as the journal writes them): feeds the color variants that follow a material (`predict_variants`)."""
     system_body_types: Optional[Tuple[str, ...]] = None
     """Every PlanetClass scanned so far this system (not just the body
     currently being evaluated) - feeds SpeciesRuleset.bodies, which asks
@@ -256,6 +258,57 @@ def display_species(name: Optional[str]) -> str:
 _GENUS_WORDS = frozenset(info.name.casefold() for info in species_data.GENUS.values() if " " not in info.name)
 
 
+_STAR_CLASSES = {"TTS": "TTS", "AEBE": "Ae", "AE": "Ae", "Y": "Y", "T": "T", "L": "L"}
+_BODY_KINDS = {"Rocky body": "Rocky", "High metal content body": "HighMetalContent", "Icy body": "Icy", "Rocky ice body": "RockyIce"}
+
+
+def star_class(star_type: Optional[str]) -> Optional[str]:
+    """The class a StarType (from the journal) falls under for the color variants: O to M, L, T, Y, TTS, Ae, W (Wolf-Rayet), D (white dwarf) or N (neutron); None when not known."""
+    text = str(star_type or "").strip()
+    if not text:
+        return None
+    upper = text.upper()
+    if upper in _STAR_CLASSES:
+        return _STAR_CLASSES[upper]
+    if upper.startswith("W"):
+        return "W"
+    if upper.startswith("D"):
+        return "D"
+    if upper in ("N",):
+        return "N"
+    return upper if upper in ("O", "B", "A", "F", "G", "K", "M") else None
+
+
+def variant_rule(species_name: str):
+    """The color rule for a species (its own, else its genus's), or None when its colors are separate species (the plants) or unknown."""
+    from . import organic_variant_data as data
+    name = " ".join(str(species_name or "").split()).split(" - ")[0].casefold()
+    return data.SPECIES_RULES.get(name) or data.GENUS_RULES.get(name.split(" ")[0])
+
+
+def predict_variants(species_name: str, cond: BodyConditions) -> Tuple[str, ...]:
+    """The color variants a species could take on this body: from the class of the star (the system's main star, as the rest of the prediction approximates it) or from the surface materials the body
+    holds, depending on the species. () when it has no such rule, or the star or materials are not known. A material rule can name more than one."""
+    rule = variant_rule(species_name)
+    if rule is None:
+        return ()
+    kind, entries = rule
+    body = _BODY_KINDS.get(cond.planet_class or "")
+    found = []
+    for variant, values, bodies in entries:
+        if bodies and body not in bodies:
+            continue
+        if kind == "fixed":
+            found.append(variant)
+        elif kind == "star":
+            cls = star_class(cond.star_type)
+            if cls is not None and cls in values:
+                found.append(variant)
+        elif cond.materials is not None and any(v.casefold() in cond.materials for v in values):
+            found.append(variant)
+    return tuple(dict.fromkeys(found))
+
+
 def predict_species(genus_key: str, cond: BodyConditions) -> List[species_data.SpeciesInfo]:
     """Every species of `genus_key` whose habitability rulesets are
     consistent with `cond` - a body holds at most one species per genus in
@@ -323,6 +376,7 @@ class GenusView:
     distance_m: Optional[float] = None
     variant: Optional[str] = None
     positions: Tuple[Tuple[float, float], ...] = ()
+    variant_hint: str = ""       # the color a species of this genus would take on this body, from its star or its materials ("Emerald", "Lime or White"); "" when not known
 
     @property
     def complete(self) -> bool:

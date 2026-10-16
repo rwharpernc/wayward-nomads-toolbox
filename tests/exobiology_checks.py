@@ -89,6 +89,15 @@ class Cards(unittest.TestCase):
         EX._note_codex({"SubCategory": "$Codex_SubCategory_Geology;", "Name_Localised": "Something"})
         self.assertIsNone(EX._codex_scan())
 
+    def test_list_card_says_the_likely_color_until_a_sample_names_the_real_one(self):
+        guess = dataclasses.replace(self.view.genera[1], variant_hint="Emerald")          # a single candidate, not yet sampled
+        card = EX.build_list_card(dataclasses.replace(self.view, genera=(guess,)))
+        self.assertEqual(card.rows[0][0], "Frutexa fera" + chr(10) + "Likely color: Emerald")
+        sampled = dataclasses.replace(self.view.genera[2], variant_hint="Lime")            # a sampled plant already has its real color
+        self.assertNotIn("Likely color", EX.build_list_card(dataclasses.replace(self.view, genera=(sampled,))).rows[0][0])
+        several = dataclasses.replace(self.view.genera[0], variant_hint="Lime or White")
+        self.assertTrue(EX.build_list_card(dataclasses.replace(self.view, genera=(several,))).rows[0][0].endswith("Likely color: Lime or White"))
+
     def test_list_card_shows_candidates_confirmed_species_and_the_rewards(self):
         card = EX.build_list_card(self.view, "Sample System")
         names = [r[0] for r in card.rows]

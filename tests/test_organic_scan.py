@@ -364,6 +364,39 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(len(tracker.organisms), 0)
 
 
+class VariantTests(unittest.TestCase):
+    def cond(self, star="G", planet="Rocky body", materials=("iron", "sulphur")):
+        return scan.BodyConditions(body_name="B", planet_class=planet, star_type=star, materials=materials)
+
+    def test_a_genus_whose_colors_follow_the_star(self):
+        self.assertEqual(scan.predict_variants("Bacterium Aurasus", self.cond("G")), ("Emerald",))
+        self.assertEqual(scan.predict_variants("Tussock Pennatis", self.cond("G")), ("Lime",))
+        self.assertEqual(scan.predict_variants("Tussock Pennatis - Lime", self.cond("G")), ("Lime",))       # a sampled name still resolves
+        self.assertEqual(scan.predict_variants("Bacterium Aurasus", self.cond("M")), ("Teal",))
+
+    def test_a_species_whose_colors_follow_a_material_the_body_holds(self):
+        self.assertEqual(scan.predict_variants("Fungoida Bullarum", self.cond(materials=("iron", "technetium"))), ("Peach",))
+        self.assertEqual(set(scan.predict_variants("Fungoida Bullarum", self.cond(materials=("polonium", "yttrium")))), {"Mulberry", "Orange"})   # more than one: all that fit
+        self.assertEqual(scan.predict_variants("Fungoida Bullarum", self.cond(materials=("iron",))), ())
+
+    def test_a_species_with_one_color_and_the_body_kind_a_color_needs(self):
+        self.assertEqual(scan.predict_variants("Stratum Araneamus", self.cond("A")), ("Emerald",))              # whatever the star
+        self.assertEqual(scan.predict_variants("Aleoida Arcus", self.cond("A", "Rocky body")), ("Green",))       # a color that also needs a rocky body
+        self.assertEqual(scan.predict_variants("Aleoida Arcus", self.cond("A", "Icy body")), ())
+
+    def test_nothing_is_predicted_when_the_star_or_materials_are_not_known_or_the_species_has_no_rule(self):
+        self.assertEqual(scan.predict_variants("Bacterium Aurasus", self.cond(None)), ())
+        self.assertEqual(scan.predict_variants("Fungoida Bullarum", scan.BodyConditions(body_name="B", materials=None)), ())
+        self.assertEqual(scan.predict_variants("Roseum Brain Tree", self.cond()), ())
+        self.assertEqual(scan.predict_variants("", self.cond()), ())
+
+    def test_star_types_fall_into_the_classes_the_colors_use(self):
+        for star, cls in (("G", "G"), ("DA", "D"), ("DBV", "D"), ("WN", "W"), ("AeBe", "Ae"), ("TTS", "TTS"), ("N", "N"), ("Y", "Y"), ("T", "T"), ("L", "L"), ("O", "O")):
+            self.assertEqual(scan.star_class(star), cls, star)
+        for star in ("", None, "H", "MS", "SupermassiveBlackHole"):
+            self.assertIsNone(scan.star_class(star), star)
+
+
 class DisplaySpeciesTests(unittest.TestCase):
     """A species is shown as a scientific name: the genus capitalized and the species in lower case."""
 

@@ -151,15 +151,16 @@ def build_list_card(view: Optional[organic_scan.BodyView], system: str = "") -> 
         return Card()
     rows = []
     for genus in view.genera:
+        colour = f"\nLikely color: {genus.variant_hint}" if genus.variant_hint else ""       # from the star or the surface materials, until a sample names the real one
         if genus.species:
-            rows.append((genus.variant or genus.species, _credits(genus.value), "ok" if genus.complete else "title" if genus.stage else "text"))
+            rows.append(((genus.variant or genus.species) + ("" if genus.variant else colour), _credits(genus.value), "ok" if genus.complete else "title" if genus.stage else "text"))
         elif len(genus.candidates) == 1:
             name, value = genus.candidates[0]
-            rows.append((name, "~" + _credits(value), "info"))
+            rows.append((name + colour, "~" + _credits(value), "info"))
         elif genus.candidates:
             lines = "\n".join(f"{name}  {_credits(value)}  ~{percent}%" for name, value, percent in sorted(genus.odds(), key=lambda c: -c[1]))
             span = genus.value_range
-            rows.append((f"{genus.name}\n{lines}", _range(*span) if span else "?", "info"))
+            rows.append((f"{genus.name}\n{lines}{colour}", _range(*span) if span else "?", "info"))
         else:
             rows.append((genus.name, "unknown", "muted"))
     span = view.reward_range

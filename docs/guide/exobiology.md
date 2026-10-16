@@ -6,7 +6,7 @@ bonus.
 
 > **Where this comes from:** your scans, signals, codex finds and samples come from the journal, and your position, heading and the body you are near come from
 > the game's `Status.json`, so everything about *your* sampling is exact. What the game does not say (which species a planet hosts before you sample, or the
-> color variant before the first sample) is predicted, and marked as a prediction. Nothing here contacts the internet.
+> color variant before the first sample, where the game's rules for it are known) is predicted, and marked as a prediction. Nothing here contacts the internet.
 
 **On this page:** [The pieces](#the-pieces) · [Organic Scanning panel](#organic-scanning-panel) · [The overlay cards](#the-overlay-cards) ·
 [Finding your way back to a plant](#finding-your-way-back-to-a-plant) · [First footfall](#first-footfall) · [When the cards reset](#when-the-cards-reset) ·
@@ -52,7 +52,8 @@ own entry on **Overlay Placement**.
   genus with the distance it needs between samples, and `Done` once analysed. A plant you have identified with the Composition Scanner is named at the foot
   until you sample it. On a body you have not mapped it says to map it.
 - **Biology** (bottom, left of center). Every genus on the body with the species it could be or is once a sample has named it (with its color variant), and what
-  it pays. While the species is open the genus shows the **range** it could pay (`1.0M - 5.3M CR`), and each candidate its value and a percentage (`~50%`); a single
+  it pays. Before a sample names the real color, a genus whose colors follow the **star** the body orbits or a **surface material** shows `Likely color: Emerald` (or `Lime or White` when more than one material fits) under its row.
+  While the species is open the genus shows the **range** it could pay (`1.0M - 5.3M CR`), and each candidate its value and a percentage (`~50%`); a single
   likely species has a `~` before its value. The footer is the range the whole body could pay (`Rewards: 7.6M - 11.9M CR`), and with a first footfall the larger figure
   is on its own line (`First footfall (5x): 38.2M - 59.6M CR`). Analysed species are in the good color. **The percentages are an even share:** the data says which
   species the body's conditions allow, not how likely each one is, so with two candidates each shows about 50%. Treat them as a count of the candidates, not as odds.
@@ -113,7 +114,7 @@ The cards are plain dark panels, so they sit quietly over the game; the text siz
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | The species before you map the body | The scan gives only the number of biological signals; the genera come with the mapping scan. | Map the body. Until then Bio status shows the signal count. |
-| The color variant before the first sample | The variant is named by the first sample (or the Composition Scanner). WNTB predicts the species from the body's conditions, not the variant. | Sample, or scan the plant with the Composition Scanner. |
+| The color variant before the first sample | The variant is named by the first sample (or the Composition Scanner). For the genera whose colors follow the star or a surface material, WNTB shows the likely color from the body's star and materials; it takes the system's main star as the star, so in a system with several stars it can be wrong, and a material rule can name more than one color. The plants (Brain Trees, Anemones, Sinuous Tubers) follow the environment in ways WNTB does not predict. | Sample, or scan the plant with the Composition Scanner: the real color replaces the guess. |
 | A real chance for each candidate species | The data lists which species a body's conditions allow, with no frequency for each, so the percentages are an even share of the candidates. | The sample names the real species. |
 | A certain species before a sample names it | The prediction is a list of candidates from the body's conditions; unknown conditions never eliminate a species, so a candidate may be listed that the game would not allow. | The sample names the real species. |
 | The position of a sample taken while EDMC was closed | The journal does not record positions; WNTB reads yours from `Status.json` as you sample. | None: samples taken with EDMC running are kept for the body across restarts. |
