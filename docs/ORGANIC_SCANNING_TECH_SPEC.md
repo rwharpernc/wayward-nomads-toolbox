@@ -1,11 +1,11 @@
 # Technical Specification — Organic Scanning
 
 **Author:** R.W. Harper (CMDR Bocheaux)
-**Last updated:** 2026-10-02 (see `CHANGELOG.md`)
+**Last updated:** 2026-10-16 (see `CHANGELOG.md`)
 
 The standing reference for Organic Scanning (exobiology): what it predicts, the rules behind the
 prediction, how scan progress is tracked, and where its answers can be wrong. For how to use it, see the
-[README](guide/exploration.md#organic-scanning). For how the code is organized in general, see
+[Exobiology guide](guide/exobiology.md). For how the code is organized in general, see
 [TECHNICAL.md](TECHNICAL.md).
 
 > **Design principle.** Like all of WNTB, this is journal-first: a third-party tool only knows what the game writes to its journal files, and not everything is logged. Gaps are filled from Frontier's own data or from community services where those exist, and otherwise worked around, and each gap and its workaround is written down. See [the design principle in TECHNICAL.md](TECHNICAL.md).
@@ -18,13 +18,16 @@ prediction, how scan progress is tracked, and where its answers can be wrong. Fo
   enough from the last sample for the next one to count.
 - Show the **credit value** of each species.
 - Remember a body's biology across a relog or an EDMC restart.
+- Feed the Exobiology overlay cards (section 11): a per-body view of the genera, the predicted and confirmed species, the sample positions and the way back to
+  plants the commander identified.
 
 ## 2. Non-goals
 
 - **No network access, and nothing submitted anywhere.** It is a local, read-only companion and never
   submits codex or biology data.
 - **No first-discovery bonus.** Exobiology analysis pays a flat per-species value regardless of who found
-  it first.
+  it first. The one multiplier WNTB shows is the **first footfall** bonus (five times the value for the first
+  commander on a body, from the body's `WasFootfalled`), which is a property of the body, not of the species.
 - **No certainty before a sample.** Until a scan names the species, the answer is a candidate list.
 
 ## 3. Architecture
@@ -34,9 +37,11 @@ All modules live in `plugin/`; `PANEL_PLACEMENT = "exploration"`.
 ```
 organic_scan.py         Pure logic: BodyConditions, the matching rules, scan-stage tracking, distance.
 organic_scan_state.py   Per-commander persistence of each body's biology (organic_scan_state.json).
-organic_scan_panel.py   The panel: reads journal events, builds conditions, shows predictions and progress.
+organic_scan_panel.py   The panel: reads journal events, builds conditions, shows predictions and progress, and builds the overlay view.
 organic_species_data.py Generated reference data: genera, species, values and habitability rulesets.
 organic_region_data.py  Generated reference data: the galactic region grid and the named zones.
+exobiology_overlay.py   The four overlay cards (bio status, biology, sample popup; radar via exo_radar.py).
+exo_radar.py            The Bio radar's geometry (offsets, bearings, circles, little pointers) and drawing.
 ```
 
 `organic_scan.py` has no screen code, no EDMC imports beyond the logger, and is unit-testable.
@@ -50,7 +55,12 @@ organic_region_data.py  Generated reference data: the galactic region grid and t
 | `FSSBodySignals`, `SAASignalsFound` | Which genera are present on a body |
 | `ScanOrganic` | The genus and species named at each stage (Log, Sample, Analyze) |
 | `FSDJump`, `Location` | The system's own position (`StarPos`, in light years), for the region lookup |
-| `Status.json` | Your surface latitude and longitude, for the sample-distance check |
+| `Status.json` | Your surface latitude, longitude, heading and planet radius (the sample-distance check, the radar), and the body you are near (`BodyName`; absent once you have left it) |
+| `Scan` (a body) | also `WasFootfalled`: false means nobody has set foot there, so the first footfall bonus is open |
+| `SAASignalsFound`, `FSSBodySignals` | also the count of biological signals |
+| `ScanOrganic` | also the color variant (`Variant_Localised`) and, with the position from `Status.json` at that moment, where each Log and Sample was taken |
+| `CodexEntry` (organic structures) | the plant's name and latitude and longitude, kept as a waypoint |
+| `Touchdown`, `Liftoff`, `LaunchSRV`, `DockSRV`, `Disembark`, `Embark` | where the ship touched down and where the SRV was launched or left |
 
 Gravity is converted from m/s² to G and pressure from pascals to atmospheres, to match the data's units.
 
@@ -101,9 +111,10 @@ when you've gone far enough. The **credit estimate** is the species' value from 
 
 Per commander, in `organic_scan_state.json` (in the plugin folder, listed in the updater's protected
 files): each body's conditions, the genera detected, and each organism's confirmed species and progress.
-A planet's biology doesn't reset when you log out, and a relog starts a new journal file that replays none
+Also kept per body: where each sample was taken, the color variant, the first footfall flag and the plant waypoints. A planet's biology doesn't reset when you log out, and a relog starts a new journal file that replays none
 of the earlier scan events, so without this the picture would vanish. Moving to a different body resets
-the live tracker, and returning restores the saved progress.
+the live tracker, and returning restores the saved progress. When `Status.json` names no body (the commander has left the planet) the live view is
+cleared in the same way, so the overlay cards stop showing a finished planet.
 
 ## 8. The reference data
 
@@ -115,8 +126,10 @@ species added by a game update needs the tables regenerated**. Until then it sim
 ## 9. Testing
 
 `tests/test_organic_scan.py` covers the pure logic in `organic_scan.py` (the matching rules, region and
-zone handling, scan stages and distances) without needing EDMC. The panel is exercised by hand in a live
-game, by visiting a planet with biological signals.
+zone handling, scan stages and distances) without needing EDMC. `tests/exobiology_checks.py` (run by
+`tests/test_exobiology_overlay.py` in its own process) covers the overlay cards, the radar geometry, the little
+pointers, the waypoints and the per-body view built from journal events and `Status.json`. The panel itself is
+exercised by hand in a live game, by visiting a planet with biological signals.
 
 ## 10. Known gaps
 
@@ -125,3 +138,16 @@ game, by visiting a planet with biological signals.
 - Some game rules in the data aren't evaluated (see §5).
 - New species need the data regenerated.
 - The Odyssey exobiology tools in the game itself remain the final word.
+- A plant's position is known only from the Composition Scanner's codex entry, and genera whose codex names do not follow the usual pattern (such as Bark Mound)
+  are not tracked.
+- The color variant is not predicted, only reported once a sample or the Composition Scanner names it.
+- The SRV's position is where the commander was when it was launched or left, not a reading of the SRV.
+
+## 11. The overlay view
+
+`organic_scan_panel.overlay_view()` builds an `organic_scan.BodyView` from the controller's state without any widgets: for the body the commander is at, each
+genus (`GenusView`: predicted candidates with values, the confirmed species and variant, the stage, the positions of the samples and the distance from the
+last one), the first footfall flag, the biological signal count, the commander's position and heading, the ship and SRV positions, the genus in progress and
+the plants being tracked (`Waypoint`s of the genus being surveyed). The cards in `exobiology_overlay.py` are built from it, and `exo_radar.py` turns the positions
+into pixels (a flat-earth offset rotated to the heading, accurate over the few hundred meters of a sampling walk). The genus a codex name belongs to comes from
+`organic_scan.genus_key_for_codex_name`. Each genus keeps `WAYPOINTS_PER_GENUS` plants; a Log or Sample within `WAYPOINT_SAMPLED_M` of a waypoint drops it.

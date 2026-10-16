@@ -7,7 +7,7 @@ click a section's title (▸ / ▾) to open it. They fold again each time EDMC s
 
 **On this page:** [Auto-Honk](#auto-honk) · [Discovery Alerts](#discovery-alerts) ·
 [Notable Bodies](#notable-bodies) · [Boxel Survey](#boxel-survey) · [Exploration Value](#exploration-value) ·
-[Organic Scanning](#organic-scanning) · [Codex Completionist](#codex-completionist) ·
+[Organic Scanning](#organic-scanning) ([Exobiology guide](exobiology.md)) · [Codex Completionist](#codex-completionist) ·
 [GEC Nearby POI](#gec-nearby-poi) · [Canonn Nearby POI](#canonn-nearby-poi) · [Notes](#notes) · [Expedition](#expedition) · [System targets and Body info](#system-targets-and-body-info) · [Compass](#compass) ·
 [What the game does and doesn't tell us](#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it)
 
@@ -260,19 +260,12 @@ contact the internet:
 
 ## Organic Scanning
 
-Helps you find and identify exobiology life on a planet's surface.
+Helps you find and identify exobiology life on a planet's surface: which species each signal is likely to be, with an estimated credit value, your Log,
+Sample and Analyse progress, and when you have walked far enough for the next sample. It also has four overlay cards for the body you are on (bio status,
+predicted species, a sample radar and a popup after each sample), leads you back to plants you identified, and shows the first footfall bonus.
 
-**How to use it:**
-
-1. Detect biological signals on a body and get on the ground.
-2. WNTB shows which species each signal is likely to be, based on the planet's atmosphere, gravity, temperature and
-   more, with an estimated credit value.
-3. When you start sampling, it tracks your progress and tells you when you've walked far enough for the next sample
-   to count.
-
-You can switch it off under **Settings → Exploration → Organic Scanning** (**Show predicted species and scan progress**).
-It uses only your own journal and makes no internet connection, and it submits nothing. Detail is in the
-[specification](../ORGANIC_SCANNING_TECH_SPEC.md).
+All of it is in its own guide: **[Exobiology](exobiology.md)**. You can switch the panel's section off under **Settings → Exploration → Organic Scanning**
+(**Show predicted species and scan progress**); it uses only your own journal and makes no internet connection.
 
 ## Codex Completionist
 
@@ -462,38 +455,7 @@ They come back when you arrive in a system. The cards are drawn by the overlay o
 Where each card sits is set on **Overlay Placement** ("System targets" and "Body info"). They start in the lower middle of the right half of the screen,
 one above the other; move them to suit your HUD.
 
-### Exobiology cards
-
-Four overlay cards for the body you are on, in the ship, the SRV or on foot. Each has its own switch under **Settings → Overlays → Exobiology** (all **off** until
-ticked) and its own entry on **Overlay Placement**. They use Organic Scanning's prediction and sample tracking, so they never disagree with the panel above.
-Nothing is sent anywhere.
-
-- **Bio status** (top center). The heading is *Biological signals* with a count of how many you have analysed and a progress bar. While you are sampling a
-  genus it shows the species and color variant in large type with three circles (filled as you take each sample), what the species pays (**five times as much
-  on a first footfall**, marked), and how far you are from the last sample against the distance the genus needs (`Move 122 m further: 78 m of 200 m`, or `Clear`
-  once you can take the next). With nothing in progress it lists each genus with the distance it needs between samples, and `Done` once analysed; a plant you
-  have identified with the Composition Scanner is named at the foot until you sample it. On a body you have not mapped it says to map it.
-- **Biology** (bottom, left of center). Every genus on the body with the species it could be (candidates in the info color, a single likely species with a `~` before
-  its value) or is once a sample has named it (with its color variant), what each pays, and what the body could pay in all (`Rewards up to 11.9M CR (first footfall
-  bonus: 59.6M CR)`). Analysed species are in the good color.
-- **Bio radar**. A top-down plot centered on you with straight ahead up. Each sample you took has a circle as wide as the genus's minimum distance between samples:
-  **red** while you are inside it (too close for the next sample), **green** once you are clear. The ship (where it touched down) and the SRV (where you launched
-  or left it) are marked `S` and `V` with their distance beneath, with the distance to your first two samples. The scale adapts so every circle fits.
-- **Finding your way back to a plant.** When you identify a plant with the Composition Scanner, WNTB remembers where it is (the journal gives its latitude and longitude). The genus you identified last is the one being followed, so you survey one at a time; up to four plants of it are kept for the body, and the list survives restarting EDMC. The Bio radar marks each plant with a ring and the genus's letter, draws a line from you toward the nearest (to the edge of the plot if it is further), and says under the plot which plant, how far and which way. Every distance under the plot (the ship, the SRV, your first two samples and the tracked plant) has a **little pointer** before it, turned to show which way that thing lies relative to the way you face (straight up means straight ahead), so you can read where to walk at a glance; (`Tracking Tussock Pennatis`, `94 m, 60° right`; the radar turns so straight ahead is up). Bio status shows the same in one line. A plant drops off the list when you sample it (the one nearest you, within about 40 m), and the genus clears when you analyse it. Bark Mound and a few other genera whose codex names do not follow the usual pattern are not tracked.
-- **Sample popup**. For ten seconds after each sample: the species and variant, its estimated value, the distance the genus needs, and whether it was logged,
-  sampled or analysed.
-
-**When they reset.** Leaving the planet clears the Exobiology cards (the game stops naming a body once you are away from it), and what you sampled is kept for the body and returns if you come back. System targets and Body info move on to the next body to map or sample: a body drops off System targets when you map it or analyse its last organism, and Body info does not hold on to a finished target.
-
-**What they cannot tell you:**
-
-| What you might expect | What the game gives | What to do |
-|---|---|---|
-| The species before you map the body | The scan gives only the number of biological signals; the genera come with the mapping scan. | Map the body. Until then Bio status shows the signal count. |
-| The color variant before the first sample | The variant is named by the first sample (or the Composition Scanner). WNTB predicts the species from the body's conditions, not the variant. | Sample, or scan the plant with the Composition Scanner. |
-| The position of a sample taken while EDMC was closed | The journal does not record positions; WNTB reads yours from `Status.json` as you sample. | None: samples taken with EDMC running are kept for the body across restarts. |
-| The SRV's position | The journal does not give it; WNTB uses where you were when you launched or left it. | None. |
-| The first footfall mark on an old body | It comes from the body's own scan (`WasFootfalled`). | Scan the body again if the mark is missing. |
+The Exobiology cards (bio status, predicted species, the sample radar and the sample popup) are described in the [Exobiology guide](exobiology.md#the-overlay-cards).
 
 ## Compass
 

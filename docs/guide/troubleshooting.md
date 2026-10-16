@@ -18,6 +18,9 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | The missions list on the game screen | **Enable** under Missions; pinned missions need the overlay too | Settings → Overlays → Missions |
 | Carrier jump and fuel alerts | **Enable Flight Alerts** | Settings → Overlays → Flight Alerts |
 | Route and ship status card | **Enable the Route overlay** | Settings → Overlays → Route |
+| What is left to map and sample in a system | **Enable the System targets card** | Settings → Overlays → System targets |
+| A card describing the body you target or are near | **Enable the Body info card** | Settings → Overlays → Body info |
+| Sampling progress, predicted species, the sample radar, the sample popup | The tick for each of the four Exobiology cards | Settings → Overlays → Exobiology |
 | Discovery alerts | **Enable Discovery Alerts**, or the **D.A.** button | Settings → Overlays → Discovery |
 | Notable find banners | **Enable Notable Bodies alerts**, then pick the rules you want | Settings → Overlays → Notable Bodies |
 | The arrow to a mark or hotspot on a planet | **Enable Surface Compass** | Settings → Overlays → Surface Compass |
@@ -145,10 +148,18 @@ rules are on to start with, so tick the ones you want. A banner needs the overla
 (A display that is not there at all, though the overlay works, is covered under
 [Linux](#one-display-never-shows-though-test-and-the-overlay-window-both-work).)
 
-Open **Settings → Overlays → Overlay Placement**. Press **Show placement preview** to see a box for every display at its real
+Open **Settings → Overlays → Overlay Placement**. The **layout editor** at the top is a to-scale picture of your screen: drag a display's box where you
+want it (a box dropped near an edge snaps flush to it with offset 0, and **Picture size** makes the picture bigger). Press **Show placement preview** to see a box for every display at its real
 size, then **Detect screen again** if the screen size or scaling line looks wrong. **Reset all to defaults** puts every spot back.
 Displays on the right use an offset to reach the screen edge; if that misbehaves, untick **Carry displays on the right to the
 screen edge**. The details are in [Setting up the overlay](../OVERLAY_SETUP.md).
+
+### The Exobiology cards are empty, or show a planet I have left
+
+The Exobiology cards (Bio status, Biology, Bio radar) show the body the game says you are at, which it names in `Status.json` only while you are near it, so they
+are empty in supercruise and clear when you leave a planet (what you sampled is kept and returns with the body). They also need the body to be **mapped**
+(the genera come with the mapping scan); until then Bio status shows the signal count. If a card is empty on a mapped planet you are standing on, press **Test Cards**
+(Settings → Overlays → Exobiology) to check the overlay itself, and see [Exobiology](exobiology.md#what-the-game-doesnt-tell-us-and-how-to-work-around-it).
 
 ### Overlay text wraps, or a card is too small or too big
 

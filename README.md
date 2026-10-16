@@ -116,7 +116,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **System-name suggestions** in every box that takes a system name: the systems you have been in, then ones WNTB holds, and, if you tick it, Spansh's search for any system ([Typing a system name](docs/guide/getting-started.md#typing-a-system-name)).
 - **Pop-out windows** with a dark look that remember their size and place ([Getting started](docs/guide/getting-started.md#opening-the-pop-out-windows)).
 - **Automatic updates** from GitHub releases, and a **Release notes** link ([Getting started](docs/guide/getting-started.md)).
-- **On-screen overlay displays** through EDMCModernOverlay, with a Placement tool, six color schemes and a text size ([Overlay setup](docs/OVERLAY_SETUP.md)).
+- **On-screen overlay displays** through EDMCModernOverlay, with a drag-and-drop Placement editor, six color schemes and a text size ([Overlay setup](docs/OVERLAY_SETUP.md)).
 - **Windows and Linux** (native or Flatpak EDMC, Elite under Proton or Wine) ([Windows and Linux](docs/guide/platforms.md), [WNTB on Linux](docs/guide/linux.md)).
 - **Every online lookup is listed**, and each is either opt-in or runs only when you press a button ([What goes on the internet](docs/guide/internet-and-privacy.md)).
 
@@ -135,7 +135,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Notable Bodies**: a banner when a body you scan is worth a second look ([Notable Bodies](docs/guide/exploration.md#notable-bodies)).
 - **Boxel Survey**: Sequence, Region Sweep and Waypoints for exploring by procedural system name, and **RND** to find an undiscovered system ([Boxel Survey](docs/guide/exploration.md#boxel-survey)).
 - **Exploration Value**: the estimated payout for the last body, system scan progress, the system's age and region, and what your data sales paid ([Exploration Value](docs/guide/exploration.md#exploration-value)).
-- **Organic Scanning**: help finding and identifying exobiology on a planet's surface ([Organic Scanning](docs/guide/exploration.md#organic-scanning)).
+- **Organic Scanning**: help finding and identifying exobiology on a planet's surface ([Exobiology](docs/guide/exobiology.md)).
 - **Codex Completionist**: a lifetime tally of your Codex finds, with a details window and a backfill from journal history ([Codex Completionist](docs/guide/exploration.md#codex-completionist)).
 - **GEC Nearby POI** and **Canonn Nearby POI**: the nearest point of interest from edastro's catalog or Canonn's Thargoid and Guardian site lists, only when you press FIND ([GEC](docs/guide/exploration.md#gec-nearby-poi), [Canonn](docs/guide/exploration.md#canonn-nearby-poi)).
 - **Notes**: your own notes on a system or a body, shown when you arrive, with a searchable window ([Notes](docs/guide/exploration.md#notes)).
@@ -197,7 +197,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Landing Assist**: your assigned landing pad, in the panel and/or as a diagram on your game screen ([Landing Assist](docs/guide/always-on.md#landing-assist)).
 - **Interdiction Warning**: an alert on your game screen the moment an interdiction starts ([Interdiction Warning](docs/guide/always-on.md#interdiction-warning)).
 - **Flight Alerts**: a fleet carrier jump countdown and fuel warnings, including when the star you plotted to cannot be scooped ([Flight Alerts](docs/guide/always-on.md#flight-alerts)).
-- **Exobiology cards**: four overlay cards for the body you are on (bio status with sample circles and distance, predicted species and what they pay including the first footfall bonus, a sample radar, and a popup after each sample) ([Exobiology cards](docs/guide/exploration.md#exobiology-cards)).
+- **Exobiology cards**: four overlay cards for the body you are on (bio status with sample circles, progress and distance to the last sample; predicted species and what they pay, including the first footfall bonus; a sample radar with your ship and SRV and little pointers; and a popup after each sample), and WNTB leads you back to plants you identified with the Composition Scanner ([Exobiology](docs/guide/exobiology.md)).
 - **System targets and Body info**: two overlay cards for working a system: a list of scanned bodies worth mapping (above a value you choose) and bodies with life you have not analysed yet, until you do; and a card describing the body you have targeted or are close to ([System targets and Body info](docs/guide/exploration.md#system-targets-and-body-info)).
 - **Route overlay**: your fuel and jump range, the jumps left, and the systems of the route you plotted, with neutron stars and white dwarfs picked out so you can prepare for the supercharge ([Route overlay](docs/guide/always-on.md#route-overlay)).
 
@@ -276,7 +276,7 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 - Overlays need an overlay program running ([EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) is
   recommended). Press a **Test** button to check. Everything is **off until you turn it on**.
 - All overlay settings are in one place: **Settings → WNTB → Overlays** (Connection, Placement, Appearance, and a tab per feature).
-- **Placement** puts each display at one of nine spots plus pixel offsets, read from your real screen. If it looks wrong,
+- **Placement** puts each display at one of nine spots plus pixel offsets, read from your real screen, and has a drag-and-drop **layout editor**: a to-scale picture of your screen with a grid, where you drag each display's box and it snaps flush to an edge (offset 0) or to the grid. If it looks wrong,
   press **Show placement preview**, then **Detect screen again**, or **Reset all to defaults**. The overlay can't draw
   flush against the right edge by itself; WNTB works around that with an offset (a switch on the Placement tab turns it off).
 - **Appearance** sets the color scheme for every overlay; the text size (Default or Larger) is yours to choose, and the spacing is fixed so columns stay aligned. The Interdiction warning always stays red.
