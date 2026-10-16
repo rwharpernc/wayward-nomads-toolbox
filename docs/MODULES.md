@@ -285,6 +285,7 @@ Guide: [Colonization](guide/colonization.md)
 | `build_costs.py` | What each kind of building costs in tons (the bundled `colonisation_costs.json`, a copy of a community-compiled table): looked up by a site's layout name, with its biggest commodities |
 | `commodity_categories.py` | The market category of each colonization commodity, so the shopping list can be grouped as the in-game market groups it |
 | `rcc_sync.py` | Opt-in sharing of live colonization progress with Raven Colonial: depot snapshot, deliveries, commander link and (separately) carrier cargo deltas, one request per event on a worker thread with a bounded queue |
+| `overlay_profile.py` | Each commander's overlay choices (which cards run, their options, placement, Show ticks, look), kept in `overlay_settings.json`; the active commander's are loaded into EDMC's config when they are seen, so the overlay modules still read the config as before |
 | `rcc_keys.py` | Each commander's Raven Colonial key, kept in `rcc_keys.json` (one entry per commander) |
 | `rcc_client.py` | A thin client for Raven Colonial's API: reading one system's plan (its architect, whether it is open, and its build sites: planned, building, complete), with a bounded read, a user-agent, a timeout and a one-minute memory |
 | `colonisation_builds_window.py` | The Planned Builds window: Raven Colonial's sites for the picked site's system, fetched on a worker thread when opened or refreshed |

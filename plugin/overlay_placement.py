@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import myNotebook as nb
 from config import appname, config
 
-from . import overlay, overlay_appearance, overlay_grid, overlay_layout as layout, overlay_native, overlay_style, platform_support
+from . import overlay, overlay_appearance, overlay_grid, overlay_layout as layout, overlay_native, overlay_profile, overlay_style, platform_support
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -103,6 +103,10 @@ SLOTS: Dict[str, layout.Slot] = {s.key: s for s in (
     _slot("screenshots", "Screenshot messages", "right", "bottom", 40, 40, (420, 78),
           group="wntb_screenshot", group_prefix="wntb_screenshot_"),
 )}
+
+# Placement, the Show ticks and the screen choices are each commander's own (overlay_profile.py).
+overlay_profile.register(
+    [layout.setting_key(key) for key in SLOTS] + [CFG_HIDDEN_PREFIX + key for key in SLOTS] + [CFG_SCALING, CFG_MODE, CFG_OFFSETS])
 
 
 _measured: Dict[str, Tuple[overlay_style.Look, Tuple[int, int]]] = {}
@@ -463,7 +467,7 @@ def build_settings(notebook: tk.Misc) -> None:
               "offset in screen pixels: \"Bottom right\" is the bottom right corner of your screen on any monitor, however "
               "big the display. For the edge spots the offset moves the display inward from the edge; for Center and "
               "Middle it nudges it. \"Exact position\" uses the two numbers as the overlay's own x and y (a 1280 x 960 "
-              "canvas stretched over the screen) instead."),
+              "canvas stretched over the screen) instead.\n\n" + overlay_profile.profiles.note()),
         wraplength=460, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 6))
 

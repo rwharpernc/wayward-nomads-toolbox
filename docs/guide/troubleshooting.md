@@ -42,6 +42,9 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 Notes:
 - **Test buttons work even when a feature is off.** A passing **Test** shows the overlay is reachable; it does not mean the live feature is on.
 - **Settings are per computer.** A tick on one machine does not carry to another, so check each one you play on.
+- **Overlay settings are per commander.** The cards you switch on, where they sit and how they look are saved for the commander
+  playing. If a card is missing after you change commanders, check Settings → Overlays for that commander; Settings say whose
+  choices they are on the Overlay Placement tab. The overlay's connection (which overlay draws, host and port) is shared.
 - **Press OK** in Settings to keep a change.
 - Anything that contacts the internet is listed, with what it sends, on [what goes on the internet](internet-and-privacy.md).
 

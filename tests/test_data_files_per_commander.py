@@ -52,6 +52,8 @@ PER_COMMANDER = {
     "trade_route_start.json": "keyed by commander (trade_route_start.py)",
     "trade_stock.json": "keyed by commander (trade_stock.py)",
     "trade_history.json": "every saved session records its commander; the window opens on the active commander's",
+    "overlay_settings.json": "one set of overlay choices per commander (commander_data.py, overlay_profile.OverlayProfiles); "
+                             "the active commander's are loaded into EDMC's config when they are seen",
 }
 
 # file -> why it holds no commander's play

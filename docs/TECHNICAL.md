@@ -368,8 +368,23 @@ several requests in flight, use the generation counter above instead.
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `system_surveys.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
   `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`, `materials.json`, `blueprint_wishlist.json`, `mission_pins.json`, `engineers.json`, `trade_watch.json`, `surface_marks.json`,
-  `expeditions.json`, `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`. `codex_catalog.json` is a cache of a downloaded list rather
+  `expeditions.json`, `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`, `overlay_settings.json`. `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
+
+**Overlay settings are the exception to "settings live in `config`": they are per commander.** Which overlay cards run, their
+options, every display's placement and Show tick, the screen scaling and mode, and the look (scheme, text size, opacity, font,
+corners, keep-showing) belong to the commander, so two commanders on one install do not share them. The overlay modules still
+read EDMC's `config` directly; `overlay_profile.py` keeps the *active commander's* choices there and files every commander's in
+`overlay_settings.json` (the `commander_data.py` shape). `activate(cmdr)` runs at the top of `journal_entry` (and when the last
+commander is restored at start-up): it files the outgoing commander's choices, then loads the incoming commander's into the config,
+or, for a commander seen for the first time, files a copy of what the config holds, so an upgrade changes nothing on screen.
+`save_current` runs when Settings are saved and when EDMC closes. A key a commander never saved is deleted from the config on a
+switch, so it falls back to its default instead of showing the last commander's choice. Choices saved with no commander known
+yet go to the first commander seen. The keys swapped are `overlay_profile._FIXED` plus the per-display keys `overlay_placement`
+registers; `tests/test_overlay_profile.py` fails on any new `wntb_*enabled*`/`*overlay*` key not classified as swapped or as
+shared on purpose. Shared on purpose: the overlay's connection (which overlay draws, host and port), the hide hotkey and the
+layout picture's size, all facts about the machine. A switch calls `overlay_placement.refresh` and re-sends the group offsets. A
+module that caches an overlay setting at start-up keeps the old value until restart (none is known to).
 
 **Why files instead of `config`?** `config` is for settings, not structured or growing data. JSON
 files are inspectable, easy to back up and easy to hand-repair. The tradeoff is that data lives beside

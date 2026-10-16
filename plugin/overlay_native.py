@@ -73,6 +73,11 @@ _widths: dict = {}
 _MEASURE_SCALE = 8                      # measured at eight times the size and divided, so whole-pixel hinting does not blur the width
 
 
+def refresh_settings() -> None:
+    """Another commander's choices are in the config: pick the font up again now instead of within the cache time."""
+    _path_cache.update(at=0.0, path="")
+
+
 def _current_font_path() -> str:
     now = time.monotonic()
     if now - _path_cache["at"] > _PATH_SECONDS or not _path_cache["path"] and _path_cache["at"] == 0.0:

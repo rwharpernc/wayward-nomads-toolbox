@@ -26,7 +26,7 @@ from config import appname, config
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_history_window, exobiology_overlay, expedition_log_overlay, expedition_log_panel, landing_finder_panel, colonisation_overlay, colonisation_panel, credits_ledger, discovery,
     exploration_value, flight_alerts, game_mode, gec_poi_panel, interdiction, inventory_panel, ledger_window, landing, materials_panel, mining_overlay, mining_panel, notes_panel, expedition_panel, surface_compass,
-    missions, missions_overlay, notable, organic_scan_panel, overlay, overlay_native, overlay_placement, overlay_visibility, platform_support, powerplay, system_names, powerplay_window, rare_goods_window, restore, route_overlay, screenshots, session_credits, session_merits, ship_builds_panel, system_survey, targets_overlay, body_info_overlay, trade_panel, trade_watch_panel, ui,
+    missions, missions_overlay, notable, organic_scan_panel, overlay, overlay_native, overlay_placement, overlay_profile, overlay_visibility, platform_support, powerplay, system_names, powerplay_window, rare_goods_window, restore, route_overlay, screenshots, session_credits, session_merits, ship_builds_panel, system_survey, targets_overlay, body_info_overlay, trade_panel, trade_watch_panel, ui,
 )
 from .update import UpdateManager, check_applied_update
 
@@ -96,6 +96,7 @@ def plugin_start3(plugin_dir: str) -> str:
     logger.info("WNTB v%s starting from %s", __version__, plugin_dir)
 
     _reset_overlays_once()  # before any feature module reads its settings
+    overlay_profile.profiles.configure(plugin_dir, config, _on_overlay_profile_changed)
 
     powerplay.controller.start(plugin_dir)
     missions.start(plugin_dir)
@@ -183,6 +184,13 @@ def plugin_start3(plugin_dir: str) -> str:
     return "WNTB"
 
 
+def _on_overlay_profile_changed() -> None:
+    """Another commander's overlay choices are now in the config: forget what was worked out from the old ones."""
+    overlay_placement.refresh()
+    overlay_placement.apply_group_offsets()
+    overlay_native.refresh_settings()
+
+
 def _on_update_downloading(version: str) -> None:
     if _ui_frame is None:
         ui.set_update_downloading(version)      # panel not built yet; it picks the state up when it is
@@ -199,6 +207,7 @@ def _on_update_ready(version: str) -> None:
 
 def plugin_stop() -> None:
     """EDMarketConnector is closing."""
+    overlay_profile.profiles.save_current()
     powerplay.controller.flush()
     boxel_survey.stop()
     codex_completionist_panel.stop()
@@ -251,6 +260,7 @@ def _restore_commander_if_idle() -> None:
     try:
         cmdr = restore.latest_commander()
         if cmdr:
+            overlay_profile.profiles.activate(cmdr)
             handled = restore.dispatch(_FEATURES, cmdr)
             logger.info("No game running at start-up; restored commander %s in %d feature(s)", cmdr, handled)
     except Exception:
@@ -265,6 +275,7 @@ def plugin_prefs(parent, cmdr: str, is_beta: bool):
 def prefs_changed(cmdr: str, is_beta: bool) -> None:
     """Settings were saved."""
     ui.save_prefs()
+    overlay_profile.profiles.save_current(cmdr)
     powerplay.controller.flush()
     # A changed overlay host/port applies straight away: drop the old connection
     # and forget any recent "no overlay found" cool-off.
@@ -283,6 +294,7 @@ def journal_entry(
     """Dispatches journal events to every feature module's own handle_event."""
     global _live_event_seen
     _live_event_seen = True
+    overlay_profile.profiles.activate(cmdr)    # before any feature reads its overlay settings for this event
     visited = entry.get("StarSystem") if entry.get("event") in ("FSDJump", "Location", "CarrierJump") else system
     if isinstance(visited, str):
         system_names.remember(visited)

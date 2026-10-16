@@ -120,6 +120,14 @@ see the message on your screen, you're set.
 
 Where each display goes is set once, for every WNTB overlay, on **Settings → WNTB → Overlays → Overlay Placement**.
 
+**Overlay settings are per commander.** Which cards are switched on, their options, where each one sits, which are hidden, the
+screen scaling and the look (color scheme, text size, panel opacity, font, corners) are saved for the commander who is playing,
+so a commander who never uses the Expedition card can leave it off while another has it on. The first time a commander is seen
+after updating, they start with a copy of the choices already in place, so nothing moves. A commander's choices are filed when
+Settings are saved and when you switch commanders (log in as another one, or restart EDMC). Which overlay draws (the built-in
+one or EDMCModernOverlay), its host and port and the hide hotkey describe your computer, so they are shared. Choices saved when
+EDMC does not yet know the commander go to the first commander it sees.
+
 **Why not just x and y numbers?** Both overlays place things on a fixed 1280 × 960 canvas and maps it onto your game
 window, and it treats *positions* and *sizes* differently. A position is a fraction of the screen (x ÷ 1280 across, y ÷ 960
 down), so the canvas is stretched over the whole screen. A size, though, is in screen pixels, scaled by Windows' display
