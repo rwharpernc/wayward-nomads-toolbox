@@ -38,6 +38,10 @@ RAISE_EVERY_S = 0.5        # how often the window puts itself back above the gam
 PM_REMOVE = 1
 PER_MONITOR_AWARE_V2 = -4
 
+# Windows' own screen capture tools take the focus while you pick what to capture; the overlay stays up for them so it is in the picture.
+CAPTURE_TOOLS = frozenset({"screenclippinghost.exe", "snippingtool.exe", "screensketch.exe", "gamebar.exe", "gamebarftserver.exe"})
+PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+
 Geometry = Tuple[int, int, int, int, float]        # x, y, width, height of the game's drawing area on the screen, and the display scaling (1.25 for 125%)
 
 
@@ -95,8 +99,36 @@ if supported():
     gdi32.SelectObject.argtypes = [wintypes.HDC, wintypes.HANDLE]
     gdi32.SelectObject.restype = wintypes.HANDLE
     gdi32.DeleteObject.argtypes = [wintypes.HANDLE]
+    user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.QueryFullProcessImageNameW.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPWSTR, ctypes.POINTER(wintypes.DWORD)]
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
     kernel32.GetModuleHandleW.restype = wintypes.HINSTANCE
     kernel32.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
+
+
+def is_capture_tool(process_name: str) -> bool:
+    """Whether a program's file name is one of Windows' screen capture tools."""
+    return os.path.basename(process_name or "").lower() in CAPTURE_TOOLS
+
+
+def process_name(hwnd: int) -> str:
+    """The file name of the program that owns a window, or "" when it cannot be read."""
+    try:
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid.value)
+        if not handle:
+            return ""
+        try:
+            size = wintypes.DWORD(520)
+            buffer = ctypes.create_unicode_buffer(size.value)
+            return os.path.basename(buffer.value) if kernel32.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(size)) else ""
+        finally:
+            kernel32.CloseHandle(handle)
+    except Exception:
+        return ""
 
 
 def game_geometry(hwnd: int) -> Optional[Geometry]:
@@ -211,7 +243,9 @@ class OverlayWindow:
         self.geometry = geometry
         foreground = user32.GetForegroundWindow()
         items = self.scene.items()
-        in_front = foreground in (elite, hwnd) or self._keep_showing()          # a screenshot tool or another window in front is not the game
+        in_front = foreground in (elite, hwnd) or self._keep_showing()          # another window in front is not the game
+        if not in_front and foreground:
+            in_front = is_capture_tool(process_name(foreground))                    # but Windows' own capture tools are: the overlay is meant to be in the picture
         want = bool(geometry and items and not self._hidden and in_front)
         now = time.monotonic()
         if want:

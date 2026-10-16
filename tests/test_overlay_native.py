@@ -84,6 +84,13 @@ class NativeSwitchTests(unittest.TestCase):
         self.assertEqual(image.getpixel((1920 + 199, 1080 + 99))[:3], (255, 0, 0))
         self.assertEqual(image.getpixel((1920 + 210, 1080 + 50))[3], 0)
 
+    def test_windows_capture_tools_are_recognized_by_program_name(self):
+        from plugin import overlay_window as W
+        for name in ("ScreenClippingHost.exe", r"C:\Windows\SystemApps\SnippingTool.exe", "screensketch.EXE"):
+            self.assertTrue(W.is_capture_tool(name), name)
+        for name in ("", "notepad.exe", "EliteDangerous64.exe"):
+            self.assertFalse(W.is_capture_tool(name), name)
+
     def test_the_overlay_clamp_still_applies_to_the_other_overlay(self):
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25).clamped, (True, False))
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25, native=True).clamped, (False, False))

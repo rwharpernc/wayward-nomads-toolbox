@@ -183,8 +183,9 @@ keeps its fixed red alert colors whatever scheme is chosen. The default look is 
 Instead of EDMCModernOverlay, WNTB can draw its overlays itself, in a transparent window it lays over Elite. Turn it on in **Settings → WNTB → Overlays → Overlay Connection → Which overlay draws**,
 press OK, and start Elite in **borderless or windowed** mode (a fullscreen game cannot be drawn over). It is off until you choose it, and choosing EDMCModernOverlay again switches back.
 
-- It follows Elite's window as you move or resize it, shows only while Elite is the window you are in, and lets clicks and keys through to the game. To take a screenshot with another tool
-  (a snipping tool takes the focus, so the overlay would hide), tick **Keep showing when Elite is not the window in front** in the same box; the overlay then stays up whenever Elite is running.
+- It follows Elite's window as you move or resize it, shows only while Elite is the window you are in, and lets clicks and keys through to the game. Windows' own capture tools (the Snipping Tool, Win+Shift+S and the Game Bar)
+  are recognized, so the overlay stays up while you pick what to capture. For any other tool that takes the focus, tick **Keep showing when Elite is not the window in front** in the same box; the overlay
+  then stays up whenever Elite is running.
   Elite's own screenshot key (F10) never includes an overlay. To have the cards in a screenshot, tick **Include WNTB's built-in overlay in the converted screenshot** under **Settings → WNTB → Field Ops → Screenshots**:
   the converted copy then has the cards that were on screen when you pressed the key drawn onto it.
 - It draws in the font chosen under **Appearance → Overlay font** (when EDMCModernOverlay's fonts folder is installed; otherwise Segoe UI), so lower case text and your own fonts work.
