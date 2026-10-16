@@ -505,6 +505,20 @@ one above the other; move them to suit your HUD.
 
 The Exobiology cards (bio status, predicted species, the sample radar and the sample popup) are described in the [Exobiology guide](exobiology.md#the-overlay-cards).
 
+## Nearest place to land
+
+For deep space and emergencies: the nearest station that can take your ship and has what you need, and the nearest fleet carriers that let anyone dock. **Exploration → Nearest place to land → FIND** opens the window.
+
+- **It starts from where you are.** The position comes from the journal (`StarPos`, set by each jump), not from a system name, so it works in a system nobody has charted yet. If WNTB has not seen a jump this session it reads the newest journals; if it still has no position, jump once.
+- **It knows your ship's pad.** The pad comes from your ship (`Loadout`): a Python is never sent to an outpost with only small pads. Choose a pad size yourself, or *Any size*, if you want something else.
+- **Say what you need:** fuel, repairs, rearming, outfitting (fuel and repairs are ticked at first). Only stations that offer all of them are listed.
+- **Stations** (starports, outposts, planetary ports and outposts, megaships and colonization sites) are listed nearest first with their pads, the distance in light years and where they are in the system.
+- **Fleet carriers** are listed only when Spansh says docking is open to everyone, and only if its record is recent (7, 14, 30 or 90 days, your choice), because carriers jump and change who may dock. The age of each record is shown; check it before you rely on a carrier.
+- **Double-click a row** to copy its system name, to paste into the galaxy map.
+- **It is online, and only when you press Find**, once you have ticked the box that allows it. It sends Spansh your position, the pad size and your choices, and nothing about you (see [What goes on the internet](internet-and-privacy.md)).
+
+What this cannot tell you is in the last section of this guide.
+
 ## Compass
 
 *(Starts minimized.)*
@@ -549,6 +563,8 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | The jump total to include carrier jumps | A fleet carrier jump is not your ship's jump, so it ticks stops but does not add to the jump count or the light-years. | Nothing needed. |
 | The light-years to be the whole route | It adds each jump's own distance as the game reports it, so it is the distance you flew, not the straight line between stops. | Nothing needed. |
 | A note to know which body you are at | The body comes from `Status.json` (`BodyName`), which the game writes only while you are near a body, and not in supercruise between bodies. | Press **Here** in the Notes window beside Body, or type the name. A note can be about the system alone. |
+| The nearest place to land to include a carrier that has only just jumped, or one whose docking access Spansh does not know | Spansh reports a carrier as it last saw it (when a commander's EDMC sent it), and a carrier's docking access is in the data for only some carriers. A carrier whose access is not "All", or not known, is left out. | Check the age shown for a carrier; for one you want to try, request docking when you arrive. |
+| The nearest place to land to know a station's state right now | Spansh's records are what EDMC users last reported. A station that was attacked, or a carrier that moved, may differ, and a place nobody has visited recently may not be listed. | Treat the list as where to try first. |
 | The compass to work in space or in a ship above the ground | The game gives a latitude and longitude only on a landable surface (on foot or in a vehicle). | Land, or get out, and it appears. |
 | A mark to know which body it is on | The body comes from `Status.json` (`BodyName`), which the game writes only near a body. Marks are matched by body name. | Use **Here** while standing there, or type the body's full name as the game shows it. |
 | Auto-Honk to press any control | It can only press **keyboard** keys, so your fire button must be bound to one. On Linux it needs `xdotool`; Wayland without XWayland is unsupported. | Bind a keyboard key to your fire button and use **Rescan** after changing bindings. |
