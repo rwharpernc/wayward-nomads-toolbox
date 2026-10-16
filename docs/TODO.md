@@ -54,6 +54,11 @@ covers the item as well.
   name, and confirm that the whole name fits inside the card at Default and Larger text sizes. On the Missions overlay card, check a mission
   with a long station or system name: the place should move to a second line under the title, in the same color. Report any text that still extends
   past an edge.
+- [ ] **Overlay padding and alignment.** The overlay cards share one padding and left-justify their text. On each of Colonization, Discovery (system and
+  body), Notable Bodies, Interdiction, Landing, Missions, Flight Alerts, Mining, Surface Compass and the Screenshot message, confirm that the text sits
+  the same distance from the border on all four sides, that every line starts at the same left edge (no centered title or name), that the right edge
+  has no extra blank strip, and that no text runs past the border at Default and Larger text sizes. Also confirm the Text size menu offers only Default
+  and Larger. Then Linux.
 - [ ] **Mission progress colors.** Take two source-and-return missions and buy part of the cargo. Confirm that the Missions window shows `N/total held`
   with a bar, that the row turns blue and then lime past halfway, and that the overlay line follows; hand a mission in and confirm that it turns green.
   Confirm that a massacre stack's color changes as kills are recorded. Report whether the colors, or the held count (all of that commodity in the hold),
