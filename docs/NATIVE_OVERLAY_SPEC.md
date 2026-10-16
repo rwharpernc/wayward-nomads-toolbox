@@ -37,7 +37,7 @@ click-through, layered window over Elite is clean, follows the game window, hide
 
 1. **Try it in the game** and fix what shows: text sizes against the card layouts (the layouts size boxes from character estimates tuned on EDMCModernOverlay), circle radius units, the radar's
    lines and markers, vertical text position, placement at the edges, ultrawide and multiple monitors, fullscreen-windowed behavior, and the game's own menus.
-2. **Measure text** with the font itself (`ImageFont.getlength`) so card boxes fit their text exactly, replacing the width estimates for the built-in overlay.
+2. ~~**Measure text** with the font itself~~ Done: while the built-in overlay is chosen, `overlay_native.measure` (Pillow's `getlength` at eight times the size, in the font in use) replaces the width estimates through `overlay_style.set_text_measurer`, padded 5% for whole-pixel font rounding, and right-aligned text uses the exact width. Boxes came out 5 to 8% narrower on the sample cards.
 3. **A font and size of its own** (the built-in overlay's own font list, and a text size that is not tied to EDMCModernOverlay's step sizes).
 4. **Per-pixel quality**: text drawn over transparent areas (a few cards have text outside a panel), sub-pixel positioning, and a draw-on-change guard so a busy scene costs little.
 5. **Reliability**: what happens when Elite restarts, the display changes or EDMC is slow; log and report problems in Check connection and Copy diagnostics.

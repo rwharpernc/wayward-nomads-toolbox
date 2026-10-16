@@ -56,4 +56,4 @@ There is one long-lived branch, `master`, and it matches the 1.16.0 release. For
 - "Mactavious" stays as the second test commander in the tests; it is not to be stripped or renamed.
 - Every online lookup is either opt-in in Settings or runs only when a button is pressed, and is listed in
   `docs/guide/internet-and-privacy.md`.
-- Guardian ruin surveying and landing-pad diagrams are out of scope (the journal lacks what they would need).
+- Guardian ruin surveying, landing-pad diagrams and an FSS spectrum guide are out of scope (the journal lacks what they would need; the spectrum ranges are not in it and no open table of them exists).

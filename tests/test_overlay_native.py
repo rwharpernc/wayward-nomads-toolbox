@@ -91,6 +91,23 @@ class NativeSwitchTests(unittest.TestCase):
         for name in ("", "notepad.exe", "EliteDangerous64.exe"):
             self.assertFalse(W.is_capture_tool(name), name)
 
+    def test_cards_are_measured_with_the_font_only_while_the_built_in_overlay_is_chosen(self):
+        from plugin import overlay_style
+        self.addCleanup(lambda: overlay_style.set_text_measurer(None))
+        N.save_choice(N.MODERN)
+        N.install_measurer()
+        estimate = overlay_style.DEFAULT.text_width("Systems · jumps", "normal")
+        N.save_choice(N.BUILTIN)
+        N.install_measurer()
+        measured = overlay_style.DEFAULT.text_width("Systems · jumps", "normal")
+        self.assertNotEqual(measured, estimate)
+        self.assertGreater(measured, 0)
+        self.assertGreater(N.measure("Systems · jumps and more", "normal"), N.measure("Systems", "normal"))      # a longer text is wider
+        self.assertGreater(N.measure("Systems", "large"), N.measure("Systems", "normal"))                         # and a larger size
+        N.save_choice(N.MODERN)
+        N.install_measurer()
+        self.assertEqual(overlay_style.DEFAULT.text_width("Systems · jumps", "normal"), estimate)
+
     def test_the_overlay_clamp_still_applies_to_the_other_overlay(self):
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25).clamped, (True, False))
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25, native=True).clamped, (False, False))

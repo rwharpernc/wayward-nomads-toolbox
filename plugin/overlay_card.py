@@ -126,7 +126,7 @@ class CardLayout:
             base = "large" if look.measured_width(title, "large") <= inner - badge_w else "normal"
             texts.append((self.fit(title, look, inner - badge_w, base), role, x, y, look.size(base)))
             if badge:
-                texts.append((badge, "muted", x + inner - look.measured_width(badge), y + look.line_px(base) - look.line_px("normal"), size))
+                texts.append((badge, "muted", x + inner - look.extent(badge), y + look.line_px(base) - look.line_px("normal"), size))
             y += look.line_px(base) + 2
             if card.progress is not None:
                 fraction = max(0.0, min(1.0, card.progress))
@@ -193,7 +193,7 @@ class CardLayout:
             if extra:
                 texts.append((extra, "muted", x + tab_px, y, size))
             if right and card.align == "right":
-                texts.append((right, role, x + inner - look.measured_width(right), y, size))
+                texts.append((right, role, x + inner - look.extent(right), y, size))
                 y += step
             elif right:
                 column_x = x + self.name_width(look) + COLUMN_GAP
@@ -277,7 +277,7 @@ class WideCardLayout(CardLayout):
                 right_px = look.measured_width(right) + COLUMN_GAP if right else 0
                 texts.append((self.fit(name, look, col_w - right_px), "text" if role != "title" else "title", cx, y + i * step, size))
                 if right:
-                    texts.append((right, role, cx + col_w - look.measured_width(right), y + i * step, size))
+                    texts.append((right, role, cx + col_w - look.extent(right), y + i * step, size))
         return per * step
 
     def plan(self, card: Card, look: Look = LEGACY) -> Tuple[List[tuple], List[tuple], int, int]:
@@ -307,7 +307,7 @@ class WideCardLayout(CardLayout):
             texts.append((self.fit(text, look, inner - dots_w, base), role, x + dots_w, y, look.size(base)))
             if header:                                           # the first header line (the reward) ends the headline's row when it fits
                 note, note_role = header[0]
-                note_w = look.measured_width(note)
+                note_w = look.extent(note)
                 if dots_w + name_w + COLUMN_GAP + note_w <= inner:
                     texts.append((note, note_role, x + inner - note_w, y + look.line_px(base) - look.line_px("normal"), size))
                     header.pop(0)

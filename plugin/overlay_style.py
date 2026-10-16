@@ -21,8 +21,9 @@ what the pure drawing functions use when no look is passed, so they stay testabl
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 SIZES = ("small", "normal", "large", "huge")
 # The one padding every card uses, so the text sits the same distance from its card's border in all of them: the left and right
@@ -55,6 +56,18 @@ DEFAULT_SCHEME = "Elite orange"
 DEFAULT_TEXT_LEVEL = 0
 DEFAULT_PADDING = 6        # a little roomier than before, so a border has some separation from its text
 DEFAULT_SPACING = 3
+
+
+# When the built-in overlay draws, the font is known, so text can be measured instead of estimated: `overlay_native` installs a function that gives the width in logical pixels of a text at a
+# size name, and `text_width` and `measured_width` use it (a little padded, since the overlay rounds the font to whole device pixels). Without one the estimates below apply.
+MEASURE_PAD = 1.05
+_measurer: Optional[Callable[[str, str], float]] = None
+
+
+def set_text_measurer(measurer: Optional[Callable[[str, str], float]]) -> None:
+    """Install (or, with None, remove) the function that measures text exactly: `measurer(text, size_name)` is the width in logical pixels."""
+    global _measurer
+    _measurer = measurer
 
 
 WIDE_CHARS = "MWmw@%&"           # glyphs wider than the average the character estimates are tuned on
@@ -198,11 +211,21 @@ class Look:
 
     def text_width(self, text: str, base: str = "normal") -> int:
         """Estimated width in pixels of `text` at that size, padded by WIDTH_PAD so a box sized from it holds the text."""
+        if _measurer is not None:
+            return int(math.ceil(_measurer(text, self.size(base)) * MEASURE_PAD))
         return int(round(len(text) * self.char_px(base) * WIDTH_PAD))
+
+    def extent(self, text: str, base: str = "normal") -> int:
+        """The width a text occupies, for placing it against an edge (right-aligned): measured exactly, without the padding a box is sized with, when the font is known; else the same as `measured_width`."""
+        if _measurer is not None:
+            return int(math.ceil(_measurer(text, self.size(base))))
+        return self.measured_width(text, base)
 
     def measured_width(self, text: str, base: str = "normal") -> int:
         """Like `text_width` but counting capitals, digits and wide glyphs as wider and spaces and narrow marks as narrower, for a card that must
         hold text of any mix (a title in capitals, a body name such as "HIP 12345 AB 1 a") without clipping. Never less than `text_width`."""
+        if _measurer is not None:
+            return self.text_width(text, base)                 # measured with the real font: capitals and narrow marks are already as wide as they are
         return max(self.text_width(text, base), int(round(_em(text) * self.char_px(base) * WIDTH_PAD)))
 
     def pad_x(self, base_pad: int) -> int:

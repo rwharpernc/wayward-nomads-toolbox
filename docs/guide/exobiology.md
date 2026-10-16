@@ -56,7 +56,7 @@ own entry on **Overlay Placement**.
   likely species has a `~` before its value. The footer is the range the whole body could pay (`Rewards: 7.6M - 11.9M CR`), and with a first footfall the larger figure
   is on its own line (`First footfall (5x): 38.2M - 59.6M CR`). Analysed species are in the good color. **The percentages are an even share:** the data says which
   species the body's conditions allow, not how likely each one is, so with two candidates each shows about 50%. Treat them as a count of the candidates, not as odds.
-- **Bio radar**. A top-down plot centered on you with straight ahead up. Each sample you took has a circle as wide as the genus's minimum distance between
+- **Bio radar**. A top-down plot centered on you with straight ahead up, and a small arrowhead with an **N** on its edge that shows which way north lies (the plot turns as you turn, so north moves around it). Each sample you took has a circle as wide as the genus's minimum distance between
   samples: **red** while you are inside it (too close for the next sample), **green** once you are clear. The ship (where it touched down) and the SRV (where you
   launched or left it) are marked `S` and `V`. Under the plot: the distance to the ship, the SRV and your first two samples, each with a **little pointer**
   before it, turned to show which way that thing lies relative to the way you face (straight up means straight ahead). The scale adapts so every circle fits.

@@ -51,8 +51,8 @@ These are not bugs, but they surprise people. Each is explained where it belongs
 
 - **Species percentages are an even share** of the candidates, because the data lists which species a body allows and not how likely each is, and a color variant is only known once you sample.
   See [Exobiology](exobiology.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it).
-- **Scan, mapping and unsold values are estimates**, worked out from a published formula; the game's own figure when you sell is the truth. System targets ranks by scan value, and the mapped
-  value appears on Body info and in the Expedition Log. See [Exploration](exploration.md).
+- **Scan, mapping and unsold values are estimates**, worked out from a published formula; the game's own figure when you sell is the truth. System targets ranks by the mapped value by default (the scan value if you choose it in Settings), and both
+  appear on Body info and in the Expedition Log. See [Exploration](exploration.md).
 - **Plants, samples and the SRV have positions only while EDMC is running**, because the journal does not record them.
 - **Linux is checked a little behind Windows.** See [Windows and Linux](platforms.md).
 

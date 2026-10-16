@@ -336,10 +336,12 @@ class SystemSurvey:
             added += 1
         return added
 
-    def to_map(self, threshold: int) -> List[Body]:
-        """Scanned planets and moons worth at least `threshold` credits that the commander has not mapped, most valuable first."""
-        found = [b for b in self.bodies.values() if b.kind == "planet" and (b.scanned or b.known) and not b.mapped and b.scan_value() >= threshold]
-        return sorted(found, key=lambda b: -b.scan_value())
+    def to_map(self, threshold: int, basis: str = "scan") -> List[Body]:
+        """Scanned planets and moons worth at least `threshold` credits that the commander has not mapped, most valuable first. `basis` is the value
+        judged: "scan" (the estimate for scanning it) or "mapped" (what scanning and then mapping it pays)."""
+        value = (lambda b: b.mapped_value()) if basis == "mapped" else (lambda b: b.scan_value())
+        found = [b for b in self.bodies.values() if b.kind == "planet" and (b.scanned or b.known) and not b.mapped and value(b) >= threshold]
+        return sorted(found, key=lambda b: -value(b))
 
     def finished(self) -> List[Body]:
         """The planets and moons with nothing left to do (mapped, and any life analysed), in name order: where the commander has already been."""
@@ -349,6 +351,12 @@ class SystemSurvey:
         """(bodies whose life is all analysed, bodies with life): how far the biology of the system has got."""
         with_life = [b for b in self.bodies.values() if b.bio > 0]
         return sum(1 for b in with_life if b.life_done), len(with_life)
+
+    def bio_totals(self) -> Tuple[int, int]:
+        """(biological signals analysed, biological signals) over the whole system: how much of its life is done, counting each signal once (a body's analysed genera never exceed its signals)."""
+        signals = sum(b.bio for b in self.bodies.values() if b.bio > 0)
+        done = sum(min(len(set(b.analysed)), b.bio) for b in self.bodies.values() if b.bio > 0)
+        return done, signals
 
     def mapped_count(self) -> int:
         return sum(1 for b in self.bodies.values() if b.kind == "planet" and b.mapped)

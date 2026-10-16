@@ -190,6 +190,7 @@ press OK, and start Elite in **borderless or windowed** mode (a fullscreen game 
   the converted copy then has the cards that were on screen when you pressed the key drawn onto it.
 - It draws in the font chosen under **Appearance → Overlay font** (when EDMCModernOverlay's fonts folder is installed; otherwise Segoe UI), so lower case text and your own fonts work.
 - It lives and dies with EDMC, so it cannot leave a second overlay window behind (see [Known issues](guide/known-issues.md)).
+- Cards are sized from the text itself, measured in the font in use, so a box fits its text closely and right-hand values sit against the edge (with EDMCModernOverlay the sizes are estimates, a little roomier).
 - Everything else works the same: every card, Overlay Placement and its layout editor, panel opacity, and Hide overlays. **Check connection** reports whether it is running over Elite.
 - It is new. Sizes were tuned for EDMCModernOverlay, so a card's box may fit its text a little differently; report anything that looks off. The plan and what is left are in
   [the built-in overlay specification](NATIVE_OVERLAY_SPEC.md).

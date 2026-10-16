@@ -150,6 +150,31 @@ class LookTests(unittest.TestCase):
         self.assertEqual(S.value_for(S.TEXT_CHOICES, "Nonsense", 5), 5)
 
 
+class MeasuredTextTests(unittest.TestCase):
+    def tearDown(self):
+        S.set_text_measurer(None)
+
+    def test_without_a_measurer_the_estimates_apply(self):
+        S.set_text_measurer(None)
+        look = S.DEFAULT
+        self.assertEqual(look.text_width("hello", "normal"), int(round(5 * look.char_px("normal") * S.WIDTH_PAD)))
+
+    def test_a_measurer_gives_the_width_with_a_little_padding_for_every_text_and_size(self):
+        asked = []
+
+        def measurer(text, size):
+            asked.append((text, size))
+            return 10.0 * len(text)
+
+        S.set_text_measurer(measurer)
+        look = S.DEFAULT
+        self.assertEqual(look.text_width("abcd", "normal"), int(round(40 * S.MEASURE_PAD + 0.4999)))
+        self.assertEqual(look.measured_width("ABCD 1234", "normal"), look.text_width("ABCD 1234", "normal"))       # capitals are not counted wider again
+        self.assertEqual(asked[0], ("abcd", look.size("normal")))                                                 # asked at the size the look draws at
+        S.set_text_measurer(None)
+        self.assertNotEqual(look.text_width("abcd", "normal"), int(round(40 * S.MEASURE_PAD + 0.4999)))
+
+
 class SavedChoicesTests(unittest.TestCase):
     def setUp(self):
         STORE.clear()

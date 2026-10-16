@@ -41,8 +41,12 @@ _CFG_ROWS = "wntb_targets_rows"
 _CFG_LIFE = "wntb_targets_life"
 _CFG_ONLINE = "wntb_targets_online"
 _CFG_DONE = "wntb_targets_done"
+_CFG_BASIS = "wntb_targets_basis"
 
 DEFAULT_THRESHOLD = 100_000
+BASIS_SCAN, BASIS_MAPPED = "scan", "mapped"
+DEFAULT_BASIS = BASIS_MAPPED          # a card of bodies to map ranks them by what mapping them pays
+BASIS_LABELS = {BASIS_MAPPED: "Mapped value (what scanning and mapping pays)", BASIS_SCAN: "Scan value (what scanning alone pays)"}
 THRESHOLD_RANGE = (0, 50_000_000)
 ROWS_RANGE = (3, 16)
 DEFAULT_ROWS = 6
@@ -65,6 +69,7 @@ class TargetsConfig:
     life: bool = True
     done: bool = True             # also list the bodies already finished, so where you left off is on the card
     online: bool = False          # also look up what other commanders have scanned in the system (EDSM)
+    basis: str = DEFAULT_BASIS    # the value bodies are ranked and filtered by: what mapping them pays, or the scan alone
 
 
 def _clamp(value: Any, low: int, high: int, default: int) -> int:
@@ -78,7 +83,8 @@ def load_config() -> TargetsConfig:
     return TargetsConfig(enabled=config.get_bool(_CFG_ENABLED, default=False),
                          threshold=_clamp(config.get_str(_CFG_THRESHOLD), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
                          rows=_clamp(config.get_str(_CFG_ROWS), *ROWS_RANGE, DEFAULT_ROWS), life=config.get_bool(_CFG_LIFE, default=True),
-                         done=config.get_bool(_CFG_DONE, default=True), online=config.get_bool(_CFG_ONLINE, default=False))
+                         done=config.get_bool(_CFG_DONE, default=True), online=config.get_bool(_CFG_ONLINE, default=False),
+                         basis=config.get_str(_CFG_BASIS) if config.get_str(_CFG_BASIS) in BASIS_LABELS else DEFAULT_BASIS)
 
 
 def save_config(cfg: TargetsConfig) -> None:
@@ -88,6 +94,7 @@ def save_config(cfg: TargetsConfig) -> None:
     config.set(_CFG_LIFE, cfg.life)
     config.set(_CFG_ONLINE, cfg.online)
     config.set(_CFG_DONE, cfg.done)
+    config.set(_CFG_BASIS, cfg.basis)
 
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
@@ -99,10 +106,10 @@ def _distance(body: Body) -> str:
     return f"{ls / 1000:.1f}k ls" if ls >= 10_000 else f"{ls:,.0f} ls"
 
 
-def _map_row(body: Body) -> Row:
+def _map_row(body: Body, basis: str = BASIS_SCAN) -> Row:
     first = body.was_discovered is False
     left = f"{cut(body.short, 7)}\t{(body.tag + '  ' + _distance(body) + ('  EDSM' if body.known and not body.scanned else '')).strip()}"
-    right = credits_text(body.scan_value()) + (" first" if first else "")
+    right = credits_text(body.mapped_value() if basis == BASIS_MAPPED else body.scan_value()) + (" first" if first else "")
     return cut(left, NAME_CHARS), cut(right, TAG_CHARS), "title" if first else "text"
 
 
@@ -126,16 +133,17 @@ def _summary(survey: SystemSurvey) -> str:
         parts.append(f"{survey.mapped_count()} mapped")
     finished, with_life = survey.life_counts()
     if with_life:
-        parts.append(f"life {finished} of {with_life} done")
+        analysed, signals = survey.bio_totals()
+        parts.append(f"life {finished} of {with_life} done" + (f" · {analysed} of {signals} analysed" if signals else ""))
     return " · ".join(parts)
 
 
-def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True, done: bool = True) -> Card:
+def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True, done: bool = True, basis: str = BASIS_SCAN) -> Card:
     """The card for the survey: the scan progress, a line on how far the mapping and the life have got, then what is left to map, what has life, and (when `done`)
     what is already finished, at most `rows` rows. Empty before the system is honked and while there is nothing to say."""
     if not survey.visible:
         return Card()
-    maps = survey.to_map(threshold)
+    maps = survey.to_map(threshold, basis)
     lives = survey.with_life() if life else []
     finished = survey.finished() if done else []
     total = survey.body_count
@@ -154,7 +162,7 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
         header.append((summary, "muted"))
     listed: List[Row] = []
     budget = rows
-    for title, items, make in (("To map", maps, _map_row), ("Life", lives, _life_row), ("Done", finished, _done_row)):
+    for title, items, make in (("To map", maps, lambda body: _map_row(body, basis)), ("Life", lives, _life_row), ("Done", finished, _done_row)):
         if not items or budget < 2:
             continue
         listed.append((f"{title} ({len(items)})", "", "title"))
@@ -208,7 +216,7 @@ def render(card: Card, client: OverlayClient, look: Look = LEGACY) -> None:
 
 def _build() -> Card:
     cfg = load_config()
-    return build_card(system_survey.survey, cfg.threshold, cfg.rows, cfg.life, cfg.done)
+    return build_card(system_survey.survey, cfg.threshold, cfg.rows, cfg.life, cfg.done, cfg.basis)
 
 
 def _draw_live(card: Card) -> None:
@@ -285,8 +293,8 @@ def build_settings(notebook: nb.Notebook) -> None:
         frame,
         text=("A card on your in-game overlay, through EDMCModernOverlay (a separate, optional helper WNTB does not install or launch; its connection "
               "settings are on the Overlay Connection tab). After you scan bodies in a system it lists the ones worth mapping that you have not mapped yet, "
-              "and the ones with life that you have not finished analysing, until you do. It goes when you leave the system. The value is the estimated "
-              "scan value (what mapping pays on top of it is not estimated). Everything comes from your journal; nothing is sent anywhere unless you tick the EDSM lookup further down."),
+              "and the ones with life that you have not finished analysing, until you do. It goes when you leave the system. The value is an estimate: what scanning "
+              "and then mapping a body pays (or, if you choose, the scan alone), from the published formula; the game's own figure is the truth. Everything comes from your journal; nothing is sent anywhere unless you tick the EDSM lookup further down."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     HyperlinkLabel(
@@ -306,7 +314,9 @@ def build_settings(notebook: nb.Notebook) -> None:
     value_row.grid(row=3, column=0, sticky=tk.W, padx=(30, 10), pady=2)
     nb.Label(value_row, text="List bodies worth at least").pack(side=tk.LEFT)
     tk.Spinbox(value_row, from_=THRESHOLD_RANGE[0], to=THRESHOLD_RANGE[1], increment=25_000, width=10, textvariable=_vars["threshold"]).pack(side=tk.LEFT, padx=4)
-    nb.Label(value_row, text="credits (estimated scan value)").pack(side=tk.LEFT)
+    nb.Label(value_row, text="credits, judged by").pack(side=tk.LEFT)
+    _vars["basis"] = tk.StringVar(value=BASIS_LABELS[cfg.basis])
+    tk.OptionMenu(value_row, _vars["basis"], *BASIS_LABELS.values()).pack(side=tk.LEFT, padx=4)
 
     rows_row = tk.Frame(frame)
     rows_row.grid(row=4, column=0, sticky=tk.W, padx=(30, 10), pady=2)
@@ -342,7 +352,8 @@ def build_settings(notebook: nb.Notebook) -> None:
 def _typed() -> TargetsConfig:
     return TargetsConfig(enabled=bool(_vars["enabled"].get()), threshold=_clamp(_vars["threshold"].get(), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
                          rows=_clamp(_vars["rows"].get(), *ROWS_RANGE, DEFAULT_ROWS), life=bool(_vars["life"].get()), done=bool(_vars["done"].get()),
-                         online=bool(_vars["online"].get()))
+                         online=bool(_vars["online"].get()),
+                         basis=next((key for key, label in BASIS_LABELS.items() if label == _vars["basis"].get()), DEFAULT_BASIS))
 
 
 def _test_card() -> None:
@@ -356,7 +367,7 @@ def _test_card() -> None:
 
     def worker() -> None:
         try:
-            sample = build_card(sample_survey(), min(typed.threshold, 100_000), typed.rows, typed.life, typed.done)
+            sample = build_card(sample_survey(), min(typed.threshold, 100_000), typed.rows, typed.life, typed.done, typed.basis)
             render(sample, placed_client(client, look, sample), look)
             outcome, color = "Sent: check your overlay.", "#2e7d32"
         except OSError as err:

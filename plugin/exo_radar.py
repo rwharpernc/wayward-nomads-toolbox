@@ -144,6 +144,7 @@ class Plan:
     pointers: Tuple[Tuple[float, float, int], ...] = ()      # a unit direction (x right, y up) and color to each tracked plant, drawn from the center
     track: Tuple[str, ...] = ()                              # one line per tracked plant that says which and how far
     rows: Tuple[Tuple[Item, ...], ...] = ()                  # what is drawn under the plot, a row at a time, each item with its little pointer
+    north: Optional[float] = None                            # where north lies on the plot, in degrees clockwise from up (the plot is turned to your heading, so north moves as you turn)
 
 
 def build_plan(view: Optional[organic_scan.BodyView], size: int = SIZE) -> Plan:
@@ -204,7 +205,8 @@ def build_plan(view: Optional[organic_scan.BodyView], size: int = SIZE) -> Plan:
     if scan_items:
         rows.append(tuple(scan_items))
     rows.extend(track_items)
-    return Plan(tuple(circles), tuple(markers), "   ".join(parts), bottom, distance_text(extent), True, tuple(targets), tuple(pointers), track_lines(view), tuple(rows))
+    return Plan(tuple(circles), tuple(markers), "   ".join(parts), bottom, distance_text(extent), True, tuple(targets), tuple(pointers), track_lines(view), tuple(rows),
+                north=-(view.heading or 0.0))
 
 
 class RadarLayout:
@@ -260,6 +262,12 @@ class RadarLayout:
         # you: a small filled circle at the center, with a short line ahead
         client.send_circle(f"{self.prefix}me", look.color("title"), look.color("title"), cx, cy, 4, ttl=ttl, thickness=1)
         client.send_vector(f"{self.prefix}ahead", [{"x": cx, "y": cy - 4}, {"x": cx, "y": cy - 20}], look.color("title"), ttl=ttl)
+        if plan.north is not None:
+            # north, on the edge of the plot: the plot turns with you, so this says which way the map's north is (an arrowhead and an N)
+            edge = SIZE / 2 - 6
+            nx, ny = math.sin(math.radians(plan.north)), math.cos(math.radians(plan.north))
+            client.send_vector(f"{self.prefix}north", arrow_points(cx + nx * edge, cy - ny * edge, plan.north, ARROW_SIZE), look.color("muted"), ttl=ttl)
+            texts.append(("N", "muted", cx + nx * (edge - 14) - 4, cy - ny * (edge - 14) - 9))
         for index, (label, mx, my) in enumerate(plan.markers):
             texts.append((label, "info", cx + mx - 4, cy - my - 9))
             client.send_circle(f"{self.prefix}m{index}", look.color("info"), "#00000000", cx + mx, cy - my, 8, ttl=ttl, thickness=2)
@@ -295,6 +303,7 @@ class RadarLayout:
                 f"{self.prefix}t{i}" for i in range(self.MAX_TARGETS)]:
             client.send_circle(shape_id, "", "", left, top, 1, ttl=1)
         client.send_vector(f"{self.prefix}ahead", [], "white", ttl=1)
+        client.send_vector(f"{self.prefix}north", [], "white", ttl=1)
         for index in range(self.MAX_TARGETS):
             client.send_vector(f"{self.prefix}point{index}", [], "white", ttl=1)
         for index in range(self.MAX_ARROWS):

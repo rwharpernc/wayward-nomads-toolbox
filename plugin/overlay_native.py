@@ -10,11 +10,12 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from typing import List, Optional
 
 from config import appname, config
 
-from . import overlay_fonts, overlay_layout as layout, overlay_raster, overlay_window
+from . import overlay_fonts, overlay_layout as layout, overlay_raster, overlay_style, overlay_window
 from .overlay_scene import Scene
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -61,6 +62,42 @@ def save_keep_showing(keep: bool) -> None:
     config.set(CFG_KEEP, bool(keep))
 
 
+_PATH_SECONDS = 2.0
+_path_cache = {"at": 0.0, "path": ""}
+_measure_fonts: dict = {}
+_widths: dict = {}
+_MEASURE_SCALE = 8                      # measured at eight times the size and divided, so whole-pixel hinting does not blur the width
+
+
+def _current_font_path() -> str:
+    now = time.monotonic()
+    if now - _path_cache["at"] > _PATH_SECONDS or not _path_cache["path"] and _path_cache["at"] == 0.0:
+        _path_cache.update(at=now, path=_font_path())
+    return _path_cache["path"]
+
+
+def measure(text: str, size: str) -> float:
+    """The width in logical pixels of `text` at a size name, in the font the built-in overlay draws in (see `overlay_style.set_text_measurer`)."""
+    path = _current_font_path()
+    key = (path, size, text)
+    width = _widths.get(key)
+    if width is None:
+        fonts = _measure_fonts.get(path)
+        if fonts is None:
+            fonts = _measure_fonts[path] = overlay_raster.Fonts(path)
+        px = overlay_raster.FONT_PX.get(size, overlay_raster.DEFAULT_FONT_PX)
+        width = fonts.get(px * _MEASURE_SCALE).getlength(text) / _MEASURE_SCALE
+        if len(_widths) > 20000:
+            _widths.clear()
+        _widths[key] = width
+    return width
+
+
+def install_measurer() -> None:
+    """Cards are sized from measured text while the built-in overlay is chosen, and from the character estimates otherwise."""
+    overlay_style.set_text_measurer(measure if selected() == BUILTIN else None)
+
+
 window = overlay_window.OverlayWindow(scene, _font_path, keep_showing, groups)
 
 
@@ -84,6 +121,7 @@ def save_choice(choice: str) -> None:
 
 def apply_choice() -> None:
     """Starts or stops the window to match the saved choice (and drops what the other overlay was showing)."""
+    install_measurer()
     if selected() == BUILTIN:
         window.start()
     else:
@@ -92,11 +130,13 @@ def apply_choice() -> None:
 
 
 def start() -> None:
+    install_measurer()
     if selected() == BUILTIN:
         window.start()
 
 
 def stop() -> None:
+    overlay_style.set_text_measurer(None)
     window.stop()
     scene.clear()
 

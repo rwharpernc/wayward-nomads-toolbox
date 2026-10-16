@@ -215,6 +215,18 @@ class Radar(unittest.TestCase):
         self.assertGreater(right, 10.0)
         self.assertAlmostEqual(ahead, 0.0, places=3)
 
+    def test_north_is_marked_on_the_plot_and_turns_with_the_heading(self):
+        facing_east = dataclasses.replace(EX.sample_view(), heading=90.0)
+        self.assertAlmostEqual(XR.build_plan(facing_east).north, -90.0)             # facing east, north is to the left
+        self.assertAlmostEqual(XR.build_plan(dataclasses.replace(EX.sample_view(), heading=0.0)).north, 0.0)
+        rec = Recorder()
+        EX.LAYOUT_RADAR.render(XR.build_plan(facing_east), rec, S.DEFAULT)
+        north = [k for k in rec.vectors if k.endswith("north")]
+        self.assertTrue(north and rec.vectors[north[0]], "an arrowhead is drawn on the edge")
+        self.assertIn("N", rec.texts())
+        EX.LAYOUT_RADAR.clear(rec)
+        self.assertEqual(rec.vectors[north[0]], [])                                  # and it goes with the plot
+
     def test_the_plan_has_a_circle_per_sample_red_when_inside_and_the_distances(self):
         plan = XR.build_plan(EX.sample_view())
         self.assertTrue(plan.visible)

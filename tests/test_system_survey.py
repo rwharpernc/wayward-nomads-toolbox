@@ -102,6 +102,15 @@ class TargetTests(Feed):
         values = [b.scan_value() for b in self.survey.to_map(0)]
         self.assertEqual(values, sorted(values, reverse=True))
 
+    def test_the_basis_is_the_scan_value_or_what_mapping_pays(self):
+        scan_only = self.short_names(self.survey.to_map(1_000_000, "scan"))
+        mapped = self.survey.to_map(1_000_000, "mapped")
+        self.assertEqual(scan_only, [])                                  # no body's scan alone reaches a million
+        self.assertTrue(mapped)                                          # mapping pays far more, so some do
+        values = [b.mapped_value() for b in mapped]
+        self.assertEqual(values, sorted(values, reverse=True))
+        self.assertTrue(all(v >= 1_000_000 for v in values))
+
     def test_mapping_a_body_removes_it(self):
         first = self.survey.to_map(100_000)[0]
         self.feed({"event": "SAAScanComplete", "BodyName": first.name, "BodyID": first.body_id})
@@ -190,6 +199,9 @@ class Finished(Feed):
         self.feed({"event": "ScanOrganic", "ScanType": "Analyse", "Genus_Localised": "Bacterium", "Body": by["A 2"].body_id})
         self.assertEqual([b.short for b in self.survey.finished()], ["A 1", "A 2"])
         self.assertEqual(self.survey.life_counts(), (1, 1))
+        analysed, signals = self.survey.bio_totals()
+        self.assertEqual(analysed, signals)                                # the one body with life is finished: every signal of it is analysed
+        self.assertGreater(signals, 0)
 
 
 class StoreTests(unittest.TestCase):
