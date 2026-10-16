@@ -1,5 +1,9 @@
 # Windows and Linux
 
+**A note on Linux support.** Linux support is a commitment. WNTB's author uses both Linux (CachyOS) and Windows and spends about equal time on each. Most people who use the plugin are on Windows, so new
+features are proven on Windows first and Linux follows slightly behind. If something new works on Windows and not yet on Linux, that is the reason, not neglect: report it and it will be looked at. What has and has not
+been checked on Linux is listed in [Linux testing](../LINUX_TESTING.md).
+
 WNTB runs on **Windows and Linux**, wherever EDMC does. Almost everything is the same on both, because it only
 reads the game's journal. A handful of features touch the operating system, and those are the ones that differ.
 

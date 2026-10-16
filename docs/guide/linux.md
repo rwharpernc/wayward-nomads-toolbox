@@ -1,5 +1,9 @@
 # WNTB on Linux
 
+**A note on Linux support.** Linux support is a commitment. WNTB's author uses both Linux (CachyOS) and Windows and spends about equal time on each. Most people who use the plugin are on Windows, so new
+features are proven on Windows first and Linux follows slightly behind. If something new works on Windows and not yet on Linux, that is the reason, not neglect: report it and it will be looked at. What has and has not
+been checked on Linux is listed in [Linux testing](../LINUX_TESTING.md).
+
 WNTB runs on Linux wherever EDMC does. It has been tested on a real install (KDE Plasma on Wayland, Elite under
 Steam Proton, EDMC as a Flatpak): the Settings panel, the on-screen overlays (test overlay, Discovery Alerts,
 Notable Bodies), Auto-Honk, the screenshot features and Trade all work. The newer parts (the Colonization mode, and the

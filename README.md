@@ -94,6 +94,10 @@ marked as estimates on screen.
 > will come through a separate app that is in development. WNTB will connect to it when it is ready. Until then everything
 > on the COL page is about **you**: your deliveries, your ship and your carrier. Expect rough edges and changes.
 
+> **A note on Linux support.** Linux support is a commitment, not an afterthought. WNTB's author uses both Linux (CachyOS) and Windows and spends about equal time on each. Most people who use the plugin are on
+> Windows, so new features are proven on Windows first and Linux follows slightly behind: a release can reach Linux a little later than it reaches Windows, and the Linux checks for the newest parts are listed in
+> [Linux testing](docs/LINUX_TESTING.md). Linux reports are welcome and get the same attention as any other.
+
 > **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0, 1.12.0, 1.13.0, 1.14.0, 1.14.1 and 1.15.0 have been
 > tried on Windows only. The newest parts (the Missions window, the Missions overlay and Source commodities, Best picks, the Upgrade planner, Megaships, the Engineering window's Ship planner and Engineers tab, the Materials and Engineering work, the material trader finder, the
 > Expedition planner and the Help buttons) have had less time in the game than the rest, so expect a few small fixes in a later update. If something looks off,
