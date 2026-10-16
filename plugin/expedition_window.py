@@ -56,6 +56,7 @@ _COLUMNS = (
     Column("body", "Body", 160, max_chars=30),
     Column("note", "Note", 280, stretch=True, max_chars=60),
     Column("reached", "Reached (UTC)", 130),
+    Column("survey", "Found here", 190, max_chars=34),
     Column("away", "From you (ly)", 100, anchor="e"),
 )
 
@@ -96,6 +97,8 @@ def stats_text(e: Optional[expedition.Expedition]) -> str:
     taken = expedition.elapsed_text(e.started, e.finished) if e.started else ""
     if taken:
         parts.append(taken)
+    if e.survey_text():
+        parts.append(e.survey_text())
     return " · ".join(parts)
 
 
@@ -244,7 +247,7 @@ class ExpeditionWindow:
             far = expedition.distance(position, stop.xyz)
             reached = when(stop.visited) or ("next" if stop is nxt and e.status == expedition.ACTIVE else "")
             self._table.insert(stop.id, (number, clip(stop.system, 44), clip(stop.body, 30), clip(stop.note, 60), reached,
-                                         f"{far:,.0f}" if far is not None else "-"))
+                                         clip(stop.survey_text(), 34), f"{far:,.0f}" if far is not None else "-"))
         if keep and any(s.id == keep for s in e.stops):
             self._table.select(keep)
         else:

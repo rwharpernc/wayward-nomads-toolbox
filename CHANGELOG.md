@@ -6,6 +6,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 ## Unreleased
 
 ### Added
+- **The running expedition on the Route card, and survey tracking per stop.** With the Route overlay on, the card shows the running Expedition: its name and progress, what was found at the stop you are at, the next stop with its distance, that stop's note, and the stop just reached (a tick under Settings → Overlays → Route turns it off). Each stop now counts the bodies scanned, the first discoveries and the bodies mapped in its system (and how many bodies the system has, once you have honked), shown in the Expedition row, in a new **Found here** column of the window, and on the card.
 - **Route overlay.** A card with the ship's travel status (fuel, jump range, the fuel the last jump used, jumps and light years left, the next supercharge) over the systems of the route plotted in the game. Neutron stars and white dwarfs are picked out so the supercharge can be prepared for, and other stars that cannot be scooped are marked. Off until ticked in Settings → Overlays → Route; it has a Test Card and its own entry on Overlay Placement. It follows the ship along the route and clears when the route ends, is cleared, or the ship jumps off it.
 
 ### Changed

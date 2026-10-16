@@ -74,13 +74,18 @@ def route_file(*stops):
 ROUTE = route_file(("Sol", "G"), ("Alpha", "M"), ("Beta", "N"), ("Gamma", "K"), ("Delta", "DA"), ("Epsilon", "H"), ("Zeta", "N"))
 
 
+TRIP = [("Expedition: Colonia   2 of 5", "title"), ("Next: Sol / Earth   212 ly", "text"), ("Note: say hello", "muted")]
+
+
 class World:
-    def __init__(self, route=ROUTE, rows=3, enabled=True):
+    def __init__(self, route=ROUTE, rows=3, enabled=True, trip=(), show_trip=True):
         self.at = 1000.0
         self.drawn = []
         self.file = route
-        self.cfg = RO.RouteConfig(enabled=enabled, rows=rows)
-        self.state = RO.RouteOverlay(draw=self.drawn.append, now=lambda: self.at, cfg=lambda: self.cfg, read=lambda: self.file)
+        self.cfg = RO.RouteConfig(enabled=enabled, rows=rows, expedition=show_trip)
+        self.trip = list(trip)
+        self.state = RO.RouteOverlay(draw=self.drawn.append, now=lambda: self.at, cfg=lambda: self.cfg, read=lambda: self.file,
+                                     expedition=lambda: self.trip)
 
     def event(self, name, system=None, **fields):
         self.state.handle_event({"event": name, **fields}, system)
@@ -113,6 +118,28 @@ w.event("FSDJump", system="Somewhere Else", StarSystem="Somewhere Else", FuelUse
 check(not w.drawn[-1], "off the route the card clears")
 w.event("NavRouteClear", system="Somewhere Else")
 check(not w.drawn[-1], "a cleared route stays cleared")
+
+# --- the active expedition on the card -----------------------------------------------------------------------------------------------------
+w = World(trip=TRIP)
+w.event("NavRoute", system="Sol")
+card = w.drawn[-1]
+check(list(card.header[-3:]) == TRIP, f"the expedition lines follow the status lines: {card.header}")
+check([r[0] for r in card.rows][:1] == ["1. Alpha"], "and the route is still listed under them")
+w.cfg.expedition = False
+w.state.refresh()
+check(all(t not in [x for x, _r in w.drawn[-1].header] for t, _r in TRIP), "the setting hides the expedition")
+solo = World(route={"Route": []}, trip=TRIP)
+solo.event("NavRoute", system="Sol")
+check(bool(solo.drawn[-1]) and list(solo.drawn[-1].header[-3:]) == TRIP and not solo.drawn[-1].rows, f"an expedition with no route still draws a card: {solo.drawn[-1]}")
+check(solo.state.showing(), "and keeps the tick running")
+none = World(route={"Route": []})
+none.event("NavRoute", system="Sol")
+check(not none.state.showing() and not none.drawn, "no route and no expedition: nothing to show")
+
+# a card with the most header lines still fits the card's ids
+full = RO.Card(header=tuple(("line %d" % i, "text") for i in range(RO.MAX_HEADER)))
+rec_full = None
+
 
 # --- off, redraw rate --------------------------------------------------------------------------------------------------------------------------
 off = World(enabled=False)
@@ -156,6 +183,9 @@ for look in (S.LEGACY, S.DEFAULT, S.look_from_choices("Ice blue", 1, 6, 3)):
           "the star column fits inside the card")
     check(all(v[4] == look.size("normal") for v in live.values()), "one text size throughout")
 
+rec = Recorder()
+RO.render(full, rec, S.LEGACY)
+check(sum(1 for k, v in rec.messages.items() if k.startswith('wntb_route_h') and v[0]) == RO.MAX_HEADER, 'every header id is used by a full header')
 rec = Recorder()
 RO.render(RO.Card(), rec, S.LEGACY)
 check(rec.shapes[RO._CARD_ID][2:] == (0, 0) and all(v[0] == "" for v in rec.messages.values()), "an empty card clears everything")

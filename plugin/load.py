@@ -49,8 +49,8 @@ if not logger.hasHandlers():
 # Every feature module that consumes journal events. Order doesn't matter -
 # each one only ever reads `entry`/`state`, never mutates them.
 _FEATURES = (
-    powerplay, missions, missions_overlay, autohonk, interdiction, flight_alerts, route_overlay, landing, discovery, notable, boxel_survey, exploration_value,
-    organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, notes_panel, expedition_panel, surface_compass, ship_builds_panel, colonisation_panel, screenshots,
+    powerplay, missions, missions_overlay, autohonk, interdiction, flight_alerts, landing, discovery, notable, boxel_survey, exploration_value,
+    organic_scan_panel, codex_completionist_panel, gec_poi_panel, canonn_poi_panel, notes_panel, expedition_panel, route_overlay, surface_compass, ship_builds_panel, colonisation_panel, screenshots,
     inventory_panel, materials_panel, mining_panel, trade_panel, trade_watch_panel, bgs_panel, game_mode, session_credits, session_merits, credits_ledger,
 )
 

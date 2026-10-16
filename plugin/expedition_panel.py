@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import os
 import tkinter as tk
-from typing import Any, Dict, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from config import appname, config
 
@@ -59,9 +59,43 @@ def summary_lines(book_: expedition.ExpeditionBook, position: Optional[expeditio
         lines.append(f"Next: {expedition.clip(place, _SYSTEM_SHOWN)}" + (f" ({far:,.0f} ly)" if far is not None else ""))
         if nxt.note:
             lines.append(f"Note: {expedition.clip(nxt.note, _NOTE_SHOWN)}")
+    found = e.survey_text()
+    if found:
+        lines.append(f"Found: {found}")
     if arrival:
         lines.append(expedition.clip(arrival, _NOTE_SHOWN + 30))
     return "\n".join(lines), f"- {e.visited_count}/{total}"
+
+
+def _stop_here(e: expedition.Expedition, system: str) -> Optional[expedition.Stop]:
+    """The most recently reached stop in `system`, or None."""
+    key = expedition.name_key(system)
+    return max((s for s in e.stops if s.is_visited and expedition.name_key(s.system) == key), key=lambda s: s.visited, default=None) if key else None
+
+
+def build_overlay_lines(book_: expedition.ExpeditionBook, position: Optional[expedition.XYZ], arrival: str = "",
+                        system: str = "") -> List[Tuple[str, str]]:
+    """The active expedition as lines for the Route overlay card: (text, color role). Empty when none is running. The card is left-justified and
+    narrow, so a name, a place and a note are cut short here (`_fit` in the overlay cuts any that still do not fit)."""
+    e = book_.active() if book_.ready else None
+    if e is None:
+        return []
+    lines: List[Tuple[str, str]] = [(f"Expedition: {expedition.clip(e.name, 28)}   {e.visited_count} of {len(e.stops)}", "title")]
+    here = _stop_here(e, system)
+    if here is not None and here.survey_text():
+        lines.append((f"Here: {here.survey_text()}", "info"))
+    nxt = e.next_stop()
+    if nxt is None:
+        lines.append(("All stops visited", "ok"))
+    else:
+        place = f"{nxt.system} / {nxt.body}" if nxt.body else nxt.system
+        far = book_.distance_to_next(e, position)
+        lines.append((f"Next: {expedition.clip(place, 40)}" + (f"   {far:,.0f} ly" if far is not None else ""), "text"))
+        if nxt.note:
+            lines.append((f"Note: {expedition.clip(nxt.note, 60)}", "muted"))
+    if arrival:
+        lines.append((expedition.clip(arrival, 70), "ok"))
+    return lines
 
 
 class ExpeditionController:
@@ -95,6 +129,8 @@ class ExpeditionController:
                 self._jump_range = float(reach)
         if changed:
             self._arrival = ""
+        if event in expedition.SURVEY_EVENTS:
+            book.on_survey(dict(entry), self._system)
         if event in expedition.ARRIVAL_EVENTS and isinstance(entry.get("StarSystem"), str) and entry["StarSystem"].strip():
             self._arrive(entry)
         elif not self._system and system:
@@ -119,6 +155,9 @@ class ExpeditionController:
 
     def summary(self) -> Tuple[str, str]:
         return summary_lines(book, self._position, self._arrival)
+
+    def overlay_lines(self) -> List[Tuple[str, str]]:
+        return build_overlay_lines(book, self._position, self._arrival, self._system)
 
     def _update_summary(self) -> None:
         if self._summary_var is None:
@@ -186,6 +225,11 @@ class ExpeditionController:
 
 
 controller = ExpeditionController()
+
+
+def overlay_lines() -> List[Tuple[str, str]]:
+    """The active expedition's lines for the Route overlay card (see `build_overlay_lines`)."""
+    return controller.overlay_lines()
 
 
 def start(plugin_dir: str) -> None:

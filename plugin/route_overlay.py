@@ -6,6 +6,10 @@ a **neutron star** or a **white dwarf** is picked out in color so the supercharg
 be scooped is marked so the fuel is planned around it. See `route_plan.py` for what the game provides and what it does not (it does
 not say what the next jump will cost in fuel, and a plotted route is only shown while the ship is on it).
 
+**The active expedition** (Exploration mode's Expedition planner) can be shown on the same card, between the status lines and the route: its name and progress,
+the next stop with its distance, that stop's note, and the note of the stop just reached. It shares this card because every default screen spot is taken, and
+both are trip information.
+
 Nothing is sent anywhere: it reads the journal, `NavRoute.json` and EDMC's copy of `Status.json`, and draws through the shared overlay
 connection (EDMCModernOverlay, which WNTB does not install or launch). Settings-tab-only and off until ticked, like every overlay.
 Where the card sits is the global Overlay Placement setting ("Route and ship status")."""
@@ -18,7 +22,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import tkinter as tk
 
@@ -38,6 +42,7 @@ PANEL_PLACEMENT = None   # Settings-tab-only, no main-panel widget
 
 _CFG_ENABLED = "wntb_route_enabled"
 _CFG_ROWS = "wntb_route_rows"
+_CFG_EXPEDITION = "wntb_route_expedition"
 
 ROWS_RANGE = (3, 20)
 DEFAULT_ROWS = 8
@@ -50,6 +55,7 @@ RESEND_S = 3.0           # an unchanged card is drawn again this often, so it do
 class RouteConfig:
     enabled: bool = False
     rows: int = DEFAULT_ROWS
+    expedition: bool = True     # show the active expedition on the card
 
 
 def clamp_rows(value: Any) -> int:
@@ -61,12 +67,14 @@ def clamp_rows(value: Any) -> int:
 
 
 def load_config() -> RouteConfig:
-    return RouteConfig(enabled=config.get_bool(_CFG_ENABLED, default=False), rows=clamp_rows(config.get_str(_CFG_ROWS)))
+    return RouteConfig(enabled=config.get_bool(_CFG_ENABLED, default=False), rows=clamp_rows(config.get_str(_CFG_ROWS)),
+                       expedition=config.get_bool(_CFG_EXPEDITION, default=True))
 
 
 def save_config(cfg: RouteConfig) -> None:
     config.set(_CFG_ENABLED, cfg.enabled)
     config.set(_CFG_ROWS, str(cfg.rows))
+    config.set(_CFG_EXPEDITION, cfg.expedition)
 
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
@@ -134,11 +142,14 @@ def status_lines(tracker: RouteTracker, low_percent: int = fuel_alerts.DEFAULT_L
     return lines
 
 
-def build_card(tracker: RouteTracker, rows: int = DEFAULT_ROWS, low_percent: int = fuel_alerts.DEFAULT_LOW_PERCENT) -> Card:
-    """The card for the tracker's state: status lines, the next `rows` systems, and a line for the rest. Empty when no route applies."""
+def build_card(tracker: RouteTracker, rows: int = DEFAULT_ROWS, low_percent: int = fuel_alerts.DEFAULT_LOW_PERCENT,
+               expedition_lines: Sequence[Line] = ()) -> Card:
+    """The card for the tracker's state: status lines, any expedition lines, the next `rows` systems, and a line for the rest. Empty when no route
+    applies and there is no expedition to show."""
     ahead = tracker.remaining()
+    extra_lines = tuple(expedition_lines)[:MAX_EXPEDITION_LINES]
     if not ahead:
-        return Card()
+        return Card(tuple(status_lines(tracker, low_percent)) + extra_lines) if extra_lines else Card()
     shown = ahead[:rows]
     listed: List[Row] = []
     for number, hop in enumerate(shown, 1):
@@ -151,7 +162,7 @@ def build_card(tracker: RouteTracker, rows: int = DEFAULT_ROWS, low_percent: int
         neutrons, dwarfs = tracker.special_counts(rest)
         extra = [f"{count} {word}" for count, word in ((neutrons, "neutron"), (dwarfs, "white dwarf")) if count]
         footer = (f"+ {len(rest)} more" + (f" ({', '.join(extra)})" if extra else ""), "muted")
-    return Card(tuple(status_lines(tracker, low_percent)), tuple(listed), footer)
+    return Card(tuple(status_lines(tracker, low_percent)) + extra_lines, tuple(listed), footer)
 
 
 # --- drawing -------------------------------------------------------------------------------------------------------------
@@ -163,7 +174,8 @@ _Y = 100
 _LINE_GAP = 4
 _COLUMN_GAP = 14
 _SAMPLE_LINES = 4 + DEFAULT_ROWS + 1    # the card's height as placement sees it
-MAX_HEADER = 4
+MAX_EXPEDITION_LINES = 5     # name and progress, what was found here, the next stop, its note, the stop just reached
+MAX_HEADER = 4 + MAX_EXPEDITION_LINES
 GROUP_NAME = "wntb_route"
 GROUP_PREFIX = "wntb_route_"
 _CARD_ID = "wntb_route_card"
@@ -250,6 +262,24 @@ def _clear(client: OverlayClient) -> None:
         client.send_message(msg_id, "", "white", _X, _Y, ttl=1)
 
 
+SAMPLE_EXPEDITION: List[Line] = [
+    ("Expedition: Sample trip   3 of 12", "title"),
+    ("Next: Sample System 4 / A 1   212 ly", "text"),
+    ("Note: scan the ringed gas giant", "muted"),
+    ("Reached stop 3: Sample System 2.", "ok"),
+]
+
+
+def expedition_lines() -> List[Line]:
+    """The active expedition's lines from the Expedition row, or none (also when that module cannot be loaded)."""
+    try:
+        from . import expedition_panel
+        return list(expedition_panel.overlay_lines())
+    except Exception:    # a trip card must still draw without the planner
+        logger.debug("Could not read the active expedition", exc_info=True)
+        return []
+
+
 def sample_tracker() -> RouteTracker:
     """A made-up trip for the Test Card: a neutron highway with a white dwarf and a black hole on it."""
     tracker = RouteTracker(system="Sol", jump_range=61.4, last_fuel_used=3.2)
@@ -279,13 +309,15 @@ class RouteOverlay:
     without the overlay, the real clock or a journal folder."""
 
     def __init__(self, draw: Optional[Callable[[Card], None]] = None, now: Callable[[], float] = time.time,
-                 cfg: Callable[[], RouteConfig] = load_config, read: Callable[[], Optional[Any]] = read_route_file) -> None:
+                 cfg: Callable[[], RouteConfig] = load_config, read: Callable[[], Optional[Any]] = read_route_file,
+                 expedition: Callable[[], List[Line]] = expedition_lines) -> None:
         self._lock = threading.RLock()
         self.tracker = RouteTracker()
         self._draw = draw or (lambda card: None)
         self._now = now
         self._cfg = cfg
         self._read = read
+        self._expedition = expedition
         self._last: Optional[Card] = None
         self._last_sent = 0.0
 
@@ -312,8 +344,9 @@ class RouteOverlay:
 
     def card(self) -> Card:
         cfg = self._cfg()
+        trip = self._expedition() if cfg.expedition else []
         with self._lock:
-            return build_card(self.tracker, cfg.rows)
+            return build_card(self.tracker, cfg.rows, expedition_lines=trip)
 
     def refresh(self) -> None:
         """Draws the card when it changed (or now and then, so it does not expire). Does nothing when the Route overlay is off."""
@@ -330,8 +363,8 @@ class RouteOverlay:
         self._draw(card)
 
     def showing(self) -> bool:
-        with self._lock:
-            return self.tracker.on_route() and bool(self.tracker.remaining())
+        """Whether the card has anything to say, so the one-second tick keeps it from expiring."""
+        return bool(self.card())
 
 
 # --- wiring ----------------------------------------------------------------------------------------------------------------
@@ -417,7 +450,8 @@ def build_settings(notebook: nb.Notebook) -> None:
               "its connection settings are on the Overlay Connection tab). At the top it shows your fuel, jump range, the fuel your "
               "last jump used, the jumps and light years left, and how far away the next supercharge is. Below it, the systems of the "
               "route plotted in the game, in order, with each system's star: neutron stars and white dwarfs are picked out so you can "
-              "prepare for the supercharge, and other stars that cannot be scooped are marked too. Everything comes from your journal, "
+              "prepare for the supercharge, and other stars that cannot be scooped are marked too. The active expedition can be shown on "
+              "it as well. Everything comes from your journal, "
               "the game's NavRoute.json and Status.json; nothing is sent anywhere."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
@@ -428,6 +462,7 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     _vars["enabled"] = tk.BooleanVar(value=cfg.enabled)
     _vars["rows"] = tk.StringVar(value=str(cfg.rows))
+    _vars["expedition"] = tk.BooleanVar(value=cfg.expedition)
     nb.Checkbutton(frame, text="Enable the Route overlay", variable=_vars["enabled"]).grid(row=2, column=0, sticky=tk.W, padx=10, pady=2)
 
     rows_row = tk.Frame(frame)
@@ -436,6 +471,9 @@ def build_settings(notebook: nb.Notebook) -> None:
     tk.Spinbox(rows_row, from_=ROWS_RANGE[0], to=ROWS_RANGE[1], width=4, textvariable=_vars["rows"]).pack(side=tk.LEFT, padx=4)
     nb.Label(rows_row, text="(the rest are counted, with how many are neutron stars or white dwarfs)").pack(side=tk.LEFT)
 
+    nb.Checkbutton(frame, text="Show the active expedition on this card (its progress, the next stop and its note)",
+                   variable=_vars["expedition"]).grid(row=4, column=0, sticky=tk.W, padx=10, pady=2)
+
     nb.Label(
         frame,
         text=("What WNTB cannot know: the journal does not say what a jump will cost in fuel, so the card shows the fuel on board and "
@@ -443,15 +481,15 @@ def build_settings(notebook: nb.Notebook) -> None:
               "fuel it carries now. The route is shown while you are in one of its systems; if you jump off it, the card clears until "
               "you plot a new route."),
         wraplength=440, justify=tk.LEFT,
-    ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+    ).grid(row=5, column=0, sticky=tk.W, padx=10, pady=(6, 4))
 
     action_row = tk.Frame(frame)
-    action_row.grid(row=5, column=0, sticky=tk.W, padx=10, pady=(6, 2))
+    action_row.grid(row=6, column=0, sticky=tk.W, padx=10, pady=(6, 2))
     tk.Button(action_row, text="Test Card", command=_test_card).pack(side=tk.LEFT)
     _result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
     _result_label.pack(side=tk.LEFT, padx=(10, 0))
     nb.Label(frame, text="(Test Card works even while disabled above, and reports whether the overlay was actually reachable.)",
-             wraplength=440, justify=tk.LEFT).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+             wraplength=440, justify=tk.LEFT).grid(row=7, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _test_card() -> None:
@@ -462,10 +500,11 @@ def _test_card() -> None:
     label = _result_label
     look = overlay_appearance.current_look()
     rows = clamp_rows(_vars["rows"].get()) if "rows" in _vars else DEFAULT_ROWS
+    show_trip = bool(_vars["expedition"].get()) if "expedition" in _vars else True
 
     def worker() -> None:
         try:
-            render(build_card(sample_tracker(), rows), placed_client(client, look), look)
+            render(build_card(sample_tracker(), rows, expedition_lines=SAMPLE_EXPEDITION if show_trip else ()), placed_client(client, look), look)
             outcome, color = "Sent: check your overlay.", "#2e7d32"
         except OSError as err:
             outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
@@ -480,4 +519,4 @@ def _test_card() -> None:
 def save_settings() -> None:
     if not _vars:
         return
-    save_config(RouteConfig(enabled=bool(_vars["enabled"].get()), rows=clamp_rows(_vars["rows"].get())))   # a card left up simply expires
+    save_config(RouteConfig(enabled=bool(_vars["enabled"].get()), rows=clamp_rows(_vars["rows"].get()), expedition=bool(_vars["expedition"].get())))   # a card left up simply expires

@@ -16,7 +16,7 @@ on-screen extras.
 | **Landing Assist** | The pad you've been assigned, with a diagram of the station or carrier |
 | **Interdiction Warning** | An alert the moment an interdiction starts |
 | **Flight Alerts** | A small card with the fleet carrier jump countdown and the low-fuel and unscoopable-star warnings |
-| **Route** | A card with your fuel and jump range, the jumps left and the plotted route, neutron stars and white dwarfs picked out |
+| **Route** | A card with your fuel and jump range, the jumps left and the plotted route (neutron stars and white dwarfs picked out), and the running expedition |
 | **Missions** | A small card of your missions: those here and at the next jump first, then the rest by urgency |
 | **Inventory** | Capacity bars and pickup messages |
 | **Mining** | Live stats |
@@ -61,7 +61,7 @@ makes sense, a test button:
 | **Inventory** | Pickup notifications and the inventory bars | |
 | **Interdiction Warning** | The warning when you are interdicted | **Test Warning** |
 | **Flight Alerts** | The carrier jump countdown and fuel warnings card | **Test Card** |
-| **Route** | The route card (how many systems to list) | **Test Card** |
+| **Route** | The route card (how many systems to list, whether to show the running expedition) | **Test Card** |
 | **Missions** | The missions card (rows to show, next jump, urgent limit) | **Test Card** |
 | **Landing** | The assigned pad and diagram | **Test Overlay** |
 | **Mining** | The mining stats | |

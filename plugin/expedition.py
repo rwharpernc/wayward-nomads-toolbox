@@ -15,6 +15,11 @@ plotted route) or EDSM; a stop without them has no distance. Stats count only wh
 Importing reuses `waypoint_route.WaypointRoute.parse_navroute` (the route plotted in the game) and a CSV with the columns system, body, note.
 Ordering by nearest neighbor works on the unvisited stops that have coordinates and leaves the rest where they are.
 
+**Survey tracking.** While an expedition is active, what the commander finds in each stop's system is counted against that stop: the bodies scanned
+(`Scan`), the ones nobody had discovered before (`Scan` with `WasDiscovered` false), the ones mapped (`SAAScanComplete`) and how many bodies the system
+has (`FSSDiscoveryScan`'s `BodyCount`, or `FSSAllBodiesFound`). Body names are kept, not just counts, so a body scanned twice counts once; belt clusters
+are left out. Nothing is counted for a system that is not a visited stop.
+
 Limits keep the file small and the window quick: 30 expeditions, 500 stops each, and 80/100/100/500 characters for a name, a system, a body and a note.
 Past them a change is refused with a message, never trimmed quietly."""
 from __future__ import annotations
@@ -49,6 +54,8 @@ MAX_STOPS = 500
 MAX_NAME, MAX_SYSTEM, MAX_BODY, MAX_NOTE = 80, 100, 100, 500
 SAVE_EVERY_S = 5.0
 ARRIVAL_EVENTS = ("FSDJump", "CarrierJump", "Location")
+SURVEY_EVENTS = ("FSSDiscoveryScan", "FSSAllBodiesFound", "Scan", "SAAScanComplete")
+MAX_SURVEY_NAMES = 120      # body names kept per list per stop
 
 XYZ = Tuple[float, float, float]
 
@@ -65,10 +72,25 @@ class Stop:
     note: str = ""
     xyz: Optional[XYZ] = None
     visited: str = ""            # UTC time of arrival; empty until visited
+    bodies: int = 0              # bodies in the system, once the commander has honked or finished the system scan
+    scanned: List[str] = field(default_factory=list)    # names of the bodies scanned here
+    mapped: List[str] = field(default_factory=list)     # names of the bodies mapped here
+    firsts: List[str] = field(default_factory=list)     # names of the bodies scanned here that nobody had discovered
 
     @property
     def is_visited(self) -> bool:
         return bool(self.visited)
+
+    def survey_text(self) -> str:
+        """What was found here, on one line: `5 of 12 scanned · 2 first · 1 mapped`; empty when nothing has been counted."""
+        parts = []
+        if self.scanned or self.bodies:
+            parts.append(f"{len(self.scanned)} of {self.bodies} scanned" if self.bodies else f"{len(self.scanned)} scanned")
+        if self.firsts:
+            parts.append(f"{len(self.firsts)} first")
+        if self.mapped:
+            parts.append(f"{len(self.mapped)} mapped")
+        return " · ".join(parts)
 
 
 @dataclass
@@ -93,6 +115,19 @@ class Expedition:
     @property
     def all_visited(self) -> bool:
         return bool(self.stops) and self.visited_count == len(self.stops)
+
+    def survey_totals(self) -> Tuple[int, int, int]:
+        """(bodies scanned, first discoveries, bodies mapped) over all the stops."""
+        return (sum(len(s.scanned) for s in self.stops), sum(len(s.firsts) for s in self.stops), sum(len(s.mapped) for s in self.stops))
+
+    def survey_text(self) -> str:
+        scanned, firsts, mapped = self.survey_totals()
+        parts = [f"{scanned} scanned"] if scanned else []
+        if firsts:
+            parts.append(f"{firsts} first")
+        if mapped:
+            parts.append(f"{mapped} mapped")
+        return " · ".join(parts)
 
 
 @dataclass(frozen=True)
@@ -162,12 +197,24 @@ def _is_legacy(_raw: Any) -> bool:
     return False   # the file is new; nothing older to claim
 
 
+def _names(raw: Any) -> List[str]:
+    """A saved list of body names: strings only, no repeats, at most MAX_SURVEY_NAMES."""
+    out: List[str] = []
+    for item in raw if isinstance(raw, list) else []:
+        if isinstance(item, str) and item and item not in out and len(out) < MAX_SURVEY_NAMES:
+            out.append(item[:MAX_BODY + 40])
+    return out
+
+
 def _stop_from_raw(raw: Any) -> Optional[Stop]:
     if not isinstance(raw, dict) or not isinstance(raw.get("system"), str) or not raw["system"].strip():
         return None
+    bodies = raw.get("bodies")
     return Stop(str(raw.get("id") or uuid.uuid4().hex[:8]), " ".join(raw["system"].split())[:MAX_SYSTEM],
                 " ".join(str(raw.get("body") or "").split())[:MAX_BODY], str(raw.get("note") or "").strip()[:MAX_NOTE],
-                _xyz(raw.get("xyz")), str(raw.get("visited") or ""))
+                _xyz(raw.get("xyz")), str(raw.get("visited") or ""),
+                bodies if isinstance(bodies, int) and not isinstance(bodies, bool) and bodies > 0 else 0,
+                _names(raw.get("scanned")), _names(raw.get("mapped")), _names(raw.get("firsts")))
 
 
 def _expedition_from_raw(raw: Any) -> Optional[Expedition]:
@@ -185,11 +232,22 @@ def _expedition_from_raw(raw: Any) -> Optional[Expedition]:
                       float(ly) if isinstance(ly, (int, float)) and not isinstance(ly, bool) and math.isfinite(ly) and ly >= 0 else 0.0, stops)
 
 
+def _survey_to_raw(s: Stop) -> Dict[str, Any]:
+    """The survey fields of a stop that has any (the others add nothing to the file)."""
+    out: Dict[str, Any] = {}
+    if s.bodies:
+        out["bodies"] = s.bodies
+    for key, names in (("scanned", s.scanned), ("mapped", s.mapped), ("firsts", s.firsts)):
+        if names:
+            out[key] = list(names)
+    return out
+
+
 def _expedition_to_raw(e: Expedition) -> Dict[str, Any]:
     return {"id": e.id, "name": e.name, "status": e.status, "created": e.created, "started": e.started, "finished": e.finished,
             "jumps": e.jumps, "light_years": round(e.light_years, 2),
             "stops": [{"id": s.id, "system": s.system, "body": s.body, "note": s.note, "xyz": list(s.xyz) if s.xyz else None,
-                       "visited": s.visited} for s in e.stops]}
+                       "visited": s.visited, **_survey_to_raw(s)} for s in e.stops]}
 
 
 class ExpeditionBook:
@@ -597,6 +655,46 @@ class ExpeditionBook:
             self._save(force=changed_plan)
             self._changed()
         return Arrival(e, stop, stop is not None and e.all_visited)
+
+    def on_survey(self, entry: Dict[str, Any], system: Any = "") -> Optional[Stop]:
+        """A scan event (`SURVEY_EVENTS`). Counts it against the visited stop of the active expedition whose system it happened in (the event's own
+        system when it names one, else `system`, the one the commander is in) and returns that stop; None when it counted for nothing."""
+        e = self.active()
+        event = entry.get("event")
+        if e is None or not self.ready or event not in SURVEY_EVENTS:
+            return None
+        key = name_key(entry.get("StarSystem") or entry.get("SystemName") or system)
+        stop = max((s for s in e.stops if s.is_visited and name_key(s.system) == key), key=lambda s: s.visited, default=None) if key else None
+        if stop is None:
+            return None
+        body = " ".join(str(entry.get("BodyName") or "").split())
+        changed = False
+        if event == "FSSDiscoveryScan":
+            count = entry.get("BodyCount")
+            if isinstance(count, int) and not isinstance(count, bool) and count > 0 and count != stop.bodies:
+                stop.bodies, changed = count, True
+        elif event == "FSSAllBodiesFound":
+            count = entry.get("Count")
+            if isinstance(count, int) and not isinstance(count, bool) and count > 0 and count != stop.bodies:
+                stop.bodies, changed = count, True
+        elif body and "belt cluster" not in body.casefold():
+            if event == "Scan":
+                changed = self._remember(stop.scanned, body)
+                if entry.get("WasDiscovered") is False:
+                    changed = self._remember(stop.firsts, body) or changed
+            else:
+                changed = self._remember(stop.mapped, body)
+        if changed:
+            self._save(force=False)
+            self._changed()
+        return stop if changed else None
+
+    @staticmethod
+    def _remember(names: List[str], body: str) -> bool:
+        if body in names or len(names) >= MAX_SURVEY_NAMES:
+            return False
+        names.append(body)
+        return True
 
     # --- progress and export ---------------------------------------------------------------------------------------------
 

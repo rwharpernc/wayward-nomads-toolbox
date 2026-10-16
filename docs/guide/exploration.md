@@ -388,6 +388,16 @@ flown and the time since you started, the next stop with its distance (and its n
 stop's system name on the clipboard to paste into the galaxy map, and **Copy on arrival** does it for you every time you arrive anywhere (off until
 ticked). **EXPEDITION** opens the window.
 
+**What you find at each stop.** While an expedition is running, WNTB counts what you do in each stop's system against that stop: the bodies you scan,
+how many nobody had discovered before (the game says so in the scan), and how many you map. Once you have honked, it also knows how many bodies the system
+has, so a stop reads `5 of 12 scanned · 2 first · 1 mapped`. The row shows the running totals (`Found: ...`), the window has a **Found here** column
+for every stop, and the Route overlay card can show the stop you are at. A body scanned twice counts once, belt clusters are not counted, and nothing is
+counted in a system that is not a stop you have reached.
+
+**On your screen.** The Route overlay (Settings → Overlays → Route; see [Always on](always-on.md#route-overlay)) can show the running expedition on its
+card: the name and `7 of 20`, what you have found at the stop you are at, the next stop with its distance, that stop's note, and the stop you have just
+reached. It is on by default once the Route overlay is on, and there is a tick to turn it off.
+
 **The window**
 1. Type a name and press **New**. Pick an expedition from the list at the top; **Rename**, **Reset** and **Delete** act on it (to rename, press **Rename**: the current name appears in the Name box; change it and press **Rename** again. Reset forgets the
    progress and keeps the stops; Reset and Delete ask twice).
@@ -451,6 +461,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | The planner to know a stop was visited when you were not in the game | It counts arrivals the journal reports while the expedition is **running** (Start). A system you reached while it was paused, or before you started, is not ticked. | Use **Mark visited** for those. |
+| Scans to count in a system that is not a stop, or at a stop you have not reached | Survey counts go to a stop you have reached, in the system the scan happened in, while the expedition is running. | Add the system as a stop, or use **Mark visited** for a stop you reached while it was paused. |
 | The distance to the next stop on every stop | A distance needs a position for both ends. The game gives yours on every jump; a stop has one only if it came from a plotted route or EDSM. | Press **Locate and reorder (EDSM)**. A stop EDSM does not know shows `-`. |
 | The jump total to include carrier jumps | A fleet carrier jump is not your ship's jump, so it ticks stops but does not add to the jump count or the light-years. | Nothing needed. |
 | The light-years to be the whole route | It adds each jump's own distance as the game reports it, so it is the distance you flew, not the straight line between stops. | Nothing needed. |

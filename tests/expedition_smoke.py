@@ -128,6 +128,11 @@ check(lines[2] == "Next: Sol / Earth" and lines[3] == "Note: Wave goodbye", f"th
 check(suffix == "- 0/3", f"the folded title: {suffix!r}")
 check(panel._summary_var.get() == text, "the label follows the summary")
 
+# the lines the Route overlay shows for it
+trip = panel.overlay_lines()
+check(trip[0] == ("Expedition: Colonia run   0 of 3", "title"), f"overlay title line: {trip[0]}")
+check(trip[1] == ("Next: Sol / Earth", "text") and trip[2] == ("Note: Wave goodbye", "muted"), f"overlay next stop and its note: {trip[1:3]}")
+
 # a jump to a system that is not a stop counts but ticks nothing
 panel.handle_event(jump("Elsewhere", (100.0, 0.0, 0.0), 40.5), "Bocheaux", "Elsewhere", None, {})
 lines = panel.summary()[0].splitlines()
@@ -137,12 +142,19 @@ check(lines[0].endswith("0 of 3 stops"), "and ticks nothing")
 # the distance to the next stop comes from the last position
 panel.handle_event(jump("Elsewhere 2", (3.0, 4.0, 0.0), 5.0), "Bocheaux", "Elsewhere 2", None, {})
 check("Next: Sol / Earth (5 ly)" in panel.summary()[0], f"a straight-line distance: {panel.summary()[0]!r}")
+check(panel.overlay_lines()[1] == ("Next: Sol / Earth   5 ly", "text"), f"and on the overlay: {panel.overlay_lines()[1]}")
 
 # reaching a stop ticks it and shows its note; the next one has no position, so no distance
 panel.handle_event(jump("Sol", (0.0, 0.0, 0.0), 5.0), "Bocheaux", "Sol", None, {})
 text = panel.summary()[0]
 check(text.splitlines()[0].endswith("1 of 3 stops"), f"a stop is ticked: {text.splitlines()[0]!r}")
 check("Reached stop 1: Sol. Wave goodbye" in text, f"and its note shown: {text!r}")
+
+# scans in a stop's system are counted for it (the row, the overlay)
+panel.handle_event({"event": "FSSDiscoveryScan", "SystemName": "Sol", "BodyCount": 9}, "Bocheaux", "Sol", None, {})
+panel.handle_event({"event": "Scan", "BodyName": "Sol 3", "StarSystem": "Sol", "WasDiscovered": False}, "Bocheaux", "Sol", None, {})
+check("Found: 1 scanned · 1 first" in panel.summary()[0], f"the row shows what was found: {panel.summary()[0]!r}")
+check(("Here: 1 of 9 scanned · 1 first", "info") in panel.overlay_lines(), f"and so does the overlay: {panel.overlay_lines()}")
 check("Next: Sagittarius A* (25,900 ly)" in text, f"the next stop's distance: {text!r}")
 
 # a Location at login in a stop ticks it without counting a jump
