@@ -461,6 +461,36 @@ They come back when you arrive in a system. The cards are drawn by the overlay o
 Where each card sits is set on **Overlay Placement** ("System targets" and "Body info"). They start in the lower middle of the right half of the screen,
 one above the other; move them to suit your HUD.
 
+### Exobiology cards
+
+Four overlay cards for the body you are on, in the ship, the SRV or on foot. Each has its own switch under **Settings → Overlays → Exobiology** (all **off** until
+ticked) and its own entry on **Overlay Placement**. They use Organic Scanning's prediction and sample tracking, so they never disagree with the panel above.
+Nothing is sent anywhere.
+
+- **Bio status** (top center). The heading is *Biological signals* with a count of how many you have analysed and a progress bar. While you are sampling a
+  genus it shows the species and color variant in large type with three circles (filled as you take each sample), what the species pays (**five times as much
+  on a first footfall**, marked), and how far you are from the last sample against the distance the genus needs (`Move 122 m further: 78 m of 200 m`, or `Clear`
+  once you can take the next). With nothing in progress it lists each genus with the distance it needs between samples, and `Done` once analysed; a plant you
+  have identified with the Composition Scanner is named at the foot until you sample it. On a body you have not mapped it says to map it.
+- **Biology** (bottom, left of center). Every genus on the body with the species it could be (candidates in the info color, a single likely species with a `~` before
+  its value) or is once a sample has named it (with its color variant), what each pays, and what the body could pay in all (`Rewards up to 11.9M CR (first footfall
+  bonus: 59.6M CR)`). Analysed species are in the good color.
+- **Bio radar**. A top-down plot centered on you with straight ahead up. Each sample you took has a circle as wide as the genus's minimum distance between samples:
+  **red** while you are inside it (too close for the next sample), **green** once you are clear. The ship (where it touched down) and the SRV (where you launched
+  or left it) are marked `S` and `V` with their distance beneath, with the distance to your first two samples. The scale adapts so every circle fits.
+- **Sample popup**. For ten seconds after each sample: the species and variant, its estimated value, the distance the genus needs, and whether it was logged,
+  sampled or analysed.
+
+**What they cannot tell you:**
+
+| What you might expect | What the game gives | What to do |
+|---|---|---|
+| The species before you map the body | The scan gives only the number of biological signals; the genera come with the mapping scan. | Map the body. Until then Bio status shows the signal count. |
+| The color variant before the first sample | The variant is named by the first sample (or the Composition Scanner). WNTB predicts the species from the body's conditions, not the variant. | Sample, or scan the plant with the Composition Scanner. |
+| The position of a sample taken while EDMC was closed | The journal does not record positions; WNTB reads yours from `Status.json` as you sample. | None: samples taken with EDMC running are kept for the body across restarts. |
+| The SRV's position | The journal does not give it; WNTB uses where you were when you launched or left it. | None. |
+| The first footfall mark on an old body | It comes from the body's own scan (`WasFootfalled`). | Scan the body again if the mark is missing. |
+
 ## Compass
 
 *(Starts minimized.)*

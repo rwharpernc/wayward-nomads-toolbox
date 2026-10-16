@@ -75,6 +75,13 @@ class OrganicScanController:
         self._current_lat: Optional[float] = None
         self._current_lon: Optional[float] = None
         self._current_planet_radius: Optional[float] = None
+        self._current_heading: Optional[float] = None
+        self._ship_pos: Optional[tuple] = None        # where the ship touched down on the current body
+        self._srv_pos: Optional[tuple] = None         # where the SRV was left or launched
+        self._footfall: Dict[str, bool] = {}          # body name -> nobody had set foot there (from its Scan)
+        self._signal_counts: Dict[str, int] = {}      # body name -> biological signals
+        self._mapped_bodies: set = set()
+        self._active_genus: Optional[str] = None      # the genus last sampled and not yet analysed
         self._tracker = OrganicTracker()
 
         self._predictions_var: Optional[tk.StringVar] = None
@@ -137,6 +144,8 @@ class OrganicScanController:
             "stage": organism.stage,
             "last_lat": organism.last_lat,
             "last_lon": organism.last_lon,
+            "variant_name": organism.variant_name,
+            "positions": [list(p) for p in organism.positions],
         }
         self._persist()
 
@@ -169,7 +178,11 @@ class OrganicScanController:
                 organism_data.get("stage", 0),
                 organism_data.get("last_lat"),
                 organism_data.get("last_lon"),
+                organism_data.get("variant_name"),
+                organism_data.get("positions"),
             )
+        if body_name not in self._footfall and "first_footfall" in stored:
+            self._footfall[body_name] = bool(stored["first_footfall"])
 
     # --- journal dispatch -----------------------------------------------
 
@@ -194,6 +207,9 @@ class OrganicScanController:
             self._current_lat = None
             self._current_lon = None
             self._current_planet_radius = None
+            self._current_heading = None
+            self._ship_pos = self._srv_pos = self._active_genus = None
+            self._footfall, self._signal_counts, self._mapped_bodies = {}, {}, set()
             self._tracker.reset()
             self._refresh_predictions()
             self._refresh_active()
@@ -210,8 +226,31 @@ class OrganicScanController:
             self._handle_scan(entry)
         elif event in ("FSSBodySignals", "SAASignalsFound"):
             self._handle_body_signals(entry)
+        elif event == "SAAScanComplete" and entry.get("BodyName"):
+            self._mapped_bodies.add(entry["BodyName"])
         elif event == "ScanOrganic":
             self._handle_scan_organic(entry)
+        elif event in ("Touchdown", "Liftoff"):
+            self._handle_ship(event, entry)
+        elif event in ("LaunchSRV", "Disembark", "DockSRV", "Embark"):
+            self._handle_vehicle(event, entry)
+
+    def _handle_ship(self, event: str, entry: Dict[str, Any]) -> None:
+        lat, lon = entry.get("Latitude"), entry.get("Longitude")
+        if event == "Touchdown" and isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+            self._ship_pos = (float(lat), float(lon))
+        elif event == "Liftoff":
+            self._ship_pos = None
+
+    def _handle_vehicle(self, event: str, entry: Dict[str, Any]) -> None:
+        """The SRV is where the commander was when it was launched or left (the journal does not give its position, Status.json gives ours)."""
+        if event == "DockSRV" or (event == "Embark" and entry.get("SRV")):
+            self._srv_pos = None
+        elif event == "LaunchSRV" or (event == "Disembark" and entry.get("SRV")):
+            if self._current_lat is not None and self._current_lon is not None:
+                self._srv_pos = (self._current_lat, self._current_lon)
+            elif self._ship_pos is not None:
+                self._srv_pos = self._ship_pos
 
     def _handle_scan(self, entry: Dict[str, Any]) -> None:
         star_type = entry.get("StarType")
@@ -251,6 +290,9 @@ class OrganicScanController:
             atmosphere_components=atmosphere_components,
         )
         self._body_conditions[body_name] = cond
+        if isinstance(entry.get("WasFootfalled"), bool):
+            self._footfall[body_name] = not entry["WasFootfalled"]
+            self._persisted.setdefault(self._body_key(self._system_name, body_name), {})["first_footfall"] = self._footfall[body_name]
         self._save_current_conditions(body_name, cond)
         if body_name == self._current_body_name:
             self._refresh_predictions()
@@ -258,6 +300,9 @@ class OrganicScanController:
     def _handle_body_signals(self, entry: Dict[str, Any]) -> None:
         body_name = entry.get("BodyName")
         genuses = entry.get("Genuses")
+        count = next((s.get("Count") for s in entry.get("Signals", []) if isinstance(s, dict) and s.get("Type") == "$SAA_SignalType_Biological;"), None)
+        if body_name and isinstance(count, int):
+            self._signal_counts[body_name] = count
         if not body_name or not isinstance(genuses, list):
             return
         genus_keys = [g.get("Genus") for g in genuses if isinstance(g, dict) and g.get("Genus")]
@@ -271,13 +316,16 @@ class OrganicScanController:
     def _handle_scan_organic(self, entry: Dict[str, Any]) -> None:
         genus_key = entry.get("Genus")
         species_key = entry.get("Species")
+        variant_name = entry.get("Variant_Localised")
         species_name = entry.get("Species_Localised") or entry.get("Species") or "Unknown species"
         scan_type = entry.get("ScanType")
         if not genus_key or not species_key or not scan_type:
             return
         organism = self._tracker.record_scan(
             genus_key, species_key, species_name, scan_type, self._current_lat, self._current_lon,
+            variant_name if isinstance(variant_name, str) else None,
         )
+        self._active_genus = None if organism.complete else genus_key
         if self._current_body_name:
             self._save_organism(self._system_name, self._current_body_name, organism)
         self._refresh_active()
@@ -293,6 +341,9 @@ class OrganicScanController:
         lat = entry.get("Latitude")
         lon = entry.get("Longitude")
         radius = entry.get("PlanetRadius")
+        heading = entry.get("Heading")
+        if isinstance(heading, (int, float)):
+            self._current_heading = float(heading)
         if isinstance(lat, (int, float)):
             self._current_lat = lat
         if isinstance(lon, (int, float)):
@@ -352,6 +403,47 @@ class OrganicScanController:
                 names = ", ".join(c.name for c in candidates)
                 parts.append(f"{genus_name}: {names}")
         self._predictions_var.set(f"Predicted species ({body_name}):\n" + "\n".join(parts))
+
+    def overlay_view(self) -> Optional[organic_scan.BodyView]:
+        """The exobiology of the body the commander is at, for the overlay cards: each genus with its predicted species and values, its sample
+        stage, and how far the commander is from its last sample. None away from a body or before any genus is known. Needs no widgets."""
+        body_name = self._current_body_name
+        if not body_name:
+            return None
+        genus_keys = list(self._genus_hints.get(body_name, []))
+        for organism in self._tracker.organisms:
+            if organism.genus_key not in genus_keys:
+                genus_keys.append(organism.genus_key)
+        if not genus_keys and not self._signal_counts.get(body_name):
+            return None
+        cond = self._body_conditions.get(body_name)
+        if cond is not None:
+            cond = replace(cond, system_body_types=tuple(c.planet_class for c in self._body_conditions.values() if c.planet_class))
+        organisms = {o.genus_key: o for o in self._tracker.organisms}
+        if self._active_genus not in organisms or organisms[self._active_genus].complete:
+            self._active_genus = None
+        genera = []
+        for genus_key in genus_keys:
+            info = organic_scan.species_data.GENUS.get(genus_key)
+            candidates = organic_scan.predict_species(genus_key, cond) if cond is not None else []
+            organism = organisms.get(genus_key)
+            distance = None
+            if (organism is not None and organism.last_lat is not None and organism.last_lon is not None and self._current_lat is not None
+                    and self._current_lon is not None and self._current_planet_radius):
+                distance = organic_scan.haversine_distance_m(organism.last_lat, organism.last_lon, self._current_lat, self._current_lon,
+                                                             self._current_planet_radius)
+            genera.append(organic_scan.GenusView(
+                key=genus_key, name=info.name if info else genus_key.strip("$;").replace("Codex_Ent_", "").replace("_Name", ""),
+                min_distance_m=info.min_distance_m if info else 0.0,
+                candidates=tuple((c.name, c.value) for c in candidates),
+                species=organism.species_name if organism else None, value=organism.value if organism else None,
+                stage=organism.stage if organism else 0, distance_m=distance, variant=organism.variant_name if organism else None,
+                positions=tuple(organism.positions) if organism else ()))
+        here = (self._current_lat, self._current_lon) if self._current_lat is not None and self._current_lon is not None else None
+        return organic_scan.BodyView(
+            body_name, tuple(genera), first_footfall=self._footfall.get(body_name, False), mapped=bool(self._genus_hints.get(body_name)),
+            signal_count=self._signal_counts.get(body_name, 0), here=here, heading=self._current_heading,
+            radius_m=self._current_planet_radius or 0.0, ship=self._ship_pos, srv=self._srv_pos, active=self._active_genus)
 
     def _refresh_active(self) -> None:
         if self._active_var is None or not enabled():
@@ -441,6 +533,10 @@ class OrganicScanController:
 
 
 controller = OrganicScanController()
+
+
+def overlay_view() -> Optional[organic_scan.BodyView]:
+    return controller.overlay_view()
 
 
 def start(plugin_dir: str) -> None:

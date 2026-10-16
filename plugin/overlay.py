@@ -266,6 +266,16 @@ class OverlayClient:
             payload["thickness"] = thickness
         self._send(payload)
 
+    def send_circle(
+        self, shape_id: str, color: str, fill: str, x: int, y: int, radius: int, ttl: int = 8, thickness: Optional[int] = None,
+    ) -> None:
+        """A "circle" shape centered on (x, y). A radius under 1 is dropped by the overlay, so a caller clears a circle by sending it with a
+        short ttl and an empty color instead."""
+        payload = {"id": shape_id, "shape": "circle", "color": color, "fill": fill, "x": int(x), "y": int(y), "radius": max(1, int(radius)), "ttl": ttl}
+        if thickness is not None:
+            payload["thickness"] = thickness
+        self._send(payload)
+
     def send_vector(
         self, shape_id: str, points: list, color: str, ttl: int = 8,
     ) -> None:

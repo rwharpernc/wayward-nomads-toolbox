@@ -10,12 +10,16 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Body info card.** A card describing the body you have targeted or are close to: class, flags (undiscovered, terraformable, mapped), estimated scan value, temperature, gravity, pressure, atmosphere, volcanism, life and geology signals, distance and main materials. Off until ticked in Settings → Overlays → Body info.
 - Both cards have a Test Card, their own entry on Overlay Placement (new default spots in the lower middle of the right half of the screen), and are rebuilt from the newest journal when EDMC starts in the middle of a system.
 
+- **Exobiology cards** (Settings → Overlays → Exobiology): four overlay cards for the body you are on. *Bio status* shows how many biological signals you have analysed and, while sampling, the species and color variant with three sample circles, the reward (five times as much on a first footfall) and how far you are from the last sample against the distance the genus needs. *Biology* lists each genus with the species it could be or is and what each pays. *Bio radar* plots your samples with a circle at each as wide as the genus's minimum distance (red while you are inside it), your ship and your SRV. *Sample popup* names each sample as it is taken. A plant identified with the Composition Scanner is named until you sample it. They use Organic Scanning's own prediction and tracking.
+- The Body info card lists every material and the atmosphere's composition.
+
 ### Changed
 - **A cleaner look for the Route, System targets and Body info cards.** A heading with a colored accent bar, a progress bar for the system scan, thin dividers, section labels, values aligned to the right (or in a second column), and a muted second column for tags and distances. A long message now continues on the next line instead of being cut off.
 - The System targets and Body info cards now hide when the game closes or is at its main menu (so they no longer linger while another commander signs in), while docked, and in hyperspace, and a different commander loading in clears the system the last one had scanned.
 - **System targets can look up bodies other commanders have scanned** (EDSM), so it lists worthwhile planets with an estimated value right after the honk instead of waiting for your own scans. Off until you tick *Also look up bodies other commanders have scanned* in Settings → Overlays → System targets; it asks once per system and sends only the system name. Looked-up bodies are marked `EDSM` and your own scan replaces them.
 - Every genus is shown in full: the System targets card lists a body's genera on lines of their own under its row, and the Body info card wraps long values (genera, atmosphere, volcanism) within their column instead of cutting them with an ellipsis.
 - The Body info card now appears for a body you have targeted but not scanned yet, and says to scan it (the journal has nothing else on it until then).
+- Organic Scanning now keeps where each sample was taken, the color variant the sample named, and whether the body had been footfalled before.
 - The overlay card drawing is shared (`overlay_card.py`) by the Route, System targets and Body info cards, and the scan-value formula is its own module (`scan_value.py`). The Route card looks the same.
 
 ## 1.15.0 - 2026-10-16

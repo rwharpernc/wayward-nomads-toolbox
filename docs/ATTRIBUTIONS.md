@@ -28,6 +28,7 @@ being listed doesn't mean a tool was the first or the only one.
   No code was taken from any of them.
 - **Exploration value, system age and rarity readouts:** EDJP, EDDiscovery, Elite Observatory and
   many other exploration tools.
+- **Exobiology overlay cards (bio status, predicted species, sample radar, sample popup):** the idea of showing sampling progress, predicted species with their values, the first footfall bonus and a radar of sample circles as separate cards over the cockpit follows [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s biology plotters (GPL-3.0, the same license as WNTB). The cards are WNTB's own code, built on Organic Scanning's prediction and sample tracking and the journal's `ScanOrganic`, `CodexEntry` and `Status.json`; no code was taken from SrvSurvey.
 - **What is left to scan, map and sample in a system, and a card for the body you target:** [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s system status (scan progress, bodies still worth a DSS, bodies with life remaining) and body info plotters shaped the idea and which facts to show. WNTB's System targets and Body info cards are its own code, built on the journal events, the scan-value estimate described below, and the system model in `system_survey.py`; no code was taken from SrvSurvey (GPL-3.0, the same license as WNTB).
 - **Exobiology species prediction and sampling help:**
   [EDMC-BioScan](https://github.com/Silarn/EDMC-BioScan),

@@ -31,7 +31,7 @@ from __future__ import annotations
 import logging
 import math
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 try:
@@ -50,6 +50,7 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 # this is the one that actually pays out).
 STAGE_ORDER = ("Log", "Sample", "Analyse")
 REQUIRED_SAMPLES = len(STAGE_ORDER)
+FIRST_FOOTFALL_MULTIPLIER = 5    # the first commander to set foot on a body is paid five times the usual exobiology reward
 
 # Journal unit conversions to the units organic_species_data.py's rulesets
 # use (G, confirmed against the well-known community fact that every
@@ -260,6 +261,8 @@ class OrganismProgress:
     stage: int = 0  # 0=detected only, 1=Log done, 2=Sample done, 3=Analyse done (complete, paid out)
     last_lat: Optional[float] = None
     last_lon: Optional[float] = None
+    variant_name: Optional[str] = None  # the color variant a sample named, e.g. "Tussock Pennatis - Lime"
+    positions: List[Tuple[float, float]] = field(default_factory=list)  # (latitude, longitude) of each Log/Sample taken, for the exclusion circles
 
     @property
     def complete(self) -> bool:
@@ -268,6 +271,71 @@ class OrganismProgress:
     @property
     def stage_name(self) -> str:
         return STAGE_ORDER[self.stage - 1] if 0 < self.stage <= REQUIRED_SAMPLES else "Detected"
+
+
+@dataclass(frozen=True)
+class GenusView:
+    """One genus on the body the commander is at, as the overlay cards show it: what it could be (`candidates`, the predicted species with their credit
+    values), what it is once a sample has named it (`species`, `value`), how far along it is (`stage`, 0 to REQUIRED_SAMPLES), how far the commander
+    is from the last sample (`distance_m`, None before the first sample or without a position) and how far apart samples must be."""
+    key: str
+    name: str
+    min_distance_m: float
+    candidates: Tuple[Tuple[str, int], ...] = ()
+    species: Optional[str] = None
+    value: Optional[int] = None
+    stage: int = 0
+    distance_m: Optional[float] = None
+    variant: Optional[str] = None
+    positions: Tuple[Tuple[float, float], ...] = ()
+
+    @property
+    def complete(self) -> bool:
+        return self.stage >= REQUIRED_SAMPLES
+
+    @property
+    def title(self) -> str:
+        """The most specific name known: the color variant, else the species, else the genus."""
+        return self.variant or self.species or self.name
+
+    @property
+    def best_value(self) -> Optional[int]:
+        """What it pays: the confirmed species' value, else the highest of the candidates (None when neither is known)."""
+        if self.value:
+            return self.value
+        return max((v for _n, v in self.candidates), default=None)
+
+
+@dataclass(frozen=True)
+class BodyView:
+    """The exobiology of the body the commander is at: its genera, in the order the journal named them."""
+    body_name: str
+    genera: Tuple[GenusView, ...] = ()
+    first_footfall: bool = False       # nobody has set foot here before: every reward is five times as much
+    mapped: bool = True                # False when the genera are known only from the signal count (the body has not been mapped)
+    signal_count: int = 0              # biological signals the scans reported
+    here: Optional[Tuple[float, float]] = None       # (latitude, longitude) of the commander
+    heading: Optional[float] = None
+    radius_m: float = 0.0
+    ship: Optional[Tuple[float, float]] = None
+    srv: Optional[Tuple[float, float]] = None
+    active: Optional[str] = None       # the genus key last sampled and not yet analysed
+
+    @property
+    def analysed(self) -> int:
+        return sum(1 for g in self.genera if g.complete)
+
+    @property
+    def multiplier(self) -> int:
+        return FIRST_FOOTFALL_MULTIPLIER if self.first_footfall else 1
+
+    @property
+    def reward_up_to(self) -> int:
+        return sum(g.best_value or 0 for g in self.genera)
+
+    @property
+    def active_genus(self) -> Optional[GenusView]:
+        return next((g for g in self.genera if g.key == self.active), None)
 
 
 class OrganicTracker:
@@ -292,6 +360,7 @@ class OrganicTracker:
     def restore_organism(
         self, genus_key: str, species_key: Optional[str], species_name: Optional[str],
         value: Optional[int], stage: int, last_lat: Optional[float], last_lon: Optional[float],
+        variant_name: Optional[str] = None, positions: Optional[List[Tuple[float, float]]] = None,
     ) -> None:
         """Reinstates a genus's progress from persisted state (see
         organic_scan_state.py) - used when returning to a body whose
@@ -300,12 +369,13 @@ class OrganicTracker:
         and come back to the body within the same session)."""
         self._organisms[genus_key] = OrganismProgress(
             genus_key=genus_key, species_key=species_key, species_name=species_name,
-            value=value, stage=stage, last_lat=last_lat, last_lon=last_lon,
+            value=value, stage=stage, last_lat=last_lat, last_lon=last_lon, variant_name=variant_name,
+            positions=[(float(p[0]), float(p[1])) for p in (positions or []) if isinstance(p, (list, tuple)) and len(p) == 2],
         )
 
     def record_scan(
         self, genus_key: str, species_key: str, species_name: str, scan_type: str,
-        lat: Optional[float], lon: Optional[float],
+        lat: Optional[float], lon: Optional[float], variant_name: Optional[str] = None,
     ) -> OrganismProgress:
         """A real ScanOrganic event - confirms the exact species (replacing
         any predicted candidate list with certainty) and advances the scan
@@ -318,8 +388,12 @@ class OrganicTracker:
         organism.value = info.value if info else None
         if scan_type in STAGE_ORDER:
             organism.stage = max(organism.stage, STAGE_ORDER.index(scan_type) + 1)
+        if variant_name:
+            organism.variant_name = variant_name
         if lat is not None and lon is not None:
             organism.last_lat, organism.last_lon = lat, lon
+            if scan_type != "Analyse":          # the Analyse event follows the last sample, at the same spot
+                organism.positions.append((lat, lon))
         return organism
 
     def next_sample_distance_ok(

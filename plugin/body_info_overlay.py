@@ -44,7 +44,7 @@ OVERLAY_TTL = 4
 NAME_CHARS = 11
 TAG_CHARS = 25
 SAMPLE_TAG = "thin carbon dioxide, 100%"
-MAX_HEADER = 5
+MAX_HEADER = 6
 MAX_ROWS = 10
 GROUP_NAME = "wntb_body_info"
 GROUP_PREFIX = "wntb_body_info_"
@@ -120,8 +120,7 @@ def build_card(body: Optional[Body]) -> Card:
     if flags:
         header.append((", ".join(flags), "info"))
     if body.materials:
-        top = sorted(body.materials, key=lambda m: -m[1])[:3]
-        header.append((" · ".join(f"{name} {percent:.0f}%" for name, percent in top), "muted"))
+        header.append((" · ".join(f"{name.capitalize()} {percent:.1f}%" for name, percent in sorted(body.materials, key=lambda m: -m[1])), "muted"))
     rows: List[Row] = []
     value = body.scan_value()
     if value:
@@ -134,7 +133,8 @@ def build_card(body: Optional[Body]) -> Card:
         if body.pressure_atm:
             rows.append(("Pressure", f"{body.pressure_atm:.3f} atm", "text"))
         if body.landable or body.atmosphere:
-            rows.append(("Atmosphere", _clean(body.atmosphere, " atmosphere") or "None", "text"))
+            parts = " · ".join(f"{name} {percent:.1f}%" for name, percent in sorted(body.atmosphere_parts, key=lambda a: -a[1]))
+            rows.append(("Atmosphere" + (f"\n{parts}" if parts else ""), _clean(body.atmosphere, " atmosphere") or "None", "text"))
             rows.append(("Volcanism", _clean(body.volcanism, " volcanism") or "None", "text"))
     if body.bio:
         done = len(set(body.analysed))

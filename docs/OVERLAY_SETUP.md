@@ -17,6 +17,7 @@ on-screen extras.
 | **Interdiction Warning** | An alert the moment an interdiction starts |
 | **Flight Alerts** | A small card with the fleet carrier jump countdown and the low-fuel and unscoopable-star warnings |
 | **Route** | A card with your fuel and jump range, the jumps left and the plotted route (neutron stars and white dwarfs picked out), and the running expedition |
+| **Bio status**, **Biology**, **Bio radar**, **Sample popup** | The Exobiology cards: sampling progress and distance, predicted species and what they pay, a plot of your samples and their circles, and a popup after each sample |
 | **System targets** | A list of scanned bodies worth mapping and bodies with life not yet analysed, with the scan progress |
 | **Body info** | A card describing the body you have targeted or are close to |
 | **Missions** | A small card of your missions: those here and at the next jump first, then the rest by urgency |
@@ -64,6 +65,7 @@ makes sense, a test button:
 | **Interdiction Warning** | The warning when you are interdicted | **Test Warning** |
 | **Flight Alerts** | The carrier jump countdown and fuel warnings card | **Test Card** |
 | **Route** | The route card (how many systems to list, whether to show the running expedition) | **Test Card** |
+| **Exobiology** | Four switches, one for each Exobiology card | **Test Cards** |
 | **System targets** | The list of bodies to map and sample (value threshold, rows, life list) | **Test Card** |
 | **Body info** | The body card (targeted body, nearby body) | **Test Card** |
 | **Missions** | The missions card (rows to show, next jump, urgent limit) | **Test Card** |
@@ -122,7 +124,7 @@ short of the edge. The Overlay Placement tab has a switch, **Carry displays on t
 (and clears the offsets) if displays end up in the wrong place. The bottom edge needs none of this. The two Mining displays share one overlay group, so they stop at the limit
 rather than being offset.
 
-**Default spots.** On a 1920 x 1080 screen or larger the default spots do not overlap each other (the Route card is at the top left; the right-hand column runs Notable, Surface compass, Inventory, Mining stats, Flight alerts, Missions and Screenshot messages from the top; System targets and Body info sit one above the other in the lower middle of the right half of the screen). The displays are sized in pixels, so on a
+**Default spots.** On a 1920 x 1080 screen or larger the default spots do not overlap each other (the Route card is at the top left; the right-hand column runs Notable, Surface compass, Inventory, Mining stats, Flight alerts, Missions and Screenshot messages from the top; System targets and Body info sit one above the other in the lower middle of the right half of the screen). The Exobiology cards start at the top center (Bio status), the bottom center left of the Body info card (Biology), the left middle (Bio radar) and above Biology (Sample popup); the radar and the popup share a spot with the Colonization list, and Bio status with the Interdiction warning, because those are never up at the same time (a planet's surface, a construction depot, supercruise). The displays are sized in pixels, so on a
 smaller screen they take up more of it and some can overlap: use **Show placement preview** and move them. A position you chose yourself
 is never changed.
 

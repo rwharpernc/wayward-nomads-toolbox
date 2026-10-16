@@ -32,10 +32,12 @@ class Card:
     title: Optional[Line] = None
     badge: str = ""
     progress: Optional[float] = None
+    headline: Optional[Line] = None      # a large line under the title, with `dots` (filled or empty circles) before it
+    dots: Tuple[bool, ...] = ()
     align: str = "right"        # "right": a row's right-hand text ends at the card's right edge; "column": it starts in a second column (long values)
 
     def __bool__(self) -> bool:
-        return bool(self.header or self.rows or self.title)
+        return bool(self.header or self.rows or self.title or self.headline)
 
     def line_count(self) -> int:
         return len(self.header) + len(self.rows) + (1 if self.footer else 0) + (1 if self.title else 0)
@@ -149,6 +151,18 @@ class CardLayout:
             if card.header or card.rows or card.footer:
                 divider(y)
                 y += 1 + RULE_GAP
+        if card.headline:
+            text, role = card.headline
+            dot = 14
+            dots_w = len(card.dots) * (dot + 6) + (4 if card.dots else 0)
+            for number, filled in enumerate(card.dots):
+                cx = x + number * (dot + 6)
+                shapes.append(("circle", look.color(role), look.color(role) if filled else "#00000000", cx, y + 6, dot, dot))
+            base = "large" if look.measured_width(text, "large") <= inner - dots_w else "normal"
+            for line in ([self.fit(text, look, inner - dots_w, base)] if base == "large" else self.wrap(text, look, inner - dots_w)):
+                texts.append((line, role, x + dots_w, y, look.size(base)))
+                y += look.line_px(base) + 2
+            y += 2
         for text, role in card.header:
             for line in self.wrap(text, look, inner):
                 texts.append((line, role, x, y, size))
@@ -206,7 +220,10 @@ class CardLayout:
         accent = look.color(self.accent)
         client.send_shape(f"{self.prefix}bar", "rect", accent, accent, left, top, ACCENT_W, height, ttl=ttl, thickness=1)
         for index, (kind, color, fill, sx, sy, sw, sh) in enumerate(shapes):
-            client.send_shape(f"{self.prefix}s{index}", kind, color, fill, sx, self.y + sy, sw, sh, ttl=ttl, thickness=1)
+            if kind == "circle":
+                client.send_circle(f"{self.prefix}s{index}", color, fill, sx + sw // 2, self.y + sy + sh // 2, sw // 2, ttl=ttl, thickness=2)
+            else:
+                client.send_shape(f"{self.prefix}s{index}", kind, color, fill, sx, self.y + sy, sw, sh, ttl=ttl, thickness=1)
         for index in range(len(shapes), self._used_shapes):
             client.send_shape(f"{self.prefix}s{index}", "rect", "", "", left, top, 0, 0, ttl=1)
         self._used_shapes = len(shapes)

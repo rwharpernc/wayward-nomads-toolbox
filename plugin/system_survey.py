@@ -92,6 +92,7 @@ class Body:
     distance_ls: Optional[float] = None
     volcanism: str = ""
     atmosphere: str = ""
+    atmosphere_parts: List[Tuple[str, float]] = field(default_factory=list)      # (gas, percent) from the scan's AtmosphereComposition
     materials: List[Tuple[str, float]] = field(default_factory=list)
     scanned: bool = False
     known: bool = False                 # described by EDSM (other commanders' scans), not scanned by this commander yet
@@ -261,6 +262,8 @@ class SystemSurvey:
         body.distance_ls = _number(entry.get("DistanceFromArrivalLS"))
         body.volcanism = str(entry.get("Volcanism") or "")
         body.atmosphere = str(entry.get("Atmosphere") or "")
+        body.atmosphere_parts = [(str(a.get("Name") or ""), float(a.get("Percent") or 0.0)) for a in entry.get("AtmosphereComposition", [])
+                                 if isinstance(a, Mapping) and a.get("Name")]
         body.materials = [(str(m.get("Name") or ""), float(m.get("Percent") or 0.0)) for m in entry.get("Materials", [])
                           if isinstance(m, Mapping) and m.get("Name")]
         body.scanned = True

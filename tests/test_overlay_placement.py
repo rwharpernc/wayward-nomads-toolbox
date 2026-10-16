@@ -426,8 +426,8 @@ class DefaultSpotTests(unittest.TestCase):
     """The default spots, at the slots' nominal (worst-case) sizes, on a 16:9 screen of 1920 x 1080 or larger. The displays are sized in
     pixels, so on a smaller screen they take up more of it and can overlap; Overlay Placement is where to move them then."""
 
-    # Pairs that overlap by design. None: every default spot is clear of every other.
-    KNOWN: set = set()
+    # Pairs that overlap by design: the Bio radar and Sample popup are for a planet's surface and the Colonization list for a construction depot, and the Interdiction warning is for supercruise, so those are never up together.
+    KNOWN: set = {frozenset(pair) for pair in (("colonisation", "bio_radar"), ("colonisation", "bio_popup"), ("interdiction", "bio_status"))}
 
     @staticmethod
     def rects(width, height):
