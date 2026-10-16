@@ -118,7 +118,7 @@ try:
     session_merits._current_session = lambda: {"totals": {"fortify": 100}, "started_at": "2000-01-01T00:00:00Z"}
     session_merits.controller.refresh()
     check(merits.winfo_manager() == "grid" and merits["text"].startswith("Merits this session: +100"), f"merits text: {merits['text']!r}")
-    credits_row = [w for w in merits.master.grid_slaves() if w is not merits and w is not label and w is not game_mode.tracker._label]
+    credits_row = [w for w in merits.master.grid_slaves() if w is not merits and w is not label and w is not game_mode.tracker._label and w.grid_info().get("row") != 4]      # row 4 is the overlays line
     check(merits.grid_info()["row"] == 3 and credits_row and credits_row[0].grid_info()["row"] == 2, "merits is not directly under credits")
     session_merits._current_session = lambda: {"totals": {}, "started_at": "2000-01-01T00:00:00Z"}
     session_merits.controller.refresh()

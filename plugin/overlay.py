@@ -25,12 +25,13 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import socket
 import threading
 import time
 from dataclasses import dataclass
-from typing import Dict, Iterable, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import tkinter as tk
 
@@ -160,6 +161,91 @@ def set_group_offsets(offsets: Mapping[str, float], plugin: str = "WNTB") -> boo
     return ok
 
 
+# --- hiding every overlay for a while --------------------------------------------------------------------------------
+# Everything WNTB draws goes through `OverlayClient._send`, so one switch here hides it all. While hidden, nothing is sent; what each display last drew is kept (with
+# when) so it can be put back with the time it had left, which also brings back the displays that are drawn once and left up (Colonization lasts an hour). Hiding sends
+# a clear for everything drawn so far, so the screen empties at once instead of as each display expires. The state is not saved: overlays are shown when EDMC starts.
+
+_vis_lock = threading.Lock()
+_hidden = False
+_last: Dict[str, Tuple[Dict[str, Any], float]] = {}          # id -> (the payload last drawn, when)
+_listeners: List[Callable[[bool], None]] = []
+_MAX_REMEMBERED = 2000
+
+
+def _clear_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """A payload that removes what `payload` drew (the overlay lets a short ttl and nothing to draw replace it)."""
+    ident = payload["id"]
+    if "text" in payload:
+        return {"id": ident, "text": "", "color": "white", "x": payload.get("x", 0), "y": payload.get("y", 0), "ttl": 1, "size": payload.get("size", "normal")}
+    shape = payload.get("shape", "rect")
+    if shape == "vect":
+        return {"id": ident, "shape": "vect", "color": payload.get("color", ""), "vector": [], "ttl": 1}
+    if shape == "circle":
+        return {**payload, "color": "", "fill": "", "ttl": 1}
+    return {"id": ident, "shape": shape, "color": "", "fill": "", "x": payload.get("x", 0), "y": payload.get("y", 0), "w": 0, "h": 0, "ttl": 1}
+
+
+def _remember(payload: Mapping[str, Any]) -> bool:
+    """Notes what was drawn; True when everything is hidden, so it is not sent."""
+    ident = payload.get("id")
+    with _vis_lock:
+        if ident:
+            if (payload.get("ttl") or 0) > 1:
+                _last[ident] = (dict(payload), time.monotonic())
+            else:
+                _last.pop(ident, None)               # a clear
+            if len(_last) > _MAX_REMEMBERED:
+                now = time.monotonic()
+                for key in [k for k, (p, t) in _last.items() if now - t >= (p.get("ttl") or 0)]:
+                    del _last[key]
+        return _hidden
+
+
+def all_hidden() -> bool:
+    return _hidden
+
+
+def on_visibility_change(callback: Callable[[bool], None]) -> None:
+    """`callback(hidden)` runs, on whichever thread changed it, each time overlays are hidden or shown."""
+    _listeners.append(callback)
+
+
+def set_all_hidden(hidden: bool) -> None:
+    """Hides every WNTB overlay (clearing what is on screen), or shows them again (putting back what had not run out)."""
+    global _hidden
+    with _vis_lock:
+        if hidden == _hidden:
+            return
+        _hidden = hidden
+        items = list(_last.items())
+    now = time.monotonic()
+    sender = OverlayClient()
+    try:
+        for ident, (payload, when) in items:
+            if hidden:
+                sender._send_raw(_clear_payload(payload))
+            else:
+                left = (payload.get("ttl") or 0) - (now - when)
+                if left >= 1:
+                    sender._send_raw({**payload, "ttl": math.ceil(left)})
+    except OSError:
+        logger.debug("Could not reach the overlay to %s it", "hide" if hidden else "show", exc_info=True)
+    finally:
+        sender.close()
+    for callback in list(_listeners):
+        try:
+            callback(hidden)
+        except Exception:
+            logger.debug("An overlay visibility listener failed", exc_info=True)
+
+
+def toggle_all_hidden() -> bool:
+    """Flips between hidden and shown; returns whether they are now hidden."""
+    set_all_hidden(not _hidden)
+    return _hidden
+
+
 class OverlayClient:
     """Holds one persistent connection open for the client's whole lifetime
     (see the module docstring for why this is required, not just an
@@ -211,6 +297,11 @@ class OverlayClient:
             self._unavailable_until = 0.0
 
     def _send(self, payload: dict) -> None:
+        if _remember(payload):
+            return                                   # every overlay is hidden: kept, not drawn
+        self._send_raw(payload)
+
+    def _send_raw(self, payload: dict) -> None:
         """Raises OSError (e.g. the overlay isn't running, or the socket
         was reset) after trying once to reconnect - a single reconnect
         attempt covers "the overlay wasn't running yet" and "the overlay

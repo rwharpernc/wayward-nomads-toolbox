@@ -119,6 +119,7 @@ Just under the mode buttons, above the page itself, WNTB shows these lines, on e
   appears after your first merit of the session, so it stays out of the way if you do not play Powerplay. The rate is the
   merits divided by the time since you logged in, so it falls while you stop earning. The Powerplay mode's **CP** figures
   are Control Points, a separate number.
+- **Overlays**: `Overlays shown (click to hide)`. Click it to hide every WNTB overlay at once and click again to bring them back (see [Overlay setup](../OVERLAY_SETUP.md#hiding-the-overlays-for-a-while); Windows also has a keyboard shortcut).
 
 ### Pages
 

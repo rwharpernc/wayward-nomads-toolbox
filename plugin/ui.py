@@ -38,7 +38,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from . import (
     __version__, autohonk, bgs_panel, boxel_survey, canonn_poi_panel, codex_completionist_panel, colonisation_panel, discovery,
     exploration_value, flight_alerts, gec_poi_panel, interdiction, inventory_panel, landing, materials_panel, mining_panel, missions, missions_overlay,
-    notable, notes_panel, expedition_panel, expedition_log_panel, expedition_log_overlay, surface_compass, organic_scan_panel, exobiology_overlay, overlay, overlay_appearance, overlay_placement, panelkit, powerplay, route_overlay, targets_overlay, body_info_overlay, screenshots, ship_builds_panel,
+    notable, notes_panel, expedition_panel, expedition_log_panel, expedition_log_overlay, surface_compass, organic_scan_panel, exobiology_overlay, overlay, overlay_appearance, overlay_placement, overlay_visibility, panelkit, powerplay, route_overlay, targets_overlay, body_info_overlay, screenshots, ship_builds_panel,
     credits_ledger, game_mode, session_credits, session_merits, settings_scroll, system_names, trade_panel, trade_watch_panel,
 )
 from . import issue_report
@@ -260,6 +260,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     panelkit.add_tooltip(credits_label, "Click to open the Credits Ledger: income by activity, by day, and your lifetime totals")
     credits_ledger.attach(credits_label)
     session_merits.build(session_strip, row=3)     # "Merits this session: +N (+N merits/hr)", once there is a merit
+    overlay_visibility.build_panel_line(session_strip, row=4)     # "Overlays shown (click to hide)"
     panelkit.add_separator(_frame, 3)
     session_rule = _frame.grid_slaves(row=3, column=0)[0]
 
@@ -542,6 +543,7 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         overlay.build_settings,
         overlay_placement.build_settings,
         overlay_appearance.build_settings,
+        overlay_visibility.build_settings,
         colonisation_panel.build_overlay_settings,
         *settings_of(discovery),
         inventory_panel.build_overlay_settings,
@@ -655,6 +657,7 @@ def save_prefs() -> None:
 
     overlay.save_settings()
     overlay_placement.save_settings()
+    overlay_visibility.save_settings()
     overlay_appearance.save_settings()
     for feature in FEATURES:
         if hasattr(feature, "save_settings"):

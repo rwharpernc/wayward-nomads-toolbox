@@ -178,6 +178,20 @@ keeps its fixed red alert colors whatever scheme is chosen. The default look is 
 - **EDMCModernOverlay has its own placement tool**, the Overlay Controller, where you can move each
   plugin's display, change anchors and backgrounds, and keep different profiles. See its wiki.
 
+## Hiding the overlays for a while
+
+To take a clean screenshot or look at the game without cards over it, hide every WNTB overlay at once and bring them back where they were:
+
+- Click the **Overlays shown (click to hide)** line in the WNTB panel (under the credits and merits lines); it then reads **Overlays are hidden (click to show)**.
+- On Windows, press the keyboard shortcut, which works while Elite has the focus. **Settings → WNTB → Overlays → Hide overlays** sets it (Ctrl+Alt+H by default; the other
+  choices are Ctrl+Alt+O, Ctrl+Shift+H, Ctrl+Shift+O, Ctrl+Alt+F10 and Ctrl+Alt+F11, or Off) and has a **Hide / show now** button. If another program already holds the combination,
+  Settings says so after you press OK; pick another.
+- Hiding clears what is on screen at once, and showing puts back what had not run out, including the Colonization card, which is drawn once and left up.
+
+Limits: it hides WNTB's overlays only, not another plugin's. It is not saved, so the overlays are shown whenever EDMC starts. The keyboard shortcut exists on Windows only,
+because a Linux desktop gives a program no portable way to hear keys while another window has the focus (and Wayland gives none); on Linux use the panel line.
+It does not hide overlays automatically, for example in the galaxy map.
+
 ## If you don't use an overlay
 
 Nothing breaks. WNTB tries to reach an overlay when a feature wants to draw something, and if none is
