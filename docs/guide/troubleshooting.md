@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Find your symptom below. Most problems are a missing setting or a missing permission.
+Find your symptom below. Most problems are a missing setting or a missing permission. For what is known to go wrong in the current release, including overlay text that looks doubled or ghosted, see [Known issues](known-issues.md).
 
 **Jump to:** [Nothing happens (settings that start off)](#nothing-happens-settings-that-start-off) · [A number looks wrong](#a-number-looks-wrong-or-missing) · [General](#general) · [Overlay](#overlay) · [Linux](#linux) · [Missions](#missions) · [Trade](#trade) · [Still stuck?](#still-stuck)
 
@@ -172,6 +172,8 @@ journals between the expedition's start and end), and **Start since my last sale
 you scan it; the unsold figures are estimates. If you play more than one commander, each has its own archive.
 
 ### Overlay text looks doubled or ghosted, with a second copy in a different font
+
+(Also listed in [Known issues](known-issues.md).)
 
 Two copies of EDMCModernOverlay's overlay window are running and each draws everything WNTB sends. This happens when EDMC is closed or restarted in a way that leaves the old overlay window running (for example while testing an update), so the old window, which keeps the font it started with, reconnects to the new session and draws over the new one. Open Task Manager (or `ps` on Linux) and look for more than one `overlay_client` process (a `python.exe -m overlay_client.overlay_client` pair for each window, started at different times). End the older ones, or end them all and restart EDMC, and the ghosting goes. **Settings → WNTB → Overlays → Overlay Connection → Check connection** says when more than one overlay window is running (and Copy diagnostics lists how many). WNTB cannot start or stop the overlay itself, so it cannot end the extra one for you.
 

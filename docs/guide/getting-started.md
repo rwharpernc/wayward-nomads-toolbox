@@ -1,7 +1,7 @@
 # Getting started
 
 This page takes you from nothing to a working WNTB panel, then shows you how to find your way around it.
-No programming is needed.
+No programming is needed. If something looks wrong, for example overlay text that looks doubled or is all in capitals, see [Known issues](known-issues.md).
 
 **On this page:** [What you need](#what-you-need) · [Installing](#installing) ·
 [Updating](#updating) · [A first five minutes](#a-first-five-minutes) · [Finding your way around](#finding-your-way-around) ·

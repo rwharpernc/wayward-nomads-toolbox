@@ -17,6 +17,8 @@ free companion program many commanders already use. You don't need to know any p
 > **Download the latest release, not the repository.** See [Quick start](#quick-start). If you hit a
 > problem, see [Getting help](#getting-help).
 
+> **Known issues:** overlay text that looks doubled or ghosted, or is all in capitals, has a cause and a quick fix. See [Known issues](docs/guide/known-issues.md).
+
 Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS).
 
 ---
@@ -27,6 +29,7 @@ Built and maintained by R.W. Harper: CMDR Bocheaux (Wayward Nomads, WWNS).
 - [What's in the toolbox](#whats-in-the-toolbox)
 - [Full feature list](#full-feature-list)
 - [Planned and being researched](#planned-and-being-researched)
+- [Known issues](#known-issues)
 - [Quick start](#quick-start)
 - [Tips, quirks and workarounds](#tips-quirks-and-workarounds)
 - [Guides](#guides)
@@ -251,6 +254,15 @@ On **Linux**, one more step is needed so WNTB can read your game's journals. See
 To update, extract the new ZIP over the old `WNTB` folder (don't delete it first: your saved data lives there), or turn on
 **Automatically download and install updates** under **File → Settings → WNTB → General → Updates** (off by default).
 
+## Known issues
+
+The full list, with the fix for each, is in [Known issues](docs/guide/known-issues.md). The ones people meet most:
+
+- **Overlay text looks doubled or ghosted.** Two copies of EDMCModernOverlay's overlay window are running, left over from an EDMC that closed without stopping it. **Settings → Overlays →
+  Overlay Connection → Check connection** says when there is more than one; end the older `overlay_client` processes in Task Manager (or all of them) and restart EDMC.
+- **Overlay text is all in capital letters.** The overlay's default font has capitals only. Choose another in **Settings → Overlays → Appearance → Overlay font**, then restart EDMC.
+- **The newest parts (Exobiology cards, System targets, Body info, the Expedition Log) have been tested on Windows only.**
+
 ## Tips, quirks and workarounds
 
 Things that surprise people, and what to do about them. Every mode guide has a longer list at its end.
@@ -316,7 +328,7 @@ Things that surprise people, and what to do about them. Every mode guide has a l
 
 **Use the modes**: see the table above, or the [full guide index](docs/guide/README.md).
 
-**When something's wrong**: [Troubleshooting](docs/guide/troubleshooting.md).
+**When something's wrong**: [Known issues](docs/guide/known-issues.md) (what is known to go wrong, and the fix) and [Troubleshooting](docs/guide/troubleshooting.md).
 
 ## Getting help
 

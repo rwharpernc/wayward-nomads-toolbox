@@ -56,6 +56,13 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - A new guide, [Exobiology](docs/guide/exobiology.md), brings the Organic Scanning panel, the four overlay cards, plant waypoints and first footfall into one place (they were spread across the Exploration guide); the Organic Scanning specification covers the overlay view, waypoints and first footfall; Troubleshooting, Getting started, Overlay setup, Technical notes, Status, Linux testing and the attributions are brought up to date.
 - Added a note on Linux support to the README and the Linux and platform guides: the author uses Linux (CachyOS) and Windows about equally, and new features are proven on Windows first, so Linux follows slightly behind.
 
+### Known issues
+- **Overlay text can look doubled or ghosted** when two copies of EDMCModernOverlay's overlay window are running (an old one left over from an EDMC that closed without stopping it). Settings → Overlays → Overlay Connection → **Check connection** now says when more than one is running; end the older `overlay_client` processes (or all of them) and restart EDMC. See [Known issues](docs/guide/known-issues.md).
+- **Overlay text is all in capitals** with the overlay's default font (Elite's cockpit font); choose another in Settings → Overlays → Appearance → **Overlay font** and restart EDMC. The overlay cannot draw italics.
+- **The new overlay cards, the Expedition Log, the layout editor, the overlay font choice and hiding the overlays are tested on Windows only**; the hide keyboard shortcut exists on Windows only.
+- **A saved placement of the Bio status card keeps its old spot**, and the card is now a wide strip, so it may overlap something until you move it in Overlay Placement.
+
+
 ## 1.15.0 - 2026-10-16
 
 ### Added

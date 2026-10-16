@@ -1,7 +1,7 @@
 # WNTB user guide
 
 Plain-language guides for using the Wayward Nomads Toolbox. New here? Start with
-[Getting started](getting-started.md).
+[Getting started](getting-started.md). Something looks wrong? See [Known issues](known-issues.md) first.
 
 ## How WNTB knows what it knows
 
@@ -28,6 +28,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | [Windows and Linux](platforms.md) | What works where |
 | [WNTB on Linux](linux.md) | Step-by-step Linux and Flatpak setup |
 | [What goes on the internet](internet-and-privacy.md) | Every feature that contacts an outside site |
+| [Known issues](known-issues.md) | What is known to go wrong in this release (such as doubled or ghosted overlay text) and the fix |
 | [Reporting a problem](reporting-problems.md) | The **Report an issue** and **Copy diagnostics** buttons, step by step, and what they include |
 
 ## The modes
@@ -47,7 +48,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 
 ## When something's wrong
 
-[Troubleshooting](troubleshooting.md) lists symptoms and fixes. If it is a bug, [Reporting a problem](reporting-problems.md) shows how to file
+[Known issues](known-issues.md) lists what is known to go wrong in this release and the workaround. [Troubleshooting](troubleshooting.md) lists symptoms and fixes. If it is a bug, [Reporting a problem](reporting-problems.md) shows how to file
 one in a few clicks.
 
 ## For developers
