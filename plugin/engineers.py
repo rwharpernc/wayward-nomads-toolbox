@@ -69,7 +69,7 @@ BUBBLE, COLONIA = "Bubble", "Colonia"
 REGIONS = (BUBBLE, COLONIA)
 COLONIA_CENTER = (-9530.0, -910.0, 19808.0)
 COLONIA_RADIUS_LY = 500.0
-"""Colonia is the region around Colonia (about 22,000 ly from Sol); every engineer within this distance of its centre is a Colonia engineer, and the
+"""Colonia is the region around Colonia (about 22,000 ly from Sol); every engineer within this distance of its center is a Colonia engineer, and the
 rest are in the Bubble. The nearest Bubble engineer is more than 9,000 ly from it and the farthest Colonia one is about 50 ly, so the radius is not
 critical."""
 

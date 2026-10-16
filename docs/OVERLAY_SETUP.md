@@ -140,11 +140,14 @@ may sit slightly differently than before.
 - **Color scheme**: Elite orange (the default), Ice blue, Phosphor green, Amber mono, High contrast, or Color-blind safe
   (Okabe-Ito colors, so good, short and warning never rest on red against green). The chips show each color's role.
 - **Text size**: Default or Larger. It starts at **Larger**, the size the displays have had since 1.9.0, so nothing
-  changes until you choose. If the overlays look too big on a small or high-resolution screen, try Default. Overlay text is never drawn below the overlay's "normal" size, which stays readable over the game. All overlay text is left-justified.
+  changes until you choose. If the overlays look too big on a small or high-resolution screen, try Default. Overlay text is never drawn below the
+  overlay's "normal" size, which stays readable over the game.
 - **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
   puts the defaults back.
 
-Padding and line spacing are **fixed**, so columns stay lined up. EDMCModernOverlay cannot measure text for a plugin, so each card's
+Padding and line spacing are **fixed**, so columns stay lined up. Every card uses the same padding, so its text sits the same distance from the
+border on all four sides, and every line of text starts at the card's left edge (no card centers its text). EDMCModernOverlay cannot measure text
+for a plugin, so each card's
 width and height are worked out from the character count at the chosen size, with a further 10% added to every width, so text sits
 inside the border. The overlay's own font limits (EDMCModernOverlay's `min_font_point` and `max_font_point`) still apply on top.
 Placement accounts for the new size too (a display anchored to the bottom or right keeps its edge). The Interdiction warning

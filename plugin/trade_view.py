@@ -176,7 +176,7 @@ class BlockView(tk.Frame):
                 row += 1
             first = False
 
-        # EDMC's theme colours the labels; the accent, the rules and the frames' own background are set after it.
+        # EDMC's theme colors the labels; the accent, the rules and the frames' own background are set after it.
         panelkit.apply_theme_deep(self)
         for widget in accents:
             widget.configure(fg=ACCENT)

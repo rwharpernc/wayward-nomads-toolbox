@@ -6,12 +6,12 @@ Pure rule logic (no EDMC or Tk imports, so it is unit-testable the way `boxel.py
 and the overlay.
 
 Every rule reads one `Scan` event, plus - for the rules that compare a body with its
-neighbours - the other `Scan` events already seen in the same system (`bodies`, keyed by
+neighbors - the other `Scan` events already seen in the same system (`bodies`, keyed by
 `BodyID`). The journal reports distances in metres, periods in seconds and gravity in m/s^2;
 the constants below are in those same units.
 
 The rule definitions and limits are fixed defaults (see THIRD-PARTY-NOTICES.md for their
-source and licence). The green gas giant temperatures are community research (same notice).
+source and license). The green gas giant temperatures are community research (same notice).
 The code is WNTB's own.
 """
 
@@ -37,7 +37,7 @@ CLOSE_ORBIT_RATIO = 3.0  # orbit under 3x the parent's radius
 CLOSE_BINARY_MIN_RADIUS_RATIO = 0.4  # radius / semi-major axis above 0.4, for both bodies of the pair
 
 # Green gas giant surface temperatures (K) confirmed by community research (credits in THIRD-PARTY-NOTICES.md). The journal
-# never records a planet's colour, so a match is only ever a lead to check in the system map.
+# never records a planet's color, so a match is only ever a lead to check in the system map.
 GGG_TEMPERATURE_TOLERANCE_K = 0.001
 KNOWN_GGG_TEMPERATURES = {
     "sudarsky class i gas giant": (
@@ -234,7 +234,7 @@ def _shepherd_moon(scan: Scan, bodies: Bodies) -> Optional[str]:
 
 def _binary_partner(scan: Scan, bodies: Bodies) -> Optional[Scan]:
     """The one other body sharing this body's barycentre, when both are close enough to their
-    common centre for the pair to count (radius over semi-major axis above 0.4)."""
+    common center for the pair to count (radius over semi-major axis above 0.4)."""
     kind, barycentre = first_parent(scan)
     axis, radius = _number(scan.get("SemiMajorAxis")), _number(scan.get("Radius"))
     if kind != "Null" or not axis or radius is None or radius / axis <= CLOSE_BINARY_MIN_RADIUS_RATIO:
@@ -328,7 +328,7 @@ RULES = (
     Rule("large_landable", "Large landable", "A landable body over 18,000 km in radius.", False, _large_landable),
     Rule("landable_ring", "Landable ringed", "A landable body that also has rings.", False, _landable_ring),
     Rule("close_orbit", "Close orbit", "A moon orbiting very close to its parent planet.", False, _close_orbit),
-    Rule("close_binary", "Close binary", "Two bodies orbiting so close to their shared centre that they nearly touch.", False, _close_binary),
+    Rule("close_binary", "Close binary", "Two bodies orbiting so close to their shared center that they nearly touch.", False, _close_binary),
     Rule("colliding_binary", "Colliding binary", "Two bodies whose orbits overlap, so they will collide.", True,
          _colliding_binary),
     Rule("high_eccentricity", "High eccentricity", "An orbit with eccentricity above 0.9.", False,
@@ -348,7 +348,7 @@ def default_enabled() -> Set[str]:
 
 def evaluate(scan: Scan, bodies: Bodies, enabled: Iterable[str]) -> List[Match]:
     """Every enabled rule that matches `scan`, in Settings order. `bodies` should already hold
-    the neighbours this scan is compared with (it may or may not include `scan` itself).
+    the neighbors this scan is compared with (it may or may not include `scan` itself).
     A malformed event never raises - it just matches nothing."""
     enabled = set(enabled)
     matches: List[Match] = []

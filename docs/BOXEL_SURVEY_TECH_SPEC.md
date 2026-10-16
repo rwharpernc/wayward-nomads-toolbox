@@ -178,9 +178,9 @@ bumped number. **It was reverted.** This falsifies the theory that `<N1>` is "th
 axis as `<N2>`, just coarser" — moving to a real spatially-adjacent boxel needs actual coordinate/
 id64 math, which a string increment structurally cannot provide.
 
-### 4.4 Using EDSM for real spatial neighbours
+### 4.4 Using EDSM for real spatial neighbors
 
-Since a string increment can't find a real neighbouring boxel (§4.3), WNTB asks EDSM which real systems
+Since a string increment can't find a real neighboring boxel (§4.3), WNTB asks EDSM which real systems
 exist near the commander's actual position instead: its public
 `https://www.edsm.net/api-v1/cube-systems?x=...&y=...&z=...&size=...` endpoint, centered on the `StarPos`
 from the journal. No id64/coordinate-decode math is involved. `edsm_client.nearby_systems()` + the "Find
@@ -243,7 +243,7 @@ recovered system is the old event's time. The journals are only read.
 
 A small mass-code boxel has few real systems in it (§4.1), so Sequence mode can run out of reachable
 candidates after only a few hits. A fuller fix would precompute a breadth-first queue of spatially
-neighbouring boxels via id64 math, which this project has never derived (the mass-code→id64-stride table
+neighboring boxels via id64 math, which this project has never derived (the mass-code→id64-stride table
 below is only 2 of 8 letters confirmed). WNTB instead **detects the symptom directly**:
 `boxel_survey.py` tracks consecutive manual Next clicks with no confirmed jump in between
 (`_consecutive_skips`, `AUTO_SUGGEST_SKIP_THRESHOLD = 3`) — the only observable signal available, since

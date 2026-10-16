@@ -6,7 +6,7 @@ Notable Bodies), Auto-Honk, the screenshot features and Trade all work. The newe
 Overlays tab with Placement and Appearance) have had only a first pass on Linux, and 1.9.1 holds fixes that came from it. Flight Alerts,
 the Surface Compass, Notes and the Trade watch list still need their Linux checks, and the newest (Materials and Engineering, and the
 Expedition planner, released in 1.10.0) have had less time in the game than the rest. Small fixes are expected in a later
-update. The changes in 1.14.0 (history moved off the mode panels into the Credits Ledger and Colonization History windows, sections that start folded), 1.13.0 (mission progress colours, full-width Notable Bodies and Discovery cards), 1.12.0 (the Missions window and pinned missions, the Missions overlay card, Best picks and Source commodities, the Upgrade planner and Megaship scans) and 1.11.0 (the Ship planner, the Engineers tab's places and unlock steps and its Bubble / Colonia filter, the Help buttons, BGS
+update. The changes in 1.14.0 (history moved off the mode panels into the Credits Ledger and Colonization History windows, sections that start folded), 1.13.0 (mission progress colors, full-width Notable Bodies and Discovery cards), 1.12.0 (the Missions window and pinned missions, the Missions overlay card, Best picks and Source commodities, the Upgrade planner and Megaship scans) and 1.11.0 (the Ship planner, the Engineers tab's places and unlock steps and its Bubble / Colonia filter, the Help buttons, BGS
 rebuilding a period that closed while EDMC was not running, and finished Colonization builds losing the "Construction Site:" prefix) have been tried on Windows
 only. Please report anything odd.
 

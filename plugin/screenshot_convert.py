@@ -23,7 +23,7 @@ def find_source_file(candidate_dirs: Iterable[str], journal_filename: str) -> Op
     Return the first existing path for `journal_filename`'s basename across
     `candidate_dirs`, in order — the configured Screenshot Directory is
     always tried first (see `screenshots.candidate_source_dirs`), so this
-    only changes behaviour when that configured directory turns out to be
+    only changes behavior when that configured directory turns out to be
     wrong (e.g. a stale setting from before a OneDrive redirect was
     detected).
 

@@ -3,7 +3,7 @@ Builds the whole WNTB Settings tab the way EDMC would and fails if any tab raise
 
 A tab that raises while building makes EDMC log `Failed for Plugin "WNTB"` and drop the
 entire WNTB Settings tab, on Windows and Linux alike. The stand-in widgets in tests/prefs_smoke.py
-copy EDMC's real myNotebook behaviour (ttk widgets; every nb.Frame holds a gridded spacer child),
+copy EDMC's real myNotebook behavior (ttk widgets; every nb.Frame holds a gridded spacer child),
 so mistakes such as packing into an nb.Frame are caught here instead of by a user. Skipped when
 Tk has no display. Run with: python -m unittest discover -s tests
 """
@@ -24,7 +24,7 @@ class PrefsSmokeTests(unittest.TestCase):
             self.skipTest("Tk has no display here")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("SETTINGS BUILT OK", result.stdout)
-        self.assertIn("Window", result.stdout)  # the window-behaviour tab (auto height fit)
+        self.assertIn("Window", result.stdout)  # the window-behavior tab (auto height fit)
         # Grouped layout: ten top-level tabs, and the merged Exploration pages are all there.
         self.assertIn("SETTINGS BUILT OK: 10 top-level tabs", result.stdout)
         # Every page is wrapped in a scroller capped in height, so a long page can't push OK off the screen.

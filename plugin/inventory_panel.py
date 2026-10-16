@@ -66,8 +66,8 @@ TTL_SECONDS = 8
 LINE_HEIGHT = 18
 TEXT_SIZE = "normal"
 
-# Pillage-line colour per journal category (Component/Item/Data), so the
-# stack is scannable by category at a glance rather than one flat colour.
+# Pillage-line color per journal category (Component/Item/Data), so the
+# stack is scannable by category at a glance rather than one flat color.
 CATEGORY_COLOURS: Dict[str, str] = {
     "Component": "#4fc3f7",  # Assets - blue
     "Item": "#81c784",       # Goods - green
@@ -75,7 +75,7 @@ CATEGORY_COLOURS: Dict[str, str] = {
 }
 
 # The four inventory bars the main panel and the overlay both show - same
-# keys, same colours, same fixed order - each independently togglable on
+# keys, same colors, same fixed order - each independently togglable on
 # the overlay via Settings.
 BAR_ORDER: Tuple[str, ...] = ("backpack", "ship_locker", "fleet_carrier_locker", "cargo")
 BAR_COLOURS: Dict[str, str] = {
@@ -105,7 +105,7 @@ CAPACITY_TRACK_COLOUR = "#555555"
 CAPACITY_TTL = 3600
 
 # Ship locker capacity warning: distinct from pillage lines, so it gets its
-# own colour and a longer TTL — missing it can mean being forced to drop
+# own color and a longer TTL — missing it can mean being forced to drop
 # loot rather than just missing a pickup notification.
 LOCKER_WARNING_TTL = 20
 
@@ -710,7 +710,7 @@ class InventoryPanelController:
         panelkit.apply_theme_deep(parent)
 
         # Bars were first drawn above before theme.update() had a chance to
-        # colour _status_label - _bar_track_color() reads that label's
+        # color _status_label - _bar_track_color() reads that label's
         # *current* background, so redraw now that it actually reflects the
         # real theme, rather than leaving the initial paint stuck on the
         # pre-theme guess until the first journal event.
@@ -721,7 +721,7 @@ class InventoryPanelController:
         # applied its own theme (theme.current has been observed still
         # empty a full second after plugin_start3 on a real Dark-theme
         # install) - a bar drawn before that finishes is stuck showing the
-        # wrong colour forever, since nothing else would prompt a redraw
+        # wrong color forever, since nothing else would prompt a redraw
         # until the next journal event. Retry a few times over the
         # following seconds so a slow theme-apply can't permanently strand
         # the bars on their pre-theme guess.
@@ -879,17 +879,17 @@ class InventoryPanelController:
         # since EDMC always constructs every plugin's panel via
         # _config_plugins() before its own first theme.apply() call - see
         # EDMarketConnector.py) is never registered with EDMC's theme system
-        # at all, and theme.apply()'s own later re-colour pass only touches
+        # at all, and theme.apply()'s own later re-color pass only touches
         # *registered* widgets. That silent non-registration - not a delay
         # in theme.current becoming populated - is the mechanism behind the
-        # occasional-wrong-colour reports: apply_theme_deep()'s original
+        # occasional-wrong-color reports: apply_theme_deep()'s original
         # call in build_panel() ran too early to register anything, so nothing
         # ever re-themes these widgets afterward unless something calls
         # apply_theme_deep() again once theme.current is actually populated.
         # Re-running it here (same retry schedule that already existed for
         # the bar canvases) registers every widget in the panel for the
         # first time under a populated theme.current, fixing both this
-        # method's own bar-track colour (whose fallback path reads
+        # method's own bar-track color (whose fallback path reads
         # self._status_label's *applied* background) and every other label
         # in the panel that was silently never themed at all.
         panelkit.apply_theme_deep(self._parent)

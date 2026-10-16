@@ -98,7 +98,7 @@ own.
 type, name, grade, engineers, ingredients with counts and effects, and where each ingredient is found, trimmed to what WNTB shows and put in WNTB's
 order. The recipes are the game's, as that project's contributors compiled them, and can be out of date: the project is archived and newer game
 content may be missing. Some recipes were corrected and rows added from EDDiscovery's data (see the section below). The code that reads them
-(`plugin/blueprints.py`) is WNTB's own. The project's licence follows:
+(`plugin/blueprints.py`) is WNTB's own. The project's license follows:
 
 ```
 MIT License
@@ -127,7 +127,7 @@ SOFTWARE.
 ## Engineering material names, types and grades
 
 `plugin/materials_data.py` is generated from the `material.csv` published by [EDCD/FDevIDs](https://github.com/EDCD/FDevIDs), which declares no
-licence. The names are Frontier's own; the type (Raw, Manufactured, Encoded) and the grade (its `rarity` column, 1 to 5) are game facts. Nine Thargoid-war
+license. The names are Frontier's own; the type (Raw, Manufactured, Encoded) and the grade (its `rarity` column, 1 to 5) are game facts. Nine Thargoid-war
 and chip materials were added from EDDiscovery's item list (see the section above).
 
 ## Engineering recipe corrections, extra materials and engineer locations (Apache-2.0)
@@ -138,7 +138,7 @@ five synthesis recipes corrected and seven synthesis families added (from its `R
 list, which agrees with elite-intel's material table) and the engineer table (from its `Engineers.cs`: each engineer's system, base, coordinates, how to find,
 be invited by and unlock them, permit and on-foot flag). The data was changed from the original: it was converted to WNTB's tables, trimmed, and
 Yarden Bond's meeting requirement was corrected to 5 Smear campaign plans (the community wiki and Inara agree; EDDiscovery has 8). No EDDiscovery code
-is used. The changes follow the same ones the author made in ED-DDT. The licence follows:
+is used. The changes follow the same ones the author made in ED-DDT. The license follows:
 
 ```
                                  Apache License
@@ -348,10 +348,10 @@ is used. The changes follow the same ones the author made in ED-DDT. The licence
 
 `plugin/journal_blueprints.py` links the names the journal uses for engineering blueprints and experimental effects (`FSD_LongRange`,
 `special_fsd_heavy`) to the names in WNTB's blueprint table. The journal names come from [EDCD/coriolis-data](https://github.com/EDCD/coriolis-data)
-(`modifications/blueprints.json` and `specials.json`; the repository declares no licence, so only the names are used, as game facts, with credit) and
+(`modifications/blueprints.json` and `specials.json`; the repository declares no license, so only the names are used, as game facts, with credit) and
 the join uses the Coriolis UUID that each row of [msarilar/EDEngineer](https://github.com/msarilar/EDEngineer)'s `blueprints.json` records (MIT; see the
 engineering blueprints section above). The mapping from ship items to module types is WNTB's own, written from the names in
-[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs) `outfitting.csv` (no licence declared; Frontier's own names). The format a pasted ship loadout is read
+[EDCD/FDevIDs](https://github.com/EDCD/FDevIDs) `outfitting.csv` (no license declared; Frontier's own names). The format a pasted ship loadout is read
 in is the journal's `Loadout` event, which EDSY and Coriolis export as SLEF ([EDCD/slef-specification](https://github.com/jixxed/slef-specification)).
 No code was taken.
 

@@ -3,7 +3,7 @@ Every data file WNTB keeps is either per commander or has a stated reason it is 
 
 Two commanders on one install must never share data about their own play. This lists every file the updater protects
 (`_OWN_DATA_FILES`) and how each one keeps commanders apart; a new data file fails this test until it is classified here, so
-nobody can add a shared one by accident. The behaviour behind each entry is tested where it lives (see
+nobody can add a shared one by accident. The behavior behind each entry is tested where it lives (see
 `test_per_commander_data.py` and the per-feature suites).
 
 It reads the sources instead of importing them, so it needs no EDMC stand-ins and behaves the same on Windows and Linux.

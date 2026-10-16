@@ -36,10 +36,10 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ### Fixed
 - **Notable-body alerts show their full text.** The card cut a body name at 24 characters and a title at 28 with an ellipsis, and sized its width from a plain character count, so capitals and digits ran past the edge. Real names and titles now show in full (the limits are only a guard against runaway text), and the card width is measured with capitals, digits and wide letters counted wider. The new-system and new-body discovery cards use the same measure.
-- **Missions overlay card no longer cuts a long place.** When a mission's title and place do not fit on one line, the place goes on a line under the title, in the same colour, so a long station or system name shows in full.
+- **Missions overlay card no longer cuts a long place.** When a mission's title and place do not fit on one line, the place goes on a line under the title, in the same color, so a long station or system name shows in full.
 
 ### Added
-- **Progress you can see, in colour.** The Missions window now shows progress for source-and-return (Collect) missions, which the game does not report until you hand cargo in: the tonnes of that commodity in your hold against what the mission asks for (`36/60 held`), updating as you buy and sell. Progress is also drawn as a small bar, and rows and overlay lines are coloured by it: green when ready, lime when half or more done, blue when started (time pressure, red and amber, still comes first). The overlay card colours massacres too, using the combined progress of a stack.
+- **Progress you can see, in color.** The Missions window now shows progress for source-and-return (Collect) missions, which the game does not report until you hand cargo in: the tonnes of that commodity in your hold against what the mission asks for (`36/60 held`), updating as you buy and sell. Progress is also drawn as a small bar, and rows and overlay lines are colored by it: green when ready, lime when half or more done, blue when started (time pressure, red and amber, still comes first). The overlay card colors massacres too, using the combined progress of a stack.
 
 ## 1.12.0 - 2026-10-15
 
@@ -664,7 +664,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   inside a height-capped frame (`settings_scroll.py`), sized to the screen; short pages look as before and the
   mouse wheel scrolls from anywhere over a page.
 - **Grey bands on the Settings pages.** Rows built from plain `tk.Frame`s were painted the system grey on EDMC's
-  white pages; they now take the page colour.
+  white pages; they now take the page color.
 
 ### Changed
 - **Trade stock rows are clearer.** "aboard" and "elsewhere" became "in your hold" and "not in your hold", with a
@@ -838,7 +838,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
   water and ammonia world, landable or not; it says if the body is undiscovered or unmapped), terraformable
   landable, landable above about 3 g, shepherd moon,
   5 or 6 of the premium FSD materials, green gas giant (from the Codex, or a gas giant whose class and surface
-  temperature match a confirmed green one; the journal never records colour, so it is a lead to check in the
+  temperature match a confirmed green one; the journal never records color, so it is a lead to check in the
   system map), colliding binary, and eight more that start off (large landable, landable ringed, close orbit,
   close binary, high eccentricity, fast orbit, fast rotation, wide ring). Off by default; only the seven rare
   rules start ticked. Settings only, under **Exploration → Alerts**, so the main panel stays the same size.
@@ -1016,7 +1016,7 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 
 ### Fixed
 - The WNTB settings tab now appears on Linux. The Mining and BGS settings lists used Windows-only
-  colour names, which made the whole tab fail to build on other systems.
+  color names, which made the whole tab fail to build on other systems.
 
 ### Development
 - `npm run package` no longer needs PowerShell, so it works on Linux. `npm run build` now detects your
@@ -1061,7 +1061,7 @@ before release.
 
 ### Field Ops: Inventory Cargo tab
 - The **Inventory** window now has a **Cargo** tab: tonnes carried against hold capacity, with the same
-  near-full and full colour cues as the other tabs, and the commodities aboard (Filter box applies).
+  near-full and full color cues as the other tabs, and the commodities aboard (Filter box applies).
   It follows the vehicle you are in (ship or SRV hold) and says so when on foot.
 
 ### Field Ops: Colonisation
@@ -1077,7 +1077,7 @@ before release.
   sortable; tabs, buttons, dropdowns and scrollbars are WNTB's own.
 - Main-window panels are unchanged and still follow EDMC's theme. The new look never touches EDMC's
   global theme or other plugins.
-- Behaviour and wording in those windows are unchanged. Window sizes scale with display scaling, and
+- Behavior and wording in those windows are unchanged. Window sizes scale with display scaling, and
   windows now appear once, fully drawn, instead of flashing at a default size first.
 
 ### Mining: Mining Book
@@ -1094,7 +1094,7 @@ before release.
   of body (share of your saved deposits per material, with the sample size), marking the ones you
   have already saved there. Picking a material in the filter keeps the scanned bodies whose kind you
   have found it on, highest share first. It starts empty and fills in as you save hotspots.
-- The coverage minimap uses colour-blind-safe markers (shape carries "depleted") and, in the ship,
+- The coverage minimap uses color-blind-safe markers (shape carries "depleted") and, in the ship,
   only appears below 2 km altitude.
 
 ### Powerplay: Rare Goods Finder

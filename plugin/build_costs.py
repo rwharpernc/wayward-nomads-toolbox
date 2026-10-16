@@ -3,7 +3,7 @@ What a colonization build costs, so a planned build can be sized before any cons
 
 The journal only reports a depot's needs once you dock at it, but the cost of each kind of building is fixed by the game. The
 table is `colonisation_costs.json`, bundled with WNTB: a copy of the community-compiled `colonization-costs2.json` (credits and
-licence in THIRD-PARTY-NOTICES.md). It lists, for each kind of building, the tons of each commodity a build needs in all. It is
+license in THIRD-PARTY-NOTICES.md). It lists, for each kind of building, the tons of each commodity a build needs in all. It is
 only as current as that table: the game can change costs.
 
 Pure apart from reading the one bundled file (once).

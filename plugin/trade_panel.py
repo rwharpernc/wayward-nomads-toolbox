@@ -500,7 +500,7 @@ class TradePanelController:
         self._commodity_entry.pack(side=tk.LEFT)
 
         # Which side of the market the search is for. Two toggle buttons (the same on/off look as the mode
-        # buttons) rather than radio buttons, which EDMC's theme doesn't colour reliably.
+        # buttons) rather than radio buttons, which EDMC's theme doesn't color reliably.
         self._side_row = tk.Frame(parent)
         self._side_row.grid(row=2, column=0, columnspan=3, sticky="w", pady=(0, 2))
         tk.Label(self._side_row, text="I want to:").pack(side=tk.LEFT, padx=(0, 4))

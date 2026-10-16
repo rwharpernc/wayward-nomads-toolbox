@@ -153,7 +153,7 @@ screen edge**. The details are in [Setting up the overlay](../OVERLAY_SETUP.md).
 ### Overlay text wraps, or a card is too small or too big
 
 Open **Settings → Overlays → Appearance** and press **Show sample**. Cards are sized from an estimate of the text at the
-chosen size and given 10% extra width, so a card may still be tight on a small screen. Try a smaller **Text size** on the same tab.
+chosen size and given 10% extra width, so a card may still be tight on a small screen. If **Text size** is set to Larger, try Default on the same tab (the overlay's smallest size is not offered because it is hard to read over the game).
 
 ## Missions
 

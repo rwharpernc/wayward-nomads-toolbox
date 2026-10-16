@@ -3,7 +3,7 @@ Trade: the best back-and-forth pair of stations, loaded both ways.
 
 Spansh's route planner returns the best chain of hops, which is not always a pair that comes back. This module
 finds pairs itself: one station search returns the full market of every station near the start, and then it works
-out, for each neighbour, what to carry out and what to carry back. A pair only counts when BOTH legs make a profit,
+out, for each neighbor, what to carry out and what to carry back. A pair only counts when BOTH legs make a profit,
 so there is never an empty leg. Pairs are ranked by estimated profit per hour.
 
 The pairing is pure (no network); `fetch_stations` is the one network call (Spansh's /api/stations/search, the same

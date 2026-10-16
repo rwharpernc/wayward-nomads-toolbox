@@ -52,7 +52,7 @@ TABS = (
     ("fleet_carrier_locker", "Carrier Locker", "Carrier Locker — from CAPI, may lag 15–30 min"),
 )
 
-# Capacity highlight colours: NEAR is the amber "pay attention" cue (also used
+# Capacity highlight colors: NEAR is the amber "pay attention" cue (also used
 # for the baseline note below); FULL escalates once a category is actually capped.
 COLOUR_NORMAL = P.INFO
 COLOUR_NEAR = P.WARN

@@ -1,6 +1,6 @@
 """Canvas map for WNTB windows: coverage discs, hotspot markers, your
 position, a metre grid, zoom 1x/2x/4x and click-to-select. Pure geometry
-in metres east/north of the map centre - the caller projects lat/lon (see
+in metres east/north of the map center - the caller projects lat/lon (see
 mining_coverage_render._project) so this module needs no body radius.
 
 Markers carry state by shape, not hue (colour-blind safe): live hotspot =
@@ -72,7 +72,7 @@ class MapView(tk.Frame):
         self.redraw()
 
     def set_message(self, text: Optional[str]) -> None:
-        """Replaces the map with a centred note (e.g. "No body radius known")."""
+        """Replaces the map with a centered note (e.g. "No body radius known")."""
         self._message = text
         self.redraw()
 
@@ -103,7 +103,7 @@ class MapView(tk.Frame):
             return
         half = side / 2
         width, height = max(canvas.winfo_width(), side), max(canvas.winfo_height(), side)
-        self._cx, self._cy = width / 2, height / 2   # map centre; the view fills the whole canvas
+        self._cx, self._cy = width / 2, height / 2   # map center; the view fills the whole canvas
         scale = side / (2 * BASE_VIEW_M / ZOOMS[self._zoom_index])
 
         step = GRID_M * scale

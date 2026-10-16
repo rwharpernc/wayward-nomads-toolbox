@@ -577,7 +577,7 @@ class ScreenshotsController:
 
     def _render_overlay(self, lines: List[Tuple[str, str, float, str]], previous_rows: int, now: float) -> None:
         # Background panel sized to the widest current line and row count at the look's text size, outlined in the newest line's
-        # colour so a differently-coloured notification reads as a distinct panel.
+        # color so a differently-colored notification reads as a distinct panel.
         look = overlay_appearance.current_look()
         left, top, width, height = _panel(look, len(lines), max(len(text) for _, text, _, _ in lines))
         # Drawn at the fixed origin above; the Overlay Placement setting moves it to where the commander put it.

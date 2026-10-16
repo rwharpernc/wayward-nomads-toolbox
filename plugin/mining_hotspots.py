@@ -42,7 +42,7 @@ second entry."""
 
 MINED_ATTRIBUTION_M = 200.0
 """Refined tons are credited to the nearest positioned hotspot within this
-distance of the Rhino - rigs sit up to a deposit-radius from its centre."""
+distance of the Rhino - rigs sit up to a deposit-radius from its center."""
 
 _MINED_SAVE_INTERVAL_S = 5.0
 """Tons arrive roughly once a second per rig; the file is rewritten at

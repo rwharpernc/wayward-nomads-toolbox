@@ -333,7 +333,7 @@ class SlimScrollbar(tk.Canvas):
         fraction = event.y / max(self.winfo_height(), 1)
         if self._first <= fraction <= self._last:
             self._grab = fraction - self._first
-        else:  # click in the trough: centre the thumb there
+        else:  # click in the trough: center the thumb there
             self._grab = (self._last - self._first) / 2
             self._command("moveto", max(0.0, fraction - self._grab))
 

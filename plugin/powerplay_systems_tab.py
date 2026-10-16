@@ -1,6 +1,6 @@
 """The "Systems" tab of the Powerplay Sessions window: one tab per system,
 per Powerplay cycle - the Powerplay counterpart of the BGS Report window
-(bgs_window.py), with the same pin / close / "Show a system" behaviour.
+(bgs_window.py), with the same pin / close / "Show a system" behavior.
 
 A drop-down picks the cycle (the live one or an archived week). Below it, one
 tab per system: the last `RECENT_SYSTEMS` systems the commander has been in

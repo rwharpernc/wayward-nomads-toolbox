@@ -389,7 +389,7 @@ JUMP_EVENTS = ("FSDJump", "Location", "CarrierJump")
 
 
 class MissionsOverlay:
-    """Where the commander is and is heading, and what is on the card. `entries`, `now`, `draw` and `cfg` are injected so the behaviour is tested without the
+    """Where the commander is and is heading, and what is on the card. `entries`, `now`, `draw` and `cfg` are injected so the behavior is tested without the
     overlay, the Missions mode or the real clock."""
 
     def __init__(self, entries: Callable[[], List[Entry]], draw: Optional[Callable[[List[Line]], None]] = None,

@@ -176,7 +176,7 @@ How it works, in plain terms:
 
 1. It asks Spansh for the markets of the nearest stations (up to 300, within twice your jump range, but never less
    than 20 ly or more than 100 ly).
-2. For each neighbour, it works out what to carry out and what to bring back.
+2. For each neighbor, it works out what to carry out and what to bring back.
 3. A pair only counts when **both legs make a profit, so you never fly empty**.
 4. Each leg fills the hold with the most profitable commodity first and tops up with the next, limited by the supply
    where you buy, the demand where you sell and what you can afford.

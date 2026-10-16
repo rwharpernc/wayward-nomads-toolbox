@@ -313,7 +313,7 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     # ever calling self.register(widget) whenever theme.current is still
     # empty, which it always is at this point). So this call above may
     # have silently registered nothing at all - inventory_panel.py's own
-    # bar-track-colour fix hit exactly this for its own widgets
+    # bar-track-color fix hit exactly this for its own widgets
     # specifically; retrying here covers the rest
     # of WNTB's frame tree the same way, once theme.current is actually
     # populated. Uses apply_theme_deep(), not a second bare theme.update()
@@ -557,7 +557,7 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
 
 
 def _create_window_tab(notebook: nb.Notebook) -> None:
-    """Window behaviour. Everything here is placed with `grid` (never `pack`) - an
+    """Window behavior. Everything here is placed with `grid` (never `pack`) - an
     nb.Frame already holds a gridded child, and packing into it makes the whole
     WNTB Settings tab vanish (tests/test_settings_layout.py)."""
     global _fit_height_var, _suggest_var

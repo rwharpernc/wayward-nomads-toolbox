@@ -209,7 +209,7 @@ pins whose mission is gone, but only once the roster is known (`all_missions.vie
 `build_lines` puts pinned items first under PINNED (taking rows before HERE, NEXT and the rest; overflow counts in the `+N more` line). Tests: `tests/test_missions_board.py`,
 `tests/test_missions_overlay.py` (`PinnedTests`).
 
-## 10b-3. Progress and its colours
+## 10b-3. Progress and its colors
 
 `mission_progress.compute` gives each mission a `Progress` (text, fraction, done, required): the game's `CargoDepot` count when there is one, else the kill estimate, else (for a
 source-and-return mission, whose `MissionSummary.commodity_key` is the commodity's internal name) the tonnes of it in the hold, `current_cargo.held()`, shared out among the missions for

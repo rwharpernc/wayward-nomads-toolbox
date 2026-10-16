@@ -40,7 +40,7 @@ _CFG_Y = "wntb_notable_y"
 _CFG_RULES = "wntb_notable_rules"
 DEFAULT_ENABLED = False
 
-# Default position: centred like the Discovery cards but well below them and below the Canonn
+# Default position: centered like the Discovery cards but well below them and below the Canonn
 # plugin's default overlay spots (its right-middle text starts at y=200 and grows downward; its
 # left-middle spot is at x=100, left of this card), so the cards don't land on each other.
 DEFAULT_X = discovery.DEFAULT_X
@@ -338,7 +338,7 @@ class NotableController:
     def handle_event(self, entry: Dict[str, Any], cmdr: str, system: Optional[str], station: Optional[str],
                      state: Dict[str, Any]) -> None:
         # Body state is kept even while disabled, so turning the feature on mid-system still
-        # has the neighbours it needs; the enabled-rule set (empty when off) is what gates alerts.
+        # has the neighbors it needs; the enabled-rule set (empty when off) is what gates alerts.
         if entry.get("event") in ("FSDJump", "Location", "CarrierJump", "Scan", "CodexEntry"):
             self.tracker.handle_event(entry)
 

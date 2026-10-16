@@ -188,9 +188,9 @@ tab strip, and the tallest page (about 690px) sets the Settings window height.
 **Height fitting.** Once a window has an explicit size, Tk stops fitting it to its content. `ui._sync_mode_holder_height` is the single place the panel's height changes (mode switch, startup, a section expanding), and it schedules `ui._fit_window_height` once at idle: it sets the top-level window's geometry to its current width and the height its content requests (`winfo_reqheight`), so a taller mode is never cut off. It is skipped when the window is maximized, minimized or not yet visible, and keeps the width and position. The Settings → Window tab has a checkbox (`wntb_fit_window_height`, default on) that turns it off; that tab is built with `grid` only, per the Settings rule in the development guide.
 
 **Collapsible sections.** `panelkit.collapsible_section` gives GEC Nearby POI, Canonn Nearby POI and Codex
-Completionist a clickable ▸/▾ title over a body frame, collapsed unless the saved flag
-(`wntb_gec_poi_collapsed`, `wntb_canonn_poi_collapsed`, `wntb_codex_completionist_collapsed`) says otherwise.
-Boxel Survey keeps its own equivalent (`wntb_boxel_collapsed`)
+Completionist a clickable ▸/▾ title over a body frame. Since 1.14.0 every section starts folded each time EDMC starts: opening one lasts for the
+session and is not remembered, so the panel is the same height every launch (the `config_key` argument and the old `*_collapsed` settings are no longer
+read). Boxel Survey keeps its own equivalent, which also starts folded.
 
 **Modes.** `PANEL_MODES` in `ui.py` is the ordered list of mode buttons. Each mode has its own frame.
 Switching modes shows one frame and hides the others (`grid_remove`), so it never destroys or
@@ -529,7 +529,7 @@ and a live answer (see the module's docstring).
 
 System-name boxes get type-ahead from `system_autocomplete.attach(entry, var)`, which puts its own bindtag ahead of the box's so Enter, Up, Down and Escape
 are seen first (taken with "break" only when a suggestion is highlighted or the list is open) and the box's own Enter handling still runs otherwise. The
-list is a borderless Toplevel under the box, coloured from the box itself so it fits both WNTB's dark windows and the themed EDMC panel. Suggestions
+list is a borderless Toplevel under the box, colored from the box itself so it fits both WNTB's dark windows and the themed EDMC panel. Suggestions
 are `system_names.local()` (the systems seen by `load.journal_entry`, then sources such as the expedition stops and notes registered with
 `add_source`) from two letters, plus Spansh's `/api/systems/field_values/system_names?q=` answers from three letters when
 `wntb_system_suggest_spansh` is on (off by default): the call is debounced 350 ms, runs on a worker thread, and is cached by typed start for the session.

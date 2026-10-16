@@ -238,7 +238,7 @@ def material_summary(spots: Sequence[hotspots.Hotspot]) -> list[MaterialLine]:
 
 def project_m(center_lat: float, center_lon: float, lat: float, lon: float,
               radius_m: float) -> tuple[float, float]:
-    """(east, north) metres of a point from the map centre - the same flat
+    """(east, north) metres of a point from the map center - the same flat
     projection mining_coverage_render uses, fine at the few-km scale the
     map shows."""
     distance = bearing.distance_m(center_lat, center_lon, lat, lon, radius_m)
@@ -249,7 +249,7 @@ def project_m(center_lat: float, center_lon: float, lat: float, lon: float,
 def map_center(body_coverage: Optional[coverage.BodyCoverage],
                current: Optional[tuple[float, float]],
                spots: Sequence[hotspots.Hotspot]) -> Optional[tuple[float, float]]:
-    """Where to centre the map: the body's recorded coverage centre, else
+    """Where to center the map: the body's recorded coverage center, else
     the live position, else the first positioned hotspot, else None."""
     if body_coverage is not None and body_coverage.center is not None:
         return body_coverage.center.latitude, body_coverage.center.longitude

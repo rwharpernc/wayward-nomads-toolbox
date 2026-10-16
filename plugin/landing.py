@@ -616,9 +616,9 @@ _PLACEHOLDER_H = 100
 _FALLBACK_TEXT_SIZE = "normal"
 _FALLBACK_LABEL_TEXT = "No actual diagram - it probably looks something like this."
 _FALLBACK_LABEL_GAP = 16      # box to caption
-_CAPTION_CENTRE = 0.85        # centre the pair as if the caption were this fraction of its estimated width: the estimate errs wide (it must,
+_CAPTION_CENTRE = 0.85        # center the pair as if the caption were this fraction of its estimated width: the estimate errs wide (it must,
                               # so text never runs past a card), and seen on a real screen the caption was about 80% of it, which left
-                              # the pair sitting left of centre. The card's width still uses the full estimate, so nothing runs past it.
+                              # the pair sitting left of center. The card's width still uses the full estimate, so nothing runs past it.
 _CAPTION_LINES = 3            # the caption is wrapped into at most this many lines, as narrow as that allows
 _FALLBACK_LINE_HEIGHT = 22
 _FALLBACK_MAX_LINES = 6
@@ -906,7 +906,7 @@ def _render_fleetcarrier_diagram(client: OverlayClient, pad: Optional[int], carr
 
 
 def _clear_starport_diagram(client: OverlayClient) -> None:
-    # A one-point, marker-less vector at the diagram's centre, not an empty list:
+    # A one-point, marker-less vector at the diagram's center, not an empty list:
     # EDMCModernOverlay drops an empty "vect" ("insufficient points"), so the old
     # diagram would have stayed up until its ttl ran out.
     blank = [{"x": _DIAGRAM_CX, "y": _DIAGRAM_CY}]

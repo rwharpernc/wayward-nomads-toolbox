@@ -55,7 +55,7 @@ being listed doesn't mean a tool was the first or the only one.
   [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s target tracking and [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s
   compass and bookmarks. WNTB's is its own: it grew out of Mining's own hotspot arrow, and no code was taken from either.
 - **Megaship scans** (a count of the megaships scanned each Powerplay cycle, with name and system):
-  [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s BGS data store keeps the same list. Its source (no licence is declared, so none of it is
+  [ODEliteTracker](https://github.com/WarmedxMints/ODEliteTracker)'s BGS data store keeps the same list. Its source (no license is declared, so none of it is
   copied) was read for how it names the ship: the megaship you dropped to just before the uplink scan. WNTB's is its own code, checked against real
   journals, with the merits each scan earned, a check that the destination really is a megaship, and a journal back-fill.
 - **Colonisation tracking:** Architect Tracker, [Raven Colonial](https://ravencolonial.com/),
