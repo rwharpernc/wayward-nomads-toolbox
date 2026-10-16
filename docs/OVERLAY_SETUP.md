@@ -1,8 +1,8 @@
 # Setting up the on-screen overlay
 
 Some WNTB features can draw on top of your game: an alert when you find something new, the landing pad
-you've been assigned, a warning when you're being interdicted, and so on. To do that, WNTB needs a
-small helper program running alongside the game, called an **overlay**.
+you've been assigned, a warning when you're being interdicted, cards for the body you are on, and so on. To do that, something has to draw
+a transparent layer over Elite. That something is an **overlay**, and WNTB can use one of two.
 
 You don't have to do any of this. **Every WNTB feature works without an overlay;** you just won't see the
 on-screen extras.
@@ -29,37 +29,65 @@ on-screen extras.
 
 ## Step 1: Choose an overlay
 
-**EDMCModernOverlay is the recommended one.** It works on Windows and Linux.
+There are two, and you pick one under **Settings → WNTB → Overlays → Overlay Connection → Which overlay draws**.
 
-- **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)** (recommended). Its own
-  installation guide is on its project wiki, so follow that for your system.
+| | **WNTB's built-in overlay** | **EDMCModernOverlay** |
+|---|---|---|
+| What it is | A transparent window WNTB itself lays over Elite, drawn from inside EDMC | A separate program (an EDMC plugin with its own helper window) WNTB sends its drawings to |
+| Systems | **Windows only** | Windows and Linux |
+| Install | Nothing: it is part of WNTB | Install it yourself ([project page](https://github.com/SweetJonnySauce/EDMCModernOverlay) and its wiki) |
+| Draws | **WNTB's displays only** | WNTB's and every other plugin that supports it |
+| Chosen with | The setting above (off until you choose it) | The same setting (it is the default) |
+| Font | Its own: Source Sans 3 (lower case), or any `.ttf` / `.otf` you add; changes at once | One font for all plugins, in its own list; takes effect after a restart |
+| Cards fit their text | Exactly (the text is measured in the font in use) | By estimate, a little roomier |
+| Stray windows | Cannot happen: it ends with EDMC | An old window can be left running (see [Known issues](guide/known-issues.md)) |
+| Elite must run | Borderless or windowed | Borderless or windowed (it also lists fullscreen: check its notes) |
 
-WNTB does not install or start the overlay for you.
+### Do I still need EDMCModernOverlay?
+
+- **For WNTB's displays on Windows: no.** Choose the built-in overlay and WNTB needs nothing else. It no longer requires EDMCModernOverlay.
+- **On Linux: yes.** The built-in overlay is Windows only, so Linux uses EDMCModernOverlay.
+- **For other plugins' overlays: yes.** The built-in overlay draws WNTB's displays and nothing else. A plugin that draws through EDMCModernOverlay (or the older EDMCOverlay) still needs it,
+  and it will keep drawing there whatever WNTB does.
+
+### Using both
+
+You can keep EDMCModernOverlay installed and running next to the built-in overlay:
+
+- **Only one draws WNTB's displays.** With the built-in overlay chosen WNTB sends nothing to EDMCModernOverlay, so nothing of WNTB's is drawn twice. EDMCModernOverlay keeps drawing the other plugins' displays.
+- **Two windows over Elite is fine.** Each is transparent and lets clicks through. They do not know about each other, so if another plugin's display and one of WNTB's land on the same spot they overlap; move WNTB's
+  in Overlay Placement.
+- **Switching** takes effect when you press OK. Restart EDMC after switching, so anything the other overlay was still showing from WNTB expires (most displays last a few seconds; the Colonization card is left up for up to an hour).
+- **Fonts stay separate.** The built-in overlay's font and EDMCModernOverlay's are chosen independently (see [Fonts](#fonts)).
+- **The Hide overlays switch hides WNTB's displays only**, in whichever overlay draws them.
+
+WNTB does not install or start EDMCModernOverlay for you. The built-in overlay starts and stops with EDMC.
 
 ## Step 2: Set Elite up so the overlay can show
 
-The overlay draws a transparent layer on top of the game. In Elite's graphics options, use **borderless**
-or **windowed** mode, which work with every overlay. (EDMCModernOverlay also supports fullscreen; check
-its own notes if you want that.)
+An overlay draws a transparent layer on top of the game, so Elite cannot be in exclusive fullscreen: in Elite's graphics options use **borderless**
+or **windowed** mode. (EDMCModernOverlay also supports fullscreen; check its own notes if you want that. The built-in overlay does not.)
 
-## Step 3: Check WNTB's connection settings
+## Step 3: Check the settings
 
-In EDMC, open **File → Settings → WNTB**, choose **Overlays**, then the **Overlay Connection** tab. The defaults are:
+In EDMC, open **File → Settings → WNTB**, choose **Overlays**, then the **Overlay Connection** tab.
 
-- **Host:** `127.0.0.1`
-- **Port:** `5010`
-
-These match EDMCModernOverlay as they come, so you normally don't need to change anything.
-If you changed the port in your overlay, enter the same one here.
+- **Built-in overlay:** pick **WNTB built-in overlay (Windows)** under *Which overlay draws* and press OK. The tab then says whether it is running over Elite. Nothing else is needed.
+- **EDMCModernOverlay:** the defaults are **Host** `127.0.0.1` and **Port** `5010`. These match EDMCModernOverlay as they come, so you normally don't need to change anything. If you changed the
+  port in your overlay, enter the same one here.
 
 ## Step 4: Turn the features on and test them
 
 Every overlay setting lives in one place, **File → Settings → WNTB → Overlays**, with a tab for the shared connection, a
-tab for placement, and a tab for each feature that draws on your screen. Each feature tab has its switch and, where it
+tab for placement, a tab for appearance, a tab for hiding, and a tab for each feature that draws on your screen. Each feature tab has its switch and, where it
 makes sense, a test button:
 
 | Overlays tab | What it controls | Test button |
 |---|---|---|
+| **Overlay Connection** | Which overlay draws; EDMCModernOverlay's host and port; keep showing for screenshots | **Check connection** |
+| **Overlay Placement** | Where every display sits (layout editor) | **Show placement preview** |
+| **Appearance** | Color scheme, text size, panel opacity and the overlay font | **Show sample** |
+| **Hide overlays** | The keyboard shortcut (Windows) and a button to hide or show every overlay | **Hide / show now** |
 | **Colonization** | The shopping list card | **Test Overlay** |
 | **Discovery** | New system and body discovery alerts | **Test Discovery** |
 | **Inventory** | Pickup notifications and the inventory bars | |
@@ -68,7 +96,7 @@ makes sense, a test button:
 | **Route** | The route card (how many systems to list, whether to show the running expedition) | **Test Card** |
 | **Expedition Log** | The card of the running expedition's totals (and whether to keep showing the last one after it is stopped) | **Test Card** |
 | **Exobiology** | Four switches, one for each Exobiology card | **Test Cards** |
-| **System targets** | The list of bodies to map and sample (value threshold, rows, life list) | **Test Card** |
+| **System targets** | The list of bodies to map and sample (value threshold, what the value is judged by, rows, life list) | **Test Card** |
 | **Body info** | The body card (targeted body, nearby body, symbols or full names for elements and compounds) | **Test Card** |
 | **Missions** | The missions card (rows to show, next jump, urgent limit) | **Test Card** |
 | **Landing** | The assigned pad and diagram | **Test Overlay** |
@@ -81,17 +109,17 @@ The test buttons work even while the feature is switched off, and they tell you 
 could be reached. A feature's other settings (what it tracks, how it behaves) stay in its own tab elsewhere in
 Settings; only the overlay parts moved here.
 
-On the **Overlay Connection** tab, **Check connection** tells you whether an overlay is listening at the
-host and port shown, without sending anything.
+**Check connection** tells you whether the overlay is reachable: for EDMCModernOverlay, whether one is listening at the host and port shown (it sends nothing); for the built-in overlay, whether it is running and
+whether it has found Elite's window. It also says when more than one EDMCModernOverlay window is running.
 
-Start the overlay, start the game (or at least have the overlay running), and press a test button. If you
+Start the overlay (EDMCModernOverlay) or just start EDMC (the built-in overlay), start the game, and press a test button. If you
 see the message on your screen, you're set.
 
 ## Moving things around
 
 Where each display goes is set once, for every WNTB overlay, on **Settings → WNTB → Overlays → Overlay Placement**.
 
-**Why not just x and y numbers?** An overlay program places things on a fixed 1280 × 960 canvas and maps it onto your game
+**Why not just x and y numbers?** Both overlays place things on a fixed 1280 × 960 canvas and maps it onto your game
 window, and it treats *positions* and *sizes* differently. A position is a fraction of the screen (x ÷ 1280 across, y ÷ 960
 down), so the canvas is stretched over the whole screen. A size, though, is in screen pixels, scaled by Windows' display
 scaling. On a 3840 × 2160 screen at 125% scaling that makes a 360-pixel-wide card only 12% of the screen's width. A raw
@@ -108,14 +136,15 @@ what is already on screen goes the next time it would redraw. The spot and offse
 was. It works for every display on the tab (Colonization shopping list, Discovery, Notable, Flight alerts, Route, Expedition Log, Biology, Bio status, Bio radar, Sample popup, System targets, Body
 info, Interdiction, Missions, Landing, Inventory, Mining stats, Surface compass, Screenshot messages). **Reset all to defaults** shows them all again.
 
-**How WNTB knows your screen.** It reads what the overlay itself is using: the window size, fit or fill mode and display
+**How WNTB knows your screen.** With the built-in overlay it reads Elite's own window: its size and the display scaling where it sits, live, so it follows you when you move or resize the game. With
+EDMCModernOverlay it reads what that overlay itself is using: the window size, fit or fill mode and display
 scaling from EDMCModernOverlay's own log (its newest "Overlay scaling updated" line). If that isn't there it falls back to
 Elite's `DisplaySettings.xml` (in `Options\Graphics`; on Linux inside the Proton prefix) for the size, Windows' display scaling,
 and EDMCModernOverlay's settings for the mode. The tab shows what it found, for example *3840 x 2160, full screen, display
 scaling 125% (EDMCModernOverlay log); overlay mode fill*. You can set the display scaling and the mode yourself on that tab if
 they are wrong.
 
-**The right-hand edge.** Across a wide screen EDMCModernOverlay limits a shape's left position plus its pixel width to the
+**The right-hand edge (EDMCModernOverlay only; the built-in overlay has no such limit and draws against any edge).** Across a wide screen EDMCModernOverlay limits a shape's left position plus its pixel width to the
 canvas width, and squashes the shape if it would pass that, so a display cannot simply be drawn against the right edge. The
 overlay does apply a *group offset* after that limit (it is how its own Overlay Controller moves things), and offers it to
 plugins. So for a display on the right, WNTB draws it as far right as the limit allows and sets that display's group offset
@@ -126,7 +155,7 @@ short of the edge. The Overlay Placement tab has a switch, **Carry displays on t
 (and clears the offsets) if displays end up in the wrong place. The bottom edge needs none of this. The two Mining displays share one overlay group, so they stop at the limit
 rather than being offset.
 
-**Opacity and clicking through.** **Settings → Overlays → Appearance → Panel opacity** sets how solid every WNTB display's background is (100%, 90% by default, 75%, 60%, 40% or 25%); the text stays solid, so a faint panel lets the game show through behind readable text. The overlay itself is click-through: EDMCModernOverlay draws its window so mouse clicks reach the game underneath, and only becomes clickable while its own drag or controller mode is on, so there is nothing to set in WNTB. EDMCModernOverlay also has an overall opacity in its own settings that dims everything it draws, text included. If clicks do not pass through, see that program's click-through notes (on GNOME its extension is needed).
+**Opacity and clicking through.** Both overlays let clicks and keys through to the game, and neither takes the focus. **Settings → Overlays → Appearance → Panel opacity** sets how solid every WNTB display's background is (100%, 90% by default, 75%, 60%, 40% or 25%); the text stays solid, so a faint panel lets the game show through behind readable text. EDMCModernOverlay's window is click-through except while its own drag or controller mode is on, so there is nothing to set in WNTB, and it also has an overall opacity in its own settings that dims everything it draws, text included. If clicks do not pass through, see that program's click-through notes (on GNOME its extension is needed).
 
 **Plain panels.** The Route, System targets, Body info and Exobiology cards and the Bio radar are plain dark panels, with no colored bar or outline, so they sit quietly over the game.
 
@@ -158,18 +187,15 @@ may sit slightly differently than before.
   overlay's "normal" size, which stays readable over the game.
 - **Panel opacity**: how solid every display's background is (100%, 90% by default, 75%, 60%, 40% or 25%). The text stays solid, so a faint panel lets the game show through
   behind readable text; over a bright scene, 75% or more keeps small text easiest to read. Every text color in every scheme keeps strong contrast over a dark panel.
-- **Overlay font**: the font every overlay is drawn in. It is EDMCModernOverlay's font, one for all plugins, and its default (Elite's cockpit font) has capital letters only, so
-  everything shows in capitals. Choose another installed font, or **Add font file...** to copy a `.ttf` or `.otf` you downloaded (Google Fonts has many; keep a font's license with it),
-  and WNTB puts your pick first in the overlay's `preferred_fonts.txt` (keeping a `.bak` of the old list once). It takes effect when EDMC restarts; **Overlay default** goes back to the cockpit font.
-  WNTB cannot give its own cards a different font from other plugins' (the overlay takes one font), and it does not install or license fonts for you.
+- **Overlay font**: the font the overlay draws in; see [Fonts](#fonts) below. It follows whichever overlay is chosen.
 - **Show sample** draws the Colonization card with the scheme and size currently picked (before you press OK); **Reset appearance**
   puts the defaults back.
 
 Padding and line spacing are **fixed**, so columns stay lined up. Every card uses the same padding, so its text sits the same distance from the
-border on all four sides, and every line of text starts at the card's left edge (no card centers its text). EDMCModernOverlay cannot measure text
-for a plugin, so each card's
+border on all four sides, and every line of text starts at the card's left edge (no card centers its text). With the built-in overlay each card's box is sized from the text itself, measured in the font in use (with 5% to spare for the font's rounding), so the box fits closely and right-hand values sit against its edge. EDMCModernOverlay cannot measure text
+for a plugin, so with it each card's
 width and height are worked out from the character count at the chosen size, with a further 10% added to every width, so text sits
-inside the border. The overlay's own font limits (EDMCModernOverlay's `min_font_point` and `max_font_point`) still apply on top.
+inside the border; its own font limits (`min_font_point` and `max_font_point`) apply on top.
 Placement accounts for the new size too (a display anchored to the bottom or right keeps its edge). The Interdiction warning
 keeps its fixed red alert colors whatever scheme is chosen. The default look is slightly roomier than older versions.
 
@@ -178,23 +204,52 @@ keeps its fixed red alert colors whatever scheme is chosen. The default look is 
 - **EDMCModernOverlay has its own placement tool**, the Overlay Controller, where you can move each
   plugin's display, change anchors and backgrounds, and keep different profiles. See its wiki.
 
-## The built-in overlay (Windows, optional)
+## The built-in overlay (Windows)
 
-Instead of EDMCModernOverlay, WNTB can draw its overlays itself, in a transparent window it lays over Elite. Turn it on in **Settings → WNTB → Overlays → Overlay Connection → Which overlay draws**,
-press OK, and start Elite in **borderless or windowed** mode (a fullscreen game cannot be drawn over). It is off until you choose it, and choosing EDMCModernOverlay again switches back.
+WNTB's own overlay is a transparent window it lays over Elite, drawn from inside EDMC. Choose it under **Settings → WNTB → Overlays → Overlay Connection → Which overlay draws**, press OK, and start
+Elite in **borderless or windowed** mode (a fullscreen game cannot be drawn over). It is off until you choose it, and choosing EDMCModernOverlay again switches back. See
+[the comparison above](#step-1-choose-an-overlay) for when you would pick which.
 
-- It follows Elite's window as you move or resize it, shows only while Elite is the window you are in, and lets clicks and keys through to the game. Windows' own capture tools (the Snipping Tool, Win+Shift+S and the Game Bar)
-  are recognized, so the overlay stays up while you pick what to capture. For any other tool that takes the focus, tick **Keep showing when Elite is not the window in front** in the same box; the overlay
-  then stays up whenever Elite is running.
-  Elite's own screenshot key (F10) never includes an overlay. To have the cards in a screenshot, tick **Include WNTB's built-in overlay in the converted screenshot** under **Settings → WNTB → Field Ops → Screenshots**:
-  the converted copy then has the cards that were on screen when you pressed the key drawn onto it.
-- It draws in the font chosen under **Appearance → Overlay font** (when EDMCModernOverlay's fonts folder is installed; otherwise Segoe UI), so lower case text and your own fonts work.
+**How it behaves**
+- It follows Elite's window as you move or resize it, and uses the display scaling where the window is.
+- It shows only while Elite is the window you are in, and hides when you alt-tab away (a stale card is never left over another program). It lets clicks and keys through to the game and never takes the focus.
+- When you bring Elite back to the front the overlay puts itself back above it; it checks every half second.
 - It lives and dies with EDMC, so it cannot leave a second overlay window behind (see [Known issues](guide/known-issues.md)).
-- Cards are sized from the text itself, measured in the font in use, so a box fits its text closely and right-hand values sit against the edge (with EDMCModernOverlay the sizes are estimates, a little roomier).
-- Everything else works the same: every card, Overlay Placement and its layout editor, panel opacity, and Hide overlays. **Check connection** reports whether it is running over Elite.
-- It is new. Sizes were tuned for EDMCModernOverlay, so a card's box may fit its text a little differently; report anything that looks off. The plan and what is left are in
-  [the built-in overlay specification](NATIVE_OVERLAY_SPEC.md).
-- Windows only. Linux keeps using EDMCModernOverlay.
+- It draws all of WNTB's displays, with Overlay Placement and its layout editor, panel opacity, color schemes, text size and Hide overlays working as they do with EDMCModernOverlay.
+- **Check connection** reports whether it is running and whether it has found Elite's window.
+
+**Screenshots**
+- Elite's own screenshot key (F10) never includes an overlay.
+- **Windows' capture tools** (the Snipping Tool, Win+Shift+S, Print Screen and the Game Bar) take the focus while you pick what to capture. WNTB recognizes them, so the overlay stays up and is in the picture.
+- For any **other tool** that takes the focus, tick **Keep showing when Elite is not the window in front** in the same box; the overlay then stays up whenever Elite is running.
+- To have the cards in a screenshot Elite itself takes, tick **Include WNTB's built-in overlay in the converted screenshot** under **Settings → WNTB → Field Ops → Screenshots**: the converted copy then has
+  the cards that were on screen when you pressed the key drawn onto it.
+
+**Limits**
+- Windows only; Linux uses EDMCModernOverlay.
+- It draws WNTB's displays only. Other plugins' displays need EDMCModernOverlay (see [Do I still need EDMCModernOverlay?](#do-i-still-need-edmcmodernoverlay)).
+- It is new: report anything that looks off. The design and what is left are in [the built-in overlay specification](NATIVE_OVERLAY_SPEC.md).
+
+## Fonts
+
+**Settings → WNTB → Overlays → Appearance → Overlay font** chooses the font the overlay draws in. Which font that is depends on the overlay you chose:
+
+**Built-in overlay: WNTB's own fonts**
+- It starts with **Source Sans 3**, which WNTB ships (a clear font with lower case letters; SIL Open Font License, the license is in the `fonts` folder next to it).
+- **Add font file...** copies a `.ttf` or `.otf` you pick into WNTB's own `fonts` folder (inside the plugin folder) and chooses it. The change is used straight away: no restart. **Open fonts folder** shows the folder;
+  you can also drop font files into it yourself and pick them from the list.
+- A font you add **stays through WNTB updates** (an update only replaces the files it ships). You can remove one by deleting the file.
+- Where to find fonts: [Google Fonts](https://fonts.google.com/) has many free ones. **Keep a font's license with it**: WNTB does not install or license fonts for you, and not every font may be redistributed.
+  A font used only on your own machine is yours to use as its license allows.
+- A very large or unusual font file may draw slowly or oddly; a plain regular weight works best. If a chosen file is missing or unreadable WNTB falls back to Source Sans 3.
+
+**EDMCModernOverlay: its font, for every plugin**
+- The overlay takes the first font it can load from the list in its `overlay_client/fonts/preferred_fonts.txt`, and its default is Elite's cockpit font, which has **capital letters only**: every plugin's text shows in capitals.
+- WNTB can edit that list for you: pick a font from the folder, or **Add font file...** to copy one in, and WNTB puts it first (keeping a `.bak` of the old list once). **Overlay default** goes back to the cockpit font.
+- It takes effect when EDMCModernOverlay starts again (restart EDMC), and it changes every plugin's text, since the overlay takes one font. WNTB cannot give its own cards a different font here.
+- An EDMCModernOverlay update can put its own list back.
+
+**Both:** the font choices are independent. WNTB's species names are written `Tussock pennatis`; in the cockpit font they show as `TUSSOCK PENNATIS`. No overlay can draw italics, so scientific names are not italicized.
 
 ## Hiding the overlays for a while
 
@@ -212,12 +267,21 @@ It does not hide overlays automatically, for example in the galaxy map.
 
 ## If you don't use an overlay
 
-Nothing breaks. WNTB tries to reach an overlay when a feature wants to draw something, and if none is
+Nothing breaks. With EDMCModernOverlay chosen, WNTB tries to reach it when a feature wants to draw something, and if none is
 running it gives up quietly for 30 seconds before trying again. You'll see one line in EDMC's log saying no
 overlay was found, and the on-screen extras simply don't appear.
 
 ## If nothing shows up
 
+**With the built-in overlay (Windows)**
+1. Is **WNTB built-in overlay** chosen under Overlay Connection, and did you press OK? **Check connection** says whether it is running and whether it has found Elite.
+2. Is Elite in **borderless or windowed** mode? A fullscreen game cannot be drawn over.
+3. Are you in the game window? The overlay hides when another program is in front (tick **Keep showing...** if you want it to stay).
+4. Did you hide the overlays (the line in the WNTB panel reads *Overlays are hidden*)? Click it to show them again.
+5. Press a feature's test button; check the placement preview; reset a display to its default spot on Overlay Placement if only one is missing.
+6. Check EDMC's log (Help menu) for a line from WNTB about the overlay; include it if you report a problem.
+
+**With EDMCModernOverlay**
 1. **Is the overlay running?** WNTB can't start it. Start it first.
 2. **Does the port match?** Compare the one on WNTB's Overlay Connection tab with your overlay's.
 3. **Is Elite in borderless or windowed mode?** Some overlays can't draw over exclusive fullscreen.
@@ -227,16 +291,19 @@ overlay was found, and the on-screen extras simply don't appear.
    changing an overlay.
 6. **Check the logs.** EDMC's Help menu can open its log folder, and EDMCModernOverlay keeps its own
    logs. Including them helps if you report a problem.
-7. **Linux:** you need EDMCModernOverlay (the original is Windows-only). See the
+7. **Linux:** you need EDMCModernOverlay (the built-in overlay is Windows only; the original EDMCOverlay is Windows-only too). See the
    [Linux guide](guide/linux.md). If EDMC is a **Flatpak** and
    **Check connection** succeeds but nothing is drawn, the Flatpak needs permission to start the overlay
    window; the Linux guide gives the one-line `flatpak override` command.
-8. **Does only one display never show?** Its saved position may be off the screen. Reset it on the Overlay Placement tab; see
-   [Troubleshooting](guide/troubleshooting.md#one-display-never-shows-though-test-and-the-overlay-window-both-work).
+8. **Does text look doubled or ghosted?** Two overlay windows may be running; see [Known issues](guide/known-issues.md).
+
+**Either:** does only one display never show? Its saved position may be off the screen. Reset it on the Overlay Placement tab; see
+[Troubleshooting](guide/troubleshooting.md#one-display-never-shows-though-test-and-the-overlay-window-both-work).
 
 ## A note for the curious
 
-WNTB sends its drawings to the overlay over a local network connection on your own computer (the port
+With EDMCModernOverlay, WNTB sends its drawings to the overlay over a local network connection on your own computer (the port
 above). Nothing leaves your machine. WNTB keeps a single connection open for every feature, and registers
-a "Plugin Group" with EDMCModernOverlay for each on-screen card so its background draws properly. The
-technical details are in [TECHNICAL.md](TECHNICAL.md) section 10.
+a "Plugin Group" with EDMCModernOverlay for each on-screen card so its background draws properly. With the built-in overlay nothing is sent anywhere: WNTB draws the
+window itself, from Pillow (the imaging library EDMC ships), and reads Elite's window position and size. The
+technical details are in [TECHNICAL.md](TECHNICAL.md) section 10 and the [built-in overlay specification](NATIVE_OVERLAY_SPEC.md).

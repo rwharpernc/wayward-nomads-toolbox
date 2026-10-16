@@ -212,13 +212,17 @@ class OverlayWindow:
         screen_dc = user32.GetDC(None)
         mem_dc = gdi32.CreateCompatibleDC(screen_dc)
         canvas = _Canvas(mem_dc)
-        fonts = overlay_raster.Fonts(self._font_path())
+        font_path = self._font_path()
+        fonts = overlay_raster.Fonts(font_path)
         elite = 0
         shown, last, raised = False, None, 0.0
         failures = 0
         try:
             while not self._stop.is_set():
                 try:
+                    now_path = self._font_path()
+                    if now_path != font_path:                      # another font was chosen: draw in it from the next frame
+                        font_path, fonts, last = now_path, overlay_raster.Fonts(now_path), None
                     shown, last, raised, elite = self._tick(hwnd, screen_dc, canvas, fonts, elite, shown, last, raised)
                     failures = 0
                 except Exception:

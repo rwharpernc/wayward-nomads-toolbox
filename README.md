@@ -119,7 +119,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **System-name suggestions** in every box that takes a system name: the systems you have been in, then ones WNTB holds, and, if you tick it, Spansh's search for any system ([Typing a system name](docs/guide/getting-started.md#typing-a-system-name)).
 - **Pop-out windows** with a dark look that remember their size and place ([Getting started](docs/guide/getting-started.md#opening-the-pop-out-windows)).
 - **Automatic updates** from GitHub releases, and a **Release notes** link ([Getting started](docs/guide/getting-started.md)).
-- **On-screen overlay displays** through EDMCModernOverlay, with a drag-and-drop Placement editor, six color schemes and a text size ([Overlay setup](docs/OVERLAY_SETUP.md)).
+- **On-screen overlay displays**, drawn by WNTB's own built-in overlay on Windows (nothing to install) or through [EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) (Windows and Linux, and for other plugins' overlays), with a drag-and-drop Placement editor, six color schemes, a text size, panel opacity, your own fonts and a switch to hide them all ([Overlay setup](docs/OVERLAY_SETUP.md)).
 - **Windows and Linux** (native or Flatpak EDMC, Elite under Proton or Wine) ([Windows and Linux](docs/guide/platforms.md), [WNTB on Linux](docs/guide/linux.md)).
 - **Every online lookup is listed**, and each is either opt-in or runs only when you press a button ([What goes on the internet](docs/guide/internet-and-privacy.md)).
 
@@ -239,8 +239,8 @@ can change, and some of it may turn out not to be possible. If one of these matt
 ## Quick start
 
 **You need:** [EDMC](https://github.com/EDCD/EDMarketConnector) on Windows or Linux. For on-screen alerts you also
-need an overlay ([EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) is recommended), but
-everything else works without one.
+need an overlay: on Windows WNTB has its own built-in one (nothing to install; choose it in Settings), and on Linux (or to see other plugins' overlays) you use
+[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay). Everything else works without one.
 
 1. Download **`WNTB.zip`** from the [latest release](https://github.com/rwharpernc/wayward-nomads-toolbox/releases/latest)
    (under **Assets**). Don't use the green **Code → Download ZIP** button.
@@ -259,10 +259,10 @@ To update, extract the new ZIP over the old `WNTB` folder (don't delete it first
 
 The full list, with the fix for each, is in [Known issues](docs/guide/known-issues.md). The ones people meet most:
 
-- **Overlay text looks doubled or ghosted.** Two copies of EDMCModernOverlay's overlay window are running, left over from an EDMC that closed without stopping it. **Settings → Overlays →
+- **Overlay text looks doubled or ghosted** (with EDMCModernOverlay; WNTB's built-in overlay cannot). Two copies of EDMCModernOverlay's overlay window are running, left over from an EDMC that closed without stopping it. **Settings → Overlays →
   Overlay Connection → Check connection** says when there is more than one; end the older `overlay_client` processes in Task Manager (or all of them) and restart EDMC.
-- **Overlay text is all in capital letters.** The overlay's default font has capitals only. Choose another in **Settings → Overlays → Appearance → Overlay font**, then restart EDMC.
-- **The newest parts (Exobiology cards, System targets, Body info, the Expedition Log) have been tested on Windows only.**
+- **Overlay text is all in capital letters** (EDMCModernOverlay's default font has capitals only). Choose another in **Settings → Overlays → Appearance → Overlay font**, then restart EDMC; or use WNTB's built-in overlay (Windows), whose own font has lower case.
+- **The newest parts (Exobiology cards, System targets, Body info, the Expedition Log, the built-in overlay, Nearest place to land) have been tested on Windows only.**
 
 ## Tips, quirks and workarounds
 
@@ -287,9 +287,10 @@ Things that surprise people, and what to do about them. Every mode guide has a l
   granted. See [WNTB on Linux](docs/guide/linux.md).
 
 **On-screen overlays**
-- Overlays need an overlay program running ([EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay) is
-  recommended). Press a **Test** button to check. Everything is **off until you turn it on**.
-- All overlay settings are in one place: **Settings → WNTB → Overlays** (Connection, Placement, Appearance, and a tab per feature).
+- Overlays need an overlay: WNTB's **built-in overlay** (Windows; choose it under **Settings → Overlays → Overlay Connection**) or [EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)
+  (Windows and Linux; needed for other plugins' overlays too, and you can run both). Press a **Test** button to check. Everything is **off until you turn it on**.
+- **Fonts:** the built-in overlay has its own, Source Sans 3 to start with, and you can add any `.ttf` or `.otf` under **Appearance → Overlay font** ([Fonts](docs/OVERLAY_SETUP.md#fonts)). EDMCModernOverlay's default font has capital letters only.
+- All overlay settings are in one place: **Settings → WNTB → Overlays** (Connection, Placement, Appearance, Hide overlays, and a tab per feature).
 - **Placement** puts each display at one of nine spots plus pixel offsets, read from your real screen, and has a drag-and-drop **layout editor**: a to-scale picture of your screen with a grid, where you drag each display's box and it snaps flush to an edge (offset 0) or to the grid. If it looks wrong,
   press **Show placement preview**, then **Detect screen again**, or **Reset all to defaults**. The overlay can't draw
   flush against the right edge by itself; WNTB works around that with an offset (a switch on the Placement tab turns it off).

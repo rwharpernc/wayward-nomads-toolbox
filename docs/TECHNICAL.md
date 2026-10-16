@@ -564,9 +564,13 @@ card is redrawn every 3 s, and the card has one fixed width (30 characters at 1.
 
 ## 10. The overlay
 
-Overlay features (Landing, Interdiction, Discovery, Inventory bars, Mining, Screenshots) draw over the
-game window through a separate helper app, **EDMCModernOverlay**, which listens
-on a local TCP port. WNTB is only a client.
+Overlay features (every card and alert) draw over the game window through one of two overlays, chosen by `wntb_overlay_backend` (`overlay_native.py`, Settings → Overlays → Overlay Connection):
+
+- **EDMCModernOverlay** (the default; Windows and Linux): a separate helper app that listens on a local TCP port. WNTB is only a client.
+- **WNTB's built-in overlay** (Windows only, opt-in): a transparent window WNTB draws itself, described under "The built-in overlay" below.
+
+Every feature draws through `overlay.OverlayClient` (`send_message`, `send_shape`, `send_circle`, `send_vector`) whichever overlay is chosen: `OverlayClient._send_raw` hands the payload to the built-in overlay's scene when it is
+chosen and to the socket otherwise, so no feature knows the difference.
 
 **Every overlay switch defaults to off.** The Inventory, Landing and Screenshots overlays used to default on; on the first
 start after that change `load._reset_overlays_once` sets every switch in `_OVERLAY_ENABLE_KEYS` to off, once, recorded by the
@@ -666,6 +670,32 @@ every text lies inside its card and that `block_rect` equals what was drawn. `te
 overlay's own font sizing differs from one screen to the next and a box a little too wide looks fine where text past its edge does not. `measured_width` is the stricter measure for the Discovery and Notable Bodies cards, whose text is capitals and catalog names: it counts capitals, digits and wide letters (M, W) as wider and spaces and narrow marks as narrower, and is never less than `text_width`. The Notable Bodies text limits (60, 56 and 70 characters) only guard against a runaway value; the card widens to fit. The text
 size is a setting again (`wntb_overlay_text_size`: Default, Larger; it starts at Larger, the size the displays were fixed at on
 2026-10-12); the fourth step, Largest, was dropped because it is where text ran past its box. Interdiction keeps fixed red alert colors. `Look.size` never returns less than `MIN_SIZE` ("normal"), so the overlay's "small" is not used (a saved -1 from the old Smaller choice clamps to Default), every card pads its text by the same `CARD_PAD_X` / `CARD_PAD_Y` (plus the fixed extra), with no per-card minimum width, and every display draws its text left-justified at its card's padding (Discovery and Notable Bodies no longer center).
+
+### The built-in overlay (`overlay_native.py`, `overlay_scene.py`, `overlay_raster.py`, `overlay_window.py`)
+
+Design and status are in [NATIVE_OVERLAY_SPEC.md](NATIVE_OVERLAY_SPEC.md). In short:
+
+- **Scene** (`overlay_scene.py`, pure): the payloads the features send, kept by id with when each runs out (`ttl`). A resend replaces; a payload that draws nothing (empty text, a zero-size rectangle, a circle with no
+  color, an empty vector) removes the id. Items are returned in drawing order, rectangles then circles and lines then text, each in the order its id first appeared, so text is always above a panel whatever order it was sent in.
+- **Picture** (`overlay_raster.py`, Pillow, which EDMC ships): draws the scene on a transparent image the size of the game window. It follows EDMCModernOverlay's conventions, which the features were written for: a
+  *group* (the ids sharing a registered prefix, `overlay_native.set_groups`) is placed at the canvas position of its top left item (a 1280 x 960 canvas stretched over the window) and the distances inside the group are
+  logical pixels times the display scaling; a size (width, height, radius, font) is in logical pixels. An item in no group is placed in canvas units.
+- **Window** (`overlay_window.py`, ctypes and Win32): a thread inside EDMC owns a layered, topmost, click-through, no-activate window and, every 50 ms, finds Elite's window (class `FrontierDevelopmentsAppWinClass`), takes its
+  client area and display scaling (`GetDpiForWindow`, the thread is per-monitor DPI aware), redraws when the scene or the geometry changed, and pushes the bitmap with `UpdateLayeredWindow` (per-pixel alpha). It shows only while
+  Elite is the foreground window, or Windows' own capture tool is (`CAPTURE_TOOLS`, by the program's file name), or the player ticked *Keep showing* (`wntb_overlay_keep_showing`). While shown it re-asserts `HWND_TOPMOST` every half second
+  (Elite, when brought back, takes its place above other topmost windows). A frame that fails is logged and skipped. Because it is a thread of EDMC it ends with EDMC.
+- **Placement** reads the window's real size and scaling (`overlay_native.screen()`, `Screen.native`: no right-hand clamp, no group offsets).
+- **Fonts:** the font file is `overlay_native._font_path()`: `wntb_overlay_builtin_font` in WNTB's own `fonts` folder (`overlay_fonts.own_dir`; the bundled Source Sans 3 and anything the player adds, which an update does not remove),
+  else the bundled font, else a system font; the window re-reads it every two seconds so a change applies without a restart. A text measurer (`overlay_style.set_text_measurer`, `overlay_native.measure`, Pillow's `getlength` at
+  eight times the size) replaces the character-width estimates, so cards are sized from the real text (`Look.text_width`, `measured_width`, and `Look.extent` for right-aligned text).
+- **Screenshots:** `overlay_native.snapshot(width, height)` draws the current scene at a screenshot's size; `screenshot_convert.convert_to_png` lays it over the converted copy when `wntb_screenshot_include_overlay` is on.
+
+**EDMCModernOverlay's font** is separate: `overlay_fonts.py` edits `overlay_client/fonts/preferred_fonts.txt` in its folder (first entry that loads wins; the default is `Eurocaps.ttf`, capitals only), keeping a `.bak` once.
+
+**Hiding every overlay** (`overlay.set_all_hidden`, `overlay_visibility.py`): `_send` records the last payload per id (`_last`, with the time) and, while hidden, sends nothing; hiding sends a clear for every id drawn so far, and showing resends what
+had not run out with its remaining ttl. The shortcut is a Windows `RegisterHotKey` on its own thread; the panel line and the Settings button work everywhere.
+
+**Duplicate EDMCModernOverlay windows** (`overlay_processes.py`): counts `overlay_client` processes (psutil, `/proc`, or PowerShell), treating a launcher and its child as one window, so Check connection and Copy diagnostics can warn.
 
 ### Plugin Groups (EDMCModernOverlay)
 

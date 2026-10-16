@@ -195,7 +195,7 @@ shared `panelkit.nav_arrow`.
 
 ## 9. Optional extras
 
-- **On-screen stats panel** (overlay). It registers an EDMCModernOverlay Plugin Group so its background draws.
+- **On-screen stats panel** (overlay). It registers a plugin group (EDMCModernOverlay needs one for its background to draw; the built-in overlay uses the same prefix to place the display as one piece).
 - **Archive completed runs.** Off by default. When a run that has data ends, a JSON file is written to
   `mining_sessions/` for analysis outside WNTB. Empty trips write nothing.
 

@@ -40,7 +40,8 @@ Elite runs under Steam Proton or Wine on Linux, which needs a few extras. **Work
 
 - **EDMCModernOverlay** draws the on-screen cards. Install it as an EDMC plugin from its
   [project page](https://github.com/SweetJonnySauce/EDMCModernOverlay).
-  WNTB's default connection settings (`127.0.0.1`, port 5010) already match it.
+  WNTB's default connection settings (`127.0.0.1`, port 5010) already match it. WNTB's own built-in overlay is **Windows only**, so on Linux this is the overlay you use. Its default font has capital letters only;
+  **Settings → Overlays → Appearance → Overlay font** can put a lower case font first in its list (restart EDMC afterwards).
 - Optional: `canberra-gtk-play` or `paplay` for notification sounds.
 
 ## Step 2: Tell EDMC where Elite's journals are

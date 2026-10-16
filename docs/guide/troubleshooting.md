@@ -134,8 +134,8 @@ See [Ship planner](field-ops.md#engineering-blueprints-and-a-wishlist).
 
 ### On-screen alerts don't show up
 
-They need EDMCModernOverlay running, and WNTB's **Overlay Connection** settings must match it. Use the
-**Test** buttons in each feature's Settings tab to check.
+They need an overlay: WNTB's **built-in overlay** (Windows: pick it under **Settings → Overlays → Overlay Connection → Which overlay draws**, press OK, run Elite borderless or windowed) or
+**EDMCModernOverlay** running (WNTB's host and port on the same tab must match it). Use the **Test** buttons in each feature's Settings tab, and **Check connection** on the Overlay Connection tab, to check.
 
 The full checklist is in [Setting up the overlay](../OVERLAY_SETUP.md#if-nothing-shows-up).
 
@@ -179,12 +179,23 @@ Two copies of EDMCModernOverlay's overlay window are running and each draws ever
 
 ### Every overlay is in capital letters
 
-The overlay draws text in the font EDMCModernOverlay loads, and its preferred font is `Eurocaps.ttf`, Elite's cockpit font, which has capital letters only. It is not WNTB, so the species names (`Tussock pennatis`) are sent in the right case but show in capitals, and so does every other plugin's text. To get lower case letters, open **Settings → WNTB → Overlays → Appearance → Overlay font**, pick a font with lower case letters (or **Add font file...** to use one you downloaded, for example from Google Fonts), press OK and restart EDMC. That changes the font for every overlay, and an EDMCModernOverlay update can put the old list back. WNTB cannot choose the font for its own cards only, or italicize text.
+**With EDMCModernOverlay:** it draws every plugin's text in one font, and its preferred font is `Eurocaps.ttf`, Elite's cockpit font, which has capital letters only. WNTB sends the species names in the right case (`Tussock pennatis`), and the font draws them as capitals.
+Open **Settings → WNTB → Overlays → Appearance → Overlay font**, pick a font with lower case letters (or **Add font file...** to use one you downloaded, for example from Google Fonts), press OK and restart EDMC. That changes the font for every overlay, and an update of
+EDMCModernOverlay can put its old list back.
+
+**With WNTB's built-in overlay (Windows):** it has a font of its own, Source Sans 3, with lower case letters, so this does not happen. You can choose another under the same Overlay font section (it is used at once, and a font you add stays through updates).
+
+Neither overlay can draw italics, so species names are not italicized.
 
 ### Overlay text wraps, or a card is too small or too big
 
-Open **Settings → Overlays → Appearance** and press **Show sample**. Cards are sized from an estimate of the text at the
-chosen size and given 10% extra width, so a card may still be tight on a small screen. If **Text size** is set to Larger, try Default on the same tab (the overlay's smallest size is not offered because it is hard to read over the game).
+Open **Settings → Overlays → Appearance** and press **Show sample**. With the built-in overlay a card's box is measured from the text in the font in use, so it should fit closely; if it does not, or text is cut, report it with a screenshot.
+With EDMCModernOverlay cards are sized from an estimate of the text at the chosen size and given 10% extra width, so a card may still be tight on a small screen. If **Text size** is set to Larger, try Default on the same tab (the overlay's smallest size is not offered because it is hard to read over the game).
+
+### The built-in overlay shows nothing, or disappears
+
+The checklist is in [Setting up the overlay](../OVERLAY_SETUP.md#if-nothing-shows-up). The usual causes: it is not chosen under Overlay Connection (or you did not press OK), Elite is in fullscreen rather than borderless or windowed, another program is in front (the overlay hides on purpose; tick **Keep showing...** for a tool WNTB does not recognize),
+or you hid the overlays (the line in the WNTB panel says so). **Check connection** says whether it is running and whether it found Elite's window.
 
 ## Missions
 

@@ -58,6 +58,12 @@ class FontsTests(unittest.TestCase):
         with open(os.path.join(self.folder, F.PREFERRED_FILE), "rb") as handle:
             self.assertNotIn(b"\r", handle.read())
 
+    def test_wntb_has_its_own_fonts_folder_with_the_bundled_font_and_its_license(self):
+        self.assertEqual(F.own_dir("plugin"), os.path.join("plugin", "fonts"))
+        folder = F.own_dir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "plugin"))
+        self.assertIn(F.BUNDLED, F.installed(folder))
+        self.assertTrue(os.path.isfile(os.path.join(folder, "SourceSans3-OFL.txt")))              # the font's license travels with it
+
     def test_add_font_copies_a_font_file(self):
         source = os.path.join(self._tmp.name, "Lato-Regular.ttf")
         touch(self._tmp.name, "Lato-Regular.ttf")

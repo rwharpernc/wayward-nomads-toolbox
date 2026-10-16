@@ -22,6 +22,7 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CFG_BACKEND = "wntb_overlay_backend"
+CFG_FONT = "wntb_overlay_builtin_font"            # the font file (in WNTB's own fonts folder) the built-in overlay draws in; empty means the bundled one
 CFG_KEEP = "wntb_overlay_keep_showing"          # keep drawing when Elite is not the window in front (to take screenshots with another tool)
 MODERN = "modern"
 BUILTIN = "builtin"
@@ -41,25 +42,27 @@ def groups() -> List[str]:
     return list(_groups)
 
 
+def fonts_folder() -> str:
+    """WNTB's own fonts folder: the bundled font and any font the player adds."""
+    return overlay_fonts.own_dir(os.path.dirname(os.path.abspath(__file__)))
+
+
+def chosen_font() -> str:
+    return config.get_str(CFG_FONT) or overlay_fonts.BUNDLED
+
+
+def save_font(name: str) -> None:
+    config.set(CFG_FONT, "" if name == overlay_fonts.BUNDLED else name)
+
+
 def _font_path() -> str:
-    """The font the built-in overlay draws in: the one chosen in Appearance (or its default) from EDMCModernOverlay's fonts folder when that is installed, else a system font."""
-    try:
-        from . import overlay_placement
-        folder = overlay_fonts.fonts_dir(overlay_placement._plugins_dir())
-        chosen = overlay_fonts.current(folder)
-        if chosen and not overlay_fonts.is_default(chosen) and os.path.isfile(os.path.join(folder, chosen)):
-            return os.path.join(folder, chosen)
-    except Exception:
-        logger.debug("Could not look up the chosen overlay font", exc_info=True)
+    """The font file the built-in overlay draws in: the one chosen (in WNTB's own fonts folder), else the bundled Source Sans 3, else a system font."""
+    folder = fonts_folder()
+    for name in (chosen_font(), overlay_fonts.BUNDLED):
+        path = os.path.join(folder, name)
+        if name and os.path.isfile(path):
+            return path
     return overlay_raster.default_font_path()
-
-
-def keep_showing() -> bool:
-    return bool(config.get_bool(CFG_KEEP, default=False))
-
-
-def save_keep_showing(keep: bool) -> None:
-    config.set(CFG_KEEP, bool(keep))
 
 
 _PATH_SECONDS = 2.0
@@ -98,7 +101,15 @@ def install_measurer() -> None:
     overlay_style.set_text_measurer(measure if selected() == BUILTIN else None)
 
 
-window = overlay_window.OverlayWindow(scene, _font_path, keep_showing, groups)
+def keep_showing() -> bool:
+    return bool(config.get_bool(CFG_KEEP, default=False))
+
+
+def save_keep_showing(keep: bool) -> None:
+    config.set(CFG_KEEP, bool(keep))
+
+
+window = overlay_window.OverlayWindow(scene, _current_font_path, keep_showing, groups)
 
 
 def supported() -> bool:

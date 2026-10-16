@@ -19,11 +19,18 @@ HEADER = "; One font filename per line. First successfully loaded entry wins."
 DEFAULT_LABEL = "Overlay default"
 DEFAULT_FONT = "Eurocaps.ttf"              # the overlay's own first choice
 _OVERLAY_FOLDER = "EDMCModernOverlay"
+OWN_FOLDER = "fonts"                       # WNTB's own fonts folder, inside its plugin folder: the built-in overlay's fonts (an update never removes a font file added to it)
+BUNDLED = "SourceSans3-Regular.ttf"        # the font WNTB ships (Source Sans 3, SIL Open Font License 1.1) and the built-in overlay uses until another is chosen
 
 
 def fonts_dir(plugins_dir: str) -> str:
     """EDMCModernOverlay's fonts folder inside the plugins folder (it may not exist: the overlay may not be installed)."""
     return os.path.join(plugins_dir, _OVERLAY_FOLDER, "overlay_client", "fonts")
+
+
+def own_dir(plugin_dir: str) -> str:
+    """WNTB's own fonts folder (the built-in overlay's), inside the plugin folder."""
+    return os.path.join(plugin_dir, OWN_FOLDER)
 
 
 def installed(folder: str) -> List[str]:

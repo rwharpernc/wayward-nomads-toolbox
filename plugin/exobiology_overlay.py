@@ -361,14 +361,14 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     nb.Label(
         frame,
-        text=("Four cards on your in-game overlay, through EDMCModernOverlay (a separate, optional helper WNTB does not install or launch; its connection "
+        text=("Four cards on your in-game overlay, through the overlay (WNTB's built-in one on Windows, or EDMCModernOverlay: a separate, optional helper WNTB does not install or launch; its connection "
               "settings are on the Overlay Connection tab), for the body you are on, whether you are in the ship, the SRV or on foot. They use Organic "
               "Scanning's prediction and sample tracking, so the genera appear once you have mapped the body. Everything comes from your journal and the "
               "game's Status.json; nothing is sent anywhere."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (recommended)", background=nb.Label().cget("background"),
+        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
         url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
 

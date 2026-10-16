@@ -502,7 +502,7 @@ def build_settings(notebook: nb.Notebook) -> None:
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
 
     HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (recommended)", background=nb.Label().cget("background"),
+        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
         url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
 

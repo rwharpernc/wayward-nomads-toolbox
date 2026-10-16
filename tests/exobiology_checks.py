@@ -214,6 +214,31 @@ class MultiTrack(unittest.TestCase):
         self.assertTrue(any(t.startswith("Tussock: ") for t in rec.texts()))
 
 
+class WaypointAccuracy(unittest.TestCase):
+    def test_the_mode_a_plant_was_scanned_in_says_how_far_off_its_marker_may_be(self):
+        scan = organic_scan
+        self.assertEqual(scan.scan_mode(0x4000000), "srv")
+        self.assertEqual(scan.scan_mode(0x1000000), "ship")
+        self.assertEqual(scan.scan_mode(0, 0x1), "foot")
+        self.assertEqual(scan.scan_mode(None, None), "")
+        self.assertLess(scan.waypoint_error_m("foot"), scan.waypoint_error_m("srv"))
+        self.assertLess(scan.waypoint_error_m("srv"), scan.waypoint_error_m("ship"))
+        self.assertGreater(scan.waypoint_match_m("ship"), scan.waypoint_error_m("ship"))             # a sample from the marker's own spot always counts as that plant
+        self.assertGreater(scan.waypoint_match_m("foot", True), scan.waypoint_match_m("foot"))
+
+    def test_a_marker_from_a_vehicle_shows_a_tilde_and_a_ring_as_wide_as_it_may_be_off(self):
+        base = EX.sample_view()
+        for mode, tilde in (("foot", ""), ("ship", "~")):
+            view = dataclasses.replace(base, waypoints=(organic_scan.Waypoint("t", "Tussock Pennatis - Lime", 0.0, 0.0290, mode),), focus="t")
+            followed = XR.tracked(view)[0]
+            self.assertEqual(followed.distance_label.startswith("~"), bool(tilde), mode)
+            self.assertEqual(XR.track_lines(view)[0].split(": ")[1].startswith("~"), bool(tilde), mode)
+        ship = XR.build_plan(dataclasses.replace(base, waypoints=(organic_scan.Waypoint("t", "Tussock Pennatis - Lime", 0.0, 0.0290, "ship"),), focus="t"))
+        foot = XR.build_plan(dataclasses.replace(base, waypoints=(organic_scan.Waypoint("t", "Tussock Pennatis - Lime", 0.0, 0.0290, "foot"),), focus="t"))
+        self.assertGreater(ship.targets[0][4], foot.targets[0][4])                                     # the less sure marker has the wider ring
+        self.assertGreaterEqual(foot.targets[0][4], 8.0)
+
+
 class Radar(unittest.TestCase):
     def test_offset_is_right_and_ahead_for_the_heading(self):
         here, there = (0.0, 0.0), (0.0, 0.001)               # a point due east
@@ -278,12 +303,12 @@ class Waypoints(unittest.TestCase):
         self.assertEqual(len(plan.pointers), 1)
         self.assertAlmostEqual(math.hypot(plan.pointers[0][0], plan.pointers[0][1]), 1.0)
         self.assertEqual(len(plan.track), 1)
-        self.assertRegex(plan.track[0], r"^Tussock: \d+ m, \d+° (right|left)$")
+        self.assertRegex(plan.track[0], r"^Tussock: ~?\d+ m, \d+° (right|left)$")
 
     def test_every_distance_under_the_plot_has_a_little_pointer_turned_toward_it(self):
         plan = XR.build_plan(EX.sample_view())
         items = [item for row in plan.rows for item in row]
-        self.assertEqual([i.text for i in items if i.angle is not None], ["Ship: 16 m", "Scan 1: 209 m", "Scan 2: 79 m", "Tussock 94 m"])
+        self.assertEqual([i.text for i in items if i.angle is not None], ["Ship: 16 m", "Scan 1: 209 m", "Scan 2: 79 m", "Tussock ~94 m"])
         rec = Recorder()
         layout = XR.RadarLayout("t_", 100, 100)
         layout.render(plan, rec, S.DEFAULT)
@@ -377,6 +402,33 @@ class WaypointTracking(unittest.TestCase):
         sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis"}
         self.controller.handle_event({**sample, "ScanType": "Log"}, "CMDR", self.system, None, {})
         self.assertEqual(self.controller.overlay_view().waypoints, ())
+
+    def scanned_in(self, flags, flags2=0):
+        self.controller.dashboard_status({"BodyName": self.body, "Latitude": 0.0, "Longitude": 0.0, "PlanetRadius": 600_000.0, "Heading": 0.0, "Flags": flags, "Flags2": flags2})
+        self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.0, 0.0)
+
+    def sample_at(self, lon):
+        self.status(0.0, lon)
+        sample = {"event": "ScanOrganic", "Genus": TUSSOCK, "Species": "$Codex_Ent_Tussocks_06_Name;", "Species_Localised": "Tussock Pennatis", "ScanType": "Log"}
+        self.controller.handle_event(sample, "CMDR", self.system, None, {})
+
+    def test_a_plant_scanned_from_a_ship_is_matched_from_further_away_than_one_scanned_on_foot(self):
+        self.scanned_in(0x1000000)                                        # in the main ship
+        self.assertEqual(self.controller.overlay_view().waypoints[0].mode, "ship")
+        self.sample_at(0.02)                                              # about 209 m from the marker
+        self.assertEqual(self.controller.overlay_view().waypoints, ())    # a ship marker may be that far from the plant: this is it
+        self.scanned_in(0, 0x1)                                           # on foot
+        self.assertEqual(self.controller.overlay_view().waypoints[0].mode, "foot")
+        self.sample_at(0.02)
+        self.assertEqual(len(self.controller.overlay_view().waypoints), 1)  # on foot the marker is close to the plant, so a sample 209 m away is another one
+
+    def test_the_mode_is_kept_when_the_markers_are_saved_and_restored(self):
+        self.scanned_in(0x4000000)
+        saved = self.controller._persisted[self.controller._body_key(self.system, self.body)]["waypoints"]
+        self.assertEqual(saved[0][4], "srv")
+        self.controller._waypoints.clear()
+        self.controller._restore_body(self.system, self.body)
+        self.assertEqual(self.controller.overlay_view().waypoints[0].mode, "srv")
 
     def test_the_same_color_variant_is_matched_from_further_away(self):
         self.codex("$Codex_Ent_Tussocks_06_G_Name;", 0.0, 0.0, "Tussock Pennatis - Lime")

@@ -108,6 +108,23 @@ class NativeSwitchTests(unittest.TestCase):
         N.install_measurer()
         self.assertEqual(overlay_style.DEFAULT.text_width("Systems · jumps", "normal"), estimate)
 
+    def test_the_built_in_overlay_draws_in_the_bundled_font_until_another_is_added_and_chosen(self):
+        import tempfile
+        from plugin import overlay_fonts
+        bundled = os.path.join(N.fonts_folder(), overlay_fonts.BUNDLED)
+        self.assertTrue(os.path.isfile(bundled))
+        self.assertEqual(N._font_path(), bundled)                                   # nothing chosen: the font WNTB ships
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(N, "fonts_folder", lambda: folder):
+                with open(os.path.join(folder, "Mine.ttf"), "wb") as handle:
+                    handle.write(b"font")
+                N.save_font("Mine.ttf")
+                self.assertEqual(N._font_path(), os.path.join(folder, "Mine.ttf"))     # a chosen font in WNTB's folder is used
+                N.save_font("Gone.ttf")
+                self.assertTrue(N._font_path().endswith("Gone.ttf") is False)         # one that is not there falls back (to the bundled one, here a stand-in folder has none)
+        N.save_font(overlay_fonts.BUNDLED)
+        self.assertEqual(N._font_path(), bundled)
+
     def test_the_overlay_clamp_still_applies_to_the_other_overlay(self):
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25).clamped, (True, False))
         self.assertEqual(L.Screen(3840, 2160, ratio=1.25, native=True).clamped, (False, False))

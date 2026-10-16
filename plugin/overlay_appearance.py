@@ -18,7 +18,7 @@ from typing import Optional
 import myNotebook as nb
 from config import appname, config
 
-from . import overlay, overlay_fonts, overlay_placement, overlay_style as style
+from . import overlay, overlay_fonts, overlay_native, overlay_placement, overlay_style as style
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -159,34 +159,51 @@ def save_settings() -> None:
 
 
 # --- the overlay font ----------------------------------------------------------------------------------------------
+# Which overlay draws decides whose font this is. With WNTB's built-in overlay it is WNTB's own: the fonts in WNTB's `fonts` folder (the bundled Source Sans 3 and any font file added), chosen and used
+# straight away. With EDMCModernOverlay it is that program's font, one for every plugin, kept in its `preferred_fonts.txt`, and it takes effect when it starts again.
+
+def _builtin() -> bool:
+    return overlay_native.selected() == overlay_native.BUILTIN
+
 
 def _fonts_folder() -> str:
-    return overlay_fonts.fonts_dir(overlay_placement._plugins_dir())
+    return overlay_native.fonts_folder() if _builtin() else overlay_fonts.fonts_dir(overlay_placement._plugins_dir())
 
 
 def _font_labels() -> list:
-    return [overlay_fonts.DEFAULT_LABEL] + overlay_fonts.installed(_fonts_folder())
+    names = overlay_fonts.installed(_fonts_folder())
+    return names if _builtin() else [overlay_fonts.DEFAULT_LABEL] + names
 
 
 def _build_font_section(frame: tk.Misc, row: int) -> None:
-    """Choose the font every overlay is drawn in (EDMCModernOverlay's, for all plugins), or add one from a file."""
+    """Choose the font the overlay is drawn in, or add one from a file."""
     global _font_var, _font_menu
     box = tk.LabelFrame(frame, text="Overlay font")
     box.grid(row=row, column=0, sticky=tk.W + tk.E, padx=10, pady=(6, 10))
-    nb.Label(box, text=("The font is the overlay's, not WNTB's, so it applies to every plugin's text. The overlay's default, Elite's cockpit font, has capital letters "
-                        "only, so species names show as TUSSOCK PENNATIS. Pick a font with lower case letters, or add a .ttf or .otf file you downloaded (for example "
-                        "from Google Fonts; keep its license with it). It takes effect when the overlay starts again (restart EDMC)."),
-             wraplength=440, justify=tk.LEFT).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=6, pady=(4, 6))
+    if _builtin():
+        explain = ("The font WNTB's built-in overlay draws in. It starts with Source Sans 3, which WNTB ships (lower case and easy to read). To use another, press Add font file... and pick a .ttf or .otf "
+                   "(for example one from Google Fonts; keep its license with it): it is copied into WNTB's fonts folder and used at once. A font file you add stays through updates. "
+                   "Other plugins' overlays, if you use EDMCModernOverlay too, keep that program's own font.")
+    else:
+        explain = ("The font is EDMCModernOverlay's, not WNTB's, so it applies to every plugin's text. Its default, Elite's cockpit font, has capital letters only, so species names show as "
+                   "TUSSOCK PENNATIS. Pick a font with lower case letters, or add a .ttf or .otf file you downloaded (for example from Google Fonts; keep its license with it). It takes effect "
+                   "when the overlay starts again (restart EDMC). WNTB's built-in overlay (Windows) has a font of its own, with its own folder.")
+    nb.Label(box, text=explain, wraplength=440, justify=tk.LEFT).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=6, pady=(4, 6))
     if not os.path.isdir(_fonts_folder()):
-        nb.Label(box, text="EDMCModernOverlay's fonts folder was not found, so there is no font to choose here.", wraplength=440,
+        nb.Label(box, text="The fonts folder was not found (is EDMCModernOverlay installed?), so there is no font to choose here.", wraplength=440,
                  justify=tk.LEFT).grid(row=1, column=0, columnspan=3, sticky=tk.W, padx=6, pady=(0, 6))
         _font_var = None
         return
-    chosen = overlay_fonts.current(_fonts_folder())
     labels = _font_labels()
-    _font_var = tk.StringVar(value=chosen if chosen in labels and not overlay_fonts.is_default(chosen) else overlay_fonts.DEFAULT_LABEL)
+    if _builtin():
+        current = overlay_native.chosen_font()
+        initial = current if current in labels else (overlay_fonts.BUNDLED if overlay_fonts.BUNDLED in labels else (labels[0] if labels else ""))
+    else:
+        current = overlay_fonts.current(_fonts_folder())
+        initial = current if current in labels and not overlay_fonts.is_default(current) else overlay_fonts.DEFAULT_LABEL
+    _font_var = tk.StringVar(value=initial)
     nb.Label(box, text="Font:").grid(row=1, column=0, sticky=tk.W, padx=6, pady=2)
-    _font_menu = tk.OptionMenu(box, _font_var, *labels)
+    _font_menu = tk.OptionMenu(box, _font_var, *(labels or [""]))
     _font_menu.grid(row=1, column=1, sticky=tk.W, pady=2)
     tk.Button(box, text="Add font file...", command=_add_font).grid(row=1, column=2, sticky=tk.W, padx=(8, 0), pady=2)
     tk.Button(box, text="Open fonts folder", command=_open_fonts_folder).grid(row=2, column=1, columnspan=2, sticky=tk.W, pady=(0, 6))
@@ -212,7 +229,7 @@ def _add_font() -> None:
         return
     _refresh_font_menu()
     _font_var.set(name)
-    _say(f"Added {name} and chose it. Press OK in Settings to keep it, then restart EDMC.")
+    _say(f"Added {name} and chose it. Press OK in Settings to keep it" + ("." if _builtin() else ", then restart EDMC."))
 
 
 def _open_fonts_folder() -> None:
@@ -221,10 +238,13 @@ def _open_fonts_folder() -> None:
 
 
 def _save_font() -> None:
-    """Writes the chosen font to the overlay's list when it differs from what is there."""
+    """Keeps the chosen font: for the built-in overlay in WNTB's settings (used at once), for EDMCModernOverlay in its own font list when it differs from what is there."""
     if _font_var is None:
         return
     choice = _font_var.get()
+    if _builtin():
+        overlay_native.save_font(choice)
+        return
     wanted = "" if choice == overlay_fonts.DEFAULT_LABEL else choice
     folder = _fonts_folder()
     now = overlay_fonts.current(folder)

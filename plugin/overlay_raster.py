@@ -50,10 +50,10 @@ def parse_color(text: str) -> Optional[RGBA]:
 
 
 def default_font_path() -> str:
-    """A font to draw with when none is chosen: EDMCModernOverlay's bundled lower-case font if it is installed beside WNTB, else Windows' Segoe UI, else "" (Pillow's own)."""
-    plugins = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    """A font to draw with when none is chosen: the Source Sans 3 WNTB ships, else Windows' Segoe UI or DejaVu Sans, else "" (Pillow's own)."""
+    here = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.join(plugins, "EDMCModernOverlay", "overlay_client", "fonts", "SourceSans3-Regular.ttf"),
+        os.path.join(here, "fonts", "SourceSans3-Regular.ttf"),
         os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "segoeui.ttf"),
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     ]

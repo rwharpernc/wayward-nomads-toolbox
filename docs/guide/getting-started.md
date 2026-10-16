@@ -14,13 +14,14 @@ No programming is needed. If something looks wrong, for example overlay text tha
 Connector), a free companion program. EDMC reads the game's journal files while you play and hands the events to
 plugins like WNTB. It runs on Windows and Linux. If you already use EDMC, you have it.
 
-**2. An overlay (optional).** An *overlay* is a small helper program that draws on top of your game screen.
+**2. An overlay (optional).** An *overlay* draws on top of your game screen.
 WNTB only needs one for its on-screen extras: Discovery Alerts, Notable Bodies, Landing Assist, Interdiction
-Warning, Flight Alerts, the Surface Compass, and the optional overlays for Inventory, Mining, Missions, Colonization and
-Screenshots. Everything else works without one.
+Warning, Flight Alerts, the Route, System targets, Body info, the Exobiology cards, the Expedition Log, the Surface Compass, and the optional overlays for Inventory, Mining, Missions, Colonization and
+Screenshots. Everything else works without one. There are two to choose from:
 
-- **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)** is the recommended one. It works
-  on Windows and Linux.
+- **WNTB's built-in overlay** (Windows only): nothing to install. Choose it under **Settings → Overlays → Overlay Connection → Which overlay draws**. It draws WNTB's displays only.
+- **[EDMCModernOverlay](https://github.com/SweetJonnySauce/EDMCModernOverlay)** (Windows and Linux): a separate program you install. It is what Linux uses, and it is still what other
+  plugins' overlays need; you can run it next to the built-in overlay.
 
 Set Elite to **borderless** or **windowed** mode and the overlay will work. The step-by-step guide is
 [Setting up the on-screen overlay](../OVERLAY_SETUP.md).
@@ -200,7 +201,7 @@ Trade, BGS, Colonization, Field Ops and Overlays. Some have a row of tabs of the
 | **General** | Window (including *Suggest system names from Spansh while typing*), Updates, Help (**Report an issue**, **Copy diagnostics**) |
 | **Exploration** | Exploration Value, Organic Scanning, Points of Interest (GEC, Canonn and Codex Completionist settings), Boxel Survey, Region Sweep, Waypoint Route, Auto-Honk |
 | **Field Ops** | Screenshots, Inventory, Ship Builds |
-| **Overlays** | Overlay Connection, Overlay Placement, Appearance (color schemes for every overlay), then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Flight Alerts, Route, Expedition Log, System targets, Body info, Exobiology, Missions, Landing, Surface Compass, Mining, Notable Bodies, Screenshots |
+| **Overlays** | Overlay Connection (which overlay draws, and EDMCModernOverlay's host and port), Overlay Placement, Appearance (color schemes, text size, opacity and the overlay font), Hide overlays, then one tab for each feature that draws on your screen: Colonization, Discovery, Inventory, Interdiction Warning, Flight Alerts, Route, Expedition Log, System targets, Body info, Exobiology, Missions, Landing, Surface Compass, Mining, Notable Bodies, Screenshots |
 
 This is where you switch things on and off and adjust how they behave.
 
@@ -239,6 +240,7 @@ Switch to the mode first, then use the button listed here.
 | Codex Completionist | Exploration | **DET** button in the Codex Completionist section |
 | Notes | Exploration | **NOTES** button in the Notes section |
 | Expedition | Exploration | **EXPEDITION** button in the Expedition section |
+| Nearest place to land | Exploration | **FIND** button in the Nearest place to land section |
 | Marks (for the Surface Compass) | Exploration | **MARKS** button in the Compass section |
 | Watch list | Trade | **WATCH** button in the Watch list section |
 | Missions window (tabs: Active, By place) | Missions | **Missions window** button at the very bottom of the panel, or click a mission's card |
@@ -291,6 +293,7 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **NOTES** | Open the Notes window | Exploration (Notes section) |
 | **EXPEDITION** | Open the Expedition window | Exploration (Expedition section) |
 | **COPY** | Copy the next expedition stop's system name to the clipboard, to paste into the galaxy map | Exploration (Expedition section) |
+| **FIND** | Open the Nearest place to land window | Exploration (Nearest place to land section) |
 | **MARK** | Save where you are as a mark for the Surface Compass | Exploration (Compass section) |
 | **TARGET** | Aim the compass at the next target: the nearest hotspot, each mark on this body, then none | Exploration (Compass section) |
 | **MARKS** | Open the Marks window | Exploration (Compass section) |

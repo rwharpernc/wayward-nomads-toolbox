@@ -8,3 +8,5 @@
 *.jpeg binary
 *.ico binary
 *.zip binary
+*.ttf binary
+*.otf binary

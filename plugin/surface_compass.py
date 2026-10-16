@@ -427,7 +427,7 @@ def build_settings(notebook: nb.Notebook) -> None:
     notebook.add(frame, text="Surface Compass")
     nb.Label(
         frame,
-        text=("An arrow, a name and a distance on your in-game overlay (through EDMCModernOverlay) pointing at a spot on the planet you are "
+        text=("An arrow, a name and a distance on your in-game overlay (through the overlay) pointing at a spot on the planet you are "
               "on. It replaces Mining's Surface Waypoint arrow: by default it points at the nearest hotspot you have recorded, and in "
               "Exploration mode's Compass section you can mark spots (MARK), choose what it points at (TARGET) and manage them (MARKS). "
               "It works from any mode, on foot or in a vehicle on a landable surface. Where it sits is set on Overlay Placement."),

@@ -152,6 +152,15 @@ Two guards worth knowing: `tests/test_prefs_smoke.py` builds every Settings tab 
 top-level tabs, so adding a tab means updating it), and `tests/test_own_data_files.py` fails if a module defines a
 data file (`*FILENAME = "x.json"`) that `plugin/update.py` doesn't list in `_OWN_DATA_FILES`.
 
+The built-in overlay is tested in layers: the scene and the picture (`tests/test_overlay_scene.py`, Pillow only), the switch, fonts, text measuring and placement (`tests/test_overlay_native.py`, `tests/test_overlay_fonts.py`,
+`tests/test_overlay_style.py`) and hiding (`tests/test_overlay_hide.py`). The Win32 window itself (`plugin/overlay_window.py`) needs a desktop: `scripts/native_overlay_test.py` draws four real cards over Elite (or the screen) to look at.
+
+Scripts in `scripts/`: `build.mjs`, `package.mjs` and `env.mjs` build and install the plugin; `gen_journal_blueprints.py` and `gen_organic_variants.py` regenerate data tables (the latter from SrvSurvey's `bio-criteria` files, GPL-3.0);
+`verify_organic_variants.py` checks the color predictions against your own journals; `native_overlay_test.py` is the built-in overlay experiment.
+
+**Fonts.** `plugin/fonts/` ships Source Sans 3 (SIL Open Font License; the license file sits beside it and is in THIRD-PARTY-NOTICES.md) for the built-in overlay. Font files a player adds go in the same folder; the updater only replaces files that are in the release zip, so they stay.
+A different bundled font needs its license added the same way.
+
 Screens and windows aren't covered by automated tests. For those, build, copy and click through the
 feature in EDMC. [TECHNICAL.md](TECHNICAL.md) section 14 explains what is and isn't tested and why.
 

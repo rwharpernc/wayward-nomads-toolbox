@@ -60,6 +60,8 @@ class OrganicScanController:
         self._plugin_dir: Optional[str] = None
         self._cmdr: Optional[str] = None
         self._persisted: Dict[str, Dict[str, Any]] = {}
+        self._status_flags: Optional[int] = None         # Status.json's Flags and Flags2 as last seen: they say whether the commander is in a ship, an SRV or on foot
+        self._status_flags2: Optional[int] = None
         """This commander's saved per-body state (organic_scan_state.py),
         keyed by `_body_key()` - unlike `_body_conditions`/`_genus_hints`
         below, this is never cleared on a system change, since it's meant
@@ -184,8 +186,8 @@ class OrganicScanController:
                 organism_data.get("positions"),
             )
         if body_name not in self._waypoints and stored.get("waypoints"):
-            self._waypoints[body_name] = [organic_scan.Waypoint(w[0], w[1], float(w[2]), float(w[3])) for w in stored["waypoints"]
-                                          if isinstance(w, (list, tuple)) and len(w) == 4]
+            self._waypoints[body_name] = [organic_scan.Waypoint(w[0], w[1], float(w[2]), float(w[3]), str(w[4]) if len(w) > 4 and w[4] in organic_scan.SCAN_MODES else "")
+                                          for w in stored["waypoints"] if isinstance(w, (list, tuple)) and len(w) in (4, 5)]
         if body_name not in self._footfall and "first_footfall" in stored:
             self._footfall[body_name] = bool(stored["first_footfall"])
 
@@ -254,7 +256,7 @@ class OrganicScanController:
             return
         body = self._current_body_name
         points = [p for p in self._waypoints.get(body, []) if p.genus_key != genus_key or abs(p.lat - lat) > 1e-5 or abs(p.lon - lon) > 1e-5]
-        points.append(organic_scan.Waypoint(genus_key, str(entry.get("Name_Localised") or ""), float(lat), float(lon)))
+        points.append(organic_scan.Waypoint(genus_key, str(entry.get("Name_Localised") or ""), float(lat), float(lon), organic_scan.scan_mode(self._status_flags, self._status_flags2)))
         same = [p for p in points if p.genus_key == genus_key]
         for extra in same[:-organic_scan.WAYPOINTS_PER_GENUS]:
             points.remove(extra)
@@ -278,7 +280,7 @@ class OrganicScanController:
             if self._current_lat is not None and self._current_lon is not None and self._current_planet_radius:
                 scored = []
                 for p in mine:
-                    reach = organic_scan.WAYPOINT_SAMPLED_SAME_VARIANT_M if variant and p.name == variant else organic_scan.WAYPOINT_SAMPLED_M
+                    reach = organic_scan.waypoint_match_m(p.mode, bool(variant and p.name == variant))      # a plant scanned from a vehicle is further from its marker
                     distance = organic_scan.haversine_distance_m(p.lat, p.lon, self._current_lat, self._current_lon, self._current_planet_radius)
                     if distance <= reach:
                         scored.append((distance, p))
@@ -292,7 +294,7 @@ class OrganicScanController:
 
     def _save_waypoints(self, body: str) -> None:
         stored = self._persisted.setdefault(self._body_key(self._system_name, body), {})
-        stored["waypoints"] = [[p.genus_key, p.name, p.lat, p.lon] for p in self._waypoints.get(body, [])]
+        stored["waypoints"] = [[p.genus_key, p.name, p.lat, p.lon, p.mode] for p in self._waypoints.get(body, [])]
         self._persist()
 
     def _handle_ship(self, event: str, entry: Dict[str, Any]) -> None:
@@ -405,6 +407,8 @@ class OrganicScanController:
         lon = entry.get("Longitude")
         radius = entry.get("PlanetRadius")
         heading = entry.get("Heading")
+        if isinstance(entry.get("Flags"), int):
+            self._status_flags, self._status_flags2 = entry["Flags"], entry.get("Flags2")
         if isinstance(heading, (int, float)):
             self._current_heading = float(heading)
         if isinstance(lat, (int, float)):

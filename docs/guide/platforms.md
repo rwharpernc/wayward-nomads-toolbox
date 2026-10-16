@@ -23,7 +23,9 @@ Look for the **Works on:** line.
 | **Screenshot auto-timer** and **Thargoid-scan capture** (press the screenshot key for you) | Yes | Yes, needs **`xdotool`** |
 | Screenshot conversion and renaming | Yes | Yes (Elite's `Pictures` folder inside the Proton/Wine folder) |
 | Pickup **sound** (Field Ops → Inventory) | Yes (system beep) | Yes, needs `canberra-gtk-play` or `paplay` |
-| On-screen overlay features | EDMCModernOverlay | EDMCModernOverlay |
+| On-screen overlay features | WNTB's built-in overlay (nothing to install), or EDMCModernOverlay | EDMCModernOverlay (the built-in overlay is Windows only) |
+| The hide-all-overlays keyboard shortcut | Yes (the panel line works too) | No (use the panel line or the Settings button) |
+| Include the overlay in converted screenshots | Yes (built-in overlay) | No |
 | Self-update | Yes | Yes |
 
 ## Windows only

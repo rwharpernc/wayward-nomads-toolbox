@@ -362,7 +362,7 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     nb.Label(
         frame,
-        text=("A card on your in-game overlay, through EDMCModernOverlay (a separate, optional helper WNTB does not install or launch; "
+        text=("A card on your in-game overlay, through the overlay (WNTB's built-in one on Windows, or EDMCModernOverlay: a separate, optional helper WNTB does not install or launch; "
               "its connection settings are on the Overlay Connection tab). At the top it shows your fuel, jump range, the fuel your "
               "last jump used, the jumps and light years left, and how far away the next supercharge is. Below it, the systems of the "
               "route plotted in the game, in order, with each system's star: neutron stars and white dwarfs are picked out so you can "
@@ -372,7 +372,7 @@ def build_settings(notebook: nb.Notebook) -> None:
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (recommended)", background=nb.Label().cget("background"),
+        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
         url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
 

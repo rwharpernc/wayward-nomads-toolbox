@@ -291,14 +291,14 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     nb.Label(
         frame,
-        text=("A card on your in-game overlay, through EDMCModernOverlay (a separate, optional helper WNTB does not install or launch; its connection "
+        text=("A card on your in-game overlay, through the overlay (WNTB's built-in one on Windows, or EDMCModernOverlay: a separate, optional helper WNTB does not install or launch; its connection "
               "settings are on the Overlay Connection tab). After you scan bodies in a system it lists the ones worth mapping that you have not mapped yet, "
               "and the ones with life that you have not finished analysing, until you do. It goes when you leave the system. The value is an estimate: what scanning "
               "and then mapping a body pays (or, if you choose, the scan alone), from the published formula; the game's own figure is the truth. Everything comes from your journal; nothing is sent anywhere unless you tick the EDSM lookup further down."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (recommended)", background=nb.Label().cget("background"),
+        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
         url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
 

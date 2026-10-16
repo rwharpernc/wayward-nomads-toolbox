@@ -98,9 +98,9 @@ event, not the range with the cargo and fuel it carries now. Distances are strai
 ## Overlay connection
 
 All three use the connection settings on the **Overlay Connection** Settings tab (Settings → Overlays), and where they appear
-on screen is set on **Overlay Placement** (same place). The defaults
-(`127.0.0.1`, port `5010`) match EDMCModernOverlay as they come. **Check connection** tells you
-whether an overlay is listening.
+on screen is set on **Overlay Placement** (same place). That tab is also where you choose which overlay draws: WNTB's own built-in overlay (Windows) or EDMCModernOverlay. For EDMCModernOverlay the defaults
+(`127.0.0.1`, port `5010`) match it as they come. **Check connection** tells you
+whether the overlay is reachable. See [Setting up the overlay](../OVERLAY_SETUP.md).
 
 ## What the game does and doesn't tell us, and how to work around it
 

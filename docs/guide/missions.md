@@ -73,8 +73,8 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 
 ## Missions on the overlay
 
-A small card on your in-game overlay, for flying. It is **off until you tick it** (Settings → Overlays → Missions) and needs EDMCModernOverlay like every
-overlay ([setup](../OVERLAY_SETUP.md)). With up to twenty missions a list of all of them would cover the screen, so the card shows what you can act on now:
+A small card on your in-game overlay, for flying. It is **off until you tick it** (Settings → Overlays → Missions) and needs an overlay like every
+overlay, WNTB's built-in one (Windows) or EDMCModernOverlay ([setup](../OVERLAY_SETUP.md)). With up to twenty missions a list of all of them would cover the screen, so the card shows what you can act on now:
 
 ```
 MISSIONS 14 · 2 ready · 3 soon

@@ -52,9 +52,35 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 STAGE_ORDER = ("Log", "Sample", "Analyse")
 REQUIRED_SAMPLES = len(STAGE_ORDER)
 WAYPOINTS_PER_GENUS = 4          # plants kept per genus on a body: enough to come back to, not a list to maintain
-WAYPOINT_SAMPLED_M = 100.0       # a Log or Sample taken this close to a waypoint is that plant, so it is dropped from the list (the scanner names a plant from a distance, so the
-                                 # position it records can be well away from where the commander stands to take the sample)
-WAYPOINT_SAMPLED_SAME_VARIANT_M = 150.0    # further out when the sample names the same color variant as the waypoint
+# The Composition Scanner names a plant from a distance, and the journal gives where the *commander* was, not the plant. How far off that can be depends on what the commander was in when scanning:
+# on foot the scanner is short ranged; from an SRV or a ship it reaches much further (a marker about 200 m from the plant was seen from the air). So each waypoint remembers the mode it was
+# scanned in, shows how sure it is (`WAYPOINT_ERROR_M`, drawn as the size of its ring and marked with a ~ when it is not exact), and a sample counts as that plant within `WAYPOINT_MATCH_M`.
+WAYPOINT_ERROR_M = {"foot": 40.0, "srv": 150.0, "ship": 250.0, "": 150.0}       # how far from the plant the marker may be, by mode (estimates, to be refined)
+WAYPOINT_MATCH_M = {"foot": 100.0, "srv": 300.0, "ship": 450.0, "": 250.0}      # a Log or Sample taken this close is that plant, so it is dropped from the list
+WAYPOINT_SAME_VARIANT_EXTRA_M = 50.0                                             # further out when the sample names the same color variant as the waypoint
+SCAN_MODES = ("foot", "srv", "ship")
+WAYPOINT_SAMPLED_M = WAYPOINT_MATCH_M["foot"]                                    # kept for the on-foot case
+WAYPOINT_SAMPLED_SAME_VARIANT_M = WAYPOINT_MATCH_M["foot"] + WAYPOINT_SAME_VARIANT_EXTRA_M
+
+
+def scan_mode(flags: Optional[int], flags2: Optional[int] = None) -> str:
+    """What the commander was in, from Status.json's Flags and Flags2: "srv", "ship" (the main ship), "foot", or "" when the flags are not known."""
+    if isinstance(flags, int):
+        if flags & 0x4000000:          # InSRV
+            return "srv"
+        if flags & 0x1000000:          # InMainShip
+            return "ship"
+    if isinstance(flags2, int) and flags2 & 0x1:   # OnFoot
+        return "foot"
+    return ""
+
+
+def waypoint_error_m(mode: str) -> float:
+    return WAYPOINT_ERROR_M.get(mode, WAYPOINT_ERROR_M[""])
+
+
+def waypoint_match_m(mode: str, same_variant: bool = False) -> float:
+    return WAYPOINT_MATCH_M.get(mode, WAYPOINT_MATCH_M[""]) + (WAYPOINT_SAME_VARIANT_EXTRA_M if same_variant else 0.0)
 FIRST_FOOTFALL_MULTIPLIER = 5    # the first commander to set foot on a body is paid five times the usual exobiology reward
 
 # Journal unit conversions to the units organic_species_data.py's rulesets
@@ -418,6 +444,16 @@ class Waypoint:
     name: str                 # e.g. "Tussock Pennatis - Lime"
     lat: float
     lon: float
+    mode: str = ""            # what the commander was in when the scanner named it: "foot", "srv" or "ship" ("" when not known); it says how far off the position can be
+
+    @property
+    def error_m(self) -> float:
+        return waypoint_error_m(self.mode)
+
+    @property
+    def exact(self) -> bool:
+        """On foot the position is close to the plant; from a vehicle it is only near it."""
+        return self.mode == "foot"
 
 
 @dataclass(frozen=True)

@@ -1,7 +1,9 @@
 # Built-in overlay: specification and plan
 
 WNTB can draw its own overlays, in a window it lays over Elite, instead of sending them to EDMCModernOverlay. This page records why, how it works, what is done and what is still to do. It is
-optional and off until the player turns it on (Settings → Overlays → Overlay Connection → **Which overlay draws**). Windows only; Linux keeps EDMCModernOverlay.
+optional and off until the player turns it on (Settings → Overlays → Overlay Connection → **Which overlay draws**). Windows only; Linux keeps EDMCModernOverlay. For players, the guide is [Setting up the overlay](OVERLAY_SETUP.md); the code is described in [TECHNICAL.md](TECHNICAL.md) section 10.
+
+**Relation to EDMCModernOverlay.** The built-in overlay draws WNTB's displays only. Other plugins' overlays still need EDMCModernOverlay (or the older EDMCOverlay it replaces), and Linux needs it for everything. Both can run at once: with the built-in overlay chosen WNTB sends nothing to EDMCModernOverlay, so nothing of WNTB's is drawn twice, and the other plugins keep drawing there.
 
 ## Why
 
@@ -27,21 +29,22 @@ click-through, layered window over Elite is clean, follows the game window, hide
 - **Screenshots.** The game's own screenshot never includes an overlay, and a snipping tool takes the focus (the overlay hides unless **Keep showing** is on). `overlay_native.snapshot()` draws the scene at a screenshot's size so the Screenshots setting can lay it onto the converted copy.
 - **Placement** reads the game window's real size and scaling from the window thread (`overlay_native.screen()`), is told there is no right-hand clamp (`Screen.native`), and uses no group
   offsets. The layout editor, anchors and saved placements work as before.
-- **The font** is the one chosen in Appearance → Overlay font when EDMCModernOverlay's fonts folder is installed (so one choice serves both overlays), otherwise Segoe UI.
+- **The font** is WNTB's own, independent of EDMCModernOverlay's: the file named by `wntb_overlay_builtin_font` in WNTB's `plugin/fonts` folder, else the bundled Source Sans 3 (SIL Open Font License, shipped with its license), else a system font. Appearance → Overlay font lists the files in that folder and
+  **Add font file...** copies one in; a change is used within two seconds, and a font file added stays through updates (the updater only replaces what the release zip holds). EDMCModernOverlay's font is chosen separately, in its own list, when it is the overlay in use.
 
 ## What is done
 
-- Scene, raster, window thread, the switch and its Settings choice, placement, hide-everything, tests, the check on a stand-in Elite window (no real Elite yet), and the in-game test script.
+- Scene, raster, window thread (with the re-raise above Elite and capture tools recognized), the switch and its Settings choice, group placement, hide-everything, keep-showing, screenshots with the overlay, text measuring, WNTB's own fonts (bundled Source Sans 3, add your own), the player documentation, tests, and the in-game test script. The player confirmed in the game (2026-10-16) that the cards line up, converted and captured screenshots include it, it stays above Elite after an alt-tab, and font size and color scheme changes hold.
 
 ## Still to do
 
 1. **Try it in the game** and fix what shows: text sizes against the card layouts (the layouts size boxes from character estimates tuned on EDMCModernOverlay), circle radius units, the radar's
    lines and markers, vertical text position, placement at the edges, ultrawide and multiple monitors, fullscreen-windowed behavior, and the game's own menus.
 2. ~~**Measure text** with the font itself~~ Done: while the built-in overlay is chosen, `overlay_native.measure` (Pillow's `getlength` at eight times the size, in the font in use) replaces the width estimates through `overlay_style.set_text_measurer`, padded 5% for whole-pixel font rounding, and right-aligned text uses the exact width. Boxes came out 5 to 8% narrower on the sample cards.
-3. **A font and size of its own** (the built-in overlay's own font list, and a text size that is not tied to EDMCModernOverlay's step sizes).
+3. ~~**A font of its own**~~ Done (see above). Still to do: a text size that is not tied to EDMCModernOverlay's step sizes, and bold or other weights of the same family.
 4. **Per-pixel quality**: text drawn over transparent areas (a few cards have text outside a panel), sub-pixel positioning, and a draw-on-change guard so a busy scene costs little.
 5. **Reliability**: what happens when Elite restarts, the display changes or EDMC is slow; log and report problems in Check connection and Copy diagnostics.
-6. **Documentation** for players: Overlay setup, Known issues, Troubleshooting, the Linux guide (it stays on EDMCModernOverlay).
+6. ~~**Documentation** for players~~ Done: Overlay setup (the two overlays, using both, fonts), Known issues, Troubleshooting, the Linux and platforms guides, TECHNICAL and the module index.
 7. **Linux**: not planned for now. It needs a compositor-aware window and input-shape handling that differs between X11 and Wayland.
 
 ## Decisions to revisit

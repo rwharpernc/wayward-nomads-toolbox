@@ -85,8 +85,18 @@ class Tracked:
         return genus_label(self.waypoint)
 
     @property
+    def error(self) -> float:
+        """How far from the plant the marker may be, meters (it is where the commander was when the scanner named the plant)."""
+        return self.waypoint.error_m
+
+    @property
+    def distance_label(self) -> str:
+        """The distance, with a ~ when the marker is only near the plant (scanned from a vehicle) and not at it."""
+        return ("" if self.waypoint.exact else "~") + distance_text(self.distance)
+
+    @property
     def text(self) -> str:
-        return f"{self.name} {distance_text(self.distance)}"
+        return f"{self.name} {self.distance_label}"
 
 
 def tracked(view: Optional[organic_scan.BodyView]) -> Tuple[Tracked, ...]:
@@ -108,7 +118,7 @@ def tracked(view: Optional[organic_scan.BodyView]) -> Tuple[Tracked, ...]:
 
 def track_lines(view: Optional[organic_scan.BodyView]) -> Tuple[str, ...]:
     """One line per tracked plant that leads you back to it: 'Tussock: 94 m, 60° right'. Empty when none is being tracked."""
-    return tuple(f"{t.name}: {distance_text(t.distance)}, {bearing_text(t.right, t.ahead)}" for t in tracked(view))
+    return tuple(f"{t.name}: {t.distance_label}, {bearing_text(t.right, t.ahead)}" for t in tracked(view))
 
 
 @dataclass(frozen=True)
@@ -140,7 +150,7 @@ class Plan:
     bottom: str = ""                                         # "Scan one: 342 m   Scan two: 0 m"
     scale: str = ""                                          # what half the plot's width is, e.g. "300 m"
     visible: bool = False
-    targets: Tuple[Tuple[str, float, float, int], ...] = ()  # (label, x, y, color) of each plant being tracked that fits in the plot
+    targets: Tuple[Tuple[str, float, float, int, float], ...] = ()  # (label, x, y, color, ring radius) of each plant being tracked that fits in the plot; the ring is as wide as the marker may be off
     pointers: Tuple[Tuple[float, float, int], ...] = ()      # a unit direction (x right, y up) and color to each tracked plant, drawn from the center
     track: Tuple[str, ...] = ()                              # one line per tracked plant that says which and how far
     rows: Tuple[Tuple[Item, ...], ...] = ()                  # what is drawn under the plot, a row at a time, each item with its little pointer
@@ -197,7 +207,7 @@ def build_plan(view: Optional[organic_scan.BodyView], size: int = SIZE) -> Plan:
     track_items: List[Tuple[Item, ...]] = []
     for t in followed:
         if t.distance <= extent:
-            targets.append((t.name[:1], t.right * per_m, t.ahead * per_m, t.color))
+            targets.append((t.name[:1], t.right * per_m, t.ahead * per_m, t.color, max(8.0, min(half, t.error * per_m))))
         if t.distance > 0:
             pointers.append((t.right / t.distance, t.ahead / t.distance, t.color))
         track_items.append((Item(t.text, _angle(t.right, t.ahead), f"series{t.color}"),))
@@ -274,9 +284,9 @@ class RadarLayout:
         for index in range(len(plan.markers), 2):
             client.send_circle(f"{self.prefix}m{index}", "", "", cx, cy, 1, ttl=1)
         # the plants being tracked: a ring with the genus's letter, and a line from you toward the nearest one (to the edge of the plot if it is further)
-        for index, (label, tx, ty, color) in enumerate(plan.targets[:self.MAX_TARGETS]):
+        for index, (label, tx, ty, color, ring) in enumerate(plan.targets[:self.MAX_TARGETS]):
             texts.append((label, f"series{color}", cx + tx - 4, cy - ty - 9))
-            client.send_circle(f"{self.prefix}t{index}", look.color(f"series{color}"), "#00000000", cx + tx, cy - ty, 8, ttl=ttl, thickness=2)
+            client.send_circle(f"{self.prefix}t{index}", look.color(f"series{color}"), "#00000000", cx + tx, cy - ty, ring, ttl=ttl, thickness=2)
         for index in range(min(len(plan.targets), self.MAX_TARGETS), self.MAX_TARGETS):
             client.send_circle(f"{self.prefix}t{index}", "", "", cx, cy, 1, ttl=1)
         reach = SIZE / 2 - 14

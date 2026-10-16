@@ -191,7 +191,7 @@ def build_settings(notebook: nb.Notebook) -> None:
 
     nb.Label(
         frame,
-        text=("A card on your in-game overlay, through EDMCModernOverlay (a separate, optional helper WNTB does not install or launch; its connection "
+        text=("A card on your in-game overlay, through the overlay (WNTB's built-in one on Windows, or EDMCModernOverlay: a separate, optional helper WNTB does not install or launch; its connection "
               "settings are on the Overlay Connection tab), that keeps the running expedition's totals in view: exploration (systems, jumps, light-years, bodies "
               "scanned, first discoveries, mapped, and what you have earned from selling data) and exobiology (samples, species, first footfalls and what you have "
               "earned). You start, stop, name and edit expeditions with the LOG button in the Exploration panel. Everything comes from your journal; nothing is "
@@ -199,7 +199,7 @@ def build_settings(notebook: nb.Notebook) -> None:
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (recommended)", background=nb.Label().cget("background"),
+        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
         url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
     ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
 

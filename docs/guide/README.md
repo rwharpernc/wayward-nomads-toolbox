@@ -24,7 +24,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | Guide | What's in it |
 |---|---|
 | [Getting started](getting-started.md) | What you need, installing, updating, finding your way around, opening windows, button names |
-| [Setting up the overlay](../OVERLAY_SETUP.md) | The on-screen helper for alerts and diagrams |
+| [Setting up the overlay](../OVERLAY_SETUP.md) | The on-screen overlay for alerts, cards and diagrams: WNTB's built-in one (Windows) or EDMCModernOverlay, using both, and fonts |
 | [Windows and Linux](platforms.md) | What works where |
 | [WNTB on Linux](linux.md) | Step-by-step Linux and Flatpak setup |
 | [What goes on the internet](internet-and-privacy.md) | Every feature that contacts an outside site |
@@ -36,7 +36,7 @@ know of, how it looks on screen, and what to do. Where a figure is an estimate, 
 | Mode | Guide |
 |---|---|
 | **Powerplay** | [Powerplay](powerplay.md): merits, cycles, sessions, rare goods |
-| **Exploration** | [Exploration](exploration.md): Auto-Honk, alerts, Boxel Survey, Codex, Notes, Expedition planner, Expedition Log, System targets and Body info, Compass |
+| **Exploration** | [Exploration](exploration.md): Auto-Honk, alerts, Boxel Survey, Codex, Notes, Expedition planner, Expedition Log, System targets and Body info, Nearest place to land, Compass |
 | **Exobiology** | [Exobiology](exobiology.md): the Organic Scanning panel, the four overlay cards (status, predicted species, sample radar, popup), finding your way back to a plant, first footfall |
 | **Mining** | [Mining](mining.md): space and surface mining, the Mining Book |
 | **Trade** | [Trade](trade.md): profit, routes, prices, Watch list, carrier cargo, History |

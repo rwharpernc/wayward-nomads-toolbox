@@ -62,6 +62,8 @@ Copy diagnostics (clipboard only), the Missions overlay card and window (with pi
 above), Organic Scanning, Ship Builds, Landing Assist, Interdiction Warning, and Trade's session profit,
 stock, carrier cargo and History, and the Watch list's prices from the markets you open.
 
+The **overlays** send nothing outside your computer either. WNTB's built-in overlay (Windows) is a window drawn on your own screen; with EDMCModernOverlay, WNTB talks to it over a local connection on your own computer (`127.0.0.1`). Fonts are files on your disk: WNTB downloads none, and the font section only copies a file you pick. Converted screenshots with the overlay drawn on them stay on your disk. The one overlay feature that goes online, and only when you press a button, is the opt-in EDSM lookup for System targets, above.
+
 ## How WNTB keeps its traffic low
 
 WNTB is built to ask these services for as little as it can:

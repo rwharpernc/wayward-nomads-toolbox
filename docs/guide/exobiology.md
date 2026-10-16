@@ -73,8 +73,11 @@ at once. Up to four plants of a genus are kept for the body, and the list surviv
 - The **Bio radar** marks each tracked plant with a ring and the genus's letter, draws a line from you toward it, and lists it under the plot (`Tussock 94 m`) with a
   **little pointer** that turns to show which way it lies. Each genus has its own color, the same for its ring, its line, its row and its line on Bio status.
 - **Bio status** has a line for each, with the distance and direction (`Tussock: 94 m, 60° right`, the lines side by side in one row, each in its genus's color; `ahead` or `behind` when it is nearly straight on or off).
-- **A pointer goes when you sample that plant.** A Log or Sample taken at a plant drops it (the plant nearest you within about 100 m, or within about 150 m when the sample names the same color variant; the scanner names a plant from a distance, so the spot it recorded can be well away from where you stand to take the sample), and the genus's pointer moves to the
-  next most recent plant of that genus you identified, or disappears if there is none. Analysing a genus clears all of its pointers.
+- **How exact a marker is.** The Composition Scanner names a plant from a distance, and the journal records where *you* were when it did, not where the plant is. So a marker is only as exact as that distance: scanned **on foot** it is close to the plant; from an **SRV** it can be a
+  hundred meters or more off; from a **ship** it can be two hundred or more (a marker about 200 m off was seen after scanning from the air). WNTB remembers which you were in, draws the marker's ring as wide as the marker may be off, and writes the distance with a `~` (`Tussock: ~210 m, 30° right`) unless
+  you scanned on foot. Walk to the ring and look: the plant is inside it. **Sampling the plant makes its spot exact.** The numbers are estimates (about 40, 150 and 250 m for foot, SRV and ship).
+- **A pointer goes when you sample that plant.** A Log or Sample taken at a plant drops the marker nearest you for that genus when you are within its reach: about 100 m for an on-foot marker, 300 m for an SRV one, 450 m for a ship one (50 m more when the sample names the same color variant). That is the next most recent plant of that genus you identified, or none if there is no other.
+  Analysing a genus clears all of its pointers, wherever you did it.
 - Bark Mound and a few other genera whose codex names do not follow the usual pattern are not tracked.
 
 ## First footfall
