@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import myNotebook as nb
 from config import appname, config
 
-from . import overlay, overlay_appearance, overlay_layout as layout, overlay_style, platform_support
+from . import overlay, overlay_appearance, overlay_grid, overlay_layout as layout, overlay_style, platform_support
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -344,6 +344,14 @@ def client_for(slot_key: str, client: Any, block: Tuple[int, int, int, int]) -> 
     return client if (dx, dy) == (0, 0) else layout.ShiftedClient(client, dx, dy)
 
 
+def client_for_measured(slot_key: str, client: Any, block: Tuple[int, int, int, int], look: Optional[overlay_style.Look] = None) -> Any:
+    """Like `client_for`, for a card that knows its real size: `block` is the rectangle the card occupies *now* (so a bottom or middle anchor sits on
+    the card's real edge, not on a worst-case guess), and the size is noted so a right-hand edge and the group offset are worked out from it too."""
+    if note_measured_size(slot_key, (block[2], block[3]), look):
+        threading.Thread(target=apply_group_offsets, name="WNTB-overlay-offsets", daemon=True).start()
+    return client_for(slot_key, client, block)
+
+
 def origin_for(slot_key: str, size: Tuple[int, int]) -> Tuple[int, int]:
     """Top left corner for a display of `size` that positions itself from an origin rather than being shifted (as far as the
     clamp allows, when its group's offset carries it the rest of the way)."""
@@ -473,8 +481,10 @@ def build_settings(notebook: tk.Misc) -> None:
         variable=_offsets_var, command=_show_info,
     ).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(6, 0))
 
+    editor_holder = tk.Frame(frame)
+    editor_holder.grid(row=3, column=0, sticky=tk.W, padx=10, pady=(10, 0))
     grid = tk.Frame(frame)
-    grid.grid(row=3, column=0, sticky=tk.W, padx=10, pady=(10, 4))
+    grid.grid(row=4, column=0, sticky=tk.W, padx=10, pady=(10, 4))
     for column, heading in enumerate(("Display", "Spot", "Offset X", "Offset Y", "Show")):
         nb.Label(grid, text=heading).grid(row=0, column=column, sticky=tk.W, padx=(0, 8))
     _rows.clear()
@@ -492,15 +502,52 @@ def build_settings(notebook: tk.Misc) -> None:
         _hidden_vars[key] = tk.BooleanVar(value=not is_hidden(key))      # ticked = shown
         nb.Checkbutton(grid, variable=_hidden_vars[key]).grid(row=row_index, column=4, sticky=tk.W, pady=1)
 
+    _build_editor(editor_holder)
+
     buttons = tk.Frame(frame)
-    buttons.grid(row=4, column=0, sticky=tk.W, padx=10, pady=(8, 2))
+    buttons.grid(row=5, column=0, sticky=tk.W, padx=10, pady=(8, 2))
     tk.Button(buttons, text="Show placement preview", command=_preview).pack(side=tk.LEFT)
     tk.Button(buttons, text="Reset all to defaults", command=_reset_all).pack(side=tk.LEFT, padx=(8, 0))
     tk.Button(buttons, text="Detect screen again", command=_redetect).pack(side=tk.LEFT, padx=(8, 0))
     _result_var = tk.StringVar(value="")
     nb.Label(frame, textvariable=_result_var, wraplength=460, justify=tk.LEFT).grid(
-        row=5, column=0, sticky=tk.W, padx=10, pady=(2, 10))
+        row=6, column=0, sticky=tk.W, padx=10, pady=(2, 10))
     _show_info()
+
+
+_editor: Optional[overlay_grid.LayoutEditor] = None
+
+
+def _build_editor(holder: tk.Misc) -> None:
+    """The drag-and-drop layout picture above the table (see overlay_grid.py): it reads and writes the same rows, so the table and the picture agree."""
+    global _editor
+    _editor = None
+    try:
+        screen = current_screen()
+        logical = screen.logical if screen.pixel_sizes else (float(layout.BASE_WIDTH), float(layout.BASE_HEIGHT))
+
+        def get(key: str) -> Optional[layout.Placement]:
+            try:
+                return _typed_placement(key)
+            except (KeyError, ValueError):
+                return None
+
+        def put(key: str, placement: layout.Placement) -> None:
+            choice, first, second = _rows[key]
+            choice.set(layout.preset_label(placement))
+            first.set(str(placement.x if placement.custom else placement.dx))
+            second.set(str(placement.y if placement.custom else placement.dy))
+
+        slots = {key: (slot.label, slot_size(key)) for key, slot in SLOTS.items()}
+        _editor = overlay_grid.LayoutEditor(holder, logical, slots, get, put, lambda key: key in _hidden_vars and not _hidden_vars[key].get(), _PREVIEW_COLORS)
+        _editor.frame.pack(anchor=tk.W)
+        for choice, first, second in _rows.values():
+            for var in (choice, first, second):
+                var.trace_add("write", lambda *_a: _editor.redraw() if _editor is not None else None)
+        for var in _hidden_vars.values():
+            var.trace_add("write", lambda *_a: _editor.redraw() if _editor is not None else None)
+    except Exception:
+        logger.exception("Could not build the layout editor")
 
 
 def save_settings() -> None:

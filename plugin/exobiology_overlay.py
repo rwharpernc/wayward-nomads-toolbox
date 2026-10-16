@@ -213,8 +213,9 @@ class _Display:
     def block_rect(self, look: Look = LEGACY, card: Any = None) -> tuple:
         return self.layout.block_rect(look) if isinstance(self.layout, exo_radar.RadarLayout) else self.layout.block_rect(look, card)
 
-    def placed_client(self, client: OverlayClient, look: Look = LEGACY) -> OverlayClient:
-        return overlay_placement.client_for(self.slot, client, self.block_rect(look))
+    def placed_client(self, client: OverlayClient, look: Look = LEGACY, card: Any = None) -> OverlayClient:
+        """`client` moved to where this card is placed, from the card's real size (so a bottom or right edge is the card's own edge)."""
+        return overlay_placement.client_for_measured(self.slot, client, self.block_rect(look, card), look)
 
     def render(self, card: Any, client: OverlayClient, look: Look = LEGACY) -> None:
         self.layout.render(card, client, look, ttl=OVERLAY_TTL)
@@ -229,7 +230,7 @@ class _Display:
 
         def worker() -> None:
             try:
-                self.render(card, self.placed_client(_overlay_client, look), look)
+                self.render(card, self.placed_client(_overlay_client, look, card), look)
             except OSError:
                 logger.debug("Could not reach the overlay for the %s card", self.slot, exc_info=True)
 
@@ -379,7 +380,7 @@ def _test_cards() -> None:
         try:
             for display, card in ((status, build_status_card(view, "Sample System")), (listing, build_list_card(view, "Sample System")),
                                   (radar, exo_radar.build_plan(view)), (popup, build_popup_card(sample_popup()))):
-                display.render(card, display.placed_client(client, look), look)
+                display.render(card, display.placed_client(client, look, card), look)
             outcome, color = "Sent: check your overlay.", "#2e7d32"
         except OSError as err:
             outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"

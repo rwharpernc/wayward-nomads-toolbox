@@ -167,8 +167,9 @@ def block_rect(look: Look = LEGACY, card: Optional[Card] = None) -> tuple:
     return LAYOUT.block_rect(look, card)
 
 
-def placed_client(client: OverlayClient, look: Look = LEGACY) -> OverlayClient:
-    return overlay_placement.client_for("route", client, block_rect(look))
+def placed_client(client: OverlayClient, look: Look = LEGACY, card: Optional[Card] = None) -> OverlayClient:
+    """`client` moved to where this card is placed, from the card's real size (so a bottom or right edge is the card's own edge)."""
+    return overlay_placement.client_for_measured("route", client, block_rect(look, card), look)
 
 
 def render(card: Card, client: OverlayClient, look: Look = LEGACY) -> None:
@@ -297,7 +298,7 @@ def _draw_live(card: Card) -> None:
 
     def worker() -> None:
         try:
-            render(card, placed_client(_overlay_client, look), look)
+            render(card, placed_client(_overlay_client, look, card), look)
         except OSError:
             logger.debug("Could not reach the overlay for the route card", exc_info=True)
 
@@ -419,7 +420,8 @@ def _test_card() -> None:
 
     def worker() -> None:
         try:
-            render(build_card(sample_tracker(), rows, expedition_lines=SAMPLE_EXPEDITION if show_trip else ()), placed_client(client, look), look)
+            sample = build_card(sample_tracker(), rows, expedition_lines=SAMPLE_EXPEDITION if show_trip else ())
+            render(sample, placed_client(client, look, sample), look)
             outcome, color = "Sent: check your overlay.", "#2e7d32"
         except OSError as err:
             outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"

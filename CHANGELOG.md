@@ -13,6 +13,12 @@ All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 - **Exobiology cards** (Settings → Overlays → Exobiology): four overlay cards for the body you are on. *Bio status* shows how many biological signals you have analysed and, while sampling, the species and color variant with three sample circles, the reward (five times as much on a first footfall) and how far you are from the last sample against the distance the genus needs. *Biology* lists each genus with the species it could be or is and what each pays. *Bio radar* plots your samples with a circle at each as wide as the genus's minimum distance (red while you are inside it), your ship and your SRV. *Sample popup* names each sample as it is taken. A plant identified with the Composition Scanner is named until you sample it. They use Organic Scanning's own prediction and tracking.
 - The Body info card lists every material and the atmosphere's composition.
 
+- **A drag-and-drop layout editor on Overlay Placement.** A to-scale picture of your screen with a grid (20, 40, 60 or 120 pixels) and a box for every display: drag a box where you want it and the spot and offset are filled in for you. A box dropped near an edge snaps flush to it (offset 0), near the middle snaps to the center line, and otherwise to the grid. The table below it still works and the two stay in step.
+
+### Fixed
+- **Exobiology circles and the Bio radar drew away from their cards.** Circles were not moved with the rest of a placed card, so the sample dots and the radar's circles landed at the card's unplaced position and could drag the rest of the card with them.
+- **A zero offset at a bottom or right edge now sits on the edge.** Cards (Route, System targets, Body info and the Exobiology cards) were placed using their largest possible size, so a card shorter than that stopped short of the edge; they are now placed from the size they are drawn at.
+
 ### Changed
 - **A cleaner look for the Route, System targets and Body info cards.** A heading with a colored accent bar, a progress bar for the system scan, thin dividers, section labels, values aligned to the right (or in a second column), and a muted second column for tags and distances. A long message now continues on the next line instead of being cut off.
 - The System targets and Body info cards now hide when the game closes or is at its main menu (so they no longer linger while another commander signs in), while docked, and in hyperspace, and a different commander loading in clears the system the last one had scanned.

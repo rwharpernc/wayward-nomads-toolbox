@@ -366,6 +366,9 @@ class HiddenClient:
     def send_vector(self, shape_id: str, points: Sequence[Dict[str, Any]], color: str, ttl: int = 8) -> None:
         self._client.send_vector(shape_id, [], color, ttl=1)
 
+    def send_circle(self, shape_id: str, color: str, fill: str, x: int, y: int, radius: int, ttl: int = 8, thickness: Optional[int] = None) -> None:
+        self._client.send_circle(shape_id, "", "", x, y, 1, ttl=1, thickness=thickness)
+
     def __getattr__(self, name: str) -> Any:
         return getattr(self._client, name)
 
@@ -388,6 +391,9 @@ class ShiftedClient:
     def send_vector(self, shape_id: str, points: Sequence[Dict[str, Any]], color: str, ttl: int = 8) -> None:
         moved: List[Dict[str, Any]] = [dict(p, x=p["x"] + self._dx, y=p["y"] + self._dy) for p in points]
         self._client.send_vector(shape_id, moved, color, ttl=ttl)
+
+    def send_circle(self, shape_id: str, color: str, fill: str, x: int, y: int, radius: int, ttl: int = 8, thickness: Optional[int] = None) -> None:
+        self._client.send_circle(shape_id, color, fill, x + self._dx, y + self._dy, radius, ttl=ttl, thickness=thickness)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._client, name)
