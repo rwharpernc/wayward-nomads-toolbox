@@ -487,6 +487,14 @@ class _SectionStack(nb.Frame):
         self._next_row += 1
 
 
+def _sort_tabs(notebook: ttk.Notebook) -> None:
+    """Put a notebook's tabs in alphabetical order by their label (case-insensitive). Done after the tabs are built, from
+    the labels each feature gave its own tab, so a new tab lands in the right place without being listed anywhere."""
+    ordered = sorted(notebook.tabs(), key=lambda tab: str(notebook.tab(tab, "text")).casefold())
+    for index, tab in enumerate(ordered):
+        notebook.insert(index, tab)
+
+
 def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.Misc], None]], page_bg: str) -> None:
     """One top-level Settings tab holding its own row of tabs, so the strip across
     the top stays short instead of listing every feature."""
@@ -498,6 +506,7 @@ def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.M
     inner.grid(row=1, column=0, sticky=tk.NSEW, padx=4, pady=4)
     for build in builders:
         settings_scroll.scrolled_page(inner, build, page_bg)
+    _sort_tabs(inner)
 
 
 def _stacked_page(title: str, builders: List[Callable[[tk.Misc], None]]) -> Callable[[tk.Misc], None]:
@@ -556,6 +565,7 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
     leftovers = [f for f in FEATURES if hasattr(f, "build_settings") and f not in placed]
     if leftovers:
         _settings_group(tabs, "Other", settings_of(*leftovers), page_bg)
+    _sort_tabs(tabs)
 
 
 def _create_window_tab(notebook: nb.Notebook) -> None:

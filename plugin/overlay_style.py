@@ -131,21 +131,25 @@ def with_opacity(color: str, percent: int) -> str:
     return f"#{round(max(0, min(100, percent)) * 255 / 100):02x}{rgb}"
 
 
+# The status colors mean the same in every scheme but the color-blind one: red is danger, yellow a caution, green good, and blue
+# a status that is only information (or not known yet). Each is bright enough to read on the dark card fill (a pale tint read as pink).
+OK, WARN, INFO, DANGER = "#22e05a", "#ffe600", "#66b3ff", "#ff5555"
+
 ELITE_ORANGE = Palette(
-    "Elite orange", "#f97316", "#e6000000", "#fdba74", "#ddb57a", "#e5e7eb", "#ced1d7", "#86efac", "#fbbf24", "#7dd3fc",
-    "#f87171", ("#fbbf24", "#67e8f9", "#c4b5fd"), ("#4fc3f7", "#81c784", "#ba68c8", "#ff8c0d"))
+    "Elite orange", "#f97316", "#e6000000", "#fdba74", "#ddb57a", "#e5e7eb", "#ced1d7", OK, WARN, INFO,
+    DANGER, ("#fbbf24", "#67e8f9", "#c4b5fd"), ("#4fc3f7", "#81c784", "#ba68c8", "#ff8c0d"))
 ICE_BLUE = Palette(
-    "Ice blue", "#38bdf8", "#e6000000", "#bae6fd", "#7acef3", "#f0f9ff", "#cad1dc", "#86efac", "#fde047", "#a5b4fc",
-    "#fca5a5", ("#7dd3fc", "#5eead4", "#c4b5fd"), ("#38bdf8", "#34d399", "#a78bfa", "#fbbf24"))
+    "Ice blue", "#38bdf8", "#e6000000", "#bae6fd", "#7acef3", "#f0f9ff", "#cad1dc", OK, WARN, INFO,
+    DANGER, ("#7dd3fc", "#5eead4", "#c4b5fd"), ("#38bdf8", "#34d399", "#a78bfa", "#fbbf24"))
 PHOSPHOR_GREEN = Palette(
-    "Phosphor green", "#22c55e", "#e6000000", "#86efac", "#7fcc9b", "#dcfce7", "#c2d1c7", "#bef264", "#fde047", "#67e8f9",
-    "#fca5a5", ("#4ade80", "#a3e635", "#5eead4"), ("#4ade80", "#a3e635", "#2dd4bf", "#facc15"))
+    "Phosphor green", "#22c55e", "#e6000000", "#86efac", "#7fcc9b", "#dcfce7", "#c2d1c7", OK, WARN, INFO,
+    DANGER, ("#4ade80", "#a3e635", "#5eead4"), ("#4ade80", "#a3e635", "#2dd4bf", "#facc15"))
 AMBER_MONO = Palette(
-    "Amber mono", "#f59e0b", "#e6000000", "#fcd34d", "#d6a078", "#fef3c7", "#d4d0ce", "#d9f99d", "#fb923c", "#fde68a",
-    "#fca5a5", ("#fcd34d", "#fbbf24", "#fdba74"), ("#fcd34d", "#fbbf24", "#f59e0b", "#d97706"))
+    "Amber mono", "#f59e0b", "#e6000000", "#fcd34d", "#d6a078", "#fef3c7", "#d4d0ce", OK, WARN, INFO,
+    DANGER, ("#fcd34d", "#fbbf24", "#fdba74"), ("#fcd34d", "#fbbf24", "#f59e0b", "#d97706"))
 HIGH_CONTRAST = Palette(
-    "High contrast", "#ffffff", "#f2000000", "#ffff00", "#ffffff", "#ffffff", "#eaeaec", "#00ff7f", "#ffb000", "#00e5ff",
-    "#ff5555", ("#ffff00", "#00e5ff", "#ff80ff"), ("#00e5ff", "#00ff7f", "#ff80ff", "#ffb000"))
+    "High contrast", "#ffffff", "#f2000000", "#ffff00", "#ffffff", "#ffffff", "#eaeaec", OK, WARN, INFO,
+    DANGER, ("#ffff00", "#00e5ff", "#ff80ff"), ("#00e5ff", "#00ff7f", "#ff80ff", "#ffb000"))
 COLOR_BLIND_SAFE = Palette(      # the Okabe-Ito set, which stays distinct for the common kinds of color blindness
     "Color-blind safe", "#56b4e9", "#e6000000", "#f0e442", "#e69f00", "#ffffff", "#bdbdbd", "#56b4e9", "#e69f00", "#e8a6cb",
     "#ff7b2e", ("#f0e442", "#56b4e9", "#cc79a7"), ("#56b4e9", "#009e73", "#cc79a7", "#e69f00"))

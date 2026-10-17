@@ -29,6 +29,8 @@ LINE_DEFAULT = 2     # the Radar size setting: a larger plot draws the circles l
 MIN_EXTENT_M = 150.0        # the plot never shows less than this radius
 MAX_EXTENT_M = 3000.0       # nor more than this
 MARGIN = 1.12               # room around the outermost circle
+CIRCLE_RADIUS_FRAC = (0.05, 0.16)   # a drawn circle's radius as a fraction of the plot size, lowest and highest: the zoom changes, the circles stay in this band
+INSIDE_COLOR = "#c41e1e"    # the circle you are inside: a deep red, darker than the overlay's general danger color
 ARROW_SIZE = 6.0             # half the width of a little pointer
 BOTTOM_LINES = 3            # lines under the plot: the first two samples, then which plant is being tracked and how far
 
@@ -186,7 +188,9 @@ def build_plan(view: Optional[organic_scan.BodyView], size: int = SIZE) -> Plan:
         right, ahead = offset_m(here, position, radius, view.heading)
         if math.hypot(right, ahead) + range_m > extent:
             continue
-        circles.append(Circle(right * per_m, ahead * per_m, max(2.0, range_m * per_m), math.hypot(right, ahead) < range_m, is_active))
+        # the position is to scale but the circle's size is held to a band, so zooming out never shrinks it to a dot nor zooming in swells it over the plot
+        drawn = max(size * CIRCLE_RADIUS_FRAC[0], min(size * CIRCLE_RADIUS_FRAC[1], range_m * per_m))
+        circles.append(Circle(right * per_m, ahead * per_m, drawn, math.hypot(right, ahead) < range_m, is_active))
     markers = []
     parts = []
     vehicles: List[Item] = []
@@ -285,9 +289,9 @@ class RadarLayout:
                 x += look.measured_width(item.text) + 16
         texts.append((plan.scale, "muted", self.x + self.size - look.measured_width(plan.scale), self.y + line + 4))
         for index, circle in enumerate(plan.circles[:self.MAX_CIRCLES]):
-            role = "danger" if circle.inside else "ok"
-            color = look.color(role) if circle.active else look.color("muted")
-            fill = with_alpha(look.color(role), self.fill_alpha) if circle.inside and self.fill_alpha else "#00000000"
+            base = INSIDE_COLOR if circle.inside else look.color("ok")
+            color = base if circle.active else look.color("muted")
+            fill = with_alpha(base, self.fill_alpha) if circle.inside and self.fill_alpha else "#00000000"
             client.send_circle(f"{self.prefix}c{index}", color, fill, cx + circle.x, cy - circle.y, circle.radius, ttl=ttl, thickness=self.line_width)
         for index in range(min(len(plan.circles), self.MAX_CIRCLES), self._used_circles):
             client.send_circle(f"{self.prefix}c{index}", "", "", cx, cy, 1, ttl=1)

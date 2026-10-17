@@ -60,7 +60,7 @@ own entry on **Overlay Placement**.
 - **Bio radar**. (**Settings → Overlays → Exobiology** has **Radar size** in pixels across, 260 by default and 520 for twice the size, which draws every sample circle larger; **Circle fill**, how solid a circle is while you are inside it; and **Circle outline**, its thickness.) A top-down plot centered on you with straight ahead up, and a small arrowhead with an **N** on its edge that shows which way north lies (the plot turns as you turn, so north moves around it). Each sample you took has a circle as wide as the genus's minimum distance between
   samples: **red** while you are inside it (too close for the next sample), **green** once you are clear. The ship (where it touched down) and the SRV (where you
   launched or left it) are marked `S` and `V`. Under the plot: the distance to the ship, the SRV and your first two samples, each with a **little pointer**
-  before it, turned to show which way that thing lies relative to the way you face (straight up means straight ahead). The scale adapts so every circle fits.
+  before it, turned to show which way that thing lies relative to the way you face (straight up means straight ahead). The scale adapts so every circle's center fits, and the circles themselves are drawn within a fixed size range (about 5% to 16% of the plot's width as a radius), so a circle is never a dot or a blob however far you zoom out. Because of that a circle's size is not to scale, though its position is, and a circle that reads as overlapping another may not be.
 - **Sample popup**. For ten seconds after each sample: the species and variant, its estimated value, the distance the genus needs, and whether it was logged,
   sampled or analysed.
 

@@ -270,6 +270,23 @@ class Radar(unittest.TestCase):
         wide.render(large, rec, S.DEFAULT)
         self.assertTrue(rec.circles)                                                       # and it draws at that size
 
+    def test_circle_size_is_held_to_a_band_whatever_the_zoom(self):
+        base = EX.sample_view()
+        low, high = (XR.SIZE * f for f in XR.CIRCLE_RADIUS_FRAC)
+        near = XR.build_plan(base)
+        far = XR.build_plan(dataclasses.replace(base, here=(0.0, 0.0)))             # standing far away zooms the plot out a long way
+        for plan in (near, far):
+            for circle in plan.circles:
+                self.assertGreaterEqual(circle.radius, low - 1e-6)
+                self.assertLessEqual(circle.radius, high + 1e-6)
+
+    def test_the_circle_you_are_inside_is_drawn_in_the_deep_red(self):
+        rec = Recorder()
+        EX.LAYOUT_RADAR.render(XR.build_plan(EX.sample_view()), rec, S.DEFAULT)
+        outlines = {c for (_x, _y, _r, c, _f) in rec.circles.values()}
+        self.assertIn(XR.INSIDE_COLOR, outlines)
+        self.assertNotIn(S.DEFAULT.color("danger"), outlines)
+
     def test_the_circle_fill_and_outline_follow_their_settings_and_are_held_to_their_range(self):
         plan = XR.build_plan(EX.sample_view())
         for fill, alpha in ((100, 0xFF), (50, 0x80), (70, 0xB2)):
