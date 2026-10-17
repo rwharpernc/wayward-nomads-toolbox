@@ -31,6 +31,15 @@ class MapMarker:
     depleted: bool = False
 
 
+@dataclass
+class MapCircle:
+    """A ring around a point, in metres, with a short label (a stop's number). Dashed, so it reads without color."""
+    east_m: float
+    north_m: float
+    radius_m: float
+    label: str = ""
+
+
 class MapView(tk.Frame):
     def __init__(self, parent: tk.Misc, size: int = 300,
                  on_select: Optional[Callable[[str], None]] = None) -> None:
@@ -41,6 +50,7 @@ class MapView(tk.Frame):
         self._coverage: Sequence[tuple[float, float]] = ()
         self._markers: Sequence[MapMarker] = ()
         self._you: Optional[tuple[float, float]] = None
+        self._circles: Sequence[MapCircle] = ()
         self._selected: Optional[str] = None
         self._hits: list[tuple[float, float, str]] = []
         self._cx = self._cy = size / 2
@@ -67,8 +77,8 @@ class MapView(tk.Frame):
 
     # --- data ------------------------------------------------------------
     def set_data(self, coverage: Sequence[tuple[float, float]], markers: Sequence[MapMarker],
-                 you: Optional[tuple[float, float]] = None) -> None:
-        self._coverage, self._markers, self._you = coverage, markers, you
+                 you: Optional[tuple[float, float]] = None, circles: Sequence[MapCircle] = ()) -> None:
+        self._coverage, self._markers, self._you, self._circles = coverage, markers, you, circles
         self.redraw()
 
     def set_message(self, text: Optional[str]) -> None:
@@ -121,6 +131,13 @@ class MapView(tk.Frame):
             x, y = self._to_px(east, north, scale, half)
             canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
                                fill=P.MAP_COVERAGE, outline="")
+
+        for circle in self._circles:
+            x, y = self._to_px(circle.east_m, circle.north_m, scale, half)
+            ring = circle.radius_m * scale
+            canvas.create_oval(x - ring, y - ring, x + ring, y + ring, outline=P.ACCENT, width=2, dash=(6, 4))
+            if circle.label:
+                canvas.create_text(x, y - ring - 8, text=circle.label, fill=P.ACCENT, font=style.font(P.FONT_SMALL))
 
         self._hits = []
         for marker in self._markers:

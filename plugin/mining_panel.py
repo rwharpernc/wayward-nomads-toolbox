@@ -42,6 +42,7 @@ from . import mining_price_finder_dialog as price_finder_dialog
 from . import mining_render as render
 from . import mining_reserve_lookup_dialog as reserve_lookup_dialog
 from . import mining_session_archive as session_archive
+from . import mining_stops
 from . import mining_space as space_mining
 from . import mining_surface as surface_mining
 from . import overlay
@@ -64,6 +65,7 @@ _CFG_OVERLAY_ENABLED = "wntb_mining_overlay_enabled"
 _CFG_DISPLAY_COVERAGE_MINIMAP = "wntb_mining_display_coverage_minimap"
 _CFG_ARCHIVE_SESSIONS = "wntb_mining_archive_sessions"
 _CFG_CURRENT_PAGE = "wntb_mining_current_page"
+_CFG_STOP_RADIUS = "wntb_mining_stop_radius_m"
 
 _MAX_PANEL_HEIGHT = 260
 """Hard cap on the scrollable content area's rendered height, in pixels
@@ -139,6 +141,7 @@ class MiningPanelController:
         self._overlay_result_label: Optional[tk.Misc] = None
         self._display_coverage_minimap_var: Optional[tk.BooleanVar] = None
         self._archive_sessions_var: Optional[tk.BooleanVar] = None
+        self._stop_radius_var: Optional[tk.StringVar] = None
 
     # --- lifecycle -----------------------------------------------------
 
@@ -611,6 +614,8 @@ class MiningPanelController:
         self._edsm_reserve_lookup_var = tk.BooleanVar(value=_cfg_bool(_CFG_EDSM_RESERVE_LOOKUP_ENABLED, False))
         self._display_coverage_minimap_var = tk.BooleanVar(value=_cfg_bool(_CFG_DISPLAY_COVERAGE_MINIMAP, False))
         self._archive_sessions_var = tk.BooleanVar(value=_cfg_bool(_CFG_ARCHIVE_SESSIONS, False))
+        self._stop_radius_var = tk.StringVar(value=str(mining_stops.clamp_radius(
+            config.get_int(_CFG_STOP_RADIUS, default=mining_stops.DEFAULT_RADIUS_M))))
 
         nb.Label(frame, text="UI settings").grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 2))
         nb.Checkbutton(frame, text="Show session totals",
@@ -646,7 +651,16 @@ class MiningPanelController:
             variable=self._archive_sessions_var,
         ).grid(row=10, column=0, sticky=tk.W, padx=10)
 
-        mining_hotspot_settings.build(frame, start_row=11)
+        radius_row = tk.Frame(frame)
+        radius_row.grid(row=11, column=0, sticky=tk.W, padx=10, pady=(6, 0))
+        nb.Label(radius_row, text="Stop radius in the Mining Book (m):").pack(side=tk.LEFT)
+        tk.Spinbox(radius_row, from_=mining_stops.MIN_RADIUS_M, to=mining_stops.MAX_RADIUS_M,
+                   increment=mining_stops.STEP_RADIUS_M, width=6, textvariable=self._stop_radius_var).pack(side=tk.LEFT, padx=6)
+        nb.Label(frame, text=("Deposits within this distance of the one with the most rigs count as one Rhino stop. "
+                              "500 to 2500 in steps of 250."), wraplength=440, justify=tk.LEFT).grid(
+            row=12, column=0, sticky=tk.W, padx=10)
+
+        mining_hotspot_settings.build(frame, start_row=13)
 
     def build_overlay_settings(self, notebook: nb.Notebook) -> None:
         """The mining stats HUD, on the Overlays tab."""
@@ -707,6 +721,7 @@ class MiningPanelController:
             config.set(_CFG_OVERLAY_ENABLED, bool(self._overlay_enabled_var.get()))
         config.set(_CFG_DISPLAY_COVERAGE_MINIMAP, bool(self._display_coverage_minimap_var.get()))
         config.set(_CFG_ARCHIVE_SESSIONS, bool(self._archive_sessions_var.get()))
+        config.set(_CFG_STOP_RADIUS, mining_stops.clamp_radius(self._stop_radius_var.get()))
         self._redraw_if_alive()
 
 

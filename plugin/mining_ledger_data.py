@@ -236,6 +236,25 @@ def material_summary(spots: Sequence[hotspots.Hotspot]) -> list[MaterialLine]:
     return sorted(lines, key=lambda m: (-m.mined_tons, -m.hotspots, m.material.casefold()))
 
 
+YOU_ARE_HERE_M = 175.0
+"""A saved deposit this close to the Rhino counts as the one you are at (a deposit is about 100 m across and refined ore
+scatters beyond it; the same reach RhinoSpotter uses)."""
+
+
+def deposit_here(spots: Sequence[hotspots.Hotspot], latitude: float, longitude: float,
+                 radius_m: float) -> Optional[hotspots.Hotspot]:
+    """The positioned hotspot nearest the given spot, if one is within YOU_ARE_HERE_M."""
+    best: Optional[hotspots.Hotspot] = None
+    best_distance = YOU_ARE_HERE_M
+    for spot in spots:
+        if not spot.has_position():
+            continue
+        distance = bearing.distance_m(spot.latitude, spot.longitude, latitude, longitude, radius_m)
+        if distance <= best_distance:
+            best, best_distance = spot, distance
+    return best
+
+
 def project_m(center_lat: float, center_lon: float, lat: float, lon: float,
               radius_m: float) -> tuple[float, float]:
     """(east, north) metres of a point from the map center - the same flat

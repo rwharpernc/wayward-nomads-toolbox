@@ -130,6 +130,13 @@ Material, rigs, signal number, Amount and Density are entered by the commander o
 tons are derived from the journal. Saving a hotspot within **100 m** of an existing one on the same body
 updates it instead of adding a duplicate.
 
+Depletion bookkeeping lives on the hotspot too (`depleted_at`, `regrown_at`, `tons_at_regrow`, `rechecks`; absent in older files,
+which load with defaults). `mining_depletion.apply` is called by `HotspotRepository.add` and `update`, so the dialogs, which build a
+hotspot without these fields, cannot lose them; `settle` runs when a commander's list loads and when the Mining Book refreshes. A
+Depleted mark is taken off `REGEN_DAYS` (14, assumed) after it was set; Mark depleted on a hotspot that refilled with no ton refined
+since is a recheck (first date kept, the mark comes off `RECHECK_DAYS` (7) after the look). A Depleted mark with no date is dated
+on first sight, so it refills 14 days after that.
+
 ### 6.2 Import and export
 WNTB exports and re-imports its own file format, with a merge or replace choice (the **I/E** button, and the buttons
 in Settings).
@@ -138,6 +145,13 @@ in Settings).
 A three-pane window: bodies (the current system's scanned landable bodies plus every saved hotspot,
 anywhere), a body's hotspots grouped by location, and a detail card with a zoomable map. Filters are by
 material and by rig count; the card offers Edit, Mark depleted, Copy coordinates and Delete.
+
+**Stops.** `mining_stops.find_stops` groups a body's active, positioned deposits that have a rig count: greedily, the one with the most
+rigs (ties by how many others are within reach) leads, and every remaining deposit within the stop radius (`wntb_mining_stop_radius_m`,
+500 to 2500 in steps of 250, default 1250) joins it. `best_stops` keeps up to three whose lead has 5 or more rigs, else 4 or more. They need
+the body's radius, known only for the body the Rhino is on. The Book lists them, tags each deposit's row, and the map draws a dashed ring
+(`MapCircle`) around each lead. **You are here:** `mining_ledger_data.deposit_here` finds the positioned hotspot (depleted included) within
+175 m of the live position, which the Book marks and selects when no deposit was already selected.
 
 **Your own rates.** For a scanned body, the Mining Book shows what *you* have found so far on that kind of
 ground: the share of your saved deposits, per material, with the sample size. `mining_ground.classify`

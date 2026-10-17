@@ -184,6 +184,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 | `mining_body_survey.py` | The landable bodies the journal has shown in the current system (scans and mining-location signals), which the Mining Book lists and the ground-type rates are worked from |
 | `mining_coverage.py` | Where the SRV's scanner has driven, per body, one map per commander |
 | `mining_coverage_render.py` | Draws that coverage as a small map (PIL, no Tk) |
+| `mining_depletion.py` | When a Depleted mark is assumed to refill (14 days, 7 after a look at a still-empty deposit) and the status line the Mining Book shows |
 | `mining_deposit.py` | Estimates tonnes left in a recorded hotspot deposit |
 | `mining_ground.py` | Ground type of a body and your own base rates of deposits on it |
 | `mining_hotspot_dialog.py` | The shared Add/Edit Hotspot form |
@@ -207,6 +208,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 | `mining_session_archive.py` | Optional per-run JSON archive of finished mining runs |
 | `mining_space.py` | Tracks ship-based mining runs |
 | `mining_spansh_client.py` | Spansh search for hotspots and best-price stations (shared with Trade's price searches) |
+| `mining_stops.py` | Rhino stops: saved deposits one parking spot can reach, the best three, and the radius setting's limits |
 | `mining_surface.py` | Tracks SRV surface-mining runs |
 
 ## Trade

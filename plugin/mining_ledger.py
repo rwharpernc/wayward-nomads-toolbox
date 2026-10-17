@@ -25,17 +25,19 @@ from config import appname, config
 
 from . import mining_coverage as coverage
 from . import mining_deposit
+from . import mining_depletion as depletion
 from . import mining_hotspot_dialog as hotspot_dialog
 from . import mining_hotspots as hotspots
 from . import mining_live_position as live_position
 from . import mining_ground
 from . import mining_ledger_data as data
+from . import mining_stops as stops
 from . import mining_surface as surface_mining
 from . import panelkit
 from .mining_body_survey import system_body_survey
 from .uikit import palette as P
 from .uikit import style
-from .uikit.mapview import MapMarker, MapView
+from .uikit.mapview import MapCircle, MapMarker, MapView
 from .uikit.shell import WindowShell
 from .uikit.table import Column, DataTable
 from .uikit.widgets import Card, Combobox, FlatButton, FoldList, Pill, StatTile, clip, section_header
@@ -44,6 +46,7 @@ plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
 
 CONFIG_GEOMETRY = "wntb_mining_ledger_geometry"
+CONFIG_STOP_RADIUS = "wntb_mining_stop_radius_m"
 
 _DENSITY_COLORS = {"High": P.OK, "Medium": P.WARN, "Low": P.DANGER}
 _AMOUNT_COLORS = {"High": P.OK, "Medium": P.WARN, "Low": P.DANGER, "Depleted": P.MUTED}
@@ -128,6 +131,8 @@ class MiningBook:
                                    padx=P.PAD)
         self._materials.pack(fill="x", pady=(0, P.PAD_SM))
         middle.bind("<Configure>", lambda e: self._materials.configure(wraplength=max(e.width - 2 * P.PAD, 120)))
+        self._stops_label = tk.Label(middle, text="", bg=P.PANE, fg=P.ACCENT, anchor="w", justify="left", padx=P.PAD)
+        middle.bind("<Configure>", lambda e: self._stops_label.configure(wraplength=max(e.width - 2 * P.PAD, 120)), add="+")
         self._prospect_head = tk.Frame(middle, bg=P.PANE, padx=P.PAD)
         self._prospect_title = tk.Label(self._prospect_head, text="", bg=P.PANE, fg=P.MUTED, anchor="w",
                                         font=style.font(P.FONT_SMALL))
@@ -181,6 +186,7 @@ class MiningBook:
         hotspot where they still exist."""
         if not self.alive:
             return
+        hotspots.hotspot_repository.settle_depletion(notify=False)   # marks that came due while the Book was shut
         saved = hotspots.hotspot_repository.all()
         surface = surface_mining.surface_mining_repository
         current_system = surface.current_system or system_body_survey.current_system
@@ -261,6 +267,7 @@ class MiningBook:
             for tile, text in ((self._tile_saved, "0"), (self._tile_mined, "0 t"), (self._tile_active, "0")):
                 tile.set(text)
             self._draw_materials([])
+            self._draw_stops([], None)
             self._show_prospecting(False)
             self._map.set_message("Nothing to show yet")
             self._render_card(None)
@@ -270,6 +277,11 @@ class MiningBook:
         saved = hotspots.hotspot_repository.all()
         spots = data.spots_on(saved, entry.system, entry.body)
         position_of = {id(h): i for i, h in enumerate(saved)}  # identity, not equality: duplicates compare equal
+        radius, live = self._body_ground(entry)
+        found = stops.find_stops(spots, radius, self._stop_radius())
+        best = stops.best_stops(found)
+        stop_number = {id(m): n for n, stop in enumerate(best, 1) for m in stop.members}
+        here_spot = data.deposit_here(spots, live[0], live[1], radius) if live and radius else None
         groups = []
         for label, group_spots in data.group_by_location(spots):
             rows = []
@@ -277,8 +289,11 @@ class MiningBook:
                 key = str(position_of[id(spot)])
                 self._spot_by_key[key] = spot
                 estimate = mining_deposit.reserve_text(spot.rigs, spot.amount, spot.density, spot.mined_tons)
-                bits = [f"{spot.rigs} rigs"] if spot.rigs else []
-                bits.append(estimate or "no estimate")
+                bits = ["you are here"] if spot is here_spot else []
+                bits += [f"{spot.rigs} rigs"] if spot.rigs else []
+                bits.append(estimate or ("assumed refilled" if spot.regrown_at else "no estimate"))
+                if id(spot) in stop_number:
+                    bits.append(f"stop {stop_number[id(spot)]}")
                 rows.append(dict(key=key, title=spot.material, indent=10, sub="  ·  ".join(bits),
                                  detail=f"{spot.mined_tons:,} t" if spot.mined_tons else "",
                                  pill=(spot.amount, _AMOUNT_COLORS.get(spot.amount, P.MUTED)) if spot.amount else None))
@@ -292,10 +307,13 @@ class MiningBook:
         self._tile_mined.set(f"{summary.mined_tons:,} t")
         self._tile_active.set(str(summary.still_active))
         self._draw_materials(spots)
+        self._draw_stops(found, radius)
         self._draw_prospecting(entry, spots)
-        self._draw_map(entry, spots)
+        self._draw_map(entry, spots, best)
 
         reselect = next((k for k, s in self._spot_by_key.items() if _spot_ident(s) == previous), None)
+        if reselect is None and here_spot is not None:
+            reselect = next((k for k, s in self._spot_by_key.items() if s is here_spot), None)   # stand at one: it is the one to act on
         if reselect:
             self._select_spot(reselect)
         else:
@@ -309,6 +327,41 @@ class MiningBook:
         if len(lines) > 6:
             text += f"  ·  +{len(lines) - 6} more"
         self._materials.configure(text=text)
+
+    @staticmethod
+    def _stop_radius() -> int:
+        return stops.clamp_radius(config.get_int(CONFIG_STOP_RADIUS, default=stops.DEFAULT_RADIUS_M))
+
+    @staticmethod
+    def _body_ground(entry: data.BodyEntry) -> tuple[Optional[float], Optional[tuple[float, float]]]:
+        """(the body's radius, the Rhino's position on it), each None unless you are on this body now."""
+        surface = surface_mining.surface_mining_repository
+        here = (surface.current_system or "").casefold() == entry.system.casefold() and \
+               (surface.current_body or "").casefold() == entry.body.casefold()
+        if not here:
+            return None, None
+        position = live_position.current_position()
+        return surface.radius_for_current_body(), ((position.latitude, position.longitude) if position else None)
+
+    def _draw_stops(self, found: list[stops.Stop], radius: Optional[float]) -> None:
+        """The best stops (see mining_stops.py), or a note on why there are none to show."""
+        best = stops.best_stops(found)
+        lines = []
+        for number, stop in enumerate(best, 1):
+            tons = stop.tons_left()
+            text = f"Stop {number}: {stop.rigs} rigs at {data.location_label(stop.lead)}, {len(stop.members)} deposit(s)"
+            if tons:
+                text += f", ~{tons[0]:,}-{tons[1]:,} t left"
+            lines.append(text)
+        if lines:
+            lines.insert(0, f"Best stops (deposits within {self._stop_radius():,} m of the lead):")
+        elif radius is None:
+            lines = ["Stops need the body's radius: visit the body to see them."]
+        self._stops_label.configure(text="\n".join(lines))
+        if lines:
+            self._stops_label.pack(fill="x", pady=(0, P.PAD_SM), before=self._hotspots)
+        else:
+            self._stops_label.pack_forget()
 
     def _show_prospecting(self, visible: bool) -> None:
         for widget in (self._prospect_head, self._prospect_table, self._prospect_note):
@@ -344,7 +397,8 @@ class MiningBook:
             text="Built only from deposits you have saved: what you have found so far on this kind of "
                  "body, not what this body holds. A small sample says little.")
 
-    def _draw_map(self, entry: data.BodyEntry, spots: list[hotspots.Hotspot]) -> None:
+    def _draw_map(self, entry: data.BodyEntry, spots: list[hotspots.Hotspot],
+                  best: Optional[list[stops.Stop]] = None) -> None:
         surface = surface_mining.surface_mining_repository
         here = (surface.current_system or "").casefold() == entry.system.casefold() and \
                (surface.current_body or "").casefold() == entry.body.casefold()
@@ -370,7 +424,11 @@ class MiningBook:
                 markers.append(MapMarker(key, east, north, label, spot.amount == "Depleted"))
         you = data.project_m(center[0], center[1], current[0], current[1], radius) if current else None
         self._map.set_message(None)
-        self._map.set_data(cover, markers, you)
+        circles = []
+        for number, stop in enumerate(best or (), 1):
+            east, north = data.project_m(center[0], center[1], stop.lead.latitude, stop.lead.longitude, radius)
+            circles.append(MapCircle(east, north, self._stop_radius(), f"Stop {number}"))
+        self._map.set_data(cover, markers, you, circles)
 
     # --- selection / card --------------------------------------------------------
     def _select_spot(self, key: str) -> None:
@@ -404,6 +462,10 @@ class MiningBook:
         if estimate:
             tk.Label(self._card, text=estimate, fg=P.ACCENT, bg=P.CARD,
                      font=style.font(P.FONT_SECTION)).pack(anchor="w")
+        status = depletion.status_text(spot, depletion.now_utc())
+        if status:
+            tk.Label(self._card, text=status, fg=P.MUTED, bg=P.CARD, wraplength=300,
+                     justify="left").pack(anchor="w")
         if spot.mined_tons:
             tk.Label(self._card, text=f"{spot.mined_tons:,} t mined so far", fg=P.MUTED, bg=P.CARD).pack(anchor="w")
         if spot.has_position():

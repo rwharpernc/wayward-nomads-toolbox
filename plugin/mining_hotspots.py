@@ -24,13 +24,14 @@ import json
 import logging
 import os
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Callable, Optional
 
 from config import appname
 
 from . import commander_data
 from . import mining_bearing as bearing
+from . import mining_depletion as depletion
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -85,7 +86,10 @@ class Hotspot:
     mining_deposit.reserve_text() for an estimated tons-remaining range.
     `mined_tons` is the one derived field: refined tons the journal
     credited to this deposit (see HotspotRepository.add_mined_tons) -
-    shown once it is marked Depleted, as what the deposit actually gave."""
+    shown once it is marked Depleted, as what the deposit actually gave.
+    `depleted_at`, `regrown_at`, `tons_at_regrow` and `rechecks` are the depletion bookkeeping
+    (mining_depletion.py): when the Depleted mark was set, when it was taken off as assumed refilled, the mined tons then,
+    and when the commander looked again and found it still empty. The repository keeps them; the dialogs never set them."""
     system: str
     body: str
     material: str
@@ -104,6 +108,10 @@ class Hotspot:
     Mining Book's "your own rates"; None for hotspots saved or imported
     without it, which still count while their body is in the current
     survey."""
+    depleted_at: Optional[str] = None
+    regrown_at: Optional[str] = None
+    tons_at_regrow: Optional[int] = None
+    rechecks: list[str] = field(default_factory=list)
 
     def matches_body(self, system: str, body: str) -> bool:
         return (self.system.strip().casefold() == system.strip().casefold()
@@ -156,7 +164,8 @@ class HotspotRepository:
             logger.exception("Failed to read %s's hotspots - starting with an empty list", cmdr)
             self._hotspots = []
         self._hotspots = self._hotspots + pending
-        if claimed or pending:
+        changed = self.settle_depletion(notify=False)
+        if (claimed or pending) and not changed:
             self._write_current()
         for listener in self._listeners:
             listener()
@@ -208,7 +217,7 @@ class HotspotRepository:
         return matches
 
     def add(self, hotspot: Hotspot) -> None:
-        self._hotspots.append(hotspot)
+        self._hotspots.append(depletion.apply(None, hotspot, depletion.now_utc()))
         self._save_and_notify()
 
     def add_or_merge(self, hotspot: Hotspot, radius_m: Optional[float]) -> bool:
@@ -282,8 +291,22 @@ class HotspotRepository:
         self._save_and_notify()
 
     def update(self, index: int, hotspot: Hotspot) -> None:
-        self._hotspots[index] = hotspot
+        self._hotspots[index] = depletion.apply(self._hotspots[index], hotspot, depletion.now_utc())
         self._save_and_notify()
+
+    def settle_depletion(self, notify: bool = True) -> bool:
+        """Takes off the Depleted marks that are due (mining_depletion.settle) and dates any that were set before dates were
+        kept. Saves, and tells listeners when `notify` is set, only if something changed. Returns whether it did."""
+        moment = depletion.now_utc()
+        settled = [depletion.settle(h, moment) for h in self._hotspots]
+        if all(a is b for a, b in zip(settled, self._hotspots)):
+            return False
+        self._hotspots = settled
+        if notify:
+            self._save_and_notify()
+        else:
+            self._save()
+        return True
 
     def remove(self, index: int) -> None:
         del self._hotspots[index]

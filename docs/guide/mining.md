@@ -72,7 +72,24 @@ It lists the bodies you've scanned in this system and every hotspot you've saved
 - add a hotspot by hand (**Add hotspot**, top right),
 - edit a hotspot or mark it as depleted,
 - copy its coordinates,
-- view a zoomable map.
+- view a zoomable map,
+- see the best **stops** on a body you are on (below).
+
+**Depleted marks refill.** The game does not say when a mined-out deposit refills, so WNTB assumes 14 days. A hotspot marked
+depleted shows how long is left; after that the mark comes off and the hotspot has no Amount until you read it again. If you
+press **Mark depleted** on it and you have not refined anything there since, WNTB takes that as a look at a deposit that is
+still empty, keeps the first date and looks again 7 days later (`Still depleted at 15 d; look again in 7 d`). Tons refined
+since make it a fresh depletion. Marks made before this feature are dated when you first open the Book or load the commander.
+
+**Stops.** Rigs sit around the Rhino, so deposits close together can be worked from one place. For the body you are on, the Book
+takes the saved deposit with the most rigs and every other one within the **stop radius** of it (Settings → Mining, 500 to 2500 m,
+default 1250 m) as one stop. The best three, led by a deposit of 5 or more rigs (4 or more if the body has none), are listed
+above the hotspots with the tons left added up, circled on the map and tagged `stop 1` to `stop 3` on each row. Deposits that
+are depleted, or have no position or rig count, are left out. Stops need the body's radius, which WNTB only has for a body you
+have visited this session, so a body you are not on shows none.
+
+**You are here.** With the Rhino on the body, the deposit within 175 m of it is marked `you are here` and selected, so
+**Mark depleted** is one click. It is worked out when the Book is opened or refreshed, not while you drive.
 
 **Your hotspots, tons mined, depleted marks and the ground your Rhino has driven over belong to the commander you are
 playing.** Switching commander switches the Mining Book and the coverage map; one commander never sees or changes
@@ -90,6 +107,7 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | Ring and deposit amounts read for you | Amount and Density are not given to WNTB. They are **typed in by hand**. | Check the figure you type. A wrong reading gives a wrong range. |
+| When a mined-out deposit refills | Nothing in the journal says. WNTB assumes 14 days. | Read the Amount again at the deposit and edit the hotspot; that overrides the assumption. |
 | Exact tonnes left in a deposit | The deposit figures are measurements from a handful of deposits, so the ranges are wide. | Treat "tons left" as a guide, not a count. |
 | A map of everywhere you have mined | Coverage means ground the Rhino has **driven over**, not ground it has scanned. | Use the minimap to see where you have been, not what is left. |
 | An exact count of limpets aboard | "On board" is approximate (bought less launched). | Check your cargo for the real number. |
@@ -109,6 +127,7 @@ The checkboxes (the first three are on by default; the rest are off):
   in [Exploration](exploration.md#compass)). It still points at the nearest hotspot by default, and also works from any mode;
 - *Show coverage minimap* (Surface Mining page): a small map of ground the Rhino has driven over on the current
   body,
-- *Archive completed mining runs*: writes a JSON file per run.
+- *Archive completed mining runs*: writes a JSON file per run,
+- *Stop radius in the Mining Book*: how close deposits must be to the lead deposit to share a stop (500 to 2500 m).
 
 More detail: [Mining specification](../MINING_TECH_SPEC.md).

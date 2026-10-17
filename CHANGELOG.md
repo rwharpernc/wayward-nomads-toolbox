@@ -3,6 +3,13 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **Depleted marks refill.** A deposit marked Depleted in the Mining Book is now dated, and the mark comes off by itself 14 days later, leaving the hotspot with no Amount (`assumed refilled`) until you read it again. The game gives no refill date, so 14 days is an assumption, not a measurement. If you press **Mark depleted** on such a hotspot and no ton has been refined there since, WNTB takes it as a look at a still-empty deposit: the first depletion date is kept, the card reads `Still depleted at 15 d; look again in 7 d`, and the mark comes off again 7 days after the look. Tons refined since it refilled make it a new depletion instead. Marks made before this version are dated the first time the Book or a commander loads (so they refill 14 days after that). Setting a hotspot active by hand, or entering a new Amount, ends the cycle.
+- **Rhino stops.** The Mining Book works out which saved deposits one parking spot can reach: the deposit with the most rigs and every other active one within the stop radius of it (500 to 2500 m in steps of 250, default 1250; Settings → Mining → Stop radius). The best three stops, those led by a deposit of 5 or more rigs (4 or more when the body has none that large), are listed above the hotspots with their rigs, the number of deposits and the tons left added up, circled with a dashed ring on the map, and tagged `stop 1`, `stop 2`, `stop 3` on each deposit's row. Depleted deposits and deposits with no position or rig count are left out, and stops need the body's radius, which WNTB has only for a body you have visited this session.
+- **The deposit you are standing at is picked for you.** With the Rhino on a body, the Mining Book marks the saved deposit within 175 m of it as `you are here` and selects it, so **Mark depleted** is one click. A depleted one counts too, so a recheck is one click as well.
+
 ## 1.17.3 - 2026-10-17
 
 ### Changed
