@@ -64,6 +64,7 @@ These are not bugs, but they surprise people. Each is explained where it belongs
 
 - **Species percentages are an even share** of the candidates, because the data lists which species a body allows and not how likely each is, and a color variant is only known once you sample.
   See [Exobiology](exobiology.md#what-the-game-does-and-doesnt-tell-us-and-how-to-work-around-it).
+- **System targets' visit line and Known section have limits.** The visit line comes from your own journals and counts only those that still exist (and a relog in the same system is not a second visit); the first read takes about 40 seconds for thousands of journals. The Known section comes from Spansh, which knows only what other commanders uploaded, so a system nobody scanned shows nothing, and its figures are Spansh's estimates.
 - **Scan, mapping and unsold values are estimates**, worked out from a published formula; the game's own figure when you sell is the truth. System targets ranks by the mapped value by default (the scan value if you choose it in Settings), and both
   appear on Body info and in the Expedition Log. See [Exploration](exploration.md).
 - **Plants, samples and the SRV have positions only while EDMC is running**, because the journal does not record them.

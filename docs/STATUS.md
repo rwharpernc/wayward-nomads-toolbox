@@ -28,6 +28,10 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
 
+## Unreleased on master
+
+- System targets: an opt-in **Spansh lookup** of the life and points of interest other commanders found in a system (a Known section, with `Looking up data (Spansh)...` while it asks), and a **visit history** built from the commander's journals (`system_history.py`, `system_history.json`, per commander) that adds `First visit here` / `Been here N times before` and lets a system's survey be rebuilt from just the journals that hold the visits. Tested on Windows only; the checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`. Not released.
+
 ## Branches
 
 There is one long-lived branch, `master`, and it matches the 1.17.1 release. For a fix to a released version, cut a short branch from
