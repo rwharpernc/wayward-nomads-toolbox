@@ -3,6 +3,15 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## 1.17.1 - 2026-10-17
+
+### Fixed
+- **The Route overlay shows longer system names.** A row cut a system name at 24 characters, counting its `NN. ` number, so longer procedural names ended in an ellipsis. A row now holds 32 characters.
+- **The Body info, System targets and Bio signals cards show the whole name in their title.** Each uses a body or system name as its title, and a long one was cut because the card's width came only from its row columns. The cards now keep room for a long title beside their badge, so they are wider than before; check them in Overlay Placement if you anchor them on the right or bottom edge. A new test draws a long system name through every card and fails on any cut.
+
+### Documentation
+- **Streaming and recording.** [Setting up the overlay](docs/OVERLAY_SETUP.md#streaming-and-recording) explains that both overlays draw in a separate window over Elite, so a stream or recording includes them only when it captures the whole display, not through game or window capture. It has not been tested with every capture program.
+
 ## 1.17.0 - 2026-10-16
 
 ### Added
