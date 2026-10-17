@@ -135,7 +135,7 @@ two commanders is one record. Bodies sampled before the file existed are filled 
 conditions, where each species was found, the observed temperature, gravity and pressure against the rules' range, and the species found together on a body.
 The same analysis (`exo_analysis.py`) is the **Prediction review window**, opened with REVIEW on the Organic Scanning panel: a Finds tab (a filter, each find's conditions and the species the prediction
 listed, and a review status (*Needs a rule change*, *Bad data or journal quirk*, *Expected, no change*, *Look at again later*) with a note, saved on the find as `review` in the same file and kept when the
-species is sampled again), and Genera, Ranges and Together tabs. **Copy report** copies the analysis as text. A review changes nothing about the prediction; it is a note for whoever next tunes the rules.
+species is sampled again), and By genus, Ranges and Together tabs. **Copy report** copies the analysis as text. A review changes nothing about the prediction; it is a note for whoever next tunes the rules.
 
 ## 8. The reference data
 

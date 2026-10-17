@@ -104,6 +104,9 @@ W.show(root, book)
 win = W._window
 root.update()
 check(win is not None and win.alive, "the window opens")
+bar = win._tabs._bar
+check(all(c.winfo_x() + c.winfo_width() <= bar.winfo_width() for c in win._tabs._cells), "every tab sits fully inside the tab bar")
+check([l.cget("text") for l, _u, _c in win._tabs._tabs] == ["FINDS", "BY GENUS", "RANGES", "TOGETHER"], "the four tabs carry their whole names")
 check(len(win._finds_table) == 2, f"two finds listed, got {len(win._finds_table)}")
 check(len(win._genus_table) == 1 and len(win._range_table) >= 3, "the genus and range tables fill")
 check(any(r.outside for r in A.range_rows(A.finds(book.bodies()))), "the cold find is flagged outside the temperature range")

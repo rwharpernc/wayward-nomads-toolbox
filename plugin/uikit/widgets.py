@@ -462,11 +462,11 @@ class Combobox(tk.Frame):
 
 class Tabs(tk.Frame):
     """A flat tab bar with an amber underline on the selected tab.
-    `add(title)` returns the tab's content frame. With `wrap=True` the bar
-    flows onto extra rows when the tabs don't fit the width (for a variable
-    number of tabs with long titles); otherwise it's a single row."""
+    `add(title)` returns the tab's content frame. With `wrap=True` (the
+    default) the bar flows onto extra rows when the tabs don't fit the width,
+    so no tab's label is ever cut off; `wrap=False` forces a single row."""
 
-    def __init__(self, parent: tk.Misc, bg: str = P.BG, wrap: bool = False) -> None:
+    def __init__(self, parent: tk.Misc, bg: str = P.BG, wrap: bool = True) -> None:
         super().__init__(parent, bg=bg)
         self._wrap = wrap
         self._bar = tk.Frame(self, bg=bg)
@@ -490,7 +490,7 @@ class Tabs(tk.Frame):
             self.after_idle(self._reflow)
         else:
             cell.pack(side="left")
-        label = tk.Label(cell, text=title.upper(), bg=P.BG, fg=P.MUTED, padx=16, pady=8, cursor="hand2",
+        label = tk.Label(cell, text=title.upper(), bg=P.BG, fg=P.MUTED, padx=20, pady=10, cursor="hand2",
                          font=style.font(P.FONT_BOLD))
         label.pack()
         underline = tk.Frame(cell, bg=P.BG, height=2)

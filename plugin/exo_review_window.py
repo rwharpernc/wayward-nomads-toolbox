@@ -2,7 +2,7 @@
 
 Built on the shared window kit (plugin/uikit). The numbers come from `exo_analysis` (pure) over the records `exo_observations.ObservationBook` keeps. Four tabs:
 Finds (every confirmed species with whether the prediction listed it, a filter, and under the table the body's conditions, what was predicted and a review
-box: a status and a note), Genera (hit rate and how long the predicted list was), Ranges (the temperature, gravity and pressure each species was found at
+box: a status and a note), By genus (hit rate and how long the predicted list was), Ranges (the temperature, gravity and pressure each species was found at
 beside the range its rules allow) and Together (which species shared a body). **Copy report** puts the whole analysis on the clipboard as text.
 
 A review is kept in the same file as the finds (global, naming no commander) and changes nothing about the prediction: it is a note to whoever next tunes the rules.
@@ -124,10 +124,10 @@ class ExoReviewWindow:
         self._shell.window.protocol("WM_DELETE_WINDOW", self.close)
         self._shell.add_action("Copy report", self._copy_report)
 
-        tabs = Tabs(self._shell.body)
+        self._tabs = tabs = Tabs(self._shell.body)
         tabs.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
         self._build_finds(tabs.add("Finds"))
-        self._genus_table = self._plain_table(tabs.add("Genera"), _GENUS_COLUMNS, _GENUS_NOTE,
+        self._genus_table = self._plain_table(tabs.add("By genus"), _GENUS_COLUMNS, _GENUS_NOTE,
                                               "Nothing recorded yet. Sample something with WNTB running and it appears here.")
         self._range_table = self._plain_table(tabs.add("Ranges"), _RANGE_COLUMNS, _RANGE_NOTE, "Nothing recorded yet.")
         self._range_table.tag_configure("outside", foreground=P.DANGER)

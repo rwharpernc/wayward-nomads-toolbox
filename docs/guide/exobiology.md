@@ -136,7 +136,7 @@ biology state.
 
 Press **REVIEW** on the Organic Scanning panel (Exploration mode) to open the **Prediction review** window. **Finds** lists every confirmed species and whether the prediction had listed it (**MISSED** means a rule
 is missing or too strict; a **!** means the body was outside the range the data allows that species), with a filter, the body's conditions and the species that were listed. Give a find a review (*Needs a rule
-change*, *Bad data or journal quirk*, *Expected, no change* or *Look at again later*) and a note, and filter on them later. **Genera** shows the hit rate and how long the predicted list usually was, **Ranges** the
+change*, *Bad data or journal quirk*, *Expected, no change* or *Look at again later*) and a note, and filter on them later. **By genus** shows the hit rate and how long the predicted list usually was, **Ranges** the
 temperature, gravity and pressure each species was found at beside its rules, and **Together** the species that shared a body. **Copy report** copies all of it as text. A review changes nothing in the
 prediction; it is a note for whoever next tunes the rules. `python scripts/analyze_exo_observations.py` (from a copy of the source) prints the same report.
 

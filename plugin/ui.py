@@ -405,6 +405,7 @@ def _on_panel_mode_click(mode: str) -> None:
 # --- Settings tab ----------------------------------------------------------
 
 _SETTINGS_NOTEBOOK_STYLE = "WNTB.TNotebook"
+_BAR_NOTEBOOK_STYLE = "WNTB.Bar.TNotebook"   # a notebook whose own tab strip is hidden: _TabBar draws the tabs, so none can be clipped
 
 
 def _style_settings_notebook() -> None:
@@ -416,6 +417,7 @@ def _style_settings_notebook() -> None:
     style = ttk.Style()
     style.configure(f"{_SETTINGS_NOTEBOOK_STYLE}.Tab", padding=(10, 4), borderwidth=1, relief=tk.RAISED)
     style.map(f"{_SETTINGS_NOTEBOOK_STYLE}.Tab", relief=[("selected", tk.SUNKEN)])
+    style.layout(f"{_BAR_NOTEBOOK_STYLE}.Tab", [])      # the tab strip takes no room
 
 
 def create_prefs(parent: tk.Frame) -> nb.Frame:
@@ -434,11 +436,14 @@ def create_prefs(parent: tk.Frame) -> nb.Frame:
     notebook_border.rowconfigure(0, weight=1)
 
     _style_settings_notebook()
-    tabs = nb.Notebook(notebook_border, style=_SETTINGS_NOTEBOOK_STYLE)
-    tabs.grid(row=0, column=0, sticky=tk.NSEW, padx=4, pady=4)
+    notebook_border.rowconfigure(0, weight=0)
+    notebook_border.rowconfigure(1, weight=1)
+    tabs = nb.Notebook(notebook_border, style=_BAR_NOTEBOOK_STYLE)
+    tabs.grid(row=1, column=0, sticky=tk.NSEW, padx=4, pady=(0, 4))
 
     page_bg = _page_background(outer)
     _build_settings_tabs(tabs, page_bg)
+    _TabBar(notebook_border, tabs).grid(row=0, column=0, sticky=tk.EW, padx=4, pady=(4, 2))
     _match_page_background(tabs, page_bg)
 
     return outer
@@ -463,6 +468,47 @@ def _match_page_background(widget: tk.Misc, background: str) -> None:
         if background and child.winfo_class() == "Frame":
             child.configure(background=background)
         _match_page_background(child, background)
+
+
+_TAB_BAR_FIRST_WIDTH = 640
+
+
+class _TabBar(tk.Frame):
+    """The tab strip for a Settings notebook, drawn as buttons that wrap onto more rows when they do not fit the width. A ttk tab strip cannot wrap:
+    when its tabs are wider than the window it cuts their text (the Overlays group alone has twenty). The notebook keeps its pages and its tab
+    labels (it is a real ttk.Notebook with its own strip hidden); this chooses which page shows. Build it after the notebook's tabs are final and
+    sorted. Padding is generous so the whole label always has room."""
+
+    def __init__(self, parent: tk.Misc, notebook: ttk.Notebook) -> None:
+        super().__init__(parent)
+        self._notebook = notebook
+        self._choice = tk.StringVar(value=str(notebook.select()))
+        self._buttons: List[tk.Radiobutton] = []
+        for tab in notebook.tabs():
+            button = tk.Radiobutton(
+                self, text=str(notebook.tab(tab, "text")), variable=self._choice, value=str(tab), indicatoron=False,
+                relief=tk.RAISED, borderwidth=1, padx=12, pady=5, command=lambda t=tab: notebook.select(t))
+            self._buttons.append(button)
+        notebook.bind("<<NotebookTabChanged>>", lambda _e: self._choice.set(str(notebook.select())), add="+")
+        self.bind("<Configure>", lambda _e: self._reflow())
+        self._reflow()
+
+    def _reflow(self) -> None:
+        """Place the tabs in rows that fit the bar's width and size the bar to the rows. They are placed, not gridded: a grid keeps every row's
+        columns the same width, which spreads the tabs out and pushes the last one past the edge."""
+        width = self.winfo_width() - 6              # a little slack so the last tab on a row is never touching the edge
+        if width <= 1:
+            width = _TAB_BAR_FIRST_WIDTH            # not laid out yet: wrap at a modest width; <Configure> brings the real one
+        used = row = 0
+        height = max((b.winfo_reqheight() for b in self._buttons), default=0)
+        for button in self._buttons:
+            needed = button.winfo_reqwidth() + 2
+            if used and used + needed > width:
+                row, used = row + 1, 0
+            button.place(x=used, y=row * (height + 2))
+            used += needed
+        rows = row + 1 if self._buttons else 0
+        self.configure(height=rows * (height + 2))
 
 
 class _SectionStack(nb.Frame):
@@ -500,13 +546,14 @@ def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.M
     the top stays short instead of listing every feature."""
     page = nb.Frame(tabs)
     page.columnconfigure(0, weight=1)
-    page.rowconfigure(1, weight=1)
     tabs.add(page, text=title)
-    inner = nb.Notebook(page, style=_SETTINGS_NOTEBOOK_STYLE)
-    inner.grid(row=1, column=0, sticky=tk.NSEW, padx=4, pady=4)
+    page.rowconfigure(2, weight=1)
+    inner = nb.Notebook(page, style=_BAR_NOTEBOOK_STYLE)
+    inner.grid(row=2, column=0, sticky=tk.NSEW, padx=4, pady=4)
     for build in builders:
         settings_scroll.scrolled_page(inner, build, page_bg)
     _sort_tabs(inner)
+    _TabBar(page, inner).grid(row=1, column=0, sticky=tk.EW, padx=4, pady=(4, 0))
 
 
 def _stacked_page(title: str, builders: List[Callable[[tk.Misc], None]]) -> Callable[[tk.Misc], None]:

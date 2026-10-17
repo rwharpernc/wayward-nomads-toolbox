@@ -124,6 +124,20 @@ try:
     print("OVERLAY APPEARANCE SAVED:", len(appearance), "of 1")
     print("OVERLAY PLACEMENTS SAVED:", len(overlay_placement.SLOTS) - len(missing), "of", len(overlay_placement.SLOTS), missing)
     print("TALLEST PAGE (px):", max(tabs.nametowidget(t).winfo_reqheight() for t in tabs.tabs()) if tabs else 0)
+    # The tab bar wraps: twenty long labels in a narrow window must all sit fully inside it, on more than one row.
+    wide = ttk.Notebook(root, style=ui._BAR_NOTEBOOK_STYLE)
+    for n in range(20):
+        wide.add(tk.Frame(wide), text=f"A fairly long tab label {n}")
+    holder = tk.Frame(root, width=600)
+    holder.pack_propagate(False)
+    holder.pack()
+    bar = ui._TabBar(holder, wide)
+    bar.pack(fill="x")
+    root.update()
+    spans = [(b.winfo_x(), b.winfo_x() + b.winfo_width(), b.winfo_y()) for b in bar._buttons]
+    print("TAB BAR ROWS:", len({y for _x0, _x1, y in spans}), "| WIDEST EDGE:", max(x1 for _x0, x1, _y in spans), "of", bar.winfo_width())
+    if len({y for _x0, _x1, y in spans}) < 2 or max(x1 for _x0, x1, _y in spans) > bar.winfo_width():
+        raise AssertionError("the tab bar did not wrap its tabs inside its width")
     code = 0 if names else 1
 except Exception as exc:  # noqa: BLE001
     import traceback
