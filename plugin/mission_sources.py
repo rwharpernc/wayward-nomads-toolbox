@@ -1,4 +1,4 @@
-"""Where to get what your Collect and Mining missions still need: the list of needs, and the four source picks (source_picks.py) for each.
+"""Where to get what your Collect, Mining and Delivery missions still need: the list of needs, and the four source picks (source_picks.py) for each.
 
 Pure logic apart from the Spansh search, which is passed in. The window that shows it is `mission_sources_window.py`.
 

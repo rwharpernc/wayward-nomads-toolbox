@@ -1,4 +1,4 @@
-"""The "Source commodities" window of the Missions mode: for each commodity your Collect and Mining missions still need, the closest place that has it in stock,
+"""The "Source commodities" window of the Missions mode: for each commodity your Collect, Mining and Delivery missions still need, the closest place that has it in stock,
 the best nearby, the cheapest anywhere and a recommended one (see `source_picks.py`). Opened from the "Commodities needed" list.
 
 Nothing is looked up until you press **Find sources**, and only when Trade's online-lookups switch is on (it is off by default): that is the only thing here
@@ -116,7 +116,7 @@ class MissionSourcesWindow:
         box.pack(side="left")
         box.bind("<<ComboboxSelected>>", lambda _e: self._clear_results())
         self._table = DataTable(self._shell.body, _COLUMNS, on_select=self._select, sortable=False,
-                                empty_text="Nothing to source: no active Collect or Mining mission still needs cargo.")
+                                empty_text="Nothing to source: no active Collect, Mining or Delivery mission still needs cargo you have to bring.")
         self._table.pack(fill="both", expand=True, pady=(0, P.PAD_SM))
         self.refresh()
 
@@ -168,7 +168,7 @@ class MissionSourcesWindow:
         mode = _MODES.get(self._mode.get(), mission_sources.HERE)
         note = ""
         if not needs:
-            self._shell.set_status("None of your active missions needs cargo to be found (Collect and Mining missions do).")
+            self._shell.set_status("None of your active missions needs cargo to be found (Collect, Mining and Delivery missions whose cargo was not handed over do).")
             return
         if not lookups_enabled() and not self._offer_lookups():
             self.refresh()

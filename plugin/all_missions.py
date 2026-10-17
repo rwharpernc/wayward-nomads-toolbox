@@ -45,9 +45,9 @@ class MissionSummary:
     rather than showing a misleading mining-method hint."""
     needed_commodity: str
     """Commodity display name for missions where it must still be sourced -
-    mined or bought/collected (see mission_types.needs_commodity_supply) -
-    empty otherwise, including plain Delivery (cargo already in hand from
-    acceptance). Independent of `commodity` above: a Collect mission gets
+    mined or bought/collected, or a Delivery whose cargo has not been handed
+    over (see mission_types.needs_commodity_supply) - empty otherwise,
+    including a Delivery whose cargo was handed over at acceptance. Independent of `commodity` above: a Collect mission gets
     this field but not `commodity`, since collecting isn't mining. Backs the
     Trade & Mining page's "Commodities needed" summary in missions_ui.py."""
     needed_commodity_count: int

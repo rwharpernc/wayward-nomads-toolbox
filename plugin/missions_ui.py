@@ -671,8 +671,8 @@ def _aggregate_commodities_needed(
     """(commodity, total units still needed, mission count), summed across
     missions where the commodity must still be sourced (mined or bought/
     collected - see mission_types.needs_commodity_supply), sorted by name.
-    A plain Delivery mission's cargo was already handed over at acceptance,
-    so it never contributes here."""
+    A Delivery mission whose cargo was handed over at acceptance (the
+    journal's CargoDepot event says so) does not contribute here."""
     totals: dict[str, list[int]] = {}
     for mission in missions.values():
         if not mission.needed_commodity:

@@ -172,7 +172,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Every mission on one view**, in pages by type, with grouped kill-progress bars for massacre and settlement-raid missions and one card per mission otherwise ([Using it](docs/guide/missions.md#using-it)).
 - **Missions window** (button at the bottom of the panel): every mission with progress (including cargo held for source-and-return missions) shown as a bar and in color, reward and time left, grouped by where to hand it in, with a detail strip and **pinned missions** that stay at the top of the overlay card ([The Missions window](docs/guide/missions.md#the-missions-window)).
 - **Missions overlay card**: the missions for the system you are in and the one you are jumping to first, ready ones in green and the rest colored by time left and progress, in a corner of the screen ([Missions on the overlay](docs/guide/missions.md#missions-on-the-overlay)).
-- **Source commodities**: where to buy the cargo your Collect and Mining missions need, with the closest, best local, cheapest and a recommended station ([Source commodities](docs/guide/missions.md#source-commodities)).
+- **Source commodities**: where to buy the cargo your Collect, Mining and Delivery missions need, with the closest, best local, cheapest and a recommended station ([Source commodities](docs/guide/missions.md#source-commodities)).
 - **Community Goals** and what they paid you.
 
 ### Field Ops ([guide](docs/guide/field-ops.md))

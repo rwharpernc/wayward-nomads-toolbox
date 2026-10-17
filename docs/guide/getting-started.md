@@ -322,7 +322,7 @@ shows its full name.** Buttons inside pop-out windows and Settings keep their fu
 | **WATCH** | Open the Watch list window | Trade (Watch list section) |
 | **◀** / **▶** | Previous / next page | Mining, Trade, Missions |
 | **Missions window** | Open the window listing every active mission, with progress and pinning | Missions (bottom of every page) |
-| **Find sources** | Where to buy the cargo your Collect and Mining missions need (needs Trade lookups on) | Missions (bottom of every page) |
+| **Find sources** | Where to buy the cargo your Collect, Mining and Delivery missions need (needs Trade lookups on) | Missions (bottom of every page) |
 | **SHIPS** | Manage ship builds | Field Ops |
 | **DASHBOARD** | Colonization sites | Colonization |
 | **OVERLAY** | Force the colonization shopping list onto the overlay (lit while on), press again to let go | Colonization |

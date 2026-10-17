@@ -98,11 +98,19 @@ def is_mining_mission(event: dict) -> bool:
 
 def needs_commodity_supply(event: dict) -> bool:
     """True for missions where the commander must source the commodity
-    themselves - mining it, or buying/collecting it - as opposed to plain
-    Delivery missions, where the cargo was already handed over at
-    acceptance and there's nothing left to acquire."""
+    themselves - mining it, or buying/collecting it.
+
+    Delivery missions are the awkward case: the faction hands the cargo over at acceptance for some (a `CargoDepot` "Collect"
+    event follows within seconds, and a war-supplies Delivery always does) but not for others, such as a plain
+    "Deliver 132 units of Personal Weapons" (`Mission_Delivery`), where the commander has to bring the goods. The accept event
+    does not say which, so a Delivery mission with a commodity counts as needing supply until `CargoDepot` shows the cargo
+    collected (all_missions.MissionSummary.from_event then takes it off the total). In 30 `Mission_Delivery` acceptances in one
+    commander's journals, 21 were handed over and 9 were not. On-foot deliveries and colonisation missions are left out."""
     name = event.get("Name", "").lower()
-    return "mining" in name or "collect" in name
+    if "mining" in name or "collect" in name:
+        return True
+    return ("delivery" in name and "onfoot" not in name and "colonisation" not in name
+            and bool(event.get("Commodity")) and (event.get("Count") or 0) > 0)
 
 
 def classify(event: dict) -> str:

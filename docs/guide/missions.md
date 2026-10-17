@@ -107,7 +107,7 @@ journals (as above). The next jump is the system you have *targeted*; with no ta
 
 ## Source commodities
 
-Collect and Mining missions need cargo you have to find. The **Find sources** button at the bottom of the panel (or **Sources** in the Missions window) opens the
+Collect and Mining missions need cargo you have to find, and so does a Delivery mission whose cargo the faction did not hand over (a plain "Deliver 132 units of Personal Weapons" is one; a war-supplies delivery is usually handed over at once). WNTB cannot tell which kind a Delivery is when you accept it, so it counts as needing cargo until the journal reports the cargo collected, usually within seconds. The **Find sources** button at the bottom of the panel (or **Sources** in the Missions window) opens the
 Source commodities window: for each commodity, summed over all your active missions, the same four picks as Trade's [Best picks](trade.md#best-picks) (closest,
 best local, cheapest anywhere, recommended within 10% of the cheapest), for buying.
 

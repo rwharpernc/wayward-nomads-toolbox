@@ -240,7 +240,7 @@ Spec: [TRADE_TECH_SPEC.md](TRADE_TECH_SPEC.md) (has its own module table with mo
 | `mission_pins.py` | The missions a commander pinned (ids only), kept per commander in `mission_pins.json`; pins go with their mission |
 | `missions_board.py` | The Missions window's data: a row per active mission (progress, reward, time left, ready, pinned), the totals line, grouping by place, the detail lines; no Tk |
 | `missions_window.py` | The Missions window (Active and By place tabs, detail strip, Pin / Unpin, Pin all here, Unpin all, Copy system, Sources); replaces the old "All" popup |
-| `mission_sources.py` | The commodities your Collect and Mining missions still need, and the four source picks looked up for each |
+| `mission_sources.py` | The commodities your Collect, Mining and Delivery missions still need, and the four source picks looked up for each |
 | `mission_sources_window.py` | The Missions "Source commodities" window (Find sources, Copy system) |
 | `source_picks.py` | The four answers to "where do I buy or sell this?": closest, best local, cheapest anywhere, recommended (within 10% of the best); used by Trade and Missions |
 | `trade_prices.py` | Ranks station offers for your load (sell and buy), carrier split and verdict lines |
