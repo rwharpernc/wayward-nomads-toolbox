@@ -26,6 +26,7 @@ from dataclasses import asdict, replace
 from typing import Any, Dict, List, Optional
 
 import tkinter as tk
+from tkinter import messagebox
 
 import myNotebook as nb
 from config import appname, config
@@ -39,10 +40,16 @@ logger = logging.getLogger(f"{appname}.{plugin_name}")
 PANEL_PLACEMENT = "exploration"
 
 _CFG_ENABLED = "wntb_organic_enabled"
+_CFG_OBSERVE = "wntb_exo_observations_enabled"     # keep the record of finds that the Prediction review reads (exo_observations.py)
 
 _NO_BODY_TEXT = "Predicted species: (land on a body with biological signals)"
 _NO_ACTIVE_TEXT = "Active scan: (none yet)"
 _DISABLED_TEXT = "Organic Scanning is disabled — see Settings."
+
+
+def observing() -> bool:
+    """Whether finds are being recorded for the Prediction review. On by default; it is a local file and sends nothing."""
+    return config.get_bool(_CFG_OBSERVE, default=True)
 
 
 def enabled() -> bool:
@@ -88,6 +95,9 @@ class OrganicScanController:
         self._focus_genus: Optional[str] = None       # the genus being surveyed: the one in progress, else the one last identified
         self._waypoints: Dict[str, List[organic_scan.Waypoint]] = {}     # body name -> plants identified there and not yet sampled
         self._tracker = OrganicTracker()
+        self._observe_var: Optional[tk.BooleanVar] = None
+        self._settings_frame: Optional[tk.Misc] = None
+        self._observed_var: Optional[tk.StringVar] = None
         self._observations = exo_observations.ObservationBook()      # what lived where, for checking the prediction later; global, not per commander
 
         self._predictions_var: Optional[tk.StringVar] = None
@@ -122,7 +132,8 @@ class OrganicScanController:
         self._persisted = saved if isinstance(saved, dict) else {}
         if self._persisted:
             logger.info("Restored Organic Scanning state for %s: %d bodies", cmdr, len(self._persisted))
-            self._observations.backfill(self._persisted)
+            if observing():
+                self._observations.backfill(self._persisted)
 
     def _persist(self) -> None:
         if self._plugin_dir is not None and self._cmdr is not None:
@@ -405,7 +416,7 @@ class OrganicScanController:
         """Keep the body's conditions with the species just confirmed and the species the prediction listed, for analysis later (exo_observations.py)."""
         body = self._current_body_name
         cond = self._body_conditions.get(body) if body else None
-        if cond is None:
+        if cond is None or not observing():
             return
         cond = replace(cond, system_body_types=tuple(c.planet_class for c in self._body_conditions.values() if c.planet_class))
         try:
@@ -643,10 +654,49 @@ class OrganicScanController:
             frame, text="Show predicted species and scan progress", variable=self._enabled_var,
         ).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
+        nb.Label(frame, text="Prediction review", font=("TkDefaultFont", 9, "bold")).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+        nb.Label(
+            frame,
+            text=(
+                "Each sample that names a species is kept, with the body's conditions and the species the prediction listed, so the prediction can be "
+                "checked against what you really find (REVIEW on the Organic Scanning panel). The record is one file shared by every commander on this "
+                "install and names none of them; nothing is sent anywhere."
+            ),
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        self._settings_frame = frame
+        self._observe_var = tk.BooleanVar(value=observing())
+        nb.Checkbutton(frame, text="Keep a record of what I find, to check the prediction", variable=self._observe_var).grid(
+            row=5, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        self._observed_var = tk.StringVar(value=self._observed_text())
+        nb.Label(frame, textvariable=self._observed_var).grid(row=6, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        nb.Button(frame, text="Clear the record...", command=self._clear_observations).grid(row=7, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+
+    def _observed_text(self) -> str:
+        finds, bodies = self._observations.count(), len(self._observations.bodies())
+        return f"{finds} find{'s' if finds != 1 else ''} on {bodies} bod{'ies' if bodies != 1 else 'y'} recorded so far."
+
+    def _clear_observations(self) -> None:
+        count = self._observations.count()
+        if not count:
+            return
+        if not messagebox.askyesno(
+                "Clear the record",
+                f"Delete all {count} recorded finds, and any reviews you wrote on them? The record is shared by every commander on this install, "
+                "so it clears for all of them. The biology WNTB remembers for each body is not touched, and the record starts again with your next sample.",
+                icon="warning", parent=self._settings_frame):
+            return
+        self._observations.clear()
+        exo_review_window.refresh()
+        if self._observed_var is not None:
+            self._observed_var.set(self._observed_text())
+
     def save_settings(self) -> None:
         if self._enabled_var is None:
             return
         config.set(_CFG_ENABLED, self._enabled_var.get())
+        if self._observe_var is not None:
+            config.set(_CFG_OBSERVE, self._observe_var.get())
         self._refresh_enabled_display()
 
 

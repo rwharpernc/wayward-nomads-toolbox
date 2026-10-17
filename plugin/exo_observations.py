@@ -112,6 +112,13 @@ class ObservationBook:
         return sum(len(r.get("species") or {}) for r in self._bodies.values())
 
     # --- writing -------------------------------------------------------------
+    def clear(self) -> int:
+        """Forget every recorded find (and every review of one), and save the empty file. Returns how many finds there were."""
+        count = self.count()
+        self._bodies = {}
+        self.save()
+        return count
+
     def record(self, cond: BodyConditions, genera: Iterable[str], genus_key: str, species_key: str, species_name: str,
                variant: Optional[str], predicted: Sequence[str], when: Optional[str] = None, source: str = SOURCE_LIVE,
                save: bool = True) -> bool:

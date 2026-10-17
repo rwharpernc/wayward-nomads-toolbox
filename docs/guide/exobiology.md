@@ -132,7 +132,7 @@ Each time a sample names a species, WNTB adds a line to `exo_observations.json` 
 pressure, volcanism, the star, surface materials, the system's other body types and its position in the galaxy), the species and color found, and which species the prediction had listed. It is used to check
 the prediction over time: how often the species was on the list, what the rules missed, and which species turn up together. Unlike everything else WNTB saves about your play, this file is **shared by
 every commander on the install and names none of them**; it holds facts about bodies, not about who found them. Nothing is sent anywhere. Bodies you sampled before this existed are filled in from your saved
-biology state.
+biology state. Turn the record off, or clear it, under **Settings → Exploration → Organic Scanning → Prediction review** (clearing deletes every recorded find and review, for every commander on the install).
 
 Press **REVIEW** on the Organic Scanning panel (Exploration mode) to open the **Prediction review** window. **Finds** lists every confirmed species and whether the prediction had listed it (**MISSED** means a rule
 is missing or too strict; a **!** means the body was outside the range the data allows that species), with a filter, the body's conditions and the species that were listed. Give a find a review (*Needs a rule

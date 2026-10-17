@@ -20,7 +20,7 @@ import myNotebook as nb
 
 MIN_CAP = 260           # never shorter than this, so a small screen still shows a usable page
 MAX_CAP = 640           # never taller than this, so a huge screen doesn't get an enormous page
-CHROME_ALLOWANCE = 460  # window title, EDMC's own tabs, our two tab rows, the version line and the OK/Cancel row
+CHROME_ALLOWANCE = 530  # window title, EDMC's own tabs, our two tab bars (the Overlays group wraps to three rows), the version line and the OK/Cancel row
 _SKIP_WHEEL = {"Listbox", "Text", "Treeview", "TCombobox"}  # these scroll themselves
 
 

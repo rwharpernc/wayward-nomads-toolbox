@@ -443,6 +443,7 @@ def create_prefs(parent: tk.Frame) -> nb.Frame:
 
     page_bg = _page_background(outer)
     _build_settings_tabs(tabs, page_bg)
+    _hold_spinboxes_to_range(outer)
     _TabBar(notebook_border, tabs).grid(row=0, column=0, sticky=tk.EW, padx=4, pady=(4, 2))
     _match_page_background(tabs, page_bg)
 
@@ -533,6 +534,42 @@ class _SectionStack(nb.Frame):
         self._next_row += 1
 
 
+def _hold_spinboxes_to_range(widget: tk.Misc) -> None:
+    """Every number box on the Settings pages that has a range (a Spinbox with `from_` and `to`) snaps a typed value back inside it when you leave the box
+    or press Enter, so typing 900 into a 200 to 800 box shows 800 at once instead of being quietly changed when Settings is saved. Something that is not
+    a number goes back to what the box held before. One place for every page, so a new Spinbox gets it without doing anything."""
+    for child in widget.winfo_children():
+        if child.winfo_class() == "Spinbox":
+            _hold_to_range(child)
+        _hold_spinboxes_to_range(child)
+
+
+def _hold_to_range(box: tk.Spinbox) -> None:
+    try:
+        low, high = float(box.cget("from")), float(box.cget("to"))
+    except (TypeError, ValueError, tk.TclError):
+        return
+    if not low < high:
+        return
+    whole = low.is_integer() and high.is_integer()
+    last = [box.get()]
+
+    def settle(_event: object = None) -> None:
+        text = box.get().strip()
+        try:
+            value = min(high, max(low, float(text)))
+        except ValueError:
+            value = None
+        shown = last[0] if value is None else (str(int(value)) if whole else f"{value:g}")
+        if shown != box.get():
+            box.delete(0, tk.END)
+            box.insert(0, shown)
+        last[0] = shown
+
+    box.bind("<FocusOut>", settle, add="+")
+    box.bind("<Return>", settle, add="+")
+
+
 def _sort_tabs(notebook: ttk.Notebook) -> None:
     """Put a notebook's tabs in alphabetical order by their label (case-insensitive). Done after the tabs are built, from
     the labels each feature gave its own tab, so a new tab lands in the right place without being listed anywhere."""
@@ -553,6 +590,8 @@ def _settings_group(tabs: nb.Notebook, title: str, builders: List[Callable[[tk.M
     for build in builders:
         settings_scroll.scrolled_page(inner, build, page_bg)
     _sort_tabs(inner)
+    if inner.tabs():
+        inner.select(inner.tabs()[0])               # a group opens on the first tab its bar shows, not on whichever was built first
     _TabBar(page, inner).grid(row=1, column=0, sticky=tk.EW, padx=4, pady=(4, 0))
 
 

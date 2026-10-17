@@ -138,6 +138,20 @@ try:
     print("TAB BAR ROWS:", len({y for _x0, _x1, y in spans}), "| WIDEST EDGE:", max(x1 for _x0, x1, _y in spans), "of", bar.winfo_width())
     if len({y for _x0, _x1, y in spans}) < 2 or max(x1 for _x0, x1, _y in spans) > bar.winfo_width():
         raise AssertionError("the tab bar did not wrap its tabs inside its width")
+    # A number box with a range snaps a typed value back inside it, and a non-number back to what it held.
+    box = tk.Spinbox(root, from_=200, to=800, width=5)
+    box.insert(0, "260")
+    box.pack()
+    root.update()
+    ui._hold_to_range(box)
+    for typed, shown in (("900", "800"), ("5", "200"), ("abc", "200"), (" 300 ", "300")):
+        box.delete(0, tk.END)
+        box.insert(0, typed)
+        box.event_generate("<FocusOut>")
+        root.update()
+        print("SPINBOX", repr(typed), "->", box.get())
+        if box.get() != shown:
+            raise AssertionError(f"typed {typed!r}, expected {shown!r}, got {box.get()!r}")
     code = 0 if names else 1
 except Exception as exc:  # noqa: BLE001
     import traceback

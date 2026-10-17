@@ -133,6 +133,7 @@ genera the body's signals named, and for each genus the confirmed species, the c
 two commanders is one record. Bodies sampled before the file existed are filled in from each commander's saved per-body state as that commander is seen, marked `"source": "backfill"` (their
 `predicted` is today's rules applied to the saved conditions). `python scripts/analyze_exo_observations.py [file]` reads it and prints the hit rate by genus, each find the rules did not list with its
 conditions, where each species was found, the observed temperature, gravity and pressure against the rules' range, and the species found together on a body.
+Recording is on by default (`wntb_exo_observations_enabled`, Settings → Exploration → Organic Scanning → Prediction review, which also has **Clear the record...**); off, nothing is recorded and no older state is backfilled.
 The same analysis (`exo_analysis.py`) is the **Prediction review window**, opened with REVIEW on the Organic Scanning panel: a Finds tab (a filter, each find's conditions and the species the prediction
 listed, and a review status (*Needs a rule change*, *Bad data or journal quirk*, *Expected, no change*, *Look at again later*) with a note, saved on the find as `review` in the same file and kept when the
 species is sampled again), and By genus, Ranges and Together tabs. **Copy report** copies the analysis as text. A review changes nothing about the prediction; it is a note for whoever next tunes the rules.

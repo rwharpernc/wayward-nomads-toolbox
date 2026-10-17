@@ -68,6 +68,17 @@ class RecordTests(unittest.TestCase):
         self.assertFalse(self.book.record(conditions(), [], BACTERIUM, "", "x", None, []))
         self.assertEqual(self.book.bodies(), {})
 
+    def test_clearing_forgets_every_find_and_review_and_saves_the_empty_file(self) -> None:
+        self.book.record(conditions(), [BACTERIUM], BACTERIUM, AURASUS, "Bacterium Aurasus", None, [AURASUS])
+        self.book.record(conditions("Sol 4"), [BACTERIUM], BACTERIUM, AURASUS, "Bacterium Aurasus", None, [AURASUS])
+        self.book.set_review("Sol|Sol 4", BACTERIUM, "rule", "x")
+        self.assertEqual(self.book.clear(), 2)
+        self.assertEqual((self.book.count(), self.book.bodies()), (0, {}))
+        again = E.ObservationBook()
+        again.load(self.dir.name)
+        self.assertEqual(again.bodies(), {})
+        self.assertEqual(self.book.clear(), 0)
+
     def test_it_survives_a_restart(self) -> None:
         self.book.record(conditions(), [BACTERIUM], BACTERIUM, AURASUS, "Bacterium Aurasus", None, [AURASUS])
         again = E.ObservationBook()

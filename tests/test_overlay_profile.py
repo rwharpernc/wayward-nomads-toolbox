@@ -176,6 +176,7 @@ SHARED_BY_DESIGN = {
     "wntb_mining_edsm_reserve_lookup_enabled": "not an overlay setting",
     "wntb_trade_lookups_enabled": "not an overlay setting",
     "wntb_organic_enabled": "not an overlay setting",
+    "wntb_exo_observations_enabled": "not an overlay setting",
     "wntb_rcc_enabled": "not an overlay setting",
 }
 
