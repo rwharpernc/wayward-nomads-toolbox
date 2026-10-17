@@ -167,6 +167,7 @@ class SystemSurvey:
         self.docked = False             # docked, or on a carrier: nothing to explore from here
         self.cmdr = ""                  # whose survey this is; another commander loading in clears it
         self.bodies: Dict[int, Body] = {}
+        self.sites_status = ""              # "" not asked, "looking", "none" (Spansh has nothing), "failed"
         self.sites: List[KnownSite] = []     # what Spansh lists in the system (system_known.py): biology and points of interest, opt-in, not saved
 
     # --- events ----------------------------------------------------------------------------------------------------------
@@ -174,7 +175,7 @@ class SystemSurvey:
         self.name, self.address = name, address
         self.honked, self.body_count, self.progress, self.fss_complete = False, 0, 0.0, False
         self.bodies = {}
-        self.sites = []
+        self.sites, self.sites_status = [], ""
 
     def handle_event(self, entry: Mapping[str, Any], system: str = "") -> bool:
         """Takes one journal event. True when something the cards show may have changed."""
@@ -344,7 +345,7 @@ class SystemSurvey:
         """Takes what Spansh lists in `system`. Ignored when the commander has moved on. Returns how many sites it took."""
         if system.casefold() != self.name.casefold():
             return 0
-        self.sites = list(sites)
+        self.sites, self.sites_status = list(sites), "" if sites else "none"
         return len(self.sites)
 
     def known_to_visit(self) -> List[KnownSite]:
@@ -406,8 +407,9 @@ SAVED_EVENTS = ("FSSDiscoveryScan", "FSSAllBodiesFound", "Scan", "FSSBodySignals
 
 
 def start(plugin_dir: str) -> None:
-    from . import system_survey_store
+    from . import system_history, system_survey_store
     system_survey_store.store.start(plugin_dir)
+    system_history.history.start(plugin_dir)
 
 
 def stop() -> None:
@@ -415,50 +417,32 @@ def stop() -> None:
     system_survey_store.store.flush()
 
 
-_visited: Dict[str, set] = {}            # commander -> the systems (lower case names) their journals say they have been in; read once, in the background
-_pending = {"merge": False}
-
-
-def _index_visited(commander: str) -> None:
-    """Reads the commander's journals once (newest MAX_BACKFILL_FILES) for the systems they have been in, so arriving in one that is not saved can be told from
-    arriving somewhere new, without reading the journals again at every jump."""
-    from . import journal_files
-    key = commander.casefold()
-    if not key or key in _visited:
-        return
-    _visited[key] = set()
-
-    def worker() -> None:
-        try:
-            names = set()
-            for path in journal_files.files_modified_since(0.0)[-MAX_BACKFILL_FILES:]:
-                entries = list(journal_files.read_events(path, journal_files.event_pattern(*ARRIVALS, "LoadGame")))
-                owner = _commander_of(entries)
-                if owner and owner != key:
-                    continue
-                names.update(str(e.get("StarSystem") or "").casefold() for e in entries if e.get("event") in ARRIVALS)
-            _visited[key] = names
-        except Exception:
-            logger.debug("Could not index the visited systems", exc_info=True)
-
-    threading.Thread(target=worker, name="WNTB-survey-index", daemon=True).start()
+_pending = {"merge": False, "retry": False}
 
 
 def _backfill_if_visited_before(saved: Any, force: bool = False) -> None:
-    """Arrived in a system with no saved survey: if the journals say the commander has been here before, rebuild it from those visits in the background."""
+    """Arrived in a system with no saved survey: if the commander's journal history (system_history.py) says they have been here before, rebuild the survey from
+    the journals that hold those visits, in the background."""
+    from . import journal_files, system_history
     if not survey.name or saved.has_saved(survey.name, survey.address) or not saved.commander:
         return
     commander, name, address = saved.commander, survey.name, survey.address
-    if not force and name.casefold() not in _visited.get(commander.casefold(), set()):
+    visit = system_history.history.lookup(name)
+    if not force and not system_history.history.ready:
+        _pending["retry"] = True                          # the journals are still being read: ask again when they are
         return
+    if not force and (visit is None or visit.visits < 2):
+        return                                            # never here before
     key = (commander.casefold(), name.casefold())
     if key in _backfilled:
         return
     _backfilled.add(key)
+    folder = journal_files.journal_folder()
+    paths = [os.path.join(folder, f) for f in (visit.files if visit else [])] + system_history.history.unindexed_files()
 
     def worker() -> None:
         try:
-            found = rebuild_system(name, commander)
+            found = rebuild_system(name, commander, paths=paths or None)
             if found is not None:
                 found.address = found.address or address
                 saved.absorb(found, Body)
@@ -475,6 +459,11 @@ _backfilled: set = set()
 def apply_pending() -> None:
     """Applies a survey rebuilt in the background (called on the main thread, from the journal and Status.json hooks, so the survey is never changed from two
     threads)."""
+    from . import system_history
+    if _pending["retry"] and system_history.history.ready:
+        _pending["retry"] = False
+        from . import system_survey_store
+        _backfill_if_visited_before(system_survey_store.store)
     if _pending["merge"]:
         _pending["merge"] = False
         from . import system_survey_store
@@ -499,11 +488,13 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
     """The journal hook: feeds the shared survey. Registered ahead of the cards that read it, so they see the state after the event."""
     from . import system_survey_store
     saved = system_survey_store.store
+    from . import system_history
     saved.set_commander(cmdr)
     apply_pending()
     event = entry.get("event")
     if cmdr:
-        _index_visited(cmdr)
+        system_history.history.set_commander(cmdr)
+        system_history.history.record(entry)
     if event in ("StartUp", RESTORE_EVENT):
         restore_from_journal(survey)      # EDMC started in the middle of a system: rebuild it from the journals
         survey.cmdr = cmdr or survey.cmdr
@@ -531,12 +522,13 @@ def _commander_of(entries: List[Dict[str, Any]]) -> str:
 MAX_BACKFILL_FILES = 80
 
 
-def rebuild_system(name: str, commander: str = "", folder: Optional[str] = None, max_files: int = MAX_BACKFILL_FILES) -> Optional[SystemSurvey]:
+def rebuild_system(name: str, commander: str = "", folder: Optional[str] = None, max_files: int = MAX_BACKFILL_FILES,
+                   paths: Optional[List[str]] = None) -> Optional[SystemSurvey]:
     """What the journals say about one system across every visit: the scans, signals, mapping and organisms from each time the commander was in it, in order.
     Only the given commander's journals are read (each begins with their LoadGame). None when the commander was never in it. Reads at most `max_files` journals,
-    newest first, so a long history is not walked in full."""
+    newest first, so a long history is not walked in full; `paths` (the journals the history says hold visits) are read instead, in order, without that limit."""
     from . import journal_files
-    files = journal_files.files_modified_since(0.0, folder)[-max_files:]
+    files = sorted(set(paths), key=lambda p: os.path.basename(p)) if paths else journal_files.files_modified_since(0.0, folder)[-max_files:]
     pattern = journal_files.event_pattern(*EVENTS)
     found = SystemSurvey()
     seen = False

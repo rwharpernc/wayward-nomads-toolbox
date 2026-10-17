@@ -24,7 +24,7 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay, overlay_appearance, overlay_placement, restore, system_known, system_survey
+from . import overlay, overlay_appearance, overlay_placement, restore, system_history, system_known, system_survey
 from .overlay import OverlayClient
 from .overlay_card import Card, CardLayout, LiveCard, Ticker, Row, cut
 from .overlay_style import LEGACY, Look
@@ -57,7 +57,7 @@ NAME_CHARS = 26          # the body's short name, class tag and distance
 TAG_CHARS = 12           # the value or the life count
 SAMPLE_TAG = "123.4M first"
 TITLE_CHARS = 32         # the system's full name, so the title is never cut
-MAX_HEADER = 2
+MAX_HEADER = 3          # the known or nothing-to-map line, where you have been before, the summary
 GROUP_NAME = "wntb_targets"
 GROUP_PREFIX = "wntb_targets_"
 LAYOUT = CardLayout(GROUP_PREFIX, x=650, y=100, max_header=MAX_HEADER, max_rows=ROWS_RANGE[1] + 2, name_chars=NAME_CHARS, tag_chars=TAG_CHARS,
@@ -133,6 +133,9 @@ def _done_row(body: Body) -> Row:
     return f"{cut(body.short, 7)}	{status}", "done", "ok"
 
 
+STATUS_TEXT = {"looking": "Looking up data (Spansh)...", "none": "Spansh has nothing on this system", "failed": "Spansh lookup failed; will retry"}
+
+
 def _site_row(site: KnownSite) -> Row:
     """A body Spansh lists biology or a point of interest on: the species (best first, the rest counted) and the points of interest on a line of their own."""
     species = ""
@@ -164,9 +167,10 @@ def _summary(survey: SystemSurvey) -> str:
     return " · ".join(parts)
 
 
-def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True, done: bool = True, basis: str = BASIS_SCAN) -> Card:
+def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: int = DEFAULT_ROWS, life: bool = True, done: bool = True, basis: str = BASIS_SCAN,
+               visit: str = "") -> Card:
     """The card for the survey: the scan progress, a line on how far the mapping and the life have got, then what is left to map, what has life, and (when `done`)
-    what is already finished, at most `rows` rows. Empty before the system is honked and while there is nothing to say."""
+    what is already finished, at most `rows` rows. `visit` is the line on where the commander has been before. Empty before the system is honked and while there is nothing to say."""
     if not survey.visible:
         return Card()
     maps = survey.to_map(threshold, basis)
@@ -180,13 +184,18 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
     heading, progress = (survey.name, "title"), (survey.progress if survey.honked else None)
     summary = _summary(survey)
     header: List[tuple] = []
+    status = STATUS_TEXT.get(survey.sites_status)
     if sites:
-        header.append((_known_summary(sites), "info"))      # what others found says there is something here, so it replaces "Nothing ... to map"
+        header.append((_known_summary(sites), "info"))
+    elif status and not maps and not lives:
+        header.append((status, "muted"))      # the lookup's progress, so a quiet card is not mistaken for a system with nothing in it
     elif not maps and not lives:
-        if not survey.honked and not finished:
+        if not survey.honked and not finished and not visit:
             return Card()
         over = f"over {credits_text(threshold)}" if threshold else "scanned"
         header.append((f"Nothing {over} left to map or sample" if survey.fss_complete else f"Nothing {over} to map yet", "ok" if survey.fss_complete else "muted"))
+    if visit:
+        header.append((visit, "muted"))
     if summary:
         header.append((summary, "muted"))
     listed: List[Row] = []
@@ -247,7 +256,9 @@ def render(card: Card, client: OverlayClient, look: Look = LEGACY) -> None:
 
 def _build() -> Card:
     cfg = load_config()
-    return build_card(system_survey.survey, cfg.threshold, cfg.rows, cfg.life, cfg.done, cfg.basis)
+    survey = system_survey.survey
+    visit = system_history.history.reading or (system_history.visit_line(survey.name) if survey.name else "")
+    return build_card(survey, cfg.threshold, cfg.rows, cfg.life, cfg.done, cfg.basis, visit)
 
 
 def _draw_live(card: Card) -> None:
@@ -281,57 +292,44 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
         live.refresh()
     if event in ("FSSDiscoveryScan", "FSSAllBodiesFound", "StartUp", restore.RESTORE_EVENT):
         _look_up_known()
-    if event in system_survey.ARRIVALS or event in ("StartUp", restore.RESTORE_EVENT):
-        _look_up_sites()
+    if event in system_survey.EVENTS or event in ("StartUp", restore.RESTORE_EVENT):
+        _look_up_sites()       # also when undocking or loading in: the first try may have found the commander docked
 
 
 _looked_up: Dict[str, bool] = {}
 
 
 def _look_up_sites() -> None:
-    """When it is switched on, asks Spansh once per system, on arrival, what other commanders found there (biology and points of interest), so a system that
-    was surveyed before reads as worth a look before you have scanned anything. Sends only the system's number."""
+    """When it is switched on, asks Spansh once per system what other commanders found there (biology and points of interest), so a system that was surveyed
+    before reads as worth a look before you have scanned anything. Sends only the system's number. Tried again at the next event after a failure."""
     survey = system_survey.survey
-    if not load_config().known or not survey.visible or not isinstance(survey.address, int):
+    if not load_config().known or not survey.visible or not isinstance(survey.address, int) or survey.sites_status in ("looking", "none") or survey.sites:
         return
     name, address = survey.name, survey.address
     have = system_known.cached(address)
     if have is not None:
-        if survey.merge_sites(name, have):
-            live.refresh()
+        survey.merge_sites(name, have)
+        live.refresh()
         return
+    survey.sites_status = "looking"
+    live.refresh()
 
     def worker() -> None:
         try:
             sites = system_known.lookup(address, name)
         except Exception:
             logger.debug("Spansh lookup for the system targets failed", exc_info=True)
-            return
-        if sites and system_survey.survey.merge_sites(name, sites):
-            live.refresh()
+            sites = None
+        current = system_survey.survey
+        if current.name.casefold() != name.casefold():
+            return                                   # the commander has moved on
+        if sites is None:
+            current.sites_status = "failed"
+        else:
+            current.merge_sites(name, sites)
+        live.refresh()
 
     threading.Thread(target=worker, name="WNTB-targets-spansh", daemon=True).start()
-
-
-def _look_up_known() -> None:
-    """When it is switched on, asks EDSM once per system (after the honk) for the planets other commanders have scanned, and adds them to the survey."""
-    survey = system_survey.survey
-    if not load_config().online or not survey.visible or not survey.honked or _looked_up.get("system") == survey.name:
-        return
-    _looked_up["system"] = survey.name
-    name = survey.name
-
-    def worker() -> None:
-        try:
-            from . import edsm_client
-            rows = edsm_client.system_bodies(name)
-        except Exception:
-            logger.debug("EDSM lookup for the system targets failed", exc_info=True)
-            return
-        if rows and system_survey.survey.merge_known(name, rows):
-            live.refresh()
-
-    threading.Thread(target=worker, name="WNTB-targets-edsm", daemon=True).start()
 
 
 # --- Settings tab ----------------------------------------------------------------------------------------------------------

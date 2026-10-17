@@ -9,7 +9,7 @@ were checked against real responses (2026-10-17): the record has a `bodies` list
 Spansh's body `id` is a 64-bit number, not the journal's BodyID, so bodies are matched to the journal's by name. If Spansh changes it, this is the one place to fix.
 
 Opt-in (Settings → Overlays → System targets), run on a background thread, never raises: a system Spansh does not have, or a failed request, gives no sites.
-Nothing is saved: the answer is kept in memory for the session. No Tk, no overlay.
+Nothing is saved: a good answer is kept in memory for the session. No Tk, no overlay.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import threading
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -110,11 +111,16 @@ def _short(name: str, system: str) -> str:
 
 
 def fetch(id64: int) -> Optional[Dict[str, Any]]:
-    """Spansh's record for the system with this number, or None when Spansh does not have it or the request failed."""
+    """Spansh's record for the system with this number: {} when Spansh does not have it (404), None when the request failed."""
     try:
         request = urllib.request.Request(SYSTEM_URL.format(id64=int(id64)), headers={"User-Agent": http_identity.user_agent("system-known")})
         with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as response:
             data = json.loads(response.read(MAX_RESPONSE_BYTES).decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        if err.code == 404:
+            return {}
+        logger.debug("Spansh system lookup failed for %s", id64, exc_info=True)
+        return None
     except Exception:
         logger.debug("Spansh system lookup failed for %s", id64, exc_info=True)
         return None
@@ -131,12 +137,16 @@ def cached(id64: int) -> Optional[List[KnownSite]]:
         return _cache.get(id64)
 
 
-def lookup(id64: int, system: str) -> List[KnownSite]:
-    """The sites in a system, asking Spansh once per system per session (a failure is remembered too, so a dead network is not asked again at every redraw)."""
+def lookup(id64: int, system: str) -> Optional[List[KnownSite]]:
+    """The sites in a system, asking Spansh once per system per session. [] when Spansh has none; None when the request failed (not remembered, so a later
+    event tries again)."""
     have = cached(id64)
     if have is not None:
         return have
-    sites = parse(fetch(id64), system)
+    record = fetch(id64)
+    if record is None:
+        return None
+    sites = parse(record, system)
     with _cache_lock:
         _cache[id64] = sites
     return sites

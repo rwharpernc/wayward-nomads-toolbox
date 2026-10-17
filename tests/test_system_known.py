@@ -55,12 +55,16 @@ class Parse(unittest.TestCase):
         for bad in (None, [], {}, {"bodies": "x"}, {"bodies": [None, 3]}):
             self.assertEqual(K.parse(bad, SYSTEM), [])
 
-    def test_a_failed_lookup_is_remembered(self):
+    def test_a_failed_lookup_is_retried_and_an_unknown_system_is_remembered(self):
         K._cache.clear()
         with mock.patch.object(K, "fetch", return_value=None) as fetch:
-            self.assertEqual(K.lookup(7, SYSTEM), [])
-            self.assertEqual(K.lookup(7, SYSTEM), [])
-        self.assertEqual(fetch.call_count, 1)
+            self.assertIsNone(K.lookup(7, SYSTEM))
+            self.assertIsNone(K.lookup(7, SYSTEM))
+        self.assertEqual(fetch.call_count, 2, "a failure is not remembered")
+        with mock.patch.object(K, "fetch", return_value={}) as fetch:
+            self.assertEqual(K.lookup(8, SYSTEM), [])
+            self.assertEqual(K.lookup(8, SYSTEM), [])
+        self.assertEqual(fetch.call_count, 1, "Spansh not having the system is")
         K._cache.clear()
 
 
@@ -98,6 +102,15 @@ class Card(unittest.TestCase):
         self.assertEqual(card.rows[0][0], "Known (2)")
         self.assertEqual(card.rows[1][1], "2.6M", "the reward for the biology listed on the body")
         self.assertEqual(card.rows[2][1], "POI")
+
+    def test_the_card_says_while_it_is_looking_and_when_there_is_nothing(self):
+        from plugin import targets_overlay as T
+        survey = S.SystemSurvey()
+        survey.handle_event({"event": "FSDJump", "StarSystem": SYSTEM, "SystemAddress": 99})
+        for status, text in (("looking", "Looking up"), ("none", "Spansh has nothing"), ("failed", "Spansh lookup failed")):
+            survey.sites_status = status
+            card = T.build_card(survey, 100_000, 6, True)
+            self.assertTrue(card.header and card.header[0][0].startswith(text), f"{status}: {card.header}")
 
     def test_without_sites_the_card_is_as_before(self):
         from plugin import targets_overlay as T
