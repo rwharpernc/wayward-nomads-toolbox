@@ -152,6 +152,30 @@ try:
         print("SPINBOX", repr(typed), "->", box.get())
         if box.get() != shown:
             raise AssertionError(f"typed {typed!r}, expected {shown!r}, got {box.get()!r}")
+    # A related-settings link goes to its page; a page that does not exist is refused; every pair of pages in CROSS_LINKS really exists.
+    paths = ui._page_paths(tabs)
+    for source, targets in ui.CROSS_LINKS.items():
+        for path in (source,) + targets:
+            if path not in paths:
+                raise AssertionError(f"CROSS_LINKS names a page that does not exist: {path}")
+    if not ui.goto_settings_page("Overlays > Inventory") or str(tabs.tab(tabs.select(), "text")) != "Overlays":
+        raise AssertionError("goto did not open the Overlays group")
+    group = [w for w in tabs.nametowidget(tabs.select()).winfo_children() if isinstance(w, ttk.Notebook)][0]
+    if str(group.tab(group.select(), "text")) != "Inventory":
+        raise AssertionError("goto did not open the Inventory page")
+    if ui.goto_settings_page("Overlays > Nowhere") or ui.goto_settings_page("Nothing"):
+        raise AssertionError("goto accepted a page that does not exist")
+    # Hiding mode buttons: the ones chosen are hidden, and ticking every one off hides none.
+    real_get_bool = Cfg.get_bool
+    try:
+        Cfg.get_bool = lambda self, key, default=False: key in (ui.CONFIG_MODE_HIDDEN + "bgs", ui.CONFIG_MODE_HIDDEN + "trade") or real_get_bool(self, key, default)
+        if ui.hidden_modes() != {"bgs", "trade"}:
+            raise AssertionError(f"hidden modes: {ui.hidden_modes()}")
+        Cfg.get_bool = lambda self, key, default=False: key.startswith(ui.CONFIG_MODE_HIDDEN) or real_get_bool(self, key, default)
+        if ui.hidden_modes() != set():
+            raise AssertionError("with every mode ticked off, none may be hidden")
+    finally:
+        Cfg.get_bool = real_get_bool
     code = 0 if names else 1
 except Exception as exc:  # noqa: BLE001
     import traceback

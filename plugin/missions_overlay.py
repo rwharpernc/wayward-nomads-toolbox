@@ -27,9 +27,8 @@ import tkinter as tk
 
 import myNotebook as nb
 from config import appname, config
-from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import active_missions, all_missions, current_cargo, kill_tracker, mission_pins, mission_progress, mission_types, overlay, overlay_appearance, overlay_placement
+from . import active_missions, all_missions, current_cargo, kill_tracker, mission_pins, mission_progress, mission_types, overlay, overlay_appearance, overlay_link, overlay_placement
 from .overlay import OverlayClient
 from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
 
@@ -554,10 +553,7 @@ def build_settings(notebook: nb.Notebook) -> None:
               "and the journal; nothing is sent anywhere. Where the card sits is the Overlay Placement setting (\"Missions list\")."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
-    HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
-        url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
-    ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
+    overlay_link.add(frame)
 
     _vars["enabled"] = tk.BooleanVar(value=cfg.enabled)
     _vars["next"] = tk.BooleanVar(value=cfg.show_next)

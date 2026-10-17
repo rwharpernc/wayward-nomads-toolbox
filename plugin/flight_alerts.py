@@ -27,9 +27,8 @@ import tkinter as tk
 
 import myNotebook as nb
 from config import appname, config
-from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import carrier_jump_timer as jump_timer
+from . import carrier_jump_timer as jump_timer, overlay_link
 from . import fuel_alerts, overlay, overlay_appearance, overlay_placement, platform_support, restore
 from .overlay import OverlayClient
 from .overlay_style import CARD_PAD_X, CARD_PAD_Y, LEGACY, Look
@@ -390,10 +389,7 @@ def build_settings(notebook: nb.Notebook) -> None:
               "from your journal and the game's Status.json; nothing is sent anywhere."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
-    HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
-        url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
-    ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
+    overlay_link.add(frame)
 
     _vars["enabled"] = tk.BooleanVar(value=cfg.enabled)
     _vars["carrier"] = tk.BooleanVar(value=cfg.carrier)

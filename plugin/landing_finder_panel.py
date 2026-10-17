@@ -11,7 +11,8 @@ import os
 import tkinter as tk
 from typing import Any, Dict, Optional, Tuple
 
-from config import appname
+import myNotebook as nb
+from config import appname, config
 
 from . import landing_finder, landing_finder_window, panelkit, restore
 
@@ -84,6 +85,31 @@ class FinderController:
     def stop(self) -> None:
         landing_finder_window.close()
 
+    # --- Settings tab (the switch that is also ticked in the window) --------------------------------------------------
+    def build_settings(self, notebook: nb.Notebook) -> None:
+        frame = nb.Frame(notebook)
+        frame.columnconfigure(0, weight=1)
+        notebook.add(frame, text="Nearest place to land")
+        nb.Label(frame, text="Nearest place to land", font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
+        nb.Label(
+            frame,
+            text=("FIND on the Exploration panel opens a window that finds, from where you are, the nearest stations that can take your ship and the fleet carriers open "
+                  "to everyone. It asks Spansh, and only when you press Find in that window."),
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        self._settings_allowed = tk.BooleanVar(value=landing_finder_window.allowed())
+        nb.Checkbutton(frame, text="Allow this lookup: pressing Find sends Spansh my position, the pad size and my choices, nothing else",
+                       variable=self._settings_allowed).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        nb.Label(frame, text="This is the same switch as the tick in the window. Off by default.", wraplength=440, justify=tk.LEFT).grid(
+            row=3, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+
+    def save_settings(self) -> None:
+        var = getattr(self, "_settings_allowed", None)
+        if var is None:
+            return
+        config.set(landing_finder_window.CONFIG_ALLOWED, bool(var.get()))
+        landing_finder_window.sync_allowed()
+
 
 def summary_text(tracker: landing_finder.Tracker) -> str:
     """The line under the section's title: where you are and what pad you need, or that neither is known yet."""
@@ -102,6 +128,14 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
 
 def build_panel(parent: tk.Frame) -> None:
     controller.build_panel(parent)
+
+
+def build_settings(notebook: nb.Notebook) -> None:
+    controller.build_settings(notebook)
+
+
+def save_settings() -> None:
+    controller.save_settings()
 
 
 def start(plugin_dir: str) -> None:

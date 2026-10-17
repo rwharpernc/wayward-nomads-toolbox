@@ -44,7 +44,7 @@ _FIXED: Tuple[str, ...] = (
     "wntb_colonisation_overlay_forced",
     "wntb_flight_enabled", "wntb_flight_carrier", "wntb_flight_fuel", "wntb_flight_low_percent",
     "wntb_flight_unscoopable_percent", "wntb_flight_sound",
-    "wntb_route_enabled", "wntb_route_rows", "wntb_route_expedition",
+    "wntb_route_enabled", "wntb_route_rows", "wntb_route_expedition", "wntb_route_edsm",
     "wntb_targets_enabled", "wntb_targets_threshold", "wntb_targets_rows", "wntb_targets_life", "wntb_targets_online",
     "wntb_targets_done", "wntb_targets_basis",
     "wntb_body_info_enabled", "wntb_body_info_targeted", "wntb_body_info_near", "wntb_chemistry_style",

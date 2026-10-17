@@ -1,7 +1,7 @@
 """
 "Find Best Price" dialog (both pages) - queries Spansh for the best-price
 stations trading a commodity, closest/highest-price first. Opt-in via the
-"Enable Spansh Best Price Finder" setting (see mining_panel.py); the
+"Enable Spansh best price finder" setting (see mining_panel.py); the
 actual network call lives in mining_spansh_client.py, kept separate so
 this module only owns the Tk form/threading/results side - same split as
 mining_hotspot_finder_dialog.py/mining_spansh_client.py's ring-hotspot

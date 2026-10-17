@@ -41,7 +41,7 @@ from . import (
     notable, notes_panel, expedition_panel, expedition_log_panel, expedition_log_overlay, landing_finder_panel, surface_compass, organic_scan_panel, exobiology_overlay, overlay, overlay_appearance, overlay_placement, overlay_visibility, panelkit, powerplay, route_overlay, targets_overlay, body_info_overlay, screenshots, ship_builds_panel,
     credits_ledger, game_mode, session_credits, session_merits, settings_scroll, system_names, trade_panel, trade_watch_panel,
 )
-from . import issue_report
+from . import issue_report, settings_online
 from .update import CONFIG_AUTO_UPDATE, RELEASES_PAGE_URL
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -76,6 +76,7 @@ FEATURES = (
 _SIDE_BY_SIDE_PAIRS = {autohonk: discovery}
 
 CONFIG_PANEL_MODE = "wntb_active_panel_mode"
+CONFIG_MODE_HIDDEN = "wntb_mode_hidden_"     # + the mode key: that mode's button is hidden from the main panel
 CONFIG_FIT_HEIGHT = "wntb_fit_window_height"
 _DEFAULT_FIT_HEIGHT = True
 
@@ -240,8 +241,8 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
     for key, label in PANEL_MODES:
         btn = tk.Button(mode_buttons_frame, text=_MODE_BUTTON_TEXT.get(key, label), command=lambda k=key: _on_panel_mode_click(k))
         panelkit.add_tooltip(btn, _MODE_TOOLTIPS.get(key, label))
-        btn.pack(side=tk.LEFT, padx=(0, 6) if key != PANEL_MODES[-1][0] else (0, 0))
         _mode_buttons[key] = btn
+    _apply_mode_buttons()
 
     # Session strip (game mode, then credits this session) + a separator,
     # directly under the buttons and before any page content: visible in every
@@ -328,6 +329,30 @@ def create_plugin_app(parent: tk.Frame) -> tk.Frame:
         _frame.after(delay_ms, lambda: panelkit.apply_theme_deep(_frame))
 
     return _frame
+
+
+def hidden_modes() -> set:
+    """The modes whose buttons the commander chose to hide (Settings → General → Window). Never all of them: with every mode ticked off none is hidden."""
+    hidden = {key for key, _label in PANEL_MODES if config.get_bool(CONFIG_MODE_HIDDEN + key, default=False)}
+    return set() if len(hidden) >= len(PANEL_MODES) else hidden
+
+
+def _apply_mode_buttons() -> None:
+    """Show the buttons of the modes not hidden, in order (the row keeps its full width, so hiding one never resizes EDMC's window), and move off a hidden mode.
+    A hidden mode keeps running: its overlays and tracking work as before, only its panel and button are not shown."""
+    global _panel_mode
+    hidden = hidden_modes()
+    visible = [key for key, _label in PANEL_MODES if key not in hidden and key in _mode_buttons]
+    for button in _mode_buttons.values():
+        button.pack_forget()
+    for key in visible:
+        _mode_buttons[key].pack(side=tk.LEFT, padx=(0, 6) if key != visible[-1] else (0, 0))
+    if _panel_mode in hidden and visible:
+        _panel_mode = visible[0]
+        config.set(CONFIG_PANEL_MODE, _panel_mode)
+        if _toggle_off_colors is not None:        # not while the panel is still being built: it applies these itself afterwards
+            _apply_panel_mode_button_colors()
+            _apply_panel_mode_visibility()
 
 
 def _sync_mode_holder_height() -> None:
@@ -443,6 +468,7 @@ def create_prefs(parent: tk.Frame) -> nb.Frame:
 
     page_bg = _page_background(outer)
     _build_settings_tabs(tabs, page_bg)
+    _add_cross_links(tabs)
     _hold_spinboxes_to_range(outer)
     _TabBar(notebook_border, tabs).grid(row=0, column=0, sticky=tk.EW, padx=4, pady=(4, 2))
     _match_page_background(tabs, page_bg)
@@ -534,6 +560,74 @@ class _SectionStack(nb.Frame):
         self._next_row += 1
 
 
+# A feature's settings are sometimes on two pages (the feature's own, and its overlay under Overlays). Each page names the other as a link at its foot, so there is
+# no hunting for it. Page paths are "Tab" or "Group > Tab", as the tab bars show them; a path that does not exist is skipped, so a renamed tab never breaks a page.
+CROSS_LINKS: Dict[str, Tuple[str, ...]] = {
+    "Colonization": ("Overlays > Colonization",), "Overlays > Colonization": ("Colonization",),
+    "Field Ops > Inventory": ("Overlays > Inventory",), "Overlays > Inventory": ("Field Ops > Inventory",),
+    "Mining": ("Overlays > Mining", "Overlays > Surface Compass"), "Overlays > Mining": ("Mining",), "Overlays > Surface Compass": ("Mining",),
+    "Missions": ("Overlays > Missions",), "Overlays > Missions": ("Missions",),
+    "Field Ops > Screenshots": ("Overlays > Screenshots",), "Overlays > Screenshots": ("Field Ops > Screenshots",),
+    "Exploration > Organic Scanning": ("Overlays > Exobiology",), "Overlays > Exobiology": ("Exploration > Organic Scanning",),
+    "Exploration > Expedition": ("Overlays > Expedition Log", "Overlays > Route"), "Overlays > Expedition Log": ("Exploration > Expedition",),
+}
+_settings_top: Optional[ttk.Notebook] = None
+
+
+def goto_settings_page(path: str) -> bool:
+    """Show the Settings page at `path` ("Tab" or "Group > Tab"). Returns whether it exists."""
+    if _settings_top is None:
+        return False
+    first, _sep, second = (part.strip() for part in path.partition(">"))
+    for tab in _settings_top.tabs():
+        if str(_settings_top.tab(tab, "text")) != first:
+            continue
+        if not second:
+            _settings_top.select(tab)
+            return True
+        for group in (w for w in _settings_top.nametowidget(tab).winfo_children() if isinstance(w, ttk.Notebook)):
+            for inner in group.tabs():
+                if str(group.tab(inner, "text")) == second:
+                    _settings_top.select(tab)
+                    group.select(inner)
+                    return True
+    return False
+
+
+def _page_paths(top: ttk.Notebook) -> Dict[str, tk.Misc]:
+    """Every Settings page by its path."""
+    pages: Dict[str, tk.Misc] = {}
+    for tab in top.tabs():
+        name = str(top.tab(tab, "text"))
+        page = top.nametowidget(tab)
+        groups = [w for w in page.winfo_children() if isinstance(w, ttk.Notebook)]
+        if groups:
+            for inner in groups[0].tabs():
+                pages[f"{name} > {groups[0].tab(inner, 'text')}"] = groups[0].nametowidget(inner)
+        else:
+            pages[name] = page
+    return pages
+
+
+def _add_cross_links(top: ttk.Notebook) -> None:
+    global _settings_top
+    _settings_top = top
+    pages = _page_paths(top)
+    for path, targets in CROSS_LINKS.items():
+        page = pages.get(path)
+        content = getattr(page, "content", None)
+        shown = [target for target in targets if target in pages]
+        if content is None or not shown:
+            continue
+        row = tk.Frame(content)
+        row.grid(row=content.grid_size()[1], column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        nb.Label(row, text="Related settings:").pack(side=tk.LEFT, padx=(0, 6))
+        for target in shown:
+            link = HyperlinkLabel(row, text=target, background=nb.Label().cget("background"), underline=True,
+                                  url=lambda _text, t=target: goto_settings_page(t) and None)    # a link that goes to a page, not to a web address
+            link.pack(side=tk.LEFT, padx=(0, 12))
+
+
 def _hold_spinboxes_to_range(widget: tk.Misc) -> None:
     """Every number box on the Settings pages that has a range (a Spinbox with `from_` and `to`) snaps a typed value back inside it when you leave the box
     or press Enter, so typing 900 into a 200 to 800 box shows 800 at once instead of being quietly changed when Settings is saved. Something that is not
@@ -617,12 +711,12 @@ def _build_settings_tabs(tabs: nb.Notebook, page_bg: str) -> None:
         placed.update(features)
         return [feature.build_settings for feature in features]
 
-    _settings_group(tabs, "General", [_create_window_tab, _create_updates_tab, _create_help_tab], page_bg)
+    _settings_group(tabs, "General", [_create_window_tab, _create_updates_tab, _create_help_tab, settings_online.build_settings], page_bg)
     for feature in (powerplay, missions):
         for build in settings_of(feature):
             settings_scroll.scrolled_page(tabs, build, page_bg)
     _settings_group(tabs, "Exploration", [
-        *settings_of(exploration_value, organic_scan_panel),
+        *settings_of(exploration_value, expedition_panel, landing_finder_panel, organic_scan_panel),
         _stacked_page("Points of Interest", settings_of(gec_poi_panel, canonn_poi_panel, codex_completionist_panel)),
         *settings_of(boxel_survey),
         *settings_of(autohonk),
@@ -692,6 +786,20 @@ def _create_window_tab(notebook: nb.Notebook) -> None:
         wraplength=440, justify=tk.LEFT,
     ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
+    nb.Label(frame, text="Mode buttons on the main panel", font=("TkDefaultFont", 9, "bold")).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(10, 2))
+    nb.Label(
+        frame,
+        text=("Untick a mode you do not use to hide its button and panel. A hidden mode keeps working in the background (its overlays and tracking run as before). "
+              "At least one stays; if you untick them all, none is hidden."),
+        wraplength=440, justify=tk.LEFT,
+    ).grid(row=5, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+    _mode_vars.clear()
+    modes_row = tk.Frame(frame)
+    modes_row.grid(row=6, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+    for index, (key, label) in enumerate(PANEL_MODES):
+        _mode_vars[key] = tk.BooleanVar(value=not config.get_bool(CONFIG_MODE_HIDDEN + key, default=False))
+        nb.Checkbutton(modes_row, text=label, variable=_mode_vars[key]).grid(row=index // 4, column=index % 4, sticky=tk.W, padx=(0, 12))
+
 
 def _create_updates_tab(notebook: nb.Notebook) -> None:
     global _auto_update_var
@@ -741,7 +849,15 @@ def _create_help_tab(notebook: nb.Notebook) -> None:
     nb.Label(frame, textvariable=copy_status).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
+_mode_vars: Dict[str, tk.BooleanVar] = {}
+
+
 def save_prefs() -> None:
+    if _mode_vars:
+        shown = {key for key, var in _mode_vars.items() if var.get()} or set(_mode_vars)     # all unticked: show every mode
+        for key in _mode_vars:
+            config.set(CONFIG_MODE_HIDDEN + key, key not in shown)
+        _apply_mode_buttons()
     if _fit_height_var is not None:
         config.set(CONFIG_FIT_HEIGHT, bool(_fit_height_var.get()))
         if _fit_height_var.get() and _frame is not None:

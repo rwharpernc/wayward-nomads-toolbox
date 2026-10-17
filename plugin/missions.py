@@ -204,18 +204,18 @@ class MissionsController:
 
         cfg = load_config()
 
-        nb.Label(frame, text="UI Settings", font=("TkDefaultFont", 9, "bold")).grid(
+        nb.Label(frame, text="UI settings", font=("TkDefaultFont", 9, "bold")).grid(
             row=0, column=0, sticky=tk.W, padx=10, pady=(10, 2),
         )
 
         checkboxes = (
-            ("display_progress", "Display Kill Progress", cfg.display_progress),
-            ("show_remaining_column", "Show Remaining-Kills Column", cfg.show_remaining_column),
-            ("show_totals_row", "Show Totals Row", cfg.show_totals_row),
-            ("show_mission_count", "Show Mission Count", cfg.show_mission_count),
-            ("display_settlement", "Display Target Settlement (Ground Missions)", cfg.display_settlement),
+            ("display_progress", "Show kill progress", cfg.display_progress),
+            ("show_remaining_column", "Show remaining-kills column", cfg.show_remaining_column),
+            ("show_totals_row", "Show totals row", cfg.show_totals_row),
+            ("show_mission_count", "Show mission count", cfg.show_mission_count),
+            ("display_settlement", "Show target settlement (ground missions)", cfg.display_settlement),
             (
-                "display_commodities_needed", "Display Commodities Needed (Trade & Mining)",
+                "display_commodities_needed", "Show commodities needed (trade and mining)",
                 cfg.display_commodities_needed,
             ),
         )

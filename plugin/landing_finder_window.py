@@ -83,6 +83,17 @@ def close() -> None:
         _window.close()
 
 
+def allowed() -> bool:
+    """Whether the online lookup is switched on (the window's own tick and Settings → Exploration → Nearest place to land are the one switch)."""
+    return config.get_bool(CONFIG_ALLOWED, default=False)
+
+
+def sync_allowed() -> None:
+    """After Settings changed the switch: an open window's tick follows it."""
+    if _window is not None and _window.alive:
+        _window.set_allowed(allowed())
+
+
 def saved_services() -> List[str]:
     raw = config.get_str(CONFIG_SERVICES)
     if not raw:
@@ -197,6 +208,9 @@ class LandingFinderWindow:
     def _chosen_days(self) -> int:
         digits = "".join(ch for ch in self._fresh.get() if ch.isdigit())
         return int(digits) if digits and int(digits) in landing_finder.FRESH_CHOICES else landing_finder.DEFAULT_FRESH_DAYS
+
+    def set_allowed(self, value: bool) -> None:
+        self._allowed.set(value)
 
     def _save_choices(self) -> None:
         try:

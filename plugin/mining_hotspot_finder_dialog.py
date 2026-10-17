@@ -1,7 +1,7 @@
 """
 "Find Nearby Hotspots" dialog (Space Mining page) - queries Spansh for
 the nearest rings with a confirmed hotspot for a commodity, closest
-first. Opt-in via the "Enable Spansh Nearby Hotspot Finder" setting (see
+first. Opt-in via the "Enable Spansh nearby hotspot finder" setting (see
 mining_panel.py); the actual network call lives in
 mining_spansh_client.py, kept separate so this module only owns the Tk
 form/threading/results-display side. A plain tk.Toplevel like

@@ -28,8 +28,9 @@ class PrefsSmokeTests(unittest.TestCase):
         # Grouped layout: ten top-level tabs, and the merged Exploration pages are all there.
         self.assertIn("SETTINGS BUILT OK: 10 top-level tabs", result.stdout)
         # Every page is wrapped in a scroller capped in height, so a long page can't push OK off the screen.
-        self.assertIn("PAGES OVER HEIGHT CAP: 0 of 37", result.stdout)
-        for leaf in ("Exploration > Points of Interest", "Exploration > Auto-Honk", "Field Ops > Inventory"):
+        self.assertIn("PAGES OVER HEIGHT CAP: 0 of 40", result.stdout)
+        for leaf in ("Exploration > Points of Interest", "Exploration > Auto-Honk", "Field Ops > Inventory", "Exploration > Expedition",
+                     "Exploration > Nearest place to land", "General > Online lookups"):
             self.assertIn(leaf, result.stdout)
         # Every overlay setting and toggle is under one Overlays tab, a subtab per feature that draws on the overlay.
         for leaf in ("Overlays > Overlay Connection", "Overlays > Overlay Placement", "Overlays > Appearance", "Overlays > Colonization",

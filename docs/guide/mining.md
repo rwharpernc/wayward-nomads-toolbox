@@ -16,7 +16,7 @@ Lines come and go with the settings listed at the end of this page.
 
 **Space Mining** (in your ship, from undocking):
 
-- your cargo, and the ring you are at with its reserve level (once *Enable EDSM Ring Reserve Lookup* is ticked and EDSM knows it);
+- your cargo, and the ring you are at with its reserve level (once *Enable EDSM ring reserve lookup* is ticked and EDSM knows it);
 - **Asteroids prospected**, with how many of each content grade, and the **materials seen** in them;
 - **Asteroids cracked** (core mining);
 - **Limpets launched** by type, with an approximate count still on board (bought less launched);
@@ -44,9 +44,9 @@ Settings. Hover for the full name.
 |---|---|---|
 | **BOOK** (Mining Book) | Opens your catalog (see below). | Always |
 | **+H.S.** (save hotspot here) | Saves the current ring as a hotspot. | On the pages that offer it |
-| **H.S.** (find nearby hotspots) | Finds rings with a confirmed hotspot for a commodity, using Spansh. | Space Mining page, once *Enable Spansh Nearby Hotspot Finder* is ticked |
-| **PRICE** (find best price) | Finds the best-paying station for a commodity, using Spansh. | Once *Enable Spansh Best Price Finder* is ticked |
-| **RES** (check ring reserve level) | Looks up a ring's reserve level, using EDSM. | Space Mining page, once *Enable EDSM Ring Reserve Lookup* is ticked |
+| **H.S.** (find nearby hotspots) | Finds rings with a confirmed hotspot for a commodity, using Spansh. | Space Mining page, once *Enable Spansh nearby hotspot finder* is ticked |
+| **PRICE** (find best price) | Finds the best-paying station for a commodity, using Spansh. | Once *Enable Spansh best price finder* is ticked |
+| **RES** (check ring reserve level) | Looks up a ring's reserve level, using EDSM. | Space Mining page, once *Enable EDSM ring reserve lookup* is ticked |
 | **I/E** | Import or export your saved hotspots. | On the pages that offer it |
 
 The three online lookups are **off until you turn them on in Settings**. Note that the EDSM ring reserve lookup,
@@ -102,13 +102,13 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 
 The checkboxes (the first three are on by default; the rest are off):
 
-- *Display Session Totals*, *Display Cargo Bar*, *Display Prospector Hints* (on by default),
+- *Show session totals*, *Show the cargo bar*, *Show prospector hints* (on by default),
 - the three online lookups above,
 - *Enable HUD Overlay*: sends live stats to the overlay,
 - The arrow to the nearest known hotspot is now the **Surface Compass** (Settings → Overlays → Surface Compass, and the Compass section
   in [Exploration](exploration.md#compass)). It still points at the nearest hotspot by default, and also works from any mode;
-- *Show Coverage Minimap* (Surface Mining page): a small map of ground the Rhino has driven over on the current
+- *Show coverage minimap* (Surface Mining page): a small map of ground the Rhino has driven over on the current
   body,
-- *Archive Completed Mining Runs*: writes a JSON file per run.
+- *Archive completed mining runs*: writes a JSON file per run.
 
 More detail: [Mining specification](../MINING_TECH_SPEC.md).

@@ -22,9 +22,8 @@ import tkinter as tk
 
 import myNotebook as nb
 from config import appname, config
-from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay, overlay_appearance, overlay_placement, restore, system_history, system_known, system_survey
+from . import overlay, overlay_appearance, overlay_link, overlay_placement, restore, system_history, system_known, system_survey
 from .overlay import OverlayClient
 from .overlay_card import Card, CardLayout, LiveCard, Ticker, Row, cut
 from .overlay_style import LEGACY, Look
@@ -353,10 +352,7 @@ def build_settings(notebook: nb.Notebook) -> None:
               "and then mapping a body pays (or, if you choose, the scan alone), from the published formula; the game's own figure is the truth. Everything comes from your journal; nothing is sent anywhere unless you tick the EDSM lookup further down."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
-    HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
-        url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
-    ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
+    overlay_link.add(frame)
 
     _vars["enabled"] = tk.BooleanVar(value=cfg.enabled)
     _vars["life"] = tk.BooleanVar(value=cfg.life)

@@ -380,7 +380,7 @@ off as you arrive and keeps the totals; you can keep several expeditions and run
 **The Expedition row** (a collapsible section in Exploration mode) shows the one running: its name, `7 of 20 stops`, the jumps and light-years
 flown and the time since you started, the next stop with its distance (and its note), and the stop you have just reached. **COPY** puts the next
 stop's system name on the clipboard to paste into the galaxy map, and **Copy on arrival** does it for you every time you arrive anywhere (off until
-ticked). **EXPEDITION** opens the window.
+ticked; the same switch is in Settings → Exploration → Expedition). **EXPEDITION** opens the window.
 
 **What you find at each stop.** While an expedition is running, WNTB counts what you do in each stop's system against that stop: the bodies you scan,
 how many nobody had discovered before (the game says so in the scan), and how many you map. Once you have honked, it also knows how many bodies the system
@@ -511,7 +511,7 @@ The Exobiology cards (bio status, predicted species, the sample radar and the sa
 
 ## Nearest place to land
 
-For deep space and emergencies: the nearest station that can take your ship and has what you need, and the nearest fleet carriers that let anyone dock. **Exploration → Nearest place to land → FIND** opens the window.
+For deep space and emergencies: the nearest station that can take your ship and has what you need, and the nearest fleet carriers that let anyone dock. **Exploration → Nearest place to land → FIND** opens the window. The online lookup is allowed by the tick in that window, or by the same switch in Settings → Exploration → Nearest place to land.
 
 - **It starts from where you are.** The position comes from the journal (`StarPos`, set by each jump), not from a system name, so it works in a system nobody has charted yet. If WNTB has not seen a jump this session it reads the newest journals; if it still has no position, jump once.
 - **It knows your ship's pad.** The pad comes from your ship (`Loadout`): a Python is never sent to an outpost with only small pads. Choose a pad size yourself, or *Any size*, if you want something else.

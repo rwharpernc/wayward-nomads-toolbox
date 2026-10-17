@@ -193,6 +193,27 @@ def system_fully_scanned(system: str) -> Optional[bool]:
     return len(bodies) >= body_count
 
 
+def systems_known(names: List[str]) -> Optional[Dict[str, bool]]:
+    """Whether EDSM knows each of `names`, in one request to the bulk `systems` endpoint: {name: True if EDSM has a record of it, False if not}. None when the
+    request itself failed (no network, EDSM down, an unexpected answer), which a caller must read as "could not tell" and never as "unknown to EDSM". EDSM matches names
+    without regard to case, so the answer is matched that way too."""
+    if not names:
+        return {}
+    params = [("systemName[]", name) for name in names]
+    try:
+        response = requests.get(SYSTEMS_URL, params=params, headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT)
+        response.raise_for_status()
+        data = response.json()
+    except Exception:
+        logger.exception("EDSM bulk system lookup failed for %d name(s)", len(names))
+        return None
+    if not isinstance(data, list):
+        logger.warning("EDSM systems lookup returned unexpected shape: %r", type(data))
+        return None
+    found = {str(entry.get("name")).casefold() for entry in data if isinstance(entry, dict) and entry.get("name")}
+    return {name: name.casefold() in found for name in names}
+
+
 def systems_coords(names: List[str]) -> Dict[str, Tuple[float, float, float]]:
     """Bulk-resolve real galactic (x, y, z) coordinates for `names` — used
     by Waypoint Route mode's nearest-neighbor reordering, which (unlike

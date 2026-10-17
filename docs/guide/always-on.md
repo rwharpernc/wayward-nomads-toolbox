@@ -84,7 +84,8 @@ One card on your game screen for a trip. It has no panel button, only Settings.
 3. Optionally untick **Show the active expedition on this card**. With it ticked (the default), a running Expedition (Exploration mode) adds its name and
    progress, what you have found at the stop you are at, the next stop with its distance and its note, and the stop you have just reached, between the status lines and
    the route. An expedition with no plotted route still draws the card.
-4. Press **Test Card** to see it with a made-up trip. The test works even while the feature is off, and reports whether an overlay could be reached.
+4. Optionally tick **Mark the systems ahead that EDSM does not know yet** (**off by default**; it asks EDSM, see below). With it ticked, a system on the list that EDSM has no record of gets a **\*** after its name, and a line under the status says which jumps (`* Not in EDSM yet: jumps 2, 4`). A system EDSM does not know has not been uploaded by anyone who shares with EDSM, so it may be a first discovery. While it asks the card says `EDSM: checking the route...`, and if EDSM cannot be reached it says so and tries again after a few minutes; a failed check never marks a system as unknown.
+5. Press **Test Card** to see it with a made-up trip (with the EDSM option ticked, jumps 3 and 7 of the sample show the mark). The test works even while the feature is off, and reports whether an overlay could be reached.
 
 The card follows you along the route as you jump, and clears when you reach the end, clear the route, or jump to a system that is not on
 it. After a restart it reads the route the game has saved, so it comes straight back. Every line starts at the same left edge, the card's
@@ -93,7 +94,7 @@ is at the top left, above the Colonization list.
 
 **What it cannot tell you:** the journal does not say what the next jump will cost in fuel, so the card shows the fuel on board and what
 your last jump used, not whether the tank is enough. The range is your ship's maximum with its current modules, from the game's `Loadout`
-event, not the range with the cargo and fuel it carries now. Distances are straight lines between the systems on the route.
+event, not the range with the cargo and fuel it carries now. Distances are straight lines between the systems on the route. The EDSM check covers the systems listed and a few beyond (30 at most), asks once for the whole list, and asks again about a system EDSM did not know after ten minutes, since someone may upload it meanwhile. EDSM only knows what its users have uploaded, so a system it lacks is not proof that nobody has been there.
 
 ## Overlay connection
 

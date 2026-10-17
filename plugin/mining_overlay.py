@@ -104,6 +104,17 @@ def _in_supercruise() -> bool:
     return run is not None and run.is_paused
 
 
+def send_test(client) -> None:
+    """Draw a sample stats panel for a few seconds, wherever Overlay Placement puts the Mining stats (the Settings page's Test button). Raises OSError when the overlay cannot be reached."""
+    look = overlay_appearance.current_look()
+    lines = ["Cargo: 24 / 32 t", "Mining rate: 6.5 t/h", "Limpets remaining: ~12"]
+    placed = overlay_placement.client_for("mining_stats", client, _panel_rect(_OVERLAY_X, _OVERLAY_Y_START, lines, look))
+    _send_overlay_panel(placed, _BG_ID, _OVERLAY_X, _OVERLAY_Y_START, lines, look)
+    for index, text in enumerate(lines):
+        placed.send_message(f"wntb_mining_stat_{index}", text, look.color("title"), _OVERLAY_X, _OVERLAY_Y_START + index * _stat_pitch(look),
+                            ttl=8, size=look.size("normal"))
+
+
 def push_stats_overlay(page: str, *, display_cargo_bar: bool, display_session_totals: bool,
                        display_prospector_hints: bool) -> None:
     """Sends the same live numbers the panel itself is already showing,

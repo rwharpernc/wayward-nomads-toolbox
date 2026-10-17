@@ -1384,17 +1384,29 @@ class TradePanelController:
 
         form = tk.Frame(frame)
         form.grid(row=2, column=0, sticky=tk.W, padx=10, pady=(6, 2))
-        for row, (label, var) in enumerate((
-                ("Route hops (1-10)", self._hops_var),
-                ("Max distance from the star (ls)", self._arrival_var),
-                ("Jump range override (ly, blank = use my ship's)", self._range_var),
-                ("Routes: ignore prices older than (hours, 0 = any)", self._age_var),
-                ("Round trip: least supply at the buying station (t)", self._supply_var),
-                ("Round trip: least demand at the selling station (t)", self._demand_var),
-                ("'Near me' price search radius (ly)", self._near_var),
-                ("Round trip: search radius (ly, 0 = from my jump range)", self._round_radius_var))):
-            nb.Label(form, text=label).grid(row=row, column=0, sticky=tk.W, pady=2)
-            tk.Entry(form, textvariable=var, width=8).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=2)
+        # (label, variable, lowest, highest): a number box with a range snaps a typed value back inside it; the jump range override has none (blank means the ship's own).
+        sections = (
+            ("Routes", (
+                ("Route hops", self._hops_var, 1, 10),
+                ("Max distance from the star (ls)", self._arrival_var, 1, 1_000_000),
+                ("Jump range override (ly, blank = use my ship's)", self._range_var, None, None),
+                ("Ignore prices older than (hours, 0 = any)", self._age_var, 0, 24 * 365))),
+            ("Round trips", (
+                ("Least supply at the buying station (t)", self._supply_var, 0, 1_000_000),
+                ("Least demand at the selling station (t)", self._demand_var, 0, 1_000_000),
+                ("Search radius (ly, 0 = from my jump range)", self._round_radius_var, 0, 100_000))),
+            ("Market", (
+                ("'Near me' price search radius (ly)", self._near_var, 1, 100_000),)),
+        )
+        for section_row, (title, fields) in enumerate(sections):
+            box = tk.LabelFrame(form, text=title, padx=8, pady=4)
+            box.grid(row=section_row, column=0, sticky=tk.EW, pady=(0, 6))
+            for row, (label, var, low, high) in enumerate(fields):
+                nb.Label(box, text=label).grid(row=row, column=0, sticky=tk.W, pady=2)
+                if low is None:
+                    tk.Entry(box, textvariable=var, width=8).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=2)
+                else:
+                    tk.Spinbox(box, from_=low, to=high, width=9, textvariable=var).grid(row=row, column=1, sticky=tk.W, padx=(8, 0), pady=2)
         nb.Checkbutton(frame, text="Only stations with a large landing pad", variable=self._pad_var).grid(
             row=3, column=0, sticky=tk.W, padx=10, pady=2)
         where = tk.Frame(frame)

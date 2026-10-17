@@ -32,7 +32,7 @@ off does not show an error. It just does nothing, which looks exactly like a bug
 | Auto-Honk | **Enable Auto-Honk** or the **A.H.** button | Settings → Exploration → Auto-Honk |
 | **Find sources** (Missions) and **Best picks** (Trade) | **Enable Spansh trade lookups**; Find sources asks to turn it on when you press it | Settings → WNTB → Trade |
 | Routes and Market on the Trade page | **Enable Spansh trade lookups** ([details](#the-lookup-buttons-are-grayed-out-or-there-is-no-commodity-box)) | Settings → WNTB → Trade |
-| The **H.S.**, **PRICE** or **RES** buttons in Mining | **Enable Spansh Nearby Hotspot Finder**, **Enable Spansh Best Price Finder**, **Enable EDSM Ring Reserve Lookup** (each separately) | Settings → Mining |
+| The **H.S.**, **PRICE** or **RES** buttons in Mining | **Enable Spansh nearby hotspot finder**, **Enable Spansh best price finder**, **Enable EDSM ring reserve lookup** (each separately) | Settings → Mining |
 | ELW rarity or EDSM upload status in Exploration | The two options under Exploration Value | Settings → Exploration → Exploration Value |
 | Fleet carriers missing from "where to buy" results | **Include fleet carriers** in the Colonization sites window | Colonization sites window |
 | Raven Colonial not updating | The master switch and the two options under it ([steps](#raven-colonial-doesnt-update-as-i-deliver)) | Settings → Colonization → Raven Colonial |

@@ -11,6 +11,9 @@ exceptions are **BGS tick detection**, which is on by default (turn it off in Se
 Finder** and **Codex "Not found" tab**, which have no on/off setting and contact their service when you open them.
 The table says exactly when.
 
+**All the switches in one place:** Settings → General → Online lookups lists every one of them, whether it is on now, who it asks and which Settings page changes
+it. It shows what is saved and has no controls of its own.
+
 | Feature | Contacts | When |
 |---|---|---|
 | N.S. and W.D. buttons (nearest neutron star / white dwarf) | Spansh | Only when you click **N.S.** or **W.D.** |
@@ -29,6 +32,7 @@ The table says exactly when.
 | System targets: *Also look up the life and points of interest other commanders found in the system* (Settings → Overlays → System targets) | Spansh | **Off** until you tick it. Once on, it asks Spansh once per system, when you arrive (or tick it while in the system), for what other commanders found there: biology with its reward, wrecks, beacons and Guardian sites. Sends only the system's number, and nothing about you. The answer is kept in memory for the session and not saved |
 | Exploration Value extras | Spansh, EDSM | **Off** until you turn them on in Settings |
 | Report an issue (Settings → General → Help) | github.com (opened in your browser, not by WNTB) | Only when you press **Report an issue**. Opens a new-issue page with the WNTB, EDMC and Python versions and your operating system in the address. WNTB sends nothing itself; the page is GitHub's, and nothing is filed unless you submit it. No commander name, system or path is included ([how to use it](reporting-problems.md)) |
+| Route overlay: mark systems EDSM does not know (Settings → Overlays → Route, **off by default**) | EDSM | One request, in the background, for the names of the next systems on your plotted route (up to 30) when the route changes, and again after a failed request (not sooner than 5 minutes) or for systems EDSM did not know (after 10 minutes). Sends system names only, nothing about you |
 | Mining lookups (hotspots, prices, ring reserves) | Spansh, EDSM | **Off** until you turn them on in Settings. Once on, the ring reserve lookup also runs by itself each time you drop into a ring |
 | Colonization: Planned Builds (Raven Colonial menu in the Colonization Sites window) | Raven Colonial (ravencolonial.com) | Only when you press **Planned Builds** or **Refresh** in that window. Sends the name of the site's system and nothing else; answers are remembered for a minute. It only reads |
 | Colonization: sharing progress with Raven Colonial (Settings → Colonization → Raven Colonial, **off by default**) | Raven Colonial (ravencolonial.com) | Only live events, one request each, and only for a site Raven already has a project for (WNTB first reads the system's plan to find it). **Progress:** the depot's figures and what is still needed of each commodity. **Deliveries:** the commodities and tons you hand over, under your commander name, plus a one-time link of your commander to the project. **Carrier cargo** (a second switch): the tons moved to and from your fleet carrier, as plus and minus amounts. Every write needs your Raven key, which goes in a header (with your commander name, as Raven Colonial's own web page sends them) and nowhere else; with no key nothing is looked up or sent. Nothing from before the event, and no other journal data |

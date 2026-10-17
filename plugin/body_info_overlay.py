@@ -22,9 +22,8 @@ import tkinter as tk
 
 import myNotebook as nb
 from config import appname, config
-from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import chemistry, overlay, overlay_appearance, overlay_placement, restore, system_survey
+from . import chemistry, overlay, overlay_appearance, overlay_link, overlay_placement, restore, system_survey
 from .overlay import OverlayClient
 from .overlay_card import Card, CardLayout, LiveCard, Row, Ticker, cut
 from .overlay_style import LEGACY, Look
@@ -272,10 +271,7 @@ def build_settings(notebook: nb.Notebook) -> None:
               "nothing is sent anywhere."),
         wraplength=440, justify=tk.LEFT,
     ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
-    HyperlinkLabel(
-        frame, text="Get EDMCModernOverlay (needed on Linux, and for other plugins' overlays)", background=nb.Label().cget("background"),
-        url="https://github.com/SweetJonnySauce/EDMCModernOverlay", underline=True,
-    ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 8))
+    overlay_link.add(frame)
 
     _vars["enabled"] = tk.BooleanVar(value=cfg.enabled)
     _vars["targeted"] = tk.BooleanVar(value=cfg.targeted)

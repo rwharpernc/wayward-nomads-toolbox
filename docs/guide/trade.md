@@ -478,7 +478,7 @@ Copying these between computers is not needed and not recommended.
 
 ## Trade settings
 
-**Settings → WNTB → Trade**:
+**Settings → WNTB → Trade** (the number settings are grouped under **Routes**, **Round trips** and **Market** headings; a number typed outside its range snaps back inside it when you leave the box):
 
 | Setting | Default | Notes |
 |---|---|---|
@@ -487,9 +487,9 @@ Copying these between computers is not needed and not recommended.
 | Max distance from the star | 5,000 ls | For Routes. |
 | Jump range override | blank | Blank uses your ship's unladen range. |
 | Only stations with a large landing pad | | For Routes. |
-| Round trip: least supply / least demand | 200 t each | Leaves thin markets out. |
-| Round trip: search radius | 0 (from my jump range) | How far around your start to look, in light years. 0 uses twice your ship's jump range, between 20 and 100 ly. Any number from 5 to 500 is used as given; the search reads at most the nearest 300 stations. |
-| Routes: ignore prices older than | 72 hours (0 = any age) | |
+| Round trips: least supply / least demand | 200 t each | Leaves thin markets out. |
+| Round trips: search radius | 0 (from my jump range) | How far around your start to look, in light years. 0 uses twice your ship's jump range, between 20 and 100 ly. Any number from 5 to 500 is used as given; the search reads at most the nearest 300 stations. |
+| Routes: ignore prices older than (**Ignore prices older than**) | 72 hours (0 = any age) | |
 | Routes may use systems that need a permit | Off | |
 | "Near me" price search radius | 100 ly | |
 | Include fleet carriers / ground facilities | On / On | Applies to prices **and routes**. |

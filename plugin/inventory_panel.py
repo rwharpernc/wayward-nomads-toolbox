@@ -272,6 +272,7 @@ class InventoryPanelController:
 
         # Settings-tab vars.
         self._overlay_var: Optional[tk.BooleanVar] = None
+        self._overlay_result_label: Optional[tk.Misc] = None
         self._overlay_bar_vars: Dict[str, tk.BooleanVar] = {}
         self._sound_var: Optional[tk.BooleanVar] = None
         self._message_format_var: Optional[tk.StringVar] = None
@@ -1009,7 +1010,38 @@ class InventoryPanelController:
             text="Where the pickups and bars appear on screen is set on the Overlay Placement tab.",
             wraplength=440, justify=tk.LEFT,
         ).grid(row=start_row, column=0, sticky=tk.W, padx=10, pady=(0, 10))
-        return start_row + 1
+        action_row = tk.Frame(frame)
+        action_row.grid(row=start_row + 1, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        tk.Button(action_row, text="Test pickup", command=self._test_overlay).pack(side=tk.LEFT)
+        self._overlay_result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
+        self._overlay_result_label.pack(side=tk.LEFT, padx=(10, 0))
+        nb.Label(frame, text="(Test pickup works even while the notifications are off above, and says whether the overlay was reachable.)",
+                 wraplength=440, justify=tk.LEFT).grid(row=start_row + 2, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        return start_row + 3
+
+    def _test_overlay(self) -> None:
+        """Show one sample pickup line for a few seconds at the pickup origin, whatever the notifications setting, and say whether the overlay answered."""
+        label = self._overlay_result_label
+        if label is None:
+            return
+        cfg = overlay.load_config()
+        client = self._overlay_client                # the same client (and so the same placement) the real pickups use
+        look = overlay_appearance.current_look()
+        origin_x, origin_y = self._overlay_x, self._overlay_y
+
+        def worker() -> None:
+            try:
+                client.send_message(f"{ID_PREFIX}pillage_test", "Test pickup: Iron x5 (total 12)", _resolve(look, "warn"), origin_x, origin_y,
+                                    ttl=6, size=look.size(TEXT_SIZE))
+                outcome, color = "Sent — check your overlay.", "#2e7d32"
+            except OSError as err:
+                outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+            try:
+                label.after(0, lambda: label.configure(text=outcome, foreground=color))
+            except tk.TclError:
+                pass
+
+        threading.Thread(target=worker, name="WNTB-inventory-overlay-test", daemon=True).start()
 
     def _build_announce_categories(self, frame: nb.Frame, *, start_row: int) -> int:
         row = start_row

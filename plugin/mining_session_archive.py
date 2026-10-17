@@ -1,7 +1,7 @@
 """
 Optional per-run JSON archive, written when a completed run has data,
 for post-session analysis outside the plugin itself. Opt-in via the
-"Archive Completed Mining Runs" setting (default off) - see
+"Archive completed mining runs" setting (default off) - see
 mining_panel.py.
 
 Called from mining_panel.py at each page's natural run-end event

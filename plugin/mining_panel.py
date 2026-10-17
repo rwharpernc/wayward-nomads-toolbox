@@ -136,6 +136,7 @@ class MiningPanelController:
         self._spansh_price_finder_var: Optional[tk.BooleanVar] = None
         self._edsm_reserve_lookup_var: Optional[tk.BooleanVar] = None
         self._overlay_enabled_var: Optional[tk.BooleanVar] = None
+        self._overlay_result_label: Optional[tk.Misc] = None
         self._display_coverage_minimap_var: Optional[tk.BooleanVar] = None
         self._archive_sessions_var: Optional[tk.BooleanVar] = None
 
@@ -540,7 +541,7 @@ class MiningPanelController:
     def _check_ring_reserve(self, system: str, ring: str) -> None:
         """Automatic counterpart to mining_reserve_lookup_dialog.py's
         on-demand search - fired from `SupercruiseExit` when the
-        "Enable EDSM Ring Reserve Lookup" setting is on, so the passive
+        "Enable EDSM ring reserve lookup" setting is on, so the passive
         Space Mining panel line doesn't need a button press. A cache hit
         resolves synchronously (main thread, no network call); a miss
         runs on a background thread, marshaling the result back via
@@ -611,37 +612,37 @@ class MiningPanelController:
         self._display_coverage_minimap_var = tk.BooleanVar(value=_cfg_bool(_CFG_DISPLAY_COVERAGE_MINIMAP, False))
         self._archive_sessions_var = tk.BooleanVar(value=_cfg_bool(_CFG_ARCHIVE_SESSIONS, False))
 
-        nb.Label(frame, text="UI Settings").grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 2))
-        nb.Checkbutton(frame, text="Display Session Totals",
+        nb.Label(frame, text="UI settings").grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 2))
+        nb.Checkbutton(frame, text="Show session totals",
                        variable=self._display_session_totals_var).grid(row=1, column=0, sticky=tk.W, padx=10)
-        nb.Checkbutton(frame, text="Display Cargo Bar",
+        nb.Checkbutton(frame, text="Show the cargo bar",
                        variable=self._display_cargo_bar_var).grid(row=2, column=0, sticky=tk.W, padx=10)
-        nb.Checkbutton(frame, text="Display Prospector Hints",
+        nb.Checkbutton(frame, text="Show prospector hints",
                        variable=self._display_prospector_hints_var).grid(row=3, column=0, sticky=tk.W, padx=10)
 
         nb.Checkbutton(
-            frame, text="Enable Spansh Nearby Hotspot Finder (Space Mining page - contacts spansh.co.uk)",
+            frame, text="Enable Spansh nearby hotspot finder (Space Mining page - contacts spansh.co.uk)",
             variable=self._spansh_hotspot_finder_var,
         ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(6, 0))
         nb.Checkbutton(
-            frame, text="Enable Spansh Best Price Finder (both pages - contacts spansh.co.uk)",
+            frame, text="Enable Spansh best price finder (both pages - contacts spansh.co.uk)",
             variable=self._spansh_price_finder_var,
         ).grid(row=5, column=0, sticky=tk.W, padx=10)
         nb.Checkbutton(
-            frame, text=("Enable EDSM Ring Reserve Lookup (Space Mining page - automatically contacts "
+            frame, text=("Enable EDSM ring reserve lookup (Space Mining page - automatically contacts "
                         "edsm.net every time you drop into a ring, plus manual search)"),
             variable=self._edsm_reserve_lookup_var,
         ).grid(row=6, column=0, sticky=tk.W, padx=10)
         nb.Label(frame, text="The in-game HUD overlay is set up on the Overlays tab (the surface compass is its own tab there).").grid(
             row=7, column=0, sticky=tk.W, padx=10, pady=(6, 0))
         nb.Checkbutton(
-            frame, text=("Show Coverage Minimap (Surface Mining page - a small map of ground the "
+            frame, text=("Show coverage minimap (Surface Mining page - a small map of ground the "
                         "Rhino has driven over on the current body; redrawn once a second while "
                         "deployed)"),
             variable=self._display_coverage_minimap_var,
         ).grid(row=9, column=0, sticky=tk.W, padx=10)
         nb.Checkbutton(
-            frame, text="Archive Completed Mining Runs (writes a JSON file per run)",
+            frame, text="Archive completed mining runs (writes a JSON file per run)",
             variable=self._archive_sessions_var,
         ).grid(row=10, column=0, sticky=tk.W, padx=10)
 
@@ -664,6 +665,34 @@ class MiningPanelController:
                   "hotspot is now the Surface Compass, on its own tab here."),
             wraplength=440, justify=tk.LEFT,
         ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(8, 10))
+
+        action_row = tk.Frame(frame)
+        action_row.grid(row=2, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+        tk.Button(action_row, text="Test HUD", command=self._test_overlay).pack(side=tk.LEFT)
+        self._overlay_result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
+        self._overlay_result_label.pack(side=tk.LEFT, padx=(10, 0))
+        nb.Label(frame, text="(Test HUD works even while the HUD is off above, and says whether the overlay was reachable.)", wraplength=440,
+                 justify=tk.LEFT).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+
+    def _test_overlay(self) -> None:
+        label = self._overlay_result_label
+        if label is None:
+            return
+        cfg = overlay.load_config()
+        client = overlay.OverlayClient(cfg)
+
+        def worker() -> None:
+            try:
+                mining_overlay.send_test(client)
+                outcome, color = "Sent — check your overlay.", "#2e7d32"
+            except OSError as err:
+                outcome, color = f"Could not reach the overlay at {cfg.host}:{cfg.port} ({err}).", "#c07000"
+            try:
+                label.after(0, lambda: label.configure(text=outcome, foreground=color))
+            except tk.TclError:
+                pass
+
+        threading.Thread(target=worker, name="WNTB-mining-overlay-test", daemon=True).start()
 
     def save_settings(self) -> None:
         if self._display_session_totals_var is None:

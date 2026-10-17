@@ -57,6 +57,7 @@ sys.modules["config"] = cfgmod
 from plugin import fuel_alerts  # noqa: E402
 from plugin import overlay_placement as P  # noqa: E402
 from plugin import overlay_style as S  # noqa: E402
+from plugin import route_edsm as RE  # noqa: E402
 from plugin import route_overlay as RO  # noqa: E402
 
 problems = []
@@ -78,14 +79,20 @@ TRIP = [("Expedition: Colonia   2 of 5", "title"), ("Next: Sol / Earth   212 ly"
 
 
 class World:
-    def __init__(self, route=ROUTE, rows=3, enabled=True, trip=(), show_trip=True):
+    def __init__(self, route=ROUTE, rows=3, enabled=True, trip=(), show_trip=True, edsm=False, lookup=None):
         self.at = 1000.0
         self.drawn = []
         self.file = route
-        self.cfg = RO.RouteConfig(enabled=enabled, rows=rows, expedition=show_trip)
+        self.cfg = RO.RouteConfig(enabled=enabled, rows=rows, expedition=show_trip, edsm=edsm)
         self.trip = list(trip)
+        self.asked = []
+
+        def ask(names):
+            self.asked.append(list(names))
+            return lookup(names)
+        checker = RE.EdsmChecker(lookup=ask, now=lambda: self.at, background=False) if lookup else None
         self.state = RO.RouteOverlay(draw=self.drawn.append, now=lambda: self.at, cfg=lambda: self.cfg, read=lambda: self.file,
-                                     expedition=lambda: self.trip)
+                                     expedition=lambda: self.trip, edsm=checker)
 
     def event(self, name, system=None, **fields):
         self.state.handle_event({"event": name, **fields}, system)
@@ -187,6 +194,59 @@ RO.render(full, rec, S.LEGACY)
 rec = Recorder()
 RO.render(RO.Card(), rec, S.LEGACY)
 check(rec.shapes[RO._CARD_ID][2:] == (0, 0) and all(v[0] == "" for v in rec.messages.values()), "an empty card clears everything")
+
+# --- the EDSM check -------------------------------------------------------------------------------------------------------------------------------
+UNKNOWN_TO_EDSM = {"Beta", "Delta"}
+
+
+def edsm_world(**kwargs):
+    world = World(rows=5, edsm=True, lookup=kwargs.pop("lookup", lambda names: {n: n not in UNKNOWN_TO_EDSM for n in names}), **kwargs)
+    world.event("NavRoute", system="Sol")
+    return world
+
+
+w = edsm_world()
+w.state.refresh()
+card = w.state.card()
+check(w.asked and "Alpha" in w.asked[0] and "Sol" not in w.asked[0], f"it asks about the systems ahead, not the one you are in: {w.asked}")
+check([r[0] for r in card.rows][:4] == ["1. Alpha", "2. Beta *", "3. Gamma", "4. Delta *"], f"unknown systems get a mark: {card.rows}")
+check(("* Not in EDSM yet: jumps 2, 4", "warn") in card.header, f"a line says which jumps: {card.header}")
+check(len(w.asked) == 1, "it asks once for the whole list, and not again for answers it has")
+
+w = edsm_world(lookup=lambda names: None)
+w.state.refresh()
+card = w.state.card()
+check(not any(r[0].endswith("*") for r in card.rows), "a failed lookup marks nothing (could not tell is not unknown)")
+check(("EDSM: could not check these systems", "muted") in card.header, f"it says it could not check: {card.header}")
+asked = len(w.asked)
+w.state.refresh()
+check(len(w.asked) == asked, "it does not hammer EDSM after a failure")
+w.at += RE.FAILED_RETRY_S + 1
+w.state.refresh()
+check(len(w.asked) == asked + 1, "it tries again after the pause")
+
+w = edsm_world()
+w.state.refresh()
+before = len(w.asked)
+w.at += RE.NOT_KNOWN_TTL_S - 1
+w.state.refresh()
+check(len(w.asked) == before, "an answer is kept until its time is up")
+w.at += 2
+w.state.refresh()
+check(len(w.asked) == before + 1 and w.asked[-1] == ["Beta", "Delta"], f"systems EDSM did not know are asked about again after a while, and only those: {w.asked[-1]}")
+
+w = World(rows=5, edsm=False, lookup=lambda names: {n: False for n in names})
+w.event("NavRoute", system="Sol")
+check(not w.asked and not any(r[0].endswith("*") for r in w.state.card().rows), "switched off, it asks nothing and marks nothing")
+
+long_name = "Pru Aescs QN-S b" + "9-" * 6 + "1234"
+w = World(route=route_file(("Sol", "G"), (long_name, "M")), rows=3, edsm=True, lookup=lambda names: {n: False for n in names})
+w.event("NavRoute", system="Sol")
+mark = [r[0] for r in w.state.card().rows][0]
+check(mark.endswith(RO.NEW_MARK) and len(mark) <= RO.NAME_CHARS, f"a long name is cut so the mark fits: {mark!r}")
+
+sample = RO.build_card(RO.sample_tracker(), 8, edsm=RE.sample_checker())
+check([r[0].endswith(" *") for r in sample.rows][:8] == [False, False, True, False, False, False, True, False], f"the Test Card shows the mark on jumps 3 and 7: {sample.rows}")
 
 # --- placement ----------------------------------------------------------------------------------------------------------------------------------
 check("route" in P.SLOTS and P.SLOTS["route"].group == RO.GROUP_NAME, "the slot is registered with the card's group")

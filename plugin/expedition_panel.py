@@ -13,6 +13,7 @@ import os
 import tkinter as tk
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
+import myNotebook as nb
 from config import appname, config
 
 from . import expedition, expedition_window, panelkit, system_names
@@ -195,6 +196,32 @@ class ExpeditionController:
         if self._autocopy_var is not None:
             config.set(_CFG_AUTOCOPY, self._autocopy_var.get())
 
+    # --- Settings tab (the same switch as the panel's "Copy on arrival" tick) ---------------------------------------
+    def build_settings(self, notebook: nb.Notebook) -> None:
+        frame = nb.Frame(notebook)
+        frame.columnconfigure(0, weight=1)
+        notebook.add(frame, text="Expedition")
+        nb.Label(frame, text="Expedition", font=("TkDefaultFont", 9, "bold")).grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 4))
+        nb.Label(
+            frame,
+            text=("The Expedition planner (the Expedition window, opened with EXPEDITION on the Exploration panel) keeps a list of stops and tracks your progress "
+                  "along it. Everything comes from your journal; nothing is sent anywhere."),
+            wraplength=440, justify=tk.LEFT,
+        ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        self._settings_autocopy = tk.BooleanVar(value=autocopy_enabled())
+        nb.Checkbutton(frame, text="Copy the next stop's system name to the clipboard every time I arrive anywhere",
+                       variable=self._settings_autocopy).grid(row=2, column=0, sticky=tk.W, padx=10, pady=(0, 4))
+        nb.Label(frame, text="This is the same switch as the Copy on arrival tick on the Exploration panel. Off by default.",
+                 wraplength=440, justify=tk.LEFT).grid(row=3, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+
+    def save_settings(self) -> None:
+        settings_var = getattr(self, "_settings_autocopy", None)
+        if settings_var is None:
+            return
+        config.set(_CFG_AUTOCOPY, bool(settings_var.get()))
+        if self._autocopy_var is not None:
+            self._autocopy_var.set(bool(settings_var.get()))        # the panel's tick follows at once
+
     def system(self) -> str:
         """The system the commander is in, or an empty string when it is not known yet."""
         return self._system
@@ -246,3 +273,11 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
 
 def build_panel(parent: tk.Frame) -> None:
     controller.build_panel(parent)
+
+
+def build_settings(notebook: nb.Notebook) -> None:
+    controller.build_settings(notebook)
+
+
+def save_settings() -> None:
+    controller.save_settings()

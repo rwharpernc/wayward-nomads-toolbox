@@ -139,7 +139,7 @@ open it, switch modes, or expand or collapse a section. You never need to drag i
 position alone.
 
 If you'd rather set the height yourself, untick *Resize the EDMC window's height to fit WNTB automatically* under
-**File → Settings → WNTB → General → Window**.
+**File → Settings → WNTB → General → Window**. The same page lets you hide the buttons of modes you do not use (a hidden mode keeps working in the background).
 
 ## Commanders and your data
 
