@@ -196,7 +196,7 @@ that means you have no permission to.
 
 To release: bump the version in `plugin/__init__.py` and `package.json`, add a dated section to
 `CHANGELOG.md`, run `npm run package`, commit, tag `v<version>`, and publish `dist/WNTB.zip` as
-the asset of a GitHub release. Then update `docs/guide/known-issues.md` (what is known to go wrong in the new release) and `docs/STATUS.md` (the current release, which branches exist, what is still unreleased) and the version
+the asset of a GitHub release. Title the release `WNTB <version>` (for example `WNTB 1.17.3`, with no `v`), and use the changelog section for that version as its notes. The tag keeps the `v` (`v1.17.3`); the in-app updater reads the tag, not the title. Then update `docs/guide/known-issues.md` (what is known to go wrong in the new release) and `docs/STATUS.md` (the current release, which branches exist, what is still unreleased) and the version
 examples in `docs/guide/getting-started.md`, and move the changelog's "Unreleased" entries under the new version heading when they ship. A fix to a released
 version is made on a short `bugfix/<version>` branch cut from `master`, merged back with the release, and the branch is then deleted. Users download that zip, not the repository. Publish it as a normal release:
 the in-app updater (and the README's "latest release" link) only follow official (non-draft,
