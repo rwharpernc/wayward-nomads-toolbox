@@ -24,10 +24,11 @@ import myNotebook as nb
 from config import appname, config
 from ttkHyperlinkLabel import HyperlinkLabel
 
-from . import overlay, overlay_appearance, overlay_placement, restore, system_survey
+from . import overlay, overlay_appearance, overlay_placement, restore, system_known, system_survey
 from .overlay import OverlayClient
 from .overlay_card import Card, CardLayout, LiveCard, Ticker, Row, cut
 from .overlay_style import LEGACY, Look
+from .system_known import KnownSite
 from .system_survey import Body, SystemSurvey, credits_text
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -42,6 +43,7 @@ _CFG_LIFE = "wntb_targets_life"
 _CFG_ONLINE = "wntb_targets_online"
 _CFG_DONE = "wntb_targets_done"
 _CFG_BASIS = "wntb_targets_basis"
+_CFG_KNOWN = "wntb_targets_known"
 
 DEFAULT_THRESHOLD = 100_000
 BASIS_SCAN, BASIS_MAPPED = "scan", "mapped"
@@ -72,6 +74,7 @@ class TargetsConfig:
     done: bool = True             # also list the bodies already finished, so where you left off is on the card
     online: bool = False          # also look up what other commanders have scanned in the system (EDSM)
     basis: str = DEFAULT_BASIS    # the value bodies are ranked and filtered by: what mapping them pays, or the scan alone
+    known: bool = False           # also look up the biology and points of interest other commanders found in the system (Spansh), on arrival
 
 
 def _clamp(value: Any, low: int, high: int, default: int) -> int:
@@ -86,7 +89,8 @@ def load_config() -> TargetsConfig:
                          threshold=_clamp(config.get_str(_CFG_THRESHOLD), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
                          rows=_clamp(config.get_str(_CFG_ROWS), *ROWS_RANGE, DEFAULT_ROWS), life=config.get_bool(_CFG_LIFE, default=True),
                          done=config.get_bool(_CFG_DONE, default=True), online=config.get_bool(_CFG_ONLINE, default=False),
-                         basis=config.get_str(_CFG_BASIS) if config.get_str(_CFG_BASIS) in BASIS_LABELS else DEFAULT_BASIS)
+                         basis=config.get_str(_CFG_BASIS) if config.get_str(_CFG_BASIS) in BASIS_LABELS else DEFAULT_BASIS,
+                         known=config.get_bool(_CFG_KNOWN, default=False))
 
 
 def save_config(cfg: TargetsConfig) -> None:
@@ -97,6 +101,7 @@ def save_config(cfg: TargetsConfig) -> None:
     config.set(_CFG_ONLINE, cfg.online)
     config.set(_CFG_DONE, cfg.done)
     config.set(_CFG_BASIS, cfg.basis)
+    config.set(_CFG_KNOWN, cfg.known)
 
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
@@ -128,6 +133,25 @@ def _done_row(body: Body) -> Row:
     return f"{cut(body.short, 7)}	{status}", "done", "ok"
 
 
+def _site_row(site: KnownSite) -> Row:
+    """A body Spansh lists biology or a point of interest on: the species (best first, the rest counted) and the points of interest on a line of their own."""
+    species = ""
+    if site.species:
+        name, count, _value = site.species[0]
+        species = cut(name, 18) + (f" x{count}" if count > 1 else "") + (f" +{len(site.species) - 1}" if len(site.species) > 1 else "")
+    pois = ", ".join(f"{what} x{count}" if count > 1 else what for what, count in site.pois)
+    left = f"{cut(site.short, 7)}\t{species or pois}" + (f"\n{pois}" if species and pois else "")
+    return cut(left, NAME_CHARS), cut(credits_text(site.bio_value) if site.species else "POI", TAG_CHARS), "info"
+
+
+def _known_summary(sites: List[KnownSite]) -> str:
+    """What Spansh lists in the system in one line: how many bodies have biology, and how many points of interest."""
+    life = sum(1 for s in sites if s.species)
+    pois = sum(count for s in sites for _what, count in s.pois)
+    parts = ([f"{life} with life"] if life else []) + ([f"{pois} point{'s' if pois != 1 else ''} of interest"] if pois else [])
+    return "Known (Spansh): " + " · ".join(parts) if parts else ""
+
+
 def _summary(survey: SystemSurvey) -> str:
     """Where the survey stands in one line: how many bodies are mapped and how much of the life is analysed."""
     parts = []
@@ -148,6 +172,7 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
     maps = survey.to_map(threshold, basis)
     lives = survey.with_life() if life else []
     finished = survey.finished() if done else []
+    sites = survey.known_to_visit()
     total = survey.body_count
     badge = f"{survey.scanned_count()} of {total} scanned" if total else f"{survey.scanned_count()} scanned"
     if survey.known_count():
@@ -155,7 +180,9 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
     heading, progress = (survey.name, "title"), (survey.progress if survey.honked else None)
     summary = _summary(survey)
     header: List[tuple] = []
-    if not maps and not lives:
+    if sites:
+        header.append((_known_summary(sites), "info"))      # what others found says there is something here, so it replaces "Nothing ... to map"
+    elif not maps and not lives:
         if not survey.honked and not finished:
             return Card()
         over = f"over {credits_text(threshold)}" if threshold else "scanned"
@@ -164,7 +191,7 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
         header.append((summary, "muted"))
     listed: List[Row] = []
     budget = rows
-    for title, items, make in (("To map", maps, lambda body: _map_row(body, basis)), ("Life", lives, _life_row), ("Done", finished, _done_row)):
+    for title, items, make in (("To map", maps, lambda body: _map_row(body, basis)), ("Life", lives, _life_row), ("Known", sites, _site_row), ("Done", finished, _done_row)):
         if not items or budget < 2:
             continue
         listed.append((f"{title} ({len(items)})", "", "title"))
@@ -172,7 +199,7 @@ def build_card(survey: SystemSurvey, threshold: int = DEFAULT_THRESHOLD, rows: i
         for body in items[:budget]:
             listed.append(make(body))
         budget -= min(budget, len(items))
-    hidden = (len(maps) + len(lives) + len(finished)) - sum(1 for r in listed if r[1])
+    hidden = (len(maps) + len(lives) + len(sites) + len(finished)) - sum(1 for r in listed if r[1])
     footer = (f"+ {hidden} more", "muted") if hidden > 0 else None
     return Card(tuple(header), tuple(listed), footer, title=heading, badge=badge, progress=progress)
 
@@ -190,6 +217,8 @@ def sample_survey() -> SystemSurvey:
     survey._body(4, "").bio = 3
     survey._body(4, "").landable, survey._body(4, "").was_footfalled = True, False
     survey._body(5, "").bio, survey._body(5, "").analysed = 2, ["Bacterium"]
+    survey.sites = [KnownSite("Sample System 7", "7", "Rocky body", species=[("Fungoida Setisis", 2, 1_600_000), ("Bacterium Aurasus", 1, 1_000_000)], pois=[("Wreck", 2)]),
+                    KnownSite("Sample System 8", "8", "Icy body", pois=[("Beacon", 1)])]
     return survey
 
 
@@ -252,9 +281,36 @@ def handle_event(entry: Dict[str, Any], cmdr: str, system: Optional[str], statio
         live.refresh()
     if event in ("FSSDiscoveryScan", "FSSAllBodiesFound", "StartUp", restore.RESTORE_EVENT):
         _look_up_known()
+    if event in system_survey.ARRIVALS or event in ("StartUp", restore.RESTORE_EVENT):
+        _look_up_sites()
 
 
 _looked_up: Dict[str, bool] = {}
+
+
+def _look_up_sites() -> None:
+    """When it is switched on, asks Spansh once per system, on arrival, what other commanders found there (biology and points of interest), so a system that
+    was surveyed before reads as worth a look before you have scanned anything. Sends only the system's number."""
+    survey = system_survey.survey
+    if not load_config().known or not survey.visible or not isinstance(survey.address, int):
+        return
+    name, address = survey.name, survey.address
+    have = system_known.cached(address)
+    if have is not None:
+        if survey.merge_sites(name, have):
+            live.refresh()
+        return
+
+    def worker() -> None:
+        try:
+            sites = system_known.lookup(address, name)
+        except Exception:
+            logger.debug("Spansh lookup for the system targets failed", exc_info=True)
+            return
+        if sites and system_survey.survey.merge_sites(name, sites):
+            live.refresh()
+
+    threading.Thread(target=worker, name="WNTB-targets-spansh", daemon=True).start()
 
 
 def _look_up_known() -> None:
@@ -308,6 +364,7 @@ def build_settings(notebook: nb.Notebook) -> None:
     _vars["life"] = tk.BooleanVar(value=cfg.life)
     _vars["done"] = tk.BooleanVar(value=cfg.done)
     _vars["online"] = tk.BooleanVar(value=cfg.online)
+    _vars["known"] = tk.BooleanVar(value=cfg.known)
     _vars["threshold"] = tk.StringVar(value=f"{cfg.threshold}")
     _vars["rows"] = tk.StringVar(value=str(cfg.rows))
     nb.Checkbutton(frame, text="Enable the System targets card", variable=_vars["enabled"]).grid(row=2, column=0, sticky=tk.W, padx=10, pady=2)
@@ -333,28 +390,31 @@ def build_settings(notebook: nb.Notebook) -> None:
         row=6, column=0, sticky=tk.W, padx=(30, 10), pady=2)
     nb.Checkbutton(frame, text="Also look up bodies other commanders have scanned (EDSM, once per system)",
                    variable=_vars["online"]).grid(row=7, column=0, sticky=tk.W, padx=(30, 10), pady=2)
+    nb.Checkbutton(frame, text="Also look up the life and points of interest other commanders found in the system (Spansh, once per system, on arrival)",
+                   variable=_vars["known"]).grid(row=8, column=0, sticky=tk.W, padx=(30, 10), pady=2)
 
     nb.Label(
         frame,
         text=("What WNTB cannot know: a body appears only after you have scanned it (the system scan or a detailed scan), because the journal gives its "
               "class and mass then, unless you tick the EDSM lookup above, which asks EDSM once per system after the honk (it sends only the system name) and adds the planets other commanders have already scanned. The list is rebuilt from your newest journal when EDMC starts in the middle of a system. Life counts come from the "
-              "signal counts the scans give; the genera are known only after you map the body."),
+              "signal counts the scans give; the genera are known only after you map the body. The Spansh lookup (the line above) lists, as Known, the bodies other commanders "
+              "found life or a point of interest on (a wreck, a beacon, a Guardian site) with the reward for the life, and replaces the 'Nothing to map' line when there are any; it sends only the system's number."),
         wraplength=440, justify=tk.LEFT,
-    ).grid(row=8, column=0, sticky=tk.W, padx=10, pady=(6, 4))
+    ).grid(row=9, column=0, sticky=tk.W, padx=10, pady=(6, 4))
 
     action_row = tk.Frame(frame)
-    action_row.grid(row=9, column=0, sticky=tk.W, padx=10, pady=(6, 2))
+    action_row.grid(row=10, column=0, sticky=tk.W, padx=10, pady=(6, 2))
     tk.Button(action_row, text="Test Card", command=_test_card).pack(side=tk.LEFT)
     _result_label = nb.Label(action_row, text="", wraplength=320, justify=tk.LEFT)
     _result_label.pack(side=tk.LEFT, padx=(10, 0))
     nb.Label(frame, text="(Test Card works even while disabled above, and reports whether the overlay was actually reachable.)",
-             wraplength=440, justify=tk.LEFT).grid(row=10, column=0, sticky=tk.W, padx=10, pady=(0, 10))
+             wraplength=440, justify=tk.LEFT).grid(row=11, column=0, sticky=tk.W, padx=10, pady=(0, 10))
 
 
 def _typed() -> TargetsConfig:
     return TargetsConfig(enabled=bool(_vars["enabled"].get()), threshold=_clamp(_vars["threshold"].get(), *THRESHOLD_RANGE, DEFAULT_THRESHOLD),
                          rows=_clamp(_vars["rows"].get(), *ROWS_RANGE, DEFAULT_ROWS), life=bool(_vars["life"].get()), done=bool(_vars["done"].get()),
-                         online=bool(_vars["online"].get()),
+                         online=bool(_vars["online"].get()), known=bool(_vars["known"].get()),
                          basis=next((key for key, label in BASIS_LABELS.items() if label == _vars["basis"].get()), DEFAULT_BASIS))
 
 
@@ -385,3 +445,4 @@ def _test_card() -> None:
 def save_settings() -> None:
     if _vars:
         save_config(_typed())   # a card left up simply expires
+        _look_up_sites()        # ticked while in a system: look it up now rather than at the next arrival

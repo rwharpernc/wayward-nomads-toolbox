@@ -19,13 +19,15 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 try:
     from config import appname
 except ImportError:   # unit tests outside EDMC
     appname = "EDMarketConnector"
+
+from .system_known import KnownSite
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
 logger = logging.getLogger(f"{appname}.{plugin_name}")
@@ -165,12 +167,14 @@ class SystemSurvey:
         self.docked = False             # docked, or on a carrier: nothing to explore from here
         self.cmdr = ""                  # whose survey this is; another commander loading in clears it
         self.bodies: Dict[int, Body] = {}
+        self.sites: List[KnownSite] = []     # what Spansh lists in the system (system_known.py): biology and points of interest, opt-in, not saved
 
     # --- events ----------------------------------------------------------------------------------------------------------
     def reset(self, name: str, address: Optional[int] = None) -> None:
         self.name, self.address = name, address
         self.honked, self.body_count, self.progress, self.fss_complete = False, 0, 0.0, False
         self.bodies = {}
+        self.sites = []
 
     def handle_event(self, entry: Mapping[str, Any], system: str = "") -> bool:
         """Takes one journal event. True when something the cards show may have changed."""
@@ -335,6 +339,25 @@ class SystemSurvey:
             body.volcanism = str(row.get("volcanismType") or "")
             added += 1
         return added
+
+    def merge_sites(self, system: str, sites: List[KnownSite]) -> int:
+        """Takes what Spansh lists in `system`. Ignored when the commander has moved on. Returns how many sites it took."""
+        if system.casefold() != self.name.casefold():
+            return 0
+        self.sites = list(sites)
+        return len(self.sites)
+
+    def known_to_visit(self) -> List[KnownSite]:
+        """The sites worth a trip that the commander has not finished with, best first: a body with biology not yet all analysed or a point of interest.
+        A body the commander has scanned and found life on is left to the Life list (it counts the same organisms), so only its points of interest remain, and
+        biology already all analysed is dropped."""
+        out: List[KnownSite] = []
+        for site in self.sites:
+            body = self.find(name=site.name)
+            species = [] if body is not None and (body.bio > 0 or body.life_done) else site.species
+            if species or site.pois:
+                out.append(replace(site, species=list(species)))
+        return sorted(out, key=lambda s: (-s.bio_value, -s.map_value))
 
     def to_map(self, threshold: int, basis: str = "scan") -> List[Body]:
         """Scanned planets and moons worth at least `threshold` credits that the commander has not mapped, most valuable first. `basis` is the value

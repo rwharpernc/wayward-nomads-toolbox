@@ -97,7 +97,7 @@ makes sense, a test button:
 | **Route** | The route card (how many systems to list, whether to show the running expedition) | **Test Card** |
 | **Expedition Log** | The card of the running expedition's totals (and whether to keep showing the last one after it is stopped) | **Test Card** |
 | **Exobiology** | Four switches, one for each Exobiology card | **Test Cards** |
-| **System targets** | The list of bodies to map and sample (value threshold, what the value is judged by, rows, life list) | **Test Card** |
+| **System targets** | The list of bodies to map and sample (value threshold, what the value is judged by, rows, life list, and the EDSM and Spansh lookups of what others found) | **Test Card** |
 | **Body info** | The body card (targeted body, nearby body, symbols or full names for elements and compounds) | **Test Card** |
 | **Missions** | The missions card (rows to show, next jump, urgent limit) | **Test Card** |
 | **Landing** | The assigned pad and diagram | **Test Overlay** |
