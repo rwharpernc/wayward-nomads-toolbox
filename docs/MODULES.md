@@ -184,7 +184,7 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 | `mining_body_survey.py` | The landable bodies the journal has shown in the current system (scans and mining-location signals), which the Mining Book lists and the ground-type rates are worked from |
 | `mining_coverage.py` | Where the SRV's scanner has driven, per body, one map per commander |
 | `mining_coverage_render.py` | Draws that coverage as a small map (PIL, no Tk) |
-| `mining_depletion.py` | When a Depleted mark is assumed to refill (14 days, 7 after a look at a still-empty deposit) and the status line the Mining Book shows |
+| `mining_depletion.py` | Dates a Depleted mark and, if the commander sets a refill time (the default is unknown), takes it off when due (7 days after a look at a still-empty deposit); the status line the Mining Book shows |
 | `mining_deposit.py` | Estimates tonnes left in a recorded hotspot deposit |
 | `mining_ground.py` | Ground type of a body and your own base rates of deposits on it |
 | `mining_hotspot_dialog.py` | The shared Add/Edit Hotspot form |
@@ -379,7 +379,7 @@ Spec: [WINDOW_FRAMEWORK_SPEC.md](WINDOW_FRAMEWORK_SPEC.md). Pure tkinter; nothin
 | Module | What it is |
 |---|---|
 | `uikit/__init__.py` | Package marker for the shared window kit |
-| `uikit/mapview.py` | Canvas map widget (coverage, hotspots, position, zoom) |
+| `uikit/mapview.py` | Canvas map widget (coverage, hotspots, position, dashed rings, zoom) |
 | `uikit/palette.py` | Color and font tokens for WNTB's own window look |
 | `uikit/shell.py` | The window shell: header, body, status footer, saved geometry |
 | `uikit/style.py` | Fonts and per-window skinning |

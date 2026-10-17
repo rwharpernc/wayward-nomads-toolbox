@@ -45,8 +45,8 @@ stay native on Windows, so table-heavy windows use the kit's own table instead.
   spans the full width and re-wraps as the window is resized, for hints under a table), `field_grid`, and
   `DataTable` (striped, sortable, optionally grouped, with an API like Treeview's, and header and body columns
   kept aligned; a tag can set a row's text color and a whole-row background tint, which is lightened while hovered or selected; `set_rows` refills it and does nothing when the rows haven't changed, for windows that refresh often).
-- **Map canvas** (`mapview.py`): a `Canvas`-based map with zoom, hover and click-to-select, used by the
-  Mining Book. The fixed-size minimap image on the Surface Mining page is drawn separately.
+- **Map canvas** (`mapview.py`): a `Canvas`-based map with zoom, hover and click-to-select, and dashed
+  rings (`MapCircle`, the Mining Book's stops), used by the Mining Book. The fixed-size minimap image on the Surface Mining page is drawn separately.
 
 Any window content that comes from outside data (Spansh names, file names) is truncated with a hard cap,
 for the same discipline as the main panels.

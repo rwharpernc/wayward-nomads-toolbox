@@ -62,7 +62,7 @@ All in `plugin/`. Pure modules have no Tk and no EDMC-only imports, so they are 
 | `lifetime_stats.py` | pure + file read | The game's lifetime totals from the `Statistics` event: parsing, the grouped rows, and finding each commander's newest event in the journals. Used by the Credits Ledger window, not by Trade |
 | `trade_stats.py` | pure | Every number and table row shown from a saved session |
 | `trade_history_window.py` | UI | The Trade History pop-out window (uikit) |
-| `trade_market.py` | pure + file read | `Market.json` parsing and cargo valuation |
+| `trade_market.py` | pure + file read | `Market.json` parsing and cargo valuation; the read checks the file's `MarketID` against the `Market` event and tries again (5 reads, 0.1 s apart) when the game wrote the file late |
 | `trade_ship.py` | pure | Ship to landing-pad size, and whether a ship fits a station's pads |
 | `trade_carrier.py` | pure + file | Carrier cargo tracking, journal backfill, `trade_carrier.json` |
 | `trade_carrier_ops.py` | pure | Running the carrier (tritium, location, planned jump, orders, balance) from `CarrierDepositFuel`, `CarrierLocation`, `CarrierJumpRequest`/`Cancelled`, `CarrierTradeOrder`, `CarrierFinance` and the extra `CarrierStats` fields; every fact carries its event time and only a newer event replaces it |

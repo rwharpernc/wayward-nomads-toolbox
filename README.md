@@ -101,7 +101,7 @@ marked as estimates on screen.
 > Windows, so new features are proven on Windows first and Linux follows slightly behind: a release can reach Linux a little later than it reaches Windows, and the Linux checks for the newest parts are listed in
 > [Linux testing](docs/LINUX_TESTING.md). Linux reports are welcome and get the same attention as any other.
 
-> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0, 1.12.0, 1.13.0, 1.14.0, 1.14.1, 1.15.0, 1.16.0, 1.17.0, 1.17.1, 1.17.2 and 1.17.3 have been
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0, 1.12.0, 1.13.0, 1.14.0, 1.14.1, 1.15.0, 1.16.0, 1.17.0, 1.17.1, 1.17.2, 1.17.3 and 1.17.4 have been
 > tried on Windows only. The newest parts (the Exobiology cards, System targets, Body info and the Expedition Log, the Missions window, the Missions overlay and Source commodities, Best picks, the Upgrade planner, Megaships, the Engineering window's Ship planner and Engineers tab, the Materials and Engineering work, the material trader finder, the
 > Expedition planner and the Help buttons) have had less time in the game than the rest, so expect a few small fixes in a later update. If something looks off,
 > please [report it](#getting-help) (Settings has a **Report an issue** button that does most of the work).
@@ -144,7 +144,7 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 - **Codex Completionist**: a lifetime tally of your Codex finds, with a details window and a backfill from journal history ([Codex Completionist](docs/guide/exploration.md#codex-completionist)).
 - **GEC Nearby POI** and **Canonn Nearby POI**: the nearest point of interest from edastro's catalog or Canonn's Thargoid and Guardian site lists, only when you press FIND ([GEC](docs/guide/exploration.md#gec-nearby-poi), [Canonn](docs/guide/exploration.md#canonn-nearby-poi)).
 - **Notes**: your own notes on a system or a body, shown when you arrive, with a searchable window ([Notes](docs/guide/exploration.md#notes)).
-- **Expedition planner**: named trips of stops with notes, ticked off as you arrive, with jumps, light-years and time so far, the next stop's distance, COPY for the galaxy map, import from your plotted route or a CSV, and optional nearest-neighbor ordering through EDSM, and one-button expeditions from Spansh's **Road to Riches** and **Exomastery** planners ([Expedition](docs/guide/exploration.md#expedition)).
+- **Expedition planner**: named trips of stops with notes, ticked off as you arrive, with jumps, light-years and time so far, the next stop's distance, COPY for the galaxy map, import from your plotted route or a CSV, and optional nearest-neighbor ordering through EDSM, and one-button expeditions from Spansh's **Road to Riches**, **Exomastery** and **Neutron route** planners ([Expedition](docs/guide/exploration.md#expedition)).
 - **Nearest place to land**: for deep space and emergencies, the nearest station that can take your ship and offers what you need (fuel, repairs, rearming), and the nearest fleet carriers open to all, from your position, with how old each record is; online only when you press Find ([Nearest place to land](docs/guide/exploration.md#nearest-place-to-land)).
 - **Expedition Log**: an archive of your exploration expeditions (start, stop, reset, rescan from your journals, name them and edit their dates, start location, ships and notes) with what each found and earned in exploration and exobiology, and an overlay card that keeps the running one in view ([Expedition Log](docs/guide/exploration.md#expedition-log)).
 - **Compass** and **Marks**: an arrow, a name and a distance on your game screen pointing at the nearest recorded hotspot or a mark you saved on the planet you are on ([Compass](docs/guide/exploration.md#compass)).
@@ -152,10 +152,10 @@ Every feature, by mode, with a link to its step-by-step section in the user guid
 ### Mining ([guide](docs/guide/mining.md))
 
 - **Space Mining** and **Surface Mining** pages with live stats for your run: asteroids prospected and cracked, limpets, what you refined and the refining rate, the Rhino's cargo, and a minimap of the ground it has driven over ([What each page shows](docs/guide/mining.md#what-each-page-shows)).
-- **Mining Book**: your own catalog of hotspots, with tons mined and an estimate of what is left ([The Mining Book](docs/guide/mining.md#the-mining-book)).
+- **Mining Book**: your own catalog of hotspots, with tons mined and an estimate of what is left, dated Depleted marks, Rhino stops, market research and one-line sharing of a deposit ([The Mining Book](docs/guide/mining.md#the-mining-book)).
 - **+H.S.** to save a hotspot, and **I/E** to import or export them ([The buttons](docs/guide/mining.md#the-buttons)).
 - **Mining stats on the overlay**, optional, and an optional JSON archive of each completed run ([Settings](docs/guide/mining.md#settings)).
-- **Opt-in online lookups**: nearby hotspots and the best price (Spansh), and ring reserve level (EDSM) ([The buttons](docs/guide/mining.md#the-buttons)).
+- **Opt-in online lookups**: nearby hotspots, the best price and market research (Spansh), and ring reserve level (EDSM) ([The buttons](docs/guide/mining.md#the-buttons)).
 
 ### Trade ([guide](docs/guide/trade.md))
 

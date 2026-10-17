@@ -535,12 +535,14 @@ system matches, counting jumps and distance. There are two online parts, both on
 `expedition_window._spelling`), and, while the box under the editor is ticked (`wntb_expedition_lookup_names`, on unless turned off), asks EDSM
 in the background for the names just added (`_look_up`, 50 to a request): `ExpeditionBook.canonical_names` takes EDSM's spelling for stops whose names
 match ignoring case and spacing, and `set_coords` gives them a position. **Locate and reorder (EDSM)** sends system
-names to EDSM for their positions and orders the stops by nearest neighbor. **Road to Riches** and **Exomastery** (`spansh_planners.py`,
+names to EDSM for their positions and orders the stops by nearest neighbor. **Road to Riches**, **Exomastery** and **Neutron route** (`spansh_planners.py`,
 `expedition_plan_dialog.py`) post the start system, the optional end and the chosen numbers to Spansh's `/api/riches/route` or
 `/api/exobiology/route`, poll `/api/results/<job>` on a worker thread (the answer takes seconds to a couple of minutes), and turn the systems of the
 answer into a new expedition: each stop is a system with its best body, a note of what the bodies are worth, and Spansh's position for it. The jump
 range offered is the last `Loadout`'s `MaxJumpRange`. The endpoints are undocumented; the request and result shapes were taken from Spansh's own page
-and a live answer (see the module's docstring).
+and a live answer (see the module's docstring). The neutron route posts `from`, `to`, `range`, `efficiency` and `supercharge_multiplier` to `/api/route`; its answer
+is a dict whose `system_jumps` becomes one stop per system to jump to (noted with the jumps since the stop before and whether it is a neutron star), and an end
+system is required.
 
 System-name boxes get type-ahead from `system_autocomplete.attach(entry, var)`, which puts its own bindtag ahead of the box's so Enter, Up, Down and Escape
 are seen first (taken with "break" only when a suggestion is highlighted or the list is open) and the box's own Enter handling still runs otherwise. The
@@ -746,7 +748,7 @@ journal cannot say. They never overrule the journal, and none is needed for the 
 | Service | Used for | Trigger |
 |---|---|---|
 | EDSM | Nearby systems, "does EDSM know this system", bodies, ring reserves | Buttons; some opt-in automatic checks |
-| Spansh | Mining price finder, hotspot and boxel lookups, ELW rarity, rare-goods origin Power, nearest neutron star / white dwarf (N.S./W.D.), Trade routes and best-price searches | Buttons; opt-in; the Rares window looks up on open |
+| Spansh | Mining price finder and Market research, hotspot and boxel lookups, expedition planners (Road to Riches, Exomastery, Neutron route), ELW rarity, rare-goods origin Power, nearest neutron star / white dwarf (N.S./W.D.), Trade routes and best-price searches | Buttons; opt-in; the Rares window looks up on open |
 | edastro.com (GEC) | Nearest exploration POI: the whole list (`/gec/json/all`, ~2 MB, 652 entries) is downloaded and the nearest worked out locally | Button only; kept in memory for 6 hours |
 | Canonn sheets | Thargoid and Guardian site lists | Button; downloaded once per session |
 | tick.infomancer.uk | BGS tick time | 60-second poll; can be turned off |
@@ -819,7 +821,7 @@ for as little as it can. These are the measures that are in the code today.
 - The Colonisation window's search choices (radius, pad, carriers, sort) are one JSON string in EDMC's config
   (`wntb_colonisation_search_prefs`, `colonisation_sources.SearchPrefs`), written when a search starts and when the window
   closes. They are window preferences like its geometry, so they are shared by every commander; nothing about play is in them.
-- "Only what [station] sells": on a `Market` event the Colonisation controller reads `Market.json` and keeps the commodities
+- "Only what [station] sells": on a `Market` event the Colonisation controller reads `Market.json` (checked against the event's `MarketID`, and read again for up to 0.4 s if the game wrote it late) and keeps the commodities
   with stock and a buy price (`trade_market.sold_keys`); it forgets them on `Undocked`, `FSDJump`, `SupercruiseEntry` and a
   `Location` without a station, because the file stays on disk after you leave. Not saved; only the market opened this
   session is known.
@@ -980,7 +982,11 @@ game's 42 region boundaries as a coordinate grid indexed from an origin offset. 
   the panel within 100 m of an existing one on the same body updates it instead of adding a second.
 - **Windows** (`plugin/uikit/`, `mining_ledger.py`) use WNTB's own dark look - see "External
   windows" in section 5. The Mining Book (`mining_ledger.py`, data in
-  `mining_ledger_data.py`) is the browser for scanned bodies and saved hotspots.
+  `mining_ledger_data.py`) is the browser for scanned bodies and saved hotspots. Beyond the list and map it holds, each documented in
+  `MINING_TECH_SPEC.md` section 6: dated Depleted marks with an optional assumed refill time (`mining_depletion.py`; the default is unknown and a mark
+  stays), Rhino stops (`mining_stops.py`; the map draws `MapCircle` rings), the deposit within 175 m of the Rhino picked as "you are here", Market
+  research (`mining_market_research.py`, `mining_market_research_dialog.py`; one Spansh station search per system, behind the price finder's switch) and
+  one-line sharing of a deposit (`mining_share.py`).
 - **Your own rates** (`mining_ground.py`): no third-party dataset is bundled or downloaded. The
   journal never reports what a surface deposit holds, so `OwnRates` tallies the commander's saved
   hotspots per kind of ground: "of the deposits you recorded on this kind of body, what share were

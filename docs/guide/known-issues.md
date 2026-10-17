@@ -1,6 +1,6 @@
 # Known issues
 
-What is known to go wrong in the current release (**1.17.3**), what it looks like, and what to do about it. This page is for things that are bugs or rough edges; the
+What is known to go wrong in the current release (**1.17.4**), what it looks like, and what to do about it. This page is for things that are bugs or rough edges; the
 limits of what the game's journal tells WNTB are in the last section of each mode guide. If you hit something that is not here, see
 [Reporting a problem](reporting-problems.md).
 
