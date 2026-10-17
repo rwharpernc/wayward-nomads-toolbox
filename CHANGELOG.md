@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.17.2 - 2026-10-17
 
 ### Added
 - **System targets lists what other commanders found, so a system that was surveyed before no longer reads as empty.** A new option, **Also look up the life and points of interest other commanders found in the system (Spansh, once per system, on arrival)** (Settings → Overlays → System targets, off until you tick it), asks Spansh once per system, when you arrive, which bodies have biology (with the species and the reward) or a point of interest (a wreck, a beacon, a Guardian site). The card shows them in a **Known** section, with a header line such as `Known (Spansh): 2 with life · 3 points of interest`, before you have honked or scanned anything, and that line replaces `Nothing over 100k to map yet` when there is anything to show. A body you have found life on stays on the Life list instead, and biology you have finished drops off. It sends only the system's number, and nothing about you (see [what goes on the internet](docs/guide/internet-and-privacy.md)). Spansh knows only what other commanders have uploaded, so a system nobody has scanned shows nothing. Settlements, geysers and vents are not listed.

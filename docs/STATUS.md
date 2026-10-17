@@ -5,7 +5,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **1.17.1** is the current release (2026-10-17, tag `v1.17.1`; tested on Windows only): the Route overlay shows system names up to 32 characters, the Body info, System targets and Bio signals cards keep room for a long name in their title, and the overlay guide covers streaming and recording.
+- **1.17.2** is the current release (2026-10-17, tag `v1.17.2`; tested on Windows only): System targets can show the life and points of interest other commanders found in a system (an opt-in Spansh lookup, a Known section, and a status line while it asks), says whether you have been in a system before (a per-commander visit history built from your journals, `system_history.json`), and rebuilds a scanned system's survey from just the journals that hold your visits.
+- **1.17.1** (2026-10-17, tag `v1.17.1`; tested on Windows only): the Route overlay shows system names up to 32 characters, the Body info, System targets and Bio signals cards keep room for a long name in their title, and the overlay guide covers streaming and recording.
 - **1.17.0** (2026-10-16, tag `v1.17.0`; tested on Windows only): WNTB's **built-in overlay** (Windows, optional: a transparent window over Elite, no EDMCModernOverlay needed for WNTB's displays, with its own fonts (Source Sans 3 bundled, any `.ttf` or `.otf` added), cards sized from the measured text, a keep-showing option and Windows capture tools recognized, WNTB's displays in converted screenshots; EDMCModernOverlay stays for Linux and for other plugins' overlays, and the two can run together), **Nearest place to land** (Spansh, by position, the ship's pad, services, open fleet carriers), the **likely color** of a species before it is sampled (from SrvSurvey's data, checked against the owner's journals), tracked-plant marker rings and `~` distances by how the plant was scanned, the Bio radar's north mark, System targets ranked by mapped value with a whole-system biology count, a duplicate-overlay-window warning, and **overlay settings saved per commander** (cards on or off, placement and look). The in-game checks are in `docs/TODO.md` and the Linux ones in `docs/LINUX_TESTING.md`; the design of the built-in overlay and what is left are in `docs/NATIVE_OVERLAY_SPEC.md`.
 
 - **1.16.0** (2026-10-16, tag `v1.16.0`): the System targets and Body info cards (with a saved per-commander survey of each system, an optional EDSM lookup, element symbols and formulas, mapped value and first footfall), the four Exobiology cards (Bio status, Biology with reward ranges, the Bio radar with a pointer for each genus, the Sample popup) with plant waypoints, species written as scientific names, the Expedition Log (archive, window, overlay card, Start since my last sale), a corrected scan value formula, a drag-and-drop layout editor on Overlay Placement, plain card panels, panel opacity, brighter and more legible overlay text, cards that reset when you leave a planet, and the Linux support note. Tested on Windows only; the Linux checks are in `docs/LINUX_TESTING.md` section 6 and `docs/TODO.md`. Known issues (doubled or ghosted overlay text from a second overlay window, all-capital text from the overlay's default font) are in `docs/guide/known-issues.md`. A new guide, `docs/guide/exobiology.md`, covers all of exobiology.
@@ -28,13 +29,9 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 - **1.9.0** (2026-10-13, tag `v1.9.0`) added the Surface Compass and Marks, Notes, Flight Alerts, the Trade Watch list, overlay default
   spots that no longer overlap, and the Colonization improvements.
 
-## Unreleased on master
-
-- System targets: an opt-in **Spansh lookup** of the life and points of interest other commanders found in a system (a Known section, with `Looking up data (Spansh)...` while it asks), and a **visit history** built from the commander's journals (`system_history.py`, `system_history.json`, per commander) that adds `First visit here` / `Been here N times before` and lets a system's survey be rebuilt from just the journals that hold the visits. Tested on Windows only; the checks are in `docs/TODO.md` and `docs/LINUX_TESTING.md`. Not released.
-
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.17.1 release. For a fix to a released version, cut a short branch from
+There is one long-lived branch, `master`, and it matches the 1.17.2 release. For a fix to a released version, cut a short branch from
 `master` (for example `bugfix/1.13.1`), and merge it back.
 
 ## Testing
