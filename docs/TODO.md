@@ -20,6 +20,9 @@ Work that is under way and will take time. Items here are active, not waiting; t
 The items below are implemented and covered by unit tests, but have not all been verified in the game. "Then Linux" means the Linux checklist
 covers the item as well.
 
+- [ ] **Prediction review and the record of finds.** Sample a few species with WNTB running and check that `exo_observations.json` gains a record for each; open **REVIEW** on the Organic Scanning panel and check the Finds, By genus, Ranges and Together tabs, a review status and note, and Copy report; turn the record off and clear it under Settings → Exploration → Organic Scanning. Then Linux.
+- [ ] **Route overlay EDSM check.** Tick the option, plot a route through uncharted systems, and check that a system EDSM does not know gets a `*` and the `Not in EDSM yet` line, that the card says so when EDSM cannot be reached, and that the Test Card shows the mark. Then Linux.
+- [ ] **Settings tabs.** Check, with a narrow Settings window, that the tab rows wrap and every label is whole (Overlays has twenty), that a **Related settings** link opens its page (the link click was not tried in EDMC), that hiding mode buttons under General → Window works, and that OK stays on screen on a 1080p display. Then Linux.
 - [ ] **Flight Alerts.** Verify the Test Card; fuel warnings with a plotted neutron star and with a high fuel percentage; the carrier jump countdown
   with a real scheduled jump (not yet verified: the feature reads `CarrierJumpRequest`, and its field names and flag bits come from the journal
   documentation rather than from a recorded event); the sound; and the card position (right side, below the Inventory display). Then Linux (the sound

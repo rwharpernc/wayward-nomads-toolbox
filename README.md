@@ -101,7 +101,7 @@ marked as estimates on screen.
 > Windows, so new features are proven on Windows first and Linux follows slightly behind: a release can reach Linux a little later than it reaches Windows, and the Linux checks for the newest parts are listed in
 > [Linux testing](docs/LINUX_TESTING.md). Linux reports are welcome and get the same attention as any other.
 
-> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0, 1.12.0, 1.13.0, 1.14.0, 1.14.1, 1.15.0, 1.16.0, 1.17.0, 1.17.1 and 1.17.2 have been
+> **Linux has had a test pass.** The 1.10.0 build was tested on Linux and 1.10.1 fixed a panel-width problem found in that pass. 1.10.2, 1.11.0, 1.12.0, 1.13.0, 1.14.0, 1.14.1, 1.15.0, 1.16.0, 1.17.0, 1.17.1, 1.17.2 and 1.17.3 have been
 > tried on Windows only. The newest parts (the Exobiology cards, System targets, Body info and the Expedition Log, the Missions window, the Missions overlay and Source commodities, Best picks, the Upgrade planner, Megaships, the Engineering window's Ship planner and Engineers tab, the Materials and Engineering work, the material trader finder, the
 > Expedition planner and the Help buttons) have had less time in the game than the rest, so expect a few small fixes in a later update. If something looks off,
 > please [report it](#getting-help) (Settings has a **Report an issue** button that does most of the work).
