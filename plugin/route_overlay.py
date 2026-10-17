@@ -80,7 +80,7 @@ def save_config(cfg: RouteConfig) -> None:
 
 # --- what the card says (pure) ---------------------------------------------------------------------------------------
 
-NAME_CHARS = 24                   # characters of "N. System name" in a row; a longer name is cut with an ellipsis
+NAME_CHARS = 32                   # characters of "NN. System name" in a row (the longest procedural names run about 28); a longer one is cut with an ellipsis
 TAG_CHARS = 11                    # the widest star text ("WHITE DWARF")
 SAMPLE_TAG = "WHITE DWARF"
 
