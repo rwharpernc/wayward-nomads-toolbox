@@ -134,6 +134,8 @@ class HotspotRepository:
         self._last_mined_save = 0.0
         self._store = commander_data.new_store()
         self._cmdr = ""
+        self.refill_days = 0
+        """Days after which a Depleted mark is assumed refilled (Settings > Mining); 0 = unknown, marks stay."""
 
     def load(self, plugin_dir: str) -> None:
         """Read the file. Nothing is shown until `set_commander` says whose list to use."""
@@ -298,7 +300,7 @@ class HotspotRepository:
         """Takes off the Depleted marks that are due (mining_depletion.settle) and dates any that were set before dates were
         kept. Saves, and tells listeners when `notify` is set, only if something changed. Returns whether it did."""
         moment = depletion.now_utc()
-        settled = [depletion.settle(h, moment) for h in self._hotspots]
+        settled = [depletion.settle(h, moment, self.refill_days) for h in self._hotspots]
         if all(a is b for a, b in zip(settled, self._hotspots)):
             return False
         self._hotspots = settled

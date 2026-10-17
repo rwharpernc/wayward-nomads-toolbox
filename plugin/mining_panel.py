@@ -32,6 +32,7 @@ from . import mining_coverage as coverage
 from . import mining_hotspot_finder_dialog as hotspot_finder_dialog
 from . import mining_hotspot_import_export as hotspot_import_export
 from . import mining_hotspot_settings
+from . import mining_depletion as depletion
 from . import mining_hotspots as hotspots
 from . import mining_journal_backfill as journal_backfill
 from . import mining_live_position as live_position
@@ -66,6 +67,7 @@ _CFG_DISPLAY_COVERAGE_MINIMAP = "wntb_mining_display_coverage_minimap"
 _CFG_ARCHIVE_SESSIONS = "wntb_mining_archive_sessions"
 _CFG_CURRENT_PAGE = "wntb_mining_current_page"
 _CFG_STOP_RADIUS = "wntb_mining_stop_radius_m"
+_CFG_REFILL_DAYS = "wntb_mining_refill_days"
 
 _MAX_PANEL_HEIGHT = 260
 """Hard cap on the scrollable content area's rendered height, in pixels
@@ -84,6 +86,17 @@ zero during a mining lull rather than freezing at its last value."""
 
 def _cfg_bool(key: str, default: bool) -> bool:
     return config.get_bool(key, default=default)
+
+
+def _clamp_refill_days(value: object) -> int:
+    try:
+        return min(depletion.MAX_REGEN_DAYS, max(0, int(round(float(value)))))   # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return 0
+
+
+def _refill_days() -> int:
+    return _clamp_refill_days(config.get_int(_CFG_REFILL_DAYS, default=0))
 
 
 def _settings() -> render.PanelSettings:
@@ -142,11 +155,13 @@ class MiningPanelController:
         self._display_coverage_minimap_var: Optional[tk.BooleanVar] = None
         self._archive_sessions_var: Optional[tk.BooleanVar] = None
         self._stop_radius_var: Optional[tk.StringVar] = None
+        self._refill_days_var: Optional[tk.StringVar] = None
 
     # --- lifecycle -----------------------------------------------------
 
     def start(self, plugin_dir: str) -> None:
         self._plugin_dir = plugin_dir
+        hotspots.hotspot_repository.refill_days = _refill_days()
         hotspots.hotspot_repository.load(plugin_dir)
         coverage.coverage_repository.load(plugin_dir)
         space_mining.space_mining_repository.add_listener(lambda _run: self._redraw_if_alive())
@@ -616,6 +631,7 @@ class MiningPanelController:
         self._archive_sessions_var = tk.BooleanVar(value=_cfg_bool(_CFG_ARCHIVE_SESSIONS, False))
         self._stop_radius_var = tk.StringVar(value=str(mining_stops.clamp_radius(
             config.get_int(_CFG_STOP_RADIUS, default=mining_stops.DEFAULT_RADIUS_M))))
+        self._refill_days_var = tk.StringVar(value=str(_refill_days()))
 
         nb.Label(frame, text="UI settings").grid(row=0, column=0, sticky=tk.W, padx=10, pady=(10, 2))
         nb.Checkbutton(frame, text="Show session totals",
@@ -630,7 +646,7 @@ class MiningPanelController:
             variable=self._spansh_hotspot_finder_var,
         ).grid(row=4, column=0, sticky=tk.W, padx=10, pady=(6, 0))
         nb.Checkbutton(
-            frame, text="Enable Spansh best price finder (both pages - contacts spansh.co.uk)",
+            frame, text="Enable Spansh best price finder and Market research in the Mining Book (contacts spansh.co.uk)",
             variable=self._spansh_price_finder_var,
         ).grid(row=5, column=0, sticky=tk.W, padx=10)
         nb.Checkbutton(
@@ -660,7 +676,16 @@ class MiningPanelController:
                               "500 to 2500 in steps of 250."), wraplength=440, justify=tk.LEFT).grid(
             row=12, column=0, sticky=tk.W, padx=10)
 
-        mining_hotspot_settings.build(frame, start_row=13)
+        refill_row = tk.Frame(frame)
+        refill_row.grid(row=13, column=0, sticky=tk.W, padx=10, pady=(6, 0))
+        nb.Label(refill_row, text="Assume a depleted deposit has refilled after (days):").pack(side=tk.LEFT)
+        tk.Spinbox(refill_row, from_=0, to=depletion.MAX_REGEN_DAYS, increment=1, width=5,
+                   textvariable=self._refill_days_var).pack(side=tk.LEFT, padx=6)
+        nb.Label(frame, text=("0 means unknown: a Depleted mark stays until you change it. The game gives no refill time and it may "
+                              "differ from system to system, so set a number only if you have seen one."),
+                 wraplength=440, justify=tk.LEFT).grid(row=14, column=0, sticky=tk.W, padx=10)
+
+        mining_hotspot_settings.build(frame, start_row=15)
 
     def build_overlay_settings(self, notebook: nb.Notebook) -> None:
         """The mining stats HUD, on the Overlays tab."""
@@ -722,6 +747,8 @@ class MiningPanelController:
         config.set(_CFG_DISPLAY_COVERAGE_MINIMAP, bool(self._display_coverage_minimap_var.get()))
         config.set(_CFG_ARCHIVE_SESSIONS, bool(self._archive_sessions_var.get()))
         config.set(_CFG_STOP_RADIUS, mining_stops.clamp_radius(self._stop_radius_var.get()))
+        config.set(_CFG_REFILL_DAYS, _clamp_refill_days(self._refill_days_var.get()))
+        hotspots.hotspot_repository.refill_days = _refill_days()
         self._redraw_if_alive()
 
 

@@ -197,6 +197,8 @@ Spec: [MINING_TECH_SPEC.md](MINING_TECH_SPEC.md)
 | `mining_ledger_data.py` | The data side of the Mining Book: grouping and map projection |
 | `mining_live_position.py` | Live surface position and heading from `Status.json` |
 | `mining_location.py` | The current system name for Mining |
+| `mining_market_research.py` | Market Research logic: the commodities worth checking in a system (from your own records) and the markets that buy them |
+| `mining_market_research_dialog.py` | The Market Research window (Spansh, opened from the Mining Book) |
 | `mining_methods.py` | Which mining method suits each commodity |
 | `mining_overlay.py` | The mining stats overlay |
 | `mining_pages.py` | Mining's page order |

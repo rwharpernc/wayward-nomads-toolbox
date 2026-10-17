@@ -2,8 +2,9 @@
 When a hotspot marked Depleted is assumed to carry material again, and what the Mining Book says while it waits.
 
 A deposit that has been mined out refills over time in the game, but no journal event or Status.json field says when, and
-the HUD's Amount readout is the only proof. So WNTB works from an assumption, not a measurement: a Depleted mark is taken
-off REGEN_DAYS after it was set, which leaves the hotspot with no Amount until the commander reads it again. Pressing
+the HUD's Amount readout is the only proof. By default WNTB treats the refill time as unknown and leaves a Depleted mark alone, saying how long ago it was set. If the
+commander sets a number of days in Settings (0 = unknown, up to MAX_REGEN_DAYS; it may differ by system), the mark is taken off
+that long after it was set, which leaves the hotspot with no Amount until the commander reads it again. Pressing
 Mark depleted on such a hotspot when no ton has been refined there since means the deposit was looked at and is still
 empty: the first depletion date is kept, the look is recorded, and the mark comes off again RECHECK_DAYS after that look.
 Refined tons since the regrowth make it a fresh depletion instead.
@@ -23,8 +24,8 @@ if TYPE_CHECKING:
 
 DEPLETED = "Depleted"
 
-REGEN_DAYS = 14
-"""Days after a Depleted mark before it is assumed to have refilled. Assumed, not measured."""
+MAX_REGEN_DAYS = 90
+"""The longest refill time the setting accepts. 0 means unknown: marks never come off by themselves."""
 
 RECHECK_DAYS = 7
 """Days after a recheck (Mark depleted pressed with no ton refined since the regrowth) before the mark comes off again."""
@@ -79,25 +80,27 @@ def apply(old: Optional["Hotspot"], new: "Hotspot", moment: datetime) -> "Hotspo
                                tons_at_regrow=tons_at_regrow, rechecks=rechecks)
 
 
-def due_at(spot: "Hotspot") -> Optional[datetime]:
-    """When a Depleted mark comes off: RECHECK_DAYS after the last look, else REGEN_DAYS after it was set."""
-    if spot.amount != DEPLETED:
+def due_at(spot: "Hotspot", regen_days: int) -> Optional[datetime]:
+    """When a Depleted mark comes off: RECHECK_DAYS after the last look, else `regen_days` after it was set. None when
+    `regen_days` is 0 (refill time unknown)."""
+    if spot.amount != DEPLETED or regen_days <= 0:
         return None
     if spot.rechecks:
         last = parse(spot.rechecks[-1])
         if last is not None:
             return last + timedelta(days=RECHECK_DAYS)
     started = parse(spot.depleted_at)
-    return started + timedelta(days=REGEN_DAYS) if started is not None else None
+    return started + timedelta(days=regen_days) if started is not None else None
 
 
-def settle(spot: "Hotspot", moment: datetime) -> "Hotspot":
-    """`spot` unchanged, or with a legacy Depleted mark dated now, or with a due mark taken off (the same object when nothing changed)."""
+def settle(spot: "Hotspot", moment: datetime, regen_days: int = 0) -> "Hotspot":
+    """`spot` unchanged, or with a legacy Depleted mark dated now, or with a due mark taken off (the same object when nothing
+    changed). With `regen_days` 0 (unknown) a mark is dated but never taken off."""
     if spot.amount != DEPLETED:
         return spot
     if parse(spot.depleted_at) is None:
         return dataclasses.replace(spot, depleted_at=stamp(moment))
-    due = due_at(spot)
+    due = due_at(spot, regen_days)
     if due is not None and moment >= due:
         return dataclasses.replace(spot, amount=None, regrown_at=stamp(moment), tons_at_regrow=_tons(spot))
     return spot
@@ -107,13 +110,16 @@ def _days(delta: timedelta) -> int:
     return max(0, math.ceil(delta.total_seconds() / 86400))
 
 
-def status_text(spot: "Hotspot", moment: datetime) -> str:
+def status_text(spot: "Hotspot", moment: datetime, regen_days: int = 0) -> str:
     """One line on where a hotspot stands in the depletion cycle, or "" when it is not in it."""
     if spot.amount == DEPLETED:
-        due = due_at(spot)
+        due = due_at(spot, regen_days)
         started = parse(spot.depleted_at)
-        if due is None or started is None:
+        if started is None:
             return ""
+        if due is None:
+            return (f"Depleted {max(0, (moment - started).days)} d ago. When it refills is unknown: read its Amount again to see "
+                    "(Settings > Mining can set a time to assume)")
         left = _days(due - moment)
         if spot.rechecks:
             looked = parse(spot.rechecks[-1]) or moment

@@ -45,7 +45,7 @@ Settings. Hover for the full name.
 | **BOOK** (Mining Book) | Opens your catalog (see below). | Always |
 | **+H.S.** (save hotspot here) | Saves the current ring as a hotspot. | On the pages that offer it |
 | **H.S.** (find nearby hotspots) | Finds rings with a confirmed hotspot for a commodity, using Spansh. | Space Mining page, once *Enable Spansh nearby hotspot finder* is ticked |
-| **PRICE** (find best price) | Finds the best-paying station for a commodity, using Spansh. | Once *Enable Spansh best price finder* is ticked |
+| **PRICE** (find best price) | Finds the best-paying station for a commodity, using Spansh. | Once *Enable Spansh best price finder* is ticked (the same switch also turns on Market research in the Mining Book) |
 | **RES** (check ring reserve level) | Looks up a ring's reserve level, using EDSM. | Space Mining page, once *Enable EDSM ring reserve lookup* is ticked |
 | **I/E** | Import or export your saved hotspots. | On the pages that offer it |
 
@@ -73,13 +73,17 @@ It lists the bodies you've scanned in this system and every hotspot you've saved
 - edit a hotspot or mark it as depleted,
 - copy its coordinates,
 - view a zoomable map,
-- see the best **stops** on a body you are on (below).
+- see the best **stops** on a body you are on (below),
+- open **Market research** (below).
 
-**Depleted marks refill.** The game does not say when a mined-out deposit refills, so WNTB assumes 14 days. A hotspot marked
-depleted shows how long is left; after that the mark comes off and the hotspot has no Amount until you read it again. If you
-press **Mark depleted** on it and you have not refined anything there since, WNTB takes that as a look at a deposit that is
-still empty, keeps the first date and looks again 7 days later (`Still depleted at 15 d; look again in 7 d`). Tons refined
-since make it a fresh depletion. Marks made before this feature are dated when you first open the Book or load the commander.
+**Depleted marks.** A hotspot marked depleted is dated, and its card says how long ago. Nobody knows when a mined-out deposit
+refills (the game gives no date and it may differ from system to system), so by default the mark stays until you change it: read
+the deposit's Amount again and edit the hotspot. If you have seen a refill time, set it in **Settings → Mining → Assume a
+depleted deposit has refilled after (days)** (0 = unknown). With a time set, the mark comes off that long after it was set and the
+hotspot has no Amount until you read it again. If you then press **Mark depleted** on it and have not refined anything there
+since, WNTB takes that as a look at a deposit that is still empty, keeps the first date and looks again 7 days later (`Still
+depleted at 15 d; look again in 7 d`); tons refined since make it a fresh depletion. Marks made before this feature are dated
+when you first open the Book or load the commander.
 
 **Stops.** Rigs sit around the Rhino, so deposits close together can be worked from one place. For the body you are on, the Book
 takes the saved deposit with the most rigs and every other one within the **stop radius** of it (Settings → Mining, 500 to 2500 m,
@@ -87,6 +91,14 @@ default 1250 m) as one stop. The best three, led by a deposit of 5 or more rigs 
 above the hotspots with the tons left added up, circled on the map and tagged `stop 1` to `stop 3` on each row. Deposits that
 are depleted, or have no position or rig count, are left out. Stops need the body's radius, which WNTB only has for a body you
 have visited this session, so a body you are not on shows none.
+
+**Market research.** The **Market research** button asks which markets in the system buy the commodities you could mine
+there. It works from your own records only: deposits you saved in that system, what you have recorded on the same kind of
+ground as its scanned bodies, and anything you type into *Also check*. For each commodity it lists the markets that buy it,
+best price first, with demand, how old the prices are, the distance from the star and the pad size. A system where you have
+recorded nothing suggests nothing until you add a commodity or save a hotspot. It is off until you tick *Enable Spansh best
+price finder* (Settings → Mining), leaves out fleet carriers and markets not updated in 30 days, and sends only the system's
+name. Prices are the last ones players uploaded.
 
 **You are here.** With the Rhino on the body, the deposit within 175 m of it is marked `you are here` and selected, so
 **Mark depleted** is one click. It is worked out when the Book is opened or refreshed, not while you drive.
@@ -107,7 +119,8 @@ WNTB, like every third-party tool, only knows what Elite Dangerous writes to its
 | What you might expect | What the game gives | What to do |
 |---|---|---|
 | Ring and deposit amounts read for you | Amount and Density are not given to WNTB. They are **typed in by hand**. | Check the figure you type. A wrong reading gives a wrong range. |
-| When a mined-out deposit refills | Nothing in the journal says. WNTB assumes 14 days. | Read the Amount again at the deposit and edit the hotspot; that overrides the assumption. |
+| When a mined-out deposit refills | Nothing in the journal says, and community testing has not found out: deposits have been seen still empty after about a week, and no refill time is known. WNTB shows it as unknown and leaves the mark. | Read the Amount again at the deposit and edit the hotspot, or set a time to assume in Settings → Mining if you have seen one. |
+| Which commodities a body carries | The game does not say, and community testing treats planet class as a screening hint only. Market research uses your own records for this. | Save hotspots as you find them, or type commodities into *Also check*. |
 | Exact tonnes left in a deposit | The deposit figures are measurements from a handful of deposits, so the ranges are wide. | Treat "tons left" as a guide, not a count. |
 | A map of everywhere you have mined | Coverage means ground the Rhino has **driven over**, not ground it has scanned. | Use the minimap to see where you have been, not what is left. |
 | An exact count of limpets aboard | "On board" is approximate (bought less launched). | Check your cargo for the real number. |
@@ -128,6 +141,7 @@ The checkboxes (the first three are on by default; the rest are off):
 - *Show coverage minimap* (Surface Mining page): a small map of ground the Rhino has driven over on the current
   body,
 - *Archive completed mining runs*: writes a JSON file per run,
+- *Assume a depleted deposit has refilled after (days)*: 0 (the default) means unknown and marks stay; a number takes a Depleted mark off that long after it was set,
 - *Stop radius in the Mining Book*: how close deposits must be to the lead deposit to share a stop (500 to 2500 m).
 
 More detail: [Mining specification](../MINING_TECH_SPEC.md).

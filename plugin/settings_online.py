@@ -25,7 +25,7 @@ LOOKUPS: Tuple[Tuple[str, str, str, bool, str], ...] = (
     ("Region Sweep: find more nearby cubes", "EDSM", "wntb_boxel_sweep_auto_discover", False, "Exploration > Boxel Survey"),
     ("Nearest place to land", "Spansh", "wntb_landing_finder_allowed", False, "Exploration > Nearest place to land"),
     ("Mining: nearby hotspot finder", "Spansh", "wntb_mining_spansh_hotspot_finder_enabled", False, "Mining"),
-    ("Mining: best price finder", "Spansh", "wntb_mining_spansh_price_finder_enabled", False, "Mining"),
+    ("Mining: best price finder and Market research", "Spansh", "wntb_mining_spansh_price_finder_enabled", False, "Mining"),
     ("Mining: ring reserve lookup", "EDSM", "wntb_mining_edsm_reserve_lookup_enabled", False, "Mining"),
     ("Trade: routes, prices and best picks", "Spansh", "wntb_trade_lookups_enabled", False, "Trade"),
     ("System targets: bodies other commanders scanned", "EDSM", "wntb_targets_online", False, "Overlays > System targets"),

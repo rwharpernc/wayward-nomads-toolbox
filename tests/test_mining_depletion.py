@@ -66,32 +66,57 @@ class MarkingTests(unittest.TestCase):
 class RegrowthTests(unittest.TestCase):
     def test_not_due_before_14_days(self) -> None:
         spot = _depleted()
-        self.assertIs(depletion.settle(spot, _day(13.9)), spot)
+        self.assertIs(depletion.settle(spot, _day(13.9), 14), spot)
 
     def test_taken_off_at_14_days(self) -> None:
-        spot = depletion.settle(_depleted(mined_tons=40), _day(14))
+        spot = depletion.settle(_depleted(mined_tons=40), _day(14), 14)
         self.assertIsNone(spot.amount)
         self.assertEqual(spot.regrown_at, depletion.stamp(_day(14)))
         self.assertEqual(spot.tons_at_regrow, 40)
 
     def test_a_legacy_mark_is_dated_not_removed(self) -> None:
         legacy = _spot(amount="Depleted")
-        settled = depletion.settle(legacy, _day(100))
+        settled = depletion.settle(legacy, _day(100), 14)
         self.assertEqual(settled.amount, "Depleted")
         self.assertEqual(settled.depleted_at, depletion.stamp(_day(100)))
 
     def test_a_damaged_stamp_does_not_raise(self) -> None:
         spot = _spot(amount="Depleted", depleted_at="garbage")
-        self.assertEqual(depletion.settle(spot, _day(1)).depleted_at, depletion.stamp(_day(1)))
+        self.assertEqual(depletion.settle(spot, _day(1), 14).depleted_at, depletion.stamp(_day(1)))
 
     def test_other_hotspots_are_untouched(self) -> None:
         spot = _spot()
-        self.assertIs(depletion.settle(spot, _day(99)), spot)
+        self.assertIs(depletion.settle(spot, _day(99), 14), spot)
+
+
+class UnknownRefillTests(unittest.TestCase):
+    """The default: nobody knows when a deposit refills, so a mark stays."""
+
+    def test_a_mark_is_never_taken_off(self) -> None:
+        spot = _depleted()
+        self.assertIs(depletion.settle(spot, _day(400)), spot)
+        self.assertIsNone(depletion.due_at(spot, 0))
+
+    def test_a_legacy_mark_is_still_dated(self) -> None:
+        self.assertEqual(depletion.settle(_spot(amount="Depleted"), _day(5)).depleted_at, depletion.stamp(_day(5)))
+
+    def test_the_text_says_it_is_unknown(self) -> None:
+        text = depletion.status_text(_depleted(), _day(20))
+        self.assertIn("Depleted 20 d ago", text)
+        self.assertIn("unknown", text)
+
+    def test_the_repository_follows_its_setting(self) -> None:
+        repo = hotspots.HotspotRepository()
+        repo._hotspots = [dataclasses.replace(_depleted(), depleted_at=depletion.stamp(START))]
+        self.assertFalse(repo.settle_depletion(notify=False))      # unknown: nothing to do
+        repo.refill_days = 14
+        self.assertTrue(repo.settle_depletion(notify=False))       # 14 days and START is long past
+        self.assertIsNone(repo.all()[0].amount)
 
 
 class RecheckTests(unittest.TestCase):
     def _regrown(self, tons: int = 0) -> hotspots.Hotspot:
-        return depletion.settle(_depleted(mined_tons=tons or None), _day(14))
+        return depletion.settle(_depleted(mined_tons=tons or None), _day(14), 14)
 
     def test_pressing_again_with_no_tons_is_a_recheck(self) -> None:
         again = depletion.apply(self._regrown(), dataclasses.replace(self._regrown(), amount="Depleted"), _day(15))
@@ -102,8 +127,8 @@ class RecheckTests(unittest.TestCase):
     def test_the_mark_comes_off_7_days_after_the_look(self) -> None:
         regrown = self._regrown()
         again = depletion.apply(regrown, dataclasses.replace(regrown, amount="Depleted"), _day(15))
-        self.assertIs(depletion.settle(again, _day(21.9)), again)
-        self.assertIsNone(depletion.settle(again, _day(22)).amount)
+        self.assertIs(depletion.settle(again, _day(21.9), 14), again)
+        self.assertIsNone(depletion.settle(again, _day(22), 14).amount)
 
     def test_tons_since_regrowth_make_it_a_new_depletion(self) -> None:
         regrown = self._regrown(tons=40)
@@ -121,18 +146,18 @@ class RecheckTests(unittest.TestCase):
 
 class StatusTextTests(unittest.TestCase):
     def test_waiting(self) -> None:
-        self.assertIn("refill in 11 d", depletion.status_text(_depleted(), _day(3)))
+        self.assertIn("refill in 11 d", depletion.status_text(_depleted(), _day(3), 14))
 
     def test_after_a_look(self) -> None:
-        regrown = depletion.settle(_depleted(), _day(14))
+        regrown = depletion.settle(_depleted(), _day(14), 14)
         again = depletion.apply(regrown, dataclasses.replace(regrown, amount="Depleted"), _day(15))
-        self.assertEqual(depletion.status_text(again, _day(15)), "Still depleted at 15 d; look again in 7 d")
+        self.assertEqual(depletion.status_text(again, _day(15), 14), "Still depleted at 15 d; look again in 7 d")
 
     def test_regrown(self) -> None:
-        self.assertIn("Assumed refilled", depletion.status_text(depletion.settle(_depleted(), _day(14)), _day(14)))
+        self.assertIn("Assumed refilled", depletion.status_text(depletion.settle(_depleted(), _day(14), 14), _day(14), 14))
 
     def test_ordinary_hotspot_has_none(self) -> None:
-        self.assertEqual(depletion.status_text(_spot(), START), "")
+        self.assertEqual(depletion.status_text(_spot(), START, 14), "")
 
 
 class RepositoryTests(unittest.TestCase):

@@ -133,9 +133,9 @@ updates it instead of adding a duplicate.
 Depletion bookkeeping lives on the hotspot too (`depleted_at`, `regrown_at`, `tons_at_regrow`, `rechecks`; absent in older files,
 which load with defaults). `mining_depletion.apply` is called by `HotspotRepository.add` and `update`, so the dialogs, which build a
 hotspot without these fields, cannot lose them; `settle` runs when a commander's list loads and when the Mining Book refreshes. A
-Depleted mark is taken off `REGEN_DAYS` (14, assumed) after it was set; Mark depleted on a hotspot that refilled with no ton refined
+Depleted mark is taken off `wntb_mining_refill_days` days after it was set (default 0 = unknown: never taken off, the card says how long ago it was set; up to `MAX_REGEN_DAYS`, 90; the repository's `refill_days` holds it); Mark depleted on a hotspot that refilled with no ton refined
 since is a recheck (first date kept, the mark comes off `RECHECK_DAYS` (7) after the look). A Depleted mark with no date is dated
-on first sight, so it refills 14 days after that.
+on first sight.
 
 ### 6.2 Import and export
 WNTB exports and re-imports its own file format, with a merge or replace choice (the **I/E** button, and the buttons
@@ -152,6 +152,15 @@ rigs (ties by how many others are within reach) leads, and every remaining depos
 the body's radius, known only for the body the Rhino is on. The Book lists them, tags each deposit's row, and the map draws a dashed ring
 (`MapCircle`) around each lead. **You are here:** `mining_ledger_data.deposit_here` finds the positioned hotspot (depleted included) within
 175 m of the live position, which the Book marks and selects when no deposit was already selected.
+
+**Market research.** `mining_market_research.plan` lists the commodities worth checking in a system, each with its reasons: deposits
+saved in that system (most first), then the commander's own rates (`OwnRates`) on the grounds of the system's scanned bodies (highest share
+first), then names typed by hand; names are resolved with `trade_commodities.resolve` and unknown ones are reported, not searched. There
+is no commodity-to-planet-type table, by decision: the game publishes none and community testing treats planet class as a screening hint.
+`mining_spansh_client.search_system_stations` makes one `/api/stations/search` request with a distance of 0 from the system (checked
+live 2026-10-17 on Sol: 44 stations, each with its whole `market` and `market_updated_at`), keeps those in the system with a market that
+are not fleet carriers, and sends only the system name. `match` lists the buyers (demand and sell price above zero) per commodity, best price
+first. It shares the price finder's switch (`wntb_mining_spansh_price_finder_enabled`).
 
 **Your own rates.** For a scanned body, the Mining Book shows what *you* have found so far on that kind of
 ground: the share of your saved deposits, per material, with the sample size. `mining_ground.classify`

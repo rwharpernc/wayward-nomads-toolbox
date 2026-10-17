@@ -361,6 +361,30 @@ def search_best_price_stations(reference_system: str, commodity: str, transactio
     return results
 
 
+SYSTEM_STATIONS_PAGE = 100
+"""Stations asked for in one page. A system with more than this shows only the first page (the caller says so)."""
+
+
+def search_system_stations(system: str, market_days_old: int = _MARKET_DAYS_OLD_DEFAULT,
+                           ) -> tuple[list[dict], int]:
+    """(the stations in `system` that have a market, how many stations Spansh counted there).
+
+    One request: a station search with a distance of 0 from `system` returns the stations in it, each with its whole market
+    and when that was last updated (checked live 2026-10-17 on Sol: 44 stations, all with `market`). Fleet carriers are left
+    out (they move and their markets go stale), as are stations whose market is older than `market_days_old` days or missing.
+    Only the system's name is sent. Raises on any network or parse failure, like the other searches here."""
+    filters = {"distance": {"min": "0", "max": "0.01"},
+               "market_updated_at": {"comparison": "<=>", "value": [f"now-{market_days_old}d", "now"]}}
+    data = _post_station_search({"filters": filters, "sort": [{"distance": {"direction": "asc"}}],
+                                 "size": SYSTEM_STATIONS_PAGE, "page": 0, "reference_system": system})
+    wanted = system.strip().casefold()
+    stations = [st for st in data.get("results", [])
+                if isinstance(st, dict) and str(st.get("system_name", "")).strip().casefold() == wanted
+                and st.get("market") and "carrier" not in str(st.get("type", "")).casefold()]
+    count = data.get("count")
+    return stations, int(count) if isinstance(count, (int, float)) else len(stations)
+
+
 TRADER_TYPES = ("Raw", "Manufactured", "Encoded")
 
 

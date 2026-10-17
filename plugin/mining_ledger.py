@@ -31,6 +31,7 @@ from . import mining_hotspots as hotspots
 from . import mining_live_position as live_position
 from . import mining_ground
 from . import mining_ledger_data as data
+from . import mining_market_research_dialog as market_research
 from . import mining_stops as stops
 from . import mining_surface as surface_mining
 from . import panelkit
@@ -90,6 +91,7 @@ class MiningBook:
             save_geometry=lambda geometry: config.set(CONFIG_GEOMETRY, geometry))
         self._shell.window.protocol("WM_DELETE_WINDOW", self.close)
         self._shell.add_action("Add hotspot", self._add_hotspot, accent=True)
+        self._shell.add_action("Market research", self._market_research)
 
         self._body_entry: Optional[data.BodyEntry] = None
         self._entries: dict[str, data.BodyEntry] = {}
@@ -462,7 +464,7 @@ class MiningBook:
         if estimate:
             tk.Label(self._card, text=estimate, fg=P.ACCENT, bg=P.CARD,
                      font=style.font(P.FONT_SECTION)).pack(anchor="w")
-        status = depletion.status_text(spot, depletion.now_utc())
+        status = depletion.status_text(spot, depletion.now_utc(), hotspots.hotspot_repository.refill_days)
         if status:
             tk.Label(self._card, text=status, fg=P.MUTED, bg=P.CARD, wraplength=300,
                      justify="left").pack(anchor="w")
@@ -522,6 +524,20 @@ class MiningBook:
                                parent=self._shell.window):
             hotspots.hotspot_repository.remove(index)
             self._shell.set_status("Hotspot deleted")
+
+    def _market_research(self) -> None:
+        """Markets in the selected body's system (else the current one) that buy what you could mine there."""
+        if not market_research.enabled():
+            self._shell.set_status("Turn on Enable Spansh best price finder in Settings > Mining to use Market research")
+            return
+        surface = surface_mining.surface_mining_repository
+        current = surface.current_system or system_body_survey.current_system
+        system = self._body_entry.system if self._body_entry else current
+        if not system:
+            self._shell.set_status("No system yet: market research needs one")
+            return
+        surveyed = system_body_survey.landable_bodies() if current and system.casefold() == current.casefold() else []
+        market_research.open_dialog(self._shell.window, system, surveyed, self._rates)
 
     def _add_hotspot(self) -> None:
         from . import mining_render
