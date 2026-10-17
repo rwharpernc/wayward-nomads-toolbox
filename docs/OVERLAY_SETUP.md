@@ -261,6 +261,20 @@ Elite in **borderless or windowed** mode (a fullscreen game cannot be drawn over
 
 **Both:** the font choices are independent. WNTB's species names are written `Tussock pennatis`; in the cockpit font they show as `TUSSOCK PENNATIS`. No overlay can draw italics, so scientific names are not italicized.
 
+## Streaming and recording
+
+Both overlays (WNTB's built-in one and EDMCModernOverlay) draw in a separate transparent window laid over Elite. They do not draw inside the game's own graphics, so whether a stream or a recording includes them depends on how it captures the picture. This has not been tested with every program; what follows is how the capture methods work in general.
+
+- **Display capture** (OBS "Display Capture", or any capture of the whole monitor) records everything on the screen, so it should include the overlay.
+- **Game capture** (OBS "Game Capture") hooks Elite's own rendering, so it most likely does not include the overlay window.
+- **Window capture** (OBS "Window Capture" pointed at Elite) records only Elite's window, so it most likely does not include the overlay either. The result can differ between capture programs and versions.
+
+Two things to know when you use display capture:
+- The built-in overlay shows only while Elite is the window you are in (see [The built-in overlay](#the-built-in-overlay-windows)). If you click over to your streaming program, the overlay hides and the capture loses it. Tick **Keep showing when Elite is not the window in front** in the same box to keep it up whenever Elite is running.
+- Elite must run borderless or windowed.
+
+If your capture method does not include the overlay, Elite's screenshot feature is a separate route: tick **Include WNTB's built-in overlay in the converted screenshot** under **Settings -> WNTB -> Field Ops -> Screenshots** (Windows, built-in overlay only).
+
 ## Hiding the overlays for a while
 
 To take a clean screenshot or look at the game without cards over it, hide every WNTB overlay at once and bring them back where they were:
