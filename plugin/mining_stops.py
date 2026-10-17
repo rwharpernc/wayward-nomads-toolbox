@@ -9,8 +9,7 @@ body has none that large), at most MAX_BEST of them, best first.
 Only deposits with a position and a rig count are placed in a stop, and a Depleted one is left out, since nobody drives to
 it. Distances need the body's radius, so the caller supplies it (the Mining Book has it for the body you are on).
 
-The idea follows RhinoSpotter's golden circles; the rule and the code are WNTB's own. Pure logic, no tkinter: see
-tests/test_mining_stops.py.
+Pure logic, no tkinter: see tests/test_mining_stops.py.
 """
 from __future__ import annotations
 

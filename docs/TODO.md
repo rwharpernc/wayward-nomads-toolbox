@@ -154,15 +154,11 @@ for a tool that reads the journal.
 
 ## Ideas from other tools
 
-Projects reviewed: SrvSurvey (GPL-3.0), EDDiscovery (Apache-2.0), Elite Dangerous Odyssey Materials Helper (MIT), EDEngineer (MIT), ODEliteTracker and
-OD-Explorer (no license stated; their source was consulted only to understand how they read the journal, and none of it is copied). WNTB's code is
-written independently, and data used from the licensed projects is credited in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Implemented so far: the fleet
+WNTB's code is written independently; ideas and data taken from other projects are credited in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Implemented so far: the fleet
 carrier jump countdown, low-fuel and next-star warnings, system and body notes, the Surface Compass with marks, the Trade watch list, materials and
 engineering (including the blueprint wishlist, the engineers and the ship planner), the material trader finder, and expedition planning. What remains of it is under "In progress" above.
 
 - [x] **Nearest place to land (a button).** Built (see `docs/guide/exploration.md`): Spansh's station search by coordinates (`reference_coords`), the ship's pad from `Loadout`, services, and fleet carriers filtered on Spansh's `carrier_docking_access` ("All") and on how recently the record was updated. The question about whether public data says a carrier's docking access is open is answered: Spansh has it for some carriers, and the others are left out. Not started: Inara or EDSM as another source.
-- [ ] **Surface mining ideas from [EDRhinoSpotter](https://github.com/Fumlop/EDRhinoSpotter) (GPL-3.0; ideas only, WNTB's code stays its own). To look into:**
-  a rig placement radar (an overlay card showing each placed rig as a 76 to 80 m band around the SRV, red while too close and green once clear; the spacing is RhinoSpotter's own measurement and must be checked in the game first); sharing one spot as a single line to paste into another install (refusing a spot within 100 m of one already saved, with no commander name, dates or tons in it); a per-body ranking of materials with a median credits per ton (needs a price table that would have to be sourced and kept current); and a shareable map picture saved per dock, with a legend and the stop circles. Already brought over in the Mining Book: refilling Depleted marks, Rhino stops and the deposit you are standing at.
 
 ## Low priority
 

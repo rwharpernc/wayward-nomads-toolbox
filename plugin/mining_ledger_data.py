@@ -238,7 +238,7 @@ def material_summary(spots: Sequence[hotspots.Hotspot]) -> list[MaterialLine]:
 
 YOU_ARE_HERE_M = 175.0
 """A saved deposit this close to the Rhino counts as the one you are at (a deposit is about 100 m across and refined ore
-scatters beyond it; the same reach RhinoSpotter uses)."""
+scatters beyond it)."""
 
 
 def deposit_here(spots: Sequence[hotspots.Hotspot], latitude: float, longitude: float,

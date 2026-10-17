@@ -8,9 +8,6 @@ Mark depleted on such a hotspot when no ton has been refined there since means t
 empty: the first depletion date is kept, the look is recorded, and the mark comes off again RECHECK_DAYS after that look.
 Refined tons since the regrowth make it a fresh depletion instead.
 
-The ideas (a 14 day regrowth and a shorter second wait after a look at a still-empty deposit) follow RhinoSpotter's
-published behavior; the code is WNTB's own.
-
 Pure logic with no tkinter and no file access; mining_hotspots.py calls it whenever a hotspot is added or changed and when a
 commander's list is loaded. See tests/test_mining_depletion.py.
 """
