@@ -64,12 +64,15 @@ CHROME_PX = 22                    # what the title row, bar and divider add to t
 class CardLayout:
     """Where and how one kind of card is drawn. `prefix` starts every overlay id (so one Plugin Group covers the card); `x` and `y` are the
     fixed draw origin of the first line; `name_chars` sizes the left column and `sample_tag` is the widest right-hand text (together they fix the
-    card's width); `sample_lines` is the height placement assumes; and `accent` is the color role of the bar down the left edge."""
+    card's width); `sample_lines` is the height placement assumes; and `accent` is the color role of the bar down the left edge. A card whose title
+    is a system or body name sets `title_chars` and `sample_badge` (the longest title and the widest badge beside it), which keep the card at least
+    wide enough to show that title whole."""
 
     def __init__(self, prefix: str, x: int, y: int, max_header: int, max_rows: int, name_chars: int, tag_chars: int, sample_tag: str,
-                 sample_lines: int, accent: str = "border") -> None:
+                 sample_lines: int, accent: str = "border", title_chars: int = 0, sample_badge: str = "") -> None:
         self.prefix, self.x, self.y = prefix, x, y
         self.name_chars, self.tag_chars, self.sample_tag, self.sample_lines = name_chars, tag_chars, sample_tag, sample_lines
+        self.title_chars, self.sample_badge = title_chars, sample_badge
         self.accent = accent
         self.card_id = f"{prefix}card"
         self._used_texts = 0
@@ -80,7 +83,10 @@ class CardLayout:
         return look.measured_width("X" * self.name_chars)
 
     def inner_width(self, look: Look) -> int:
-        return self.name_width(look) + COLUMN_GAP + look.measured_width(self.sample_tag)
+        columns = self.name_width(look) + COLUMN_GAP + look.measured_width(self.sample_tag)
+        if not self.title_chars:
+            return columns
+        return max(columns, look.measured_width("X" * self.title_chars) + COLUMN_GAP + look.measured_width(self.sample_badge))
 
     def fit(self, text: str, look: Look, limit_px: int, base: str = "normal") -> str:
         """`text` cut with an ellipsis until it fits `limit_px` at the look's size."""

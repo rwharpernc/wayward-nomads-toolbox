@@ -44,12 +44,14 @@ OVERLAY_TTL = 4
 NAME_CHARS = 11
 TAG_CHARS = 25
 SAMPLE_TAG = "thin carbon dioxide, 100%"
+TITLE_CHARS = 34         # the body's full name ("<system> 3 b a"), so the title is never cut
 MAX_HEADER = 6
 MAX_ROWS = 10
 GROUP_NAME = "wntb_body_info"
 GROUP_PREFIX = "wntb_body_info_"
 LAYOUT = CardLayout(GROUP_PREFIX, x=650, y=100, max_header=MAX_HEADER, max_rows=MAX_ROWS, name_chars=NAME_CHARS, tag_chars=TAG_CHARS,
-                    sample_tag=SAMPLE_TAG, sample_lines=MAX_HEADER + MAX_ROWS - 3)
+                    sample_tag=SAMPLE_TAG, sample_lines=MAX_HEADER + MAX_ROWS - 3,
+                    title_chars=TITLE_CHARS, sample_badge="99,999 ls")
 
 
 @dataclass

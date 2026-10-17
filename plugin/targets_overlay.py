@@ -54,11 +54,13 @@ OVERLAY_TTL = 4
 NAME_CHARS = 26          # the body's short name, class tag and distance
 TAG_CHARS = 12           # the value or the life count
 SAMPLE_TAG = "123.4M first"
+TITLE_CHARS = 32         # the system's full name, so the title is never cut
 MAX_HEADER = 2
 GROUP_NAME = "wntb_targets"
 GROUP_PREFIX = "wntb_targets_"
 LAYOUT = CardLayout(GROUP_PREFIX, x=650, y=100, max_header=MAX_HEADER, max_rows=ROWS_RANGE[1] + 2, name_chars=NAME_CHARS, tag_chars=TAG_CHARS,
-                    sample_tag=SAMPLE_TAG, sample_lines=1 + DEFAULT_ROWS + 3)
+                    sample_tag=SAMPLE_TAG, sample_lines=1 + DEFAULT_ROWS + 3,
+                    title_chars=TITLE_CHARS, sample_badge="12 of 20 scanned · 3 online")
 
 
 @dataclass

@@ -47,12 +47,15 @@ _CFG = {"status": "wntb_exo_status_enabled", "list": "wntb_exo_list_enabled", "r
 OVERLAY_TTL = 4
 POPUP_SECONDS = 10.0
 NAME_CHARS = 24
+TITLE_CHARS = 44                   # "Bio signals " and the body's name; a body outside the current system is named in full
 STATUS_CHARS = 54                  # the Bio status card is one wide strip
 GROUPS = {"status": ("wntb_exo_status", "wntb_exo_status_"), "list": ("wntb_exo_pred", "wntb_exo_pred_"),
           "radar": ("wntb_exo_radar", "wntb_exo_radar_"), "popup": ("wntb_exo_popup", "wntb_exo_popup_")}
 LAYOUT_STATUS = WideCardLayout(GROUPS["status"][1], x=650, y=100, width_chars=STATUS_CHARS, sample_lines=4)       # short and wide, to sit above the game's compass
-LAYOUT_LIST = CardLayout(GROUPS["list"][1], x=650, y=100, max_header=1, max_rows=12, name_chars=NAME_CHARS, tag_chars=14, sample_tag="up to 12.3M CR", sample_lines=8)
-LAYOUT_POPUP = CardLayout(GROUPS["popup"][1], x=650, y=100, max_header=3, max_rows=4, name_chars=NAME_CHARS, tag_chars=14, sample_tag="5,000,000 cr", sample_lines=4)
+LAYOUT_LIST = CardLayout(GROUPS["list"][1], x=650, y=100, max_header=1, max_rows=12, name_chars=NAME_CHARS, tag_chars=14, sample_tag="up to 12.3M CR", sample_lines=8,
+                         title_chars=TITLE_CHARS, sample_badge="12 of 12 done")
+LAYOUT_POPUP = CardLayout(GROUPS["popup"][1], x=650, y=100, max_header=3, max_rows=4, name_chars=NAME_CHARS, tag_chars=14, sample_tag="5,000,000 cr", sample_lines=4,
+                          title_chars=TITLE_CHARS, sample_badge="12 of 12 done")
 _CFG_RADAR_SIZE = "wntb_exo_radar_size"
 _CFG_RADAR_FILL = "wntb_exo_radar_fill"
 _CFG_RADAR_LINE = "wntb_exo_radar_line"
