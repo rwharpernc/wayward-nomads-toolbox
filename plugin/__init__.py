@@ -1,3 +1,3 @@
 """WNTB: Wayward Nomads Toolbox — EDMC plugin."""
 
-__version__ = "1.17.4"
+__version__ = "1.17.5"

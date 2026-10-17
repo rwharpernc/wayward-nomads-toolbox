@@ -3,7 +3,7 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
-## Unreleased
+## 1.17.5 - 2026-10-17
 
 ### Fixed
 - **Source commodities now counts Delivery missions whose cargo you have to bring.** A plain "Deliver 132 units of Personal Weapons" (`Mission_Delivery`) was left out because only Collect and Mining missions were treated as needing cargo, so the window said none of your active missions needed cargo to be found. The faction hands the goods over for some Delivery missions (war supplies always, many others) but not for others, and the accept event does not say which, so a Delivery with a commodity now counts as needing cargo until the journal's `CargoDepot` event shows it collected, usually within seconds. On-foot and colonisation deliveries are left out. The Commodities needed total and the held-cargo progress on the Missions pages follow the same rule.

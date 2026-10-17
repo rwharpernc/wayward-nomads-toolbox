@@ -5,7 +5,8 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Releases
 
-- **1.17.4** is the current release (2026-10-17, tag `v1.17.4`; tested on Windows only): the Mining Book's dated Depleted marks (the refill time is unknown, with an optional assumed time in Settings → Mining), Rhino stops, the deposit you are standing at picked for you, Market research (Spansh, behind the price finder's switch), **Share line** and **Paste spot**; a **Neutron route** button in the Expedition window; and Trade, Trade Watch and Colonization reading `Market.json` against the event's market and retrying when the game writes it late. The in-game checks are in `docs/TODO.md` and the Linux ones in `docs/LINUX_TESTING.md`.
+- **1.17.5** is the current release (2026-10-17, tag `v1.17.5`; tested on Windows only): Source commodities now counts Delivery missions whose cargo the faction did not hand over (a plain "Deliver N units of Personal Weapons"), until the journal shows the cargo collected.
+- **1.17.4** (2026-10-17, tag `v1.17.4`; tested on Windows only): the Mining Book's dated Depleted marks (the refill time is unknown, with an optional assumed time in Settings → Mining), Rhino stops, the deposit you are standing at picked for you, Market research (Spansh, behind the price finder's switch), **Share line** and **Paste spot**; a **Neutron route** button in the Expedition window; and Trade, Trade Watch and Colonization reading `Market.json` against the event's market and retrying when the game writes it late. The in-game checks are in `docs/TODO.md` and the Linux ones in `docs/LINUX_TESTING.md`.
 - **1.17.3** (2026-10-17, tag `v1.17.3`; tested on Windows only): the Bio radar's circles keep a steady size and the circle you are inside is a deep red, the overlay status colors are plain red, yellow, green and blue (Color-blind safe keeps its own), Settings tabs are alphabetical, wrap and are never cut off, number boxes snap back into their range, General has an Online lookups page and can hide mode buttons, related Settings pages link to each other, the Exobiology record of finds with the Prediction review window (REVIEW on the Organic Scanning panel; `exo_observations.json` is the one file shared by all commanders), and an opt-in EDSM check on the Route overlay.
 - **1.17.2** (2026-10-17, tag `v1.17.2`; tested on Windows only): System targets can show the life and points of interest other commanders found in a system (an opt-in Spansh lookup, a Known section, and a status line while it asks), says whether you have been in a system before (a per-commander visit history built from your journals, `system_history.json`), and rebuilds a scanned system's survey from just the journals that hold your visits.
 - **1.17.1** (2026-10-17, tag `v1.17.1`; tested on Windows only): the Route overlay shows system names up to 32 characters, the Body info, System targets and Bio signals cards keep room for a long name in their title, and the overlay guide covers streaming and recording.
@@ -33,7 +34,7 @@ kept in Git because Git is the only thing shared between the Windows and Linux m
 
 ## Branches
 
-There is one long-lived branch, `master`, and it matches the 1.17.4 release. For a fix to a released version, cut a short branch from
+There is one long-lived branch, `master`, and it matches the 1.17.5 release. For a fix to a released version, cut a short branch from
 `master` (for example `bugfix/1.13.1`), and merge it back.
 
 ## Testing
