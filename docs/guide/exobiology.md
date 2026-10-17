@@ -126,5 +126,19 @@ The cards are plain dark panels, so they sit quietly over the game; the text siz
 | The first footfall mark on an old body | It comes from the body's own scan (`WasFootfalled`). | Scan the body again if the mark is missing. |
 | A new species from a game update | The species data is a snapshot; a species added later cannot be predicted until the data is regenerated. | Sample it: the sample still names it. |
 
+## What WNTB keeps to improve the prediction
+
+Each time a sample names a species, WNTB adds a line to `exo_observations.json` (in the plugin folder) with the body's conditions (type, atmosphere and its trace gases, gravity, temperature,
+pressure, volcanism, the star, surface materials, the system's other body types and its position in the galaxy), the species and color found, and which species the prediction had listed. It is used to check
+the prediction over time: how often the species was on the list, what the rules missed, and which species turn up together. Unlike everything else WNTB saves about your play, this file is **shared by
+every commander on the install and names none of them**; it holds facts about bodies, not about who found them. Nothing is sent anywhere. Bodies you sampled before this existed are filled in from your saved
+biology state.
+
+Press **REVIEW** on the Organic Scanning panel (Exploration mode) to open the **Prediction review** window. **Finds** lists every confirmed species and whether the prediction had listed it (**MISSED** means a rule
+is missing or too strict; a **!** means the body was outside the range the data allows that species), with a filter, the body's conditions and the species that were listed. Give a find a review (*Needs a rule
+change*, *Bad data or journal quirk*, *Expected, no change* or *Look at again later*) and a note, and filter on them later. **Genera** shows the hit rate and how long the predicted list usually was, **Ranges** the
+temperature, gravity and pressure each species was found at beside its rules, and **Together** the species that shared a body. **Copy report** copies all of it as text. A review changes nothing in the
+prediction; it is a note for whoever next tunes the rules. `python scripts/analyze_exo_observations.py` (from a copy of the source) prints the same report.
+
 The Odyssey exobiology tools in the game itself remain the final word. The idea of separate cards for status, predicted species and a sample radar follows
 [SrvSurvey](https://github.com/njthomson/SrvSurvey)'s biology plotters; WNTB's are its own code (see [Attributions](../ATTRIBUTIONS.md)).

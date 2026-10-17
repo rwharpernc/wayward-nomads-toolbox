@@ -85,7 +85,8 @@ detects the OS and EDMC's plugins folder (see "Try your changes in EDMC" above).
 
 - Everything saved about a player's play is **per commander** (`plugin/commander_data.py`); nothing is shared between
   commanders. A new data file is classified in `tests/test_data_files_per_commander.py`, and a commander's name is never
-  used in a file name (Windows is case-insensitive and rejects some characters; Linux is case-sensitive).
+  used in a file name (Windows is case-insensitive and rejects some characters; Linux is case-sensitive). The one exception is
+  `exo_observations.json` (facts about bodies, pooled on purpose to check the species prediction; it stores no commander name).
 - Read and write files as UTF-8, write through a temporary file and `os.replace`, and keep OS-specific calls behind
   `platform_support.py`. Say in `LINUX_TESTING.md` what has only been tried on one OS.
 
@@ -156,7 +157,7 @@ The built-in overlay is tested in layers: the scene and the picture (`tests/test
 `tests/test_overlay_style.py`) and hiding (`tests/test_overlay_hide.py`). The Win32 window itself (`plugin/overlay_window.py`) needs a desktop: `scripts/native_overlay_test.py` draws four real cards over Elite (or the screen) to look at.
 
 Scripts in `scripts/`: `build.mjs`, `package.mjs` and `env.mjs` build and install the plugin; `gen_journal_blueprints.py` and `gen_organic_variants.py` regenerate data tables (the latter from SrvSurvey's `bio-criteria` files, GPL-3.0);
-`verify_organic_variants.py` checks the color predictions against your own journals; `native_overlay_test.py` is the built-in overlay experiment.
+`verify_organic_variants.py` checks the color predictions against your own journals; `analyze_exo_observations.py` checks the species prediction against the finds WNTB recorded (`exo_observations.json`); `native_overlay_test.py` is the built-in overlay experiment.
 
 **Fonts.** `plugin/fonts/` ships Source Sans 3 (SIL Open Font License; the license file sits beside it and is in THIRD-PARTY-NOTICES.md) for the built-in overlay. Font files a player adds go in the same folder; the updater only replaces files that are in the release zip, so they stay.
 A different bundled font needs its license added the same way.

@@ -3,6 +3,16 @@
 All notable changes to Wayward Nomads Toolbox (WNTB) are documented here. See
 `docs/ATTRIBUTIONS.md` for acknowledgements.
 
+## Unreleased
+
+### Added
+- **WNTB keeps what lived where, to check the species prediction over time.** Each sample that names a species now adds a record to `exo_observations.json`: the body's conditions (type, atmosphere and trace gases, gravity, temperature, pressure, volcanism, the star, surface materials, the system's other body types, galactic position), the species and color found, and the species the prediction had listed. Bodies sampled before are filled in from your saved biology state. Unlike every other file about your play it is shared by all commanders on the install and names none of them; nothing is sent anywhere. **REVIEW** on the Organic Scanning panel opens a **Prediction review** window: every confirmed species and whether the prediction listed it (with a filter and each find's conditions), the hit rate by genus, observed temperature, gravity and pressure against each species' range, and which species shared a body, with a status and a note you can give each find (*Needs a rule change*, *Bad data or journal quirk*, *Expected, no change*, *Look at again later*) and **Copy report**. `scripts/analyze_exo_observations.py` prints the same report.
+
+### Changed
+- **The Bio radar's circles keep a steady size.** A circle's drawn radius is held between 5% and 16% of the plot's width however far the plot is zoomed, so circles are no longer tiny at one moment and huge the next. Positions are still to scale; sizes are not, so overlapping circles may not truly overlap. The circle you are inside is a deep red.
+- **Settings tabs and subtabs are in alphabetical order.**
+- **Overlay status colors are plain hues.** Danger is red, caution yellow, good green and information blue in every color scheme except Color-blind safe (which keeps avoiding red against green); the earlier pale tints read as pink and washed out.
+
 ## 1.17.2 - 2026-10-17
 
 ### Added

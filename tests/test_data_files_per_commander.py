@@ -65,6 +65,8 @@ NOT_COMMANDER_DATA = {
     "session_credits.json": "the current login only: one record that names its commander and is replaced when another "
                             "commander logs in (session_credits.sync_session)",
     "trade_journal_scan.json": "which journal files have been read (a fact about files, not about a commander)",
+    "exo_observations.json": "facts about bodies (their conditions and the species confirmed on them) pooled on purpose to check the prediction; "
+                             "it stores no commander name or journal path (exo_observations.py)",
 }
 
 

@@ -30,7 +30,7 @@ import tkinter as tk
 import myNotebook as nb
 from config import appname, config
 
-from . import organic_scan, organic_scan_state, panelkit
+from . import exo_observations, exo_review_window, organic_scan, organic_scan_state, panelkit
 from .organic_scan import BodyConditions, OrganicTracker
 
 plugin_name = os.path.basename(os.path.dirname(__file__))
@@ -58,6 +58,7 @@ def _format_credits(value: Optional[int]) -> str:
 class OrganicScanController:
     def __init__(self) -> None:
         self._plugin_dir: Optional[str] = None
+        self._parent: Optional[tk.Frame] = None
         self._cmdr: Optional[str] = None
         self._persisted: Dict[str, Dict[str, Any]] = {}
         self._status_flags: Optional[int] = None         # Status.json's Flags and Flags2 as last seen: they say whether the commander is in a ship, an SRV or on foot
@@ -87,6 +88,7 @@ class OrganicScanController:
         self._focus_genus: Optional[str] = None       # the genus being surveyed: the one in progress, else the one last identified
         self._waypoints: Dict[str, List[organic_scan.Waypoint]] = {}     # body name -> plants identified there and not yet sampled
         self._tracker = OrganicTracker()
+        self._observations = exo_observations.ObservationBook()      # what lived where, for checking the prediction later; global, not per commander
 
         self._predictions_var: Optional[tk.StringVar] = None
         self._active_var: Optional[tk.StringVar] = None
@@ -96,12 +98,14 @@ class OrganicScanController:
 
     def start(self, plugin_dir: str) -> None:
         self._plugin_dir = plugin_dir
+        self._observations.load(plugin_dir)
         # Per-body state is per-commander and EDMC doesn't know which
         # commander is active until the first journal event - actual
         # restore happens in _switch_cmdr(), called from handle_event().
 
     def stop(self) -> None:
         self._persist()
+        exo_review_window.close()
 
     def _body_key(self, system: Optional[str], body_name: str) -> str:
         return f"{system or ''}|{body_name}"
@@ -118,6 +122,7 @@ class OrganicScanController:
         self._persisted = saved if isinstance(saved, dict) else {}
         if self._persisted:
             logger.info("Restored Organic Scanning state for %s: %d bodies", cmdr, len(self._persisted))
+            self._observations.backfill(self._persisted)
 
     def _persist(self) -> None:
         if self._plugin_dir is not None and self._cmdr is not None:
@@ -393,7 +398,22 @@ class OrganicScanController:
         self._drop_waypoints(genus_key, organism.complete, variant_name if isinstance(variant_name, str) else None)
         if self._current_body_name:
             self._save_organism(self._system_name, self._current_body_name, organism)
+            self._note_observation(genus_key, species_key, species_name, variant_name if isinstance(variant_name, str) else None, entry.get("timestamp"))
         self._refresh_active()
+
+    def _note_observation(self, genus_key: str, species_key: str, species_name: str, variant: Optional[str], when: Any) -> None:
+        """Keep the body's conditions with the species just confirmed and the species the prediction listed, for analysis later (exo_observations.py)."""
+        body = self._current_body_name
+        cond = self._body_conditions.get(body) if body else None
+        if cond is None:
+            return
+        cond = replace(cond, system_body_types=tuple(c.planet_class for c in self._body_conditions.values() if c.planet_class))
+        try:
+            self._observations.record(cond, self._genus_hints.get(body, []), genus_key, species_key, species_name, variant,
+                                      exo_observations.predicted_keys(genus_key, cond), when if isinstance(when, str) else None)
+            exo_review_window.refresh()
+        except Exception:
+            logger.exception("Could not note the exobiology observation")
 
     # --- dashboard (Status.json) dispatch --------------------------------
 
@@ -562,6 +582,7 @@ class OrganicScanController:
     # --- main-panel widgets -----------------------------------------------
 
     def build_panel(self, parent: tk.Frame) -> None:
+        self._parent = parent
         tk.Label(parent, text="Organic Scanning", font=panelkit.bold_font(parent)).grid(
             row=0, column=0, columnspan=3, sticky=tk.W,
         )
@@ -575,6 +596,13 @@ class OrganicScanController:
         panelkit.wrap_label(parent, textvariable=self._active_var, anchor="w").grid(
             row=2, column=0, columnspan=3, sticky=tk.W,
         )
+        review = tk.Button(parent, text="REVIEW", command=self._open_review)
+        review.grid(row=3, column=0, sticky=tk.W, pady=(4, 0))
+        panelkit.add_tooltip(review, "Open the Prediction review window: how the species prediction did against what you found, and a way to review each find")
+
+    def _open_review(self) -> None:
+        if self._parent is not None:
+            exo_review_window.show(self._parent, self._observations)
 
     def _refresh_enabled_display(self) -> None:
         if self._predictions_var is None or self._active_var is None:

@@ -56,6 +56,7 @@ _OWN_DATA_FILES: set = {
     "waypoint_route_state.json",  # Waypoint Route's stop list (waypoint_route_state.py)
     "visited_systems.json",  # Boxel Survey's per-commander visited log (visited_systems.py)
     "organic_scan_state.json",  # Organic Scanning's per-body state (organic_scan_state.py)
+    "exo_observations.json",  # what lived where, pooled for checking the species prediction; global, no commander named (exo_observations.py)
     "expedition_log.json",  # the Expedition Log's archive of exploration expeditions, per commander (expedition_log.py)
     "system_history.json",  # which systems the commander has been in and scanned in, built from their journals, per commander (system_history.py)
     "system_surveys.json",  # the System targets and Body info cards' saved surveys of each system, per commander (system_survey_store.py)

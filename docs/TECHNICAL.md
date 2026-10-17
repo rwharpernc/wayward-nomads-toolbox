@@ -368,7 +368,7 @@ several requests in flight, use the generation counter above instead.
   `region_sweep_state.json`, `waypoint_route_state.json`, `visited_systems.json`, `survey_log.json`,
   `organic_scan_state.json`, `system_surveys.json`, `system_history.json`, `codex_completionist_state.json`, `bgs_state.json`, `powerplay_state.json`,
   `mining_hotspots.json`, `mining_coverage.json`, `ship_builds.json`, `colonisation_sites.json`, `colonisation_carrier.json`, `colonisation_history.json`, `notes.json`, `materials.json`, `blueprint_wishlist.json`, `mission_pins.json`, `engineers.json`, `trade_watch.json`, `surface_marks.json`,
-  `expeditions.json`, `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`, `overlay_settings.json`. `codex_catalog.json` is a cache of a downloaded list rather
+  `expeditions.json`, `trade_ledger.json`, `trade_carrier.json`, `trade_stock.json`, `trade_history.json`, `trade_journal_scan.json`, `trade_route_start.json`, `overlay_settings.json`. `exo_observations.json` is the one data file that is global rather than per commander (facts about bodies and the species found there, pooled to check the prediction; no commander name is stored). `codex_catalog.json` is a cache of a downloaded list rather
 than commander data, but it is protected from updates the same way.
 
 **Overlay settings are the exception to "settings live in `config`": they are per commander.** Which overlay cards run, their

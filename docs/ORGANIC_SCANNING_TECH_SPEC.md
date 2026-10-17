@@ -37,6 +37,9 @@ All modules live in `plugin/`; `PANEL_PLACEMENT = "exploration"`.
 ```
 organic_scan.py         Pure logic: BodyConditions, the matching rules, scan-stage tracking, distance.
 organic_scan_state.py   Per-commander persistence of each body's biology (organic_scan_state.json).
+exo_observations.py     A global record of conditions against confirmed species, for checking the prediction (exo_observations.json).
+exo_analysis.py         The analysis of that record (hit rate, misses, ranges, species together), pure.
+exo_review_window.py    The Prediction review window: the analysis, with a manual review of each find.
 organic_scan_panel.py   The panel: reads journal events, builds conditions, shows predictions and progress, and builds the overlay view.
 organic_species_data.py Generated reference data: genera, species, values and habitability rulesets.
 organic_region_data.py  Generated reference data: the galactic region grid and the named zones.
@@ -120,6 +123,19 @@ Also kept per body: where each sample was taken, the color variant, the first fo
 of the earlier scan events, so without this the picture would vanish. Moving to a different body resets
 the live tracker, and returning restores the saved progress. When `Status.json` names no body (the commander has left the planet) the live view is
 cleared in the same way, so the overlay cards stop showing a finished planet.
+
+### Observations for checking the prediction
+
+`exo_observations.json` is kept in the plugin folder (protected from updates) and is **global, not per commander**, unlike every other file about play: it holds facts about bodies and
+what grows on them, it pools every commander's finds on the install, and it stores no commander name. Each `ScanOrganic` writes one record per body: the conditions
+(`planet_class`, `atmosphere` and `atmosphere_components`, `gravity_g`, `temperature_k`, `pressure_atm`, `volcanism`, `star_type`, `materials`, `system_body_types`, `galactic_position`), the
+genera the body's signals named, and for each genus the confirmed species, the color variant, the time first seen and `predicted`, the species keys the prediction listed at that moment. A body seen by
+two commanders is one record. Bodies sampled before the file existed are filled in from each commander's saved per-body state as that commander is seen, marked `"source": "backfill"` (their
+`predicted` is today's rules applied to the saved conditions). `python scripts/analyze_exo_observations.py [file]` reads it and prints the hit rate by genus, each find the rules did not list with its
+conditions, where each species was found, the observed temperature, gravity and pressure against the rules' range, and the species found together on a body.
+The same analysis (`exo_analysis.py`) is the **Prediction review window**, opened with REVIEW on the Organic Scanning panel: a Finds tab (a filter, each find's conditions and the species the prediction
+listed, and a review status (*Needs a rule change*, *Bad data or journal quirk*, *Expected, no change*, *Look at again later*) with a note, saved on the find as `review` in the same file and kept when the
+species is sampled again), and Genera, Ranges and Together tabs. **Copy report** copies the analysis as text. A review changes nothing about the prediction; it is a note for whoever next tunes the rules.
 
 ## 8. The reference data
 
