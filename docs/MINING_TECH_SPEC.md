@@ -162,6 +162,13 @@ live 2026-10-17 on Sol: 44 stations, each with its whole `market` and `market_up
 are not fleet carriers, and sends only the system name. `match` lists the buyers (demand and sell price above zero) per commodity, best price
 first. It shares the price finder's switch (`wntb_mining_spansh_price_finder_enabled`).
 
+**Sharing.** `mining_share.encode` writes `WNTB-SPOT1:<base64url JSON>:<CRC-32 hex>`: system, body, material, position (5 decimals), and when present rigs,
+location number, Amount, Density, ground and the body's radius; never notes, folder, tons, dates or a commander. `decode` strips chat decoration,
+checks the prefix, the CRC and every field (text 80 characters, no control characters; latitude, longitude, rigs 1 to 7, Amount and Density from
+the game's own lists, radius) and raises `ShareError` with a message for the commander. `find_duplicate` refuses a spot within `SAME_SPOT_M` of
+one saved on the same body (the receiver's own body radius if known, else the sender's, else an assumed one). The Book's **Paste spot** asks
+before `HotspotRepository.add`.
+
 **Your own rates.** For a scanned body, the Mining Book shows what *you* have found so far on that kind of
 ground: the share of your saved deposits, per material, with the sample size. `mining_ground.classify`
 turns the journal's `PlanetClass` and `Volcanism` into a ground (for example "Rocky body, silicate

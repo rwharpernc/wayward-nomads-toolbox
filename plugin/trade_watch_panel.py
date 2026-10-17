@@ -96,7 +96,7 @@ class WatchController:
         self._system = place
         changed = book.set_commander(cmdr)   # a new commander tells the book's listeners (this row, an open window) itself
         if entry.get("event") == "Market" and book.count():
-            market = trade_market.read_market_file(_journal_dir())
+            market = trade_market.read_market_file(_journal_dir(), entry.get("MarketID"))
             where = str(entry.get("StationName") or station or "")
             book.record_market(where, str(entry.get("StarSystem") or self._system), market)   # tells the listeners itself
         elif moved and not changed:

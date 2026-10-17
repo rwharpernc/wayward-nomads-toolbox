@@ -149,5 +149,47 @@ class PlanTests(unittest.TestCase):
                 self.run_plan([{"job": "J"}])
 
 
+NEUTRON_RESULT = {"destination_system": "Colonia", "source_system": "Sol", "total_jumps": 21, "via": [], "system_jumps": [
+    {"distance_jumped": 0, "id64": 1, "jumps": 0, "neutron_star": False, "system": "Sol", "x": 0, "y": 0, "z": 0},
+    {"distance_jumped": 407.5, "id64": 2, "jumps": 12, "neutron_star": True, "system": "PSR J1752-2806", "x": -10.96875, "y": -6.84375, "z": 407.28125},
+    {"distance_jumped": 30.0, "id64": 3, "jumps": 1, "neutron_star": False, "system": "Colonia", "x": -9530.5, "y": -910.28, "z": 19808.1},
+]}
+
+
+class NeutronTests(unittest.TestCase):
+    def test_the_form_is_the_plotters_own(self):
+        form = S.build_form(S.PlanQuery(S.NEUTRON, " Sol ", 40, "Colonia", efficiency=60, supercharge=6))
+        self.assertEqual(form, {"from": "Sol", "to": "Colonia", "range": "40", "efficiency": "60", "supercharge_multiplier": "6"})
+
+    def test_an_end_is_needed(self):
+        with self.assertRaises(S.RouteSearchError):
+            S.build_form(S.PlanQuery(S.NEUTRON, "Sol"))
+
+    def test_efficiency_is_kept_in_range_and_an_odd_multiplier_is_four(self):
+        form = S.build_form(S.PlanQuery(S.NEUTRON, "Sol", 40, "Colonia", efficiency=900, supercharge=5))
+        self.assertEqual((form["efficiency"], form["supercharge_multiplier"]), ("100", "4"))
+
+    def test_each_system_to_jump_to_is_a_stop_and_the_start_is_left_out(self):
+        stops = S.parse_stops(S.NEUTRON, NEUTRON_RESULT, "Sol")
+        self.assertEqual([x.system for x in stops], ["PSR J1752-2806", "Colonia"])
+        self.assertEqual(stops[0].note, "12 jumps, neutron star: supercharge here")
+        self.assertEqual(stops[1].note, "1 jump")
+        self.assertEqual(stops[0].xyz, (-10.96875, -6.84375, 407.28125))
+
+    def test_damaged_answers_give_no_stops(self):
+        for bad in (None, [], {}, {"system_jumps": "x"}, {"system_jumps": [None, {"system": 3}, {"system": " ", "jumps": 2}]}):
+            self.assertEqual(S.parse_stops(S.NEUTRON, bad), [])
+
+    def test_it_goes_to_the_route_endpoint(self):
+        answers = iter([{"job": "J"}, {"state": "completed", "status": "ok", "result": NEUTRON_RESULT}])
+        with mock.patch.object(S, "_request", side_effect=lambda *a, **k: next(answers)) as request,                 mock.patch.object(S, "POLL_INTERVAL_S", 0), mock.patch.object(S.time, "sleep"):
+            stops = S.plan(S.PlanQuery(S.NEUTRON, "Sol", 40, "Colonia"))
+        self.assertEqual(request.call_args_list[0].args[0], "https://spansh.co.uk/api/route")
+        self.assertEqual(len(stops), 2)
+
+    def test_the_name_says_neutron(self):
+        self.assertEqual(S.default_name(S.PlanQuery(S.NEUTRON, "Sol", 40, "Colonia")), "Neutron Highway from Sol")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -8,6 +8,10 @@ The endpoints are undocumented; the shapes below were taken from Spansh's own we
 - `POST /api/riches/route` and `POST /api/exobiology/route` with form fields `from`, `to` (optional), `range` (jump range in ly), `radius` (ly
   around the route to look for bodies), `max_results`, `max_distance` (ls from the arrival star), `min_value`, `avoid_thargoids` and `loop`
   (0 or 1), and, for riches only, `use_mapping_value` -> `{"job": "<id>", "status": "queued"}`
+- the neutron plotter, `POST /api/route` with form fields `from`, `to`, `range` (jump range in ly), `efficiency` (percent, Spansh starts at 60) and
+  `supercharge_multiplier` (4 or 6) -> the same `{"job": ...}`; its `result` is a dict whose `system_jumps` lists the systems to jump to in order, each
+  with `system`, `jumps` (jumps since the previous entry), `distance_jumped`, `distance_left`, `neutron_star` and `x`, `y`, `z`; the first entry is
+  where you start with 0 jumps (checked live 2026-10-17: Sol to Colonia, 169 jumps in 170 entries)
 - `GET /api/results/<id>` until `state == "completed"`; `result` is a list of systems in route order, each with `name`, `jumps`, `x`, `y`, `z`
   and `bodies`. A riches body has `name`, `subtype`, `is_terraformable`, `distance_to_arrival`, `estimated_scan_value` and
   `estimated_mapping_value`; an exobiology body has `name`, `subtype`, `distance_to_arrival`, `landmark_value` and `landmarks` (each with
@@ -32,9 +36,11 @@ from .trade_spansh_client import RouteSearchError, describe_state
 
 RICHES = "riches"
 EXOBIOLOGY = "exobiology"
-KINDS = (RICHES, EXOBIOLOGY)
-TITLES = {RICHES: "Road to Riches", EXOBIOLOGY: "Expressway to Exomastery"}
-URLS = {RICHES: "https://spansh.co.uk/api/riches/route", EXOBIOLOGY: "https://spansh.co.uk/api/exobiology/route"}
+NEUTRON = "neutron"
+KINDS = (RICHES, EXOBIOLOGY, NEUTRON)
+TITLES = {RICHES: "Road to Riches", EXOBIOLOGY: "Expressway to Exomastery", NEUTRON: "Neutron Highway"}
+URLS = {RICHES: "https://spansh.co.uk/api/riches/route", EXOBIOLOGY: "https://spansh.co.uk/api/exobiology/route",
+        NEUTRON: "https://spansh.co.uk/api/route"}
 RESULTS_URL = "https://spansh.co.uk/api/results/"
 REQUEST_TIMEOUT_S = 20
 POLL_INTERVAL_S = 5.0
@@ -47,8 +53,10 @@ DEFAULT_RADIUS_LY = 25
 DEFAULT_MAX_RESULTS = 100
 DEFAULT_MAX_ARRIVAL_LS = 50_000
 DEFAULT_JUMP_RANGE_LY = 30.0
+DEFAULT_EFFICIENCY = 60
+SUPERCHARGE_CHOICES = (4, 6)
 
-LIMITS = {"range": (1.0, 500.0), "radius": (1, 1000), "max_results": (1, 100), "max_distance": (1, 5_000_000)}
+LIMITS = {"efficiency": (1, 100), "range": (1.0, 500.0), "radius": (1, 1000), "max_results": (1, 100), "max_distance": (1, 5_000_000)}
 NOTE_CHARS = 480            # an expedition stop's note holds 500
 BODIES_PER_NOTE = 3
 SPECIES_PER_BODY = 2
@@ -69,6 +77,8 @@ class PlanQuery:
     use_mapping_value: bool = False     # riches only: rank by what mapping pays, not only the first scan
     avoid_thargoids: bool = True
     loop: bool = False                  # return to the start; an expedition is usually one way
+    efficiency: int = DEFAULT_EFFICIENCY    # neutron plotter only
+    supercharge: int = 4                    # neutron plotter only: 4 normal, 6 overcharged
 
 
 @dataclass(frozen=True)
@@ -95,6 +105,14 @@ def build_form(query: PlanQuery) -> Dict[str, str]:
     start = " ".join(str(query.start or "").split())
     if not start:
         raise RouteSearchError("Give the system to start from.")
+    if query.kind == NEUTRON:
+        destination = " ".join(str(query.destination or "").split())
+        if not destination:
+            raise RouteSearchError("Give the system to end at.")
+        return {"from": start, "to": destination,
+                "range": f"{_clamp(query.jump_range, 'range', DEFAULT_JUMP_RANGE_LY):g}",
+                "efficiency": str(int(_clamp(query.efficiency, "efficiency", DEFAULT_EFFICIENCY))),
+                "supercharge_multiplier": str(query.supercharge if query.supercharge in SUPERCHARGE_CHOICES else 4)}
     form = {
         "from": start,
         "range": f"{_clamp(query.jump_range, 'range', DEFAULT_JUMP_RANGE_LY):g}",
@@ -179,9 +197,27 @@ def _exobiology_line(body: Dict[str, Any]) -> Tuple[float, str]:
     return value, f"{head}: {shown}" if shown else head
 
 
+def parse_neutron_stops(result: Any) -> List[PlannedStop]:
+    """The neutron plotter's `system_jumps` -> one stop per system to jump to, in order. The first entry (where you start, no jumps) is left out.
+    The note says how many jumps it is from the stop before and whether the system is a neutron star to supercharge at."""
+    entries = result.get("system_jumps") if isinstance(result, dict) else None
+    stops: List[PlannedStop] = []
+    for raw in entries if isinstance(entries, list) else []:
+        if not isinstance(raw, dict) or not isinstance(raw.get("system"), str) or not raw["system"].strip():
+            continue
+        jumps = int(_num(raw.get("jumps")))
+        if jumps <= 0:
+            continue
+        note = f"{jumps} jump{'s' if jumps != 1 else ''}" + (", neutron star: supercharge here" if raw.get("neutron_star") else "")
+        stops.append(PlannedStop(" ".join(raw["system"].split()), "", note, _xyz(raw)))
+    return stops
+
+
 def parse_stops(kind: str, result: Any, start: str = "") -> List[PlannedStop]:
     """Spansh's `result` list -> stops, in route order. A malformed system is skipped rather than failing the whole plan. The system you start
     in (which has no bodies) is left out, because you are already there."""
+    if kind == NEUTRON:
+        return parse_neutron_stops(result)
     line = _riches_line if kind == RICHES else _exobiology_line
     started = " ".join(str(start or "").split()).casefold()
     stops: List[PlannedStop] = []

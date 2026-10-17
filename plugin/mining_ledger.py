@@ -32,6 +32,7 @@ from . import mining_live_position as live_position
 from . import mining_ground
 from . import mining_ledger_data as data
 from . import mining_market_research_dialog as market_research
+from . import mining_share as share
 from . import mining_stops as stops
 from . import mining_surface as surface_mining
 from . import panelkit
@@ -92,6 +93,7 @@ class MiningBook:
         self._shell.window.protocol("WM_DELETE_WINDOW", self.close)
         self._shell.add_action("Add hotspot", self._add_hotspot, accent=True)
         self._shell.add_action("Market research", self._market_research)
+        self._shell.add_action("Paste spot", self._paste_spot)
 
         self._body_entry: Optional[data.BodyEntry] = None
         self._entries: dict[str, data.BodyEntry] = {}
@@ -481,6 +483,7 @@ class MiningBook:
         buttons.columnconfigure((0, 1), weight=1)
         actions = [("Mark depleted", self._mark_depleted, spot.amount != "Depleted"),
                    ("Copy coords", self._copy_coords, spot.has_position()),
+                   ("Share line", self._copy_share_line, share.can_share(spot)),
                    ("Edit", self._edit, True), ("Delete", self._delete, True)]
         for index, (text, command, enabled) in enumerate(a for a in actions if a[2]):
             FlatButton(buttons, text, command, kind="danger" if text == "Delete" else "normal"
@@ -499,6 +502,40 @@ class MiningBook:
         if spot is not None and index is not None:
             hotspots.hotspot_repository.update(index, dataclasses.replace(spot, amount="Depleted"))
             self._shell.set_status(f"{spot.material} marked depleted")
+
+    def _copy_share_line(self) -> None:
+        """One line of text for someone else's Mining Book (see mining_share.py): no name, notes, tons or dates in it."""
+        spot = self._selected_spot
+        if spot is None or not share.can_share(spot):
+            return
+        radius = self._body_ground(self._body_entry)[0] if self._body_entry else None
+        if panelkit.copy_to_clipboard(self._shell.window, share.encode(spot, radius)):
+            self._shell.set_status("Share line copied: paste it into Discord, or into another Mining Book with Paste spot")
+
+    def _paste_spot(self) -> None:
+        """Takes in a line copied with Share line, after checking it and asking."""
+        try:
+            text = self._shell.window.clipboard_get()
+        except tk.TclError:
+            text = ""
+        try:
+            shared = share.decode(text)
+        except share.ShareError as err:
+            self._shell.set_status(str(err))
+            return
+        entry_radius = None
+        if self._body_entry and self._body_entry.system.casefold() == shared.hotspot.system.casefold()                 and self._body_entry.body.casefold() == shared.hotspot.body.casefold():
+            entry_radius = self._body_ground(self._body_entry)[0]
+        duplicate = share.find_duplicate(shared, hotspots.hotspot_repository.all(), entry_radius)
+        if duplicate is not None:
+            self._shell.set_status(f"You already have {duplicate.material} within {hotspots.SAME_SPOT_M:.0f} m of that spot")
+            return
+        spot = shared.hotspot
+        rigs = f", {spot.rigs} rigs" if spot.rigs else ""
+        if not messagebox.askyesno("Paste spot", f"Add {spot.material}{rigs} on {spot.body} ({spot.system})?", parent=self._shell.window):
+            return
+        hotspots.hotspot_repository.add(spot)
+        self._shell.set_status(f"Added {spot.material} on {spot.body}")
 
     def _copy_coords(self) -> None:
         spot = self._selected_spot

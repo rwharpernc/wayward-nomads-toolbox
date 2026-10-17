@@ -390,7 +390,7 @@ class TradePanelController:
             if isinstance(jump, (int, float)) and jump > 0:
                 self._jump_range = float(jump)
         elif event == "Market":
-            self._market = market_mod.read_market_file(_journal_dir())
+            self._market = market_mod.read_market_file(_journal_dir(), entry.get("MarketID"))
             self._names.update({key: item.name for key, item in self._market.items()})
             self._market_station = entry.get("StationName") or self._station
         elif event in ("Undocked", "Location") and not self._station:

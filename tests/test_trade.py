@@ -297,6 +297,49 @@ class MarketTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             self.assertEqual(market.read_market_file(folder), {})
 
+    def _write(self, folder: str, text: str) -> None:
+        with open(os.path.join(folder, "Market.json"), "w", encoding="utf-8") as handle:
+            handle.write(text)
+
+    def test_a_late_write_is_waited_for(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self._write(folder, json.dumps({"MarketID": 1, "Items": [{"Name": "$tea_Name;", "SellPrice": 9}]}))   # the previous station's
+            waits = []
+
+            def sleep(seconds: float) -> None:
+                waits.append(seconds)
+                self._write(folder, json.dumps(dict(self.DATA, MarketID=2)))      # the game catches up
+
+            parsed = market.read_market_file(folder, 2, sleep)
+            self.assertEqual(set(parsed), {"gold", "tea"})
+            self.assertEqual(len(waits), 1)
+
+    def test_another_stations_file_is_never_returned(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self._write(folder, json.dumps(dict(self.DATA, MarketID=1)))
+            waits = []
+            self.assertEqual(market.read_market_file(folder, 2, waits.append), {})
+            self.assertEqual(len(waits), market.READ_ATTEMPTS - 1)
+
+    def test_a_half_written_file_is_waited_for(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self._write(folder, '{"MarketID": 2, "Items": [')
+            sleep = lambda _s: self._write(folder, json.dumps(dict(self.DATA, MarketID=2)))
+            self.assertEqual(set(market.read_market_file(folder, 2, sleep)), {"gold", "tea"})
+
+    def test_without_an_id_a_good_file_is_read_at_once(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            self._write(folder, json.dumps(self.DATA))
+            waits = []
+            self.assertEqual(set(market.read_market_file(folder, None, waits.append)), {"gold", "tea"})
+            self.assertEqual(waits, [])
+
+    def test_without_an_id_a_missing_file_is_not_waited_for(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            waits = []
+            self.assertEqual(market.read_market_file(folder, None, waits.append), {})
+            self.assertEqual(waits, [])
+
 
 class SpanshClientTests(unittest.TestCase):
     # Shaped like a real /api/results response (captured 2026-10-09).

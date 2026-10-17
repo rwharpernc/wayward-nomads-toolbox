@@ -329,7 +329,7 @@ class ColonisationController:
         """Remember what the station sells when its commodity market is opened, and forget it once the commander leaves
         (Market.json stays on disk after undocking, so the file alone would offer a station they are no longer at)."""
         if event == "Market":
-            keys = trade_market.sold_keys(trade_market.read_market_file(_journal_dir()))
+            keys = trade_market.sold_keys(trade_market.read_market_file(_journal_dir(), entry.get("MarketID")))
             self._market = (str(entry.get("StationName") or station or ""), keys)
         elif event in ("Undocked", "FSDJump", "SupercruiseEntry") or (event == "Location" and not station):
             if self._market is None:

@@ -42,8 +42,11 @@ _BLURBS = {
                              "and puts them in a good order. The most credits for the fewest jumps."),
     spansh_planners.EXOBIOLOGY: ("Spansh's Expressway to Exomastery picks the planets with the most valuable biological signals near a route "
                                  "and puts them in a good order."),
+    spansh_planners.NEUTRON: ("Spansh's neutron plotter finds the fastest way between two systems for your ship's jump range, supercharging "
+                              "at neutron stars on the way. Each system to jump to becomes a stop, marked when it is a neutron star."),
 }
 _VALUE_LABEL = {spansh_planners.RICHES: "Least a body is worth (credits)", spansh_planners.EXOBIOLOGY: "Least a planet's biology is worth (credits)"}
+_NEUTRON_ROWS = ("start", "destination", "jump_range", "efficiency", "supercharge")
 
 
 def open_dialog(parent: tk.Misc, kind: str, system: str, jump_range: Optional[float],
@@ -80,7 +83,9 @@ class PlanDialog:
             "radius": tk.StringVar(value=str(spansh_planners.DEFAULT_RADIUS_LY)),
             "max_results": tk.StringVar(value=str(spansh_planners.DEFAULT_MAX_RESULTS)),
             "max_distance": tk.StringVar(value=str(spansh_planners.DEFAULT_MAX_ARRIVAL_LS)),
-            "min_value": tk.StringVar(value=str(spansh_planners.DEFAULT_MIN_VALUE[kind])),
+            "min_value": tk.StringVar(value=str(spansh_planners.DEFAULT_MIN_VALUE.get(kind, 1))),
+            "efficiency": tk.StringVar(value=str(spansh_planners.DEFAULT_EFFICIENCY)),
+            "supercharge": tk.StringVar(value="4"),
         }
         rows = (("Start from", "start", "The system the route begins in. Filled in with the one you are in."),
                 ("End at (optional)", "destination", "Leave empty for a route that just goes where the best places are."),
@@ -88,7 +93,15 @@ class PlanDialog:
                 ("Look this far from the route (ly)", "radius", "How far off the route a place may be."),
                 ("Most results", "max_results", "Up to 100."),
                 ("Furthest from the arrival star (ls)", "max_distance", "Leaves out bodies that are a long way from where you arrive."),
-                (_VALUE_LABEL[kind], "min_value", "Fewer, better places with a higher number."))
+                (_VALUE_LABEL.get(kind, ""), "min_value", "Fewer, better places with a higher number."),
+                ("Efficiency (percent)", "efficiency", "Spansh's own starting value is 60."),
+                ("Supercharge multiplier", "supercharge", "4 for most ships; 6 only if your ship overcharges at neutron stars."))
+        if kind == spansh_planners.NEUTRON:
+            rows = tuple(r for r in rows if r[1] in _NEUTRON_ROWS)
+            rows = tuple((("End at", key, "The system the route goes to (required).") if key == "destination" else (label, key, hint))
+                         for label, key, hint in rows)
+        else:
+            rows = tuple(r for r in rows if r[1] not in ("efficiency", "supercharge"))
         self._entries = {}
         for row, (label, key, hint) in enumerate(rows):
             tk.Label(form, text=label, fg=P.MUTED, bg=P.PANE, anchor="w").grid(row=row * 2, column=0, sticky="w", pady=(4, 0))
@@ -103,6 +116,8 @@ class PlanDialog:
         self._flags = {"avoid_thargoids": tk.BooleanVar(value=True), "loop": tk.BooleanVar(value=False),
                        "use_mapping_value": tk.BooleanVar(value=False)}
         checks = [("Avoid systems the Thargoids control", "avoid_thargoids"), ("Come back to the start", "loop")]
+        if kind == spansh_planners.NEUTRON:
+            checks = []
         if kind == spansh_planners.RICHES:
             checks.insert(0, ("Count what mapping pays as well as the first scan", "use_mapping_value"))
         flags = tk.Frame(body, bg=P.BG)
@@ -168,6 +183,23 @@ class PlanDialog:
             self._say("Type the system to start from.")
             self._entries["start"].focus_set()
             return None
+        if self._kind == spansh_planners.NEUTRON:
+            destination = " ".join(self._vars["destination"].get().split())
+            if not destination:
+                self._say("Type the system to end at.")
+                self._entries["destination"].focus_set()
+                return None
+            reach, efficiency = self._number("jump_range", "Jump range", False), self._number("efficiency", "Efficiency")
+            if reach is None or efficiency is None:
+                return None
+            boost = self._number("supercharge", "The supercharge multiplier")
+            if boost is None:
+                return None
+            if int(boost) not in spansh_planners.SUPERCHARGE_CHOICES:
+                self._say("The supercharge multiplier is 4 or 6.")
+                self._entries["supercharge"].focus_set()
+                return None
+            return spansh_planners.PlanQuery(self._kind, start, reach, destination, efficiency=int(efficiency), supercharge=int(boost))
         numbers = {}
         for key, label, whole in (("jump_range", "Jump range", False), ("radius", "The distance from the route", True),
                                   ("max_results", "Most results", True), ("max_distance", "The distance from the arrival star", True),

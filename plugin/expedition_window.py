@@ -179,7 +179,8 @@ class ExpeditionWindow:
         planners = tk.Frame(body, bg=P.BG)
         planners.pack(fill="x", pady=(0, P.PAD_SM))
         tk.Label(planners, text="Make an expedition with Spansh", fg=P.MUTED, bg=P.BG).pack(side="left", padx=(0, P.PAD))
-        for text, kind in (("Road to Riches", spansh_planners.RICHES), ("Exomastery", spansh_planners.EXOBIOLOGY)):
+        for text, kind in (("Road to Riches", spansh_planners.RICHES), ("Exomastery", spansh_planners.EXOBIOLOGY),
+                           ("Neutron route", spansh_planners.NEUTRON)):
             FlatButton(planners, text, lambda k=kind: self._plan(k)).pack(side="left", padx=(0, 6))
         tools = tk.Frame(body, bg=P.BG)
         tools.pack(fill="x")
@@ -552,7 +553,8 @@ class ExpeditionWindow:
 
     def _planned(self, query: spansh_planners.PlanQuery, stops: List[spansh_planners.PlannedStop]) -> None:
         if not stops:
-            self._say(f"{spansh_planners.TITLES[query.kind]} found nothing worth stopping for. Lower the least worth, or look further from the route.")
+            self._say(f"{spansh_planners.TITLES[query.kind]} found nothing"
+                      + (" to jump to." if query.kind == spansh_planners.NEUTRON else " worth stopping for. Lower the least worth, or look further from the route."))
             return
         name, taken, number = spansh_planners.default_name(query), {x.name.casefold() for x in self._book.expeditions()}, 1
         base = name

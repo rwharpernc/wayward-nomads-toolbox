@@ -12,8 +12,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 _TOKEN = re.compile(r"^\$(.+?)_name;$", re.IGNORECASE)
 
@@ -57,12 +58,39 @@ def parse_market(data: Any) -> Dict[str, MarketItem]:
     return items
 
 
-def read_market_file(journal_dir: str) -> Dict[str, MarketItem]:
+READ_ATTEMPTS = 5
+READ_DELAY_S = 0.1
+"""The game sometimes writes Market.json a moment after the journal's `Market` event, so a read made on the event can find the
+file missing, half written, or still the previous station's. Up to READ_ATTEMPTS reads, READ_DELAY_S apart (at most 0.4 s of
+waiting, and only when the first read was not good), before giving up."""
+
+
+def _load(path: str) -> Optional[dict]:
     try:
-        with open(os.path.join(journal_dir, "Market.json"), "r", encoding="utf-8") as handle:
-            return parse_market(json.load(handle))
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
     except (OSError, ValueError):
-        return {}
+        return None
+    return data if isinstance(data, dict) and isinstance(data.get("Items"), list) else None
+
+
+def read_market_file(journal_dir: str, market_id: Any = None,
+                     sleep: Callable[[float], None] = time.sleep) -> Dict[str, MarketItem]:
+    """The market in Market.json, or {} when it cannot be read.
+
+    With `market_id` (the journal `Market` event's MarketID) the file must be that market's; a file for another station,
+    which is what is on disk until the game catches up, is waited out rather than returned. Without it any readable file
+    counts, and an unreadable one is not waited for unless it exists but cannot be parsed yet."""
+    path = os.path.join(journal_dir, "Market.json")
+    for attempt in range(READ_ATTEMPTS):
+        data = _load(path)
+        if data is not None and (market_id is None or data.get("MarketID") == market_id):
+            return parse_market(data)
+        if market_id is None and data is None and not os.path.exists(path):
+            return {}
+        if attempt < READ_ATTEMPTS - 1:
+            sleep(READ_DELAY_S)
+    return {}
 
 
 def cargo_value(cargo: Dict[str, int], market: Dict[str, MarketItem]) -> Optional[int]:

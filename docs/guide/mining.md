@@ -74,7 +74,8 @@ It lists the bodies you've scanned in this system and every hotspot you've saved
 - copy its coordinates,
 - view a zoomable map,
 - see the best **stops** on a body you are on (below),
-- open **Market research** (below).
+- open **Market research** (below),
+- **Share line** and **Paste spot** (below).
 
 **Depleted marks.** A hotspot marked depleted is dated, and its card says how long ago. Nobody knows when a mined-out deposit
 refills (the game gives no date and it may differ from system to system), so by default the mark stays until you change it: read
@@ -99,6 +100,12 @@ best price first, with demand, how old the prices are, the distance from the sta
 recorded nothing suggests nothing until you add a commodity or save a hotspot. It is off until you tick *Enable Spansh best
 price finder* (Settings → Mining), leaves out fleet carriers and markets not updated in 30 days, and sends only the system's
 name. Prices are the last ones players uploaded.
+
+**Sharing a deposit.** **Share line** on a hotspot's card copies one line of text (`WNTB-SPOT1:...`) you can post in Discord. In
+another Mining Book, **Paste spot** (top of the window) reads it from the clipboard, checks it and asks before adding it to the
+commander you are playing. The line holds the system, body, material, rigs, location number, position, Amount, Density and kind
+of ground, and never a commander name, notes, folder, tons mined or dates. A line that was cut short or changed is refused, and
+so is a deposit within 100 m of one you already have on that body. A hotspot with no position cannot be shared.
 
 **You are here.** With the Rhino on the body, the deposit within 175 m of it is marked `you are here` and selected, so
 **Mark depleted** is one click. It is worked out when the Book is opened or refreshed, not while you drive.
